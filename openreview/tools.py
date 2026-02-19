@@ -23,6 +23,34 @@ import random
 import string
 from deprecated.sphinx import deprecated
 
+# --- URL Constants ---
+PROD_API_V1 = 'https://api.openreview.net'
+PROD_API_V2 = 'https://api2.openreview.net'
+PROD_SITE   = 'https://openreview.net'
+
+DEV_API_V1 = 'https://api.dev.openreview.net'
+DEV_API_V2 = 'https://api2.dev.openreview.net'
+DEV_SITE   = 'https://dev.openreview.net'
+
+LEGACY_DEV_API_V1 = 'https://devapi.openreview.net'
+LEGACY_DEV_API_V2 = 'https://devapi2.openreview.net'
+
+LOCAL_API_V1 = 'http://localhost:3000'
+LOCAL_API_V2 = 'http://localhost:3001'
+LOCAL_SITE   = 'http://localhost:3030'
+
+# Remote-only lists (exclude localhost) used by client guards
+V1_REMOTE_URLS = [PROD_API_V1, DEV_API_V1, LEGACY_DEV_API_V1]
+V2_REMOTE_URLS = [PROD_API_V2, DEV_API_V2, LEGACY_DEV_API_V2]
+
+def _identify_environment(baseurl):
+    """Return 'dev', 'prod', or 'local' based on baseurl."""
+    if any(url in baseurl for url in [LEGACY_DEV_API_V1, LEGACY_DEV_API_V2, DEV_API_V1, DEV_API_V2]):
+        return 'dev'
+    if any(url in baseurl for url in [PROD_API_V1, PROD_API_V2]):
+        return 'prod'
+    return 'local'
+
 def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
     Returns the venue for a submission based on its decision
@@ -1894,18 +1922,20 @@ def get_own_reviews(client):
     return links
 
 def get_base_urls(client):
+    env = _identify_environment(client.baseurl)
+    if env == 'dev':
+        return [DEV_API_V1, DEV_API_V2]
+    if env == 'prod':
+        return [PROD_API_V1, PROD_API_V2]
+    return [LOCAL_API_V1, LOCAL_API_V2]
 
-    baseurl_v1 = 'http://localhost:3000'
-    baseurl_v2 = 'http://localhost:3001'
-
-    if 'https://devapi' in client.baseurl:
-        baseurl_v1 = 'https://devapi.openreview.net'
-        baseurl_v2 = 'https://devapi2.openreview.net'
-    if 'https://api' in client.baseurl:
-        baseurl_v1 = 'https://api.openreview.net'
-        baseurl_v2 = 'https://api2.openreview.net'
-
-    return [baseurl_v1, baseurl_v2]
+def get_site_url(client):
+    env = _identify_environment(client.baseurl)
+    if env == 'dev':
+        return DEV_SITE
+    if env == 'prod':
+        return PROD_SITE
+    return LOCAL_SITE
 
 def resend_emails(client, request_id, groups):
     message_requests = client.get_message_requests(id=request_id)

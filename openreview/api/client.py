@@ -61,8 +61,8 @@ class OpenReviewClient(object):
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
         self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL_V2', 'http://localhost:3001')
-        if 'https://api.openreview.net' in self.baseurl or 'https://devapi.openreview.net' in self.baseurl:
-            correct_baseurl = self.baseurl.replace('api', 'api2')
+        if any(url in self.baseurl for url in tools.V1_REMOTE_URLS):
+            correct_baseurl = tools.get_base_urls(self)[1]
             raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the old client openreview.Client')
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
@@ -217,7 +217,7 @@ class OpenReviewClient(object):
 
     def __resolve_passkey(self, mfa_pending_token):
         """Handle passkey authentication via browser flow."""
-        result = _passkey_browser_flow(self.baseurl, mfa_pending_token)
+        result = _passkey_browser_flow(self, mfa_pending_token)
         if result and result.get('token'):
             return result
         raise OpenReviewException({

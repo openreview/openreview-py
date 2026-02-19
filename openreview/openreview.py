@@ -67,7 +67,7 @@ def _default_mfa_code_prompt(method):
     }
     return input(prompts.get(method, f'Enter {method} code: ')).strip()
 
-def _passkey_browser_flow(baseurl, mfa_pending_token, timeout=120):
+def _passkey_browser_flow(client, mfa_pending_token, timeout=120):
     """
     Open browser to API's WebAuthn page, receive auth token via local callback.
     Returns token_response_dict or None on timeout/failure.
@@ -78,14 +78,10 @@ def _passkey_browser_flow(baseurl, mfa_pending_token, timeout=120):
     import urllib.parse
     import json as _json
 
+    baseurl = client.baseurl
     result = {}
 
-    if 'localhost' in baseurl:
-        site_url = 'http://localhost:3030'
-    elif 'dev' in baseurl:
-        site_url = 'https://dev.openreview.net'
-    else:
-        site_url = 'https://openreview.net'
+    site_url = tools.get_site_url(client)
 
     class CallbackHandler(http.server.BaseHTTPRequestHandler):
         def do_POST(self):
@@ -170,8 +166,8 @@ class Client(object):
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
         self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL', 'http://localhost:3000')
-        if 'https://api2.openreview.net' in self.baseurl or 'https://devapi2.openreview.net' in self.baseurl:
-            correct_baseurl = self.baseurl.replace('api2', 'api')
+        if any(url in self.baseurl for url in tools.V2_REMOTE_URLS):
+            correct_baseurl = tools.get_base_urls(self)[0]
             raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the new client openreview.api.OpenReviewClient')
         self.baseurl_v2 = tools.get_base_urls(self)[1]
         self.groups_url = self.baseurl + '/groups'
@@ -319,7 +315,7 @@ class Client(object):
 
     def __resolve_passkey(self, mfa_pending_token):
         """Handle passkey authentication via browser flow."""
-        result = _passkey_browser_flow(self.baseurl, mfa_pending_token)
+        result = _passkey_browser_flow(self, mfa_pending_token)
         if result and result.get('token'):
             return result
         raise OpenReviewException({

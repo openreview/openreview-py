@@ -264,7 +264,7 @@ def process(client, edit, invitation):
         )
     )
 
-    baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+    baseurl = openreview.tools.get_site_url(client)
 
     #edit Comment invitation to have PC group as readers
     client.post_invitation_edit(
