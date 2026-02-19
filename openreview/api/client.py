@@ -1189,11 +1189,9 @@ class OpenReviewClient(object):
         duedate = None,
         pastdue = None,
         replyto = None,
-        details = None,
         expired = None,
         sort = None,
         type = None,
-        with_count=None,
         invitation = None,
         trash = None,
         domain = None
@@ -1235,7 +1233,9 @@ class OpenReviewClient(object):
         :return: List of Invitations
         :rtype: list[Invitation]
         """
-        params = {}
+        params = {
+            'stream': True
+        }
 
         if id is not None:
             params['id'] = id
@@ -1263,16 +1263,12 @@ class OpenReviewClient(object):
             params['pastdue'] = pastdue
         if replyto is not None:
             params['replyto'] = replyto
-        if details is not None:
-            params['details'] = details
         if expired is not None:
             params['expired'] = expired
         if sort is not None:
             params['sort'] = sort
         if type is not None:
             params['type'] = type
-        if with_count is not None:
-            params['with_count'] = with_count
         if invitation is not None:
             params['invitation'] = invitation
         if trash is not None:
@@ -1280,7 +1276,7 @@ class OpenReviewClient(object):
         if domain is not None:
             params['domain'] = domain
 
-        return list(tools.efficient_iterget(self.get_invitations, desc='Getting V2 Invitations', **params))
+        return self.get_invitations(**params)
 
     def get_invitation_edit(self, id):
         """
@@ -1479,7 +1475,6 @@ class OpenReviewClient(object):
             details = None,
             select = None,
             sort = None,
-            with_count=None,
             domain=None
             ):
         """
@@ -1559,8 +1554,6 @@ class OpenReviewClient(object):
             params['select'] = select
         if sort is not None:
             params['sort'] = sort
-        if with_count is not None:
-            params['with_count'] = with_count
         if domain is not None:
             params['domain'] = domain
 
@@ -1781,7 +1774,7 @@ class OpenReviewClient(object):
 
         return tags
 
-    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, note = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, domain=None):
+    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, note = None, profile = None, signature = None, tag = None, domain=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1804,13 +1797,9 @@ class OpenReviewClient(object):
             'profile': profile,
             'signature': signature,
             'tag': tag,
-            'limit': limit,
-            'offset': offset,
-            'with_count': with_count,
-            'domain': domain
+            'domain': domain,
+            'stream': True
         }
-
-        params['stream'] = True
 
         return self.get_tags(**params)
 
@@ -1853,7 +1842,7 @@ class OpenReviewClient(object):
 
         return edges
 
-    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, domain=None):
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, trash=None, select=None, domain=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1869,14 +1858,11 @@ class OpenReviewClient(object):
             'head': head,
             'tail': tail,
             'label': label,
-            'limit': limit,
-            'offset': offset,
-            'with_count': with_count,
             'trash': trash,
-            'domain': domain
+            'select': select,
+            'domain': domain,
+            'stream': True
         }
-
-        params['stream'] = True
 
         return self.get_edges(**params)
 
