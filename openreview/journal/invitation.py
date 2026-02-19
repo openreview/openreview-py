@@ -899,7 +899,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=['~'],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[editor_in_chief_id],
+            signatures=[venue_id],
             cdate=self.journal.get_submission_start_date(),
             expdate=self.journal.get_submission_deadline(),
             edit={
@@ -1442,7 +1442,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
-            signatures=[editor_in_chief_id], ## EIC have permission to check conflicts
+            signatures=[venue_id],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -3119,7 +3119,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[self.journal.get_editors_in_chief_id()],
+            signatures=[venue_id],
             maxReplies=1,
             edit={
                 'ddate': {
@@ -3953,7 +3953,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         ## Change review invitation readers
         invitation = self.post_invitation_edit(invitation=openreview.api.Invitation(id=self.journal.get_review_id(number=note.number),
-                signatures=[self.journal.get_editors_in_chief_id()],
+                signatures=[self.journal.venue_id],
                 edit={
                     'note': {
                         'readers': self.journal.get_release_review_readers(number=note.number)
