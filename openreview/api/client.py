@@ -1810,7 +1810,9 @@ class OpenReviewClient(object):
             'domain': domain
         }
 
-        return tools.concurrent_get(self, self.get_tags, **params)
+        params['stream'] = True
+
+        return self.get_tags(**params)
 
     def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, select=None, stream=None, domain=None):
         """
