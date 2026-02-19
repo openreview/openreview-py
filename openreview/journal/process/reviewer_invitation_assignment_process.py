@@ -9,20 +9,7 @@ def process(client, edge, invitation):
     print(edge.id)
 
     reviewer_group = client.get_group(journal.get_reviewers_id())
-    invite_assignment_template = reviewer_group.content.get('invite_assignment_template_script', {}).get('value', '')
-    if not invite_assignment_template:
-        invite_assignment_template = '''Hi {user_preferred_name},
-
-You were invited to review the paper number: {submission_number}, title: "{submission_title}".
-
-Abstract: {submission_abstract}
-
-{invitation_links}
-
-Thanks,
-
-{inviter_id}
-{inviter_preferred_name}'''
+    invite_assignment_template = reviewer_group.content['invitation_assignment_email_template_script']['value']
 
     if edge.ddate is None and edge.label == invite_label:
 

@@ -297,6 +297,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content['unassignment_email_template_script'] = { 'value': reviewer_unassignment_email_template }
             content['discussion_starts_email_template_script'] = { 'value': reviewer_discussion_starts_email_template }
             content['official_recommendation_starts_email_template_script'] = { 'value': reviewer_official_recommendation_starts_email_template }
+            content['invitation_assignment_email_template_script'] = { 'value': reviewer_invitation_assignment_email_template }
             reviewer_group = Group(id=reviewers_id,
                             readers=[venue_id, action_editors_id, reviewers_id] + additional_committee,
                             writers=[venue_id],

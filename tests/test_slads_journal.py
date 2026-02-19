@@ -119,14 +119,14 @@ class TestSLADSJournal():
 
         openreview_client.add_members_to_group('SLADS/Reviewers', ['~David_Box1', '~Carlos_Gex1', '~Javier_Bax1'])
 
-        # add invite email template to reviewers group
+        # edit invite email template in reviewers group
         openreview_client.post_group_edit(
             invitation='SLADS/-/Edit',
             signatures=['SLADS'],
             group=openreview.api.Group(
                 id='SLADS/Reviewers',
                 content = {
-                    'invite_assignment_template_script': {
+                    'invitation_assignment_email_template_script': {
                         'value': '''Hi {user_preferred_name},
 
 We request your help with reviewing a SLADS submission:
