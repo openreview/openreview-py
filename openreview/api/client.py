@@ -988,7 +988,7 @@ class OpenReviewClient(object):
 
         return groups
 
-    def get_all_groups(self, id=None, invitation=None, parent=None, prefix=None, member=None, members=None, domain=None, signatory=None, web=None, sort=None, with_count=None, domain=None):
+    def get_all_groups(self, id=None, invitation=None, parent=None, prefix=None, member=None, members=None, domain=None, signatory=None, web=None, sort=None, with_count=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -1041,8 +1041,6 @@ class OpenReviewClient(object):
             params['sort'] = sort
         if with_count is not None:
             params['with_count'] = with_count
-        if domain is not None:
-            params['domain'] = domain
 
         return self.get_groups(**params)
 
