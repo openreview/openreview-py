@@ -21,7 +21,7 @@ class Assignment(object):
             self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head, wait_to_finish=True)
             tools.post_bulk_edges(self.client, edges)
             # Perform sanity check
-            edges_posted = self.client.get_edges_count(invitation=edges[0].invitation, head=edges[0].head)
+            edges_posted = self.client.get_edges_count(invitation=edges[0].invitation, head=edges[0].head, domain=self.journal.venue_id)
             if edges_posted != len(edges):
                 raise openreview.OpenReviewException(f'Failed during bulk post of {edges[0].invitation} edges! Edges found: {len(edges)}, Edges posted: {edges_posted}')
                

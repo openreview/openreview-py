@@ -1183,7 +1183,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
             # For each submission check the status of the expertise task
             for submission in tqdm(active_submissions):
-                ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id)
+                ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id, domain=journal.venue_id)
                 if ae_score_count == 0:
                     print('Submission with no AE scores', submission.id, submission.number)
                     result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_action_editors_id())
@@ -1220,7 +1220,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                     sender=journal.get_message_sender()
                                 )
 
-                reviewers_score_count = journal.client.get_edges_count(invitation=journal.get_reviewer_affinity_score_id(), head=submission.id)
+                reviewers_score_count = journal.client.get_edges_count(invitation=journal.get_reviewer_affinity_score_id(), head=submission.id, domain=journal.venue_id)
                 if reviewers_score_count == 0:
                     print('Submission with no reviewers scores', submission.id, submission.number)
                     result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_reviewers_id())

@@ -31,7 +31,7 @@ def process(client, invitation):
         token=client.token
     )
 
-    if client.get_edges_count(invitation=f"{senior_area_chairs_id}/-/Affinity_Score") <= 0:
+    if client.get_edges_count(invitation=f"{senior_area_chairs_id}/-/Affinity_Score", domain=venue_id) <= 0:
         print(f"no affinity scores for {senior_area_chairs_id}")
         return
 

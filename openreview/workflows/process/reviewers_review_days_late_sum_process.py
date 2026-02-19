@@ -27,7 +27,7 @@ def process(client, invitation):
     review_days_late_tags = []
 
     submission_by_id = { n.id: n for n in client.get_all_notes(invitation=submission_id, details='replies', domain=venue_id) }
-    assignments_by_reviewers = { e['id']['tail']: e['values'] for e in client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
+    assignments_by_reviewers = { e['id']['tail']: e['values'] for e in client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail', domain=venue_id) }
     all_submission_groups = client.get_all_groups(prefix=submission_venue_id, domain=venue_id)
 
     all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{reviewers_anon_name}' in g.id ]
