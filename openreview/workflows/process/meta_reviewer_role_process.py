@@ -22,7 +22,7 @@ def process(client, invitation):
 
     if not reviews:
         print('No meta reviews found, try getting the meta reviews per submission.')
-        submissions = client.get_all_notes(invitation=domain.content.get('submission_id', {}).get('value'), details='replies')
+        submissions = client.get_all_notes(invitation=domain.content.get('submission_id', {}).get('value'), details='replies', domain=domain.id)
         for submission in submissions:
             reviews += [openreview.api.Note.from_json(reply) for reply in submission.details.get('replies', []) if reply['invitations'][0].endswith(f'/{review_name}')]
         if reviews:

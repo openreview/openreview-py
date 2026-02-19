@@ -884,8 +884,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def setup_note_invitations(self):
 
-        note_invitations = self.client.get_all_invitations(prefix=f'{self.venue_id}/{self.submission_group_name}')
-        submissions_by_number = {s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id())}
+        note_invitations = self.client.get_all_invitations(prefix=f'{self.venue_id}/{self.submission_group_name}', domain=self.venue_id, type='note')
+        submissions_by_number = {s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id(), domain=self.venue_id)}
 
         def find_number(tokens):
             for token in tokens:
@@ -1014,7 +1014,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def setup_responsibility_acknowledgement_invitations(self):
 
-        reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id())
+        reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id(), domain=self.venue_id, type='note')
 
         for invitation in reviewer_invitations:
             tokens = invitation.id.split('/')
@@ -1233,7 +1233,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def run_reviewer_stats(self, end_cdate, output_file, start_cdate=None):
 
-        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
+        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True, domain=self.venue_id)}
         submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
         archived_assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(archived=True), groupby='tail')}
         assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='tail')}
@@ -1498,7 +1498,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def run_action_editors_stats(self, end_cdate, output_file, start_cdate=None):
 
-        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
+        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True, domain=self.venue_id)}
         submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
         archived_assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(archived=True), groupby='tail')}
         assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail')}
@@ -1702,7 +1702,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def run_reviewer_unavailability_stats(self):
 
-        unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id())
+        unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id(), domain=self.venue_id)
         preferred_emails_edges = { e['id']['head']: e['values'][0]['tail'] for e in self.client.get_grouped_edges(invitation=self.get_preferred_emails_invitation_id(), groupby='head', select='tail') }
 
         reviewers = self.client.get_group(self.get_reviewers_id()).members

@@ -19,7 +19,7 @@ def process(client, invitation):
         def filter_by_source(source):
 
             venueids = source.get('venueid', [submission_venue_id]) ## we should always have a venueid
-            source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies')
+            source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies', domain=venue_id)
 
             if 'readers' in source:
                 source_submissions = [s for s in source_submissions if set(source['readers']).issubset(set(s.readers))]

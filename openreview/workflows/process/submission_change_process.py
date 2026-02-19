@@ -25,7 +25,7 @@ def process(client, invitation):
         )
     
     ## Release the submissions to specified readers if venueid is still submission
-    submissions = client.get_all_notes(content= { 'venueid': submission_venue_id })
+    submissions = client.get_all_notes(content= { 'venueid': submission_venue_id }, domain=venue_id)
 
     if not submissions:
         print('No submissions were updated since there are no active submissions')

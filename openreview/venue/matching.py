@@ -441,7 +441,7 @@ class Matching(object):
         current_custom_max_edges={ e['id']['tail']: Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation_id, groupby='tail', select=None)}
 
         reduced_loads = {}
-        reduced_load_notes = self.client.get_all_notes(invitation=self.venue.get_recruitment_id(self.match_group.id), sort='tcdate:asc')
+        reduced_load_notes = self.client.get_all_notes(invitation=self.venue.get_recruitment_id(self.match_group.id), sort='tcdate:asc', domain=self.venue.venue_id)
         for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
             if 'reduced_load' in note.content:
                 reduced_loads[note.content['user']['value']] = note.content['reduced_load']['value']
@@ -1406,7 +1406,7 @@ class Matching(object):
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.match_group_name}''')
 
         #get the default max papers from the assignment configuration if possible
-        current_matching_configuration = [x for x in self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration') if x.content['title']['value']==assignment_title]
+        current_matching_configuration = [x for x in self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration', domain=self.venue.id) if x.content['title']['value']==assignment_title]
         if current_matching_configuration:
             default_max_papers = int(current_matching_configuration[0].content['max_papers']['value'])
             max_load_name = self.venue.get_custom_max_papers_id(self.match_group_name)

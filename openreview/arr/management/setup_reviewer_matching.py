@@ -182,7 +182,7 @@ def process(client, invitation):
     # Build load map
     id_to_load_note = {}
     for role_id in [reviewers_id]:
-        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
+        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}", domain=venue_id) ## Assume only 1 note per user
         for note in load_notes:
             if note.signatures[0] not in name_to_id:
                 continue
@@ -193,7 +193,7 @@ def process(client, invitation):
     track_to_ids = {}
     for role_id in [reviewers_id]:
         track_to_ids[role_id] = defaultdict(list)
-        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}")
+        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}", domain=venue_id)
         for note in registration_notes:
             if note.signatures[0] not in name_to_id:
                 continue
