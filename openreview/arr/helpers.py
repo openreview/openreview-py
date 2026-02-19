@@ -1936,9 +1936,6 @@ def flag_submission(
             'responsible_checklist': 'Yes',
             'limitations': 'Yes'
         },
-        'Official_Review': {
-            'Knowledge_of_or_educated_guess_at_author_identity': 'No'
-        },
         'Meta_Review': {
             'author_identity_guess': [4, 3, 2, 1]
         }
@@ -1983,7 +1980,6 @@ def flag_submission(
         forum.details['replies']
     ))
     ethics_flag_from_reviews = False
-    dsv_flag_from_reviews = False
     for review in reviews:
         # Check for ethics flagging
         print(f"ethics review flag state {ethics_flag_from_reviews}")
@@ -1992,14 +1988,6 @@ def flag_submission(
             ethics_flag_fields['Review'],
             ethics_flag_default
         )
-        # Check for desk reject verification
-        for violation_field, field_default in violation_fields['Official_Review'].items():
-            print(f"dsv review flag state {dsv_flag_from_reviews}")
-            dsv_flag_from_reviews = dsv_flag_from_reviews or check_field_violated(
-                review,
-                violation_field,
-                field_default
-            )
 
     # Check checklists
     checklists = list(filter(
@@ -2080,7 +2068,6 @@ def flag_submission(
     ## False -> True
     if not dsv_flagged and any([
         dsv_flag_from_checklists,
-        dsv_flag_from_reviews,
         dsv_flag_from_metareviews]):
         print('setting dsv flag false -> true')
         post_flag(
@@ -2090,7 +2077,6 @@ def flag_submission(
     ## True -> False
     if dsv_flagged and all([
         not dsv_flag_from_checklists,
-        not dsv_flag_from_reviews,
         not dsv_flag_from_metareviews]):
         print('setting dsv flag true -> false')
         post_flag(
