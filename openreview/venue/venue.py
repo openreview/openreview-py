@@ -1940,7 +1940,7 @@ OpenReview Team'''
         
         return True
 
-    def compute_dual_submission_metadata(self, alternate_venue, output_file_path, sparse_value=5, top_percent_cutoff=1, job_id=None, author_overlap_only=False):
+    def compute_dual_submission_metadata(self, alternate_venue, output_file_path, top_percent_cutoff=1, job_id=None, author_overlap_only=False):
         short_name_a = self.short_name # Column A
         short_name_b = alternate_venue.short_name # Column B
         same_venue = self.venue_id == alternate_venue.venue_id
@@ -1955,7 +1955,7 @@ OpenReview Team'''
                 venue_id=self.get_submission_venue_id(),
                 alternate_venue_id=alternate_venue.get_submission_venue_id(),
                 model='specter2+scincl',
-                sparse_value=sparse_value
+                sparse_value=5
             )
             job_id = res['jobId']
             print('Computing scores for active papers... Job ID: ', job_id)
@@ -1965,11 +1965,8 @@ OpenReview Team'''
 
         ## Score filtering
 
-        # Keep top sparse_value scores per paper
-        print(f'Finding the top {sparse_value} scores per paper')
-        top_scores_a_to_b = {}  # Column A -> Column B
-        top_scores_b_to_a = {}  # Column B -> Column A
-
+        unique_scores = []
+        seen_pairs = set()
         for r in results['results']:
             paper_id_a = r['match_submission']
             paper_id_b = r['submission']
@@ -1979,46 +1976,22 @@ OpenReview Team'''
             if paper_id_a == paper_id_b:
                 continue
 
-            # Maintain min-heaps for both columns
-            # A -> B
-            heap_a = top_scores_a_to_b.setdefault(paper_id_a, [])
-            if len(heap_a) < sparse_value:
-                heapq.heappush(heap_a, (score, paper_id_b))
-            else:
-                heapq.heappushpop(heap_a, (score, paper_id_b))
+            # Deduplicate mirrored pairs
+            pair = tuple(sorted([paper_id_a, paper_id_b]))
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
 
-            # B -> A
-            heap_b = top_scores_b_to_a.setdefault(paper_id_b, [])
-            if len(heap_b) < sparse_value:
-                heapq.heappush(heap_b, (score, paper_id_a))
-            else:
-                heapq.heappushpop(heap_b, (score, paper_id_a))
+            unique_scores.append((paper_id_a, paper_id_b, score))
 
-        # Flatten to list, deduplicate mirrored pairs, and find cutoff
+        # Apply cutoff
         print(f'Applying {top_percent_cutoff}% score cutoff')
 
-        all_scores = []
-        seen_pairs = set()
-        for paper_id_a, heap in top_scores_a_to_b.items():
-            for score, paper_id_b in heap:
-                pair = tuple(sorted([paper_id_a, paper_id_b]))
-                if pair not in seen_pairs:
-                    all_scores.append((paper_id_a, paper_id_b, score))
-                    seen_pairs.add(pair)
-
-        for paper_id_b, heap in top_scores_b_to_a.items():
-            for score, paper_id_a in heap:
-                pair = tuple(sorted([paper_id_a, paper_id_b]))
-                if pair not in seen_pairs:
-                    all_scores.append((paper_id_a, paper_id_b, score))
-                    seen_pairs.add(pair)
-
-        scores_only = [s for (_, _, s) in all_scores]
+        scores_only = [s for (_, _, s) in unique_scores]
         cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
-
-        filtered_scores = [(a, b, s) for (a, b, s) in all_scores if s >= cutoff]
+        filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
-        print(f'{len(all_scores)} scores before cutoff')
+        print(f'{len(unique_scores)} scores before cutoff')
         print(f'{len(filtered_scores)} scores after cutoff')
 
         # Sort by score descending

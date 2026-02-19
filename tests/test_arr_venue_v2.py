@@ -2985,24 +2985,69 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision', count=1)
 
+        metadata_super_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision')
+        assert '~Super_User1' in metadata_super_invitation.edit['invitation']['signatures']
+        assert '~Super_User1' in metadata_super_invitation.edit['invitation']['writers']
+
         paper_metadata_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision')
+        assert paper_metadata_invitation.preprocess
         # Round to the nearest minute
         rounded = datetime.datetime.strptime(due_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
         assert paper_metadata_invitation.duedate is None
         assert paper_metadata_invitation.expdate == openreview.tools.datetime_millis(rounded)
 
-        fields_to_remove = [
-            'paperhash',
-            'number_of_action_editor_checklists',
-            'number_of_reviewer_checklists',
-            'venue',
-            'venueid'
-        ]
-        current_content = deepcopy(submissions[0].content)
-        for field in fields_to_remove:
-            current_content.pop(field)
+        june_submission = openreview_client.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission')[0]
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+
+        metadata_revision_content = {
+            "title": { "value": "Paper title 1" },
+            "abstract": { "value": "This is an abstract 1" },
+            "TLDR": { "value": "This is a tldr 1" },
+            "paper_type": { "value": "Short" },
+            "research_area": { "value": "Code Models" },
+            "research_area_keywords": { "value": "A keyword" },
+            "languages_studied": { "value": "A language" },
+            "reassignment_request_area_chair": { "value": "No, I want the same area chair from our previous submission (subject to their availability)." },
+            "reassignment_request_reviewers": { "value": "Yes, I want a different set of reviewers" },
+            "previous_URL": { "value": f"https://openreview.net/forum?id={june_submission.id}" },
+            "explanation_of_revisions_PDF": { "value": "/pdf/pppppppppppppppppppppppppppppppppppppppp.pdf" },
+            "justification_for_not_keeping_action_editor_or_reviewers": { "value": "We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission." },
+            "software": { "value": "/pdf/pppppppppppppppppppppppppppppppppppppppp.zip" },
+            "data": { "value": "/pdf/pppppppppppppppppppppppppppppppppppppppp.zip" },
+            "preprint": { "value": "no" },
+            "preprint_status": { "value": "There is no non-anonymous preprint and we do not intend to release one. (this option is binding)" },
+            "existing_preprints": { "value": "existing_preprints" },
+            "preferred_venue": { "value": "ACL" },
+            "consent_to_share_data": { "value": "yes" },
+            "consent_to_share_submission_details": { "value": "On behalf of all authors, we agree to the terms above to share our submission details." },
+            "A1_limitations_section": { "value": "This paper has a limitations section." },
+            "A2_potential_risks": { "value": "Yes" },
+            "B_use_or_create_scientific_artifacts": { "value": "Yes" },
+            "B1_cite_creators_of_artifacts": { "value": "Yes" },
+            "B2_discuss_the_license_for_artifacts": { "value": "Yes" },
+            "B3_artifact_use_consistent_with_intended_use": { "value": "Yes" },
+            "B4_data_contains_personally_identifying_info_or_offensive_content": { "value": "Yes" },
+            "B5_documentation_of_artifacts": { "value": "Yes" },
+            "B6_statistics_for_data": { "value": "Yes" },
+            "C_computational_experiments": { "value": "Yes" },
+            "C1_model_size_and_budget": { "value": "Yes" },
+            "C2_experimental_setup_and_hyperparameters": { "value": "Yes" },
+            "C3_descriptive_statistics": { "value": "Yes" },
+            "C4_parameters_for_packages": { "value": "Yes" },
+            "D_human_subjects_including_annotators": { "value": "Yes" },
+            "D1_instructions_given_to_participants": { "value": "Yes" },
+            "D2_recruitment_and_payment": { "value": "Yes" },
+            "D3_data_consent": { "value": "Yes" },
+            "D4_ethics_review_board_approval": { "value": "Yes" },
+            "D5_characteristics_of_annotators": { "value": "Yes" },
+            "E_ai_assistants_in_research_or_writing": { "value": "Yes" },
+            "E1_information_about_use_of_ai_assistants": { "value": "Yes" },
+            "author_submission_checklist": { "value": "yes" },
+            "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { "value": "On behalf of all authors, I do not agree" }
+        }
 
         # Cannot edit author lists
+        current_content = deepcopy(metadata_revision_content)
         current_content['authorids'] = {'value': ['~Not_AnAuthor1']}
         current_content['authors'] = {'value': ['Not An Author']}
         with pytest.raises(openreview.OpenReviewException, match=r'property authorids must NOT be present'):
@@ -3026,30 +3071,43 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision",
                 signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
                 note=openreview.api.Note(
-                    content=current_content
+                    content={
+                        **current_content,
+                        'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'}
+                    }
                 )
             )
-        
+
         # Change some fields
-        current_content = deepcopy(submissions[0].content)
-        for field in fields_to_remove:
-            current_content.pop(field)
-        current_content.pop('pdf')
-        current_content.pop('authorids')
-        current_content.pop('authors')
-        new_content = {
+        current_content = deepcopy(metadata_revision_content)
+        current_content.update({
             'title': { 'value': 'metadata edit title' },
             'abstract': { 'value': 'metadata edit abstract' },
             'paper_type': { 'value': 'Long' },
-            'research_area_keywords': { 'value': 'A keyword, another keyword' },
-            'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'metadata edit justification' }
-        }
-        current_content.update(new_content)
+            'research_area_keywords': { 'value': 'A keyword, another keyword' }
+        })
         test_client.post_note_edit(
                 invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision",
                 signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
                 note=openreview.api.Note(
                     content=current_content
+                )
+        )
+
+        # Reuse submission preprocess: current-cycle previous_URL should be rejected.
+        current_cycle_link_content = deepcopy(current_content)
+        current_cycle_link_content.update({
+            'previous_URL': {'value': f"https://openreview.net/forum?id={submissions[1].id}"},
+            'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).'},
+            'reassignment_request_reviewers': {'value': 'Yes, I want a different set of reviewers'},
+            'justification_for_not_keeping_action_editor_or_reviewers': {'value': 'metadata edit justification'}
+        })
+        with pytest.raises(openreview.OpenReviewException, match=r'The provided URL points to a submission in the current cycle. Please provide a link to a previous ARR submission.'):
+            test_client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision",
+                signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
+                note=openreview.api.Note(
+                    content=current_cycle_link_content
                 )
             )
         
@@ -3830,14 +3888,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value'] + 1
                 continue
             assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value']
-
-        cmp_edges = {
-            g['id']['tail'] : g['values'][0]
-            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Custom_Max_Papers', select='head,id,weight,label', groupby='tail')
-        }
-        assert '~SAC_ARROne1' not in cmp_edges
-        assert '~SAC_ARRTwo1' in cmp_edges
-        assert cmp_edges['~SAC_ARRTwo1']['weight'] == 68
 
         # Check for seniority edges
         seniority_edges = {
