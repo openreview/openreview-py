@@ -12,8 +12,6 @@ def process(client, edit, invitation):
     committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
     committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
-    secret = committee_invited_response_invitation.secret
-
 
     invitee_details = edit.content['invitee_details']['value'].strip().split('\n')
 
@@ -49,7 +47,7 @@ def process(client, edit, invitation):
         email = email.lower() if is_email else email
         invalid_profile_id = False
         no_profile_found = False
-        
+
         if is_email and not valid_email_re.match(email):
             if 'invalid_emails' not in recruitment_status['errors']:
                 recruitment_status['errors']['invalid_emails'] = []
@@ -130,7 +128,12 @@ def process(client, edit, invitation):
     def recruit_user(invitee):
         email, name = invitee
 
-        hash_key = openreview.tools.get_user_hash_key(email, secret, invitation=committee_invited_response_id)
+        if committee_invited_response_invitation.secret:
+            hash_key = openreview.tools.get_user_hash_key(email, committee_invited_response_invitation.secret, invitation=committee_invited_response_id)
+        else:
+            ## Deprecated method to generate hash key for invitations without a secret. This should be removed once all recruitment invitations have a secret.
+            hash_key = openreview.tools.get_user_hash_key(email, committee_invited_response_invitation.content['hash_seed']['value'])
+        
         user_parse = openreview.tools.get_user_parse(email)
 
         url = f'https://openreview.net/invitation?id={committee_invited_response_id}&user={user_parse}&key={hash_key}'
