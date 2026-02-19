@@ -9,7 +9,7 @@ def process(client, invitation):
     action_editors = client.get_group(journal.get_action_editors_id()).members
 
     print('Get profiles for all the assigned reviewers and action editors')
-    groups = client.get_all_groups(prefix=journal.venue_id + '/Paper')
+    groups = client.get_all_groups(prefix=journal.venue_id + '/Paper', domain=journal.venue_id)
 
     for group in groups:
         if '/Reviewer_' in group.id:

@@ -32,7 +32,7 @@ def process(client, invitation):
             return
 
     print('Get meta review signatures')
-    signatures_by_id = { g.id:g for g in client.get_all_groups(prefix=f'{domain.id}/{submission_name}') }
+    signatures_by_id = { g.id:g for g in client.get_all_groups(prefix=f'{domain.id}/{submission_name}', domain=domain.id) }
 
     review_signatures = [r.signatures[0] for r in reviews]
 

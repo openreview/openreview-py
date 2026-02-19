@@ -1522,7 +1522,7 @@ Total Errors: {len(errors)}
         
         reviewer_assignment_id = self.get_assignment_id(reviewers_id, deployed=True)
         assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
-        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
+        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id(), domain=venue_id)
 
         all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.reviewers_name)}' in g.id ]
         all_anon_reviewer_group_members = []
@@ -1660,7 +1660,7 @@ Total Errors: {len(errors)}
         
         reviewer_assignment_id = self.get_assignment_id(committee_id, deployed=True)
         assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
-        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
+        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id(), domain=venue_id)
 
         all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.area_chairs_name)}' in g.id ]
         all_anon_reviewer_group_members = []

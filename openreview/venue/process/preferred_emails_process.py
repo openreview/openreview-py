@@ -29,7 +29,7 @@ def process(client, invitation):
         users += client.get_group(reviewers_id).members
 
     print('Get profiles for all the assigned reviewers and area chairs')
-    groups = client.get_all_groups(prefix=venue_id + '/' + submission_name)
+    groups = client.get_all_groups(prefix=venue_id + '/' + submission_name, domain=venue_id)
 
     for group in groups:
         if store_ac_emails and f'/{area_chairs_anon_name}' in group.id:
