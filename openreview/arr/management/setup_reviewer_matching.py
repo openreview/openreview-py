@@ -271,18 +271,16 @@ def process(client, invitation):
         try:
             previous_submission = client_v1.get_note(previous_id)
             previous_venue_id = previous_submission.invitation.split('/-/')[0]
-            previous_parent_reviewers = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers")
+            previous_parent_reviewers = openreview.tools.get_group(client_v1, f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers")
             previous_reviewers = openreview.tools.get_group(client_v1, f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers/Submitted")
-            previous_ae = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client_v1
         except:
             previous_submission = client.get_note(previous_id)
             previous_venue_id = previous_submission.domain
-            previous_parent_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers")
+            previous_parent_reviewers = openreview.tools.get_group(client, f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers")
             previous_reviewers = openreview.tools.get_group(client, f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
-            previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
-        return previous_submission, previous_venue_id, previous_parent_reviewers, previous_reviewers, previous_ae, current_client
+        return previous_submission, previous_venue_id, previous_parent_reviewers, previous_reviewers, current_client
 
     def build_reassignment_edge(submission_id, reviewer_id, label):
         return {
@@ -326,18 +324,18 @@ def process(client, invitation):
         wants_new_reviewers = submission.content[rev_reassignment_field]['value'].startswith('Yes')
         wants_new_ae = submission.content[ae_reassignment_field]['value'].startswith('Yes')
         previous_id = submission.content[previous_url_field]['value'].split('?id=')[1].split('&')[0]
-        previous_submission, previous_venue_id, previous_parent_reviewers, previous_reviewers, previous_ae, current_client = load_previous_submission_context(previous_id)
+        previous_submission, previous_venue_id, previous_parent_reviewers, previous_reviewers, current_client = load_previous_submission_context(previous_id)
 
         print(f"previous submission {submission.id}\nreviewers {wants_new_reviewers}\nae {wants_new_ae}")
+
+        if previous_reviewers is None or previous_parent_reviewers is None:
+            print(f"no previous reviewers for {submission.id}")
+            return result
 
         if venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers) not in previous_parent_reviewers.members:
             current_client.add_members_to_group(previous_parent_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
             if previous_reviewers is not None:
                 current_client.add_members_to_group(previous_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
-
-        if previous_reviewers is None:
-            print(f"no previous reviewers for {submission.id}")
-            return result
 
         rev_scores = {
             g['id']['tail'] : g['values'][0]
