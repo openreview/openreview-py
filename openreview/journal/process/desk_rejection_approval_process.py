@@ -47,7 +47,7 @@ def process(client, edit, invitation):
     if desk_rejection_approval_note.content['approval']['value'] == 'I don\'t approve the AE\'s decision. Submission should be appropriate for review.':
 
         client.post_note_edit(invitation= journal.get_review_approval_id(submission.number),
-                                    signatures=[journal.venue_id],
+                                    signatures=[journal.get_editors_in_chief_id()],
                                     note=openreview.api.Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))        
