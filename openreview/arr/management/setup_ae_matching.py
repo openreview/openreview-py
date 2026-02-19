@@ -10,7 +10,7 @@ def process(client, invitation):
 
     from openreview.venue import matching
     from openreview.arr.helpers import get_resubmissions
-    from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT
+    from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT, ROOT_DOMAIN
     from collections import defaultdict
 
     def replace_edge(existing_edge=None, edge_inv=None, new_weight=None, submission_id=None, profile_id=None, edge_readers=None):
@@ -60,6 +60,7 @@ def process(client, invitation):
     ae_cmp_inv = domain.content['area_chairs_custom_max_papers_id']['value']
     reviewers_id = domain.content['reviewers_id']['value']
     area_chairs_id = domain.content['area_chairs_id']['value']
+    area_chairs_name = domain.content['area_chairs_name']['value']
     area_chairs_group = client.get_group(area_chairs_id).members
     senior_area_chairs_id = domain.content['senior_area_chairs_id']['value']
     tracks_field_name = 'research_area'
@@ -106,31 +107,29 @@ def process(client, invitation):
             name_to_id[name_obj['username']] = profile.id
 
     # Build load map
-    print(f"num profiles {len(all_profiles)}")
     id_to_load_note = {}
-    for role_id in [area_chairs_id]:
-        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
-        for note in load_notes:
-            if note.signatures[0] not in name_to_id:
-                continue
-            note_signature_id = name_to_id[note.signatures[0]]
-            id_to_load_note[note_signature_id] = note
+    root_role_id = domain.content['root_area_chairs_id']['value']
+    load_notes = client.get_all_notes(invitation=f"{root_role_id}/-/{max_load_name}") ## Assume only 1 note per user
+    for note in load_notes:
+        if note.signatures[0] not in name_to_id:
+            continue
+        note_signature_id = name_to_id[note.signatures[0]]
+        id_to_load_note[note_signature_id] = note
 
     # Build track map
     track_to_ids = {}
-    for role_id in [area_chairs_id]:
-        track_to_ids[role_id] = defaultdict(list)
-        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}")
-        for note in registration_notes:
-            if note.signatures[0] not in name_to_id:
-                continue
-            note_signature_id = name_to_id[note.signatures[0]]
-            for track in note.content[tracks_field_name]['value']:
-                track_to_ids[role_id][track].append(note_signature_id)
+    track_to_ids[area_chairs_id] = defaultdict(set)
+    registration_notes = client.get_all_notes(invitation=f"{root_role_id}/-/{registration_name}")
+    for note in registration_notes:
+        if note.signatures[0] not in name_to_id:
+            continue
+        note_signature_id = name_to_id[note.signatures[0]]
+        for track in note.content[tracks_field_name]['value']:
+            track_to_ids[area_chairs_id][track].add(note_signature_id)
 
         # Build research area invitation
-        matching.Matching(venue, client.get_group(role_id), None)._create_edge_invitation(
-            edge_id=f"{role_id}/-/{tracks_inv_name}"
+        matching.Matching(venue, client.get_group(area_chairs_id), None)._create_edge_invitation(
+            edge_id=f"{area_chairs_id}/-/{tracks_inv_name}"
         )
     track_edge_readers = {
         area_chairs_id: [venue_id, senior_area_chairs_id]
@@ -141,22 +140,16 @@ def process(client, invitation):
     }
 
     # Reset custom max papers to ground truth notes
-    for role_id in [area_chairs_id]:
-        cmp_to_post = []
-        role_cmp_inv = f"{role_id}/-/Custom_Max_Papers"
-        print(f"num of notes {len(id_to_load_note)}")
-        for id, note in id_to_load_note.items():
-            load_invitation = [inv for inv in note.invitations if max_load_name in inv][0]
-            if role_id not in load_invitation:
-                continue
-
-            cmp_to_post.append(
-                openreview.api.Edge(
-                    invitation=role_cmp_inv,
-                    head=role_id,
+    cmp_to_post = []
+    role_cmp_inv = f"{area_chairs_id}/-/Custom_Max_Papers"
+    for id, note in id_to_load_note.items():
+        cmp_to_post.append(
+            openreview.api.Edge(
+                invitation=role_cmp_inv,
+                head=area_chairs_id,
                     tail=id,
                     weight=int(note.content['maximum_load_this_cycle']['value']),
-                    readers=track_edge_readers[role_id] + [id],
+                    readers=track_edge_readers[area_chairs_id] + [id],
                     writers=[venue_id],
                     signatures=[venue_id]
                 )
@@ -168,6 +161,42 @@ def process(client, invitation):
         )
         print(f"posting {len(cmp_to_post)} custom max papers for {role_id}")
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
+
+    # Create Reviewing_Resubmissions edges from root domain load notes
+    resubmissions_to_post = []
+    role_resubmissions_inv = f"{area_chairs_id}/-/Reviewing_Resubmissions"
+        
+    for id, note in id_to_load_note.items():
+        max_load = int(note.content['maximum_load_this_cycle']['value'])
+        for_resubmissions = note.content.get('maximum_load_this_cycle_for_resubmissions', {}).get('value', '')
+        
+        availability_label = None
+        if 'yes' in for_resubmissions.lower() and max_load == 0:
+            availability_label = 'Only Reviewing Resubmissions'
+        elif 'yes' in for_resubmissions.lower():
+            availability_label = 'Yes'
+        elif 'no' in for_resubmissions.lower():
+            availability_label = 'No'
+        
+        if availability_label:
+            resubmissions_to_post.append(
+                openreview.api.Edge(
+                    invitation=role_resubmissions_inv,
+                    head=area_chairs_id,
+                    tail=id,
+                    label=availability_label,
+                    readers=track_edge_readers[area_chairs_id] + [id],
+                    writers=[venue_id],
+                    signatures=[venue_id]
+                )
+            )
+    
+    client.delete_edges(
+        invitation=role_resubmissions_inv,
+        soft_delete=True,
+        wait_to_finish=True
+    )
+    openreview.tools.post_bulk_edges(client=client, edges=resubmissions_to_post)
     
     ae_exceptions = {}
     for submission in resubmissions:

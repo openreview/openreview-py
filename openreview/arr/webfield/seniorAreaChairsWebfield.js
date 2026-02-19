@@ -129,6 +129,10 @@ return {
       })
       return metaReviewReplies?.length??0;
       `
-    }
+    },
+    registrationFormInvitations: [
+      'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/Registration',
+      'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request',
+    ],
   }
 }

@@ -25,8 +25,17 @@ from openreview.stages.arr_content import (
     arr_max_load_task_forum,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
-    arr_sac_max_load_task
+    arr_sac_max_load_task,
+    arr_reviewer_emergency_load_task_forum,
+    arr_reviewer_emergency_load_task,
+    arr_ac_emergency_load_task_forum,
+    arr_ac_emergency_load_task
 )
+from openreview.arr.helpers import setup_arr_root_groups
+from openreview.arr.root_invitation import RootInvitationBuilder
+from openreview.arr.arr import ROOT_DOMAIN
+from openreview.arr.process.sync_cmp_dateprocess import process as sync_cmp_process
+
 # API2 template from ICML
 class TestARRVenueV2():
 
@@ -173,6 +182,244 @@ class TestARRVenueV2():
                     license = 'CC BY-SA 4.0'
             ))
 
+        # Create top-level groups first
+        # NOTE: (assume this will be done before deployment)
+        root_form_note = pc_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Request_Form',
+            signatures=['~Program_ARRChair1'],
+            readers=[
+                'openreview.net/Support',
+                '~Program_ARRChair1'
+            ],
+            writers=[],
+            content={
+                'title': 'ACL Rolling Review - Root',
+                'Official Venue Name': 'ACL Rolling Review - Root',
+                'Abbreviated Venue Name': 'ARR - Root',
+                'Official Website URL': 'http://aclrollingreview.org',
+                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
+                'contact_email': 'editors@aclrollingreview.org',
+                'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
+                'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'senior_area_chairs_assignment': 'Submissions',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2023/08/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'Author and Reviewer Anonymity': 'Double-blind',
+                'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'api_version': '2',
+                'submission_license': ['CC BY-SA 4.0'],
+                "preferred_emails_groups": [
+                    "aclweb.org/ACL/ARR/Senior_Area_Chairs",
+                    "aclweb.org/ACL/ARR/Area_Chairs",
+                    "aclweb.org/ACL/ARR/Reviewers"
+                ],
+                'comment_notification_threshold': '3',
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ],
+                'senior_area_chair_roles': ['Senior_Area_Chairs'],
+                'area_chair_roles': ['Area_Chairs'],
+                'reviewer_roles': ['Reviewers'],
+            }))
+
+        helpers.await_queue()
+
+        # Post a deploy note
+        root_deploy_edit = client.post_note(openreview.Note(
+            content={'venue_id': 'aclweb.org/ACL/ARR'},
+            forum=root_form_note.forum,
+            invitation='openreview.net/Support/-/Request{}/Deploy'.format(root_form_note.number),
+            readers=['openreview.net/Support'],
+            referent=root_form_note.forum,
+            replyto=root_form_note.forum,
+            signatures=['openreview.net/Support'],
+            writers=['openreview.net/Support']
+        ))
+
+        helpers.await_queue()
+        
+        # Add all users to top-level role groups
+        # NOTE: (assume this will be done before deployment)
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Reviewers', [
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRTwoMerge1',
+            '~Reviewer_ARRThree1',
+            '~Reviewer_ARRFour1',
+            '~Reviewer_ARRFive1',
+            '~Reviewer_ARRSix1',
+            '~Reviewer_ARRSeven1',
+            '~Reviewer_ARRNA1',
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Area_Chairs', [
+            '~AC_ARROne1',
+            '~AC_ARRTwo1',
+            '~AC_ARRThree1',
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Senior_Area_Chairs', [
+            '~SAC_ARROne1',
+            '~SAC_ARRTwo1',
+            '~SAC_ARRThree1',
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Ethics_Reviewers', [
+            '~EthicsReviewer_ARROne1',
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Ethics_Chairs', [
+            '~EthicsChair_ARROne1',
+        ])
+
+        # Create root maximum load invitations
+        # NOTE: (assume this will be done before deployment)
+        reg_start_date = datetime.datetime.now()
+        reg_due_date = reg_start_date + datetime.timedelta(days=1)
+        reg_exp_date = reg_due_date + datetime.timedelta(days=1)
+        root_venue = openreview.helpers.get_conference(
+            client, 
+            root_form_note.id
+        )
+
+        reviewer_load_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Reviewers',
+            name='Max_Load_And_Unavailability_Request',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Reviewers' + ' ' + arr_max_load_task_forum['title'],
+            instructions = arr_max_load_task_forum['instructions'],
+            remove_fields = ['profile_confirmed', 'expertise_confirmed'],
+            additional_fields = arr_reviewer_max_load_task
+        )
+        root_venue.registration_stages = [reviewer_load_stage]
+
+
+        area_chair_load_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Area_Chairs',
+            name='Max_Load_And_Unavailability_Request',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Area Chairs' + ' ' + arr_max_load_task_forum['title'],
+            instructions = arr_max_load_task_forum['instructions'],
+            remove_fields = ['profile_confirmed', 'expertise_confirmed'],
+            additional_fields = arr_ac_max_load_task
+        )
+        root_venue.registration_stages.append(area_chair_load_stage)
+
+        senior_area_chair_load_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Senior_Area_Chairs',
+            name='Max_Load_And_Unavailability_Request',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Senior Area Chairs' + ' ' + arr_max_load_task_forum['title'],
+            instructions = arr_max_load_task_forum['instructions'],
+            remove_fields = ['profile_confirmed', 'expertise_confirmed'],
+            additional_fields = arr_sac_max_load_task
+        )
+        root_venue.registration_stages.append(senior_area_chair_load_stage)
+
+        # Create root registration invitations
+        # NOTE: (assume this will be done before deployment)
+        reviewer_reg_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Reviewers',
+            name='Registration',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Reviewers' + ' ' + arr_registration_task_forum['title'],
+            instructions = arr_registration_task_forum['instructions'],
+            additional_fields = arr_registration_task
+        )
+        root_venue.registration_stages.append(reviewer_reg_stage)
+        area_chair_reg_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Area_Chairs',
+            name='Registration',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Area Chairs' + ' ' + arr_registration_task_forum['title'],
+            instructions = arr_registration_task_forum['instructions'],
+            additional_fields = arr_registration_task
+        )
+        root_venue.registration_stages.append(area_chair_reg_stage)
+        senior_area_chair_reg_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Senior_Area_Chairs',
+            name='Registration',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Senior Area Chairs' + ' ' + arr_registration_task_forum['title'],
+            instructions = arr_registration_task_forum['instructions'],
+            additional_fields = arr_registration_task
+        )
+        root_venue.registration_stages.append(senior_area_chair_reg_stage)
+        reviewer_license_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Reviewers',
+            name='License_Agreement',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Reviewers' + ' ' + arr_content_license_task_forum['title'],
+            instructions = arr_content_license_task_forum['instructions'],
+            additional_fields = arr_content_license_task,
+            remove_fields = ['profile_confirmed', 'expertise_confirmed']
+        )
+        root_venue.registration_stages.append(reviewer_license_stage)
+        area_chair_license_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Area_Chairs',
+            name='License_Agreement',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Area Chairs' + ' ' + arr_content_license_task_forum['title'],
+            instructions = arr_content_license_task_forum['instructions'],
+            additional_fields = arr_content_license_task,
+            remove_fields = ['profile_confirmed', 'expertise_confirmed']
+        )
+        root_venue.registration_stages.append(area_chair_license_stage)
+        reviewer_emergency_agreement_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Reviewers',
+            name='Emergency_Reviewer_Agreement',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Reviewers' + ' ' + arr_reviewer_emergency_load_task_forum['title'],
+            instructions = arr_reviewer_emergency_load_task_forum['instructions'],
+            additional_fields = arr_reviewer_emergency_load_task,
+            remove_fields = ['profile_confirmed', 'expertise_confirmed']
+        )
+        root_venue.registration_stages.append(reviewer_emergency_agreement_stage)
+        area_chair_emergency_agreement_stage = openreview.stages.RegistrationStage(
+            committee_id='aclweb.org/ACL/ARR/Area_Chairs',
+            name='Emergency_Metareviewer_Agreement',
+            start_date=reg_start_date,
+            due_date=reg_due_date,
+            expdate=reg_exp_date,
+            title = 'Area Chairs' + ' ' + arr_ac_emergency_load_task_forum['title'],
+            instructions = arr_ac_emergency_load_task_forum['instructions'],
+            additional_fields = arr_ac_emergency_load_task,
+            remove_fields = ['profile_confirmed', 'expertise_confirmed']
+        )
+        root_venue.registration_stages.append(area_chair_emergency_agreement_stage)
+
+        root_venue.create_registration_stages()
+
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
             signatures=['~Program_ARRChair1'],
@@ -240,6 +487,39 @@ class TestARRVenueV2():
             signatures=['openreview.net/Support'],
             writers=['openreview.net/Support']
         ))
+
+        helpers.await_queue()
+
+        # Verify Root Domain Group exists
+        domain_group = openreview_client.get_group('aclweb.org/ACL/ARR')
+        assert domain_group is not None
+        
+        # Verify Meta Invitation exists
+        meta_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/-/Edit')
+        assert meta_invitation is not None
+        
+        # Verify Role Groups exist
+        roles = ['Reviewers', 'Area_Chairs', 'Senior_Area_Chairs', 'Ethics_Reviewers', 'Program_Chairs']
+        for role in roles:
+            role_group = openreview_client.get_group(f'aclweb.org/ACL/ARR/{role}')
+            assert role_group is not None
+            assert role_group.id == f'aclweb.org/ACL/ARR/{role}'
+        
+        august_cycle_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers')
+        # Use an existing member from the August cycle group
+        reviewer_profile_id = august_cycle_group.members[0]
+        
+        # Verify shared group now has the member
+        shared_group = openreview_client.get_group('aclweb.org/ACL/ARR/Reviewers')
+        assert reviewer_profile_id in shared_group.members
+        
+        # Test that calling setup_arr_root_groups again doesn't break (idempotent)
+        # setup_arr_root_groups(openreview_client, 'openreview.net/Support')
+        
+        # Verify groups still exist
+        for role in roles:
+            role_group = openreview_client.get_group(f'aclweb.org/ACL/ARR/{role}')
+            assert role_group is not None
 
         helpers.await_queue_edit(client, invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number))
 
@@ -404,8 +684,6 @@ class TestARRVenueV2():
                     'author_consent_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'author_consent_end_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'registration_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'recognition_form_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'license_agreement_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
@@ -439,59 +717,10 @@ class TestARRVenueV2():
         helpers.await_queue()
 
         # Check duedates for registration stages
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration').duedate > 0
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registration').duedate > 0
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Registration').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Recognition_Request').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Recognition_Request').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Metareview_License_Agreement').duedate > 0
-
-        # Pin 2023 and 2024 into next available year
-        task_array = [
-            arr_reviewer_max_load_task,
-            arr_ac_max_load_task,
-            arr_sac_max_load_task,
-        ]
-        venue_roles = [
-            venue.get_reviewers_id(),
-            venue.get_area_chairs_id(),
-            venue.get_senior_area_chairs_id()
-        ]
-
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request')
-
-        for role, task_field in zip(venue_roles, task_array):
-            m = matching.Matching(venue, venue.client.get_group(role), None, None)
-            m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
-
-            openreview_client.post_invitation_edit(
-                invitations=venue.get_meta_invitation_id(),
-                readers=[venue.id],
-                writers=[venue.id],
-                signatures=[venue.id],
-                invitation=openreview.api.Invitation(
-                    id=f"{role}/-/{max_load_name}",
-                    edit={
-                        'note': {
-                            'content':{
-                                'next_available_year': {
-                                    'value': {
-                                        'param': {
-                                            "input": "checkbox",
-                                            "optional": True,
-                                            "type": "integer",
-                                            'enum' : list(set([2022, 2023, 2024] + task_field['next_available_year']['value']['param']['enum']))
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                )
-            )
 
     def test_june_cycle(self, client, openreview_client, helpers, test_client):
         # Build the previous cycle
@@ -745,10 +974,7 @@ class TestARRVenueV2():
 
         helpers.await_queue_edit(openreview_client, edit_id='aclweb.org/ACL/ARR/2023/June/Ethics_Reviewers/-/Submission_Group-0-1', count=1)
 
-        ethics_review_invitations = openreview_client.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review')
-        assert len(ethics_review_invitations) == 0
-
-        flag_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag')
+        flag_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/June/-/Ethics_Review_Flag')
         assert flag_invitation.process
         assert 'for invitation_name in [review_name, ae_checklist_name, reviewer_checklist_name]:' in flag_invitation.process
         assert 'ae_checklist_name' in flag_invitation.content
@@ -756,108 +982,6 @@ class TestARRVenueV2():
 
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         venue.create_ethics_review_stage()
-
-        # Create past registration stages
-
-        # Pin 2023 and 2024 into next available year
-        for content in [
-            arr_reviewer_max_load_task,
-            arr_ac_max_load_task,
-            arr_sac_max_load_task,
-        ]:
-            content['next_available_year']['value']['param']['enum'] = list(set([2022, 2023, 2024] + content['next_available_year']['value']['param']['enum']))
-        
-        registration_name = 'Registration'
-        max_load_name = 'Max_Load_And_Unavailability_Request'
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = registration_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_registration_task_forum['instructions'],
-            title = venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
-            additional_fields=arr_registration_task)
-        )
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = max_load_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
-            additional_fields=arr_reviewer_max_load_task,
-            remove_fields=['profile_confirmed', 'expertise_confirmed'])
-        )
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = 'License_Agreement',
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_content_license_task_forum['instructions'],
-            title = arr_content_license_task_forum['title'],
-            additional_fields=arr_content_license_task,
-            remove_fields=['profile_confirmed', 'expertise_confirmed'])
-        )
-
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-            name = registration_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_registration_task_forum['instructions'],
-            title = venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
-            additional_fields=arr_registration_task)
-        )
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-            name = max_load_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
-            additional_fields=arr_ac_max_load_task,
-            remove_fields=['profile_confirmed', 'expertise_confirmed'])
-        )
-
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
-            name = registration_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_registration_task_forum['instructions'],
-            title = venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
-            additional_fields=arr_registration_task)
-        )
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
-            name = max_load_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_max_load_task_forum['title'],
-            additional_fields=arr_sac_max_load_task,
-            remove_fields=['profile_confirmed', 'expertise_confirmed'])
-        )
-        venue.create_registration_stages()
-
-        # Add max load preprocess validation
-        invitation_builder = openreview.arr.InvitationBuilder(venue)
-        venue_roles = [
-            venue.get_reviewers_id(),
-            venue.get_area_chairs_id(),
-            venue.get_senior_area_chairs_id()
-        ]
-        for role in venue_roles:
-            openreview_client.post_invitation_edit(
-                invitations=venue.get_meta_invitation_id(),
-                readers=[venue.id],
-                writers=[venue.id],
-                signatures=[venue.id],
-                invitation=openreview.api.Invitation(
-                    id=f"{role}/-/{max_load_name}",
-                    preprocess=invitation_builder.get_process_content('process/max_load_preprocess.py')
-                )
-            )
 
         # Post some past registration notes
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
@@ -871,8 +995,20 @@ class TestARRVenueV2():
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@aclrollingreview.com', password=helpers.strong_password)
         sac_two_client = openreview.api.OpenReviewClient(username = 'sac2@aclrollingreview.com', password=helpers.strong_password)
         sac_three_client = openreview.api.OpenReviewClient(username = 'sac3@aclrollingreview.com', password=helpers.strong_password)
+
+        registration_name = 'Registration'
+        max_load_name = 'Max_Load_And_Unavailability_Request'
+
+        root_reviewers_reg_inv = f'{ROOT_DOMAIN}/Reviewers/-/{registration_name}'
+        root_area_chairs_reg_inv = f'{ROOT_DOMAIN}/Area_Chairs/-/{registration_name}'
+        root_senior_area_chairs_reg_inv = f'{ROOT_DOMAIN}/Senior_Area_Chairs/-/{registration_name}'
+        root_reviewers_max_load_inv = f'{ROOT_DOMAIN}/Reviewers/-/{max_load_name}'
+        root_area_chairs_max_load_inv = f'{ROOT_DOMAIN}/Area_Chairs/-/{max_load_name}'
+        root_senior_area_chairs_max_load_inv = f'{ROOT_DOMAIN}/Senior_Area_Chairs/-/{max_load_name}'
+        root_license_agreement_inv = f'{ROOT_DOMAIN}/Reviewers/-/License_Agreement'
+
         reviewer_client.post_note_edit(
-            invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+            invitation=root_reviewers_reg_inv,
             signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
@@ -887,7 +1023,7 @@ class TestARRVenueV2():
             )
         )
         reviewer_two_client.post_note_edit(
-            invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+            invitation=root_reviewers_reg_inv,
             signatures=['~Reviewer_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
@@ -904,7 +1040,7 @@ class TestARRVenueV2():
 
         # Post duplicate and merge profiles
         reviewer_two_merge_client.post_note_edit(
-            invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+            invitation=root_reviewers_reg_inv,
             signatures=['~Reviewer_ARRTwoMerge1'],
             note=openreview.api.Note(
                 content = {
@@ -928,7 +1064,7 @@ class TestARRVenueV2():
         profile.content['names'][2]['username'] == '~Reviewer_ARRTwoMerge1'
 
         ac_client.post_note_edit(
-            invitation=f'{venue.get_area_chairs_id()}/-/{registration_name}',
+            invitation=root_area_chairs_reg_inv,
             signatures=['~AC_ARROne1'],
             note=openreview.api.Note(
                 content = {
@@ -943,7 +1079,7 @@ class TestARRVenueV2():
             )
         )
         sac_client.post_note_edit(
-            invitation=f'{venue.get_senior_area_chairs_id()}/-/{registration_name}',
+            invitation=root_senior_area_chairs_reg_inv,
             signatures=['~SAC_ARROne1'],
             note=openreview.api.Note(
                 content = {
@@ -958,7 +1094,7 @@ class TestARRVenueV2():
             )
         )
         sac_two_client.post_note_edit(
-            invitation=f'{venue.get_senior_area_chairs_id()}/-/{registration_name}',
+            invitation=root_senior_area_chairs_reg_inv,
             signatures=['~SAC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
@@ -973,7 +1109,7 @@ class TestARRVenueV2():
             )
         )
         sac_three_client.post_note_edit(
-            invitation=f'{venue.get_senior_area_chairs_id()}/-/{registration_name}',
+            invitation=root_senior_area_chairs_reg_inv,
             signatures=['~SAC_ARRThree1'],
             note=openreview.api.Note(
                 content = {
@@ -988,211 +1124,9 @@ class TestARRVenueV2():
             )
         )
 
-
-        # Post past unavailability notes
-        reviewer_client.post_note_edit( ## Reviewer should be available - next available date is now
-            invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-            signatures=['~Reviewer_Alternate_ARROne1'],
-            note=openreview.api.Note(
-                content = {
-                    'maximum_load_this_cycle': { 'value': 0 },
-                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                    'next_available_month': { 'value': 'August'},
-                    'next_available_year': { 'value': 2023}
-                }
-            )
-        )
-        with pytest.raises(openreview.OpenReviewException, match=r'Please provide both your next available year and month'):
-            reviewer_two_client.post_note_edit(
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRTwo1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 0 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': 'August'}
-                    }
-                )
-            )
-        with pytest.raises(openreview.OpenReviewException, match=r'Please provide both your next available year and month'):
-            reviewer_two_client.post_note_edit(
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRTwo1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 0 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': 2024}
-                    }
-                )
-            )
-        with pytest.raises(openreview.OpenReviewException, match="Please only provide your next available year and month if you are unavailable this cycle. Click Cancel to reset these fields and fill out the form again."):
-            reviewer_two_client.post_note_edit(
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRTwo1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 4 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': 2024}
-                    }
-                )
-            )
-        with pytest.raises(openreview.OpenReviewException, match="Please only provide your next available year and month if you are unavailable this cycle. Click Cancel to reset these fields and fill out the form again."):
-            reviewer_two_client.post_note_edit(
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRTwo1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 4 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': 'August'}
-                    }
-                )
-            )
-            
-        reviewer_two_client.post_note_edit( ## Reviewer should not be available - 1 month past next cycle
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRTwo1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 0 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': 'September'},
-                        'next_available_year': { 'value': 2023}
-                    }
-                )
-            )
-        reviewer_three_client.post_note_edit( ## Reviewer should be available - 1 month in the past
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRThree1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 0 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'No, I do not consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': 'July'},
-                        'next_available_year': { 'value': 2023}
-                    }
-                )
-            )
-        reviewer_four_client.post_note_edit( ## Reviewer should be available - 1 year in the past
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRFour1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 0 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': 'August'},
-                        'next_available_year': { 'value': 2022}
-                    }
-                )
-            )
-        reviewer_five_client.post_note_edit( ## Reviewer should be available - 1 year in the past + 1 month in the past
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRFive1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 0 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': 'July'},
-                        'next_available_year': { 'value': 2022}
-                    }
-                )
-            ) 
-        ac_client.post_note_edit( ## AC should not be available - 1 year into future
-            invitation=f'{venue.get_area_chairs_id()}/-/{max_load_name}',
-            signatures=['~AC_ARROne1'],
-            note=openreview.api.Note(
-                content = {
-                    'maximum_load_this_cycle': { 'value': 0 },
-                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                    'next_available_month': { 'value': 'August'},
-                    'next_available_year': { 'value': 2024}
-                }
-            )
-        )
-        sac_client.post_note_edit( ## SAC should not be available - 1 month + 1 year into future
-            invitation=f'{venue.get_senior_area_chairs_id()}/-/{max_load_name}',
-            signatures=['~SAC_ARROne1'],
-            note=openreview.api.Note(
-                content = {
-                    'availability_this_cycle': { 'value': "I confirm that I will serve as SAC in this cycle, with the review load shared equally with other SACs (computed per track in conference-associated cycles)." },
-                    'next_available_month': { 'value': 'September'},
-                    'next_available_year': { 'value': 2024}
-                }
-            )
-        )
-        sac_two_client.post_note_edit( ## SAC should be available
-            invitation=f'{venue.get_senior_area_chairs_id()}/-/{max_load_name}',
-            signatures=['~SAC_ARRTwo1'],
-            note=openreview.api.Note(
-                content = {
-                    'availability_this_cycle': { 'value': "I confirm that I will serve as SAC in this cycle, with the review load shared equally with other SACs (computed per track in conference-associated cycles)." }
-                }
-            )
-        )
-
-        # Create past expertise edges
-        user_client = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
-        archive_note = user_client.post_note_edit(
-            invitation='openreview.net/Archive/-/Direct_Upload',
-            signatures=['~Reviewer_Alternate_ARROne1'],
-            note = openreview.api.Note(
-                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
-                content = {
-                    'title': { 'value': 'Paper title 2' },
-                    'abstract': { 'value': 'Paper abstract 2' },
-                    'authors': { 'value': ['Reviewer ARR', 'Test2 Client'] },
-                    'authorids': { 'value': ['~Reviewer_Alternate_ARROne1', 'test2@mail.com'] },
-                    'venue': { 'value': 'Arxiv' }
-                },
-                license = 'CC BY-SA 4.0'
-        ))
-        user_client.post_edge(
-            openreview.api.Edge(
-                invitation = venue.get_expertise_selection_id(committee_id = venue.get_reviewers_id()),
-                readers = [venue.id, '~Reviewer_ARROne1'],
-                writers = [venue.id, '~Reviewer_ARROne1'],
-                signatures = ['~Reviewer_ARROne1'],
-                head = archive_note['note']['id'],
-                tail = '~Reviewer_ARROne1',
-                label = 'Exclude'
-        ))
-        user_client = openreview.api.OpenReviewClient(username='ac1@aclrollingreview.com', password=helpers.strong_password)
-        user_client.post_edge(
-            openreview.api.Edge(
-                invitation = venue.get_expertise_selection_id(committee_id = venue.get_area_chairs_id()),
-                readers = [venue.id, '~AC_ARROne1'],
-                writers = [venue.id, '~AC_ARROne1'],
-                signatures = ['~AC_ARROne1'],
-                head = archive_note['note']['id'],
-                tail = '~AC_ARROne1',
-                label = 'Exclude'
-        ))
-        user_client = openreview.api.OpenReviewClient(username='sac1@aclrollingreview.com', password=helpers.strong_password)
-        user_client.post_edge(
-            openreview.api.Edge(
-                invitation = venue.get_expertise_selection_id(committee_id = venue.get_senior_area_chairs_id()),
-                readers = [venue.id, '~SAC_ARROne1'],
-                writers = [venue.id, '~SAC_ARROne1'],
-                signatures = ['~SAC_ARROne1'],
-                head = archive_note['note']['id'],
-                tail = '~SAC_ARROne1',
-                label = 'Exclude'
-        ))
-
-        # Create past reviewer license
+        # Create reviewer license agreements
         license_edit = reviewer_four_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/June/Reviewers/-/License_Agreement',
+            invitation=root_license_agreement_inv,
             signatures=['~Reviewer_ARRFour1'],
             note=openreview.api.Note(
                 content = {
@@ -1205,7 +1139,7 @@ class TestARRVenueV2():
         assert reviewer_four_client.get_note(license_edit['note']['id'])
 
         license_edit = reviewer_five_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/June/Reviewers/-/License_Agreement',
+            invitation=root_license_agreement_inv,
             signatures=['~Reviewer_ARRFive1'],
             note=openreview.api.Note(
                 content = {
@@ -1219,7 +1153,7 @@ class TestARRVenueV2():
     def test_ac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
         pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
 
         reviewer_details = '''acextra1@aclrollingreview.com, AC ARRExtraOne\nacextra2@aclrollingreview.com, AC ARRExtraOne'''
         pc_client.post_note(openreview.Note(
@@ -1240,7 +1174,7 @@ class TestARRVenueV2():
 
         helpers.await_queue()
 
-        assert len(openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members) == 0
+        assert len(openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members) == 3
         assert len(openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs/Invited').members) == 2
 
         messages = openreview_client.get_messages(subject = '[ARR August 2023] Invitation to serve as Area Chair')
@@ -1271,7 +1205,7 @@ class TestARRVenueV2():
     def test_reviewer_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
         pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
 
         reviewer_details = '''reviewerextra1@aclrollingreview.com, Reviewer ARRExtraOne
 reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
@@ -1332,10 +1266,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # of previous_URL/reassignment_request_area_chair/reassignment_request_reviewers
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        june_request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        june_request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[2]
         june_venue = openreview.helpers.get_conference(client, june_request_form.id, 'openreview.net/Support')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
 
         generic_note_content = {
@@ -1396,8 +1330,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'author_consent_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'author_consent_end_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
@@ -1680,7 +1612,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # If reviewer assignment quota is not set, check that pre-processes don't fail
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[2]
         june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         submissions = june_venue.get_submissions(sort='number:asc')
@@ -1776,377 +1708,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             weight = 0,
             label = "Invitation Sent"
         ))
-
-
-
-
-
-    def test_copy_members(self, client, openreview_client, helpers):
-        # Create a previous cycle (2023/June) and test the script that copies all roles
-        # (reviewers/ACs/SACs/ethics reviewers/ethics chairs) into the current cycle (2023/August)
-
-        # Create groups for previous cycle
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-        june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
-        august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
-
-        now = datetime.datetime.now()
-
-        pc_client.post_note(
-            openreview.Note(
-                content={
-                    'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
-                    'setup_shared_data_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M')
-                },
-                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
-                forum=request_form.id,
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-                referent=request_form.id,
-                replyto=request_form.id,
-                signatures=['~Program_ARRChair1'],
-                writers=[],
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Share_Data-0-1', count=1)
-
-        # Call twice to ensure data only gets copied once
-        pc_client.post_note(
-            openreview.Note(
-                content={
-                    'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
-                    'setup_shared_data_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
-                },
-                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
-                forum=request_form.id,
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-                referent=request_form.id,
-                replyto=request_form.id,
-                signatures=['~Program_ARRChair1'],
-                writers=[],
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Share_Data-0-1', count=2)
-
-        # Find August in readers of groups and registration notes
-        assert set(pc_client_v2.get_group(june_venue.get_reviewers_id()).members).difference({'~AC_ARROne1', '~SAC_ARROne1'}) == set(pc_client_v2.get_group(august_venue.get_reviewers_id()).members)
-        assert set(pc_client_v2.get_group(june_venue.get_area_chairs_id()).members).difference({'~SAC_ARROne1'}) == set(pc_client_v2.get_group(august_venue.get_area_chairs_id()).members)
-        assert set(pc_client_v2.get_group(june_venue.get_senior_area_chairs_id()).members) == set(pc_client_v2.get_group(august_venue.get_senior_area_chairs_id()).members)
-        assert set(pc_client_v2.get_group(june_venue.get_ethics_reviewers_id()).members) == set(pc_client_v2.get_group(august_venue.get_ethics_reviewers_id()).members)
-        assert set(pc_client_v2.get_group(june_venue.get_ethics_chairs_id()).members) == set(pc_client_v2.get_group(august_venue.get_ethics_chairs_id()).members)
-
-        june_reviewer_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/Registration")
-        august_reviewer_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/Registration")
-        august_reviewer_signatures = [a.signatures[0] for a in august_reviewer_registration_notes]
-        assert set(august_reviewer_signatures) == set([
-          '~Reviewer_ARRTwo1',
-          '~Reviewer_Alternate_ARROne1'
-        ])
-
-        ## Check that signatures only have 1 from Reviewer 2
-        assert '~Reviewer_ARRTwoMerge1' not in august_reviewer_signatures
-
-        june_ac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
-        august_ac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/Registration")
-        august_ac_signatures = [a.signatures[0] for a in august_ac_registration_notes]
-        assert all(j.signatures[0] in august_ac_signatures for j in june_ac_registration_notes)
-
-        june_sac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_senior_area_chairs_id()}/-/Registration")
-        august_sac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Registration")
-        august_sac_signatures = [a.signatures[0] for a in august_sac_registration_notes]
-        assert all(j.signatures[0] in august_sac_signatures for j in june_sac_registration_notes)
-
-        # Load and check for August in readers of edges
-        june_reviewers_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in pc_client_v2.get_grouped_edges(invitation=f"{june_venue.get_reviewers_id()}/-/Expertise_Selection", groupby='tail', select='head')}
-        june_acs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in pc_client_v2.get_grouped_edges(invitation=f"{june_venue.get_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
-        june_sacs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in pc_client_v2.get_grouped_edges(invitation=f"{june_venue.get_senior_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
-
-        august_reviewers_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Expertise_Selection", groupby='tail', select='head')}
-        august_acs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
-        august_sacs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
-    
-        for reviewer, edges in june_reviewers_with_edges.items():
-            assert reviewer in august_reviewers_with_edges
-            assert set(edges) == set(august_reviewers_with_edges[reviewer])
-
-        for ac, edges in june_acs_with_edges.items():
-            assert ac in august_acs_with_edges
-            assert set(edges) == set(august_acs_with_edges[ac])
-
-        for sac, edges in june_sacs_with_edges.items():
-            assert sac in august_sacs_with_edges
-            assert set(edges) == set(august_sacs_with_edges[sac])
-
-        ## Add overlap for deduplication test
-        assert all(overlap not in openreview_client.get_group(august_venue.get_reviewers_id()).members for overlap in ['~AC_ARROne1', '~SAC_ARROne1'])
-        assert all(overlap not in openreview_client.get_group(august_venue.get_area_chairs_id()).members for overlap in ['~SAC_ARROne1'])
-
-        # Check reviewer license notes
-        june_reviewer_license_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/License_Agreement")
-        august_reviewer_license_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/License_Agreement")
-        assert len(june_reviewer_license_notes) > len(august_reviewer_license_notes) ## One June reviewer did not agree
-        assert '~Reviewer_ARRFour1' in [note.signatures[0] for note in august_reviewer_license_notes]
-        assert '~Reviewer_ARRFive1' not in [note.signatures[0] for note in august_reviewer_license_notes]
-
-    def test_unavailability_process_functions(self, client, openreview_client, helpers):
-        # Update the process functions for each of the unavailability forms, set up the custom max papers
-        # invitations and test that each note posts an edge
-
-        # Load the venues
-        now = datetime.datetime.now()
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-        june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
-        august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
-        
-        registration_name = 'Registration'
-        max_load_name = 'Max_Load_And_Unavailability_Request'
-        # r1 r3 r4 r5 should have no notes + edges | r2 ac1 sac1 should have notes + edges (unavailable)
-        migrated_reviewers = {'~Reviewer_ARRTwo1'}
-        august_reviewer_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/{max_load_name}")
-        assert len(august_reviewer_notes) == len(migrated_reviewers)
-        assert set([note.signatures[0] for note in august_reviewer_notes]) == migrated_reviewers
-        assert all(note.content['maximum_load_this_cycle']['value'] == 0 for note in august_reviewer_notes)
-
-        migrated_acs = {'~AC_ARROne1'}
-        august_ac_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/{max_load_name}")
-        assert len(august_ac_notes) == len(migrated_acs)
-        assert set([note.signatures[0] for note in august_ac_notes]) == migrated_acs
-        assert all(note.content['maximum_load_this_cycle']['value'] == 0 for note in august_ac_notes)
-
-        migrated_sacs = {'~SAC_ARROne1'}
-        august_sacs_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/{max_load_name}")
-        assert len(august_sacs_notes) == len(migrated_sacs)
-        assert set([note.signatures[0] for note in august_sacs_notes]) == migrated_sacs
-        assert all('will NOT be able to serve' in note.content['availability_this_cycle']['value'] for note in august_sacs_notes)
-
-        august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        august_sac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-
-        assert migrated_reviewers == set(august_reviewer_edges.keys())
-        assert migrated_acs == set(august_ac_edges.keys())
-        assert migrated_sacs == set(august_sac_edges.keys())
-        assert all(len(weight_list) == 1 for weight_list in august_reviewer_edges.values())
-        assert all(len(weight_list) == 1 for weight_list in august_ac_edges.values())
-        assert all(len(weight_list) == 1 for weight_list in august_sac_edges.values())
-        assert all(
-            all(value == 0 for value in weight_list) 
-            for weight_list in august_reviewer_edges.values()
-        )
-        assert all(
-            all(value == 0 for value in weight_list)
-            for weight_list in august_ac_edges.values()
-        )
-        assert all(
-            all(value == 0 for value in weight_list)
-            for weight_list in august_sac_edges.values()
-        )
-
-        # Test posting new notes and finding the edges
-        ethics_reviewer_client = openreview.api.OpenReviewClient(username = 'reviewerethics@aclrollingreview.com', password=helpers.strong_password)
-        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
-        ac_client = openreview.api.OpenReviewClient(username = 'ac2@aclrollingreview.com', password=helpers.strong_password)
-        sac_client = openreview.api.OpenReviewClient(username = 'sac2@aclrollingreview.com', password=helpers.strong_password)
-
-        ethics_reviewer_note_edit = ethics_reviewer_client.post_note_edit(
-                invitation=f'{august_venue.get_ethics_reviewers_id()}/-/{max_load_name}',
-                signatures=['~EthicsReviewer_ARROne1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 4 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                    }
-                )
-            ) 
-        reviewer_note_edit = reviewer_client.post_note_edit(
-                invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_Alternate_ARROne1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 4 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                    }
-                )
-            ) 
-        ac_note_edit = ac_client.post_note_edit(
-            invitation=f'{august_venue.get_area_chairs_id()}/-/{max_load_name}',
-            signatures=['~AC_ARRTwo1'],
-            note=openreview.api.Note(
-                content = {
-                    'maximum_load_this_cycle': { 'value': 6 },
-                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
-                }
-            )
-        )
-        sac_note_edit = sac_client.post_note_edit(
-            invitation=f'{august_venue.get_senior_area_chairs_id()}/-/{max_load_name}',
-            signatures=['~SAC_ARRTwo1'],
-            note=openreview.api.Note(
-                content = {
-                    'availability_this_cycle': { 'value': 'I confirm that I will serve as SAC in this cycle, with the review load shared equally with other SACs (computed per track in conference-associated cycles).' },
-                }
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, edit_id=ethics_reviewer_note_edit['id'])
-        helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
-        helpers.await_queue_edit(openreview_client, edit_id=ac_note_edit['id'])
-        helpers.await_queue_edit(openreview_client, edit_id=sac_note_edit['id'])
-
-        august_ethics_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_ethics_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
-        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {4}
-        assert '~Reviewer_ARROne1' in august_reviewer_edges
-        assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {4}
-        assert '~AC_ARRTwo1' in august_ac_edges
-        assert len(august_ac_edges['~AC_ARRTwo1']) == 1 and set(august_ac_edges['~AC_ARRTwo1']) == {6}
-
-        # Test editing
-        ethics_reviewer_note_edit = ethics_reviewer_client.post_note_edit(
-                invitation=f'{august_venue.get_ethics_reviewers_id()}/-/{max_load_name}',
-                signatures=['~EthicsReviewer_ARROne1'],
-                note=openreview.api.Note(
-                    id = ethics_reviewer_note_edit['note']['id'],
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                    }
-                )
-            )
-        reviewer_note_edit = reviewer_client.post_note_edit(
-                invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_Alternate_ARROne1'],
-                note=openreview.api.Note(
-                    id = reviewer_note_edit['note']['id'],
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                    }
-                )
-            ) 
-        ac_note_edit = ac_client.post_note_edit(
-            invitation=f'{august_venue.get_area_chairs_id()}/-/{max_load_name}',
-            signatures=['~AC_ARRTwo1'],
-            note=openreview.api.Note(
-                id = ac_note_edit['note']['id'],
-                content = {
-                    'maximum_load_this_cycle': { 'value': 7 },
-                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
-                }
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, edit_id=ethics_reviewer_note_edit['id'])
-        helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
-        helpers.await_queue_edit(openreview_client, edit_id=ac_note_edit['id'])
-
-        august_ethics_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_ethics_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
-        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {5}
-        assert '~Reviewer_ARROne1' in august_reviewer_edges
-        assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {5}
-        assert '~AC_ARRTwo1' in august_ac_edges
-        assert len(august_ac_edges['~AC_ARRTwo1']) == 1 and set(august_ac_edges['~AC_ARRTwo1']) == {7}
-
-        # Test deleting
-        ethics_reviewer_note_edit = ethics_reviewer_client.post_note_edit(
-                invitation=f'{august_venue.get_ethics_reviewers_id()}/-/{max_load_name}',
-                signatures=['~EthicsReviewer_ARROne1'],
-                note=openreview.api.Note(
-                    id = ethics_reviewer_note_edit['note']['id'],
-                    ddate = openreview.tools.datetime_millis(now),
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                    }
-                )
-            )
-        reviewer_note_edit = reviewer_client.post_note_edit(
-                invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_Alternate_ARROne1'],
-                note=openreview.api.Note(
-                    id = reviewer_note_edit['note']['id'],
-                    ddate = openreview.tools.datetime_millis(now),
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                    }
-                )
-            ) 
-        ac_note_edit = ac_client.post_note_edit(
-            invitation=f'{august_venue.get_area_chairs_id()}/-/{max_load_name}',
-            signatures=['~AC_ARRTwo1'],
-            note=openreview.api.Note(
-                id = ac_note_edit['note']['id'],
-                ddate = openreview.tools.datetime_millis(now),
-                content = {
-                    'maximum_load_this_cycle': { 'value': 7 },
-                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
-                }
-            )
-        )
-        helpers.await_queue_edit(openreview_client, edit_id=ethics_reviewer_note_edit['id'])
-        helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
-        helpers.await_queue_edit(openreview_client, edit_id=ac_note_edit['id'])
-
-        august_ethics_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_ethics_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
-        assert '~EthicsReviewer_ARROne1' not in august_ethics_reviewer_edges
-        assert '~Reviewer_ARROne1' not in august_reviewer_edges
-        assert '~AC_ARRTwo1' not in august_ac_edges
-
-        # Set data for resubmission unavailability
-        reviewer_five_client = openreview.api.OpenReviewClient(username = 'reviewer5@aclrollingreview.com', password=helpers.strong_password)
-        ac_three_client = openreview.api.OpenReviewClient(username = 'ac3@aclrollingreview.com', password=helpers.strong_password)
-
-        reviewer_five_client.post_note_edit(
-            invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
-            signatures=['~Reviewer_ARRFive1'],
-            note=openreview.api.Note(
-                content = {
-                    'maximum_load_this_cycle': { 'value': 0 },
-                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                }
-            )
-        ) 
-        ac_three_client.post_note_edit(
-            invitation=f'{august_venue.get_area_chairs_id()}/-/{max_load_name}',
-            signatures=['~AC_ARRThree1'],
-            note=openreview.api.Note(
-                content = {
-                    'maximum_load_this_cycle': { 'value': 0 },
-                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
-                }
-            )
-        )
-
-        # Increase load again for AC2
-        ac_note_edit = ac_client.post_note_edit(
-            invitation=f'{august_venue.get_area_chairs_id()}/-/{max_load_name}',
-            signatures=['~AC_ARRTwo1'],
-            note=openreview.api.Note(
-                content = {
-                    'maximum_load_this_cycle': { 'value': 6 },
-                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
-                }
-            )
-        )
         
     def test_reviewer_tasks(self, client, openreview_client, helpers):
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
@@ -2281,7 +1842,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form_note=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form_note=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
@@ -2402,7 +1963,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_submitted_author_form(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
@@ -2958,7 +2519,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_metadata_edit(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
@@ -3147,12 +2708,147 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
 
     def test_setup_matching(self, client, openreview_client, helpers, test_client, request_page, selenium):
-
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        # Preserve state of maximum load notes from before the migration
+        openreview_client.post_note_edit(
+            invitation = "aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request",
+            signatures = ['~Reviewer_ARRFive1'],
+            note = openreview.api.Note(
+                content = {
+                    "maximum_load_this_cycle": {
+                        "value": 0
+                    },
+                    "maximum_load_this_cycle_for_resubmissions": {
+                        "value": "Yes"
+                    },
+                    "meta_data_donation": {
+                        "value": "Yes, I consent to donating anonymous metadata of my review for research."
+                    }
+                }
+            )
+        )
+        openreview_client.post_note_edit(
+            invitation = "aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request",
+            signatures = ['~Reviewer_ARRTwo1'],
+            note = openreview.api.Note(
+                content = {
+                    "maximum_load_this_cycle": {
+                        "value": 0
+                    },
+                    "maximum_load_this_cycle_for_resubmissions": {
+                        "value": "No"
+                    },
+                    "meta_data_donation": {
+                        "value": "Yes, I consent to donating anonymous metadata of my review for research."
+                    }
+                }
+            )
+        )
+        openreview_client.post_note_edit(
+            invitation = "aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request",
+            signatures = ['~AC_ARRTwo1'],
+            note = openreview.api.Note(
+                content = {
+                    "maximum_load_this_cycle": {
+                        "value": 6
+                    },
+                    "maximum_load_this_cycle_for_resubmissions": {
+                        "value": "Yes"
+                    }
+                }
+            )
+        )
+        openreview_client.post_note_edit(
+            invitation = "aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request",
+            signatures = ['~AC_ARRThree1'],
+            note = openreview.api.Note(
+                content = {
+                    "maximum_load_this_cycle": {
+                        "value": 0
+                    },
+                    "maximum_load_this_cycle_for_resubmissions": {
+                        "value": "Yes"
+                    }
+                }
+            )
+        )
+        openreview_client.post_note_edit(
+            invitation = "aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request",
+            signatures = ['~AC_ARROne1'],
+            note = openreview.api.Note(
+                content = {
+                    "maximum_load_this_cycle": {
+                        "value": 0
+                    },
+                    "maximum_load_this_cycle_for_resubmissions": {
+                        "value": "No"
+                    }
+                }
+            )
+        )
+        openreview_client.post_note_edit( ## SAC should be available
+            invitation="aclweb.org/ACL/ARR/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request",
+            signatures=['~SAC_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'availability_this_cycle': { 'value': "I confirm that I will serve as SAC in this cycle, with the review load shared equally with other SACs (computed per track in conference-associated cycles)." }
+                }
+            )
+        )
+
+        # Post expertise edges
+        user_client = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        archive_note = user_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Reviewer_Alternate_ARROne1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['Reviewer ARR', 'Test2 Client'] },
+                    'authorids': { 'value': ['~Reviewer_Alternate_ARROne1', 'test2@mail.com'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+        user_client.post_edge(
+            openreview.api.Edge(
+                invitation = august_venue.get_expertise_selection_id(committee_id = august_venue.get_reviewers_id()),
+                readers = [august_venue.id, '~Reviewer_ARROne1'],
+                writers = [august_venue.id, '~Reviewer_ARROne1'],
+                signatures = ['~Reviewer_ARROne1'],
+                head = archive_note['note']['id'],
+                tail = '~Reviewer_ARROne1',
+                label = 'Exclude'
+        ))
+        user_client = openreview.api.OpenReviewClient(username='ac1@aclrollingreview.com', password=helpers.strong_password)
+        user_client.post_edge(
+            openreview.api.Edge(
+                invitation = august_venue.get_expertise_selection_id(committee_id = august_venue.get_area_chairs_id()),
+                readers = [august_venue.id, '~AC_ARROne1'],
+                writers = [august_venue.id, '~AC_ARROne1'],
+                signatures = ['~AC_ARROne1'],
+                head = archive_note['note']['id'],
+                tail = '~AC_ARROne1',
+                label = 'Exclude'
+        ))
+        user_client = openreview.api.OpenReviewClient(username='sac1@aclrollingreview.com', password=helpers.strong_password)
+        user_client.post_edge(
+            openreview.api.Edge(
+                invitation = august_venue.get_expertise_selection_id(committee_id = august_venue.get_senior_area_chairs_id()),
+                readers = [august_venue.id, '~SAC_ARROne1'],
+                writers = [august_venue.id, '~SAC_ARROne1'],
+                signatures = ['~SAC_ARROne1'],
+                head = archive_note['note']['id'],
+                tail = '~SAC_ARROne1',
+                label = 'Exclude'
+        ))
 
         # Create review stages
         now = datetime.datetime.now()
@@ -3301,12 +2997,73 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict')
 
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 14 # All 7 reviewers will conflict with submissions 1/101 because of domain of SAC
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 16 # All 8 reviewers will conflict with submissions 1/101 because of domain of SAC
+        
+        # 1. Assert date_process exists with correct cron schedule
+        cmp_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers')
+        assert cmp_invitation.date_processes is not None
+        assert cmp_invitation.date_processes[0].get('cron') == '0 0,12 * * *'
+        
+        # 2. Get current edge weight for Reviewer_ARRTwo1 (set to 0 in root note earlier)
+        original_edges = openreview_client.get_all_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers',
+            tail='~Reviewer_ARRTwo1'
+        )
+        original_weight = original_edges[0].weight if original_edges else 0
+
+        original_note = openreview_client.get_all_notes(
+            invitation = "aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request",
+            signatures=['~Reviewer_ARRTwo1']
+        )[0]
+        
+        # 3. Modify root max load note to a new value
+        note_edit = openreview_client.post_note_edit(
+            invitation="aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request",
+            signatures=['~Reviewer_ARRTwo1'],
+            note=openreview.api.Note(
+                id=original_note.id,
+                content={
+                    "maximum_load_this_cycle": {"value": 5},  # Test value
+                    "maximum_load_this_cycle_for_resubmissions": {"value": "No"},
+                    "meta_data_donation": {"value": "Yes, I consent to donating anonymous metadata of my review for research."}
+                }
+            )
+        )
+        
+        # 4. Run the process directly
+        sync_cmp_process(openreview_client, cmp_invitation)
+        
+        # 5. Assert edge was updated
+        updated_edges = openreview_client.get_all_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers',
+            tail='~Reviewer_ARRTwo1'
+        )
+        assert len(updated_edges) == 1
+        assert updated_edges[0].weight == 5
+        
+        # 6. Revert the root note back to original value
+        note_edit = openreview_client.post_note_edit(
+            invitation="aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request",
+            signatures=['~Reviewer_ARRTwo1'],
+            note=openreview.api.Note(
+                id=original_note.id,
+                content={
+                    "maximum_load_this_cycle": {"value": 0},  # Original value
+                    "maximum_load_this_cycle_for_resubmissions": {"value": "No"},
+                    "meta_data_donation": {"value": "Yes, I consent to donating anonymous metadata of my review for research."}
+                }
+            )
+        )
+        
+        # Run process again to restore edges
+        sync_cmp_process(openreview_client, cmp_invitation)
+        helpers.await_queue()
         ## Extra 101 conflicts from new reviewer which is an author of all submissions
+        # NOTE: All reviewers included, no excluding
 
         affinity_scores =  openreview_client.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
-        assert len(affinity_scores) == 101 * 7 ## submissions * reviewers
+        assert len(affinity_scores) == 101 * 8 ## submissions * reviewers
 
         # Post assignment configuration notes
         openreview_client.post_note_edit(
@@ -3415,16 +3172,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         openreview.tools.post_bulk_edges(openreview_client, ac_edges_to_post)
 
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 3
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 7
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 8
 
 
     def test_resubmission_and_track_matching_data(self, client, openreview_client, helpers, test_client, request_page, selenium):
         # Create groups for previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        june_request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        june_request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[2]
         june_venue = openreview.helpers.get_conference(client, june_request_form.id, 'openreview.net/Support')
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         june_submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
@@ -3933,7 +3690,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
@@ -4479,7 +4236,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_checklists(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         violation_fields = ['appropriateness', 'formatting', 'length', 'anonymity', 'responsible_checklist', 'limitations'] # TODO: move to domain or somewhere?
@@ -4779,7 +4536,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_official_review_flagging(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         ethics_client = openreview.api.OpenReviewClient(username = 'reviewerethics@aclrollingreview.com', password=helpers.strong_password)
@@ -5175,7 +4932,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_author_response(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = venue.get_submissions(sort='tmdate')
 
@@ -5434,7 +5191,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_changing_deadlines(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form_note=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form_note=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         registration_name = 'Registration'
         max_load_name = 'Max_Load_And_Unavailability_Request'
@@ -5442,14 +5199,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=5)
 
-        # Original due dates were at +3, now at +5
-        reviewer_max_load_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{max_load_name}').duedate
-        ac_max_load_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/{max_load_name}').duedate
-        sac_max_load_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').duedate
-
-        reviewer_max_load_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{max_load_name}').expdate
-        ac_max_load_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/{max_load_name}').expdate
-        sac_max_load_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').expdate
+        # Original due dates were at +3, now at +5client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').expdate
 
         reviewer_checklist_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist').edit['invitation']['duedate']
         reviewer_checklist_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist').edit['invitation']['expdate']
@@ -5467,8 +5217,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             openreview.Note(
                 content={
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
@@ -5494,15 +5242,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
 
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{max_load_name}').duedate > reviewer_max_load_due_date
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{max_load_name}').expdate > reviewer_max_load_exp_date
-        
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/{max_load_name}').duedate > ac_max_load_due_date
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/{max_load_name}').expdate > ac_max_load_exp_date
-
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').duedate > sac_max_load_due_date
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').expdate > sac_max_load_exp_date
-
         assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist').edit['invitation']['duedate'] > reviewer_checklist_due_date
         assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist').edit['invitation']['expdate'] > reviewer_checklist_exp_date
 
@@ -5518,7 +5257,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_meta_review_flagging_and_ethics_review(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         violation_fields = ['author_identity_guess']
@@ -5725,7 +5464,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         now = datetime.datetime.now()
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         invitation_builder = openreview.arr.InvitationBuilder(venue)
 
@@ -5766,7 +5505,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ac_client = openreview.api.OpenReviewClient(username = 'ac2@aclrollingreview.com', password=helpers.strong_password)
 
         reviewer_note_edit = reviewer_client.post_note_edit( ## Reviewer 1 will have an original load
-            invitation=f'{venue.get_reviewers_id()}/-/{invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}',
+            invitation=f'aclweb.org/ACL/ARR/Reviewers/-/{invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}',
             signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
@@ -5776,7 +5515,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
-        helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
+        custom_max_papers_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers')
+        sync_cmp_process(openreview_client, custom_max_papers_invitation)
+
         assert len(openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARROne1')) == 1
         assert openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARROne1')[0].weight == 4
 
@@ -5963,7 +5704,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         now = datetime.datetime.now()
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         invitation_builder = openreview.arr.InvitationBuilder(venue)
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
@@ -6073,7 +5814,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         reviewer_client.impersonate(reviewer)
         
         # Get venue configuration
-        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='number:asc')[1]
         
         # Configure dates
         now = datetime.datetime.now()
@@ -6231,10 +5972,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.create_user('reviewer7@aclrollingreview.com', 'Reviewer', 'ARRSeven')
         helpers.create_user('reviewer8@aclrollingreview.com', 'Reviewer', 'ARREight')
         openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRSeven1', '~Reviewer_ARREight1'])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Reviewers', ['~Reviewer_ARRSeven1', '~Reviewer_ARREight1'])
         rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
         rev_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
         rev_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            invitation='aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request',
             signatures=['~Reviewer_ARRSeven1'],
             note=openreview.api.Note(
                 content = {
@@ -6257,7 +5999,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         rev_client = openreview.api.OpenReviewClient(username = 'reviewer8@aclrollingreview.com', password=helpers.strong_password)
         rev_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            invitation='aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request',
             signatures=['~Reviewer_ARREight1'],
             note=openreview.api.Note(
                 content = {
@@ -6269,19 +6011,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         # Update reviewer two's fields to cover more cases
-        load_note = rev_two_client.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')[0]
+        load_note = rev_two_client.get_all_notes(invitation='aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request')[0]
         openreview_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
-            readers=['aclweb.org/ACL/ARR/2023/August'],
-            writers=['aclweb.org/ACL/ARR/2023/August'],
-            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            invitation='aclweb.org/ACL/ARR/-/Edit',
+            readers=['aclweb.org/ACL/ARR'],
+            writers=['aclweb.org/ACL/ARR'],
+            signatures=['aclweb.org/ACL/ARR'],
             note=openreview.api.Note(
                 id=load_note.id,
                 ddate=now_millis,
             )
         )
         rev_two_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            invitation='aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request',
             signatures=['~Reviewer_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
@@ -6310,6 +6052,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.create_user('ac5@aclrollingreview.com', 'AC', 'ARRFive')
         helpers.create_user('ac6@aclrollingreview.com', 'AC', 'ARRSix')
         openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs', [
+            '~AC_ARRFour1',
+            '~AC_ARRFive1',
+            '~AC_ARRSix1'
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Area_Chairs', [
             '~AC_ARRFour1',
             '~AC_ARRFive1',
             '~AC_ARRSix1'
@@ -6360,7 +6107,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # AC with load no assignment and responded emergency
         ac_client = openreview.api.OpenReviewClient(username = 'ac5@aclrollingreview.com', password=helpers.strong_password)
         ac_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            invitation='aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request',
             signatures=['~AC_ARRFive1'],
             note=openreview.api.Note(
                 content = {
@@ -6372,7 +6119,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # AC with load no assignment no emergency
         ac_client = openreview.api.OpenReviewClient(username = 'ac6@aclrollingreview.com', password=helpers.strong_password)
         ac_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            invitation='aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request',
             signatures=['~AC_ARRSix1'],
             note=openreview.api.Note(
                 content = {
@@ -6392,6 +6139,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+
+        custom_max_papers_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers')
+        sync_cmp_process(openreview_client, custom_max_papers_invitation)
 
         def send_email(email_option, role):
             role_tab_id_format = role.replace('_', '-')

@@ -10,7 +10,7 @@ def process(client, invitation):
 
     from openreview.venue import matching
     from openreview.arr.helpers import get_resubmissions
-    from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT
+    from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT, ROOT_DOMAIN
     from collections import defaultdict
 
     def get_title(profile):
@@ -131,6 +131,7 @@ def process(client, invitation):
     rev_affinity_inv = domain.content['reviewers_affinity_score_id']['value']
     rev_cmp_inv = domain.content['reviewers_custom_max_papers_id']['value']
     reviewers_id = domain.content['reviewers_id']['value']
+    reviewers_name = domain.content['reviewers_name']['value']
     reviewers_group = client.get_group(reviewers_id).members
     area_chairs_id = domain.content['area_chairs_id']['value']
     #area_chairs_group = client.get_group(area_chairs_id).members
@@ -181,29 +182,28 @@ def process(client, invitation):
 
     # Build load map
     id_to_load_note = {}
-    for role_id in [reviewers_id]:
-        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
-        for note in load_notes:
-            if note.signatures[0] not in name_to_id:
-                continue
-            note_signature_id = name_to_id[note.signatures[0]]
-            id_to_load_note[note_signature_id] = note
+    root_role_id = domain.content['root_reviewers_id']['value']
+    load_notes = client.get_all_notes(invitation=f"{root_role_id}/-/{max_load_name}") ## Assume only 1 note per user
+    for note in load_notes:
+        if note.signatures[0] not in name_to_id:
+            continue
+        note_signature_id = name_to_id[note.signatures[0]]
+        id_to_load_note[note_signature_id] = note
 
     # Build track map
     track_to_ids = {}
-    for role_id in [reviewers_id]:
-        track_to_ids[role_id] = defaultdict(list)
-        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}")
-        for note in registration_notes:
-            if note.signatures[0] not in name_to_id:
-                continue
-            note_signature_id = name_to_id[note.signatures[0]]
-            for track in note.content[tracks_field_name]['value']:
-                track_to_ids[role_id][track].append(note_signature_id)
+    track_to_ids[reviewers_id] = defaultdict(set)
+    registration_notes = client.get_all_notes(invitation=f"{root_role_id}/-/{registration_name}")
+    for note in registration_notes:
+        if note.signatures[0] not in name_to_id:
+            continue
+        note_signature_id = name_to_id[note.signatures[0]]
+        for track in note.content[tracks_field_name]['value']:
+            track_to_ids[reviewers_id][track].add(note_signature_id)
 
         # Build research area invitation
         matching.Matching(venue, client.get_group(role_id), None)._create_edge_invitation(
-            edge_id=f"{role_id}/-/{tracks_inv_name}"
+            edge_id=f"{reviewers_id}/-/{tracks_inv_name}"
         )
     track_edge_readers = {
         reviewers_id: [venue_id, senior_area_chairs_id, area_chairs_id]
@@ -239,31 +239,117 @@ def process(client, invitation):
         )
 
     # Reset custom max papers to ground truth notes
-    for role_id in [reviewers_id]:
-        cmp_to_post = []
-        role_cmp_inv = f"{role_id}/-/Custom_Max_Papers"
-        for id, note in id_to_load_note.items():
-            load_invitation = [inv for inv in note.invitations if max_load_name in inv][0]
-            if role_id not in load_invitation:
-                continue
+    cmp_to_post = []
+    role_cmp_inv = f"{reviewers_id}/-/Custom_Max_Papers"
+    for id, note in id_to_load_note.items():
 
-            cmp_to_post.append(
+        cmp_to_post.append(
+            openreview.api.Edge(
+                invitation=role_cmp_inv,
+                head=reviewers_id,
+                tail=id,
+                weight=int(note.content['maximum_load_this_cycle']['value']),
+                readers=track_edge_readers[reviewers_id] + [id],
+                writers=[venue_id],
+                signatures=[venue_id]
+            )
+        )
+    client.delete_edges(
+        invitation=role_cmp_inv,
+        soft_delete=True,
+        wait_to_finish=True
+    )
+    openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
+
+    # Create Reviewing_Resubmissions edges from root domain load notes
+    resubmissions_to_post = []
+    role_resubmissions_inv = f"{reviewers_id}/-/Reviewing_Resubmissions"
+    
+    for id, note in id_to_load_note.items():
+        max_load = int(note.content['maximum_load_this_cycle']['value'])
+        for_resubmissions = note.content.get('maximum_load_this_cycle_for_resubmissions', {}).get('value', '')
+        
+        availability_label = None
+        if 'yes' in for_resubmissions.lower() and max_load == 0:
+            availability_label = 'Only Reviewing Resubmissions'
+        elif 'yes' in for_resubmissions.lower():
+            availability_label = 'Yes'
+        elif 'no' in for_resubmissions.lower():
+            availability_label = 'No'
+        
+        if availability_label:
+            resubmissions_to_post.append(
                 openreview.api.Edge(
-                    invitation=role_cmp_inv,
-                    head=role_id,
+                    invitation=role_resubmissions_inv,
+                    head=reviewers_id,
                     tail=id,
-                    weight=int(note.content['maximum_load_this_cycle']['value']),
-                    readers=track_edge_readers[role_id] + [id],
+                    label=availability_label,
+                    readers=track_edge_readers[reviewers_id] + [id],
                     writers=[venue_id],
                     signatures=[venue_id]
                 )
             )
-        client.delete_edges(
-            invitation=role_cmp_inv,
-            soft_delete=True,
-            wait_to_finish=True
+    
+    client.delete_edges(
+        invitation=role_resubmissions_inv,
+        soft_delete=True,
+        wait_to_finish=True
+    )
+    openreview.tools.post_bulk_edges(client=client, edges=resubmissions_to_post)
+
+    # Handle Ethics Reviewers Custom_Max_Papers (no Reviewing_Resubmissions for ethics reviewers)
+    ethics_reviewers_name = domain.content['ethics_reviewers_name']['value']
+    ethics_reviewers_id = domain.content['ethics_chairs_id']['value'].replace(
+        domain.content['ethics_chairs_name']['value'],
+        ethics_reviewers_name
+    )
+    root_ethics_reviewers_id = domain.content['root_ethics_reviewers_id']['value']
+    
+    # Build ethics load map
+    ethics_id_to_load_note = {}
+    ethics_profiles = openreview.tools.get_profiles(client, client.get_group(ethics_reviewers_id).members)
+    ethics_name_to_id = {}
+    for profile in ethics_profiles:
+        filtered_names = filter(
+            lambda obj: 'username' in obj and len(obj['username']) > 0,
+            profile.content.get('names', [])
         )
-        openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
+        for name_obj in filtered_names:
+            ethics_name_to_id[name_obj['username']] = profile.id
+    
+    ethics_load_notes = client.get_all_notes(invitation=f"{root_ethics_reviewers_id}/-/{max_load_name}")
+    for note in ethics_load_notes:
+        if note.signatures[0] not in ethics_name_to_id:
+            continue
+        note_signature_id = ethics_name_to_id[note.signatures[0]]
+        ethics_id_to_load_note[note_signature_id] = note
+    
+    # Post Ethics Custom_Max_Papers edges
+    ethics_cmp_to_post = []
+    ethics_cmp_inv = f"{ethics_reviewers_id}/-/Custom_Max_Papers"
+    matching.Matching(venue, client.get_group(ethics_reviewers_id), None)._create_edge_invitation(
+        edge_id=ethics_cmp_inv
+    )
+    
+    for id, note in ethics_id_to_load_note.items():
+        ethics_cmp_to_post.append(
+            openreview.api.Edge(
+                invitation=ethics_cmp_inv,
+                head=ethics_reviewers_id,
+                tail=id,
+                weight=int(note.content['maximum_load_this_cycle']['value']),
+                readers=[venue_id, id],
+                writers=[venue_id],
+                signatures=[venue_id]
+            )
+        )
+    
+    client.delete_edges(
+        invitation=ethics_cmp_inv,
+        soft_delete=True,
+        wait_to_finish=True
+    )
+    openreview.tools.post_bulk_edges(client=client, edges=ethics_cmp_to_post)
     
     reviewer_exceptions = {}
 
