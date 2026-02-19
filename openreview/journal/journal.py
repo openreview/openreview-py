@@ -1117,8 +1117,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         submissions = self.client.get_all_notes(invitation=self.get_author_submission_id())
 
-        ae_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head')}
-        reviewer_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head')}
+        ae_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head', domain=self.venue_id)}
+        reviewer_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head', domain=self.venue_id)}
 
         # Archive finished papers
         for submission in tqdm(submissions):
@@ -1235,9 +1235,9 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True, domain=self.venue_id)}
         submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
-        archived_assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(archived=True), groupby='tail')}
-        assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='tail')}
-        availability_by_reviewer = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_availability_id(), groupby='tail')}
+        archived_assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(archived=True), groupby='tail', domain=self.venue_id)}
+        assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='tail', domain=self.venue_id)}
+        availability_by_reviewer = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_availability_id(), groupby='tail', domain=self.venue_id)}
 
         report_by_reviewer = {}
         reports = self.client.get_all_notes(invitation=self.get_reviewer_report_id())
@@ -1500,10 +1500,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True, domain=self.venue_id)}
         submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
-        archived_assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(archived=True), groupby='tail')}
-        assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail')}
-        availability_by_action_editors = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_ae_availability_id(), groupby='tail')}
-        custom_quota_by_action_editors = {e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=self.get_ae_custom_max_papers_id(), groupby='tail')}
+        archived_assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(archived=True), groupby='tail', domain=self.venue_id)}
+        assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail', domain=self.venue_id)}
+        availability_by_action_editors = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_ae_availability_id(), groupby='tail', domain=self.venue_id)}
+        custom_quota_by_action_editors = {e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=self.get_ae_custom_max_papers_id(), groupby='tail', domain=self.venue_id)}
         recruitment_notes = self.client.get_all_notes(forum=self.request_form_id)
         recruitment_note_by_signature = {}
 
@@ -1703,7 +1703,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
     def run_reviewer_unavailability_stats(self):
 
         unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id(), domain=self.venue_id)
-        preferred_emails_edges = { e['id']['head']: e['values'][0]['tail'] for e in self.client.get_grouped_edges(invitation=self.get_preferred_emails_invitation_id(), groupby='head', select='tail') }
+        preferred_emails_edges = { e['id']['head']: e['values'][0]['tail'] for e in self.client.get_grouped_edges(invitation=self.get_preferred_emails_invitation_id(), groupby='head', select='tail', domain=self.venue_id) }
 
         reviewers = self.client.get_group(self.get_reviewers_id()).members
 
@@ -1843,7 +1843,7 @@ OpenReview Team'''
             print('Check venue', journal.venue_id)
 
             invite_assignment_invitation_id = journal.get_reviewer_invite_assignment_id()
-            grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation_id, label='Pending Sign Up', groupby='tail')
+            grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation_id, label='Pending Sign Up', groupby='tail', domain=journal.venue_id)
             print('Pending sign up edges found', len(grouped_edges))
 
             for grouped_edge in grouped_edges:

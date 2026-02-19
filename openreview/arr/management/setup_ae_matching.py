@@ -194,7 +194,7 @@ def process(client, invitation):
 
         ae_scores = {
             g['id']['tail'] : g['values'][0]
-            for g in current_client.get_grouped_edges(invitation=ae_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail')
+            for g in current_client.get_grouped_edges(invitation=ae_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail', domain=venue_id)
         }
 
         # Handle AE reassignments
@@ -210,7 +210,7 @@ def process(client, invitation):
 
             ae_cmp = {
                 g['id']['tail'] : g['values'][0]
-                for g in current_client.get_grouped_edges(invitation=ae_cmp_inv, select='id,weight', groupby='tail')
+                for g in current_client.get_grouped_edges(invitation=ae_cmp_inv, select='id,weight', groupby='tail', domain=venue_id)
             }
 
             ae_id = name_to_id[ae]

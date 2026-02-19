@@ -21,7 +21,7 @@ def process(client, invitation):
 
     print('Create preferred email edges for all the profiles')
 
-    existing_edges = { g['id']['head']: openreview.api.Edge.from_json(g['values'][0]) for g in client.get_grouped_edges(invitation=invitation.id, groupby='head') }
+    existing_edges = { g['id']['head']: openreview.api.Edge.from_json(g['values'][0]) for g in client.get_grouped_edges(invitation=invitation.id, groupby='head', domain=journal.venue_id) }
     
     new_edges = []
     for profile in all_profiles:

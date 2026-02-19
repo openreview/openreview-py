@@ -302,7 +302,7 @@ def process(client, invitation):
             })
             rev_cmp = {
                 g['id']['tail'] : g['values'][0]
-                for g in current_client.get_grouped_edges(invitation=rev_cmp_inv, select='id,weight', groupby='tail')
+                for g in current_client.get_grouped_edges(invitation=rev_cmp_inv, select='id,weight', groupby='tail', domain=venue_id)
             }
             result['reviewer_exception_updates'].append({
                 'reviewer_id': reviewer_id,
@@ -341,7 +341,7 @@ def process(client, invitation):
 
         rev_scores = {
             g['id']['tail'] : g['values'][0]
-            for g in current_client.get_grouped_edges(invitation=rev_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail')
+            for g in current_client.get_grouped_edges(invitation=rev_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail', domain=venue_id)
         }
         
         # Handle reviewer reassignment
