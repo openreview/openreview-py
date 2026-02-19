@@ -581,7 +581,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'invitees': ['${3/content/reviewerId/value}'],
                     'readers': [venue_id, '${3/content/reviewerId/value}'],
                     'writers': [venue_id],
-                    'signatures': [editors_in_chief_id],
+                    'signatures': [venue_id],
                     'maxReplies': 1,
                     'duedate': '${2/content/duedate/value}',
                     'dateprocesses': [self.responsibility_ACK_reminder_process],
@@ -728,7 +728,7 @@ If you have questions after reviewing the points below that are not answered on 
             'invitees': ['${3/content/reviewerId/value}'],
             'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), '${3/content/reviewerId/value}'],
             'writers': [venue_id],
-            'signatures': [editors_in_chief_id],
+            'signatures': [venue_id],
             'maxReplies': 1,
             'duedate': '${2/content/duedate/value}',
             'process': self.process_script,
@@ -1374,7 +1374,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id, authors_id],
             writers=[venue_id],
-            signatures=[venue_id], ## EIC have permission to check conflicts
+            signatures=[venue_id],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -4327,7 +4327,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
-            'signatures': [editors_in_chief_id], ## to compute conflicts
+            'signatures': [venue_id],
             'duedate': '${2/content/duedate/value}',
             'maxReplies': 1,
             'process': self.process_script,
@@ -5127,7 +5127,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
-            'signatures': [editors_in_chief_id],
+            'signatures': [venue_id],
             'maxReplies': 1,
             'minReplies': 1,
             'edit': {
@@ -5484,7 +5484,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
-            'signatures': [editors_in_chief_id],
+            'signatures': [venue_id],
             'maxReplies': 1,
             'edit': {
                     'signatures': { 
