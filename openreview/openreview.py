@@ -46,6 +46,17 @@ class LogRetry(Retry):
         # Call the parent class method to perform the actual retry increment
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
 
+def _is_interactive():
+    """Check if interactive input is available (terminal or notebook)."""
+    if sys.stdin.isatty():
+        return True
+    try:
+        if 'IPKernelApp' in get_ipython().config:
+            return True
+    except NameError:
+        pass
+    return False
+
 def _default_mfa_method_chooser(mfa_methods, preferred_method):
     """Phase 1: Choose MFA method interactively."""
     supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]
@@ -296,7 +307,7 @@ class Client(object):
                 'message': f'No supported MFA methods. Server offered: {", ".join(mfa_methods)}'
             })
 
-        if not sys.stdin.isatty():
+        if not _is_interactive():
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
 
         method = _default_mfa_method_chooser(mfa_methods, preferred_method)

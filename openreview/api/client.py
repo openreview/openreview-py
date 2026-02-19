@@ -22,7 +22,7 @@ import json
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from ..openreview import MfaRequiredException
-from ..openreview import _default_mfa_method_chooser, _default_mfa_code_prompt, _passkey_browser_flow
+from ..openreview import _is_interactive, _default_mfa_method_chooser, _default_mfa_code_prompt, _passkey_browser_flow
 from .. import tools
 
 class LogRetry(Retry):
@@ -198,7 +198,7 @@ class OpenReviewClient(object):
                 'message': f'No supported MFA methods. Server offered: {", ".join(mfa_methods)}'
             })
 
-        if not sys.stdin.isatty():
+        if not _is_interactive():
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
 
         method = _default_mfa_method_chooser(mfa_methods, preferred_method)
