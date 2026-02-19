@@ -1436,10 +1436,12 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_fields_email_template_invitation(self, super_invitation_id, due_date=None):
+    def set_edit_fields_email_template_invitation(self, super_invitation_id, due_date=None, is_review_invitation=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Fields_to_Include'
+
+        default_fields = ['review', 'rating', 'confidence'] if is_review_invitation else ['decision', 'comment']
 
         invitation = Invitation(
             id = invitation_id,
@@ -1453,7 +1455,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                     'type': 'string[]',
-                                    'enum': ['review', 'rating', 'confidence'] #default review fields
+                                    'enum': default_fields #default review fields
                                 }
                         }
                     }
@@ -1465,7 +1467,7 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'review_fields_to_include': {
+                        'fields_to_include': {
                             'value': ['${5/content/fields/value}']
                         }
                     }

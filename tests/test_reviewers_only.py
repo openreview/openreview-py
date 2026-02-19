@@ -1667,7 +1667,7 @@ For more details, please check the following links:
         # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', sort='number:asc')
         assert len(notes) == 4
-        assert notes[-1].content['title']['value'] == 'Author Review Notification Failed'
+        assert notes[-1].content['title']['value'] == 'Author Reviews Notification Failed'
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Fields_to_Include',
@@ -2003,11 +2003,13 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Fields_to_Include')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Message')
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
+        # trigger notification date process with no fields to include
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Author_Decision_Notification/Dates',
             content={
@@ -2016,15 +2018,30 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Decision_Notification-0-1', count=2)
 
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', count=6)
+
+        # assert status comment posted to request form
+        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', sort='number:asc')
+        assert len(notes) == 6
+        assert notes[-1].content['title']['value'] == 'Author Decision Notification Failed'
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Decision_Notification/Fields_to_Include',
+            content={
+                'fields': { 'value': ['decision', 'comment'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Decision_Notification-0-1', count=3)
+
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #1, titled \"Paper title 1\" is now available')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
 This is to inform you that the decision for your submission #1, "Paper title 1", to ABCD 2025 is now available.
 
-Decision: Accept 
+**decision**: Accept
+**comment**: Congratulations on your acceptance.
 
-Comment: Congratulations on your acceptance.
 
 To view this paper, please go to https://openreview.net/forum?id={submissions[0].id}
 
