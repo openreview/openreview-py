@@ -263,6 +263,15 @@ class ProfileManagement():
                                 }
                             }
                         },
+                        'author_name': {
+                            'order': 3,
+                            'description': 'Enter the author name at the given index.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                }
+                            }
+                        },
                     },
                     'note': {
                         'id': {
@@ -271,21 +280,24 @@ class ProfileManagement():
                             }
                         },
                         'content': {
-                            'authorids': {
+                            'authors': {
                                 'order': 2,
                                 'value': {
                                     'param': {
                                         'const': {
                                             'replace': {
                                                 'index': '${6/content/author_index/value}',
-                                                'value': '${6/content/author_id/value}'
+                                                'value': {
+                                                    'fullname': '${7/content/author_name/value}',
+                                                    'username': '${7/content/author_id/value}'
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }                                        
+                    }
                 }
             )
         )
@@ -304,8 +316,8 @@ class ProfileManagement():
                 preprocess=self.get_process_content('process/author_coreference_pre_process.js'),
                 edit={
                     'readers': ['everyone'],
-                    'signatures': { 
-                        'param': { 
+                    'signatures': {
+                        'param': {
                             'items': [
                                 { 'prefix': '~.*', 'optional': True },
                                 { 'value': self.support_group_id, 'optional': True },
@@ -313,7 +325,7 @@ class ProfileManagement():
                                 { 'value': self.arxiv_group_id, 'optional': True },
                                 { 'value': self.orcid_group_id, 'optional': True }
                             ]
-                        } 
+                        }
                     },
                     'writers':  [self.public_article_group_id],
                     'content': {
@@ -336,6 +348,15 @@ class ProfileManagement():
                                 }
                             }
                         },
+                        'author_name': {
+                            'order': 3,
+                            'description': 'Enter the author name at the given index.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                }
+                            }
+                        },
                     },
                     'note': {
                         'id': {
@@ -344,21 +365,24 @@ class ProfileManagement():
                             }
                         },
                         'content': {
-                            'authorids': {
+                            'authors': {
                                 'order': 2,
                                 'value': {
                                     'param': {
                                         'const': {
                                             'replace': {
                                                 'index': '${6/content/author_index/value}',
-                                                'value': '${6/content/author_id/value}'
+                                                'value': {
+                                                    'fullname': '${7/content/author_name/value}',
+                                                    'username': '${7/content/author_id/value}'
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }                                        
+                    }
                 }
             )
         )        
@@ -933,24 +957,19 @@ class ProfileManagement():
                             },
                             'authors': {
                                 'order': 2,
+                                'description': 'Authors of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
                                     }
                                 }
                             },
-                            'authorids': {
-                                'order': 3,
-                                'value': {
-                                    'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                            
                             'venue': {
-                                'order': 4,
+                                'order': 3,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -960,7 +979,7 @@ class ProfileManagement():
                                 }
                             },
                             'venueid': {
-                                'order': 5,
+                                'order': 4,
                                 'value': {
                                     'param': {
                                         'type': "string",
@@ -1121,27 +1140,22 @@ class ProfileManagement():
                             },
                             'authors': {
                                 'order': 2,
+                                'description': 'Authors of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
                                     }
                                 }
                             },
-                            'authorids': {
+                            'abstract': {
                                 'order': 3,
+                                'description': 'Abstract of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                             
-                            'abstract': {
-                                'order': 4,
-                                'description': 'Abstract of paper.',
-                                'value': { 
-                                    'param': { 
                                         'type': 'string',
                                         'markdown': True,
                                         'input': 'textarea',
@@ -1150,7 +1164,7 @@ class ProfileManagement():
                                 }
                             },
                             'subject_areas': {
-                                'order': 5,
+                                'order': 4,
                                 'description': 'Subject areas of paper.',
                                 'value': {
                                     'param': {
@@ -1162,7 +1176,7 @@ class ProfileManagement():
                                 }
                             },
                             'pdf': {
-                                'order': 6,
+                                'order': 5,
                                 'description': 'Link to the PDF paper.',
                                 'value': {
                                     'param': {
@@ -1171,9 +1185,9 @@ class ProfileManagement():
                                         'optional': True
                                     }
                                 }
-                            },                                                    
+                            },
                             'venue': {
-                                'order': 7,
+                                'order': 6,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -1184,7 +1198,7 @@ class ProfileManagement():
                                 }
                             },
                             'venueid': {
-                                'order': 8,
+                                'order': 7,
                                 'value': {
                                     'param': {
                                         'type': "string",
@@ -1300,24 +1314,19 @@ class ProfileManagement():
                             },
                             'authors': {
                                 'order': 2,
+                                'description': 'Authors of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
                                     }
                                 }
                             },
-                            'authorids': {
-                                'order': 3,
-                                'value': {
-                                    'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                            
                             'venue': {
-                                'order': 4,
+                                'order': 3,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -1327,7 +1336,7 @@ class ProfileManagement():
                                 }
                             },
                             'venueid': {
-                                'order': 5,
+                                'order': 4,
                                 'value': {
                                     'param': {
                                         'type': "string",

@@ -16,12 +16,12 @@ async function process(client, edit, invitation) {
 
   const { profiles } = await client.getProfiles({ id: edit.signatures[0] });
   const userProfile = profiles[0];
-  
+
   const usernames = userProfile.content.names.map(name => name.username);
 
-  const authorName = publication.content.authorids?.value[authorIndex];
-  if (!usernames.some(username => username === authorName)) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${authorName} from index ${authorIndex} doesn't match with the names listed in your profile` }));
+  const authorUsername = publication.content.authors.value[authorIndex]?.username;
+  if (!usernames.some(username => username === authorUsername)) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${authorUsername} from index ${authorIndex} doesn't match with the names listed in your profile` }));
   }
 
 }
