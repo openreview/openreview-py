@@ -48,7 +48,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 )
             )
 
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=f'{venue_id}/-/', type='invitation') if i.is_active()]
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=f'{venue_id}/-/', type='invitation', domain=venue_id) if i.is_active()]
 
     for venue_invitation in invitation_invitations:
         print('processing invitation: ', venue_invitation.id)

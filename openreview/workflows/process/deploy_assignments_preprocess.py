@@ -11,7 +11,7 @@ def process(client, edit, invitation):
         config_to_deploy = None
 
         # get all Assignment_Configuration notes
-        notes = client.get_all_notes(invitation=f'{reviewers_id}/-/Assignment_Configuration')
+        notes = client.get_all_notes(invitation=f'{reviewers_id}/-/Assignment_Configuration', domain=venue_id)
         for note in notes:
             if match_name == note.content['title']['value']:
                 config_to_deploy = note
