@@ -38,6 +38,8 @@ def process(client, edit, invitation):
         else:
             ## Deprecated method to generate hash key for invitations without a secret. This should be removed once all recruitment invitations have a secret.
             hash_key = openreview.tools.get_user_hash_key(invitee, committee_invited_response_invitation.content['hash_seed']['value'])
+        
+        user_parse = openreview.tools.get_user_parse(invitee)
 
         url = f'https://openreview.net/invitation?id={committee_invited_response_id}&user={user_parse}&key={hash_key}'
 
