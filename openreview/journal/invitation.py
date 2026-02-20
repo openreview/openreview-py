@@ -4141,7 +4141,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_official_recommendation_additional_fields():
             for key, value in self.journal.get_official_recommendation_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value if value else { "delete": True }                       
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
+        if self.journal.get_official_recommendation_description():
+            invitation['description'] = self.journal.get_official_recommendation_description()
+        else:
+            invitation['description'] = { 'param': { 'const': { 'delete': True } } }
 
         self.save_super_invitation(self.journal.get_reviewer_recommendation_id(), invitation_content, edit_content, invitation)
 
