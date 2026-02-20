@@ -26,7 +26,7 @@ def process(client, invitation):
     
     print('Get SAC groups')
     venue_id = domain.id
-    all_groups = client.get_all_groups(prefix=f'{venue_id}/{submission_name}')
+    all_groups = client.get_all_groups(prefix=f'{venue_id}/{submission_name}', domain=venue_id)
     assignments_groups = [g for g in all_groups if g.id.endswith(f'/{senior_area_chairs_name}')]
     if not assignments_groups:
         print(f'No senior area chair assignments found with submission prefix {venue_id}/{submission_name}.')

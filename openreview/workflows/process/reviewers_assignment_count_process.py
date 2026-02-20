@@ -16,7 +16,7 @@ def process(client, invitation):
     profile_by_id = openreview.tools.get_profiles(client, reviewers.members, as_dict=True)
     
     print('Get assignments')
-    assignments_by_reviewers = { e['id']['tail']: e['values'] for e in client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
+    assignments_by_reviewers = { e['id']['tail']: e['values'] for e in client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail', domain=domain.id) }
 
     review_assignment_count_tags = []
     for reviewer, assignments in assignments_by_reviewers.items():
