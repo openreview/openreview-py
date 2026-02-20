@@ -2645,7 +2645,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_desk_rejection_approval_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id, editors_in_chief_id],
-            'readers': [venue_id, editors_in_chief_id],
+            'readers': [venue_id, editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'minReplies': 1,
@@ -3780,7 +3780,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_review_id(number='${2/content/noteNumber/value}'),
             'signatures': [ venue_id ],
-            'readers': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'invitees': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
             'noninvitees': [editors_in_chief_id],
@@ -4022,7 +4022,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_reviewer_recommendation_id(number='${2/content/noteNumber/value}'),
             'signatures': [ venue_id ],
-            'readers': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'invitees': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
             'maxReplies': 1,
@@ -5314,7 +5314,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'duedate': '${2/content/duedate/value}',
             'invitees': [venue_id, editors_in_chief_id],
             'noninvitees': [self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
-            'readers': [venue_id, editors_in_chief_id],
+            'readers': [venue_id, editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'minReplies': 1,
