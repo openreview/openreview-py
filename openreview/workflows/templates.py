@@ -1015,16 +1015,6 @@ Program Chairs'''
                                 'deletable': True
                             }
                         }
-                    },
-                    'hash_seed': {
-                        'order': 6,
-                        'description': 'Invitation hash seed',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100
-                            }
-                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1032,7 +1022,7 @@ Program Chairs'''
                     'id': '${2/content/committee_id/value}/-/Recruitment_Response',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}',
-                    'invitees': ['everyone'],
+                    'invitees': ['${3/content/committee_id/value}/Invited'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
@@ -1040,11 +1030,8 @@ Program Chairs'''
                     'preprocess': self.get_process_content('process/committee_recruitment_response_pre_process.js'),
                     'process': self.get_process_content('process/committee_recruitment_response_process.py'),
                     'web': self.get_webfield_content('webfield/committeeRecruitmentResponseWebfield.js'),
+                    'guestPosting': True,
                     'content': {
-                        'hash_seed': {
-                            'value': '${4/content/hash_seed/value}',
-                            'readers': ['${5/content/venue_id/value}']
-                        },
                         'committee_id': {
                             'value': '${4/content/committee_id/value}',
                         },
@@ -1071,50 +1058,17 @@ If you would like to change your decision, please follow the link in the previou
                         }                         
                     },
                     'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [
-                                    { 'prefix': '~.*', 'optional': True }, 
-                                    { 'value': '(guest)', 'optional': True }
-                                ]
+                        'signatures': {
+                            'param': {
+                                'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
                             }
                         },
-                        'readers': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}', '${2/signatures}'],
                         'note': {
                             'signatures':['${3/signatures}'],
-                            'readers': ['${5/content/venue_id/value}', '${2/content/user/value}'],
+                            'readers': ['${5/content/venue_id/value}', '${3/signatures}'],
                             'writers': ['${5/content/venue_id/value}'],
                             'content': {
-                                'title': {
-                                    'order': 1,
-                                    'description': 'Title',
-                                    'value': { 
-                                        'param': { 
-                                            'type': 'string',
-                                            'const': 'Recruit response'
-                                        }
-                                    }
-                                },
-                                'user': {
-                                    'order': 2,
-                                    'description': 'email address',
-                                    'value': { 
-                                        'param': { 
-                                            'type': 'string',
-                                            'regex': '.*'
-                                        }
-                                    }
-                                },
-                                'key': {
-                                    'order': 3,
-                                    'description': 'Email key hash',
-                                    'value': { 
-                                        'param': { 
-                                            'type': 'string',
-                                            'regex': '.{0,100}'
-                                        }
-                                    }
-                                },
                                 "response": {
                                     'order': 4,
                                     'description': 'Invitation response',
