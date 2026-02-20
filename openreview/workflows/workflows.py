@@ -376,7 +376,7 @@ class Workflows():
         invitation = Invitation(
             id = deploy_invitation_id,
             invitees = [support_group_id],
-            readers = ['everyone'],
+            readers = [support_group_id],
             writers = [support_group_id],
             signatures = [self.super_id],
             edit = {
@@ -424,7 +424,7 @@ class Workflows():
 
         invitation = Invitation(id=comment_invitation_id,
             invitees=[support_group_id],
-            readers=['everyone'],
+            readers=[support_group_id],
             writers=[support_group_id],
             signatures=[support_group_id],
             content={
@@ -544,7 +544,7 @@ class Workflows():
 
         invitation = Invitation(id=comment_invitation_id,
             invitees=[support_group_id],
-            readers=['everyone'],
+            readers=[support_group_id],
             writers=[support_group_id],
             signatures=[support_group_id],
             content={
@@ -583,7 +583,7 @@ class Workflows():
                 'invitation': {
                     'id': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${2/content/noteNumber/value}' + '/-/Status',
                     'signatures': [self.super_id],
-                    'readers': ['everyone'],
+                    'readers': ['${3/content/venueId/value}'],
                     'writers': [support_group_id],
                     'invitees': ['${3/content/venueId/value}'],
                     'noninvitees': ['${3/content/venueId/value}/Program_Chairs'],
