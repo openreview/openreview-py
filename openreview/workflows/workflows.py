@@ -411,6 +411,7 @@ class Workflows():
                     }
                 }
             },
+            preprocess=self.get_process_content('workflow_process/conferenceWorkflowDeploymentPreprocess.js'),
             process=self.get_process_content('workflow_process/conference_review_workflow_deployment.py')
         )
 

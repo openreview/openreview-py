@@ -512,6 +512,78 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert 'pdf' in submission_invitation.edit['note']['content']
         assert not submission_invitation.edit['note']['content']['pdf']['value']['param']['optional']
 
+    def test_deploy_with_same_venueid(self, client, selenium, request_page, helpers, openreview_client):
+
+        pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc_venue_v2@mail.com', password=helpers.strong_password)
+
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=3)
+        due_date = now + datetime.timedelta(days=2)
+
+        new_request_form = pc_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Request_Form',
+            signatures=['~ProgramChair_User1'],
+            readers=[
+                'openreview.net/Support',
+                '~ProgramChair_User1',
+                'pc_venue_v2@mail.com',
+                'tom_venue@mail.com'
+            ],
+            writers=[],
+            content={
+                'title': 'Test 2022 Venue Challenge',
+                'Official Venue Name': 'Test 2022 Venue Challenge',
+                'Abbreviated Venue Name': 'TestVenueChallenge@OR2022',
+                'Official Website URL': 'https://testvenue2021.gitlab.io/venue/',
+                'program_chair_emails': [
+                    'pc_venue_v2@mail.com',
+                    'tom_venue@mail.com'],
+                'contact_email': 'another_pc@mail.com',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
+                'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
+                'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
+                'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',
+                'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.',
+                'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'submission_name': 'Submission_Test',
+                'api_version': '2',
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
+            })
+        )
+
+        assert new_request_form
+        request_page(selenium, 'http://localhost:3030/forum?id=' + new_request_form.forum, pc_client)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The venue id V2.cc/2022/Conference has already been used for request'):
+            deploy_note = client.post_note(openreview.Note(
+                content={'venue_id': 'V2.cc/2022/Conference'},
+                forum=new_request_form.forum,
+                invitation='openreview.net/Support/-/Request{}/Deploy'.format(new_request_form.number),
+                readers=['openreview.net/Support'],
+                referent=new_request_form.forum,
+                replyto=new_request_form.forum,
+                signatures=['openreview.net/Support'],
+                writers=['openreview.net/Support']
+            ))
+
     def test_venue_revision(self, client, openreview_client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
