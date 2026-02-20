@@ -21,7 +21,7 @@ class TestJournal():
 
         venue_id = 'TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password=helpers.strong_password)
-        fabian_client.impersonate('TMLR/Editors_In_Chief')
+        fabian_client.impersonate('TMLR')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': venue_id })
 
