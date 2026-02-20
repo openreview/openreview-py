@@ -343,6 +343,36 @@ class TestReviewersOnly():
         for comment in comments:
             assert comment.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
 
+        # post comment as PC after deployment
+        comment_edit = pc_client.post_note_edit(
+            invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment',
+            signatures=['~ProgramChair_ABCD1'],
+            note=openreview.api.Note(
+                replyto=request_form.id,
+                content={
+                    'title': { 'value': 'Comment from Program Chair' },
+                    'comment': { 'value': 'Thanks for deploying!' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        comment_id = comment_edit['note']['id']
+        venue_id = request_form.content['venue_id']['value']
+
+        messages = openreview_client.get_messages(to='support@openreview.net', subject='[ABCD.cc/2025/Conference] Comment posted to a request for service: The ABCD Conference')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''A comment was posted to a service request.
+
+Comment title: Comment from Program Chair
+
+Comment: Thanks for deploying!
+
+To view the comment, click here: https://openreview.net/forum?id={request_form.id}&noteId={comment_id}
+
+Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
+
         # extend submission deadline
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
@@ -517,7 +547,7 @@ For more details, please check the following links:
 
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
         notes = openreview_client.get_notes(forum=venue.content['request_form_id']['value'], sort='tcdate:desc')
-        assert len(notes) == 6 # there are two comments after deployment
+        assert len(notes) == 7 # there are two comments after deployment
         assert notes[0].content['title']['value'] == 'Recruitment request status for ABCD 2025 Program Committee Group'
         
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Invitation to serve as expert Reviewer')
@@ -1053,7 +1083,7 @@ For more details, please check the following links:
         assert notes[-1].content['title']['value'] == 'Program Committee Assignment Deployment Failed'
         
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Comment posted to your request for service: The ABCD Conference')
-        assert len(messages) == 5
+        assert len(messages) == 6
         assert 'Comment title: Program Committee Assignment Deployment Failed' in messages[-1]['content']['text']
 
         # deploy with missing match name error email is not sent to support

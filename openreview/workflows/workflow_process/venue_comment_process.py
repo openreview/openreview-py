@@ -13,9 +13,7 @@ def process(client, edit, invitation):
 
     comment_title = comment.content['title']['value'] if 'title' in comment.content else f'Comment by {signature}'
 
-    comment_content = f'''
-
-Comment title: {comment_title}
+    comment_content = f'''Comment title: {comment_title}
 
 Comment: {comment.content['comment']['value']}
 
@@ -29,7 +27,9 @@ To view the comment, click here: https://openreview.net/forum?id={forum_note.id}
             recipients=comment.readers,
             ignoreRecipients = [support_user],
             subject=f'''Your venue, {forum_note.content['abbreviated_venue_name']['value']}, is available in OpenReview''',
-            message=f'''A comment was posted to your service request.{comment_content}
+            message=f'''A comment was posted to your service request.
+
+{comment_content}
 
 Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
         )
@@ -39,7 +39,9 @@ Please note that with the exception of urgent issues, requests made on weekends 
             recipients=comment.readers,
             ignoreRecipients = [support_user],
             subject=f'''Comment posted to your request for service: {forum_note.content['title']['value']}''',
-            message=f'''A comment was posted to your service request.{comment_content}
+            message=f'''A comment was posted to your service request.
+
+{comment_content}
 
 Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
         )
@@ -47,11 +49,25 @@ Please note that with the exception of urgent issues, requests made on weekends 
     #send email to support if commment comes from PCs
     if comment.signatures[0].startswith('~'):
         print('Sending email to support')
+        venue_id = forum_note.content.get('venue_id', {}).get('value', '')
+        if venue_id:
+            subject = f'''[{venue_id}] Comment posted to a request for service: {forum_note.content['title']['value']}'''
+            message = f'''A comment was posted to a service request.
+
+{comment_content}
+
+Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
+        else:
+            subject = f'''Comment posted to a request for service: {forum_note.content['title']['value']}'''
+            message = f'''A comment was posted to a service request.
+
+{comment_content}'''
+            
         client.post_message(
             invitation=f'{support_user}/-/Edit',
             recipients=[support_user],
-            subject=f'''Comment posted to a request for service: {forum_note.content['title']['value']}''',
-            message=f'''A comment was posted to a service request.{comment_content}'''
+            subject=subject,
+            message=message
         )
     else:
         print('Comment from support, no email sent to support')
