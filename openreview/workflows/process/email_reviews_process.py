@@ -18,11 +18,27 @@ def process(client, invitation):
     submission_name = domain.get_content_value('submission_name')
     authors_name  = domain.get_content_value('authors_name')
 
-    submission_authors_id = f'{venue_id}/{submission_name}{{submission_number}}/{authors_name}'
-
     email_subject = invitation.get_content_value('subject')
     email_content = invitation.get_content_value('message')
-    fields_to_include = invitation.get_content_value('review_fields_to_include')
+    fields_to_include = invitation.get_content_value('fields_to_include')
+
+    status_invitation_id = domain.get_content_value('status_invitation_id')
+
+    if not fields_to_include:
+        if status_invitation_id:
+            # post status to request form
+            client.post_note_edit(
+                invitation=status_invitation_id,
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    signatures=[venue_id],
+                    content={
+                        'title': { 'value': 'Author Reviews Notification Failed' },
+                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid review fields to include in the email notification. Please re-schedule this process to run at a later time and then select which fields to include.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split("/")[-1].replace("_", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Fields To Include" invitation, select the fields to include when emailing reviews to authors and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid fields to include. Once you have selected the fields to include, click "Submit" and the process will automatically be scheduled to run shortly.'}
+                    }
+                )
+            )
+        return
 
     active_submissions = client.get_notes(content={'venueid': submission_venue_id}, details='directReplies')
     print('# active submissions:', len(active_submissions))

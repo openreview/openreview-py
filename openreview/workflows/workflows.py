@@ -44,6 +44,7 @@ class Workflows():
         self.set_conference_review_request()
         self.set_conference_review_deployment()
         self.set_conference_review_comment()
+        self.set_conference_review_status_comment()
 
     def get_process_content(self, file_path):
         process = None
@@ -375,7 +376,7 @@ class Workflows():
         invitation = Invitation(
             id = deploy_invitation_id,
             invitees = [support_group_id],
-            readers = ['everyone'],
+            readers = [support_group_id],
             writers = [support_group_id],
             signatures = [self.super_id],
             edit = {
@@ -423,7 +424,7 @@ class Workflows():
 
         invitation = Invitation(id=comment_invitation_id,
             invitees=[support_group_id],
-            readers=['everyone'],
+            readers=[support_group_id],
             writers=[support_group_id],
             signatures=[support_group_id],
             content={
@@ -501,6 +502,123 @@ class Workflows():
                             },
                             'signatures': ['${3/signatures}'],
                             'readers': [support_group_id, '${{3/note/forum}/content/program_chair_emails/value}'],
+                            'writers': ['${3/signatures}'],
+                            'content': {
+                                'title': {
+                                    'order': 1,
+                                    'description': 'Brief summary of your comment.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 500,
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'order': 2,
+                                    'description': 'Your comment or reply (max 200000 characters).',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def set_conference_review_status_comment(self):
+
+        support_group_id = self.support_group_id
+        comment_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Status'
+
+        invitation = Invitation(id=comment_invitation_id,
+            invitees=[support_group_id],
+            readers=[support_group_id],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            content={
+                'comment_process_script': {
+                    'value': self.get_process_content('workflow_process/venue_comment_process.py')
+                }
+            },
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venueId': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${2/content/noteNumber/value}' + '/-/Status',
+                    'signatures': [self.super_id],
+                    'readers': ['${3/content/venueId/value}'],
+                    'writers': [support_group_id],
+                    'invitees': ['${3/content/venueId/value}'],
+                    'noninvitees': ['${3/content/venueId/value}/Program_Chairs'],
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': ['${4/content/venueId/value}'],
+                        'readers': ['${2/note/readers}'],
+                        'writers': [support_group_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${6/content/noteNumber/value}' + '/-/Status',
+                                    'optional': True
+                                }
+                                },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': [support_group_id, '${5/content/venueId/value}/Program_Chairs'],
                             'writers': ['${3/signatures}'],
                             'content': {
                                 'title': {

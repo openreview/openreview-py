@@ -14,18 +14,24 @@ def process(client, invitation):
     committee_name = domain.get_content_value('reviewers_name')
     committee_id = f'{venue_id}/{committee_name}'
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
+    status_invitation_id = domain.get_content_value('status_invitation_id')
 
     match_name = invitation.get_content_value('match_name')
-    deploy_date = invitation.get_content_value('deploy_date')
 
     if not match_name:
-        # post comment to request form
-        raise openreview.OpenReviewException('Select a valid match to deploy')
-    if not deploy_date:
-        raise openreview.OpenReviewException('Select a valid date to deploy reviewer assignments')
-    
-    if deploy_date > openreview.tools.datetime_millis(now):
-        # is this an error? Should this be posted to the request form
+        if status_invitation_id:
+            # post status to request form
+            client.post_note_edit(
+                invitation=status_invitation_id,
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    signatures=[venue_id],
+                    content={
+                        'title': { 'value': f'{committee_name.replace("_", " ").title()} Assignment Deployment Failed' },
+                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid configuration to deploy. Please re-schedule this process to run at a later time and then select a valid match name.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split("/-/")[-1].replace("_", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Match" invitation, select a valid match name to deploy and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid match name. Once you have selected the configuration to deploy, click "Submit" and the process will automatically be scheduled to run shortly.'}
+                    }
+                )
+            )
         return
     
     # if assignments have been deployed, return

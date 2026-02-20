@@ -10,6 +10,6 @@ def process(client, edit, invitation):
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     invitation_id = f'{domain.id}/-/{stage_name}'
     edit_invitations_builder.set_edit_email_template_invitation(invitation_id)
-    if 'Reviews' in stage_name:
-        edit_invitations_builder.set_edit_fields_email_template_invitation(invitation_id, due_date=cdate)
-    edit_invitations_builder.set_edit_email_date_invitation(invitation_id, due_date=cdate)
+    is_review_invitation = True if 'Reviews' in stage_name else False
+    edit_invitations_builder.set_edit_fields_email_template_invitation(invitation_id, due_date=cdate, is_review_invitation=is_review_invitation)
+    edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id, due_date=cdate)

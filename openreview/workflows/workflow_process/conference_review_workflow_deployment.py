@@ -14,17 +14,18 @@ def process(client, edit, invitation):
     submission_duedate = datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000)
 
     full_submission_deadline = note.content.get('full_submission_deadline', {}).get('value')
-    full_submission_duedate = datetime.datetime.fromtimestamp(full_submission_deadline/1000) if full_submission_deadline else None        
+    full_submission_duedate = datetime.datetime.fromtimestamp(full_submission_deadline/1000) if full_submission_deadline else None
+
+    submission_deadline_datetime = full_submission_duedate if full_submission_duedate else submission_duedate
 
     venue.submission_stage =  openreview.stages.SubmissionStage(
         start_date=submission_cdate,
         due_date=submission_duedate,
         second_due_date=full_submission_duedate,
+        withdraw_submission_exp_date=submission_deadline_datetime + datetime.timedelta(weeks=52),
         double_blind=True,
         force_profiles=True
     )
-
-    submission_deadline_datetime = full_submission_duedate if full_submission_duedate else submission_duedate
 
     authors_name = venue.authors_name
     reviewers_name = venue.reviewers_name
@@ -105,11 +106,8 @@ def process(client, edit, invitation):
     submission_deadline = full_submission_deadline if full_submission_deadline else note.content['submission_deadline']['value']
     venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=submission_deadline + (30*60*1000))
 
-    # AC conflict and affinity score invitations
-    if venue.use_area_chairs:
-        venue.setup_matching_invitations(venue.get_area_chairs_id())
-
-    venue.setup_matching_invitations(venue.get_reviewers_id())
+    # create conflict and affinity score invitations
+    venue.setup_matching_invitations()
 
     venue.create_bid_stages()
 
@@ -266,7 +264,7 @@ def process(client, edit, invitation):
 
     baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
 
-    #edit Comment invitation to have PC group as readers
+    # edit Comment invitation to have PC group as readers
     client.post_invitation_edit(
         invitations=f'{support_user}/-/Edit',
         signatures=[support_user],
@@ -287,7 +285,7 @@ def process(client, edit, invitation):
         )
     )
 
-    # # update all comments to have the PC group as readers
+    # update all comments to have the PC group as readers
     comments = client.get_notes(invitation=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment')
     for comment in comments:
         client.post_note_edit(
@@ -298,6 +296,28 @@ def process(client, edit, invitation):
                 readers=[venue.get_program_chairs_id(), support_user]
             )
         )
+
+    # post status invitation and add id to group content
+    inv_edit = client.post_invitation_edit(
+        invitations=f'{support_user}/Venue_Request/Conference_Review_Workflow/-/Status',
+        signatures=[support_user],
+        content = {
+            'noteNumber': { 'value': note.number},
+            'noteId': { 'value': note.id },
+            'venueId': { 'value': venue_id }
+        }
+    )
+
+    client.post_group_edit(
+        invitation=f'{venue_id}/-/Edit',
+        signatures=[venue_id],
+        group=openreview.api.Group(
+            id=venue_id,
+            content={
+                'status_invitation_id': { 'value': inv_edit['invitation']['id'] }
+            }
+        )
+    )
 
     #post note to request form
     client.post_note_edit(
