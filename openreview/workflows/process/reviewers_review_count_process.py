@@ -13,7 +13,7 @@ def process(client, invitation):
     reviews = client.get_notes(parent_invitations=review_invitation_id, stream=True)
 
     print('Get review signatures')
-    signatures_by_id = { g.id:g for g in client.get_all_groups(prefix=f'{domain.id}/{submission_name}') }
+    signatures_by_id = { g.id:g for g in client.get_all_groups(prefix=f'{domain.id}/{submission_name}', domain=domain.id) }
 
     len(signatures_by_id)
 

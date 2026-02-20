@@ -29,7 +29,7 @@ def process(client, invitation):
         users += client.get_group(reviewers_id).members
 
     print('Get profiles for all the assigned reviewers and area chairs')
-    groups = client.get_all_groups(prefix=venue_id + '/' + submission_name)
+    groups = client.get_all_groups(prefix=venue_id + '/' + submission_name, domain=venue_id)
 
     for group in groups:
         if store_ac_emails and f'/{area_chairs_anon_name}' in group.id:
@@ -50,7 +50,7 @@ def process(client, invitation):
 
     print('Create preferred email edges for all the profiles')
 
-    existing_edges = { g['id']['head']: openreview.api.Edge.from_json(g['values'][0]) for g in client.get_grouped_edges(invitation=invitation.id, groupby='head') }
+    existing_edges = { g['id']['head']: openreview.api.Edge.from_json(g['values'][0]) for g in client.get_grouped_edges(invitation=invitation.id, groupby='head', domain=venue_id) }
     
     new_edges = []
     for profile in all_profiles:
