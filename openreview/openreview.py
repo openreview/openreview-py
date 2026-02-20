@@ -22,6 +22,18 @@ import traceback
 class OpenReviewException(Exception):
     pass
 
+class MfaRequiredException(OpenReviewException):
+    """Raised when MFA is required but no code provider is available."""
+    def __init__(self, mfa_pending_token, mfa_methods, preferred_method):
+        self.mfa_pending_token = mfa_pending_token
+        self.mfa_methods = mfa_methods
+        self.preferred_method = preferred_method
+        super().__init__({
+            'name': 'MfaRequiredError',
+            'message': f'MFA verification required. Available methods: {", ".join(mfa_methods)}. '
+                       f'Interactive login required (TTY).'
+        })
+
 class LogRetry(Retry):
      
     def __init__(self, *args, **kwargs):
@@ -33,6 +45,123 @@ class LogRetry(Retry):
 
         # Call the parent class method to perform the actual retry increment
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
+
+def _is_interactive():
+    """Check if interactive input is available (terminal or notebook)."""
+    if sys.stdin.isatty():
+        return True
+    try:
+        if 'IPKernelApp' in get_ipython().config:
+            return True
+    except NameError:
+        pass
+    return False
+
+def _default_mfa_method_chooser(mfa_methods, preferred_method):
+    """Phase 1: Choose MFA method interactively."""
+    supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]
+    if not supported:
+        return None
+    print('\nMulti-factor authentication is required.')
+    if len(supported) == 1:
+        print(f'Using method: {supported[0]}')
+        return supported[0]
+    print(f'Available methods: {", ".join(supported)}')
+    method_input = input(f'Choose method [{preferred_method}]: ').strip()
+    return method_input if method_input in supported else preferred_method
+
+def _default_mfa_code_prompt(method):
+    """Phase 2: Prompt for the verification code."""
+    prompts = {
+        'totp': 'Enter TOTP code from your authenticator app: ',
+        'emailOtp': 'Enter the verification code sent to your email: ',
+    }
+    return input(prompts.get(method, f'Enter {method} code: ')).strip()
+
+def _passkey_browser_flow(client, mfa_pending_token, timeout=120):
+    """
+    Open browser to API's WebAuthn page, receive auth token via local callback.
+    Returns token_response_dict or None on timeout/failure.
+    """
+    import http.server
+    import threading
+    import webbrowser
+    import urllib.parse
+    import json as _json
+
+    baseurl = client.baseurl
+    result = {}
+
+    site_url = tools.get_site_url(client)
+
+    class CallbackHandler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length).decode('utf-8')
+            parsed = urllib.parse.parse_qs(body)
+            result['token'] = parsed.get('token', [None])[0]
+            result['user'] = parsed.get('user', [None])[0]
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            page = (
+                '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+                '<meta name="viewport" content="width=device-width,initial-scale=1">'
+                '<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans:400,700&display=swap">'
+                '<title>Authentication Complete | OpenReview</title>'
+                '<style>'
+                '*{box-sizing:border-box;margin:0;padding:0}'
+                'body{font-family:"Noto Sans","Helvetica Neue",Helvetica,Arial,sans-serif;'
+                'background:#fffdfa;color:#2c3a4a;min-height:100vh;display:flex;flex-direction:column}'
+                '.navbar{background-color:#8c1b13;padding:12px 0}'
+                '.navbar-inner{max-width:960px;margin:0 auto;padding:0 15px}'
+                '.navbar-brand{color:#fff;font-size:18px;text-decoration:none}'
+                '.navbar-brand strong{font-weight:700}'
+                '.main{flex:1;display:flex;justify-content:center;align-items:center;padding:40px 15px}'
+                '.card{background:#fff;border:1px solid #ddd;border-radius:4px;'
+                'padding:36px 40px;max-width:420px;width:100%;text-align:center}'
+                '.card h1{font-size:22px;font-weight:700;color:#2c3a4a;margin-bottom:6px}'
+                '.card .icon{font-size:48px;margin-bottom:12px}'
+                '.card p{font-size:14px;color:#555;line-height:1.5}'
+                '.footer{text-align:center;padding:16px 15px;font-size:12px;color:#999;border-top:1px solid #eee}'
+                '.footer a{color:#4d8093;text-decoration:none}'
+                '</style></head><body>'
+                '<nav class="navbar"><div class="navbar-inner">'
+                f'<a class="navbar-brand" href="{site_url}"><strong>OpenReview</strong>.net</a>'
+                '</div></nav>'
+                '<div class="main"><div class="card">'
+                '<div class="icon">&#10003;</div>'
+                '<h1>Authentication Complete</h1>'
+                '<p>You may close this tab and return to your terminal.</p>'
+                '</div></div>'
+                '<footer class="footer">'
+                f'<a href="{site_url}">OpenReview</a> &mdash; '
+                'Open Peer Review. Open Publishing. Open Access.</footer>'
+                '</body></html>'
+            )
+            self.wfile.write(page.encode('utf-8'))
+        def log_message(self, format, *args):
+            pass
+
+    server = http.server.HTTPServer(('127.0.0.1', 0), CallbackHandler)
+    port = server.server_address[1]
+    server.timeout = timeout
+
+    url = (f'{baseurl}/mfa/webauthn-auth'
+           f'?pendingToken={urllib.parse.quote(mfa_pending_token)}'
+           f'&callbackPort={port}')
+
+    thread = threading.Thread(target=server.handle_request, daemon=True)
+    thread.start()
+    print('Opening browser for passkey authentication...')
+    webbrowser.open(url)
+    thread.join(timeout=timeout)
+    server.server_close()
+
+    if result.get('token'):
+        return {'token': result['token'], 'user': _json.loads(result['user'])}
+    return None
+
 class Client(object):
     """
     :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL`
@@ -48,9 +177,10 @@ class Client(object):
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
         self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL', 'http://localhost:3000')
-        if 'https://api2.openreview.net' in self.baseurl or 'https://devapi2.openreview.net' in self.baseurl:
-            correct_baseurl = self.baseurl.replace('api2', 'api')
+        if any(url in self.baseurl for url in tools.V2_REMOTE_URLS):
+            correct_baseurl = tools.get_base_urls(self)[0]
             raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the new client openreview.api.OpenReviewClient')
+        self.baseurl_v2 = tools.get_base_urls(self)[1]
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -81,6 +211,8 @@ class Client(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.infer_notes_url = self.baseurl + '/notes/infer'
         self.domains_rename = self.baseurl + '/domains/rename'
+        self.mfa_challenge_url = self.baseurl_v2 + '/mfa/challenge'
+        self.mfa_verify_url = self.baseurl_v2 + '/mfa/verify'
 
         # Build User-Agent string: openreview-py/{package_version} (Python/{python_version})
         try:
@@ -152,6 +284,56 @@ class Client(object):
                 }
             raise OpenReviewException(error)
 
+    def __request_mfa_challenge(self, mfa_pending_token, method):
+        """Trigger MFA challenge (e.g., send email OTP)."""
+        payload = {'mfaPendingToken': mfa_pending_token, 'method': method}
+        response = self.session.post(self.mfa_challenge_url, headers=self.headers, json=payload)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def __verify_mfa(self, mfa_pending_token, method, code):
+        """Verify MFA code and complete login."""
+        payload = {'mfaPendingToken': mfa_pending_token, 'method': method, 'code': code}
+        response = self.session.post(self.mfa_verify_url, headers=self.headers, json=payload)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def __resolve_mfa(self, mfa_pending_token, mfa_methods, preferred_method):
+        """Resolve MFA via interactive prompt."""
+        supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]
+        if not supported:
+            raise OpenReviewException({
+                'name': 'MfaError',
+                'message': f'No supported MFA methods. Server offered: {", ".join(mfa_methods)}'
+            })
+
+        if not _is_interactive():
+            raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
+
+        method = _default_mfa_method_chooser(mfa_methods, preferred_method)
+        if not method:
+            raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
+
+        if method == 'passkey':
+            return self.__resolve_passkey(mfa_pending_token)
+        if method == 'emailOtp':
+            self.__request_mfa_challenge(mfa_pending_token, 'emailOtp')
+            print('A verification code has been sent to your email.')
+        code = _default_mfa_code_prompt(method)
+        if not code:
+            raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
+        return self.__verify_mfa(mfa_pending_token, method, code)
+
+    def __resolve_passkey(self, mfa_pending_token):
+        """Handle passkey authentication via browser flow."""
+        result = _passkey_browser_flow(self, mfa_pending_token)
+        if result and result.get('token'):
+            return result
+        raise OpenReviewException({
+            'name': 'MfaError',
+            'message': 'Passkey authentication failed or timed out.'
+        })
+
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
@@ -162,7 +344,9 @@ class Client(object):
 
     def login_user(self,username=None, password=None, expiresIn=None):
         """
-        Logs in a registered user
+        Logs in a registered user. If MFA is enabled for the account, this method
+        will attempt to complete MFA verification automatically using the configured
+        an interactive terminal prompt.
 
         :param username: OpenReview username
         :type username: str, optional
@@ -175,9 +359,24 @@ class Client(object):
         :rtype: dict
         """
         user = { 'id': username, 'password': password, 'expiresIn': expiresIn }
-        response = self.session.post(self.login_url, headers=self.headers, json=user)
+        login_url = self.baseurl_v2 + '/login'
+        try:
+            response = self.session.post(login_url, headers=self.headers, json=user)
+        except requests.exceptions.ConnectionError:
+            if self.baseurl_v2 != self.baseurl:
+                response = self.session.post(self.login_url, headers=self.headers, json=user)
+            else:
+                raise
         response = self.__handle_response(response)
         json_response = response.json()
+
+        if json_response.get('mfaPending'):
+            json_response = self.__resolve_mfa(
+                json_response['mfaPendingToken'],
+                json_response['mfaMethods'],
+                json_response.get('preferredMethod')
+            )
+
         self.__handle_token(json_response)
         return json_response
 

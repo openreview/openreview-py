@@ -3377,7 +3377,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if cdate:
             invitation.cdate = cdate
         if self.venue.is_template_related_workflow():
-            baseurl = self.client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+            baseurl = tools.get_site_url(self.client)
             link = f'{baseurl}/assignments?group={committee_id}'
             invitation.description = f'<span>Create draft assignments <a href={link}>here</a>.</span>'
         self.save_invitation(invitation, replacement=True)
