@@ -18,7 +18,7 @@ class TestJournalMatching():
     def journal(self, openreview_client, helpers):
 
         manuel_client=OpenReviewClient(username='manuel@mail.com', password=helpers.strong_password)
-        manuel_client.impersonate('CARP/Editors_In_Chief')
+        manuel_client.impersonate('CARP')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'CARP' })
 

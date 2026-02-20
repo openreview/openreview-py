@@ -516,6 +516,9 @@ class TestMatching():
     
     def test_redeploy_assigments(self, venue, openreview_client, pc_client, helpers):
 
+        pc_client = OpenReviewClient(username='pc1_venue@mail.com', password=helpers.strong_password)
+        pc_client.impersonate(venue.id)
+        venue.client = pc_client
         notes = venue.get_submissions(sort='number:asc')
 
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
@@ -721,7 +724,7 @@ class TestMatching():
     def test_set_reviewers_assignments_as_author(self, venue, pc_client, helpers):
 
         pc3_client = OpenReviewClient(username='pc3_venue@mail.com', password=helpers.strong_password)
-        # pc3_client.impersonate(venue.id) #ForbiddenError
+        pc3_client.impersonate(venue.id) #ForbiddenError
 
         venue.client = pc3_client
 

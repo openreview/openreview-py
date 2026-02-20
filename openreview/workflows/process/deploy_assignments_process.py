@@ -35,7 +35,7 @@ def process(client, invitation):
         return
     
     # if assignments have been deployed, return
-    matching_configuration = [x for x in client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration') if x.content['status']['value']=='Deployed']    
+    matching_configuration = [x for x in client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration', domain=venue_id) if x.content['status']['value']=='Deployed']    
     if matching_configuration:
         print('Reviewer assignments have already been deployed')
         return
@@ -61,7 +61,7 @@ def process(client, invitation):
     )
 
     # edit assignment configuration and set status as complete
-    matching_configuration = [x for x in client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration') if x.content['title']['value']==match_name]    
+    matching_configuration = [x for x in client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration', domain=venue_id) if x.content['title']['value']==match_name]    
     if matching_configuration:
         client.post_note_edit(
             invitation=meta_invitation_id,
