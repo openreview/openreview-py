@@ -1811,8 +1811,9 @@ def pretty_id(group_id):
     for token in tokens:
         transformed_token=re.sub(r'\..+', '', token).replace('-', '').replace('_', ' ')
         letters_only=re.sub(r'\d|\W', '', transformed_token)
+        has_no_ascii=not re.search(r'[a-zA-Z0-9]', transformed_token)
 
-        if letters_only != transformed_token.lower():
+        if letters_only != transformed_token.lower() or (has_no_ascii and transformed_token):
             transformed_tokens.append(transformed_token)
 
 
