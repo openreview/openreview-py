@@ -1855,6 +1855,12 @@ class VenueRequest():
                 'order': 68,
                 'required': False,
                 'hidden': True
+            },
+            'authors_with_institutions': {
+                'value-radio': ['Yes', 'No'],
+                'order': 69,
+                'required': False,
+                'hidden': True
             }
         }
 

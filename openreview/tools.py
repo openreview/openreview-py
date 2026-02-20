@@ -504,7 +504,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
         first_author_last_name = 'anonymous'
         authors = 'Anonymous'
     else:
-        note_author_list = note.content['authors'] if isinstance(note.content['authors'], list) else note.content['authors']['value']
+        note_author_list = note.get_author_names()
         first_author_last_name = note_author_list[0].split(' ')[-1].lower()
         if names_reversed:
             # last, first
