@@ -9,7 +9,7 @@ def process(client, invitation):
     action_editors = client.get_group(journal.get_action_editors_id()).members
 
     print('Get profiles for all the assigned reviewers and action editors')
-    groups = client.get_all_groups(prefix=journal.venue_id + '/Paper')
+    groups = client.get_all_groups(prefix=journal.venue_id + '/Paper', domain=journal.venue_id)
 
     for group in groups:
         if '/Reviewer_' in group.id:
@@ -21,7 +21,7 @@ def process(client, invitation):
 
     print('Create preferred email edges for all the profiles')
 
-    existing_edges = { g['id']['head']: openreview.api.Edge.from_json(g['values'][0]) for g in client.get_grouped_edges(invitation=invitation.id, groupby='head') }
+    existing_edges = { g['id']['head']: openreview.api.Edge.from_json(g['values'][0]) for g in client.get_grouped_edges(invitation=invitation.id, groupby='head', domain=journal.venue_id) }
     
     new_edges = []
     for profile in all_profiles:

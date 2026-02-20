@@ -41,6 +41,6 @@ def process(client, invitation):
         )
     
     ## Release the submissions to specified readers if venueid is still submission
-    submissions = client.get_all_notes(content= { 'venueid': submission_venue_id })
+    submissions = client.get_all_notes(content= { 'venueid': submission_venue_id }, domain=venue_id)
     print(f'update {len(submissions)} submissions')
     openreview.tools.concurrent_requests(post_submission_edit, submissions, desc='post_submission_edit')

@@ -8,7 +8,7 @@ def process(client, invitation):
     now = datetime.datetime.now()
     task = invitation.pretty_id()
 
-    edges_count = client.get_edges_count(invitation=journal.get_ae_recommendation_id(), head=submission.id)
+    edges_count = client.get_edges_count(invitation=journal.get_ae_recommendation_id(), head=submission.id, domain=journal.venue_id)
 
     if edges_count >= 3:
       return

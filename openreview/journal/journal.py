@@ -884,8 +884,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def setup_note_invitations(self):
 
-        note_invitations = self.client.get_all_invitations(prefix=f'{self.venue_id}/{self.submission_group_name}')
-        submissions_by_number = {s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id())}
+        note_invitations = self.client.get_all_invitations(prefix=f'{self.venue_id}/{self.submission_group_name}', domain=self.venue_id, type='note')
+        submissions_by_number = {s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id(), domain=self.venue_id)}
 
         def find_number(tokens):
             for token in tokens:
@@ -940,7 +940,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.invitation_builder.set_note_review_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                     if is_public:
                         invitation = self.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=invitation.id,
-                                signatures=[self.get_editors_in_chief_id()],
+                                signatures=[self.venue_id],
                                 edit={
                                     'note': {
                                         'readers': ['everyone']
@@ -1014,7 +1014,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def setup_responsibility_acknowledgement_invitations(self):
 
-        reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id())
+        reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id(), domain=self.venue_id, type='note')
 
         for invitation in reviewer_invitations:
             tokens = invitation.id.split('/')
@@ -1117,8 +1117,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         submissions = self.client.get_all_notes(invitation=self.get_author_submission_id())
 
-        ae_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head')}
-        reviewer_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head')}
+        ae_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head', domain=self.venue_id)}
+        reviewer_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head', domain=self.venue_id)}
 
         # Archive finished papers
         for submission in tqdm(submissions):
@@ -1183,7 +1183,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
             # For each submission check the status of the expertise task
             for submission in tqdm(active_submissions):
-                ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id)
+                ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id, domain=journal.venue_id)
                 if ae_score_count == 0:
                     print('Submission with no AE scores', submission.id, submission.number)
                     result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_action_editors_id())
@@ -1220,7 +1220,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                     sender=journal.get_message_sender()
                                 )
 
-                reviewers_score_count = journal.client.get_edges_count(invitation=journal.get_reviewer_affinity_score_id(), head=submission.id)
+                reviewers_score_count = journal.client.get_edges_count(invitation=journal.get_reviewer_affinity_score_id(), head=submission.id, domain=journal.venue_id)
                 if reviewers_score_count == 0:
                     print('Submission with no reviewers scores', submission.id, submission.number)
                     result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_reviewers_id())
@@ -1233,11 +1233,11 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def run_reviewer_stats(self, end_cdate, output_file, start_cdate=None):
 
-        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
+        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True, domain=self.venue_id)}
         submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
-        archived_assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(archived=True), groupby='tail')}
-        assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='tail')}
-        availability_by_reviewer = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_availability_id(), groupby='tail')}
+        archived_assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(archived=True), groupby='tail', domain=self.venue_id)}
+        assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='tail', domain=self.venue_id)}
+        availability_by_reviewer = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_availability_id(), groupby='tail', domain=self.venue_id)}
 
         report_by_reviewer = {}
         reports = self.client.get_all_notes(invitation=self.get_reviewer_report_id())
@@ -1498,12 +1498,12 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def run_action_editors_stats(self, end_cdate, output_file, start_cdate=None):
 
-        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
+        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True, domain=self.venue_id)}
         submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
-        archived_assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(archived=True), groupby='tail')}
-        assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail')}
-        availability_by_action_editors = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_ae_availability_id(), groupby='tail')}
-        custom_quota_by_action_editors = {e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=self.get_ae_custom_max_papers_id(), groupby='tail')}
+        archived_assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(archived=True), groupby='tail', domain=self.venue_id)}
+        assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail', domain=self.venue_id)}
+        availability_by_action_editors = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_ae_availability_id(), groupby='tail', domain=self.venue_id)}
+        custom_quota_by_action_editors = {e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=self.get_ae_custom_max_papers_id(), groupby='tail', domain=self.venue_id)}
         recruitment_notes = self.client.get_all_notes(forum=self.request_form_id)
         recruitment_note_by_signature = {}
 
@@ -1702,8 +1702,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def run_reviewer_unavailability_stats(self):
 
-        unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id())
-        preferred_emails_edges = { e['id']['head']: e['values'][0]['tail'] for e in self.client.get_grouped_edges(invitation=self.get_preferred_emails_invitation_id(), groupby='head', select='tail') }
+        unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id(), domain=self.venue_id)
+        preferred_emails_edges = { e['id']['head']: e['values'][0]['tail'] for e in self.client.get_grouped_edges(invitation=self.get_preferred_emails_invitation_id(), groupby='head', select='tail', domain=self.venue_id) }
 
         reviewers = self.client.get_group(self.get_reviewers_id()).members
 
@@ -1843,7 +1843,7 @@ OpenReview Team'''
             print('Check venue', journal.venue_id)
 
             invite_assignment_invitation_id = journal.get_reviewer_invite_assignment_id()
-            grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation_id, label='Pending Sign Up', groupby='tail')
+            grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation_id, label='Pending Sign Up', groupby='tail', domain=journal.venue_id)
             print('Pending sign up edges found', len(grouped_edges))
 
             for grouped_edge in grouped_edges:
