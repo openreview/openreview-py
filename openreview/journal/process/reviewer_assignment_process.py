@@ -100,7 +100,7 @@ def process_update(client, edge, invitation, existing_edge):
 
         ## Update review invitation duedate
         invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_review_id(number=note.number),
-                signatures=[journal.get_editors_in_chief_id()],
+                signatures=[journal.venue_id],
                 duedate=openreview.tools.datetime_millis(duedate)
         ))
 
