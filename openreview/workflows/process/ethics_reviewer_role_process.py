@@ -22,7 +22,7 @@ def process(client, invitation):
 
     if not reviews:
         print('No reviews found, try getting the reviews per submission.')
-        submissions = client.get_all_notes(invitation=domain.content.get('submission_id', {}).get('value'), details='replies')
+        submissions = client.get_all_notes(invitation=domain.content.get('submission_id', {}).get('value'), details='replies', domain=domain.id)
         for submission in submissions:
             reviews += [openreview.api.Note.from_json(reply) for reply in submission.details.get('replies', []) if reply['invitations'][0].endswith(f'/{review_name}')]
         if reviews:
@@ -32,7 +32,7 @@ def process(client, invitation):
             return
 
     print('Get review signatures')
-    signatures_by_id = { g.id:g for g in client.get_all_groups(prefix=f'{domain.id}/{submission_name}') }
+    signatures_by_id = { g.id:g for g in client.get_all_groups(prefix=f'{domain.id}/{submission_name}', domain=domain.id) }
 
     print('Count reviews by reviewer')
     review_signatures = [r.signatures[0] for r in reviews]

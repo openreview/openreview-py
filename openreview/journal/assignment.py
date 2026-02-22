@@ -21,7 +21,7 @@ class Assignment(object):
             self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head, wait_to_finish=True)
             tools.post_bulk_edges(self.client, edges)
             # Perform sanity check
-            edges_posted = self.client.get_edges_count(invitation=edges[0].invitation, head=edges[0].head)
+            edges_posted = self.client.get_edges_count(invitation=edges[0].invitation, head=edges[0].head, domain=self.journal.venue_id)
             if edges_posted != len(edges):
                 raise openreview.OpenReviewException(f'Failed during bulk post of {edges[0].invitation} edges! Edges found: {len(edges)}, Edges posted: {edges_posted}')
                
@@ -214,10 +214,10 @@ class Assignment(object):
                                 ))                        
 
         ## Compute the AE quota and use invitation: TMLR/Action_Editors/-/Local_Custom_Max_Papers:
-        all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= journal.get_author_submission_id(), details='directReplies')}
-        available_edges = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_availability_id(), groupby='tail', select='label') }
-        quota_edges = { e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_custom_max_papers_id(), groupby='tail', select='weight') }
-        assignments_by_ae = { e['id']['tail']: [v for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail') }
+        all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= journal.get_author_submission_id(), details='directReplies', domain=journal.venue_id) }
+        available_edges = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_availability_id(), groupby='tail', select='label', domain=journal.venue_id) }
+        quota_edges = { e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_custom_max_papers_id(), groupby='tail', select='weight', domain=journal.venue_id) }
+        assignments_by_ae = { e['id']['tail']: [v for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail', domain=journal.venue_id) }
 
         ## Clear the quotas
         self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
@@ -284,8 +284,8 @@ class Assignment(object):
         journal = self.journal
 
         proposed_assignments =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(proposed=True),
-            label=assignment_title, groupby='head', select='tail')}        
-        submission_by_id = { s.id: s for s in self.client.get_all_notes(invitation=journal.get_author_submission_id()) }
+            label=assignment_title, groupby='head', select='tail', domain=journal.venue_id)}        
+        submission_by_id = { s.id: s for s in self.client.get_all_notes(invitation=journal.get_author_submission_id(), domain=journal.venue_id) }
 
         for head, tails in tqdm(proposed_assignments.items()):
             submission = submission_by_id.get(head)
@@ -302,10 +302,10 @@ class Assignment(object):
         journal = self.journal
 
         proposed_assignments =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(proposed=True),
-            label=assignment_title, groupby='head', select='tail')}        
+            label=assignment_title, groupby='head', select='tail', domain=journal.venue_id)}        
         assignments =  { g['id']['head']: [openreview.api.Edge.from_json(v) for v in g['values']] for g in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(),
-            groupby='head', select=None)}        
-        submission_by_id = { s.id: s for s in self.client.get_all_notes(invitation=journal.get_author_submission_id()) }
+            groupby='head', select=None, domain=journal.venue_id)}        
+        submission_by_id = { s.id: s for s in self.client.get_all_notes(invitation=journal.get_author_submission_id(), domain=journal.venue_id) }
 
         to_delete_assignments = []
         now = tools.datetime_millis(datetime.datetime.now())
