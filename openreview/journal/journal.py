@@ -940,7 +940,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.invitation_builder.set_note_review_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                     if is_public:
                         invitation = self.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=invitation.id,
-                                signatures=[self.get_editors_in_chief_id()],
+                                signatures=[self.venue_id],
                                 edit={
                                     'note': {
                                         'readers': ['everyone']
