@@ -2087,7 +2087,7 @@ def is_forum_invitation(invitation):
 
 def create_replyto_invitations(client, submission, note):
 
-    venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation') if i.is_active()]
+    venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation', domain=note.domain) if i.is_active()]
 
     for invitation in venue_invitations:
         print('processing invitation: ', invitation.id)
@@ -2117,7 +2117,7 @@ def create_replyto_invitations(client, submission, note):
 
 def create_forum_invitations(client, submission):
     
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation') if i.is_active()]
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active()]
 
     for invitation in invitation_invitations:
         print('processing invitation: ', invitation.id)

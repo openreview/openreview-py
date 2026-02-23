@@ -717,7 +717,7 @@ class ARR(object):
         
         submission_id = venue_group.content.get('submission_id', {}).get('value')
 
-        commitment_submissions = client.get_all_notes(invitation=submission_id)
+        commitment_submissions = client.get_all_notes(invitation=submission_id, domain=venue_id)
 
         def process_commitment_submission(note):
             arr_submission_link = note.content.get('paper_link', {}).get('value')

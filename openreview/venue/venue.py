@@ -480,10 +480,10 @@ class Venue(object):
 
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
-            accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
+            accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details, domain=self.venue_id)
             if len(accepted_notes) == 0:
                 accepted_notes = []
-                notes = self.client.get_all_notes(content={ 'venueid': f'{self.get_submission_venue_id()}'}, sort=sort, details='directReplies')
+                notes = self.client.get_all_notes(content={ 'venueid': f'{self.get_submission_venue_id()}'}, sort=sort, details='directReplies', domain=self.venue_id)
                 for note in notes:
                     for reply in note.details['directReplies']:
                         if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
@@ -493,7 +493,7 @@ class Venue(object):
             return accepted_notes
 
         if venueid:
-            return self.client.get_all_notes(content={ 'venueid': venueid}, sort=sort, details=details)
+            return self.client.get_all_notes(content={ 'venueid': venueid}, sort=sort, details=details, domain=self.venue_id)
         
         venueids = [
             self.get_submission_venue_id(),
@@ -501,7 +501,7 @@ class Venue(object):
             self.get_rejected_submission_venue_id()
         ]
 
-        return self.client.get_all_notes(content={ 'venueid': ','.join(venueids)}, sort=sort, details=details)
+        return self.client.get_all_notes(content={ 'venueid': ','.join(venueids)}, sort=sort, details=details, domain=self.venue_id)
 
     #use to expire revision invitations from request form
     def expire_invitation(self, invitation_id):
@@ -598,7 +598,7 @@ class Venue(object):
 
         if self.submission_stage.second_due_date:
             stage = self.submission_stage
-            submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Full_Submission',
+            submission_revision_stage = openreview.stages.SubmissionRevisionStage(name=f'Full_{stage.name}',
                 start_date=stage.exp_date,
                 due_date=stage.second_due_date,
                 additional_fields=stage.second_deadline_additional_fields if stage.second_deadline_additional_fields else stage.additional_fields,
@@ -1175,6 +1175,7 @@ Total Errors: {len(errors)}
         edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             groupby="head",
+            domain=self.id
         )
         edges_dict = {edge["id"]["head"]: edge["values"] for edge in edges}
 
@@ -1296,18 +1297,21 @@ Total Errors: {len(errors)}
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             label="Error_Upload_PROCESSING_ERROR",
             groupby="tail",
+            domain=self.id
         )
 
         similarity_error_edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             label="Error_Similarity_PROCESSING_ERROR",
             groupby="tail",
+            domain=self.id
         )
 
         created_state_edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             label="Created",
             groupby="tail",
+            domain=self.id
         )
 
         edges.extend(similarity_error_edges)
@@ -1395,6 +1399,7 @@ Total Errors: {len(errors)}
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             label="File Uploaded",
             groupby="tail",
+            domain=self.id
         )
 
         for edge in tqdm(edges):
@@ -1442,6 +1447,7 @@ Total Errors: {len(errors)}
         edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             groupby="tail",
+            domain=self.id
         )
 
         label_value_not_equal_counter = 0
@@ -1463,6 +1469,7 @@ Total Errors: {len(errors)}
         edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             groupby="tail",
+            domain=self.id
         )
 
         for e in tqdm(edges):
@@ -1518,11 +1525,11 @@ Total Errors: {len(errors)}
 
         submission_id = self.get_submission_id()
         submission_name = self.submission_stage.name
-        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies')}
+        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies', domain=venue_id)}
         
         reviewer_assignment_id = self.get_assignment_id(reviewers_id, deployed=True)
-        assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
-        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
+        assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail', domain=venue_id) }
+        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id(), domain=venue_id)
 
         all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.reviewers_name)}' in g.id ]
         all_anon_reviewer_group_members = []
@@ -1656,11 +1663,11 @@ Total Errors: {len(errors)}
 
         submission_id = self.get_submission_id()
         submission_name = self.submission_stage.name
-        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies')}
+        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies', domain=venue_id)}
         
         reviewer_assignment_id = self.get_assignment_id(committee_id, deployed=True)
-        assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
-        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
+        assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail', domain=venue_id) }
+        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id(), domain=venue_id)
 
         all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.area_chairs_name)}' in g.id ]
         all_anon_reviewer_group_members = []
@@ -1879,7 +1886,7 @@ OpenReview Team'''
                 
                 print(f'Check active venue {venue_group.id}')
 
-                edge_invitations = client.get_all_invitations(prefix=venue_id, type='edge')
+                edge_invitations = client.get_all_invitations(prefix=venue_id, type='edge', domain=venue_id)
                 invite_assignment_invitations = [inv.id for inv in edge_invitations if inv.id.endswith('Invite_Assignment')]
 
                 for invite_assignment_invitation_id in invite_assignment_invitations:
@@ -1888,7 +1895,7 @@ OpenReview Team'''
                     invite_assignment_invitation = openreview.tools.get_invitation(client, invite_assignment_invitation_id)
 
                     if invite_assignment_invitation:
-                        grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation.id, label='Pending Sign Up', groupby='tail')
+                        grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation.id, label='Pending Sign Up', groupby='tail', domain=venue_id)
                         print('Pending sign up edges found', len(grouped_edges))
 
                         for grouped_edge in grouped_edges:
@@ -1944,7 +1951,7 @@ OpenReview Team'''
         
         return True
 
-    def compute_dual_submission_metadata(self, alternate_venue, output_file_path, sparse_value=5, top_percent_cutoff=1, job_id=None, author_overlap_only=False):
+    def compute_dual_submission_metadata(self, alternate_venue, output_file_path, top_percent_cutoff=1, job_id=None, author_overlap_only=False):
         short_name_a = self.short_name # Column A
         short_name_b = alternate_venue.short_name # Column B
         same_venue = self.venue_id == alternate_venue.venue_id
@@ -1959,7 +1966,7 @@ OpenReview Team'''
                 venue_id=self.get_submission_venue_id(),
                 alternate_venue_id=alternate_venue.get_submission_venue_id(),
                 model='specter2+scincl',
-                sparse_value=sparse_value
+                sparse_value=5
             )
             job_id = res['jobId']
             print('Computing scores for active papers... Job ID: ', job_id)
@@ -1969,11 +1976,8 @@ OpenReview Team'''
 
         ## Score filtering
 
-        # Keep top sparse_value scores per paper
-        print(f'Finding the top {sparse_value} scores per paper')
-        top_scores_a_to_b = {}  # Column A -> Column B
-        top_scores_b_to_a = {}  # Column B -> Column A
-
+        unique_scores = []
+        seen_pairs = set()
         for r in results['results']:
             paper_id_a = r['match_submission']
             paper_id_b = r['submission']
@@ -1983,46 +1987,22 @@ OpenReview Team'''
             if paper_id_a == paper_id_b:
                 continue
 
-            # Maintain min-heaps for both columns
-            # A -> B
-            heap_a = top_scores_a_to_b.setdefault(paper_id_a, [])
-            if len(heap_a) < sparse_value:
-                heapq.heappush(heap_a, (score, paper_id_b))
-            else:
-                heapq.heappushpop(heap_a, (score, paper_id_b))
+            # Deduplicate mirrored pairs
+            pair = tuple(sorted([paper_id_a, paper_id_b]))
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
 
-            # B -> A
-            heap_b = top_scores_b_to_a.setdefault(paper_id_b, [])
-            if len(heap_b) < sparse_value:
-                heapq.heappush(heap_b, (score, paper_id_a))
-            else:
-                heapq.heappushpop(heap_b, (score, paper_id_a))
+            unique_scores.append((paper_id_a, paper_id_b, score))
 
-        # Flatten to list, deduplicate mirrored pairs, and find cutoff
+        # Apply cutoff
         print(f'Applying {top_percent_cutoff}% score cutoff')
 
-        all_scores = []
-        seen_pairs = set()
-        for paper_id_a, heap in top_scores_a_to_b.items():
-            for score, paper_id_b in heap:
-                pair = tuple(sorted([paper_id_a, paper_id_b]))
-                if pair not in seen_pairs:
-                    all_scores.append((paper_id_a, paper_id_b, score))
-                    seen_pairs.add(pair)
-
-        for paper_id_b, heap in top_scores_b_to_a.items():
-            for score, paper_id_a in heap:
-                pair = tuple(sorted([paper_id_a, paper_id_b]))
-                if pair not in seen_pairs:
-                    all_scores.append((paper_id_a, paper_id_b, score))
-                    seen_pairs.add(pair)
-
-        scores_only = [s for (_, _, s) in all_scores]
+        scores_only = [s for (_, _, s) in unique_scores]
         cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
-
-        filtered_scores = [(a, b, s) for (a, b, s) in all_scores if s >= cutoff]
+        filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
-        print(f'{len(all_scores)} scores before cutoff')
+        print(f'{len(unique_scores)} scores before cutoff')
         print(f'{len(filtered_scores)} scores after cutoff')
 
         # Sort by score descending

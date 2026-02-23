@@ -13,12 +13,18 @@ def process(client, edit, invitation):
     submission_cdate = datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000)
     submission_duedate = datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000)
 
+    full_submission_deadline = note.content.get('full_submission_deadline', {}).get('value')
+    full_submission_duedate = datetime.datetime.fromtimestamp(full_submission_deadline/1000) if full_submission_deadline else None        
+
     venue.submission_stage =  openreview.stages.SubmissionStage(
         start_date=submission_cdate,
         due_date=submission_duedate,
+        second_due_date=full_submission_duedate,
         double_blind=True,
         force_profiles=True
     )
+
+    submission_deadline_datetime = full_submission_duedate if full_submission_duedate else submission_duedate
 
     authors_name = venue.authors_name
     reviewers_name = venue.reviewers_name
@@ -26,8 +32,8 @@ def process(client, edit, invitation):
     venue.bid_stages = [
         openreview.stages.BidStage(
             f'{venue_id}/{reviewers_name}',
-            start_date = submission_duedate + datetime.timedelta(days=3.5),
-            due_date = submission_duedate + datetime.timedelta(days=7)
+            start_date = submission_deadline_datetime + datetime.timedelta(days=3.5),
+            due_date = submission_deadline_datetime + datetime.timedelta(days=7)
         )
     ]
 
@@ -41,13 +47,13 @@ def process(client, edit, invitation):
     )
 
     venue.review_stage = openreview.stages.ReviewStage(
-        start_date=submission_duedate + datetime.timedelta(weeks=3.5),
-        due_date=submission_duedate + datetime.timedelta(weeks=5)
+        start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
+        due_date=submission_deadline_datetime + datetime.timedelta(weeks=5)
     )
 
     venue.comment_stage = openreview.stages.CommentStage(
-        start_date=submission_duedate + datetime.timedelta(weeks=4),
-        end_date=submission_duedate + datetime.timedelta(weeks=6),
+        start_date=submission_deadline_datetime + datetime.timedelta(weeks=4),
+        end_date=submission_deadline_datetime + datetime.timedelta(weeks=6),
         reader_selection=True,
         check_mandatory_readers=True,
         readers=[openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS],
@@ -56,8 +62,8 @@ def process(client, edit, invitation):
 
     venue.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
         name='Author_Rebuttal',
-        start_date=submission_duedate + datetime.timedelta(weeks=5.5),
-        due_date=submission_duedate + datetime.timedelta(weeks=6.5),
+        start_date=submission_deadline_datetime + datetime.timedelta(weeks=5.5),
+        due_date=submission_deadline_datetime + datetime.timedelta(weeks=6.5),
         single_rebuttal=True,
         readers=[openreview.stages.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED]
     )
@@ -69,15 +75,15 @@ def process(client, edit, invitation):
         )
 
     venue.decision_stage = openreview.stages.DecisionStage(
-        start_date=submission_duedate + datetime.timedelta(weeks=6),
-        due_date=submission_duedate + datetime.timedelta(weeks=7),
+        start_date=submission_deadline_datetime + datetime.timedelta(weeks=6),
+        due_date=submission_deadline_datetime + datetime.timedelta(weeks=7),
         accept_options=['Accept (Oral)', 'Accept (Poster)']
     )
 
     venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
         name='Camera_Ready_Revision',
-        start_date=submission_duedate + datetime.timedelta(weeks=7),
-        due_date=submission_duedate + datetime.timedelta(weeks=9),
+        start_date=submission_deadline_datetime + datetime.timedelta(weeks=7),
+        due_date=submission_deadline_datetime + datetime.timedelta(weeks=9),
         only_accepted=True,
         remove_fields=['email_sharing', 'data_release']
     )
@@ -96,7 +102,8 @@ def process(client, edit, invitation):
 
     venue.create_submission_stage()
 
-    venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=note.content['submission_deadline']['value'] + (30*60*1000))
+    submission_deadline = full_submission_deadline if full_submission_deadline else note.content['submission_deadline']['value']
+    venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=submission_deadline + (30*60*1000))
 
     # AC conflict and affinity score invitations
     if venue.use_area_chairs:
@@ -106,7 +113,7 @@ def process(client, edit, invitation):
 
     venue.create_bid_stages()
 
-    venue.invitation_builder.set_assignment_invitation(committee_id=venue.get_reviewers_id(), cdate=note.content['submission_deadline']['value'] + (60*60*1000*24*7*2))
+    venue.invitation_builder.set_assignment_invitation(committee_id=venue.get_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
@@ -114,12 +121,12 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': f'{reviewers_name}_Assignment_Deployment' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2.5) }
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.5) }
         },
         await_process=True
     )
 
-    venue.create_submission_change_invitation(name='Submission_Change_Before_Reviewing', activation_date=note.content['submission_deadline']['value'] + (60*60*1000*24*7*3))
+    venue.create_submission_change_invitation(name='Submission_Change_Before_Reviewing', activation_date=submission_deadline + (60*60*1000*24*7*3))
 
     venue.create_review_stage()
     venue.create_comment_stage()
@@ -130,7 +137,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': f'{venue.review_stage.name}_Release' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Official_Review' },
             'reviewers_name': { 'value': reviewers_name },
@@ -149,7 +156,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Author_Reviews_Notification' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5.1) },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5.1) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
             'message_reply_to': { 'value': note.content['contact_email']['value'] },
@@ -167,7 +174,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Decision_Upload' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6.5) }
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*6.5) }
         },
         await_process=True
     )
@@ -178,7 +185,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Decision_Release' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6.7) },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*6.7) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Decision' },
             'reviewers_name': { 'value': reviewers_name },
@@ -195,7 +202,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Author_Decision_Notification' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
             'message_reply_to': { 'value': note.content['contact_email']['value'] }
@@ -213,7 +220,7 @@ def process(client, edit, invitation):
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': authors_name }
         }
@@ -246,6 +253,7 @@ def process(client, edit, invitation):
                 'contact_email': { 'readers': [support_user] },
                 'submission_start_date': { 'readers': [support_user] },
                 'submission_deadline': { 'readers': [support_user] },
+                'full_submission_deadline': { 'readers': [support_user] },
                 'reviewers_name': { 'readers': [support_user] },
                 'area_chairs_support': { 'readers': [support_user] },
                 'area_chairs_name': { 'readers': [support_user] },

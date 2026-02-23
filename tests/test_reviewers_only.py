@@ -186,6 +186,8 @@ class TestReviewersOnly():
         assert group.members == ['openreview.net/Template', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
         assert 'request_form_id' in group.content and group.content['request_form_id']['value'] == request.id
 
+        assert 'full_submission_invitation_id' not in group.content
+
         assert 'preferred_emails_groups' in group.content and group.content['preferred_emails_groups']['value'] == [
             'ABCD.cc/2025/Conference/Program_Committee',
             'ABCD.cc/2025/Conference/Authors'
@@ -237,6 +239,7 @@ class TestReviewersOnly():
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
+
         post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
         assert post_submission_inv.edit['note']['readers'] == [
@@ -272,6 +275,7 @@ class TestReviewersOnly():
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
         assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference']
+        assert invitation.cdate == submission_inv.expdate
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Deanonymizers')
         invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request')
@@ -452,7 +456,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 
                 invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
                 content={
-                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nREVIEWER@mail.com\nmelisa_bok1\n' },
+                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nREVIEWER@mail.com\nmelisa_bok1\ninvalid_emäil@abcd.cc\n' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
                     'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
                 },
@@ -475,7 +479,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 Invited: 3
 Already invited: 0
 Already member: 0
-Errors: 1
+Errors: 2
 
 For more details, please check the following links:
 
