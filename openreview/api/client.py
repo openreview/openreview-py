@@ -22,7 +22,7 @@ import json
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from ..openreview import MfaRequiredException
-from ..openreview import _default_mfa_method_chooser, _default_mfa_code_prompt, _passkey_browser_flow
+from ..openreview import _passkey_browser_flow
 from .. import tools
 
 class LogRetry(Retry):
@@ -201,7 +201,7 @@ class OpenReviewClient(object):
         if not tools._is_interactive():
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
 
-        method = _default_mfa_method_chooser(mfa_methods, preferred_method)
+        method = tools._default_mfa_method_chooser(mfa_methods, preferred_method)
         if not method:
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
 
@@ -210,7 +210,7 @@ class OpenReviewClient(object):
         if method == 'emailOtp':
             self.__request_mfa_challenge(mfa_pending_token, 'emailOtp')
             print('A verification code has been sent to your email.')
-        code = _default_mfa_code_prompt(method)
+        code = tools._default_mfa_code_prompt(method)
         if not code:
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
         return self.__verify_mfa(mfa_pending_token, method, code)

@@ -46,27 +46,6 @@ class LogRetry(Retry):
         # Call the parent class method to perform the actual retry increment
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
 
-def _default_mfa_method_chooser(mfa_methods, preferred_method):
-    """Phase 1: Choose MFA method interactively."""
-    supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]
-    if not supported:
-        return None
-    print('\nMulti-factor authentication is required.')
-    if len(supported) == 1:
-        print(f'Using method: {supported[0]}')
-        return supported[0]
-    print(f'Available methods: {", ".join(supported)}')
-    method_input = input(f'Choose method [{preferred_method}]: ').strip()
-    return method_input if method_input in supported else preferred_method
-
-def _default_mfa_code_prompt(method):
-    """Phase 2: Prompt for the verification code."""
-    prompts = {
-        'totp': 'Enter TOTP code from your authenticator app: ',
-        'emailOtp': 'Enter the verification code sent to your email: ',
-    }
-    return input(prompts.get(method, f'Enter {method} code: ')).strip()
-
 def _passkey_browser_flow(client, mfa_pending_token, timeout=120):
     """
     Open browser to API's WebAuthn page, receive auth token via local callback.
@@ -299,7 +278,7 @@ class Client(object):
         if not tools._is_interactive():
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
 
-        method = _default_mfa_method_chooser(mfa_methods, preferred_method)
+        method = tools._default_mfa_method_chooser(mfa_methods, preferred_method)
         if not method:
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
 
@@ -308,7 +287,7 @@ class Client(object):
         if method == 'emailOtp':
             self.__request_mfa_challenge(mfa_pending_token, 'emailOtp')
             print('A verification code has been sent to your email.')
-        code = _default_mfa_code_prompt(method)
+        code = tools._default_mfa_code_prompt(method)
         if not code:
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
         return self.__verify_mfa(mfa_pending_token, method, code)

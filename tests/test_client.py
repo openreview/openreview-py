@@ -530,8 +530,8 @@ class TestMfaLogin():
         totp = pyotp.TOTP(TestMfaLogin.totp_secret)
 
         with patch('openreview.tools._is_interactive', return_value=True), \
-             patch('openreview.api.client._default_mfa_method_chooser', return_value='totp'), \
-             patch('openreview.api.client._default_mfa_code_prompt', return_value=totp.now()):
+             patch('openreview.tools._default_mfa_method_chooser', return_value='totp'), \
+             patch('openreview.tools._default_mfa_code_prompt', return_value=totp.now()):
             client = OpenReviewClient(
                 baseurl='http://localhost:3001',
                 username='mfa_totp_test@mail.com',
@@ -548,8 +548,8 @@ class TestMfaLogin():
         totp = pyotp.TOTP(TestMfaLogin.totp_secret)
 
         with patch('openreview.tools._is_interactive', return_value=True), \
-             patch('openreview.openreview._default_mfa_method_chooser', return_value='totp'), \
-             patch('openreview.openreview._default_mfa_code_prompt', return_value=totp.now()):
+             patch('openreview.tools._default_mfa_method_chooser', return_value='totp'), \
+             patch('openreview.tools._default_mfa_code_prompt', return_value=totp.now()):
             client = openreview.Client(
                 baseurl='http://localhost:3000',
                 username='mfa_totp_test@mail.com',
@@ -601,8 +601,8 @@ class TestMfaLogin():
             raise AssertionError('Could not extract OTP code from messages')
 
         with patch('openreview.tools._is_interactive', return_value=True), \
-             patch('openreview.api.client._default_mfa_method_chooser', return_value='emailOtp'), \
-             patch('openreview.api.client._default_mfa_code_prompt', side_effect=fetch_email_otp):
+             patch('openreview.tools._default_mfa_method_chooser', return_value='emailOtp'), \
+             patch('openreview.tools._default_mfa_code_prompt', side_effect=fetch_email_otp):
             client = OpenReviewClient(
                 baseurl='http://localhost:3001',
                 username=email,
@@ -647,8 +647,8 @@ class TestMfaLogin():
             raise AssertionError('Could not extract OTP code from messages')
 
         with patch('openreview.tools._is_interactive', return_value=True), \
-             patch('openreview.openreview._default_mfa_method_chooser', return_value='emailOtp'), \
-             patch('openreview.openreview._default_mfa_code_prompt', side_effect=fetch_email_otp):
+             patch('openreview.tools._default_mfa_method_chooser', return_value='emailOtp'), \
+             patch('openreview.tools._default_mfa_code_prompt', side_effect=fetch_email_otp):
             client = openreview.Client(
                 baseurl='http://localhost:3000',
                 username=email,
