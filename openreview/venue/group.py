@@ -346,6 +346,7 @@ class GroupBuilder(object):
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
 
         if self.venue.is_template_related_workflow():
+            submission_name = self.venue.submission_stage.name
             content['exclusion_workflow_invitations']  = {
                 'value': [
                     f'{venue_id}/-/Edit',
