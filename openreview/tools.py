@@ -43,6 +43,18 @@ LOCAL_SITE   = 'http://localhost:3030'
 V1_REMOTE_URLS = [PROD_API_V1, DEV_API_V1, LEGACY_DEV_API_V1]
 V2_REMOTE_URLS = [PROD_API_V2, DEV_API_V2, LEGACY_DEV_API_V2]
 
+def _is_interactive():
+    """Check if interactive input is available (terminal or notebook)."""
+    import sys
+    if sys.stdin.isatty():
+        return True
+    try:
+        if 'IPKernelApp' in get_ipython().config:
+            return True
+    except NameError:
+        pass
+    return False
+
 def _identify_environment(baseurl):
     """Return 'dev', 'prod', or 'local' based on baseurl."""
     if any(url in baseurl for url in [LEGACY_DEV_API_V1, LEGACY_DEV_API_V2, DEV_API_V1, DEV_API_V2]):

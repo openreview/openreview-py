@@ -497,7 +497,7 @@ class TestMfaLogin():
         """MfaRequiredException is raised in non-interactive mode (v2 client)."""
         from unittest.mock import patch
 
-        with patch('openreview.api.client._is_interactive', return_value=False):
+        with patch('openreview.tools._is_interactive', return_value=False):
             with pytest.raises(openreview.MfaRequiredException) as exc_info:
                 OpenReviewClient(
                     baseurl='http://localhost:3001',
@@ -512,7 +512,7 @@ class TestMfaLogin():
         """MfaRequiredException is raised in non-interactive mode (v1 client)."""
         from unittest.mock import patch
 
-        with patch('openreview.openreview._is_interactive', return_value=False):
+        with patch('openreview.tools._is_interactive', return_value=False):
             with pytest.raises(openreview.MfaRequiredException) as exc_info:
                 openreview.Client(
                     baseurl='http://localhost:3000',
@@ -529,7 +529,7 @@ class TestMfaLogin():
 
         totp = pyotp.TOTP(TestMfaLogin.totp_secret)
 
-        with patch('openreview.api.client._is_interactive', return_value=True), \
+        with patch('openreview.tools._is_interactive', return_value=True), \
              patch('openreview.api.client._default_mfa_method_chooser', return_value='totp'), \
              patch('openreview.api.client._default_mfa_code_prompt', return_value=totp.now()):
             client = OpenReviewClient(
@@ -547,7 +547,7 @@ class TestMfaLogin():
 
         totp = pyotp.TOTP(TestMfaLogin.totp_secret)
 
-        with patch('openreview.openreview._is_interactive', return_value=True), \
+        with patch('openreview.tools._is_interactive', return_value=True), \
              patch('openreview.openreview._default_mfa_method_chooser', return_value='totp'), \
              patch('openreview.openreview._default_mfa_code_prompt', return_value=totp.now()):
             client = openreview.Client(
@@ -600,7 +600,7 @@ class TestMfaLogin():
                         return match.group(1)
             raise AssertionError('Could not extract OTP code from messages')
 
-        with patch('openreview.api.client._is_interactive', return_value=True), \
+        with patch('openreview.tools._is_interactive', return_value=True), \
              patch('openreview.api.client._default_mfa_method_chooser', return_value='emailOtp'), \
              patch('openreview.api.client._default_mfa_code_prompt', side_effect=fetch_email_otp):
             client = OpenReviewClient(
@@ -646,7 +646,7 @@ class TestMfaLogin():
                         return match.group(1)
             raise AssertionError('Could not extract OTP code from messages')
 
-        with patch('openreview.openreview._is_interactive', return_value=True), \
+        with patch('openreview.tools._is_interactive', return_value=True), \
              patch('openreview.openreview._default_mfa_method_chooser', return_value='emailOtp'), \
              patch('openreview.openreview._default_mfa_code_prompt', side_effect=fetch_email_otp):
             client = openreview.Client(
