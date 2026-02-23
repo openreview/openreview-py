@@ -2,13 +2,7 @@ def process(client, note, invitation):
 
     venue_id = note.content.get('venue_id', '')
 
-    baseurl_v2 = 'http://localhost:3001'
-
-    if 'https://devapi' in client.baseurl:
-        baseurl_v2 = 'https://devapi2.openreview.net'
-    if 'https://api' in client.baseurl:
-        baseurl_v2 = 'https://api2.openreview.net'
-
+    baseurl_v1, baseurl_v2 = openreview.tools.get_base_urls(client)
     api2_client = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
 
     venue_group = openreview.tools.get_group(api2_client, id=venue_id)
