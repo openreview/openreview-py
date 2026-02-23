@@ -386,7 +386,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         reviewer_client = openreview.api.OpenReviewClient(username='program_committee1@aaai.org', password=helpers.strong_password)
 
-        request_page(selenium, "http://localhost:3030/group?id=AAAI.org/2025/Conference/Program_Committee", reviewer_client.token, wait_for_element='header')
+        request_page(selenium, "http://localhost:3030/group?id=AAAI.org/2025/Conference/Program_Committee", reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 submission' in header.text
 
@@ -707,7 +707,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Senior_Program_Committee'
 
         # Check that SPC Bid Console loads
-        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client.token, wait_for_element='header')
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'Senior Program Committee Bidding Console' in header.text
 
@@ -716,7 +716,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         # Check that PC Bid Console loads
         reviewer_client = openreview.api.OpenReviewClient(username = 'program_committee1@aaai.org', password=helpers.strong_password)
-        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client.token, wait_for_element='header')
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'Program Committee Bidding Console' in header.text
 

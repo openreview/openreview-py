@@ -4,6 +4,10 @@ import datetime
 import openreview
 import pytest
 import time
+from openreview.api import OpenReviewClient
+from openreview.api import Note
+from openreview.venue import Venue
+from openreview.stages import SubmissionStage
 
 class TestClient():
 
@@ -130,7 +134,7 @@ class TestClient():
         profile = client.get_profile('~Super_User1')
         assert profile, "Could not get the profile by id"
         assert isinstance(profile, openreview.Profile)
-        assert 'openreview.net' in profile.content['emails']
+        assert 'openreview@local.openreview.net' in profile.content['emails']
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*Profile Not Found.*'):
             profile = client.get_profile('mbok@sss.edu')
@@ -214,52 +218,63 @@ class TestClient():
     #     assert len(invitations) == 0
 
 
-    def test_get_notes_by_content(self, client, helpers):
+    def test_get_notes_by_content(self, openreview_client, helpers):
+
+        conference_id = 'Test.ws/2019/Conference'
+        venue = Venue(openreview_client, conference_id, 'openreview.net/Support')
+        venue.name = 'Test 2019 Conference'
+        venue.short_name = 'Test 2019'
+        venue.website = 'test.ws'
+        venue.contact = 'test@contact.com'
+        venue.invitation_builder.update_wait_time = 2000
+        venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"
 
         now = datetime.datetime.now()
-        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('Test.ws/2019/Conference')
-        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 100))
-
-        conference = builder.get_result()
-        assert conference, 'conference is None'
-
-        invitation = conference.get_submission_id()
-
-        author_client = openreview.Client(username='mbok@mail.com', password=helpers.strong_password)
-        note = openreview.Note(invitation = invitation,
-            readers = ['mbok@mail.com', 'andrew@mail.com'],
-            writers = ['mbok@mail.com', 'andrew@mail.com'],
-            signatures = ['~Melisa_Bokk1'],
-            content = {
-                'title': 'Paper title',
-                'abstract': 'This is an abstract',
-                'authorids': ['mbok@mail.com', 'andrew@mail.com'],
-                'authors': ['Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
-            }
+        venue.submission_stage = SubmissionStage(
+            double_blind=False,
+            due_date=now + datetime.timedelta(minutes=100),
+            readers=[SubmissionStage.Readers.EVERYONE],
         )
-        note = author_client.post_note(note)
-        assert note
 
-        notes = client.get_notes(invitation=invitation, content = { 'title': 'Paper title'})
+        venue.setup(program_chair_ids=[])
+        venue.create_submission_stage()
+
+        invitation = venue.get_submission_id()
+
+        author_client = OpenReviewClient(username='mbok@mail.com', password=helpers.strong_password)
+        note_edit = author_client.post_note_edit(
+            invitation=invitation,
+            signatures=['~Melisa_Bokk1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title' },
+                    'abstract': { 'value': 'This is an abstract' },
+                    'authorids': { 'value': ['mbok@mail.com', 'andrew@mail.com'] },
+                    'authors': { 'value': ['Melisa Bok', 'Andrew Mc'] },
+                    'keywords': { 'value': ['keyword1', 'keyword2'] },
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
+        assert note_edit
+
+        notes = openreview_client.get_notes(invitation=invitation, content = { 'title': 'Paper title'})
         assert len(notes) == 1
 
-        notes = client.get_notes(invitation=invitation, content = { 'title': 'Paper title3333'})
+        notes = openreview_client.get_notes(invitation=invitation, content = { 'title': 'Paper title3333'})
         assert len(notes) == 0
 
-        notes = list(openreview.tools.iterget_notes(client, invitation=invitation, content = { 'title': 'Paper title'}))
+        notes = list(openreview.tools.iterget_notes(openreview_client, invitation=invitation, content = { 'title': 'Paper title'}))
         assert len(notes) == 1
 
-        notes = list(openreview.tools.iterget_notes(client, invitation=invitation, content = { 'title': 'Paper title333'}))
+        notes = list(openreview.tools.iterget_notes(openreview_client, invitation=invitation, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
 
-        notes = client.get_all_notes(invitation=invitation, content = { 'title': 'Paper title'})
+        notes = openreview_client.get_all_notes(invitation=invitation, content = { 'title': 'Paper title'})
         assert len(notes) == 1
 
-        notes = client.get_all_notes(invitation=invitation, content = { 'title': 'Paper title333'})
+        notes = openreview_client.get_all_notes(invitation=invitation, content = { 'title': 'Paper title333'})
         assert len(notes) == 0
 
     def test_merge_profile(self, client, helpers):
@@ -386,22 +401,21 @@ class TestClient():
         os.environ.pop("OPENREVIEW_USERNAME")
         os.environ.pop("OPENREVIEW_PASSWORD")
 
-    def test_get_messages(self, client):
-
-        messages = client.get_messages()
+    def test_get_messages(self, openreview_client):
+        messages = openreview_client.get_messages()
         assert messages
 
-        messages = client.get_messages(status='sent')
+        messages = openreview_client.get_messages(status='sent')
         assert messages
 
-        messages = openreview.tools.iterget_messages(client, status='sent')
+        messages = openreview.tools.iterget_messages(openreview_client, status='sent')
         assert messages
 
-    def test_get_notes_by_ids(self, client):
-        notes = client.get_notes(invitation='Test.ws/2019/Conference/-/Submission', content = { 'title': 'Paper title'})
+    def test_get_notes_by_ids(self, openreview_client):
+        notes = openreview_client.get_notes(invitation='Test.ws/2019/Conference/-/Submission', content = { 'title': 'Paper title'})
         assert len(notes) == 1        
        
-        notes = client.get_notes_by_ids(ids = [notes[0].id])
+        notes = openreview_client.get_notes_by_ids(ids = [notes[0].id])
         assert len(notes) == 1, 'notes is not empty'
 
     # def test_infer_notes(self, client):

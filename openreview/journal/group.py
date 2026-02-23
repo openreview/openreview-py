@@ -199,6 +199,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content['discussion_starts_email_template_script'] = { 'value': ae_discussion_starts_email_template }
             content['discussion_too_many_reviewers_email_template_script'] = { 'value': ae_discussion_too_many_reviewers_email_template }
             content['reviewer_assignment_starts_email_template_script'] = { 'value': ae_reviewer_assignment_starts_email_template }
+            content['review_rating_starts_email_template_script'] = { 'value': ae_review_rating_starts_email_template }
             action_editor_group=self.post_group(Group(id=action_editors_id,
                             readers=['everyone'],
                             writers=[venue_id],
@@ -296,6 +297,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content['unassignment_email_template_script'] = { 'value': reviewer_unassignment_email_template }
             content['discussion_starts_email_template_script'] = { 'value': reviewer_discussion_starts_email_template }
             content['official_recommendation_starts_email_template_script'] = { 'value': reviewer_official_recommendation_starts_email_template }
+            content['invitation_assignment_email_template_script'] = { 'value': reviewer_invitation_assignment_email_template }
             reviewer_group = Group(id=reviewers_id,
                             readers=[venue_id, action_editors_id, reviewers_id] + additional_committee,
                             writers=[venue_id],

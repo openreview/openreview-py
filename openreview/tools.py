@@ -22,6 +22,7 @@ from concurrent.futures import ThreadPoolExecutor
 import random
 import string
 from deprecated.sphinx import deprecated
+import jwt
 
 def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
@@ -88,7 +89,7 @@ def format_params(params):
 
     return params
 
-def concurrent_requests(request_func, params, desc='Gathering Responses'):
+def concurrent_requests(request_func, params, desc='Gathering Responses', max_workers=None):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -96,13 +97,17 @@ def concurrent_requests(request_func, params, desc='Gathering Responses'):
     :type request_func: function
     :param params: a list of values to be executed by request_func.
     :type params: list
-    :param max_workers: number of workers to use in the multiprocessing tool, default value is 6.
+    :param desc: description to show in the progress bar.
+    :type desc: str
+    :param max_workers: number of workers to use in the ThreadPoolExecutor, default value is min(16, cpu_count() * 5).
     :type max_workers: int
 
     :return: A list of results given for each func value execution
     :rtype: list
     """
-    max_workers = cpu_count() - 1
+    if max_workers is None:
+        max_workers = min(16, (cpu_count() or 1) * 5)
+
     futures = []
     gathering_responses = tqdm(total=len(params), desc=desc)
     results = []
@@ -702,7 +707,7 @@ def concurrent_get(client, get_function, **params):
     :return: List of results
     :rtype: list
     """
-    max_workers = min(cpu_count() - 1, 6)
+    max_workers = min(16, (cpu_count() or 1) * 5)
 
     if (params.get('limit') or float('inf')) <= client.limit:
         docs = get_function(**params)
@@ -1357,7 +1362,13 @@ def recruit_user(client, user,
 
     client.post_message(recruitment_message_subject, [user], personalized_message, parentGroup=comittee_invited_id, replyTo=contact_email, invitation=message_invitation, signature=message_signature)
 
-def get_user_hash_key(user, hash_seed):
+def get_user_hash_key(user, hash_seed, invitation=None):
+    if invitation is not None:
+        jwt_payload = {
+            "group": user,
+            "invitation": invitation,
+        }
+        return jwt.encode(jwt_payload, hash_seed, algorithm="HS256")
     hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
     return hashkey
 
@@ -1807,8 +1818,9 @@ def pretty_id(group_id):
     for token in tokens:
         transformed_token=re.sub(r'\..+', '', token).replace('-', '').replace('_', ' ')
         letters_only=re.sub(r'\d|\W', '', transformed_token)
+        has_no_ascii=not re.search(r'[a-zA-Z0-9]', transformed_token)
 
-        if letters_only != transformed_token.lower():
+        if letters_only != transformed_token.lower() or (has_no_ascii and transformed_token):
             transformed_tokens.append(transformed_token)
 
 
@@ -2083,7 +2095,7 @@ def is_forum_invitation(invitation):
 
 def create_replyto_invitations(client, submission, note):
 
-    venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation') if i.is_active()]
+    venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation', domain=note.domain) if i.is_active()]
 
     for invitation in venue_invitations:
         print('processing invitation: ', invitation.id)
@@ -2113,7 +2125,7 @@ def create_replyto_invitations(client, submission, note):
 
 def create_forum_invitations(client, submission):
     
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation') if i.is_active()]
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active()]
 
     for invitation in invitation_invitations:
         print('processing invitation: ', invitation.id)

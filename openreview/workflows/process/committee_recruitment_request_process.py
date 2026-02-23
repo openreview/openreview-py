@@ -6,12 +6,12 @@ def process(client, edit, invitation):
     committee_id = invitation.content['committee_id']['value']
     committee_group = client.get_group(committee_id)
     committee_role = committee_group.content['committee_role']['value']
+    committee_name = committee_group.content['committee_name']['value']
     invited_group = client.get_group(domain.content[f'{committee_role}_invited_id']['value'])
     group_id = domain.content[f'{committee_role}_id']['value']
     committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
     committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
-    hash_seed = committee_invited_response_invitation.content['hash_seed']['value']
 
     invitee_details = edit.content['invitee_details']['value'].strip().split('\n')
 
@@ -38,39 +38,49 @@ def process(client, edit, invitation):
 
     valid_invitees = []
 
+    valid_email_re = re.compile(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
+
     for index, email in enumerate(invitee_emails):
-        profile_emails = []
         profile = None
-        is_profile_id = email.startswith('~')
-        email = email.lower() if not is_profile_id else email
+        is_email = '@' in email
+        is_profile_id = not is_email
+        email = email.lower() if is_email else email
         invalid_profile_id = False
         no_profile_found = False
-        if is_profile_id:
-            try:
-                profile = openreview.tools.get_profile(client, email)
-            except openreview.OpenReviewException as e:
-                error_string = repr(e)
-                if 'ValidationError' in error_string:
-                    invalid_profile_id = True
-                else:
-                    if error_string not in recruitment_status['errors']:
-                        recruitment_status['errors'][error_string] = []
-                    recruitment_status['errors'][error_string].append(email)
-                    continue
-            if not profile:
-                no_profile_found = True
-            profile_emails = profile.content['emails'] if profile else []
+
+        if is_email and not valid_email_re.match(email):
+            if 'invalid_emails' not in recruitment_status['errors']:
+                recruitment_status['errors']['invalid_emails'] = []
+            recruitment_status['errors']['invalid_emails'].append(email)
+            continue
+
+        try:
+            profile = openreview.tools.get_profile(client, email)
+        except openreview.OpenReviewException as e:
+            error_string = repr(e)
+            if 'ValidationError' in error_string:
+                invalid_profile_id = True
+            else:
+                if error_string not in recruitment_status['errors']:
+                    recruitment_status['errors'][error_string] = []
+                recruitment_status['errors'][error_string].append(email)
+                continue
+    
+        if is_profile_id and not profile:
+            no_profile_found = True                
+
         try:
             memberships = [g.id for g in client.get_groups(member=email, prefix=venue_id)]
         except:
             memberships = []
+    
         invited_roles = [invited_group.id]
         member_roles = [group_id]
 
         invited_group_ids=list(set(invited_roles) & set(memberships))
         member_group_ids=list(set(member_roles) & set(memberships))
 
-        if profile and not profile_emails:
+        if profile and not profile.content.get('emails', []):
             if 'profiles_without_email' not in recruitment_status['errors']:
                 recruitment_status['errors']['profiles_without_email'] = []
             recruitment_status['errors']['profiles_without_email'].append(email)
@@ -96,7 +106,7 @@ def process(client, edit, invitation):
             name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
             if not name and not is_profile_id:
                 name = 'invitee'
-            valid_invitees.append((email, name))
+            valid_invitees.append((profile.id if profile else email, name))
 
     print('Valid invitees:', valid_invitees)
     
@@ -118,7 +128,12 @@ def process(client, edit, invitation):
     def recruit_user(invitee):
         email, name = invitee
 
-        hash_key = openreview.tools.get_user_hash_key(email, hash_seed)
+        if committee_invited_response_invitation.secret:
+            hash_key = openreview.tools.get_user_hash_key(email, committee_invited_response_invitation.secret, invitation=committee_invited_response_id)
+        else:
+            ## Deprecated method to generate hash key for invitations without a secret. This should be removed once all recruitment invitations have a secret.
+            hash_key = openreview.tools.get_user_hash_key(email, committee_invited_response_invitation.content['hash_seed']['value'])
+        
         user_parse = openreview.tools.get_user_parse(email)
 
         url = f'https://openreview.net/invitation?id={committee_invited_response_id}&user={user_parse}&key={hash_key}'
@@ -134,6 +149,7 @@ def process(client, edit, invitation):
     recruitment_status['invited'] = len(invited_emails)
 
     print("Post a comment notifying the committee of the recruitment status")
+    committee_pretty_name = committee_group.content['committee_pretty_name']['value']
     # Make sure venueid has access to the request form
     request_form_id = domain.get_content_value('request_form_id')
     if request_form_id:
@@ -142,7 +158,7 @@ def process(client, edit, invitation):
             signatures=[venue_id],
             note=openreview.api.Note(
                 content={
-                    'title': { 'value': f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee' },
+                    'title': { 'value': f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_pretty_name} Group' },
                     'recruitment_request_status': { 'value': recruitment_status },
                     'recruitment_request_details': { 'value': f'https://openreview.net/group/revisions?id={group_id}&editId={edit.id}' },
                     'invited_list': { 'value': f'https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]}' if valid_invitees else 'No users were invited.' },
@@ -158,7 +174,7 @@ def process(client, edit, invitation):
 
     invited_list = f'- [invited list](https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]})' if valid_invitees else ''
 
-    message = f'''The recruitment request process for the {committee_role.capitalize()} Committee has been completed.
+    message = f'''The recruitment request process for the {committee_pretty_name} Group has been completed.
 
 Invited: {recruitment_status["invited"]}
 Already invited: {len(recruitment_status["already_invited"].get(invited_group.id, []))}
@@ -174,7 +190,7 @@ For more details, please check the following links:
     client.post_message(
         invitation=meta_invitation_id,
         signature=venue_id,
-        subject=f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
+        subject=f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_pretty_name} Group',
         recipients=[f'{venue_id}/Program_Chairs'],
         message=message
     )    

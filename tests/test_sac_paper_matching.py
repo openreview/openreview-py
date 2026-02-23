@@ -509,7 +509,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         sac_client = openreview.api.OpenReviewClient(username = 'sac@umass.edu', password=helpers.strong_password)
 
-        request_page(selenium, 'http://localhost:3030/group?id=TSACM/2024/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        request_page(selenium, 'http://localhost:3030/group?id=TSACM/2024/Conference/Senior_Area_Chairs', sac_client, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.LINK_TEXT, "Submission Status")

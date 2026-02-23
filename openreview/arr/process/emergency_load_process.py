@@ -123,15 +123,15 @@ def process(client, edit, invitation):
                 )
             )            
       
-    emergency_score_edges = client.get_all_edges(invitation=f"{role}/-/Emergency_Score", tail=user)
+    emergency_score_edges = client.get_all_edges(invitation=f"{role}/-/Emergency_Score", tail=user, domain=venue_id)
 
     ## Post emergency score edges if they don't exist
     if len(emergency_score_edges) == 0:
         print('Create emergency score edges...')
         deployed_label = [
-            note for note in client.get_all_notes(invitation=f"{role}/-/Assignment_Configuration") if 'Deployed' in note.content['status']['value']
+            note for note in client.get_all_notes(invitation=f"{role}/-/Assignment_Configuration", domain=venue_id) if 'Deployed' in note.content['status']['value']
         ][0].content['title']['value']
-        aggregate_score_edges = client.get_all_edges(invitation=f"{role}/-/Aggregate_Score", label=deployed_label, tail=user)
+        aggregate_score_edges = client.get_all_edges(invitation=f"{role}/-/Aggregate_Score", label=deployed_label, tail=user, domain=venue_id)
 
         edges_to_post = []
         for edge in aggregate_score_edges:
