@@ -429,84 +429,6 @@ arr_submission_content = {
         "description": "Did you use or create scientific artifacts? (e.g. code, datasets, models)",
         "order": 33
     },
-    "B1_cite_creators_of_artifacts": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you cite the creators of artifacts you used?",
-        "order": 34
-    },
-    "B1_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 35
-    },
-    "B2_discuss_the_license_for_artifacts": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you discuss the license or terms for use and/or distribution of any artifacts?",
-        "order": 36
-    },
-    "B2_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 37
-    },
-    "B3_artifact_use_consistent_with_intended_use": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you discuss if your use of existing artifact(s) was consistent with their intended use, provided that it was specified? For the artifacts you create, do you specify intended use and whether that is compatible with the original access conditions (in particular, derivatives of data accessed for research purposes should not be used outside of research contexts)?",
-        "order": 38
-    },
-    "B3_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 39
-    },
     "B4_data_contains_personally_identifying_info_or_offensive_content": {
         "value": {
             "param": {
@@ -532,32 +454,6 @@ arr_submission_content = {
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 41
-    },
-    "B5_documentation_of_artifacts": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you provide documentation of the artifacts, e.g., coverage of domains, languages, and linguistic phenomena, demographic groups represented, etc.?",
-        "order": 42
-    },
-    "B5_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 43
     },
     "B6_statistics_for_data": {
         "value": {
@@ -598,32 +494,6 @@ arr_submission_content = {
         },
         "description": "Did you run computational experiments?",
         "order": 46
-    },
-    "C1_model_size_and_budget": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you report the number of parameters in the models used, the total computational budget (e.g., GPU hours), and computing infrastructure used?",
-        "order": 47
-    },
-    "C1_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 48
     },
     "C2_experimental_setup_and_hyperparameters": {
         "value": {
@@ -676,32 +546,6 @@ arr_submission_content = {
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 52
-    },
-    "C4_parameters_for_packages": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation, such as NLTK, SpaCy, ROUGE, etc.), did you report the implementation, model, and parameter settings used?",
-        "order": 53
-    },
-    "C4_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 54
     },
     "D_human_subjects_including_annotators": {
         "value": {
@@ -821,32 +665,6 @@ arr_submission_content = {
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 63
     },
-    "D5_characteristics_of_annotators": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you report the basic demographic and geographic characteristics of the annotator population that is the source of the data?",
-        "order": 64
-    },
-    "D5_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 65
-    },
     "E_ai_assistants_in_research_or_writing": {
         "value": {
             "param": {
@@ -899,7 +717,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "I confirm that this submission adheres to ARR requirements. I also confirm that all authors have been notified of the requirement to register as a reviewer (for all authors), and the possibility of desk-rejection and (re-)submission bans for irresponsible reviewer behavior (for those selected for assignments, see https://aclrollingreview.org/incentives2025).\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
+        "description": "I confirm that this submission adheres to ARR requirements.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
         "order": 69
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
@@ -3013,9 +2831,24 @@ arr_submitted_author_content = {
             }
         },
         "description": "If any of your co-authors are unable to complete this form, please provide their Openreview IDs in this question. Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.",
+        "order": 1
+    },
+    "confirm_you_are_qualified_to_review": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I meet the ARR requirements to be a reviewer.",
+                    "No, I do not meet the ARR requirements to be a reviewer."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "The ARR requirements for reviewers are: (a) at least two papers in main ACL events or Findings, plus (b) at least one more paper in the ACL Anthology or a major AI venue. Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major AI venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches data online. Having your self-reported status helps us identify issues with available data.",
         "order": 2
     },
-    "confirm_you_are_willing_to_serve_as_a_reviewer_or_ac": {
+    "confirm_you_are_willing_to_serve_as_a_reviewer_or_AC": {
         "value": {
             "param": {
                 "input": "radio",
@@ -3023,23 +2856,24 @@ arr_submitted_author_content = {
                     "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified.",
                     "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified, but I would prefer to serve as an AC.",
                     "I will serve as a reviewer in this cycle if ARR considers me qualified, but I do not wish to be an AC.",
-                    "I am already serving in this ARR cycle as one of: senior area chair, ethics reviewer, ethics chair, editor in chief, technical team, support team, or editorial staff.",
+                    "I am already serving in this ARR cycle as one of: senior area chair, ethics reviewer, ethics chair, editor in chief, technical team, support team, or editorial staff, which I will specify in the next question.",
+                    "No, I cannot serve because I am unqualified (we will check this and if you are qualified you will be required to review).",
                     "No, I cannot serve because I am on parental leave.",
                     "No, I cannot serve because I am on family medical leave.",
                     "No, I cannot serve because I have a medical emergency.",
                     "No, I cannot serve because of another form of emergency beyond my control.",
-                    "No, I cannot serve because I am an AC / SAC / PC / General Chair / Local Chair for a related venue.",
-                    "No, I cannot serve because I am editor-in-chief of a major related journal.",
-                    "No, I cannot serve for another reason (this choice is very rare)."
+                    "No, I cannot serve because I am an AC / SAC / PC / General Chair / Local Chair for a related venue, which I will specify in the next question.",
+                    "No, I cannot serve because I am editor-in-chief of a major related journal, which I will specify in the next question.",
+                    "No, I cannot serve for another reason, which I will specify in the next question (this choice is very rare)."
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
-        "description": "ARR now requires all authors to contribute to the review process if asked. For details see: https://aclrollingreview.org/exemptions2025 Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are already a reviewer or AC in ARR, please select one of the first two options to confirm you are willing to serve in this cycle. If you are unable to serve please select 'No...' and note that you must provide sufficient justification in the next question or otherwise your paper will be desk rejected.",
+        "description": "ARR now requires all authors to contribute to the review process if asked (see: https://aclrollingreview.org/incentives2026). Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are unable to serve please select the most appropriate option that starts with 'No'. **Note that for the last three options you must provide sufficient justification in the next question or your paper will be desk rejected.** If you are already a reviewer or AC in ARR, please select one of the first three options to confirm you are willing to serve in this cycle. Note: if you indicate you are unavailable in the unavailability form, we will overwrite your response based on your answers here.",
         "order": 3
     },
-    "details_of_reason_for_being_unavailable_to_serve": {
+    "details_of_reason_for_being_unable_to_serve_or_ARR_role": {
         "value": {
             "param": {
                 "optional": True,
@@ -3047,10 +2881,10 @@ arr_submitted_author_content = {
                 "input": "textarea"
             }
         },
-        "description": "If you answered 'No, I cannot serve ...' in the previous question, please provide details here, e.g., the name of the conference you are a PC for. Otherwise please leave this blank. If you believe you are not qualified, do not write that here, use the question below. If you are already serving in ARR, please use one of the first three options in the previous question. For details of what are and are not suitable reasons, see: https://aclrollingreview.org/exemptions2025",
+        "description": "If you chose 'No, I cannot serve ... which I will specify in the next question' above, please provide details here, e.g., the name of the conference you are a PC for. If you are already serving in this ARR cycle in a role other than reviewer or AC, please specify your role. Otherwise, please leave this blank. If you believe you are not qualified, do *not* write that here. **Without [a suitable explanation](https://aclrollingreview.org/exemptions2025), the request will be denied.**",
         "order": 4
     },
-    "serving_as_a_regular_or_emergency_reviewer_or_ac": {
+    "serving_as_a_regular_or_emergency_reviewer_or_AC": {
         "value": {
             "param": {
                 "input": "radio",
@@ -3081,21 +2915,6 @@ arr_submitted_author_content = {
         },
         "description": "Please indicate how many papers you would be willing to do emergency reviews for if asked.",
         "order": 6
-    },
-    "confirm_you_are_qualified_to_review": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes, I meet the ARR requirements to be a reviewer.",
-                    "No, I do not meet the ARR requirements to be a reviewer."
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "The ARR requirements for reviewers are: (a) at least two papers in main ACL events or Findings, plus (b) at least one more paper in the ACL Anthology or a major AI venue. Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major AI venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches data online. Having your self-reported status helps us identify issues with available data.",
-        "order": 7
     },
     "are_you_a_student": {
         "value": {
@@ -3195,7 +3014,7 @@ arr_submitted_author_content = {
         "description": "Please list the languages that fall under your expertise, separated by commas.",
         "order": 15
     },
-    "confirm_your_openreview_profile_contains_a_dblp_link": {
+    "confirm_your_openreview_profile_contains_a_DBLP_link": {
         "value": {
             "param": {
                 "input": "radio",
@@ -3211,7 +3030,7 @@ arr_submitted_author_content = {
         "description": "If there is a valid DBLP profile for you, your OpenReview profile must contain a link to it. If the profile is invalid, you must either import your papers to OpenReview or provide a valid ACL Anthology profile link.",
         "order": 16
     },
-    "provide_your_dblp_url": {
+    "provide_your_DBLP_URL": {
         "description": "If there is a valid DBLP profile for you, please provide it here. If the profile is invalid, e.g., because it has other people's papers in it, please leave this blank.",
         "value": {
             "param": {
@@ -3237,7 +3056,7 @@ arr_submitted_author_content = {
         "description": "If there is a valid Semantic Scholar profile for you, your OpenReview profile must contain a link to it. If the profile is invalid, you must either import your papers to OpenReview or provide a valid ACL Anthology profile link.",
         "order": 18
     },
-    "provide_your_semantic_scholar_url": {
+    "provide_your_semantic_scholar_URL": {
         "description": "If there is a valid Semantic Scholar profile for you, please provide it here. If the profile is invalid, e.g., because it has other people's papers in it, please leave this blank.",
         "value": {
             "param": {
@@ -3247,7 +3066,7 @@ arr_submitted_author_content = {
         },
         "order": 19
     },
-    "provide_your_acl_anthology_url": {
+    "provide_your_ACL_anthology_URL": {
         "description": "If there is a valid ACL Anthology profile for you, please provide it here. If the profile is invalid, e.g., because it has a other people's papers in it, please leave this blank.",
         "value": {
             "param": {
@@ -3263,7 +3082,8 @@ arr_submitted_author_content = {
             "param": {
                 "type": "string",
                 "enum": [
-                    "Yes, I wish to be attributed."
+                    "Yes, I wish to be attributed.",
+                    "No, I do not wish to be attributed."
                 ],
                 "input": "radio",
                 "optional": True
