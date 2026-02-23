@@ -540,116 +540,79 @@ class Workflows():
     def set_conference_review_status_comment(self):
 
         support_group_id = self.support_group_id
-        comment_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Status'
+        status_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Status'
 
-        invitation = Invitation(id=comment_invitation_id,
-            invitees=[support_group_id],
-            readers=[support_group_id],
+        invitation = Invitation(id=status_invitation_id,
+            invitees=['active_venues'],
+            readers=['active_venues'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            content={
-                'comment_process_script': {
-                    'value': self.get_process_content('workflow_process/venue_comment_process.py')
-                }
-            },
             edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
-                'content': {
-                    'noteNumber': {
-                        'value': {
-                            'param': {
-                                'type': 'integer'
-                            }
-                        }
-                    },
-                    'noteId': {
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
-                    'venueId': {
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
+                'signatures': {
+                    'param': {
+                        'regex': '.+'
                     }
                 },
-                'replacement': True,
-                'invitation': {
-                    'id': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${2/content/noteNumber/value}' + '/-/Status',
-                    'signatures': [self.super_id],
-                    'readers': ['${3/content/venueId/value}'],
+                'readers': {
+                    'param': {
+                        'items': [
+                            { 'value': support_group_id, 'optional': False },
+                            { 'inGroup': 'active_venues', 'optional': False }
+                        ]
+                    }
+                },
+                'writers': [support_group_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Status',
+                            'optional': True
+                        }
+                    },
+                    'forum': {
+                        'param': {
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow'
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': ['${3/readers}'],
                     'writers': [support_group_id],
-                    'invitees': ['${3/content/venueId/value}'],
-                    'noninvitees': ['${3/content/venueId/value}/Program_Chairs'],
-                    'process': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['comment_process_script']['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''',
-                    'edit': {
-                        'signatures': ['${4/content/venueId/value}'],
-                        'readers': ['${2/note/readers}'],
-                        'writers': [support_group_id],
-                        'note': {
-                            'id': {
+                    'signatures': ['${3/signatures}'],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': 'Brief summary of your comment.',
+                            'value': {
                                 'param': {
-                                    'withInvitation': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${6/content/noteNumber/value}' + '/-/Status',
-                                    'optional': True
-                                }
-                                },
-                            'forum': '${4/content/noteId/value}',
-                            'replyto': '${4/content/noteId/value}',
-                            'ddate': {
-                                'param': {
-                                    'range': [ 0, 9999999999999 ],
+                                    'type': 'string',
+                                    'maxLength': 500,
                                     'optional': True,
                                     'deletable': True
                                 }
-                            },
-                            'signatures': ['${3/signatures}'],
-                            'readers': [support_group_id, '${5/content/venueId/value}/Program_Chairs'],
-                            'writers': ['${3/signatures}'],
-                            'content': {
-                                'title': {
-                                    'order': 1,
-                                    'description': 'Brief summary of your comment.',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'maxLength': 500,
-                                            'optional': True,
-                                            'deletable': True
-                                        }
-                                    }
-                                },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Your comment or reply (max 200000 characters).',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'maxLength': 200000,
-                                            'markdown': True,
-                                            'input': 'textarea'
-                                        }
-                                    }
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 200000 characters).',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'markdown': True,
+                                    'input': 'textarea'
                                 }
                             }
                         }
                     }
                 }
-            }
+            },
+            process = self.get_process_content('workflow_process/venue_comment_process.py')
         )
 
         self.post_invitation_edit(invitation)

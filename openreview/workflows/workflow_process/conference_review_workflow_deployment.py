@@ -297,28 +297,6 @@ def process(client, edit, invitation):
             )
         )
 
-    # post status invitation and add id to group content
-    inv_edit = client.post_invitation_edit(
-        invitations=f'{support_user}/Venue_Request/Conference_Review_Workflow/-/Status',
-        signatures=[support_user],
-        content = {
-            'noteNumber': { 'value': note.number},
-            'noteId': { 'value': note.id },
-            'venueId': { 'value': venue_id }
-        }
-    )
-
-    client.post_group_edit(
-        invitation=f'{venue_id}/-/Edit',
-        signatures=[venue_id],
-        group=openreview.api.Group(
-            id=venue_id,
-            content={
-                'status_invitation_id': { 'value': inv_edit['invitation']['id'] }
-            }
-        )
-    )
-
     #post note to request form
     client.post_note_edit(
         invitation=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment',

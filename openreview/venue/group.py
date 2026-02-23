@@ -346,19 +346,21 @@ class GroupBuilder(object):
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
 
         if self.venue.is_template_related_workflow():
-            content['exclusion_workflow_invitations']  = {'value': [
-                f'{venue_id}/-/Edit',
-                f'/{venue_id}/Submission[0-9]+/',
-                f'/{venue_id}/-/Venue.*/',
-                f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
-                f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment).*/', # matching invitations
-                f'{venue_id}/Authors/-/Message',
-                f'{venue_id}/Authors/Accepted/-/Message',
-                f'{venue_id}/-/Message',
-                f'{venue_id}/-/Withdrawn_Submission',
-                f'{venue_id}/-/Desk_Rejected_Submission'
+            content['exclusion_workflow_invitations']  = {
+                'value': [
+                    f'{venue_id}/-/Edit',
+                    f'/{venue_id}/Submission[0-9]+/',
+                    f'/{venue_id}/-/Venue.*/',
+                    f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
+                    f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment).*/', # matching invitations
+                    f'{venue_id}/Authors/-/Message',
+                    f'{venue_id}/Authors/Accepted/-/Message',
+                    f'{venue_id}/-/Message',
+                    f'{venue_id}/-/Withdrawn_Submission',
+                    f'{venue_id}/-/Desk_Rejected_Submission'
                 ]
             }
+            content['status_invitation_id'] = { 'value': f'{self.venue.support_user}/Venue_Request/Conference_Review_Workflow/-/Status' }
 
         update_content = self.get_update_content(venue_group.content, content)
         if self.venue.is_template_related_workflow() and venue_group.content:
