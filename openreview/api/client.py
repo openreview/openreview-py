@@ -22,8 +22,8 @@ import json
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from ..openreview import MfaRequiredException
-from ..openreview import _passkey_browser_flow
 from .. import tools
+from .. import mfa
 
 class LogRetry(Retry):
      
@@ -198,10 +198,10 @@ class OpenReviewClient(object):
                 'message': f'No supported MFA methods. Server offered: {", ".join(mfa_methods)}'
             })
 
-        if not tools._is_interactive():
+        if not mfa._is_interactive():
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
 
-        method = tools._default_mfa_method_chooser(mfa_methods, preferred_method)
+        method = mfa._default_mfa_method_chooser(mfa_methods, preferred_method)
         if not method:
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
 
@@ -210,14 +210,14 @@ class OpenReviewClient(object):
         if method == 'emailOtp':
             self.__request_mfa_challenge(mfa_pending_token, 'emailOtp')
             print('A verification code has been sent to your email.')
-        code = tools._default_mfa_code_prompt(method)
+        code = mfa._default_mfa_code_prompt(method)
         if not code:
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
         return self.__verify_mfa(mfa_pending_token, method, code)
 
     def __resolve_passkey(self, mfa_pending_token):
         """Handle passkey authentication via browser flow."""
-        result = _passkey_browser_flow(self, mfa_pending_token)
+        result = mfa._passkey_browser_flow(self, mfa_pending_token)
         if result and result.get('token'):
             return result
         raise OpenReviewException({

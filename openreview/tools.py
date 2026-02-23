@@ -43,39 +43,6 @@ LOCAL_SITE   = 'http://localhost:3030'
 V1_REMOTE_URLS = [PROD_API_V1, DEV_API_V1, LEGACY_DEV_API_V1]
 V2_REMOTE_URLS = [PROD_API_V2, DEV_API_V2, LEGACY_DEV_API_V2]
 
-def _is_interactive():
-    """Check if interactive input is available (terminal or notebook)."""
-    import sys
-    if sys.stdin.isatty():
-        return True
-    try:
-        if 'IPKernelApp' in get_ipython().config:
-            return True
-    except NameError:
-        pass
-    return False
-
-def _default_mfa_method_chooser(mfa_methods, preferred_method):
-    """Phase 1: Choose MFA method interactively."""
-    supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]
-    if not supported:
-        return None
-    print('\nMulti-factor authentication is required.')
-    if len(supported) == 1:
-        print(f'Using method: {supported[0]}')
-        return supported[0]
-    print(f'Available methods: {", ".join(supported)}')
-    method_input = input(f'Choose method [{preferred_method}]: ').strip()
-    return method_input if method_input in supported else preferred_method
-
-def _default_mfa_code_prompt(method):
-    """Phase 2: Prompt for the verification code."""
-    prompts = {
-        'totp': 'Enter TOTP code from your authenticator app: ',
-        'emailOtp': 'Enter the verification code sent to your email: ',
-    }
-    return input(prompts.get(method, f'Enter {method} code: ')).strip()
-
 def _identify_environment(baseurl):
     """Return 'dev', 'prod', or 'local' based on baseurl."""
     if any(url in baseurl for url in [LEGACY_DEV_API_V1, LEGACY_DEV_API_V2, DEV_API_V1, DEV_API_V2]):
