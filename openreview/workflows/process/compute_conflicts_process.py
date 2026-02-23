@@ -70,3 +70,29 @@ def process(client, invitation):
             print(f'Conflicts were successfully computed for all users in the {committee_name} group')
     else:
         print(matching_status['error'])
+
+    no_profiles = matching_status.get('no_profiles', [])
+    no_pubs = matching_status.get('no_publications', [])
+    error = matching_status.get('error', 'No errors.')
+
+    prefix = venue_id + '/'
+    comment = f'The process "{invitation.id.split(prefix)[-1].replace("_", " ").replace("/-/", " ")}" has successfully completed. Please note that conflicts could not be computed for users with no profile or no publications.'
+    comment += f'''\n\n**{len(no_profiles)} user(s) with no profiles**: {", ".join(no_profiles)}''' if no_profiles else '\n\n**No users with missing profiles.**'
+    comment += f'''\n\n**{len(no_pubs)} user(s) with no publications**: {", ".join(no_pubs)}''' if no_pubs else '\n\n**No users with missing publications.**'
+    if error:
+        comment += f'''\n\n**Error**: {error}'''
+
+    # post status to request form
+    client.post_note_edit(
+        invitation=status_invitation_id,
+        signatures=[venue_id],
+        readers=[venue_id, support_user],
+        note=openreview.api.Note(
+            forum=request_form_id,
+            signatures=[venue_id],
+            content={
+                'title': { 'value': f'{committee_name.replace("_", " ").title()} Conflicts Computation Completed' },
+                'comment': { 'value': comment }
+            }
+        )
+    )
