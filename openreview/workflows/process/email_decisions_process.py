@@ -77,3 +77,20 @@ def process(client, invitation):
     openreview.tools.concurrent_requests(send_decision_email, active_submissions)
 
     print('Decision emails sent to authors')
+
+    comment = f'The process "{invitation.id.split("/-/")[-1].replace("_", " ")}" has successfully completed. Decisions have been emailed to authors.'
+
+    # post status to request form
+    client.post_note_edit(
+        invitation=status_invitation_id,
+        signatures=[venue_id],
+        readers=[venue_id, support_user],
+        note=openreview.api.Note(
+            forum=request_form_id,
+            signatures=[venue_id],
+            content={
+                'title': { 'value': 'Author Decision Notification Completed' },
+                'comment': { 'value': comment }
+            }
+        )
+    )

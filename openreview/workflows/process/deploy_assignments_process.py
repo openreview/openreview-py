@@ -79,3 +79,20 @@ def process(client, invitation):
         )
 
     print('Reviewer assignments deployed successfully')
+
+    comment = f'The process "{invitation.id.split("/-/")[-1].replace("_", " ")}" has successfully completed.'
+
+    # post status to request form
+    client.post_note_edit(
+        invitation=status_invitation_id,
+        signatures=[venue_id],
+        readers=[venue_id, support_user],
+        note=openreview.api.Note(
+            forum=request_form_id,
+            signatures=[venue_id],
+            content={
+                'title': { 'value': f'{committee_name.replace("_", " ").title()} Assignment Deployment Completed' },
+                'comment': { 'value': comment }
+            }
+        )
+    )

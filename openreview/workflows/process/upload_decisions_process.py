@@ -45,3 +45,22 @@ def process(client, invitation):
 
     if errors:
         print(errors)
+
+    comment = f'The process "{invitation.id.split("/-/")[-1].replace("_", " ")}" has successfully completed. {len(results)} decisions were posted.'
+    if errors:
+        comment += f'\n\n**Errors**: {errors}'
+
+    # post status to request form
+    client.post_note_edit(
+        invitation=status_invitation_id,
+        signatures=[venue_id],
+        readers=[venue_id, support_user],
+        note=openreview.api.Note(
+            forum=request_form_id,
+            signatures=[venue_id],
+            content={
+                'title': { 'value': 'Decision Upload Completed' },
+                'comment': { 'value': comment }
+            }
+        )
+    )

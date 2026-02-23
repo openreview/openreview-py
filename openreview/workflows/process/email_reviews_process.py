@@ -81,5 +81,20 @@ def process(client, invitation):
     if fields_to_include:
         openreview.tools.concurrent_requests(send_reviews_email, active_submissions)
         print('Review emails sent to authors')
-    else:
-        print('No fields were selected; please set the review fields to include in the email to be sent to authors')
+
+    comment = f'The process "{invitation.id.split("/-/")[-1].replace("_", " ")}" has successfully completed. Reviews have been emailed to authors.'
+
+    # post status to request form
+    client.post_note_edit(
+        invitation=status_invitation_id,
+        signatures=[venue_id],
+        readers=[venue_id, support_user],
+        note=openreview.api.Note(
+            forum=request_form_id,
+            signatures=[venue_id],
+            content={
+                'title': { 'value': 'Author Reviews Notification Completed' },
+                'comment': { 'value': comment }
+            }
+        )
+    )
