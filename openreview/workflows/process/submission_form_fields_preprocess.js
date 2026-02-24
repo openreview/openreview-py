@@ -22,4 +22,6 @@ function process(client, edit, invitation) {
       }
     }
   }
+  
+  return Promise.resolve();
 }
