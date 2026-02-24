@@ -655,7 +655,7 @@ class TestARRVenueV2():
                 'TLDR': { 'value': 'This is a tldr '},
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 'paper_type': { 'value': 'Short' },
-                'research_area': { 'value': 'Code Models' },
+                'research_area': { 'value': 'NLP and Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -875,7 +875,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'Information Extraction and Retrieval'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Information Extraction'] },
                 }
             )
         )
@@ -890,7 +890,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models', 'Dialogue and Interactive Systems'] },
+                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
                 }
             )
         )
@@ -907,7 +907,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models'] },
+                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'NLP and Code Models'] },
                 }
             )
         )
@@ -931,7 +931,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'NLP Applications'] },
                 }
             )
         )
@@ -946,7 +946,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
                 }
             )
         )
@@ -961,7 +961,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
                 }
             )
         )
@@ -976,7 +976,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
                 }
             )
         )
@@ -1339,7 +1339,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
             'paper_type': { 'value': 'Short' },
-            'research_area': { 'value': 'Code Models' },
+            'research_area': { 'value': 'NLP and Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
             'languages_studied': { 'value': 'A language' },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -1632,7 +1632,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
             'paper_type': { 'value': 'Short' },
-            'research_area': { 'value': 'Code Models' },
+            'research_area': { 'value': 'NLP and Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
             'languages_studied': { 'value': 'A language' },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -2282,7 +2282,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'TLDR': { 'value': 'This is a tldr ' + str(i) },
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 'paper_type': { 'value': 'Short' },
-                'research_area': { 'value': 'Code Models' },
+                'research_area': { 'value': 'NLP and Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -2486,7 +2486,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'confirm_your_profile_has_past_domains': {'value': "Yes"},
                     'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
                     'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
-                    'indicate_your_research_areas': {'value': ["Code Models"]},
+                    'indicate_your_research_areas': {'value': ["NLP and Code Models"]},
                     'indicate_languages_you_study': {'value': "English"},
                     'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
                     'provide_your_DBLP_URL': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
@@ -3046,7 +3046,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "abstract": { "value": "This is an abstract 1" },
             "TLDR": { "value": "This is a tldr 1" },
             "paper_type": { "value": "Short" },
-            "research_area": { "value": "Code Models" },
+            "research_area": { "value": "NLP and Code Models" },
             "research_area_keywords": { "value": "A keyword" },
             "languages_studied": { "value": "A language" },
             "reassignment_request_area_chair": { "value": "No, I want the same area chair from our previous submission (subject to their availability)." },
@@ -4559,7 +4559,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         only_required_fields = ['number_of_assignments', 'diversity']
 
         default_fields = {field: True for field in violation_fields + only_required_fields}
+        default_fields['overall_level'] = True
         default_fields['need_ethics_review'] = False
+        checklist_default_justifications = {
+            'appropriateness_justification': {'value': 'N/A - this paper makes a contribution to computational processing of natural language.'},
+            'formatting_justification': {'value': 'N/A - this paper is properly formatted.'},
+            'length_justification': {'value': 'N/A - this paper is within the page limits.'},
+            'anonymity_justification': {'value': 'N/A - this paper is properly anonymized.'},
+            'limitations_justification': {'value': "N/A - this paper has the 'Limitations' section."},
+            'overall_level_justification': {'value': 'N/A - this seems like a good-faith submission worthy of full review.'},
+            'potential_violation_justification': {'value': 'N/A - the authors filled in the responsible NLP checklist appropriately.'},
+            'ethics_review_justification': {'value': 'N/A - this paper does not need an ethics review.'}
+        }
         test_submission = submissions[1]
 
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
@@ -4585,8 +4596,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         def post_checklist(chk_client, chk_inv, user, tested_field=None, ddate=None, existing_note=None, override_fields=None):
             def generate_checklist_content(tested_field=None):
                 ret_content = {field: {'value':'Yes'} if default_fields[field] else {'value':'No'} for field in default_fields}
-                ret_content['potential_violation_justification'] = {'value': 'There are no violations with this submission'}
-                ret_content['ethics_review_justification'] = {'value': 'N/A (I answered no to the previous question)'}
+                ret_content.update(deepcopy(checklist_default_justifications))
 
                 if tested_field:
                     ret_content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
@@ -4637,8 +4647,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Test checklist pre-process
         force_justifications = {
-                'potential_violation_justification': {'value': 'There are no violations with this submission'},
-                'ethics_review_justification': {'value': 'N/A (I answered no to the previous question)'}
+                'potential_violation_justification': {'value': 'N/A - the authors filled in the responsible NLP checklist appropriately.'},
+                'ethics_review_justification': {'value': 'N/A - this paper does not need an ethics review.'}
         }
         with pytest.raises(openreview.OpenReviewException, match=r'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging.'):
             post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', override_fields=force_justifications)
@@ -5102,15 +5112,22 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )[0]
         chk_content = {
             "appropriateness" : { "value" : "Yes" },
+            "appropriateness_justification" : { "value" : "N/A - this paper makes a contribution to computational processing of natural language." },
             "formatting" : { "value" : "Yes" },
+            "formatting_justification" : { "value" : "N/A - this paper is properly formatted." },
             "length" : { "value" : "Yes" },
+            "length_justification" : { "value" : "N/A - this paper is within the page limits." },
             "anonymity" : { "value" : "Yes" },
+            "anonymity_justification" : { "value" : "N/A - this paper is properly anonymized." },
             "responsible_checklist" : { "value" : "Yes" },
             "limitations" : { "value" : "Yes" },
+            "limitations_justification" : { "value" : "N/A - this paper has the 'Limitations' section." },
+            "overall_level" : { "value" : "Yes" },
+            "overall_level_justification" : { "value" : "N/A - this seems like a good-faith submission worthy of full review." },
             "number_of_assignments" : { "value" : "Yes" },
             "diversity" : { "value" : "Yes" },
             "need_ethics_review" : { "value" : "Yes" },
-            "potential_violation_justification" : { "value" : "There are no violations with this submission" },
+            "potential_violation_justification" : { "value" : "N/A - the authors filled in the responsible NLP checklist appropriately." },
             "ethics_review_justification" : { "value" : "There is an issue" }
         }
         chk_edit = ac_client.post_note_edit(
@@ -5825,7 +5842,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         content = {
                             'emergency_load': { 'value': 0 },
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
-                            'research_area': { 'value': ['Code Models'] }
+                            'research_area': { 'value': ['NLP and Code Models'] }
                         }
                     )
                 )
@@ -5849,7 +5866,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 2 },
-                        'research_area': { 'value': ['Code Models'] }
+                        'research_area': { 'value': ['NLP and Code Models'] }
                     }
                 )
             )
@@ -5869,7 +5886,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 assert cmp_edges[user][0] == 6
             assert cmp_original == reg_original + emg_original
             assert len(area_edges[user]) == 1
-            assert area_edges[user][0] == 'Code Models'
+            assert area_edges[user][0] == 'NLP and Code Models'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
@@ -5886,7 +5903,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': ['Code Models', 'Machine Translation'] }
+                        'research_area': { 'value': ['NLP and Code Models', 'Machine Translation'] }
                     }
                 )
             )
@@ -5907,7 +5924,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert emg_edges[user][0] != emg_original
             assert cmp_edges[user][0] == reg_edges[user][0] + emg_edges[user][0]
             assert len(area_edges[user]) == 2
-            assert area_edges[user][0] == 'Code Models'
+            assert area_edges[user][0] == 'NLP and Code Models'
             assert area_edges[user][1] == 'Machine Translation'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
@@ -5953,7 +5970,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': ['Code Models', 'Machine Translation'] }
+                        'research_area': { 'value': ['NLP and Code Models', 'Machine Translation'] }
                     }
                 )
             )
@@ -6264,7 +6281,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Code Models', 'Machine Translation'] }
+                    'research_area': { 'value': ['NLP and Code Models', 'Machine Translation'] }
                 }
             )
         )
@@ -6311,7 +6328,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Code Models', 'Machine Translation'] }
+                    'research_area': { 'value': ['NLP and Code Models', 'Machine Translation'] }
                 }
             )
         )
@@ -6356,15 +6373,22 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     "appropriateness" : { "value" : "Yes" },
+                    "appropriateness_justification" : { "value" : "N/A - this paper makes a contribution to computational processing of natural language." },
                     "formatting" : { "value" : "Yes" },
+                    "formatting_justification" : { "value" : "N/A - this paper is properly formatted." },
                     "length" : { "value" : "Yes" },
+                    "length_justification" : { "value" : "N/A - this paper is within the page limits." },
                     "anonymity" : { "value" : "Yes" },
+                    "anonymity_justification" : { "value" : "N/A - this paper is properly anonymized." },
                     "responsible_checklist" : { "value" : "Yes" },
                     "limitations" : { "value" : "Yes" },
+                    "limitations_justification" : { "value" : "N/A - this paper has the 'Limitations' section." },
+                    "overall_level" : { "value" : "Yes" },
+                    "overall_level_justification" : { "value" : "N/A - this seems like a good-faith submission worthy of full review." },
                     "number_of_assignments" : { "value" : "Yes" },
                     "diversity" : { "value" : "Yes" },
                     "need_ethics_review" : { "value" : "No" },
-                    "potential_violation_justification" : { "value" : "There are no violations with this submission" },
+                    "potential_violation_justification" : { "value" : "N/A - the authors filled in the responsible NLP checklist appropriately." },
                     "ethics_review_justification" : { "value" : "There is an issue" }
                 }
             )
@@ -6401,7 +6425,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Code Models'] }
+                    'research_area': { 'value': ['NLP and Code Models'] }
                 }
             )
         )
