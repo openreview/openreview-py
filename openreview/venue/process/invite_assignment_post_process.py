@@ -40,9 +40,9 @@ def process_update(client, edge, invitation, existing_edge):
         print(f'Get profile for {user}')
         user_profile=openreview.tools.get_profile(client, user)
         inviter_profile=openreview.tools.get_profile(client, edge.tauthor) if should_get_inviter_profile else None
-        inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else edge.signatures[0]
-        # Only use pretty_id if inviter_preferred_name is different from raw signature
-        inviter_id=openreview.tools.pretty_id(edge.signatures[0]) if edge.signatures[0] != inviter_preferred_name else inviter_preferred_name
+        inviter_id=openreview.tools.pretty_id(edge.signatures[0])
+        # When AC identity is hidden, use pretty_id for both values to avoid redundancy
+        inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else inviter_id
 
         if not user_profile:
             user_profile=openreview.Profile(id=user,
@@ -131,9 +131,9 @@ Thanks,
         print(f'Get profile for {user}')
         user_profile=openreview.tools.get_profile(client, user)
         inviter_profile=openreview.tools.get_profile(client, edge.tauthor) if should_get_inviter_profile else None
-        inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else edge.signatures[0]
-        # Only use pretty_id if inviter_preferred_name is different from raw signature
-        inviter_id=openreview.tools.pretty_id(edge.signatures[0]) if edge.signatures[0] != inviter_preferred_name else inviter_preferred_name
+        inviter_id=openreview.tools.pretty_id(edge.signatures[0])
+        # When AC identity is hidden, use pretty_id for both values to avoid redundancy
+        inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else inviter_id
 
         if not user_profile:
             user_profile=openreview.Profile(id=user,
