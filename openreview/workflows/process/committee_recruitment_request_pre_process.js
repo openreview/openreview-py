@@ -1,7 +1,7 @@
 function process(client, edit, invitation) {
   client.throwErrors = true
 
-  const inviteMessageBodyTemplate = edit.group?.content?.invite_message_body_template?.value
+  const inviteMessageBodyTemplate = edit.content?.invite_message_body_template?.value
 
   if (!inviteMessageBodyTemplate) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: 'invite_message_body_template is required' }))
