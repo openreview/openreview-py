@@ -145,7 +145,8 @@ class Venue(object):
     def is_template_related_workflow(self):
         template_related_workflows = [
             f'{self.support_user}/Venue_Request/-/Conference_Review_Workflow',
-            f'{self.support_user}/Venue_Request/-/ICML'
+            f'{self.support_user}/Venue_Request/-/ICML',
+            f'{self.support_user}/Venue_Request/-/TEST' ## TODO: do this better
         ]
         return self.request_form_invitation and self.request_form_invitation in template_related_workflows
     
