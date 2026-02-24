@@ -139,9 +139,9 @@ class TestProfileManagement():
             "Andrew McCallum"
         ]
         assert note.content['authorids']['value'] == [
-            "https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:",
-            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
-            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]
 
@@ -172,8 +172,8 @@ class TestProfileManagement():
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
         assert note.content['authorids']['value'] == [
             "~Haw-Shiuan_Chang1",
-            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
-            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]
 
@@ -281,8 +281,8 @@ class TestProfileManagement():
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
         assert note.content['authorids']['value'] == [
             '',
-            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
-            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]                    
 
@@ -353,7 +353,7 @@ class TestProfileManagement():
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
         assert note.content['authorids']['value'] == [
             '',
-            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "",
             "~Kate_Ricci1",
             "~Andrew_McCallum1"
         ] 
@@ -522,9 +522,9 @@ class TestProfileManagement():
             "Andrew McCallum"
         ]
         assert note.content['authorids']['value'] == [
-            "https://dblp.org/search/pid/api?q=author:Nihar_B._Shah:",
-            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
-            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]
 
@@ -546,8 +546,8 @@ class TestProfileManagement():
 
         assert note.content['authorids']['value'] == [
             "~Nihar_B._Shah1",
-            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
-            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]
 
@@ -567,8 +567,8 @@ class TestProfileManagement():
 
         assert note.content['authorids']['value'] == [
             "",
-            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
-            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]                
 
