@@ -257,7 +257,7 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         invited_group = openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors/Invited')
-        assert set(invited_group.members) == {'areachair_one@efgh.cc', 'areachair_two@efgh.cc', 'areachair_three@efgh.cc'}
+        assert set(invited_group.members) == {'~ACTwo_EFGH1', '~ACOne_EFGH1', '~ACThree_EFGH1'}
         assert openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors/Declined').members == []
         assert openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors').members == []
 
@@ -291,9 +291,9 @@ For more details, please check the following links:
         assert len(edits) == 1
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
-        assert set(openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors/Invited').members) == {'areachair_one@efgh.cc', 'areachair_two@efgh.cc', 'areachair_three@efgh.cc'}
+        assert set(openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors/Invited').members) == {'~ACTwo_EFGH1', '~ACOne_EFGH1', '~ACThree_EFGH1'}
         assert openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors/Declined').members == []
-        assert openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors').members == ['areachair_one@efgh.cc']
+        assert openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors').members == ['~ACOne_EFGH1']
 
         messages = openreview_client.get_messages(to='areachair_one@efgh.cc', subject = '[EFGH 2025] Action Editor Invitation accepted')
         assert len(messages) == 1
