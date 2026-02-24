@@ -571,6 +571,18 @@ For more details, please check the following links:
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Program Committee Invitation accepted')
         assert len(messages) == 2
 
+        ## Test validation: attempt to send recruitment without {{invitation_url}} token
+        with pytest.raises(openreview.OpenReviewException, match='invite_message_body_template must contain {{invitation_url}} token'):
+            openreview_client.post_group_edit(
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
+                content={
+                    'invitee_details': { 'value':  'reviewer_three@abcd.cc, Reviewer ABCDThree' },
+                    'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
+                    'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation.\n\nBest regards,\nABCD 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+
         ## Remind reviewers to respond the invitation
         edit = openreview_client.post_group_edit(
                 invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request_Reminder',
