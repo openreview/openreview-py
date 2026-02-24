@@ -15,6 +15,9 @@ def process(client, invitation):
     accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
+    support_user = invitation.invitations[0].split('Template')[0] + 'Support'
+    status_invitation_id = domain.get_content_value('status_invitation_id')
+    request_form_id = domain.get_content_value('request_form_id')
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
@@ -105,6 +108,20 @@ def process(client, invitation):
 
     if not source_submissions:
         print('No submissions were updated since there are no active submissions')
+        # post status to request form
+        client.post_note_edit(
+            invitation=status_invitation_id,
+            signatures=[venue_id],
+            readers=[venue_id, support_user],
+            note=openreview.api.Note(
+                forum=request_form_id,
+                signatures=[venue_id],
+                content={
+                    'title': { 'value': 'Submission Release Completed' },
+                    'comment': { 'value': f'The process "{invitation.id.split("/-/")[-1].replace("_", " ")}" has successfully completed. No submissions were released since there are no active submissions.' }
+                }
+            )
+        )
         return
     
     print(f'update {len(submissions)} submissions')
@@ -124,6 +141,23 @@ def process(client, invitation):
                 'decision_heading_map': {
                     'value': decision_heading_map
                 }
+            }
+        )
+    )
+
+    comment = f'The process "{invitation.id.split("/-/")[-1].replace("_", " ")}" has successfully completed. {len(submissions)} submissions were released to the public.'
+
+    # post status to request form
+    client.post_note_edit(
+        invitation=status_invitation_id,
+        signatures=[venue_id],
+        readers=[venue_id, support_user],
+        note=openreview.api.Note(
+            forum=request_form_id,
+            signatures=[venue_id],
+            content={
+                'title': { 'value': 'Submission Release Completed' },
+                'comment': { 'value': comment }
             }
         )
     )
