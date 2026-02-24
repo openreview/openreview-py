@@ -16,6 +16,8 @@ def process(client, invitation):
     ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
     invitation_name = invitation.edit['invitation']['id'].split('/')[-1].replace('_', ' ')
+    status_invitation_id = domain.get_content_value('status_invitation_id')
+    request_form_id = domain.get_content_value('request_form_id')
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
@@ -201,3 +203,22 @@ def process(client, invitation):
     for current_invitation in current_child_invitations:
         if current_invitation.id not in posted_invitations_by_id:
             delete_invitation(current_invitation, now)
+
+    comment = f'The process "{invitation_name}" has successfully completed. {len(notes)} {invitation_name} invitations were created or updated.'
+
+    # post status to request form
+    if status_invitation_id:
+        support_user = domain.content['request_form_invitation']['value'].split('/Venue_Request')[0]
+        client.post_note_edit(
+            invitation=status_invitation_id,
+            signatures=[venue_id],
+            readers=[venue_id, support_user],
+            note=openreview.api.Note(
+                forum=request_form_id,
+                signatures=[venue_id],
+                content={
+                    'title': { 'value': f'{invitation_name} Invitation Setup Completed' },
+                    'comment': { 'value': comment }
+                }
+            )
+        )
