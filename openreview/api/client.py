@@ -316,6 +316,17 @@ class OpenReviewClient(object):
         return response.json()    
     
     
+    def post_note_edit_as_guest(self, token, edit):
+        headers = {
+            'User-Agent': self.user_agent,
+            'Accept': 'application/json',
+            'X-Guest-Token': token
+        }        
+        response = self.session.post(self.note_edits_url, json = edit, headers = headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    
     def flush_members_cache(self, group_id=None):
         """
         Flushes the members cache for a group
@@ -3338,7 +3349,9 @@ class Invitation(object):
         responseArchiveDate = None,
         details = None,
         description = None,
-        instructions = None):
+        instructions = None,
+        guestPosting = None,
+        secret = None):
 
         self.id = id
         self.invitations = invitations
@@ -3375,6 +3388,8 @@ class Invitation(object):
         self.content = content
         self.description = description
         self.instructions = instructions
+        self.guestPosting = guestPosting
+        self.secret = secret
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -3497,6 +3512,10 @@ class Invitation(object):
             body['message']=self.message
         if self.bulk is not None:
             body['bulk']=self.bulk
+        if self.guestPosting is not None:
+            body['guestPosting']=self.guestPosting
+        if self.secret is not None:
+            body['secret']=self.secret
         return body
 
     @classmethod
@@ -3559,6 +3578,10 @@ class Invitation(object):
         if 'message' in i:
             invitation.message = i['message']
             invitation.type = 'Message'
+        if 'guestPosting' in i:
+            invitation.guestPosting = i['guestPosting']
+        if 'secret' in i:
+            invitation.secret = i['secret']
         return invitation
 class Edge(object):
     def __init__(self, head, tail, invitation, domain=None, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
