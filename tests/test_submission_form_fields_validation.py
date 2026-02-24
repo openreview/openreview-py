@@ -17,6 +17,7 @@ class TestSubmissionFormFieldsValidation():
 
         # Setup a basic venue
         venue = openreview.venue.Venue(openreview_client, 'Test.cc/2025/Conference', support_user='openreview.net/Support')
+        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/TEST'
         venue.name = 'Test Conference'
         venue.short_name = 'TEST 2025'
         venue.website = 'https://test.cc'
@@ -29,7 +30,6 @@ class TestSubmissionFormFieldsValidation():
 
         venue.setup(['pc@test.cc'])
         venue.create_submission_stage()
-        venue.invitation_builder.set_venue_template_invitations()
 
         # Verify Form_Fields invitation exists
         form_fields_invitation = openreview_client.get_invitation('Test.cc/2025/Conference/-/Submission/Form_Fields')
@@ -63,6 +63,7 @@ class TestSubmissionFormFieldsValidation():
 
         # Setup a basic venue
         venue = openreview.venue.Venue(openreview_client, 'Test2.cc/2025/Conference', support_user='openreview.net/Support')
+        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/TEST'
         venue.name = 'Test Conference 2'
         venue.short_name = 'TEST2 2025'
         venue.website = 'https://test2.cc'
@@ -75,7 +76,6 @@ class TestSubmissionFormFieldsValidation():
 
         venue.setup(['pc2@test.cc'])
         venue.create_submission_stage()
-        venue.invitation_builder.set_venue_template_invitations()
 
         # Verify Form_Fields invitation exists
         form_fields_invitation = openreview_client.get_invitation('Test2.cc/2025/Conference/-/Submission/Form_Fields')
@@ -109,6 +109,7 @@ class TestSubmissionFormFieldsValidation():
 
         # Setup a basic venue
         venue = openreview.venue.Venue(openreview_client, 'Test3.cc/2025/Conference', support_user='openreview.net/Support')
+        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/TEST'
         venue.name = 'Test Conference 3'
         venue.short_name = 'TEST3 2025'
         venue.website = 'https://test3.cc'
@@ -121,7 +122,6 @@ class TestSubmissionFormFieldsValidation():
 
         venue.setup(['pc3@test.cc'])
         venue.create_submission_stage()
-        venue.invitation_builder.set_venue_template_invitations()
 
         # Verify Form_Fields invitation exists
         form_fields_invitation = openreview_client.get_invitation('Test3.cc/2025/Conference/-/Submission/Form_Fields')
