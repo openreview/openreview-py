@@ -2,20 +2,19 @@ from copy import deepcopy
 from datetime import datetime
 
 arr_tracks = [
-    "AI/LLM Agents",
     "Clinical and Biomedical Applications",
-    "Code Models",
-    "Computational Social Science, Cultural Analytics, and NLP for Social Good",
+    "Computational Social Science and Cultural Analytics",
     "Dialogue and Interactive Systems",
-    "Discourse, Pragmatics, and Reasoning",
+    "Discourse and Pragmatics",
+    "Efficient Methods for NLP",
     "Ethics, Bias, and Fairness",
-    "Financial Applications and Time Series",
-    "Generalizability and Transfer",
-    "Hierarchical Structure Prediction, Syntax, and Parsing",
-    "Human-AI Interaction/Cooperation and Human-Centric NLP",
-    "Information Extraction and Retrieval",
+    "Generation",
+    "Human-Centered NLP and Human-AI Interaction",
+    "Information Extraction",
+    "Information Retrieval and Text Mining",
     "Interpretability and Analysis of Models for NLP",
-    "Language Models",
+    "Language Modeling",
+    "LLM agents",
     "Linguistic theories, Cognitive Modeling and Psycholinguistics",
     "LLM Efficiency",
     "Low-resource Methods for NLP",
@@ -24,7 +23,8 @@ arr_tracks = [
     "Mathematical, Symbolic, Neurosymbolic, and Logical Reasoning",
     "Multilinguality and Language Diversity",
     "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-    "Natural Language Generation",
+    "NLP and Code Models",
+    "NLP and Symbolic Reasoning",
     "NLP Applications",
     "Phonology, Morphology and Word Segmentation",
     "Question Answering",
@@ -2100,8 +2100,20 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper appropriate for *ACL venues?",
+        "description": "This and the following questions help us to identify possible violations for which the paper may be desk rejected without review. \n\n Is the paper appropriate for *CL? ARR is NOT a general machine learning venue: submissions should make a clear contribution to computational processing of natural language.",
         "order": 1
+    },
+    "appropriateness_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper makes a contribution to computational processing of natural language.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is not relevant for *CL, please explain your reasoning to help the chairs consider the case.",
+        "order": 2
     },
     "formatting": {
         "value": {
@@ -2115,8 +2127,20 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html) Please note that ACL has separate LaTeX and Microsoft Word templates, and PDFs produced by these templates look different from each other.",
-        "order": 2
+        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html)",
+        "order": 3
+    },
+    "formatting_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is properly formatted.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is not appropriately formatted (e.g. some text is too small to be legible when printed on A4 paper), please describe the violation to help the chairs consider the case.",
+        "order": 4
     },
     "length": {
         "value": {
@@ -2130,8 +2154,20 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
-        "order": 3
+        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum; Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
+        "order": 5
+    },
+    "length_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is within the page limits.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is violating the page limit rules (e.g. appendix contains materials critical to understanding the main paper), please describe the violation to help the chairs consider the case.",
+        "order": 6
     },
     "anonymity": {
         "value": {
@@ -2146,7 +2182,19 @@ arr_ae_checklist = {
             }
         },
         "description": "Is the paper properly anonymized?",
-        "order": 4
+        "order": 7
+    },
+    "anonymity_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is properly anonymized.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper discloses the author identity somehow (e.g. self-citations, links to non-anonymous repositories), please describe the violation to help the chairs consider the case.",
+        "order": 8
     },
     "limitations": {
         "value": {
@@ -2161,7 +2209,46 @@ arr_ae_checklist = {
             }
         },
         "description": "Does the paper have a section entitled \"Limitations\"?",
-        "order": 5
+        "order": 9
+    },
+    "limitations_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper has the 'Limitations' section.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If this paper is missing the required 'Limitations' section, please indicate if you noticed a description of limitations elsewhere.",
+        "order": 10
+    },
+    "overall_level": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Does the submission seem to be a good-faith submission that merits full review?",
+        "order": 11
+    },
+    "overall_level_justification": {
+        "value": {
+            "param": {
+                "regex": ".{1,250}",
+                "optional": False,
+                "default": "N/A - this seems like a good-faith submission worthy of full review.",
+                "type": "string"
+            }
+        },
+        "description": "ARR is receiving many low-quality submissions -- some possibly generated -- that do not merit full review and put a strain on our volunteer reviewer resources. If you notice a submission that is clearly not in good faith, please indicate that the chairs should consider desk rejection, and provide your rationale.  Hallucinated citations are one of the possible indicators.",
+        "order": 12
     },
     "responsible_checklist": {
         "value": {
@@ -2176,49 +2263,19 @@ arr_ae_checklist = {
             }
         },
         "description": "Have the authors completed the responsible NLP research checklist appropriately?",
-        "order": 6
+        "order": 13
     },
     "potential_violation_justification": {
         "value": {
             "param": {
                 "regex": ".{1,250}",
                 "optional": False,
-                "default": "There are no violations with this submission",
+                "default": "N/A - the authors filled in the responsible NLP checklist appropriately.",
                 "type": "string"
             }
         },
-        "description": "Modify only if a violation is marked. If you have marked any violation on this checklist, please give a brief explanation of the issue",
-        "order": 7
-    },
-    "number_of_assignments": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No"
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "Does the submission have 3 reviewers?",
-        "order": 8
-    },
-    "diversity": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No"
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "Are the reviewers diverse, in regards to seniority, geographies and institutions? If not, answer 'no' and please modify the assignments",
-        "order": 9
+        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue",
+        "order": 14
     },
     "need_ethics_review": {
         "value": {
@@ -2232,20 +2289,50 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why below, and we will try to ensure that it receives a separate review.",
-        "order": 10
+        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why below, and we will try to ensure that it receives a separate review. Please refer to https://aclrollingreview.org/ethics-flagging-guidelines/",
+        "order": 15
     },
     "ethics_review_justification": {
         "value": {
             "param": {
                 "minLength": 1,
-                "default": "N/A (I answered 'no' to the previous question)",
+                "default": "N/A - this paper does not need an ethics review.",
                 "optional": False,
                 "type": "string"
             }
         },
         "description": "Please provide a meaningful justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
-        "order": 11
+        "order": 16
+    },
+    "number_of_assignments": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "This and the following questions aim to ensure that the submission is adequately handled, if it is accepted for review. \n\n Does the submission have 3 reviewers?",
+        "order": 17
+    },
+    "diversity": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Are the reviewers diverse with respect to seniority, geographies and institutions? If not, answer 'no' and please modify the assignments",
+        "order": 18
     },
     "resubmission": {
         "value": {
@@ -2261,7 +2348,7 @@ arr_ae_checklist = {
             }
         },
         "description": "If the paper is a resubmission, does the link to the previous submission work?",
-        "order": 12
+        "order": 19
     },
     "resubmission_reassignments": {
         "value": {
@@ -2277,7 +2364,7 @@ arr_ae_checklist = {
             }
         },
         "description": "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments",
-        "order": 13
+        "order": 20
     },
     "resubmission_notes": {
         "value": {
@@ -2292,10 +2379,10 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "If this is a resubmission, is it accompanied by revision notes listing the changes made? (field: 'explanation of revisions PDF').",
-        "order": 14
+        "description": "If this is a resubmission, is it accompanied by revision notes listing the changes made? (field: 'explanation of revisions PDF'). It should contain a good-faith attempt to incorporate reasonable feedback from the past cycle, or explain why it should be disregarded.",
+        "order": 21
     },
-    "comment": {
+    "other_issues": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -2303,10 +2390,11 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Any comments on any issues with this submission?",
-        "order": 15
+        "description": "Please let us know if you have any other serious concerns about this submission that should be considered by the chairs. Markdown formatting and latex formulas can be used.",
+        "order": 22
     }
 }
+
 
 
 arr_reviewer_checklist = {
@@ -2322,8 +2410,20 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper appropriate for *ACL venues?",
+        "description": "Is the paper appropriate for *CL? ARR is NOT a general machine learning venue: submissions should make a clear contribution to computational processing of natural language.",
         "order": 1
+    },
+    "appropriateness_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper makes a contribution to computational processing of natural language.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is not relevant for *CL, please explain your reasoning to help the chairs consider the case.",
+        "order": 2
     },
     "formatting": {
         "value": {
@@ -2337,8 +2437,20 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html) Please note that ACL has separate LaTeX and Microsoft Word templates, and PDFs produced by these templates look different from each other.",
-        "order": 2
+        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html)",
+        "order": 3
+    },
+    "formatting_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is properly formatted.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is not appropriately formatted (e.g. some text is too small to be legible when printed on A4 paper), please describe the violation to help the chairs consider the case.",
+        "order": 4
     },
     "length": {
         "value": {
@@ -2352,8 +2464,20 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
-        "order": 3
+        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum; Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
+        "order": 5
+    },
+    "length_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is within the page limits.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is violating the page limit rules (e.g. appendix contains materials critical to understanding the main paper), please describe the violation to help the chairs consider the case.",
+        "order": 6
     },
     "anonymity": {
         "value": {
@@ -2368,7 +2492,19 @@ arr_reviewer_checklist = {
             }
         },
         "description": "Is the paper properly anonymized?",
-        "order": 4
+        "order": 7
+    },
+    "anonymity_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is properly anonymized.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper discloses the author identity somehow (e.g. self-citations, links to non-anonymous repositories), please describe the violation to help the chairs consider the case.",
+        "order": 8
     },
     "limitations": {
         "value": {
@@ -2383,7 +2519,46 @@ arr_reviewer_checklist = {
             }
         },
         "description": "Does the paper have a section entitled \"Limitations\"?",
-        "order": 5
+        "order": 9
+    },
+    "limitations_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper has the 'Limitations' section.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If this paper is missing the required 'Limitations' section, please indicate if you noticed a description of limitations elsewhere.",
+        "order": 10
+    },
+    "overall_level": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Does the submission seem to be a good-faith submission that merits full review?",
+        "order": 11
+    },
+    "overall_level_justification": {
+        "value": {
+            "param": {
+                "regex": ".{1,250}",
+                "optional": False,
+                "default": "N/A - this seems like a good-faith submission worthy of full review.",
+                "type": "string"
+            }
+        },
+        "description": "ARR is receiving many low-quality submissions -- some possibly generated -- that do not merit full review and put a strain on our volunteer reviewer resources. If you notice a submission that is clearly not in good faith, please indicate that the chairs should consider desk rejection, and provide your rationale.  Hallucinated citations are one of the possible indicators.",
+        "order": 12
     },
     "responsible_checklist": {
         "value": {
@@ -2398,19 +2573,19 @@ arr_reviewer_checklist = {
             }
         },
         "description": "Have the authors completed the responsible NLP research checklist appropriately?",
-        "order": 6
+        "order": 13
     },
     "potential_violation_justification": {
         "value": {
             "param": {
                 "regex": ".{1,250}",
                 "optional": False,
-                "default": "There are no violations with this submission",
+                "default": "N/A - the authors filled in the responsible NLP checklist appropriately.",
                 "type": "string"
             }
         },
-        "description": "Modify only if a violation is marked. If you have marked any violation on this checklist, please give a brief explanation of the issue",
-        "order": 7
+        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue",
+        "order": 14
     },
     "need_ethics_review": {
         "value": {
@@ -2425,21 +2600,21 @@ arr_reviewer_checklist = {
             }
         },
         "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why below, and we will try to ensure that it receives a separate review. Please refer to https://aclrollingreview.org/ethics-flagging-guidelines/",
-        "order": 8
+        "order": 15
     },
     "ethics_review_justification": {
         "value": {
             "param": {
                 "minLength": 1,
-                "default": "N/A (I answered no to the previous question)",
+                "default": "N/A - this paper does not need an ethics review.",
                 "optional": False,
                 "type": "string"
             }
         },
         "description": "Please provide a meaningful justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
-        "order": 9
+        "order": 16
     },
-    "comment": {
+    "other_issues": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -2447,10 +2622,11 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Your comment or reply (max 10000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
-        "order": 10
+        "description": "Please let us know if you have any other serious concerns about this submission that should be considered by the chairs. Markdown formatting and latex formulas can be used.",
+        "order": 17
     }
 }
+
 
 arr_review_rating_content = {
     "I1_not_specific": {
@@ -2831,21 +3007,6 @@ arr_submitted_author_content = {
             }
         },
         "description": "If any of your co-authors are unable to complete this form, please provide their Openreview IDs in this question. Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.",
-        "order": 1
-    },
-    "confirm_you_are_qualified_to_review": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes, I meet the ARR requirements to be a reviewer.",
-                    "No, I do not meet the ARR requirements to be a reviewer."
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "The ARR requirements for reviewers are: (a) at least two papers in main ACL events or Findings, plus (b) at least one more paper in the ACL Anthology or a major AI venue. Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major AI venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches data online. Having your self-reported status helps us identify issues with available data.",
         "order": 2
     },
     "confirm_you_are_willing_to_serve_as_a_reviewer_or_AC": {
@@ -2862,9 +3023,9 @@ arr_submitted_author_content = {
                     "No, I cannot serve because I am on family medical leave.",
                     "No, I cannot serve because I have a medical emergency.",
                     "No, I cannot serve because of another form of emergency beyond my control.",
-                    "No, I cannot serve because I am an AC / SAC / PC / General Chair / Local Chair for a related venue, which I will specify in the next question.",
-                    "No, I cannot serve because I am editor-in-chief of a major related journal, which I will specify in the next question.",
-                    "No, I cannot serve for another reason, which I will specify in the next question (this choice is very rare)."
+                    "No, I cannot serve because I am an AC / SAC / PC / General Chair / Local Chair for a related venue.",
+                    "No, I cannot serve because I am editor-in-chief of a major related journal.",
+                    "No, I cannot serve for another reason (this choice is very rare)."
                 ],
                 "optional": False,
                 "type": "string"
@@ -2915,6 +3076,21 @@ arr_submitted_author_content = {
         },
         "description": "Please indicate how many papers you would be willing to do emergency reviews for if asked.",
         "order": 6
+    },
+    "confirm_you_are_qualified_to_review": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I meet the ARR requirements to be a reviewer.",
+                    "No, I do not meet the ARR requirements to be a reviewer."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "The ARR requirements for reviewers are: (a) at least two papers in main ACL events or Findings, plus (b) at least one more paper in the ACL Anthology or a major AI venue. Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major AI venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches data online. Having your self-reported status helps us identify issues with available data.",
+        "order": 7
     },
     "are_you_a_student": {
         "value": {
