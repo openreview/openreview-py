@@ -203,6 +203,7 @@ class TestReviewersOnly():
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs')
         assert group.members == ['programchair@abcd.cc']
         assert group.domain == 'ABCD.cc/2025/Conference'
+        assert 'reviewers_invite_assignment_id' in group.web
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Automated_Administrator')
         assert not group.members
