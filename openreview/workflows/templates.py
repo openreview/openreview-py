@@ -880,6 +880,7 @@ Program Chairs'''
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
+                    'preprocess': self.get_process_content('process/committee_recruitment_request_reminder_pre_process.js'),
                     'process': self.get_process_content('process/committee_recruitment_request_reminder_process.py'),
                     'content': {
                         'committee_id': {

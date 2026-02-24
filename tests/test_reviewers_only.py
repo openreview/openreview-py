@@ -639,6 +639,27 @@ For more details, please check the following links:
                 group=openreview.api.Group()
             )
 
+        ## Test validation: attempt to send recruitment reminder without {{invitation_url}} token
+        with pytest.raises(openreview.OpenReviewException, match='Invite Reminder Message Body Template must contain {{invitation_url}} token'):
+            openreview_client.post_group_edit(
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request_Reminder',
+                content={
+                    'invite_reminder_message_subject_template': { 'value': '[ABCD 2025] Reminder: Invitation to serve as expert Reviewer' },
+                    'invite_reminder_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation.\n\nBest regards,\nABCD 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+
+        ## Test validation: attempt to edit recruitment request emails without {{invitation_url}} token
+        with pytest.raises(openreview.OpenReviewException, match='Invite Message Body Template must contain {{invitation_url}} token'):
+            openreview_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request/Request_Emails',
+                content={
+                    'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
+                    'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation.\n\nBest regards,\nABCD 2025 Program Chairs' },
+                }
+            )
+
         ## Remind reviewers to respond the invitation
         edit = openreview_client.post_group_edit(
                 invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request_Reminder',
