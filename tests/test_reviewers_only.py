@@ -449,6 +449,62 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
         assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['submission_authors', 'program_chairs']
 
+    def test_deployment_with_same_venue_id(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=2)
+
+        new_request = pc_client.post_note_edit(invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow',
+            signatures=['~ProgramChair_ABCD1'],
+            note=openreview.api.Note(
+                content={
+                    'official_venue_name': { 'value': 'The ABCD Conference Challenge' },
+                    'abbreviated_venue_name': { 'value': 'ABCD 2025 Challenge' },
+                    'venue_website_url': { 'value': 'https://abcd.cc/Conferences/2025' },
+                    'location': { 'value': 'Amherst, Massachusetts' },
+                    'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
+                    'program_chair_emails': { 'value': ['programchair@abcd.cc'] },
+                    'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
+                    'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
+                    'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
+                    'reviewers_name': { 'value': 'Reviewers' },
+                    'area_chairs_name': { 'value': 'Area_Chairs' },
+                    'colocated': { 'value': 'Independent' },
+                    'previous_venue': { 'value': 'ABCD.cc/2024/Conference' },
+                    'expected_submissions': { 'value': 50 },
+                    'how_did_you_hear_about_us': { 'value': 'We have used OpenReview for our previous conferences.' },
+                    'venue_organizer_agreement': {
+                        'value': [
+                            'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                            'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                            'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                            'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                            'We will treat the OpenReview staff with kindness and consideration.',
+                            'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
+                            ]
+                    }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=new_request['id'])
+
+        # try deploying with already used venue id
+        with pytest.raises(openreview.OpenReviewException, match=r'The venue id ABCD.cc/2025/Conference has already been used for request'):
+            edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
+                signatures=['openreview.net/Support'],
+                note=openreview.api.Note(
+                    id=new_request['note']['id'],
+                    content={
+                        'venue_id': { 'value': 'ABCD.cc/2025/Conference' }
+                    }
+                )
+            )
+
     def test_recruit_reviewers(self, openreview_client, helpers, selenium, request_page):
 
         # use invitation to recruit reviewers
