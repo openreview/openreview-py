@@ -4556,10 +4556,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'responsible_checklist': 'Responsible Checklist',
             'limitations': 'Limitations'
         }
-        only_required_fields = ['number_of_assignments', 'diversity']
+        only_required_fields = ['number_of_assignments', 'diversity', 'overall_level']
 
         default_fields = {field: True for field in violation_fields + only_required_fields}
-        default_fields['overall_level'] = True
         default_fields['need_ethics_review'] = False
         checklist_default_justifications = {
             'appropriateness_justification': {'value': 'N/A - this paper makes a contribution to computational processing of natural language.'},
