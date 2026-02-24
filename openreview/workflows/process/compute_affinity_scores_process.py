@@ -34,7 +34,7 @@ def process(client, invitation):
                 }
             )
         )
-    return
+        return
 
     venue = openreview.helpers.get_venue(client, venue_id, support_user)
 
