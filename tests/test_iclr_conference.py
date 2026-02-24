@@ -300,7 +300,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         reviewer_client = openreview.Client(username='iclr2021_one@mail.com', password=helpers.strong_password)
         reviewer_tasks_url = 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers#reviewer-tasks'
-        request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
+        request_page(selenium, reviewer_tasks_url, reviewer_client, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
 
         assert selenium.find_element(By.LINK_TEXT, 'Reviewer Registration')
         assert selenium.find_element(By.LINK_TEXT, 'Expertise Selection')
@@ -338,7 +338,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert registration_note
 
 
-        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers', reviewer_client.token, wait_for_element='header')
+        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers', reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert header
         notes = header.find_elements(By.CLASS_NAME, "description")
@@ -346,7 +346,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the ICLR 2021. It will be regularly updated as the conference progresses, so please check back frequently.'
 
-        request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
+        request_page(selenium, reviewer_tasks_url, reviewer_client, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
 
         assert selenium.find_element(By.LINK_TEXT, 'Reviewer Registration')
         assert selenium.find_element(By.LINK_TEXT, 'Expertise Selection')

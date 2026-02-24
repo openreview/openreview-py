@@ -88,6 +88,31 @@ We thank you for your essential contribution to {short_name}!
 The {short_name} Editors-in-Chief
 '''
 
+ae_review_rating_starts_email_template = '''Hi {{{{fullname}}}},
+
+Thank you for overseeing the review process for {short_name} submission "{submission_number}: {submission_title}".
+
+All reviewers have submitted their reviews for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:
+
+- Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.
+- Rate the quality of the reviews submitted by the reviewers. **You will not be able to submit your decision until these ratings have been submitted**. To rate a review, go on the submission's page and click on button "Rating" for each of the reviews.
+
+We ask that you submit your decision **within {decision_period_length} week** ({decision_duedate}). To do so, please follow this link: {invitation_url}
+
+The possible decisions are:
+- **Accept as is**: once its camera ready version is submitted, the manuscript will be marked as accepted.
+- **Accept with minor revision**: to use if you wish to request some specific revisions to the manuscript, to be specified explicitly in your decision comments. These revisions will be expected from the authors when they submit their camera ready version.
+- **Reject**: the paper is rejected, but you may indicate whether you would be willing to consider a significantly revised version of the manuscript. Such a revised submission will need to be entered as a new submission, that will also provide a link to this rejected submission as well as a description of the changes made since.
+
+Your decision may also include certification(s) recommendations for the submission (in case of an acceptance).
+
+For more details and guidelines on performing your review, visit {website}.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief
+'''
+
 ae_discussion_starts_email_template = '''Hi {{{{fullname}}}},
 
 Now that {number_of_reviewers} reviews have been submitted for submission {submission_number}: {submission_title}, all reviews have been made {review_visibility} and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **{discussion_period_length} weeks**.
@@ -152,6 +177,19 @@ For more details and guidelines on the {short_name} review process, visit {websi
 
 The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+author_discussion_starts_anonymous_ae_email_template = '''Hi {{{{fullname}}}},
+
+Now that {number_of_reviewers} reviews have been submitted for your submission  {submission_number}: {submission_title}, all reviews have been made {review_visibility}. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+
+You will have {discussion_period_length} weeks to interact with the reviewers, including uploading any revisions. To maximize the period of interaction and discussion, please respond as soon as possible. Additionally, revising the submission PDF in light of reviewer feedback is possible and encouraged (consider making changes in a different color to help reviewers), in order to give reviewers maximum confidence that their concerns are addressed. The reviewers will be using this time period to hear from you and gather all the information they need. In about {discussion_period_length} weeks ({discussion_cdate}), and no later than {recommendation_period_length} weeks ({recommendation_duedate}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+
+Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission_id}
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+The {short_name} Editors-in-Chief
 '''
 
 author_decision_accept_as_is_email_template = '''Hi {{{{fullname}}}},
@@ -277,6 +315,19 @@ The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.
 '''
 
+reviewer_invitation_assignment_email_template = '''Hi {user_preferred_name},
+
+You were invited to review the paper number: {submission_number}, title: "{submission_title}".
+
+Abstract: {submission_abstract}
+
+{invitation_links}
+
+Thanks,
+
+{inviter_id}
+{inviter_preferred_name}'''
+
 eic_new_submission_template = '''Hi {{{{fullname}}}},
 
 A new submission has been received for {short_name}.
@@ -301,4 +352,11 @@ The discussion period has ended and the reviewers will submit their recommendati
 
 The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+author_official_recommendation_starts_anonymous_ae_email_template = '''Hi {{{{fullname}}}},
+
+The discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.
+
+The {short_name} Editors-in-Chief
 '''

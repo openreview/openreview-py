@@ -7,6 +7,8 @@ def process(client, edit, invitation):
     ACTION_EDITOR_ACCEPTED_ID = journal.get_action_editors_id()
     ACTION_EDITOR_INVITED_ID = f'{ACTION_EDITOR_ACCEPTED_ID}/Invited'
     ACTION_EDITOR_DECLINED_ID = f'{ACTION_EDITOR_ACCEPTED_ID}/Declined'
+    ACTION_EDITOR_ARCHIVED_ID = journal.get_action_editors_archived_id() if journal.has_archived_action_editors() else None
+
     HASH_SEED = journal.secret_key
 
     if hasattr(edit, 'note'):
@@ -27,6 +29,8 @@ def process(client, edit, invitation):
         if (response == 'Yes'):
             client.remove_members_from_group(ACTION_EDITOR_DECLINED_ID, user)
             client.add_members_to_group(ACTION_EDITOR_ACCEPTED_ID, user)
+            if ACTION_EDITOR_ARCHIVED_ID:
+                client.remove_members_from_group(ACTION_EDITOR_ARCHIVED_ID, user)
 
             subject = '[{SHORT_PHRASE}] {SHORT_PHRASE} Invitation accepted'.format(SHORT_PHRASE=SHORT_PHRASE, ACTION_EDITOR_NAME=ACTION_EDITOR_NAME)
             message = '''Thank you for accepting the invitation to be an {ACTION_EDITOR_NAME} for {SHORT_PHRASE}.

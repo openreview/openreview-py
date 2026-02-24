@@ -25,13 +25,6 @@ jobs:
       TAG: ${{ github.event.inputs.tag }}
     steps:
       - uses: actions/checkout@v3
-      - name: Add SSH key
-        run: |
-          mkdir -p /home/runner/.ssh
-          echo "${{ secrets.GCLOUD_SSH_KEY }}" > /home/runner/.ssh/google_compute_engine
-          echo "${{ secrets.GCLOUD_SSH_KEY_PUB }}" > /home/runner/.ssh/google_compute_engine.pub
-          chmod 600 /home/runner/.ssh/google_compute_engine
-          chmod 600 /home/runner/.ssh/google_compute_engine.pub
       - name: Authenticate with Google Cloud
         id: auth
         uses: google-github-actions/auth@v1
@@ -63,5 +56,5 @@ jobs:
 
           for i in ${!instance_names[@]}; do
             echo Deploying to ${instance_names[$i]}
-            gcloud compute ssh --zone ${zones[$i]} openreview@${instance_names[$i]} --command "bash bin/deploy-openreview-py.sh ${TAG}"
+            gcloud compute ssh --zone ${zones[$i]} --tunnel-through-iap openreview@${instance_names[$i]} --command "bash bin/deploy-openreview-py.sh ${TAG}"
           done

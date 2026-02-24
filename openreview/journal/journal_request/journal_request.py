@@ -33,7 +33,7 @@ class JournalRequest():
         self.support_group_id = support_group_id
         self.support_group = tools.get_group(client, self.support_group_id)
         self.client = client
-        self.meta_invitation_id = f'{support_group_id}/-/Journal_Request_Edit'
+        self.meta_invitation_id = f'{support_group_id}/-/Edit'
 
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.meta_invitation_id,
@@ -44,23 +44,7 @@ class JournalRequest():
             replacement=True
         )
 
-    def set_meta_invitation(self):
-
-        self.client.post_invitation_edit(invitations=None,
-            readers=['~Super_User1'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            invitation=openreview.api.Invitation(id=self.meta_invitation_id,
-                invitees=['~Super_User1'],
-                readers=['~Super_User1'],
-                signatures=['~Super_User1'],
-                edit=True
-            )
-        )
-
     def setup_journal_request(self):
-
-        self.set_meta_invitation()
 
         journal_request_content = {
             'title': {
@@ -224,7 +208,7 @@ class JournalRequest():
             invitation = openreview.api.Invitation(
                 id = request_comment_invitation_id,
                 invitees = [venue_id, self.support_group_id],
-                readers = ['everyone'],
+                readers = [venue_id, self.support_group_id],
                 writers = [],
                 signatures = [venue_id],
                 edit = {
@@ -352,7 +336,7 @@ Cheers!'''.replace('{short_name}', short_name)
                 invitation = openreview.api.Invitation(
                     id = invitation_id,
                     invitees = [venue_id],
-                    readers = ['everyone'],
+                    readers = [venue_id],
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
@@ -394,7 +378,7 @@ Cheers!'''.replace('{short_name}', short_name)
                 invitation = openreview.api.Invitation(
                     id = invitation_id,
                     invitees = [venue_id],
-                    readers = ['everyone'],
+                    readers = [venue_id],
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
@@ -495,7 +479,7 @@ Cheers!
                 invitation = openreview.api.Invitation(
                     id = invitation_id,
                     invitees = [f'{venue_id}/Action_Editors'],
-                    readers = ['everyone'],
+                    readers = [f'{venue_id}/Action_Editors'],
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {

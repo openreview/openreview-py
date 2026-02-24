@@ -180,7 +180,7 @@ class TestICLRConference():
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@iclr.cc', password=helpers.strong_password)
 
-        request_page(selenium, "http://localhost:3030/group?id=ICLR.cc/2024/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
+        request_page(selenium, "http://localhost:3030/group?id=ICLR.cc/2024/Conference/Reviewers", reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 submission' in header.text
 

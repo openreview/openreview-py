@@ -1,7 +1,6 @@
 def process(client, edit, invitation):
 
-    domain = invitation.domain
-    support_user = f'{domain}/Support'
+    support_user = invitation.domain
 
     comment = client.get_note(edit.note.id)
     forum_note = client.get_note(comment.forum)
@@ -26,7 +25,7 @@ To view the comment, click here: https://openreview.net/forum?id={forum_note.id}
     if comment_title == 'Your venue is available in OpenReview':
 
         client.post_message(
-            invitation=f'{domain}/-/Edit',
+            invitation=f'{support_user}/-/Edit',
             recipients=comment.readers,
             ignoreRecipients = [support_user],
             subject=f'''Your venue, {forum_note.content['abbreviated_venue_name']['value']}, is available in OpenReview''',
@@ -36,7 +35,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         )
     else:
         client.post_message(
-            invitation=f'{domain}/-/Edit',
+            invitation=f'{support_user}/-/Edit',
             recipients=comment.readers,
             ignoreRecipients = [support_user],
             subject=f'''Comment posted to your request for service: {forum_note.content['title']['value']}''',
@@ -47,7 +46,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
 
     #send email to support
     client.post_message(
-        invitation=f'{domain}/-/Edit',
+        invitation=f'{support_user}/-/Edit',
         recipients=[support_user],
         subject=f'''Comment posted to a request for service: {forum_note.content['title']['value']}''',
         message=f'''A comment was posted to a service request.{comment_content}'''

@@ -8,7 +8,7 @@ def process(client, invitation):
     now = datetime.datetime.now()
     task = invitation.pretty_id()
 
-    edges_count = client.get_edges_count(invitation=journal.get_ae_recommendation_id(), head=submission.id)
+    edges_count = client.get_edges_count(invitation=journal.get_ae_recommendation_id(), head=submission.id, domain=journal.venue_id)
 
     if edges_count >= 3:
       return
@@ -34,7 +34,7 @@ We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info,
+        replyTo=assigned_action_editor if (assigned_action_editor and not journal.is_action_editor_anonymous()) else journal.contact_info,
         signature=journal.venue_id,
         sender=journal.get_message_sender()
     )

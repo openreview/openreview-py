@@ -29,8 +29,6 @@ class Recruitment(object):
             memberships = [g.id for g in self.client.get_groups(member=invitee, prefix=action_editors_id)] if tools.get_group(self.client, invitee) else []
             if action_editors_id in memberships:
                 recruitment_status['already_member'].append(invitee)
-            elif action_editors_invited_id in memberships:
-                recruitment_status['already_invited'].append(invitee)
             else:
                 profile=openreview.tools.get_profile(self.client, invitee)
                 invitee = profile.id if profile else invitee
@@ -61,7 +59,7 @@ class Recruitment(object):
 
         return recruitment_status
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reinvite=False):
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
 
         reviewers_id = self.journal.get_reviewers_id()
         reviewers_declined_id = reviewers_id + '/Declined'
@@ -82,8 +80,6 @@ class Recruitment(object):
             memberships = [g.id for g in self.client.get_groups(member=invitee, prefix=reviewers_id)] if tools.get_group(self.client, invitee) else []
             if reviewers_id in memberships:
                 recruitment_status['already_member'].append(invitee)
-            elif not reinvite and reviewers_invited_id in memberships:
-                recruitment_status['already_invited'].append(invitee)
             else:
                 profile=openreview.tools.get_profile(self.client, invitee)
                 invitee = profile.id if profile else invitee

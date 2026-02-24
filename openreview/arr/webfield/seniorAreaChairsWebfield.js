@@ -43,6 +43,7 @@ const browseReviewerInvitations = [
 ].join(';')
 
 const headBrowseInvitations = [
+  domain.content.reviewers_custom_max_papers_id?.value,
   `${reviewersId}/-/Registered_Load`,
   `${reviewersId}/-/Emergency_Load`,
   `${reviewersId}/-/Emergency_Area`,
@@ -119,6 +120,14 @@ return {
         return hasReply;
       })
       return checklistReplies?.length??0;
+      `,
+      metaReviewCount: `
+      const invitationToCheck="Meta_Review"; 
+      const metaReviewReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return metaReviewReplies?.length??0;
       `
     }
   }

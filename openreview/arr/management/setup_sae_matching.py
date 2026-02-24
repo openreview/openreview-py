@@ -8,8 +8,10 @@ def process(client, invitation):
         print('invitation is not yet active and no child invitations created', cdate)
         return
 
+    import math
     from openreview.venue import matching
     from openreview.arr.helpers import get_resubmissions
+    from openreview.stages.arr_content import arr_tracks
     from collections import defaultdict
 
     domain = client.get_group(invitation.domain)
@@ -29,7 +31,7 @@ def process(client, invitation):
         token=client.token
     )
 
-    if client.get_edges_count(invitation=f"{senior_area_chairs_id}/-/Affinity_Score") <= 0:
+    if client.get_edges_count(invitation=f"{senior_area_chairs_id}/-/Affinity_Score", domain=venue_id) <= 0:
         print(f"no affinity scores for {senior_area_chairs_id}")
         return
 
@@ -60,7 +62,7 @@ def process(client, invitation):
     # Build load map
     id_to_load_note = {}
     for role_id in [senior_area_chairs_id]:
-        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
+        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}", domain=venue_id) ## Assume only 1 note per user
         for note in load_notes:
             if note.signatures[0] not in name_to_id:
                 continue
@@ -71,13 +73,19 @@ def process(client, invitation):
     track_to_ids = {}
     for role_id in [senior_area_chairs_id]:
         track_to_ids[role_id] = defaultdict(list)
-        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}")
+        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}", domain=venue_id)
         for note in registration_notes:
             if note.signatures[0] not in name_to_id:
                 continue
+
             note_signature_id = name_to_id[note.signatures[0]]
-            for track in note.content[tracks_field_name]['value']:
-                track_to_ids[role_id][track].append(note_signature_id)
+            load_note = id_to_load_note.get(note_signature_id)
+            ## Don't add to tracks if no note available or not available, will create ghost loads
+            if load_note is not None:
+                availability_string = load_note.content.get('availability_this_cycle', {}).get('value', 'will NOT be able to serve') ## Assume default not available
+                if 'I confirm that I will serve' in availability_string:
+                    for track in note.content[tracks_field_name]['value']:
+                        track_to_ids[role_id][track].append(note_signature_id)
 
         # Build research area invitation
         matching.Matching(venue, client.get_group(role_id), None)._create_edge_invitation(
@@ -86,33 +94,6 @@ def process(client, invitation):
     track_edge_readers = {
         senior_area_chairs_id: [venue_id]
     }
-
-    # Reset custom max papers to ground truth notes
-    for role_id in [senior_area_chairs_id]:
-        cmp_to_post = []
-        role_cmp_inv = f"{role_id}/-/Custom_Max_Papers"
-        for id, note in id_to_load_note.items():
-            load_invitation = [inv for inv in note.invitations if max_load_name in inv][0]
-            if role_id not in load_invitation:
-                continue
-
-            cmp_to_post.append(
-                openreview.api.Edge(
-                    invitation=role_cmp_inv,
-                    head=role_id,
-                    tail=id,
-                    weight=int(note.content['maximum_load_this_cycle']['value']),
-                    readers=track_edge_readers[role_id] + [id],
-                    writers=[venue_id],
-                    signatures=[venue_id]
-                )
-            )
-        client.delete_edges(
-            invitation=role_cmp_inv,
-            soft_delete=True,
-            wait_to_finish=True
-        )
-        openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
 
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():

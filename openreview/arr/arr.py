@@ -187,6 +187,17 @@ class ARR(object):
     def get_committee_names(self):
         return self.venue.get_committee_names()
 
+    def get_standard_committee_role(self, committee_id):
+        name = committee_id.split('/')[-1]
+
+        standard_role_by_committee = {
+            self.reviewers_name: 'reviewers',
+            self.area_chairs_name: 'area_chairs',
+            self.senior_area_chairs_name: 'senior_area_chairs',
+        }
+
+        return standard_role_by_committee.get(name, name)
+
     def get_roles(self):
         return self.venue.get_roles()
 
@@ -706,7 +717,7 @@ class ARR(object):
         
         submission_id = venue_group.content.get('submission_id', {}).get('value')
 
-        commitment_submissions = client.get_all_notes(invitation=submission_id)
+        commitment_submissions = client.get_all_notes(invitation=submission_id, domain=venue_id)
 
         def process_commitment_submission(note):
             arr_submission_link = note.content.get('paper_link', {}).get('value')

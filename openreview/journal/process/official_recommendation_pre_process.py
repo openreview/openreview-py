@@ -9,3 +9,8 @@ def process(client, edit, invitation):
 
     if not any(review.signatures[0]==signatory_group_id for review in reviews):
         raise openreview.OpenReviewException(f'You must submit your official review before submitting your recommendation')
+
+    additional_validation = journal.get_official_recommendation_additional_validation()
+
+    if additional_validation:
+        exec(additional_validation)

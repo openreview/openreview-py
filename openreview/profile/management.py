@@ -211,7 +211,7 @@ class ProfileManagement():
             invitation = openreview.api.Invitation(
                 id=self.public_article_meta_invitation_id,
                 invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
-                readers=['everyone'],
+                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
                 signatures=[self.public_article_group_id],                
                 edit=True
             )
@@ -800,7 +800,7 @@ class ProfileManagement():
             signatures = [dblp_group_id],
             invitation = openreview.api.Invitation(
                 id=abstract_invitation_id,
-                readers=['everyone'],
+                readers=[dblp_uploader_group_id],
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
                 invitees=[dblp_uploader_group_id],
@@ -982,7 +982,7 @@ class ProfileManagement():
             signatures = [self.dblp_group_id],
             invitation = openreview.api.Invitation(
                 id=abstract_invitation_id,
-                readers=['everyone'],
+                readers=[dblp_uploader_group_id],
                 writers=[self.dblp_group_id],
                 signatures=[self.dblp_group_id],
                 invitees=[dblp_uploader_group_id],
@@ -1349,7 +1349,7 @@ class ProfileManagement():
             signatures = [self.orcid_group_id],
             invitation = openreview.api.Invitation(
                 id=abstract_invitation_id,
-                readers=['everyone'],
+                readers=[orcid_uploader_group_id],
                 writers=[self.orcid_group_id],
                 signatures=[self.orcid_group_id],
                 invitees=[orcid_uploader_group_id],
@@ -1498,7 +1498,7 @@ class ProfileManagement():
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Profile_Name_Removal_Decision',
-                readers=['everyone'],
+                readers=[self.support_group_id],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
                 invitees=[self.support_group_id],
@@ -1709,7 +1709,8 @@ class ProfileManagement():
                                     { 'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0' },
                                     { 'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0' },
                                     { 'value': 'CC0 1.0', 'description': 'CC0 1.0' },
-                                    { 'value': 'WM2024 Conference', 'description': 'WM2024 Conference' } 
+                                    { 'value': 'WM2024 Conference', 'description': 'WM2024 Conference' },
+                                    { 'value': 'arXiv.org perpetual, non-exclusive license', 'description': 'arXiv.org perpetual, non-exclusive license' },
                                 ]
                             }
                         },
@@ -1736,7 +1737,7 @@ class ProfileManagement():
                             },
                             'authorids': {
                                 'order': 3,
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'description': 'Search author profile by name or profile ID. If the profile is not found, you can add the author by completing name as well as author email address.',
                                 'value': {
                                     'param': {
                                         'type': 'profile{}',
@@ -2024,7 +2025,7 @@ class ProfileManagement():
                             },
                             'authorids': {
                                 'order': 3,
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'description': 'Search author profile by name or profile ID. If the profile is not found, you can add the author by completing name as well as author email address.',
                                 'value': {
                                     'param': {
                                         'type': 'profile{}',
@@ -2327,7 +2328,7 @@ class ProfileManagement():
                 signatures = [self.super_user],
                 invitation = openreview.api.Invitation(
                     id=f'{self.support_group_id}/-/Profile_Merge_Decision',
-                    readers=['everyone'],
+                    readers=[self.support_group_id],
                     writers=[self.support_group_id],
                     signatures=[self.super_user],
                     invitees=[self.support_group_id],

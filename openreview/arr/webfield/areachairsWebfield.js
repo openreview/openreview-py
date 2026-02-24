@@ -2,8 +2,8 @@
 const committee_name = entity.id.split('/').slice(-1)[0]
 const committee_reviewer_name = committee_name.replace(domain.content.area_chairs_name?.value, domain.content.reviewers_name?.value)
 const committee_sac_name = committee_name.replace(domain.content.area_chairs_name?.value, domain.content.senior_area_chairs_name?.value)
-const replaceAreaChairName = (invitationId) => invitationId.replace(domain.content.area_chairs_name?.value, committee_name)
-const replaceReviewerName = (invitationId) => invitationId.replace(domain.content.reviewers_name?.value, committee_reviewer_name)
+const replaceAreaChairName = (invitationId) => invitationId?.replace(domain.content.area_chairs_name?.value, committee_name)
+const replaceReviewerName = (invitationId) => invitationId?.replace(domain.content.reviewers_name?.value, committee_reviewer_name)
 const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 
 const reviewerAssignmentTitle = domain.content.reviewers_proposed_assignment_title?.value

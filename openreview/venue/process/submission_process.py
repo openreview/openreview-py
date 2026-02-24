@@ -94,7 +94,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
         )            
 
     ### Group invitations
-    group_invitations = [i for i in client.get_all_invitations(prefix=venue_id, type='group') if i.is_active()]
+    group_invitations = [i for i in client.get_all_invitations(prefix=venue_id, type='group', domain=venue_id) if i.is_active()]
 
     for group_invitation in group_invitations:
         if 'noteId' in group_invitation.edit.get('content', {}):

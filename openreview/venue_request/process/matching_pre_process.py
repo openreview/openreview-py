@@ -28,13 +28,13 @@ def process(client, note, invitation):
             return
 
         submission_venue_id = domain.get_content_value('submission_venue_id')
-        _, num_submissions = client_v2.get_notes(content={ 'venueid':submission_venue_id }, limit=1, with_count=True)
+        _, num_submissions = client_v2.get_notes(content={ 'venueid':submission_venue_id }, limit=1, with_count=True, domain=venue_id)
         if compute_affinity_scores and num_submissions >= 2000:
             raise openreview.OpenReviewException(f'Can not compute affinity scores for venues with 2000+ papers. Please contact us at info@openreview.net to compute your scores.')
 
         area_chairs_id = domain.get_content_value('area_chairs_id')
         if compute_conflicts and senior_area_chairs_id and area_chairs_id and matching_group == area_chairs_id and not sac_paper_assignments:
             senior_area_chairs_assignment_id = domain.get_content_value('senior_area_chairs_assignment_id')
-            num_edges = client_v2.get_edges_count(invitation=senior_area_chairs_assignment_id)
+            num_edges = client_v2.get_edges_count(invitation=senior_area_chairs_assignment_id, domain=venue_id)
             if not num_edges:
                 raise openreview.OpenReviewException(f'Please deploy SAC-AC assignments first. SAC-submission conflicts must be transferred to assigned ACs before computing AC-submission conflicts.')
