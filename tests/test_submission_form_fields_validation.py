@@ -12,12 +12,12 @@ class TestSubmissionFormFieldsValidation():
         due_date = now + datetime.timedelta(days=3)
 
         # Create a PC user
-        helpers.create_user('pc@test.cc', 'Program', 'Chair')
+        helpers.create_user('pc@test.cc', 'Program', 'ChairOne')
         pc_client = openreview.api.OpenReviewClient(username='pc@test.cc', password=helpers.strong_password)
 
         # Setup a basic venue
         venue = openreview.venue.Venue(openreview_client, 'Test.cc/2025/Conference', support_user='openreview.net/Support')
-        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/TEST'
+        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/Conference_Review_Workflow'
         venue.name = 'Test Conference'
         venue.short_name = 'TEST 2025'
         venue.website = 'https://test.cc'
@@ -47,6 +47,9 @@ class TestSubmissionFormFieldsValidation():
                                 'delete': True
                             }
                         }
+                    },
+                    "license": {
+                        "value": [{'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}]
                     }
                 }
             )
@@ -58,12 +61,12 @@ class TestSubmissionFormFieldsValidation():
         due_date = now + datetime.timedelta(days=3)
 
         # Create a PC user
-        helpers.create_user('pc2@test.cc', 'Program', 'Chair2')
+        helpers.create_user('pc2@test.cc', 'Program', 'ChairTwo')
         pc_client = openreview.api.OpenReviewClient(username='pc2@test.cc', password=helpers.strong_password)
 
         # Setup a basic venue
         venue = openreview.venue.Venue(openreview_client, 'Test2.cc/2025/Conference', support_user='openreview.net/Support')
-        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/TEST'
+        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/Conference_Review_Workflow'
         venue.name = 'Test Conference 2'
         venue.short_name = 'TEST2 2025'
         venue.website = 'https://test2.cc'
@@ -93,6 +96,9 @@ class TestSubmissionFormFieldsValidation():
                                 'delete': True
                             }
                         }
+                    },
+                    "license": {
+                        "value": [{'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}]
                     }
                 }
             )
@@ -104,12 +110,12 @@ class TestSubmissionFormFieldsValidation():
         due_date = now + datetime.timedelta(days=3)
 
         # Create a PC user
-        helpers.create_user('pc3@test.cc', 'Program', 'Chair3')
+        helpers.create_user('pc3@test.cc', 'Program', 'ChairThree')
         pc_client = openreview.api.OpenReviewClient(username='pc3@test.cc', password=helpers.strong_password)
 
         # Setup a basic venue
         venue = openreview.venue.Venue(openreview_client, 'Test3.cc/2025/Conference', support_user='openreview.net/Support')
-        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/TEST'
+        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/Conference_Review_Workflow'
         venue.name = 'Test Conference 3'
         venue.short_name = 'TEST3 2025'
         venue.website = 'https://test3.cc'
@@ -138,6 +144,9 @@ class TestSubmissionFormFieldsValidation():
                             'delete': True
                         }
                     }
+                },
+                "license": {
+                    "value": [{'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}]
                 }
             }
         )
