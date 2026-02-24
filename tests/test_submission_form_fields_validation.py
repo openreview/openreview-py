@@ -60,13 +60,9 @@ class TestSubmissionFormFieldsValidation():
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
-<<<<<<< HEAD
-        pc_client = openreview.api.OpenReviewClient(username='pc@test.cc', password=helpers.strong_password)
-=======
         # Create a PC user
         helpers.create_user('pc2@test.cc', 'Program', 'ChairTwo')
         pc_client = openreview.api.OpenReviewClient(username='pc2@test.cc', password=helpers.strong_password)
->>>>>>> c728de5c9b6ca3541d001bfdc33f481ac8964753
 
         # Setup a basic venue
         venue = openreview.venue.Venue(openreview_client, 'Test2.cc/2025/Conference', support_user='openreview.net/Support')
@@ -81,7 +77,7 @@ class TestSubmissionFormFieldsValidation():
             double_blind=True
         )
 
-        venue.setup(['pc@test.cc'])
+        venue.setup(['pc2@test.cc'])
         venue.create_submission_stage()
 
         # Verify Form_Fields invitation exists
@@ -113,13 +109,9 @@ class TestSubmissionFormFieldsValidation():
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
-<<<<<<< HEAD
-        pc_client = openreview.api.OpenReviewClient(username='pc@test.cc', password=helpers.strong_password)
-=======
         # Create a PC user
         helpers.create_user('pc3@test.cc', 'Program', 'ChairThree')
         pc_client = openreview.api.OpenReviewClient(username='pc3@test.cc', password=helpers.strong_password)
->>>>>>> c728de5c9b6ca3541d001bfdc33f481ac8964753
 
         # Setup a basic venue
         venue = openreview.venue.Venue(openreview_client, 'Test3.cc/2025/Conference', support_user='openreview.net/Support')
@@ -134,7 +126,7 @@ class TestSubmissionFormFieldsValidation():
             double_blind=True
         )
 
-        venue.setup(['pc@test.cc'])
+        venue.setup(['pc3@test.cc'])
         venue.create_submission_stage()
 
         # Verify Form_Fields invitation exists
