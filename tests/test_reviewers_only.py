@@ -628,7 +628,7 @@ For more details, please check the following links:
         assert len(messages) == 2
 
         ## Test validation: attempt to send recruitment without {{invitation_url}} token
-        with pytest.raises(openreview.OpenReviewException, match='invite_message_body_template must contain {{invitation_url}} token'):
+        with pytest.raises(openreview.OpenReviewException, match='Invite Message Body Template must contain {{invitation_url}} token'):
             openreview_client.post_group_edit(
                 invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
                 content={
