@@ -188,7 +188,7 @@ class EditInvitationsBuilder(object):
             invitation.process = self.get_process_content(process_file)
         
         # Add preprocess to validate venue/venueid cannot be deleted
-        invitation.preprocess = self.get_process_content('process/submission_form_fields_preprocess.py')
+        invitation.preprocess = self.get_process_content('process/submission_form_fields_preprocess.js')
 
         if due_date:
             invitation.duedate = due_date
