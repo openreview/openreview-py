@@ -50,6 +50,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
     # Update BibTeX if submission is public and already has a bibtex field
     if submission.readers == ['everyone'] and '_bibtex' in submission.content:
+        # Determine paper status based on venueid
+        paper_status = 'accepted' if submission.content['venueid']['value'] == submission.domain else 'rejected'
+        
+        # Check if authors field has readers restrictions (anonymous if restricted)
+        anonymous = 'readers' in submission.content['authors'] and len(submission.content['authors']['readers']) > 0
+        
         content = {}
         content['_bibtex'] = {
             'value': openreview.tools.generate_bibtex(
@@ -57,8 +63,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 venue_fullname=domain.content['title']['value'],
                 year=str(datetime.datetime.now().year),
                 url_forum=submission.forum,
-                paper_status = 'accepted' if submission.content['venueid']['value'] == submission.domain else 'rejected',
-                anonymous=len(submission.content['authors']['readers']) > 0
+                paper_status=paper_status,
+                anonymous=anonymous
             )
         }
 
