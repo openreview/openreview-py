@@ -396,6 +396,27 @@ class TestARRVenueV2():
         preferred_emails_groups = domain.content['preferred_emails_groups']['value']
         assert venue.get_ethics_reviewers_id() in preferred_emails_groups
         assert venue.get_ethics_chairs_id() in preferred_emails_groups
+        
+        # Trigger preferred email computation by updating the invitation cdate
+        openreview_client.post_invitation_edit(
+            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+        
+        helpers.await_queue_edit(openreview_client, edit_id='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails-0-0', count=2)
+        
+        # Verify that preferred email edges are created for ethics chair and ethics reviewer
+        ethics_chair_edges = openreview_client.get_edges(head='~EthicsChair_ARROne1', invitation='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails')
+        assert len(ethics_chair_edges) == 1
+        assert ethics_chair_edges[0].tail == 'ec1@aclrollingreview.com'
+        
+        ethics_reviewer_edges = openreview_client.get_edges(head='~EthicsReviewer_ARROne1', invitation='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails')
+        assert len(ethics_reviewer_edges) == 1
+        assert ethics_reviewer_edges[0].tail == 'reviewerethics@aclrollingreview.com'
 
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
 
