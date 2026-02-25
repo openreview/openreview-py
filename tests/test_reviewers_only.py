@@ -2196,6 +2196,9 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
+        ## Remove reviewer from reviewers group
+        openreview_client.remove_members_from_group('ABCD.cc/2025/Conference/Program_Committee', ['~ReviewerThree_ABCD1'])
+
         ## Review Count stage
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/Program_Committee/-/Review_Count/Dates',
