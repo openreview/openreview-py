@@ -56,12 +56,15 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         # Check if authors field has readers restrictions (anonymous if restricted)
         anonymous = 'readers' in submission.content['authors'] and len(submission.content['authors']['readers']) > 0
         
+        # Get year from submission publication date (pdate or odate)
+        year = datetime.datetime.fromtimestamp(submission.pdate / 1000).year if submission.pdate else datetime.datetime.fromtimestamp(submission.odate / 1000).year if submission.odate else datetime.datetime.now().year
+        
         content = {}
         content['_bibtex'] = {
             'value': openreview.tools.generate_bibtex(
                 note=submission,
                 venue_fullname=domain.content['title']['value'],
-                year=str(datetime.datetime.now().year),
+                year=str(year),
                 url_forum=submission.forum,
                 paper_status=paper_status,
                 anonymous=anonymous
