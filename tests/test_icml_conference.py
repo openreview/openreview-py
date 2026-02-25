@@ -5980,7 +5980,7 @@ Best,
             signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
             note=openreview.api.Note(
                 content={
-                    'title': { 'value': accepted_submissions[0].content['title']['value']},
+                    'title': { 'value': accepted_submissions[0].content['title']['value'] + ' REVISED'},
                     'abstract': { 'value': accepted_submissions[0].content['abstract']['value'] + ' UPDATED'},
                     'authors': {'value': accepted_submissions[0].content['authors']['value']},
                     'authorids': {'value': accepted_submissions[0].content['authorids']['value']},
@@ -6000,7 +6000,7 @@ Best,
         year = datetime.datetime.fromtimestamp(accepted_submissions[0].pdate / 1000).year if accepted_submissions[0].pdate else datetime.datetime.fromtimestamp(accepted_submissions[0].odate / 1000).year
         valid_bibtex_updated = '''@inproceedings{
 user'''+str(year)+'''paper,
-title={Paper title 1 Version 2 {UPDATED}},
+title={Paper title 1 Version 2 {UPDATED} {REVISED}},
 author={SomeFirstName User and Peter SomeLastName and Andrew Mc and SAC ICMLOne and Melisa ICML},
 booktitle={Thirty-ninth International Conference on Machine Learning},
 year={'''+str(year)+'''},
