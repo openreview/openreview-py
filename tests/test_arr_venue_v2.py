@@ -391,6 +391,11 @@ class TestARRVenueV2():
         assert domain.content['ethics_reviewers_name']['value'] == venue.ethics_reviewers_name
         assert domain.content['anon_ethics_reviewer_name']['value'] == venue.anon_ethics_reviewers_name()
         assert domain.content['submission_assignment_max_reviewers']['value'] == 3
+        
+        # Verify that ethics reviewers and ethics chairs are in the preferred_emails_groups
+        preferred_emails_groups = domain.content['preferred_emails_groups']['value']
+        assert venue.get_ethics_reviewers_id() in preferred_emails_groups
+        assert venue.get_ethics_chairs_id() in preferred_emails_groups
 
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
 

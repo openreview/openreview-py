@@ -515,6 +515,16 @@ class Venue(object):
 
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
     
+        # Update preferred_emails_groups with all participants before creating the venue group
+        if self.use_ethics_reviewers and self.get_ethics_reviewers_id() not in self.preferred_emails_groups:
+            self.preferred_emails_groups.append(self.get_ethics_reviewers_id())
+        
+        if self.use_ethics_chairs and self.get_ethics_chairs_id() not in self.preferred_emails_groups:
+            self.preferred_emails_groups.append(self.get_ethics_chairs_id())
+        
+        if self.use_publication_chairs and self.get_publication_chairs_id() not in self.preferred_emails_groups:
+            self.preferred_emails_groups.append(self.get_publication_chairs_id())
+    
         self.invitation_builder.set_meta_invitation()
 
         self.group_builder.create_venue_group()
