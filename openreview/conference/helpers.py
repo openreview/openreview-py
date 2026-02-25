@@ -29,7 +29,22 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     venue.reviewer_roles = domain.content.get('reviewer_roles', {}).get('value', ['Reviewers'])
     venue.reviewers_name = domain.content.get('reviewers_name', {}).get('value', venue.reviewer_roles[0])
     venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)
-    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', [venue.get_authors_id()])
+    
+    # Get preferred_emails_groups from domain, or build default with all enabled participants
+    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups')
+    if not venue.preferred_emails_groups:
+        preferred_emails_groups = [venue.get_authors_id(), venue.get_reviewers_id()]
+        if venue.use_area_chairs:
+            preferred_emails_groups.append(venue.get_area_chairs_id())
+        if venue.use_senior_area_chairs:
+            preferred_emails_groups.append(venue.get_senior_area_chairs_id())
+        if venue.use_ethics_reviewers:
+            preferred_emails_groups.append(venue.get_ethics_reviewers_id())
+        if venue.use_ethics_chairs:
+            preferred_emails_groups.append(venue.get_ethics_chairs_id())
+        if venue.use_publication_chairs:
+            preferred_emails_groups.append(venue.get_publication_chairs_id())
+        venue.preferred_emails_groups = preferred_emails_groups
     
     venue.submission_stage = openreview.stages.SubmissionStage(
         name=domain.content.get('submission_name', {}).get('value', 'Submission'),
@@ -163,7 +178,19 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.comment_notification_threshold = int(note.content.get('comment_notification_threshold')) if note.content.get('comment_notification_threshold') is not None else None
         venue.preferred_emails_groups = note.content.get('preferred_emails_groups')
         if not venue.preferred_emails_groups:
-            venue.preferred_emails_groups = [venue.get_authors_id()]
+            # Include all venue participants by default
+            preferred_emails_groups = [venue.get_authors_id(), venue.get_reviewers_id()]
+            if venue.use_area_chairs:
+                preferred_emails_groups.append(venue.get_area_chairs_id())
+            if venue.use_senior_area_chairs:
+                preferred_emails_groups.append(venue.get_senior_area_chairs_id())
+            if venue.use_ethics_reviewers:
+                preferred_emails_groups.append(venue.get_ethics_reviewers_id())
+            if venue.use_ethics_chairs:
+                preferred_emails_groups.append(venue.get_ethics_chairs_id())
+            if venue.use_publication_chairs:
+                preferred_emails_groups.append(venue.get_publication_chairs_id())
+            venue.preferred_emails_groups = preferred_emails_groups
         venue.iThenticate_plagiarism_check = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
         venue.iThenticate_plagiarism_check_api_key = note.content.get('iThenticate_plagiarism_check_api_key', '')
         venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')

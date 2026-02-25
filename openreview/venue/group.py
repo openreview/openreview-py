@@ -705,8 +705,6 @@ class GroupBuilder(object):
                 members.append(self.venue.get_area_chairs_id())
             if self.venue.use_senior_area_chairs:
                 members.append(self.venue.get_senior_area_chairs_id())
-            if self.venue.use_ethics_reviewers:
-                members.append(self.venue.get_ethics_reviewers_id())
             if self.venue.use_ethics_chairs:
                 members.append(self.venue.get_ethics_chairs_id())
             if self.venue.use_publication_chairs:
