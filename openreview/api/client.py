@@ -316,6 +316,17 @@ class OpenReviewClient(object):
         return response.json()    
     
     
+    def post_note_edit_as_guest(self, token, edit):
+        headers = {
+            'User-Agent': self.user_agent,
+            'Accept': 'application/json',
+            'X-Guest-Token': token
+        }        
+        response = self.session.post(self.note_edits_url, json = edit, headers = headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    
     def flush_members_cache(self, group_id=None):
         """
         Flushes the members cache for a group
@@ -925,7 +936,7 @@ class OpenReviewClient(object):
         return response.json()
 
 
-    def get_groups(self, id=None, invitation=None, prefix=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=None):
+    def get_groups(self, id=None, invitation=None, prefix=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=None, domain=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -976,6 +987,8 @@ class OpenReviewClient(object):
             params['stream'] = stream
         if with_count is not None:
             params['count'] = with_count
+        if domain is not None:
+            params['domain'] = domain
 
         response = self.session.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1065,7 +1078,9 @@ class OpenReviewClient(object):
         type = None,
         with_count=None,
         invitation = None,
-        trash = None
+        trash = None,
+        stream = None,
+        domain = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -1159,6 +1174,10 @@ class OpenReviewClient(object):
             params['count'] = with_count
         if trash is not None:
             params['trash'] = trash
+        if domain is not None:
+            params['domain'] = domain
+        if stream is not None:
+            params['stream'] = stream
 
         response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -1184,13 +1203,12 @@ class OpenReviewClient(object):
         duedate = None,
         pastdue = None,
         replyto = None,
-        details = None,
         expired = None,
         sort = None,
         type = None,
-        with_count=None,
         invitation = None,
-        trash = None
+        trash = None,
+        domain = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -1229,7 +1247,9 @@ class OpenReviewClient(object):
         :return: List of Invitations
         :rtype: list[Invitation]
         """
-        params = {}
+        params = {
+            'stream': True
+        }
 
         if id is not None:
             params['id'] = id
@@ -1257,22 +1277,20 @@ class OpenReviewClient(object):
             params['pastdue'] = pastdue
         if replyto is not None:
             params['replyto'] = replyto
-        if details is not None:
-            params['details'] = details
         if expired is not None:
             params['expired'] = expired
         if sort is not None:
             params['sort'] = sort
         if type is not None:
             params['type'] = type
-        if with_count is not None:
-            params['with_count'] = with_count
         if invitation is not None:
             params['invitation'] = invitation
         if trash is not None:
             params['trash'] = trash
+        if domain is not None:
+            params['domain'] = domain
 
-        return list(tools.efficient_iterget(self.get_invitations, desc='Getting V2 Invitations', **params))
+        return self.get_invitations(**params)
 
     def get_invitation_edit(self, id):
         """
@@ -1471,7 +1489,7 @@ class OpenReviewClient(object):
             details = None,
             select = None,
             sort = None,
-            with_count=None
+            domain=None
             ):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
@@ -1550,8 +1568,8 @@ class OpenReviewClient(object):
             params['select'] = select
         if sort is not None:
             params['sort'] = sort
-        if with_count is not None:
-            params['with_count'] = with_count
+        if domain is not None:
+            params['domain'] = domain
 
         if 'details' not in params:
             params['stream'] = True
@@ -1716,7 +1734,7 @@ class OpenReviewClient(object):
         #return response.json()
 
 
-    def get_tags(self, id = None, note = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None):
+    def get_tags(self, id = None, note = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None, domain=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1758,6 +1776,8 @@ class OpenReviewClient(object):
             params['count'] = with_count
         if stream is not None:
             params['stream'] = stream
+        if domain is not None:
+            params['domain'] = domain
 
         response = self.session.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1768,7 +1788,7 @@ class OpenReviewClient(object):
 
         return tags
 
-    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, note = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None):
+    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, note = None, profile = None, signature = None, tag = None, domain=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1791,14 +1811,13 @@ class OpenReviewClient(object):
             'profile': profile,
             'signature': signature,
             'tag': tag,
-            'limit': limit,
-            'offset': offset,
-            'with_count': with_count
+            'domain': domain,
+            'stream': True
         }
 
-        return tools.concurrent_get(self, self.get_tags, **params)
+        return self.get_tags(**params)
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, select=None):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, select=None, stream=None, domain=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1820,8 +1839,12 @@ class OpenReviewClient(object):
         params['trash'] = trash
         if select is not None:
             params['select'] = select
+        if stream is not None:
+            params['stream'] = stream
         if with_count is not None:
             params['count'] = with_count
+        if domain is not None:
+            params['domain'] = domain
 
         response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1833,7 +1856,7 @@ class OpenReviewClient(object):
 
         return edges
 
-    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None):
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, trash=None, select=None, domain=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1849,13 +1872,13 @@ class OpenReviewClient(object):
             'head': head,
             'tail': tail,
             'label': label,
-            'limit': limit,
-            'offset': offset,
-            'with_count': with_count,
-            'trash': trash
+            'trash': trash,
+            'select': select,
+            'domain': domain,
+            'stream': True
         }
 
-        return tools.concurrent_get(self, self.get_edges, **params)
+        return self.get_edges(**params)
 
     def get_edges_count(self, id=None, invitation=None, head=None, tail=None, label=None, domain=None):
         """
@@ -1890,7 +1913,7 @@ class OpenReviewClient(object):
 
         return response.json()['count']
 
-    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None, trash=None):
+    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None, trash=None, domain=None):
         '''
         Returns a list of JSON objects where each one represents a group of edges.  For example calling this
         method with default arguments will give back a list of groups where each group is of the form:
@@ -1915,6 +1938,7 @@ class OpenReviewClient(object):
         params['limit'] = limit
         params['offset'] = offset
         params['trash'] = trash
+        params['domain'] = domain
         response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
@@ -3325,7 +3349,9 @@ class Invitation(object):
         responseArchiveDate = None,
         details = None,
         description = None,
-        instructions = None):
+        instructions = None,
+        guestPosting = None,
+        secret = None):
 
         self.id = id
         self.invitations = invitations
@@ -3362,6 +3388,8 @@ class Invitation(object):
         self.content = content
         self.description = description
         self.instructions = instructions
+        self.guestPosting = guestPosting
+        self.secret = secret
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -3484,6 +3512,10 @@ class Invitation(object):
             body['message']=self.message
         if self.bulk is not None:
             body['bulk']=self.bulk
+        if self.guestPosting is not None:
+            body['guestPosting']=self.guestPosting
+        if self.secret is not None:
+            body['secret']=self.secret
         return body
 
     @classmethod
@@ -3546,6 +3578,10 @@ class Invitation(object):
         if 'message' in i:
             invitation.message = i['message']
             invitation.type = 'Message'
+        if 'guestPosting' in i:
+            invitation.guestPosting = i['guestPosting']
+        if 'secret' in i:
+            invitation.secret = i['secret']
         return invitation
 class Edge(object):
     def __init__(self, head, tail, invitation, domain=None, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):

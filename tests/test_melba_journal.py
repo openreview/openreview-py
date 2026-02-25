@@ -19,7 +19,7 @@ class TestJournal():
     def journal(self, openreview_client, helpers):
 
         eic_client=OpenReviewClient(username='adalca@mit.edu', password=helpers.strong_password)
-        eic_client.impersonate('MELBA/Editors_In_Chief')
+        eic_client.impersonate('MELBA')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'MELBA' })
 

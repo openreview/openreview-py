@@ -1363,6 +1363,7 @@ Best,
 
         assert len(all_accepted_authors) == 9
 
+        pc_client_v2.impersonate('PRL/2023/ICAPS')
         profiles =openreview.tools.get_profiles(pc_client_v2, list(all_accepted_authors), with_preferred_emails='PRL/2023/ICAPS/-/Preferred_Emails')
         assert len(profiles) == 9
 

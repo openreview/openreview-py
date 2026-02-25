@@ -139,9 +139,9 @@ class TestProfileManagement():
             "Andrew McCallum"
         ]
         assert note.content['authorids']['value'] == [
-            "https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:",
-            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
-            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]
 
@@ -172,8 +172,8 @@ class TestProfileManagement():
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
         assert note.content['authorids']['value'] == [
             "~Haw-Shiuan_Chang1",
-            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
-            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]
 
@@ -281,8 +281,8 @@ class TestProfileManagement():
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
         assert note.content['authorids']['value'] == [
             '',
-            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
-            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]                    
 
@@ -353,7 +353,7 @@ class TestProfileManagement():
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
         assert note.content['authorids']['value'] == [
             '',
-            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "",
             "~Kate_Ricci1",
             "~Andrew_McCallum1"
         ] 
@@ -522,9 +522,9 @@ class TestProfileManagement():
             "Andrew McCallum"
         ]
         assert note.content['authorids']['value'] == [
-            "https://dblp.org/search/pid/api?q=author:Nihar_B._Shah:",
-            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
-            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]
 
@@ -546,8 +546,8 @@ class TestProfileManagement():
 
         assert note.content['authorids']['value'] == [
             "~Nihar_B._Shah1",
-            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
-            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]
 
@@ -567,8 +567,8 @@ class TestProfileManagement():
 
         assert note.content['authorids']['value'] == [
             "",
-            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
-            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "",
+            "",
             "~Andrew_McCallum1"
         ]                
 
@@ -2890,7 +2890,7 @@ The OpenReview Team.
         }) 
         john_client.post_profile(profile)
 
-        profile = john_client.get_profile(email_or_id='john@profile.org')
+        profile = john_client.get_profile(email_or_id=profile.id)
         assert len(profile.content['relations']) == 2
 
         request_note = juan_client.post_note_edit(
@@ -2924,7 +2924,7 @@ The OpenReview Team.
         note = juan_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted' 
 
-        profile = juan_client.get_profile(email_or_id='juan@profile.org')
+        profile = juan_client.get_profile(email_or_id='~Juan_Alternate_Last1')
         assert len(profile.content['names']) == 1
         assert 'username' in profile.content['names'][0]
         assert profile.content['names'][0]['username'] == '~Juan_Alternate_Last1' 

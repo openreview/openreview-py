@@ -315,6 +315,19 @@ The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.
 '''
 
+reviewer_invitation_assignment_email_template = '''Hi {user_preferred_name},
+
+You were invited to review the paper number: {submission_number}, title: "{submission_title}".
+
+Abstract: {submission_abstract}
+
+{invitation_links}
+
+Thanks,
+
+{inviter_id}
+{inviter_preferred_name}'''
+
 eic_new_submission_template = '''Hi {{{{fullname}}}},
 
 A new submission has been received for {short_name}.
