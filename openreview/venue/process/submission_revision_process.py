@@ -47,3 +47,26 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     members = submission_authors
                 )
             )
+
+    # Update BibTeX if submission is public and already has a bibtex field
+    if submission.readers == ['everyone'] and '_bibtex' in submission.content:
+        content = {}
+        content['_bibtex'] = {
+            'value': openreview.tools.generate_bibtex(
+                note=submission,
+                venue_fullname=domain.content['title']['value'],
+                year=str(datetime.datetime.now().year),
+                url_forum=submission.forum,
+                paper_status = 'accepted' if submission.content['venueid']['value'] == submission.domain else 'rejected',
+                anonymous=len(submission.content['authors']['readers']) > 0
+            )
+        }
+
+        client.post_note_edit(
+            invitation=meta_invitation_id,
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=submission.id,
+                content=content
+            )
+        )
