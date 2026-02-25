@@ -26,34 +26,14 @@ function processUpdate() {
     message: authorMessage
   });
 
-  let prepareCoauthorMessages = async function() {
-    if (note.content.authorids && note.content.authorids.length) {
-      // Get preferred email from profile
-      const profileUrl = or3client.baseUrl + '/profiles?id=' + note.tauthor;
-      let tauthorPreferredEmail = note.tauthor;
-      try {
-        const profileResponse = await or3client.or3request(profileUrl, {}, 'GET', token);
-        if (profileResponse && profileResponse.profiles && profileResponse.profiles.length > 0) {
-          const profile = profileResponse.profiles[0];
-          tauthorPreferredEmail = profile.content.preferredEmail || 
-                                 (profile.content.emailsConfirmed && profile.content.emailsConfirmed.length > 0 ? profile.content.emailsConfirmed[0] : null) ||
-                                 (profile.content.emails && profile.content.emails.length > 0 ? profile.content.emails[0] : null) ||
-                                 note.tauthor;
-        }
-      } catch (error) {
-        // If profile fetch fails, fall back to note.tauthor
-        console.log('Failed to fetch profile for tauthor:', error);
-      }
-      
-      authorMessage += `\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ${tauthorPreferredEmail}`;
-      messages.push({
-        groups: note.content.authorids,
-        ignoreGroups: [note.tauthor],
-        subject: authorSubject,
-        message: authorMessage
-      })
-    }
-    return Promise.resolve();
+  if (note.content.authorids && note.content.authorids.length) {
+    authorMessage += `\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ${note.tauthor}`;
+    messages.push({
+      groups: note.content.authorids,
+      ignoreGroups: [note.tauthor],
+      subject: authorSubject,
+      message: authorMessage
+    })
   }
 
   let createGroups = async function() {
@@ -163,8 +143,7 @@ function processUpdate() {
     return Promise.all(promises);
   }
 
-  prepareCoauthorMessages()
-  .then(() => createGroups())
+  createGroups()
   .then(() => sendEmails())
   .then(() => done())
   .catch(error => done(error));

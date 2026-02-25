@@ -3555,7 +3555,13 @@ The OpenReview Team.
 
     def test_anonymous_preprint_server(self, openreview_client, helpers):
 
-        clara_client = helpers.create_user('clara@profile.org', 'Clara', 'Last', alternates=[], institution='google.com')
+        # Create user with alternate email - primary is clara_alternate@profile.org, but preferred is clara@profile.org
+        clara_client = helpers.create_user('clara_alternate@profile.org', 'Clara', 'Last', alternates=['clara@profile.org'], institution='google.com')
+        
+        # Update profile to set clara@profile.org as preferred email
+        profile = clara_client.get_profile()
+        profile.content['preferredEmail'] = 'clara@profile.org'
+        clara_client.post_profile(profile)
 
         edit = clara_client.post_note_edit(
             invitation='openreview.net/Anonymous_Preprint/-/Submission',
@@ -3576,10 +3582,12 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        messages = openreview_client.get_messages(to='clara@profile.org', subject='Anonymous Preprint Server has received your submission titled Paper title 1')
+        # tauthor email (login email) gets the submission notification without co-author message
+        messages = openreview_client.get_messages(to='clara_alternate@profile.org', subject='Anonymous Preprint Server has received your submission titled Paper title 1')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Your submission to the Anonymous Preprint Server has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: Paper abstract\n\nTo view your submission, click here: https://openreview.net/forum?id={edit['note']['id']}'''        
 
+        # Co-author gets notification with preferred email (clara@profile.org) in the contact message
         messages = openreview_client.get_messages(to='test@mail.com', subject='Anonymous Preprint Server has received your submission titled Paper title 1')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Your submission to the Anonymous Preprint Server has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: Paper abstract\n\nTo view your submission, click here: https://openreview.net/forum?id={edit['note']['id']}\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at clara@profile.org'''        
