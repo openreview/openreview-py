@@ -113,7 +113,9 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
 
     #send co-author emails
     if ('authorids' in note.content and len(note.content['authorids'])):
-        author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {note.tauthor}'''
+        tauthor_profile = openreview.tools.get_profiles(client, [note.tauthor])[0] if note.tauthor else None
+        tauthor_preferred_email = tauthor_profile.get_preferred_email() if tauthor_profile else note.tauthor
+        author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {tauthor_preferred_email}'''
         client.post_message(
             subject=author_subject,
             message=author_message,
