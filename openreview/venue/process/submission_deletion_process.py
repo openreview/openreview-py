@@ -80,7 +80,8 @@ Title: {note.content['title']['value']}{note_abstract}
     # send co-author emails
     if ('authorids' in note.content and len(note.content['authorids']['value'])):
         tauthor_profile = openreview.tools.get_profiles(client, [edit.tauthor])[0] if edit.tauthor else None
-        tauthor_preferred_email = tauthor_profile.get_preferred_email() if tauthor_profile else edit.tauthor
+        tauthor_preferred_email = tauthor_profile.get_preferred_email() if tauthor_profile else None
+        tauthor_preferred_email = tauthor_preferred_email or edit.tauthor
         author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {tauthor_preferred_email}'''
         client.post_message(
             invitation=meta_invitation_id,
