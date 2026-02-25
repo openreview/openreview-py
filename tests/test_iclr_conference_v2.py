@@ -303,7 +303,22 @@ class TestICLRConference():
 
         submission = pc_client_v2.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')[0]
         assert submission.license == 'CC0 1.0'
-        
+        assert submission.readers == ['everyone']
+        assert '_bibtex' in submission.content
+        assert 'author={Anonymous}' in submission.content['_bibtex']['value']
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@misc{
+anonymous'''+str(year)+'''paper,
+title={Paper title 1 license revision},
+author={Anonymous},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''     
+
+        valid_bibtex = valid_bibtex + submission.forum + '''}
+}'''
+        assert submission.content['_bibtex']['value'] == valid_bibtex
+
+
         # Assert that activation date of matching invitation == abstract deadline
         matching_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
         abstract_date_midnight = datetime.datetime.combine(abstract_date, datetime.datetime.min.time())
