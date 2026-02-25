@@ -5996,6 +5996,19 @@ Best,
         assert 'readers' not in accepted_submissions[0].content['authors']
         assert 'readers' not in accepted_submissions[0].content['authorids']
 
+        # Verify bibtex was updated after Camera_Ready_Revision
+        year = datetime.datetime.fromtimestamp(accepted_submissions[0].pdate / 1000).year if accepted_submissions[0].pdate else datetime.datetime.fromtimestamp(accepted_submissions[0].odate / 1000).year
+        valid_bibtex_updated = '''@inproceedings{
+user'''+str(year)+'''paper,
+title={Paper title 1 Version 2 {UPDATED}},
+author={SomeFirstName User and Peter SomeLastName and Andrew Mc and SAC ICMLOne and Melisa ICML},
+booktitle={Thirty-ninth International Conference on Machine Learning},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+        valid_bibtex_updated = valid_bibtex_updated + accepted_submissions[0].forum + '''}
+}'''
+        assert '_bibtex' in accepted_submissions[0].content and accepted_submissions[0].content['_bibtex']['value'] == valid_bibtex_updated
+
     def test_compute_reviewer_stats(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
