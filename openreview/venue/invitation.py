@@ -2844,7 +2844,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['revision_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
