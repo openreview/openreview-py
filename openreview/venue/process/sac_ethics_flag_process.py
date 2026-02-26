@@ -3,7 +3,7 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     ethics_review_name = domain.content.get('ethics_review_name', {}).get('value')
-    ethics_reviewers_name = domain.get_content_value('ethics_reviewers_name')
+    ethics_reviewers_id = domain.get_content_value('ethics_reviewers_id')
     ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
     conflict_policy = domain.content.get('reviewers_conflict_policy', {}).get('value', 'Default')
     conflict_n_years = domain.content.get('reviewers_conflict_n_years', {}).get('value')
@@ -33,12 +33,12 @@ def process(client, edit, invitation):
         # create Custom User Demand edge
         client.post_edge(openreview.api.Edge(
                 head=submission.id,
-                tail=f'{venue_id}/{ethics_reviewers_name}',
-                invitation=f'{venue_id}/{ethics_reviewers_name}/-/Custom_User_Demands',
+                tail=ethics_reviewers_id,
+                invitation=f'{ethics_reviewers_id}/-/Custom_User_Demands',
                 readers=[
                     venue_id,
                     ethics_chairs_id,
-                    f'{venue_id}/{ethics_reviewers_name}'
+                    ethics_reviewers_id
                 ],
                 writers=[venue_id],
                 signatures=[venue_id],
