@@ -1917,6 +1917,24 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id, f"{venue_id}/Paper1/Authors"]
         assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id, f"{venue_id}/Paper1/Authors"]
 
+        ## Check official recommendation enabling
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-2-0')
+
+        official_recommendation_inv = openreview.tools.get_invitation(openreview_client, f'{venue_id}/Paper1/-/Official_Recommendation_Enabling')
+        assert official_recommendation_inv
+
         ## Check review reminders
         raia_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
@@ -1931,8 +1949,6 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         )
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-0')
-
-        assert False
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 3
@@ -2255,24 +2271,17 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 '''
 
 
-
-        ## Post a review edit
-        carlos_review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
-            signatures=[carlos_anon_groups[0].id],
+        # move to next step without third review
+        official_recommendation_enabling_note = raia_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation_Enabling',
+            signatures=['TMLR/Editors_In_Chief'],
             note=Note(
                 content={
-                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'claims_and_evidence': { 'value': 'Yes' },
-                    'claims_explanation': { 'value': 'claims_explanation' },
-                    'audience': { 'value': 'Yes' },
-                    'audience_explanation': { 'value': 'audience_explanation' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'approval': { 'value': 'I approve enabling official recommendations even if there are reviews missing.' },
                 }
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_enabling_note['id'])    
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -2291,15 +2300,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert f"{venue_id}/Paper1/-/Review_Rating_Enabling" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Recommendation_Enabling" not in [i.id for i in invitations]
 
-        ## All the reviewes should be public now
+        ## All the reviews should be public now, should be only 2 reviews
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
-        assert len(reviews) == 3
+        assert len(reviews) == 2
         assert reviews[0].readers == ['everyone']
         assert reviews[0].signatures == [david_anon_groups[0].id]
         assert reviews[1].readers == ['everyone']
         assert reviews[1].signatures == [javier_anon_groups[0].id]
-        assert reviews[2].readers == ['everyone']
-        assert reviews[2].signatures == [carlos_anon_groups[0].id]
 
         ## Reviewers should see other reviewer's identity
         anon_groups = carlos_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_')

@@ -129,6 +129,8 @@ def process(client, edit, invitation):
                 sender=journal.get_message_sender()
             )
 
+            journal.invitation_builder.expire_invitation(journal.get_official_recommendation_enabling_id(submission.number))
+
         else:
             duedate = journal.get_due_date(weeks = journal.get_decision_period_length())
 
