@@ -227,8 +227,8 @@ class TestICMLConference():
                 },
                 'license': {
                     'value':  [
-                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}
+                        {'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0'},
+                        {'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0'}
                     ]
                 }
             }
@@ -1087,8 +1087,9 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                     'subject_areas': { 'value': submission.content['subject_areas']['value'] },
                     'position_paper_track': { 'value': submission.content['position_paper_track']['value'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
-                }
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                },
+                license = 'CC BY-NC-ND 4.0'
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
