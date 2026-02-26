@@ -11,10 +11,7 @@ def process(client, edit, invitation):
     SAC_ID = domain.content['senior_area_chairs_id']['value']
     AC_ID = domain.content['area_chairs_id']['value']
     REV_ID = domain.content['reviewers_id']['value']
-    ETHICS_REV_ID = domain.content['ethics_chairs_id']['value'].replace(
-      domain.content['ethics_chairs_name']['value'],
-      domain.content['ethics_reviewers_name']['value']
-    )
+    ETHICS_REV_ID = domain.content['ethics_reviewers_id']['value']
     user = client.get_profile(edit.signatures[0]).id
 
     edge_readers = [CONFERENCE_ID]
