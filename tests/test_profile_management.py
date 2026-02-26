@@ -1726,6 +1726,9 @@ The OpenReview Team.
         assert ['~John_Last1', 'test@mail.com', 'another@mail.com'] == publications[0].content['authorids']['value']
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
+        publication_edits = openreview_client.get_note_edits(note_id=publications[0].id)
+        assert publication_edits[0].readers == [publications[0].domain]
+        assert publication_edits[0].content['origin']['value'] == 'remove name process function'
 
         group = openreview_client.get_group('ICLRR.cc/Reviewers')
         assert '~John_Alternate_Last1' not in group.members
@@ -3431,6 +3434,9 @@ The OpenReview Team.
         assert ['~Harold_Last1', 'test@mail.com'] == publications[2].content['authorids']['value']
         assert '~Harold_Last1' in publications[2].writers
         assert '~Harold_Last1' in publications[2].signatures
+        publication_edits = openreview_client.get_note_edits(note_id=publications[0].id)
+        assert publication_edits[0].readers == [publications[0].domain]
+        assert publication_edits[0].content['origin']['value'] == 'remove email process function'        
 
         group = openreview_client.get_group('ICMLR.cc/Reviewers')
         assert 'alternate_harold@profile.org' not in group.members
