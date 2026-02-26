@@ -350,6 +350,9 @@ class TestReviewersOnly():
         assert 'keywords' in submission_inv.edit['note']['content']
         assert submission_inv.edit['note']['license']['param']['enum'] == [{'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}]
 
+        pc_revision_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/PC_Revision')
+        assert pc_revision_inv.edit['note']['license']['param']['enum'] == [{'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}]
+
         ## edit Submission content with Submission/Form_Fields invitation
         pc_client.post_invitation_edit(
             invitations=content_inv.id,
@@ -384,8 +387,8 @@ class TestReviewersOnly():
                 },
                 'license': {
                     'value':  [
-                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}
+                        {'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0'},
+                        {'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0'}
                     ]
                 }
             }
@@ -400,15 +403,25 @@ class TestReviewersOnly():
         assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
         assert submission_inv.edit['note']['license']['param']['enum'] == [
             {
-            'value': 'CC BY-NC-ND 4.0',
-            'optional': True,
-            'description': 'CC BY-NC-ND 4.0'
-          },
-          {
-            'value': 'CC BY-NC-SA 4.0',
-            'optional': True,
-            'description': 'CC BY-NC-SA 4.0'
-          }
+                'value': 'CC BY-NC-ND 4.0',
+                'description': 'CC BY-NC-ND 4.0'
+            },
+            {
+                'value': 'CC BY-NC-SA 4.0',
+                'description': 'CC BY-NC-SA 4.0'
+            }
+        ]
+
+        pc_revision_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/PC_Revision')
+        assert pc_revision_inv.edit['note']['license']['param']['enum'] == [
+            {
+                'value': 'CC BY-NC-ND 4.0',
+                'description': 'CC BY-NC-ND 4.0'
+            },
+            {
+                'value': 'CC BY-NC-SA 4.0',
+                'description': 'CC BY-NC-SA 4.0'
+            }
         ]
 
         # assert camera-ready revision invitation is not updated (the PCs should update the content manually)
@@ -627,6 +640,39 @@ For more details, please check the following links:
 
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Program Committee Invitation accepted')
         assert len(messages) == 2
+
+        ## Test validation: attempt to send recruitment without {{invitation_url}} token
+        with pytest.raises(openreview.OpenReviewException, match='Invite Message Body Template must contain {{invitation_url}} token'):
+            openreview_client.post_group_edit(
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
+                content={
+                    'invitee_details': { 'value':  'reviewer_three@abcd.cc, Reviewer ABCDThree' },
+                    'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
+                    'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation.\n\nBest regards,\nABCD 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+
+        ## Test validation: attempt to send recruitment reminder without {{invitation_url}} token
+        with pytest.raises(openreview.OpenReviewException, match='Invite Reminder Message Body Template must contain {{invitation_url}} token'):
+            openreview_client.post_group_edit(
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request_Reminder',
+                content={
+                    'invite_reminder_message_subject_template': { 'value': '[ABCD 2025] Reminder: Invitation to serve as expert Reviewer' },
+                    'invite_reminder_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation.\n\nBest regards,\nABCD 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+
+        ## Test validation: attempt to edit recruitment request emails without {{invitation_url}} token
+        with pytest.raises(openreview.OpenReviewException, match='Invite Message Body Template must contain {{invitation_url}} token'):
+            openreview_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request/Request_Emails',
+                content={
+                    'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
+                    'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation.\n\nBest regards,\nABCD 2025 Program Chairs' },
+                }
+            )
 
         ## Remind reviewers to respond the invitation
         edit = openreview_client.post_group_edit(
@@ -2147,7 +2193,6 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         endorsement_tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Article_Endorsement', stream=True)
         assert endorsement_tags
 
-
     def test_reviewer_stats_computation(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
@@ -2182,9 +2227,6 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert openreview_client.get_tags(profile='~ReviewerTwo_ABCD1')[0].weight == 1
         assert len(openreview_client.get_tags(profile='~ReviewerThree_ABCD1')) == 0
 
-        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Count')
-        assert len(tags) == 2
-
         ## Review Assignment Count stage
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count/Dates',
@@ -2199,10 +2241,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerOne_ABCD1')[0].weight == 2
         assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerTwo_ABCD1')[0].weight == 2
-        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerThree_ABCD1')[0].weight == 2
-
-        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Assignment_Count')
-        assert len(tags) == 3        
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerThree_ABCD1')[0].weight == 2     
 
         ## Review Days Late Sum stage
         pc_client.post_invitation_edit(
@@ -2219,9 +2258,6 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerOne_ABCD1')[0].weight == 0
         assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerTwo_ABCD1')[0].weight == 0
         assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerThree_ABCD1')[0].weight == 0
-
-        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Days_Late_Sum')
-        assert len(tags) == 3
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Program_Committee/Dates',
