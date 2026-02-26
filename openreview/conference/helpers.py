@@ -164,6 +164,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.preferred_emails_groups = note.content.get('preferred_emails_groups')
         if not venue.preferred_emails_groups:
             venue.preferred_emails_groups = [venue.get_authors_id()]
+        venue.invited_reviewer_profile_minimum_requirements = venue_content.get('invited_reviewer_profile_minimum_requirements', {}).get('value', False)
         venue.iThenticate_plagiarism_check = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
         venue.iThenticate_plagiarism_check_api_key = note.content.get('iThenticate_plagiarism_check_api_key', '')
         venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
