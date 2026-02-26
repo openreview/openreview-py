@@ -31,7 +31,7 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)
     
     # Get preferred_emails_groups from domain, or build default with all enabled participants
-    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups')
+    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', {}).get('value')
     if not venue.preferred_emails_groups:
         preferred_emails_groups = [venue.get_authors_id(), venue.get_reviewers_id()]
         if venue.use_area_chairs:
