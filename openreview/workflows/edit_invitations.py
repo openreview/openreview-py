@@ -1813,6 +1813,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('process/committee_recruitment_request_pre_process.js'),
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],

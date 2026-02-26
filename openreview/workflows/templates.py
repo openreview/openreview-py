@@ -702,6 +702,7 @@ class Templates():
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'instructions': 'Configure the timeframe Program Chairs can send ${2/content/committee_pretty_name/value} recruitment invitations and customize the recruitment email sent to users. Go to the **[${2/content/committee_pretty_name/value} group](/group/edit?id=${2/content/committee_id/value})** to recruit ${2/content/committee_pretty_name/value}.',
+                    'preprocess': self.get_process_content('process/committee_recruitment_request_pre_process.js'),
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['recruitment_request_process_script']['value']
@@ -879,6 +880,7 @@ Program Chairs'''
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
+                    'preprocess': self.get_process_content('process/committee_recruitment_request_reminder_pre_process.js'),
                     'process': self.get_process_content('process/committee_recruitment_request_reminder_process.py'),
                     'content': {
                         'committee_id': {
