@@ -1349,6 +1349,21 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         sac_group = pc_client_v2.get_group('NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs')
         assert ['~SeniorArea_NeurIPSChair1'] == sac_group.members
 
+    def test_compute_stats_before_review_stage(self, helpers, openreview_client, client):
+
+        pc_client=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
+
+        pc_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            signatures=['NeurIPS.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum',
+                cdate = openreview.tools.datetime_millis(datetime.datetime.now())
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum-0-1', count=2)
+
+    
     def test_review_stage(self, helpers, openreview_client, test_client, client):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
