@@ -1965,7 +1965,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         
         # Verify that the Preferred_Emails_Readers group includes ethics chairs and publication chairs
         preferred_emails_readers_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Preferred_Emails_Readers')
-        assert venue.get_ethics_chairs_id() in preferred_emails_readers_group.members
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in preferred_emails_readers_group.members
+        assert 'aclweb.org/ACL/ARR/2023/August/Publication_Chairs' not in preferred_emails_readers_group.members
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers' not in preferred_emails_readers_group.members
 
 
     def test_unavailability_process_functions(self, client, openreview_client, helpers):
