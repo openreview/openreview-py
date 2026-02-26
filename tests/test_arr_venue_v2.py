@@ -2010,11 +2010,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['~EthicsReviewer_ARROne1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': 4 },
+                        'maximum_load_this_cycle': { 'value': 2 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     }
                 )
-            ) 
+            )
         reviewer_note_edit = reviewer_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_Alternate_ARROne1'],
@@ -2055,7 +2055,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
-        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {4}
+        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {2}
         assert '~Reviewer_ARROne1' in august_reviewer_edges
         assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {4}
         assert '~AC_ARRTwo1' in august_ac_edges
@@ -2068,7 +2068,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                     id = ethics_reviewer_note_edit['note']['id'],
                     content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
+                        'maximum_load_this_cycle': { 'value': 3 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     }
                 )
@@ -2105,7 +2105,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
-        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {5}
+        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {3}
         assert '~Reviewer_ARROne1' in august_reviewer_edges
         assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {5}
         assert '~AC_ARRTwo1' in august_ac_edges
@@ -2119,7 +2119,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     id = ethics_reviewer_note_edit['note']['id'],
                     ddate = openreview.tools.datetime_millis(now),
                     content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
+                        'maximum_load_this_cycle': { 'value': 3 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     }
                 )
