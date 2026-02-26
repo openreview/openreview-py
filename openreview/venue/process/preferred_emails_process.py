@@ -11,7 +11,7 @@ def process(client, invitation):
     reviewers_anon_name = domain.get_content_value('reviewers_anon_name')
     authors_id = domain.get_content_value('authors_id')
     ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
-    ethics_reviewers_name = domain.get_content_value('ethics_reviewers_name')
+    ethics_reviewers_id = domain.get_content_value('ethics_reviewers_id')
     anon_ethics_reviewer_name = domain.get_content_value('anon_ethics_reviewer_name')
     publication_chairs_id = domain.get_content_value('publication_chairs_id')
 
@@ -19,7 +19,7 @@ def process(client, invitation):
     users = []
     store_ac_emails = area_chairs_id in preferred_emails_groups
     store_reviewer_emails = reviewers_id in preferred_emails_groups
-    store_ethics_reviewer_emails = ethics_reviewers_name and f'{venue_id}/{ethics_reviewers_name}' in preferred_emails_groups
+    store_ethics_reviewer_emails = ethics_reviewers_id and ethics_reviewers_id in preferred_emails_groups
 
     if senior_area_chairs_id in preferred_emails_groups:
         print('Get profiles for all the senior area chairs')
@@ -39,7 +39,7 @@ def process(client, invitation):
 
     if store_ethics_reviewer_emails:
         print('Get profiles for all the ethics reviewers')
-        ethics_reviewers_group = client.get_group(f'{venue_id}/{ethics_reviewers_name}')
+        ethics_reviewers_group = client.get_group(ethics_reviewers_id)
         users += ethics_reviewers_group.members
 
     if publication_chairs_id and publication_chairs_id in preferred_emails_groups:

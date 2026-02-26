@@ -308,6 +308,7 @@ class GroupBuilder(object):
             content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
 
         if self.venue.use_ethics_reviewers:
+            content['ethics_reviewers_id'] = { 'value': self.venue.get_ethics_reviewers_id() }
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
             content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
 
