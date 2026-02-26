@@ -5793,8 +5793,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area')
 
-        expected_due_millis = openreview.tools.datetime_millis(due_date)
-        expected_exp_millis = openreview.tools.datetime_millis(exp_date)
+        rounded_due_date = datetime.datetime.strptime(due_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        rounded_exp_date = datetime.datetime.strptime(exp_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        expected_due_millis = openreview.tools.datetime_millis(rounded_due_date)
+        expected_exp_millis = openreview.tools.datetime_millis(rounded_exp_date)
         reviewer_emergency_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement')
         metareviewer_emergency_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Metareviewer_Agreement')
         assert reviewer_emergency_invitation.duedate == expected_due_millis
