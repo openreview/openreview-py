@@ -3190,19 +3190,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
-        openreview_client.post_group_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
-            readers=['aclweb.org/ACL/ARR/2023/August'],
-            writers=['aclweb.org/ACL/ARR/2023/August'],
-            signatures=['aclweb.org/ACL/ARR/2023/August'],
-            group=openreview.api.Group(
-                id='aclweb.org/ACL/ARR/2023/August',
-                content={
-                    'allow_gurobi_solver': { 'value': True }
-                }
-            )
-        )
-
         # Create review stages
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
