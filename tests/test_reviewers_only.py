@@ -350,6 +350,9 @@ class TestReviewersOnly():
         assert 'keywords' in submission_inv.edit['note']['content']
         assert submission_inv.edit['note']['license']['param']['enum'] == [{'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}]
 
+        pc_revision_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/PC_Revision')
+        assert pc_revision_inv.edit['note']['license']['param']['enum'] == [{'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}]
+
         ## edit Submission content with Submission/Form_Fields invitation
         pc_client.post_invitation_edit(
             invitations=content_inv.id,
@@ -384,8 +387,8 @@ class TestReviewersOnly():
                 },
                 'license': {
                     'value':  [
-                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}
+                        {'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0'},
+                        {'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0'}
                     ]
                 }
             }
@@ -400,15 +403,25 @@ class TestReviewersOnly():
         assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
         assert submission_inv.edit['note']['license']['param']['enum'] == [
             {
-            'value': 'CC BY-NC-ND 4.0',
-            'optional': True,
-            'description': 'CC BY-NC-ND 4.0'
-          },
-          {
-            'value': 'CC BY-NC-SA 4.0',
-            'optional': True,
-            'description': 'CC BY-NC-SA 4.0'
-          }
+                'value': 'CC BY-NC-ND 4.0',
+                'description': 'CC BY-NC-ND 4.0'
+            },
+            {
+                'value': 'CC BY-NC-SA 4.0',
+                'description': 'CC BY-NC-SA 4.0'
+            }
+        ]
+
+        pc_revision_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/PC_Revision')
+        assert pc_revision_inv.edit['note']['license']['param']['enum'] == [
+            {
+                'value': 'CC BY-NC-ND 4.0',
+                'description': 'CC BY-NC-ND 4.0'
+            },
+            {
+                'value': 'CC BY-NC-SA 4.0',
+                'description': 'CC BY-NC-SA 4.0'
+            }
         ]
 
         # assert camera-ready revision invitation is not updated (the PCs should update the content manually)
