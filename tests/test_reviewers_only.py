@@ -2134,8 +2134,7 @@ author={SomeFirstName User and Andrea Amazon},
 booktitle={The ABCD Conference},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[0].id+'''}
-}
-'''
+}'''
 
         assert submissions[1].readers == [
             'ABCD.cc/2025/Conference',
