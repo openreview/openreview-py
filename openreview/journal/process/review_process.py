@@ -176,4 +176,4 @@ def process(client, edit, invitation):
                 replyTo=journal.contact_info,
                 signature=journal.venue_id,
                 sender=journal.get_message_sender()
-            )            
+            )
