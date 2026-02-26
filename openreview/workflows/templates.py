@@ -2183,6 +2183,17 @@ If you would like to change your decision, please follow the link in the previou
                                             'regex': '.*'
                                         }
                                     }
+                                },
+                                '_bibtex': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
                                 }
                             }
                         }

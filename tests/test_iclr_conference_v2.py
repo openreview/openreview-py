@@ -280,6 +280,19 @@ class TestICLRConference():
         assert submission.readers == ['everyone']
         assert '_bibtex' in submission.content
         assert 'author={Anonymous}' in submission.content['_bibtex']['value']
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@inproceedings{
+anonymous'''+str(year)+'''paper,
+title={Paper title 1},
+author={Anonymous},
+booktitle={Submitted to International Conference on Learning Representations},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''     
+
+        valid_bibtex = valid_bibtex + submission.forum + '''},
+note={under review}
+}'''
+        assert submission.content['_bibtex']['value'] == valid_bibtex        
 
         # Author revises submission license
         author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
@@ -306,15 +319,16 @@ class TestICLRConference():
         assert submission.readers == ['everyone']
         assert '_bibtex' in submission.content
         assert 'author={Anonymous}' in submission.content['_bibtex']['value']
-        year = datetime.datetime.now().year
-        valid_bibtex = '''@misc{
+        valid_bibtex = '''@inproceedings{
 anonymous'''+str(year)+'''paper,
 title={Paper title 1 license revision},
 author={Anonymous},
+booktitle={Submitted to International Conference on Learning Representations},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''     
 
-        valid_bibtex = valid_bibtex + submission.forum + '''}
+        valid_bibtex = valid_bibtex + submission.forum + '''},
+note={under review}
 }'''
         assert submission.content['_bibtex']['value'] == valid_bibtex
 

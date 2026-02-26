@@ -51,7 +51,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
     # Update BibTeX if submission is public and already has a bibtex field
     if submission.readers == ['everyone'] and '_bibtex' in submission.content:
         # Determine paper status based on venueid
-        paper_status = 'accepted' if submission.content['venueid']['value'] == submission.domain else 'rejected'
+        status_by_venueid = {
+            submission.domain: 'accepted',
+            domain.content['submission_venue_id']['value']: 'under review'
+        }
+        
+        paper_status = status_by_venueid.get(submission.content['venueid']['value'], 'rejected')
         
         # Check if authors field has readers restrictions (anonymous if restricted)
         anonymous = 'readers' in submission.content['authors'] and len(submission.content['authors']['readers']) > 0
