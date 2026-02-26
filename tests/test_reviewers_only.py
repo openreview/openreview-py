@@ -1257,12 +1257,12 @@ For more details, please check the following links:
                         'pdf': {
                             'readers': {
                                 'param': {
-                                    'escape': {
-                                        'const': {
-                                            'delete': True
-                                        }
-                                    }
-                                }
+                                    'const': {
+                                        'param': {
+                                            'const': { 'delete': True },
+                                        },
+                                    },
+                                },
                             }
                         }
                     }
