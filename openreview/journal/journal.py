@@ -1124,6 +1124,154 @@ Your {lower_formatted_invitation} on a submission has been {action}
         invitation.invitations = None
         self.invitation_builder.post_invitation_edit(invitation, replacement=True)
 
+    def release_reviews_process(self, submission):
+
+        number_of_reviewers = self.get_number_of_reviewers()
+
+        print('Release reviews...')
+        invitation = self.invitation_builder.set_note_release_review_invitation(submission)
+
+        print('Release comments...')
+        invitation = self.invitation_builder.set_note_release_comment_invitation(submission)
+
+        ## Enable official recommendation
+        print('Enable official recommendations')
+        if not self.should_skip_official_recommendation():
+            cdate = self.get_due_date(weeks = self.get_discussion_period_length())
+            duedate = cdate + datetime.timedelta(weeks=self.get_recommendation_period_length())
+            self.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
+            assigned_action_editor = openreview.tools.get_profiles(self.client, ids_or_emails=[submission.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=self.get_preferred_emails_invitation_id())[0]
+
+            review_visibility = 'public' if self.is_submission_public() else 'visible to all the reviewers'
+
+            ## Send email notifications to authors
+            print('Send emails to authors')
+            author_group = self.client.get_group(self.get_authors_id())
+            message=author_group.content['discussion_starts_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_id=submission.id,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                number_of_reviewers=number_of_reviewers,
+                review_visibility=review_visibility,
+                discussion_period_length=self.get_discussion_period_length(),
+                discussion_cdate=cdate.strftime("%b %d"),
+                recommendation_period_length=self.get_discussion_period_length() + self.get_recommendation_period_length(),
+                recommendation_duedate=duedate.strftime("%b %d"),
+                contact_info=self.contact_info,
+                assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_authors_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Reviewer responses and discussion for your {self.short_name} submission''',
+                message=message,
+                replyTo=self.contact_info if self.is_action_editor_anonymous() else assigned_action_editor.get_preferred_email(),
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+            ## Send email notifications to reviewers
+            print('Send emails to reviewers')
+            reviewer_group = self.client.get_group(self.get_reviewers_id())
+            message=reviewer_group.content['discussion_starts_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_id=submission.id,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                number_of_reviewers=number_of_reviewers,
+                review_visibility=review_visibility,
+                discussion_period_length=self.get_discussion_period_length(),
+                contact_info=self.contact_info,
+                assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_reviewers_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Start of author discussion for {self.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                message=message,
+                replyTo=assigned_action_editor.get_preferred_email(),
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+            ## Send email notifications to the action editor
+            print('Send emails to action editor')
+            ae_group = self.client.get_group(self.get_action_editors_id())
+            message=ae_group.content['discussion_starts_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_id=submission.id,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                number_of_reviewers=number_of_reviewers,
+                review_visibility=review_visibility,
+                discussion_period_length=self.get_discussion_period_length(),
+                contact_info=self.contact_info
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_action_editors_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Start of author discussion for {self.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                message=message,
+                replyTo=self.contact_info,
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+        else:
+            duedate = self.get_due_date(weeks = self.get_decision_period_length())
+
+            print('Skip to review rating')
+            self.invitation_builder.set_note_review_rating_invitation(submission, duedate)
+
+            print('Send email to AE')
+            ae_group = self.client.get_group(self.get_action_editors_id())
+            message=ae_group.content['review_rating_starts_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                decision_period_length=self.get_decision_period_length(),
+                decision_duedate=duedate.strftime("%b %d"),
+                invitation_url=f'https://openreview.net/forum?id={submission.id}&invitationId={journal.get_ae_decision_id(number=submission.number)}',
+                contact_info=self.contact_info
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_action_editors_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                message=message,
+                replyTo=self.contact_info,
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+        assigned_reviewers = self.client.get_group(id=self.get_reviewers_id(number=submission.number)).members
+        if len(assigned_reviewers) > number_of_reviewers:
+            print('Send another email to action editor')
+            message=ae_group.content['discussion_too_many_reviewers_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                number_of_reviewers=number_of_reviewers,
+                contact_info=self.contact_info
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_action_editors_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Too many reviewers assigned to {self.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                message=message,
+                replyTo=self.contact_info,
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+        self.invitation_builder.expire_invitation(self.get_official_recommendation_enabling_id(submission.number))
+
     def archive_assignments(self):
 
         submissions = self.client.get_all_notes(invitation=self.get_author_submission_id())
