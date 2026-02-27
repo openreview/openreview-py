@@ -308,6 +308,7 @@ class GroupBuilder(object):
             content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
 
         if self.venue.use_ethics_reviewers:
+            content['ethics_reviewers_id'] = { 'value': self.venue.get_ethics_reviewers_id() }
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
             content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
 
@@ -707,6 +708,10 @@ class GroupBuilder(object):
                 members.append(self.venue.get_area_chairs_id())
             if self.venue.use_senior_area_chairs:
                 members.append(self.venue.get_senior_area_chairs_id())
+            if self.venue.use_ethics_chairs:
+                members.append(self.venue.get_ethics_chairs_id())
+            if self.venue.use_publication_chairs:
+                members.append(self.venue.get_publication_chairs_id())
             preferred_emails_readers_group=Group(id=preferred_emails_readers_group_id,
                             readers=[venue_id, preferred_emails_readers_group_id],
                             writers=[venue_id],
