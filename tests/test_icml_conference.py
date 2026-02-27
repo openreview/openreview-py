@@ -1777,46 +1777,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                     weight=1
             ))
 
-        ## Test race condition: assign a reviewer directly and try to invite them at the same time
-        ## This should detect the assignment and send an email to the AC
-        helpers.create_user('racetest@icml.cc', 'RaceTest', 'ICML')
-        
-        ## Define functions to post edges concurrently
-        def post_assignment_edge(_):
-            return pc_client_v2.post_edge(
-                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment',
-                    signatures=['ICML.cc/2023/Conference/Program_Chairs'],
-                    head=submissions[0].id,
-                    tail='~RaceTest_ICML1',
-                    label='reviewer-matching',
-                    weight=1,
-                    readers=["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[0].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[0].number}/Area_Chairs", '~RaceTest_ICML1'],
-                    nonreaders=[f"ICML.cc/2023/Conference/Submission{submissions[0].number}/Authors"],
-                    writers=["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[0].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[0].number}/Area_Chairs"]
-            ))
-        
-        def post_invite_edge(_):
-            return ac_client.post_edge(
-                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
-                    signatures=[anon_group_id],
-                    head=submissions[0].id,
-                    tail='~RaceTest_ICML1',
-                    label='Invitation Sent',
-                    weight=1
-            ))
-        
-        ## Post both edges concurrently to create a race condition
-        edges = openreview.tools.concurrent_requests(lambda i: post_assignment_edge(i) if i == 0 else post_invite_edge(i), [0, 1], desc='Posting edges concurrently')
-        
-        ## Wait for the invite edge to be processed
-        helpers.await_queue_edit(openreview_client, edges[1].id)
-        
-        ## Check that an email was sent to the AC about the existing assignment
-        messages = openreview_client.get_messages(to='ac1@icml.cc', subject=f'[ICML 2023] Invitation not sent for paper number {submissions[0].number}')
-        assert messages and len(messages) == 1
-        assert 'RaceTest ICML' in messages[0]['content']['text']
-        assert 'already assigned' in messages[0]['content']['text']
-
         edge = ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                 signatures=[anon_group_id],

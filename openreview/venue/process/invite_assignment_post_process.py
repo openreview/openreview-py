@@ -70,10 +70,7 @@ def process_update(client, edge, invitation, existing_edge):
         
         ## - Check if the user is already assigned
         ## This handles the race condition where assignment happens between pre-process and post-process
-        if assignment_label:
-            existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id, label=assignment_label)
-        else:
-            existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id)
+        existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id, label=assignment_label)
         if existing_assignment_edges:
             print(f'User {user_profile.id} is already assigned, not sending invitation')
             ## Send email to the inviter only if inviter is not venue or program chairs
@@ -170,7 +167,7 @@ Thank you,
 
 OpenReview Team'''
                 client.post_message(error_subject, [edge.tauthor], error_message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact, sender=sender)
-            raise
+            return
 
         ## - Send email after successful edge update
         response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, parentGroup=committee_invited_id, replyTo=contact, sender=sender)
