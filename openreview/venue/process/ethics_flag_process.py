@@ -4,6 +4,7 @@ def process(client, edit, invitation):
     venue_id = domain.id
     submission_name = domain.get_content_value('submission_name')
     ethics_reviewers_name = domain.get_content_value('ethics_reviewers_name')
+    ethics_reviewers_id = domain.get_content_value('ethics_reviewers_id')
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     review_name = domain.content.get('review_name', {}).get('value')
     ethics_review_name = domain.content.get('ethics_review_name', {}).get('value')
@@ -42,7 +43,7 @@ def process(client, edit, invitation):
 
         # create ethics reviewers group
         client.post_group_edit(
-                invitation=f'{venue_id}/{ethics_reviewers_name}/-/{submission_name}_Group',
+                invitation=f'{ethics_reviewers_id}/-/{submission_name}_Group',
                 content={
                     'noteId': { 'value': submission.id },
                     'noteNumber': { 'value': submission.number },

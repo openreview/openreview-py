@@ -208,11 +208,6 @@ class TestARRVenueV2():
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'submission_license': ['CC BY-SA 4.0'],
-                "preferred_emails_groups": [
-                    "aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs",
-                    "aclweb.org/ACL/ARR/2023/August/Area_Chairs",
-                    "aclweb.org/ACL/ARR/2023/August/Reviewers"
-                ],
                 'comment_notification_threshold': '3',
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
@@ -389,9 +384,14 @@ class TestARRVenueV2():
         assert domain.content['ethics_chairs_id']['value'] == venue.get_ethics_chairs_id()
         assert domain.content['ethics_chairs_name']['value'] == venue.ethics_chairs_name
         assert domain.content['ethics_reviewers_name']['value'] == venue.ethics_reviewers_name
+        assert domain.content['ethics_reviewers_id']['value'] == venue.get_ethics_reviewers_id()
         assert domain.content['anon_ethics_reviewer_name']['value'] == venue.anon_ethics_reviewers_name()
         assert domain.content['submission_assignment_max_reviewers']['value'] == 3
-
+        
+        # Verify that ethics reviewers and ethics chairs are in the preferred_emails_groups
+        preferred_emails_groups = domain.content['preferred_emails_groups']['value']
+        assert venue.get_ethics_reviewers_id() in preferred_emails_groups
+        assert venue.get_ethics_chairs_id() in preferred_emails_groups
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
 
         now = datetime.datetime.now()
@@ -1941,6 +1941,34 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(june_reviewer_license_notes) > len(august_reviewer_license_notes) ## One June reviewer did not agree
         assert '~Reviewer_ARRFour1' in [note.signatures[0] for note in august_reviewer_license_notes]
         assert '~Reviewer_ARRFive1' not in [note.signatures[0] for note in august_reviewer_license_notes]
+
+        # Trigger preferred email computation by updating the invitation cdate
+        openreview_client.post_invitation_edit(
+            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+        
+        helpers.await_queue_edit(openreview_client, edit_id='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails-0-0', count=2)
+        
+        # Verify that preferred email edges are created for ethics chair and ethics reviewer
+        ethics_chair_edges = openreview_client.get_edges(head='~EthicsChair_ARROne1', invitation='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails')
+        assert len(ethics_chair_edges) == 1
+        assert ethics_chair_edges[0].tail == 'ec1@aclrollingreview.com'
+        
+        ethics_reviewer_edges = openreview_client.get_edges(head='~EthicsReviewer_ARROne1', invitation='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails')
+        assert len(ethics_reviewer_edges) == 1
+        assert ethics_reviewer_edges[0].tail == 'reviewerethics@aclrollingreview.com'
+        
+        # Verify that the Preferred_Emails_Readers group includes ethics chairs and publication chairs
+        preferred_emails_readers_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Preferred_Emails_Readers')
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in preferred_emails_readers_group.members
+        assert 'aclweb.org/ACL/ARR/2023/August/Publication_Chairs' not in preferred_emails_readers_group.members
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers' not in preferred_emails_readers_group.members
+
 
     def test_unavailability_process_functions(self, client, openreview_client, helpers):
         # Update the process functions for each of the unavailability forms, set up the custom max papers
