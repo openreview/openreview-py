@@ -1,6 +1,8 @@
 def process_update(client, edge, invitation, existing_edge):
 
     domain = client.get_group(invitation.domain)
+    venue_id = domain.id
+    program_chairs_id = domain.content['program_chairs_id']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
@@ -15,6 +17,8 @@ def process_update(client, edge, invitation, existing_edge):
     email_template = invitation.content['email_template']['value']
     is_reviewer = invitation.content['is_reviewer']['value']
     is_ethics_reviewer = invitation.content.get('is_ethics_reviewer',{}).get('value', False)
+    assignment_invitation_id = invitation.content['assignment_invitation_id']['value']
+    assignment_label = invitation.content.get('assignment_label', {}).get('value')
     action_string = 'to review' if is_reviewer else f'to serve as {area_chairs_name.replace("_", " ")} for'
     if is_ethics_reviewer:
         action_string = 'to serve as ethics reviewer for'
@@ -53,6 +57,27 @@ def process_update(client, edge, invitation, existing_edge):
                 })
 
         preferred_name=user_profile.get_preferred_name(pretty=True)
+        
+        ## - Check if the user is already assigned
+        ## This handles the race condition where assignment happens between pre-process and post-process
+        existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id, label=assignment_label)
+        if existing_assignment_edges:
+            print(f'User {user_profile.id} is already assigned, not sending invitation')
+            ## Send email to the inviter only if inviter is not venue or program chairs
+            should_notify_inviter = venue_id not in edge.signatures and program_chairs_id not in edge.signatures
+            if should_notify_inviter:
+                subject = f'[{short_phrase}] Invitation not sent for paper number {submission.number}'
+                message = f'''Hi {inviter_preferred_name},
+
+The reviewer {preferred_name} ({user_profile.id}) is already assigned to paper number {submission.number}, title: "{submission.content['title']['value']}".
+
+No invitation has been sent.
+
+Thank you,
+
+OpenReview'''
+                client.post_message(subject, [edge.tauthor], message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact, sender=sender)
+            return
 
         ## - Build invitation link
         print(f'Send invitation to {user_profile.id}')
@@ -116,7 +141,28 @@ Thanks,
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
         edge.tail=user_profile.id
         edge.cdate=None 
-        client.post_edge(edge)
+        
+        try:
+            client.post_edge(edge)
+        except Exception as e:
+            print(f'Error posting edge: {str(e)}')
+            ## Send email to the inviter only if inviter is not venue or program chairs
+            should_notify_inviter = venue_id not in edge.signatures and program_chairs_id not in edge.signatures
+            if should_notify_inviter:
+                error_subject = f'[{short_phrase}] Error sending invitation for paper number {submission.number}'
+                error_message = f'''Hi {inviter_preferred_name},
+
+There was an error sending the invitation to {preferred_name} ({user_profile.id}) for paper number {submission.number}, title: "{submission.content['title']['value']}".
+
+Error: {str(e)}
+
+Please try again or contact support if the problem persists.
+
+Thank you,
+
+OpenReview'''
+                client.post_message(error_subject, [edge.tauthor], error_message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact, sender=sender)
+            raise
 
     if edge.ddate and edge.label == invited_label:
 
