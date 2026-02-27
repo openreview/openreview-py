@@ -30,6 +30,9 @@ def process_update(client, edge, invitation, existing_edge):
         reviewers_name = domain.content['reviewers_name']['value']
         reviewer_readers = [r for r in signature_group.readers if r.endswith(f'/{reviewers_name}')]   
         should_get_inviter_profile = len(reviewer_readers) > 0
+    
+    ## Determine if inviter should receive notifications (not venue or program chairs)
+    should_notify_inviter = venue_id not in edge.signatures and program_chairs_id not in edge.signatures
 
     if edge.ddate is None and edge.label == invite_label and not existing_edge:
 
@@ -58,18 +61,24 @@ def process_update(client, edge, invitation, existing_edge):
 
         preferred_name=user_profile.get_preferred_name(pretty=True)
         
+        ## - Determine role name for messages
+        role_name = 'reviewer'
+        if not is_reviewer:
+            role_name = area_chairs_name.replace('_', ' ').lower()
+        if is_ethics_reviewer:
+            role_name = 'ethics reviewer'
+        
         ## - Check if the user is already assigned
         ## This handles the race condition where assignment happens between pre-process and post-process
-        existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id, label=assignment_label)
+        existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id, label=assignment_label) if assignment_label else []
         if existing_assignment_edges:
             print(f'User {user_profile.id} is already assigned, not sending invitation')
             ## Send email to the inviter only if inviter is not venue or program chairs
-            should_notify_inviter = venue_id not in edge.signatures and program_chairs_id not in edge.signatures
             if should_notify_inviter:
                 subject = f'[{short_phrase}] Invitation not sent for paper number {submission.number}'
                 message = f'''Hi {inviter_preferred_name},
 
-The reviewer {preferred_name} ({user_profile.id}) is already assigned to paper number {submission.number}, title: "{submission.content['title']['value']}".
+The {role_name} {preferred_name} ({user_profile.id}) is already assigned to paper number {submission.number}, title: "{submission.content['title']['value']}".
 
 No invitation has been sent.
 
@@ -147,12 +156,11 @@ Thanks,
         except Exception as e:
             print(f'Error posting edge: {str(e)}')
             ## Send email to the inviter only if inviter is not venue or program chairs
-            should_notify_inviter = venue_id not in edge.signatures and program_chairs_id not in edge.signatures
             if should_notify_inviter:
                 error_subject = f'[{short_phrase}] Error sending invitation for paper number {submission.number}'
                 error_message = f'''Hi {inviter_preferred_name},
 
-There was an error sending the invitation to {preferred_name} ({user_profile.id}) for paper number {submission.number}, title: "{submission.content['title']['value']}".
+There was an error sending the invitation to {role_name} {preferred_name} ({user_profile.id}) for paper number {submission.number}, title: "{submission.content['title']['value']}".
 
 Error: {str(e)}
 
