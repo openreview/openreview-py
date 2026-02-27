@@ -70,7 +70,10 @@ def process_update(client, edge, invitation, existing_edge):
         
         ## - Check if the user is already assigned
         ## This handles the race condition where assignment happens between pre-process and post-process
-        existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id, label=assignment_label) if assignment_label else []
+        if assignment_label:
+            existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id, label=assignment_label)
+        else:
+            existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id)
         if existing_assignment_edges:
             print(f'User {user_profile.id} is already assigned, not sending invitation')
             ## Send email to the inviter only if inviter is not venue or program chairs
