@@ -1,11 +1,3 @@
-"""
-Test client functionality for OpenReview API.
-
-Note: This file existed before the build-pr-tests CI job was added.
-Modifying this file demonstrates that the build-pr-tests job detects
-changes to pre-existing test files (not just newly added ones) via
-git diff --diff-filter=AM (where M = Modified).
-"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import datetime
