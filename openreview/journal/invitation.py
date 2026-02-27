@@ -3906,18 +3906,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             for key, value in self.journal.get_review_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
-        if not self.journal.should_skip_official_recommendation():
-            # allow EICs to enable official recommendation
-            invitation_content['duedate_script'] = {
-                'value': self.get_process_content('process/review_duedate_process.py')
-            }
-            invitation['dateprocesses'].append(
-                {
-                    'dates': [ "#{4/duedate} + 1000" ],
-                    'script': self.get_super_dateprocess_content('duedate_script')
-                }
-            )
-
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
         invitation = {

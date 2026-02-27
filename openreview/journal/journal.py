@@ -482,6 +482,8 @@ class Journal(object):
         self.invitation_builder.set_note_comment_invitation(note)
         self.invitation_builder.release_submission_history(note)
         self.invitation_builder.expire_invitation(self.get_review_approval_id(note.number))
+        if not self.should_skip_official_recommendation():
+            self.invitation_builder.set_note_official_recommendation_enabling_invitation(note)
 
     def is_submission_public(self):
         return self.settings.get('submission_public', True)
