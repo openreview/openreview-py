@@ -2148,6 +2148,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         ]
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
+        assert '_bibtex' not in submissions[0].content
 
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release')
         assert inv and inv.content['source']['value'] == 'accepted_submissions'
@@ -2171,6 +2172,15 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert 'readers' not in submissions[0].content['authors']
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference'
         assert submissions[0].content['venue']['value'] == 'ABCD 2025'
+        year = datetime.datetime.now().year
+        assert submissions[0].content['_bibtex']['value'] == '''@inproceedings{
+user'''+str(year)+'''paper,
+title={Paper title 1},
+author={SomeFirstName User and Andrea Amazon},
+booktitle={The ABCD Conference},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''+submissions[0].id+'''}
+}'''
 
         assert submissions[1].readers == [
             'ABCD.cc/2025/Conference',
@@ -2184,6 +2194,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         ]
         assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
         assert submissions[1].content['venue']['value'] == 'Submitted to ABCD 2025'
+        assert '_bibtex' not in submissions[1].content
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags
