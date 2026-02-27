@@ -133,6 +133,22 @@ class TestReviewersOnly():
 
         helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
+        # post an internal status
+        status_edit = openreview_client.post_note_edit(
+            invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Internal_Status',
+            signatures=['openreview.net/Support'],
+            note=openreview.api.Note(
+                id=request.id,
+                content={
+                    'status': { 'value': 'Do not deploy yet, awaiting PC clarification.' }
+                }
+            )
+        )
+
+        request_form = openreview_client.get_note(request.id)
+        assert 'status' in request_form.content and request_form.content['status']['value'] == 'Do not deploy yet, awaiting PC clarification.'
+        assert request_form.content['status']['readers'] == ['openreview.net/Support']
+
         comment = openreview_client.get_note(comment_edit['note']['id'])
         assert comment.readers == ['openreview.net/Support', 'programchair@abcd.cc']
 
@@ -179,6 +195,21 @@ class TestReviewersOnly():
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
+
+        # delete status after it's not needed anymore
+        status_edit = openreview_client.post_note_edit(
+            invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Internal_Status',
+            signatures=['openreview.net/Support'],
+            note=openreview.api.Note(
+                id=request.id,
+                content={
+                    'status': { 'value': { 'delete': True } }
+                }
+            )
+        )
+
+        request_form = openreview_client.get_note(request.id)
+        assert not request_form.content.get('status', {}).get('value')
 
         venue_group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
