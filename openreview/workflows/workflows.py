@@ -45,6 +45,7 @@ class Workflows():
         self.set_conference_review_deployment()
         self.set_conference_review_comment()
         self.set_conference_review_status_comment()
+        self.set_conference_review_internal_status()
 
     def get_process_content(self, file_path):
         process = None
@@ -614,6 +615,51 @@ class Workflows():
                 }
             },
             process = self.get_process_content('workflow_process/venue_comment_process.py')
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def set_conference_review_internal_status(self):
+
+        support_group_id = self.support_group_id
+        status_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Internal_Status'
+
+        invitation = Invitation(id=status_invitation_id,
+            invitees=[support_group_id],
+            readers=[support_group_id],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            edit = {
+                'signatures': { 
+                    'param': { 
+                        'items': [ { 'value': support_group_id, 'optional': True } ] 
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow',
+                        }
+                    },
+                    'content': {
+                        'status': {
+                            'order': 1,
+                            'description': 'Internal status for this venue. This will not be visible to the PCs. Leave empty to delete a previous status.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{0,500}',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'readers': [support_group_id],
+                        }
+                    }
+                }
+            }
         )
 
         self.post_invitation_edit(invitation)
