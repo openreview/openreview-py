@@ -47,3 +47,40 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     members = submission_authors
                 )
             )
+
+    # Update BibTeX if submission is public and already has a bibtex field
+    if submission.readers == ['everyone'] and '_bibtex' in submission.content:
+        # Determine paper status based on venueid
+        status_by_venueid = {
+            submission.domain: 'accepted',
+            domain.content['submission_venue_id']['value']: 'under review'
+        }
+        
+        paper_status = status_by_venueid.get(submission.content['venueid']['value'], 'rejected')
+        
+        # Check if authors field has readers restrictions (anonymous if restricted)
+        anonymous = 'readers' in submission.content['authors'] and len(submission.content['authors']['readers']) > 0
+        
+        # Get year from submission publication date (pdate or odate)
+        year = datetime.datetime.fromtimestamp(submission.pdate / 1000).year if submission.pdate else datetime.datetime.fromtimestamp(submission.odate / 1000).year if submission.odate else datetime.datetime.now().year
+        
+        content = {}
+        content['_bibtex'] = {
+            'value': openreview.tools.generate_bibtex(
+                note=submission,
+                venue_fullname=domain.content['title']['value'],
+                year=str(year),
+                url_forum=submission.forum,
+                paper_status=paper_status,
+                anonymous=anonymous
+            )
+        }
+
+        client.post_note_edit(
+            invitation=meta_invitation_id,
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=submission.id,
+                content=content
+            )
+        )
