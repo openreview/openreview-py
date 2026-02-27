@@ -87,7 +87,7 @@ No invitation has been sent.
 
 Thank you,
 
-OpenReview'''
+OpenReview Team'''
                 client.post_message(subject, [edge.tauthor], message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact, sender=sender)
             return
 
@@ -145,9 +145,6 @@ Thanks,
             ## General invited group
             client.add_members_to_group(committee_invited_id, [user_profile.id])
 
-        ## - Send email
-        response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, parentGroup=committee_invited_id, replyTo=contact, sender=sender)
-
         ## - Update edge to INVITED_LABEL
         edge.label=invited_label
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
@@ -171,9 +168,12 @@ Please try again or contact support if the problem persists.
 
 Thank you,
 
-OpenReview'''
+OpenReview Team'''
                 client.post_message(error_subject, [edge.tauthor], error_message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact, sender=sender)
             raise
+
+        ## - Send email after successful edge update
+        response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, parentGroup=committee_invited_id, replyTo=contact, sender=sender)
 
     if edge.ddate and edge.label == invited_label:
 
