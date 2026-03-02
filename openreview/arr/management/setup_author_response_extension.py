@@ -1,6 +1,6 @@
 def process(client, invitation):
     """
-    Dynamic Author Response Management Process
+    Author Response Extension Management Process
 
     This process runs on a cron schedule to:
     1. Keep Official_Comment open for papers with <3 reviews
@@ -17,12 +17,12 @@ def process(client, invitation):
 
     # Check if invitation is active
     if cdate > now:
-        print(f'Dynamic author response process not yet active, cdate: {cdate}')
+        print(f'Author response extension process not yet active, cdate: {cdate}')
         return
 
     # Check if process has expired
     if invitation.expdate and invitation.expdate < now:
-        print(f'Dynamic author response process has expired, expdate: {invitation.expdate}')
+        print(f'Author response extension process has expired, expdate: {invitation.expdate}')
         return
 
     # Get domain and venue information
@@ -30,7 +30,7 @@ def process(client, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
 
-    print(f'Starting dynamic author response management for {venue_id}')
+    print(f'Starting author response extension management for {venue_id}')
 
     # Fetch all submissions with replies
     submissions = client.get_all_notes(
@@ -88,7 +88,7 @@ def process(client, invitation):
             print(f'Error processing paper {paper_number}: {str(e)}')
             continue
 
-    print(f'Completed dynamic author response management for {venue_id}')
+    print(f'Completed author response extension management for {venue_id}')
 
 
 def handle_insufficient_reviews(client, venue_id, meta_invitation_id, paper_number,

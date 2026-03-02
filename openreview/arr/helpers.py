@@ -403,20 +403,20 @@ class ARRWorkflow(object):
             "order": 59,
             "required": False
         },
-        "dynamic_author_response_start_date": {
-            "description": "When should the dynamic author response management process become active? This should start just before the standard author response period ends.",
+        "author_response_extension_start_date": {
+            "description": "When should the author response extension management process become active? This should start just before the standard author response period ends.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 60,
             "required": False
         },
-        "dynamic_author_response_end_date": {
-            "description": "When should the dynamic author response management process stop running?",
+        "author_response_extension_end_date": {
+            "description": "When should the author response extension management process stop running?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 61,
             "required": False
         },
-        "dynamic_author_response_cron": {
-            "description": "Cron expression for how frequently the dynamic author response process should check papers (e.g., '0 */4 * * *' for every 4 hours). Leave empty to use default hourly schedule.",
+        "author_response_extension_cron": {
+            "description": "Cron expression for how frequently the author response extension process should check papers (e.g., '0 */4 * * *' for every 4 hours). Leave empty to use default hourly schedule.",
             "value-regex": ".*",
             "order": 62,
             "required": False
@@ -716,8 +716,8 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=['dynamic_author_response_start_date', 'dynamic_author_response_end_date'],
-                super_invitation_id=f"{self.venue_id}/-/Dynamic_Author_Response_Manager",
+                required_fields=['author_response_extension_start_date', 'author_response_extension_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/Author_Response_Extension_Manager",
                 stage_arguments={
                     'content': {
                         'author_response_delay_ms': {'value': 259200000},      # 3 days
@@ -725,10 +725,10 @@ class ARRWorkflow(object):
                         'review_issue_report_delay_ms': {'value': 432000000},  # 5 days
                     }
                 },
-                start_date=self.configuration_note.content.get('dynamic_author_response_start_date'),
-                exp_date=self.configuration_note.content.get('dynamic_author_response_end_date'),
-                process='management/setup_dynamic_author_response.py',
-                cron=self.configuration_note.content.get('dynamic_author_response_cron')
+                start_date=self.configuration_note.content.get('author_response_extension_start_date'),
+                exp_date=self.configuration_note.content.get('author_response_extension_end_date'),
+                process='management/setup_author_response_extension.py',
+                cron=self.configuration_note.content.get('author_response_extension_cron')
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,

@@ -6108,7 +6108,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert test_client.get_note(meta_review_rating_edit['note']['id'])
 
-    def test_dynamic_author_response(self, client, openreview_client, helpers, test_client):
+    def test_author_response_extension(self, client, openreview_client, helpers, test_client):
 
         pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -6118,13 +6118,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         submissions = pc_client_v2.get_all_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc', details='replies')
         now = datetime.datetime.now()
 
-        ## Step 1: Enable dynamic author response and verify invitation structure
+        ## Step 1: Enable author response extension and verify invitation structure
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'dynamic_author_response_start_date': (now - datetime.timedelta(minutes=1)).strftime('%Y/%m/%d %H:%M'),
-                    'dynamic_author_response_end_date': (now + datetime.timedelta(days=14)).strftime('%Y/%m/%d %H:%M'),
-                    'dynamic_author_response_cron': '0 */4 * * *'
+                    'author_response_extension_start_date': (now - datetime.timedelta(minutes=1)).strftime('%Y/%m/%d %H:%M'),
+                    'author_response_extension_end_date': (now + datetime.timedelta(days=14)).strftime('%Y/%m/%d %H:%M'),
+                    'author_response_extension_cron': '0 */4 * * *'
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -6139,11 +6139,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         helpers.await_queue_edit(
             openreview_client,
-            invitation=f'{venue_id}/-/Dynamic_Author_Response_Manager',
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
             count=1
         )
 
-        process_inv = openreview_client.get_invitation(f'{venue_id}/-/Dynamic_Author_Response_Manager')
+        process_inv = openreview_client.get_invitation(f'{venue_id}/-/Author_Response_Extension_Manager')
         assert process_inv.date_processes
         assert process_inv.expdate
         assert process_inv.content['author_response_delay_ms']['value'] == 259200000
@@ -6228,7 +6228,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(
-                id=f'{venue_id}/-/Dynamic_Author_Response_Manager',
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
                 content={
                     'author_response_delay_ms': {'value': 0}
                 }
@@ -6237,7 +6237,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(
             openreview_client,
-            invitation=f'{venue_id}/-/Dynamic_Author_Response_Manager',
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
             count=2,
             process_index=0
         )
@@ -6269,7 +6269,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(
-                id=f'{venue_id}/-/Dynamic_Author_Response_Manager',
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
                 content={
                     'reviewer_response_delay_ms': {'value': 0}
                 }
@@ -6278,7 +6278,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(
             openreview_client,
-            invitation=f'{venue_id}/-/Dynamic_Author_Response_Manager',
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
             count=3,
             process_index=0
         )
@@ -6294,7 +6294,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(
-                id=f'{venue_id}/-/Dynamic_Author_Response_Manager',
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
                 content={
                     'review_issue_report_delay_ms': {'value': 0}
                 }
@@ -6303,7 +6303,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(
             openreview_client,
-            invitation=f'{venue_id}/-/Dynamic_Author_Response_Manager',
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
             count=4,
             process_index=0
         )
