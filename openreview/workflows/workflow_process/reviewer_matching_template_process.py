@@ -8,3 +8,4 @@ def process(client, edit, invitation):
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     assignment_invitation_id = f'{domain.id}/-/{stage_name}'
     edit_invitations_builder.set_edit_assignment_match_settings_invitation(assignment_invitation_id)
+    edit_invitations_builder.set_edit_dates_one_level_invitation(assignment_invitation_id)
