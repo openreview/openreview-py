@@ -403,6 +403,24 @@ class ARRWorkflow(object):
             "order": 59,
             "required": False
         },
+        "dynamic_author_response_start_date": {
+            "description": "When should the dynamic author response management process become active? This should start just before the standard author response period ends.",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 60,
+            "required": False
+        },
+        "dynamic_author_response_end_date": {
+            "description": "When should the dynamic author response management process stop running?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 61,
+            "required": False
+        },
+        "dynamic_author_response_cron": {
+            "description": "Cron expression for how frequently the dynamic author response process should check papers (e.g., '0 */4 * * *' for every 4 hours). Leave empty to use default hourly schedule.",
+            "value-regex": ".*",
+            "order": 62,
+            "required": False
+        },
 
 }
 
@@ -695,6 +713,22 @@ class ARRWorkflow(object):
                 stage_arguments={},
                 start_date=self.configuration_note.content.get('close_author_response_date'),
                 process='management/setup_rebuttal_end.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['dynamic_author_response_start_date', 'dynamic_author_response_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/Dynamic_Author_Response_Manager",
+                stage_arguments={
+                    'content': {
+                        'author_response_delay_ms': {'value': 259200000},      # 3 days
+                        'reviewer_response_delay_ms': {'value': 345600000},    # 4 days
+                        'review_issue_report_delay_ms': {'value': 432000000},  # 5 days
+                    }
+                },
+                start_date=self.configuration_note.content.get('dynamic_author_response_start_date'),
+                exp_date=self.configuration_note.content.get('dynamic_author_response_end_date'),
+                process='management/setup_dynamic_author_response.py',
+                cron=self.configuration_note.content.get('dynamic_author_response_cron')
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -1579,6 +1613,7 @@ class ARRStage(object):
         exp_date = None,
         process = None,
         preprocess = None,
+        cron = None,
         build_edit = None,
         extend = None,
         ignore_dates = [],
@@ -1593,6 +1628,7 @@ class ARRStage(object):
         self.extend: function = extend
         self.process: str = process
         self.preprocess: str = preprocess
+        self.cron: str = cron
 
         self.ignore_dates: list = ignore_dates
         self.ignore_dates_map: list = {
