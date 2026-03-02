@@ -73,19 +73,12 @@ def process_update(client, edge, invitation, existing_edge):
         existing_assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id, label=assignment_label)
         if existing_assignment_edges:
             print(f'User {user_profile.id} is already assigned, not sending invitation')
-            ## Send email to the inviter only if inviter is not venue or program chairs
-            if should_notify_inviter:
-                subject = f'[{short_phrase}] Invitation not sent for paper number {submission.number}'
-                message = f'''Hi {inviter_preferred_name},
-
-The {role_name} {preferred_name} ({user_profile.id}) is already assigned to paper number {submission.number}, title: "{submission.content['title']['value']}".
-
-No invitation has been sent.
-
-Thank you,
-
-OpenReview Team'''
-                client.post_message(subject, [edge.tauthor], message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact, sender=sender)
+            ## Update edge label to "Already Assigned" instead of sending email
+            edge.label = 'Already Assigned'
+            edge.readers = [r if r != edge.tail else user_profile.id for r in edge.readers]
+            edge.tail = user_profile.id
+            edge.cdate = None
+            client.post_edge(edge)
             return
 
         ## - Build invitation link
