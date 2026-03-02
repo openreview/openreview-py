@@ -145,14 +145,23 @@ Thanks,
             client.post_edge(edge)
         except Exception as e:
             print(f'Error posting edge: {str(e)}')
-            ## Send email to the inviter only if inviter is not venue or program chairs
+            error_str = str(e)
+            
+            ## Check if error is "Already assigned" - if so, update edge label instead of sending email
+            if error_str.startswith('Already assigned'):
+                print(f'User {user_profile.id} is already assigned, updating edge label')
+                edge.label = 'Already Assigned'
+                client.post_edge(edge)
+                return
+            
+            ## Send email to the inviter for other errors only if inviter is not venue or program chairs
             if should_notify_inviter:
                 error_subject = f'[{short_phrase}] Error sending invitation for paper number {submission.number}'
                 error_message = f'''Hi {inviter_preferred_name},
 
 There was an error sending the invitation to {role_name} {preferred_name} ({user_profile.id}) for paper number {submission.number}, title: "{submission.content['title']['value']}".
 
-Error: {str(e)}
+Error: {error_str}
 
 Please try again or contact support if the problem persists.
 
