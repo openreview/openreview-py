@@ -5,6 +5,7 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     
     submission_content = edit.content['content']['value']
+    submission_license = edit.content['license']['value']
 
     pc_submission_revision_id = domain.get_content_value('pc_submission_revision_id')
     if pc_submission_revision_id:
@@ -16,7 +17,12 @@ def process(client, edit, invitation):
                 signatures=[venue_id],
                 edit={
                     'note': {
-                        'content': submission_content
+                        'content': submission_content,
+                        'license': {
+                            'param': {
+                                'enum': submission_license
+                            }
+                        }
                     }
                 }
             )
