@@ -148,7 +148,7 @@ Thanks,
             error_str = str(e)
             
             ## Check if error is "Already assigned" - if so, update edge label instead of sending email
-            if error_str.startswith('Already assigned'):
+            if 'already assigned' in error_str.lower():
                 print(f'User {user_profile.id} is already assigned, updating edge label')
                 edge.label = 'Already Assigned'
                 client.post_edge(edge)
