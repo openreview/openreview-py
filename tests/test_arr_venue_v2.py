@@ -3364,6 +3364,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict')
+        reviewer_assignment_configuration = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Configuration')
+        assert 'FairIR' in reviewer_assignment_configuration.edit['note']['content']['solver']['value']['param']['enum']
 
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 14 # All 7 reviewers will conflict with submissions 1/101 because of domain of SAC
         ## Extra 101 conflicts from new reviewer which is an author of all submissions
@@ -3373,7 +3375,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(affinity_scores) == 101 * 7 ## submissions * reviewers
 
         # Post assignment configuration notes
-        openreview_client.post_note_edit(
+        reviewer_assignment_config_edit = openreview_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Configuration',
             readers=[august_venue.id],
             writers=[august_venue.id],
@@ -3389,11 +3391,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "match_group": { "value": 'aclweb.org/ACL/ARR/2023/August/Reviewers'},
                     "aggregate_score_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score'},
                     "conflicts_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict'},
-                    "solver": { "value": 'FairFlow'},
+                    "solver": { "value": 'FairIR'},
                     "status": { "value": 'Deployed'},
                 }
             )
         )
+        assert reviewer_assignment_config_edit['note']['content']['solver']['value'] == 'FairIR'
         openreview_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment_Configuration',
             readers=[august_venue.id],
