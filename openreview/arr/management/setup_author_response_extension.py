@@ -20,28 +20,21 @@ def process(client, invitation):
         print(f'Author response extension process not yet active, cdate: {cdate}')
         return
 
-    # Check if process has expired
-    if invitation.expdate and invitation.expdate < now:
-        print(f'Author response extension process has expired, expdate: {invitation.expdate}')
-        return
-
     # Get domain and venue information
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
 
-    print(f'Starting author response extension management for {venue_id}')
-
     # Fetch all submissions with replies
     submissions = client.get_all_notes(
         invitation=f"{venue_id}/-/Submission",
-        details='replies',
+        details='directReplies',
         sort='number:asc'
     )
 
     print(f'Processing {len(submissions)} total submissions')
 
-    # Read configurable delays from invitation content
+    # Read delays from invitation content
     author_response_delay = invitation.content['author_response_delay_ms']['value']
     reviewer_response_delay = invitation.content['reviewer_response_delay_ms']['value']
     review_issue_report_delay = invitation.content['review_issue_report_delay_ms']['value']
@@ -57,7 +50,7 @@ def process(client, invitation):
 
         try:
             # Extract Official_Review notes from replies
-            reviews = [r for r in submission.details.get('replies', []) if any('Official_Review' in i for i in r.get('invitations', []))]
+            reviews = [r for r in submission.details.get('directReplies', []) if any('Official_Review' in i for i in r.get('invitations', []))]
 
             # Sort reviews by tcdate
             reviews.sort(key=lambda r: r.get('tcdate', 0))
@@ -73,7 +66,7 @@ def process(client, invitation):
                 )
             else:
                 # CASE 2: Papers with 3+ reviews - use 3rd review timing
-                third_review = reviews[2]  # 0-indexed, so index 2 is the 3rd review
+                third_review = reviews[2]
                 third_review_tcdate = third_review.get('tcdate', 0)
 
                 print(f'Paper {paper_number}: Using 3rd review date {third_review_tcdate}')
@@ -194,8 +187,8 @@ def handle_insufficient_reviews(client, venue_id, meta_invitation_id, paper_numb
                 needs_update = True
                 print(f'  - Activating Review_Issue_Report for Review{review_number}')
 
-            # Check if expdate needs updating
-            if invitation.expdate != two_weeks_millis:
+            # Check if expired
+            if invitation.expdate <= now_millis:
                 edit_params['expdate'] = two_weeks_millis
                 needs_update = True
                 print(f'  - Setting Review_Issue_Report expdate to ~2 weeks for Review{review_number}')
@@ -225,7 +218,7 @@ def handle_sufficient_reviews(client, venue_id, meta_invitation_id, paper_number
     """
     Handle papers with 3+ reviews by closing based on 3rd review date
     """
-    print(f'Paper {paper_number}: Managing closures based on 3rd review (total reviews: {review_count})')
+    print(f'Paper {paper_number}: Checking based on 3rd review (total reviews: {review_count})')
 
     # Calculate closure dates
     author_response_close = third_review_tcdate + three_days_millis
