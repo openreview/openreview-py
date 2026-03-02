@@ -1236,13 +1236,13 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 website=self.website,
                 decision_period_length=self.get_decision_period_length(),
                 decision_duedate=duedate.strftime("%b %d"),
-                invitation_url=f'https://openreview.net/forum?id={submission.id}&invitationId={journal.get_ae_decision_id(number=submission.number)}',
+                invitation_url=f'https://openreview.net/forum?id={submission.id}&invitationId={self.get_ae_decision_id(number=submission.number)}',
                 contact_info=self.contact_info
             )
             self.client.post_message(
                 invitation=self.get_meta_invitation_id(),
                 recipients=[self.get_action_editors_id(number=submission.number)],
-                subject=f'''[{self.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                subject=f'''[{self.short_name}] Evaluate reviewers and submit decision for {self.short_name} submission {submission.number}: {submission.content['title']['value']}''',
                 message=message,
                 replyTo=self.contact_info,
                 signature=self.venue_id,
