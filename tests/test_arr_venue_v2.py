@@ -5793,16 +5793,17 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
+        exp_date = due_date + datetime.timedelta(days=1)
 
         pc_client.post_note(
             openreview.Note(
                 content={
                     'emergency_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_reviewing_exp_date': (exp_date).strftime('%Y/%m/%d %H:%M'),
                     'emergency_metareviewing_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'emergency_metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'emergency_metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_metareviewing_exp_date': (exp_date).strftime('%Y/%m/%d %H:%M'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -5822,6 +5823,17 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registered_Load')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area')
+
+        rounded_due_date = datetime.datetime.strptime(due_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        rounded_exp_date = datetime.datetime.strptime(exp_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        expected_due_millis = openreview.tools.datetime_millis(rounded_due_date)
+        expected_exp_millis = openreview.tools.datetime_millis(rounded_exp_date)
+        reviewer_emergency_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement')
+        metareviewer_emergency_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Metareviewer_Agreement')
+        assert reviewer_emergency_invitation.duedate == expected_due_millis
+        assert reviewer_emergency_invitation.expdate == expected_exp_millis
+        assert metareviewer_emergency_invitation.duedate == expected_due_millis
+        assert metareviewer_emergency_invitation.expdate == expected_exp_millis
         
         # Test posting new notes and finding the edges
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
