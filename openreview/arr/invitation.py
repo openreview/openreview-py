@@ -163,6 +163,19 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         process_invitation_id = arr_stage.super_invitation_id
 
+        # Build base date_processes with initial trigger
+        date_processes = [{
+            'dates': ["#{4/cdate}", self.update_date_string],
+            'script': self.get_process_content(arr_stage.process)
+        }]
+
+        # Add cron process if cron expression is provided in arr_stage
+        if arr_stage.cron:
+            date_processes.append({
+                'cron': arr_stage.cron,
+                'script': self.get_process_content(arr_stage.process)
+            })
+
         process_invitation = Invitation(
             id=process_invitation_id,
             invitees = [venue_id],
@@ -170,10 +183,8 @@ class InvitationBuilder(object):
             readers = [venue_id],
             writers = ['~Super_User1'],
             cdate = openreview.tools.datetime_millis(arr_stage.start_date),
-            date_processes=[{ 
-                'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.get_process_content(arr_stage.process)
-            }],            
+            expdate = openreview.tools.datetime_millis(arr_stage.exp_date) if arr_stage.exp_date else None,
+            date_processes=date_processes,
             **arr_stage.stage_arguments
         )
 
