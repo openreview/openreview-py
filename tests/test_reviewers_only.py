@@ -1039,6 +1039,50 @@ For more details, please check the following links:
         messages = openreview_client.get_messages(subject='Test message to all authors')
         assert len(messages) == 12        
 
+    def test_edit_submission_updates_author_group(self, openreview_client, test_client, helpers):
+        '''Test that editing a submission to add a new author updates the author group'''
+        
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        
+        # Get the first submission
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+        
+        # Check initial author group members
+        author_group = openreview_client.get_group(f'ABCD.cc/2025/Conference/Submission{submission.number}/Authors')
+        initial_members = set(author_group.members)
+        assert '~SomeFirstName_User1' in initial_members
+        assert '~Andrea_Umass1' in initial_members
+        
+        # Create a new user to add as co-author
+        helpers.create_user('newauthor@example.com', 'NewAuthor', 'Example')
+        
+        # Edit the submission to add the new author
+        edit = test_client.post_note_edit(
+            invitation='ABCD.cc/2025/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                id=submission.id,
+                content={
+                    'authorids': { 'value': list(submission.content['authorids']['value']) + ['~NewAuthor_Example1'] },
+                    'authors': { 'value': list(submission.content['authors']['value']) + ['NewAuthor Example'] }
+                }
+            )
+        )
+        
+        # Wait for the edit to be processed
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        
+        # Verify the author group has been updated with the new author
+        author_group = openreview_client.get_group(f'ABCD.cc/2025/Conference/Submission{submission.number}/Authors')
+        updated_members = set(author_group.members)
+        
+        # The new author should be in the group
+        assert '~NewAuthor_Example1' in updated_members
+        assert '~SomeFirstName_User1' in updated_members
+        assert '~Andrea_Umass1' in updated_members
+        assert len(updated_members) == 3
+
     def test_reviewer_bidding(self, openreview_client, helpers, request_page, selenium):
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
