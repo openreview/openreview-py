@@ -1810,6 +1810,20 @@ arr_ac_max_load_task["maximum_load_this_cycle"] = {
         "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
         "order": 1,
     }
+arr_ethics_max_load_task = deepcopy(arr_max_load_task)
+arr_ethics_max_load_task["maximum_load_this_cycle"] = {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                "optional": False,
+                "type": "integer",
+            }
+        },
+        "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
+        "order": 1,
+    }
+
 arr_sac_max_load_task = deepcopy(arr_max_load_task)
 del arr_sac_max_load_task["maximum_load_this_cycle_for_resubmissions"]
 del arr_sac_max_load_task["maximum_load_this_cycle"]
