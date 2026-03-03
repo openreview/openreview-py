@@ -19,16 +19,19 @@ def process(client, invitation):
 
 
     venue_id = domain.id
-    review_invitation = client.get_invitation(review_invitation_id)
+    review_invitation = openreview.tools.get_invitation(client, review_invitation_id)
+    if not review_invitation:
+        print(f'No review invitation found with id {review_invitation_id}')
+        return
     review_duedate = datetime.datetime.fromtimestamp(review_invitation.edit['invitation']['duedate']/1000)
 
     ignore_venue_ids = [withdrawn_submission_venue_id, desk_rejected_submission_venue_id]
 
     review_days_late_tags = []
 
-    submission_by_id = { n.id: n for n in client.get_all_notes(invitation=submission_id, details='replies')}
-    assignments_by_reviewers = { e['id']['tail']: e['values'] for e in client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
-    all_submission_groups = client.get_all_groups(prefix=submission_venue_id)
+    submission_by_id = { n.id: n for n in client.get_all_notes(invitation=submission_id, details='replies', domain=venue_id) }
+    assignments_by_reviewers = { e['id']['tail']: e['values'] for e in client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail', domain=venue_id) }
+    all_submission_groups = client.get_all_groups(prefix=submission_venue_id, domain=venue_id)
 
     all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{reviewers_anon_name}' in g.id ]
     all_anon_reviewer_group_members = []

@@ -103,7 +103,7 @@ class TestMultipleRoles():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')

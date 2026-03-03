@@ -122,7 +122,7 @@ class TestNeurIPSConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
@@ -183,7 +183,7 @@ If you would like to change your decision, please follow the link in the previou
         assert 'sac2@gmail.com' in sac_group.members
 
         sac_client = openreview.Client(username='sac1@google.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client.token, wait_for_element='notes')
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client, wait_for_element='notes')
         notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
         tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
@@ -330,13 +330,13 @@ If you would like to change your decision, please follow the link in the previou
         assert edges == 3
 
         tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs#senior-areachair-tasks'
-        request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
+        request_page(selenium, tasks_url, sac_client, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
 
         assert selenium.find_element(By.LINK_TEXT, 'Senior Area Chair Bid')
 
 
         bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid'
-        request_page(selenium, bid_url, sac_client.token, wait_for_element='notes')
+        request_page(selenium, bid_url, sac_client, wait_for_element='notes')
 
         notes = selenium.find_element(By.ID, 'notes')
         assert notes
@@ -453,7 +453,7 @@ If you would like to change your decision, please follow the link in the previou
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.ID, wait_for_element='note_{}'.format(request_form.id))
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client, by=By.ID, wait_for_element='note_{}'.format(request_form.id))
         recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
@@ -553,7 +553,7 @@ If you would like to change your decision, please follow the link in the previou
 
         ## Check reviewers console load
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
-        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers', reviewer_client.token, by=By.ID, wait_for_element='header')
+        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers', reviewer_client, by=By.ID, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         strong_elements = header.find_elements(By.TAG_NAME, 'strong')
         assert len(strong_elements) == 1
@@ -938,7 +938,7 @@ If you would like to change your decision, please follow the link in the previou
 
         ## Manually set the webfield if the author ranking has to be enabled
         ## authors_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Authors'
-        ##request_page(selenium, authors_url, test_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
+        ##request_page(selenium, authors_url, test_client, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
         ##assert selenium.find_elements(By.CLASS_NAME, 'tag-widget')
 
@@ -2645,7 +2645,7 @@ NeurIPS 2021 Conference Program Chairs'''
         ac_anon_id=signatory_groups[0].id
 
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
-        request_page(selenium, ac_url, ac_client.token, wait_for_element='5-metareview-status')
+        request_page(selenium, ac_url, ac_client, wait_for_element='5-metareview-status')
 
         status = selenium.find_element(By.ID, '5-metareview-status')
         assert status
@@ -2659,7 +2659,7 @@ NeurIPS 2021 Conference Program Chairs'''
         reviewer_anon_id=signatory_groups[0].id
 
         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
-        request_page(selenium, reviewer_url, reviewer_client.token)
+        request_page(selenium, reviewer_url, reviewer_client)
 
         assert not selenium.find_elements(By.CLASS_NAME, 'tag-widget')
 
@@ -2668,7 +2668,7 @@ NeurIPS 2021 Conference Program Chairs'''
         conference.open_paper_ranking(conference.get_reviewers_id(), due_date=now + datetime.timedelta(minutes = 40))
 
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
-        request_page(selenium, ac_url, ac_client.token, by=By.ID, wait_for_element='5-metareview-status')
+        request_page(selenium, ac_url, ac_client, by=By.ID, wait_for_element='5-metareview-status')
 
         status = selenium.find_element(By.ID, '5-metareview-status')
         assert status
@@ -2694,7 +2694,7 @@ NeurIPS 2021 Conference Program Chairs'''
         )
 
         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
-        request_page(selenium, reviewer_url, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
+        request_page(selenium, reviewer_url, reviewer_client, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
         tags = selenium.find_elements(By.CLASS_NAME, 'tag-widget')
         assert tags
@@ -2821,7 +2821,7 @@ NeurIPS 2021 Conference Program Chairs'''
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 
-        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token, wait_for_element='notes')
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client, wait_for_element='notes')
         assert "NeurIPS 2021 Conference Program Chairs | OpenReview" in selenium.title
         notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel

@@ -16,6 +16,7 @@ from openreview.stages.arr_content import (
     arr_reviewer_ac_recognition_task_forum,
     arr_reviewer_ac_recognition_task,
     arr_max_load_task_forum,
+    arr_ethics_max_load_task,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
     arr_sac_max_load_task,
@@ -548,14 +549,6 @@ class ARRWorkflow(object):
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
                 required_fields=[],
-                super_invitation_id=f"{self.venue_id}/-/Register_Authors_To_Reviewers",
-                stage_arguments={},
-                process='management/setup_authors_to_reviewers.py',
-                ignore_dates=['cdate']
-            ),
-            ARRStage(
-                type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=[],
                 super_invitation_id=f"{self.venue_id}/-/Setup_SAE_Matching",
                 stage_arguments={},
                 process='management/setup_sae_matching.py',
@@ -748,7 +741,7 @@ class ARRWorkflow(object):
                     'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
                     'instructions': arr_max_load_task_forum['instructions'],
                     'title': venue.get_ethics_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
-                    'additional_fields': arr_max_load_task,
+                    'additional_fields': arr_ethics_max_load_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 due_date=self.configuration_note.content.get('maximum_load_due_date'),
@@ -813,7 +806,7 @@ class ARRWorkflow(object):
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
                 group_id=venue.get_reviewers_id(),
-                required_fields=['emergency_reviewing_start_date', 'emergency_reviewing_due_date', 'emergency_reviewing_due_date'],
+                required_fields=['emergency_reviewing_start_date', 'emergency_reviewing_due_date', 'emergency_reviewing_exp_date'],
                 super_invitation_id=f"{venue.get_reviewers_id()}/-/{self.invitation_builder.EMERGENCY_REVIEWING_NAME}",
                 stage_arguments={   
                     'committee_id': venue.get_reviewers_id(),
@@ -825,14 +818,14 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('emergency_reviewing_start_date'),
                 due_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
-                exp_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
+                exp_date=self.configuration_note.content.get('emergency_reviewing_exp_date'),
                 process='process/emergency_load_process.py',
                 preprocess='process/emergency_load_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
                 group_id=venue.get_area_chairs_id(),
-                required_fields=['emergency_metareviewing_start_date', 'emergency_metareviewing_due_date', 'emergency_metareviewing_due_date'],
+                required_fields=['emergency_metareviewing_start_date', 'emergency_metareviewing_due_date', 'emergency_metareviewing_exp_date'],
                 super_invitation_id=f"{venue.get_area_chairs_id()}/-/{self.invitation_builder.EMERGENCY_METAREVIEWING_NAME}",
                 stage_arguments={   
                     'committee_id': venue.get_area_chairs_id(),
@@ -844,7 +837,7 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('emergency_metareviewing_start_date'),
                 due_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
-                exp_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
+                exp_date=self.configuration_note.content.get('emergency_metareviewing_exp_date'),
                 process='process/emergency_load_process.py',
                 preprocess='process/emergency_load_preprocess.py'
             ),
@@ -1246,27 +1239,17 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('author_consent_end_date')
             ),
             ARRStage(
-                type=ARRStage.Type.STAGE_NOTE,
+                type=ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE,
                 required_fields=['metadata_edit_start_date', 'metadata_edit_end_date'],
                 super_invitation_id=f"{self.venue_id}/-/Submission_Metadata_Revision",
                 stage_arguments={
-                    'content': {
-                        'submission_revision_name': 'Submission_Metadata_Revision',
-                        'accepted_submissions_only': 'Enable revision for all submissions',
-                        'submission_author_edition': 'Do not allow any changes to author lists',
-                        'submission_revision_remove_options': [
-                            'authors',
-                            'authorids',
-                            'pdf'
-                        ],
-                    },
-                    'forum': request_form_id,
-                    'invitation': '{}/-/Request{}/Submission_Revision_Stage'.format(support_user, request_form.number),
-                    'readers': ['{}/Program_Chairs'.format(self.venue_id), support_user],
-                    'referent': request_form_id,
-                    'replyto': request_form_id,
-                    'signatures': ['~Super_User1'],
-                    'writers': []
+                    'remove_fields': [
+                        'authors',
+                        'authorids',
+                        'pdf'
+                    ],
+                    'only_accepted': False,
+                    'allow_author_reorder': openreview.stages.AuthorReorder.DISALLOW_EDIT
                 },
                 start_date=self.configuration_note.content.get('metadata_edit_start_date'),
                 exp_date=self.configuration_note.content.get('metadata_edit_end_date')
@@ -1416,12 +1399,14 @@ class ARRStage(object):
             STAGE_NOTE (2): Built-in OpenReview stage that's available on the request form
             PROCESS_INVITATION (3): An invitation that stores an ARR script in the form of a process function
             SUBMISSION_REVISION_STAGE (4): An invitation that allows revisions to the submission
+            SUBMISSION_METADATA_REVISION_STAGE (5): An invitation that allows metadata-only revisions to the submission
         """
         REGISTRATION_STAGE = 0
         CUSTOM_STAGE = 1
         STAGE_NOTE = 2
         PROCESS_INVITATION = 3
         SUBMISSION_REVISION_STAGE = 4
+        SUBMISSION_METADATA_REVISION_STAGE = 5
 
     class Participants(Enum):
         EVERYONE = 0
@@ -1659,7 +1644,12 @@ class ARRStage(object):
                     current_invitation.expdate
                 ]
                 return [date for idx, date in enumerate(all_dates) if idx not in skip_idxs]
-            elif self.type == ARRStage.Type.CUSTOM_STAGE or self.type == ARRStage.Type.STAGE_NOTE:
+            elif self.type in [
+                ARRStage.Type.CUSTOM_STAGE,
+                ARRStage.Type.STAGE_NOTE,
+                ARRStage.Type.SUBMISSION_REVISION_STAGE,
+                ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE
+            ]:
                 all_dates = [
                     current_invitation.edit.get('invitation', {}).get('cdate'),
                     current_invitation.edit.get('invitation', {}).get('duedate'),
@@ -1715,7 +1705,11 @@ class ARRStage(object):
                     expdate=openreview.tools.datetime_millis(self.exp_date)
                 )
             )
-        elif self.type == ARRStage.Type.CUSTOM_STAGE:
+        elif self.type in [
+            ARRStage.Type.CUSTOM_STAGE,
+            ARRStage.Type.SUBMISSION_REVISION_STAGE,
+            ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE
+        ]:
             if __is_same_dates(self._get_current_dates(current_invitation)):
                 return
             client.post_invitation_edit(
@@ -1810,6 +1804,8 @@ class ARRStage(object):
                         client, venue, invitation_builder, request_form_note
                     )
                 invitation_builder.set_process_invitation(self)
+            elif self.type == ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE:
+                invitation_builder.set_submission_metadata_revision_invitation(self)
 
             if self.extend:
                 # Wait until previous changes are done
@@ -1866,9 +1862,6 @@ def flag_submission(
             'responsible_checklist': 'Yes',
             'limitations': 'Yes'
         },
-        'Official_Review': {
-            'Knowledge_of_or_educated_guess_at_author_identity': 'No'
-        },
         'Meta_Review': {
             'author_identity_guess': [4, 3, 2, 1]
         }
@@ -1913,7 +1906,6 @@ def flag_submission(
         forum.details['replies']
     ))
     ethics_flag_from_reviews = False
-    dsv_flag_from_reviews = False
     for review in reviews:
         # Check for ethics flagging
         print(f"ethics review flag state {ethics_flag_from_reviews}")
@@ -1922,14 +1914,6 @@ def flag_submission(
             ethics_flag_fields['Review'],
             ethics_flag_default
         )
-        # Check for desk reject verification
-        for violation_field, field_default in violation_fields['Official_Review'].items():
-            print(f"dsv review flag state {dsv_flag_from_reviews}")
-            dsv_flag_from_reviews = dsv_flag_from_reviews or check_field_violated(
-                review,
-                violation_field,
-                field_default
-            )
 
     # Check checklists
     checklists = list(filter(
@@ -2010,7 +1994,6 @@ def flag_submission(
     ## False -> True
     if not dsv_flagged and any([
         dsv_flag_from_checklists,
-        dsv_flag_from_reviews,
         dsv_flag_from_metareviews]):
         print('setting dsv flag false -> true')
         post_flag(
@@ -2020,7 +2003,6 @@ def flag_submission(
     ## True -> False
     if dsv_flagged and all([
         not dsv_flag_from_checklists,
-        not dsv_flag_from_reviews,
         not dsv_flag_from_metareviews]):
         print('setting dsv flag true -> false')
         post_flag(

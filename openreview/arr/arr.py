@@ -426,6 +426,18 @@ class ARR(object):
         ]
         self.set_impersonators(profile_ids)
 
+        # Set domain field for Gurobi
+        self.client.post_group_edit(
+            invitation=self.get_meta_invitation_id(),
+            signatures=[self.venue_id],
+            group=openreview.api.Group(
+                id=self.venue_id,
+                content={
+                    'allow_gurobi_solver': { 'value': True }
+                }
+            )
+        )
+
         return setup_value
 
     def set_impersonators(self, impersonators):
@@ -742,7 +754,7 @@ class ARR(object):
         
         submission_id = venue_group.content.get('submission_id', {}).get('value')
 
-        commitment_submissions = client.get_all_notes(invitation=submission_id)
+        commitment_submissions = client.get_all_notes(invitation=submission_id, domain=venue_id)
 
         def process_commitment_submission(note):
             arr_submission_link = note.content.get('paper_link', {}).get('value')

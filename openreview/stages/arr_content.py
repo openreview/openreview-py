@@ -2,20 +2,19 @@ from copy import deepcopy
 from datetime import datetime
 
 arr_tracks = [
-    "AI/LLM Agents",
     "Clinical and Biomedical Applications",
-    "Code Models",
-    "Computational Social Science, Cultural Analytics, and NLP for Social Good",
+    "Computational Social Science and Cultural Analytics",
     "Dialogue and Interactive Systems",
-    "Discourse, Pragmatics, and Reasoning",
+    "Discourse and Pragmatics",
+    "Efficient Methods for NLP",
     "Ethics, Bias, and Fairness",
-    "Financial Applications and Time Series",
-    "Generalizability and Transfer",
-    "Hierarchical Structure Prediction, Syntax, and Parsing",
-    "Human-AI Interaction/Cooperation and Human-Centric NLP",
-    "Information Extraction and Retrieval",
+    "Generation",
+    "Human-Centered NLP and Human-AI Interaction",
+    "Information Extraction",
+    "Information Retrieval and Text Mining",
     "Interpretability and Analysis of Models for NLP",
-    "Language Models",
+    "Language Modeling",
+    "LLM agents",
     "Linguistic theories, Cognitive Modeling and Psycholinguistics",
     "LLM Efficiency",
     "Low-resource Methods for NLP",
@@ -24,7 +23,8 @@ arr_tracks = [
     "Mathematical, Symbolic, Neurosymbolic, and Logical Reasoning",
     "Multilinguality and Language Diversity",
     "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-    "Natural Language Generation",
+    "NLP and Code Models",
+    "NLP and Symbolic Reasoning",
     "NLP Applications",
     "Phonology, Morphology and Word Segmentation",
     "Question Answering",
@@ -429,84 +429,6 @@ arr_submission_content = {
         "description": "Did you use or create scientific artifacts? (e.g. code, datasets, models)",
         "order": 33
     },
-    "B1_cite_creators_of_artifacts": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you cite the creators of artifacts you used?",
-        "order": 34
-    },
-    "B1_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 35
-    },
-    "B2_discuss_the_license_for_artifacts": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you discuss the license or terms for use and/or distribution of any artifacts?",
-        "order": 36
-    },
-    "B2_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 37
-    },
-    "B3_artifact_use_consistent_with_intended_use": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you discuss if your use of existing artifact(s) was consistent with their intended use, provided that it was specified? For the artifacts you create, do you specify intended use and whether that is compatible with the original access conditions (in particular, derivatives of data accessed for research purposes should not be used outside of research contexts)?",
-        "order": 38
-    },
-    "B3_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 39
-    },
     "B4_data_contains_personally_identifying_info_or_offensive_content": {
         "value": {
             "param": {
@@ -532,32 +454,6 @@ arr_submission_content = {
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 41
-    },
-    "B5_documentation_of_artifacts": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you provide documentation of the artifacts, e.g., coverage of domains, languages, and linguistic phenomena, demographic groups represented, etc.?",
-        "order": 42
-    },
-    "B5_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 43
     },
     "B6_statistics_for_data": {
         "value": {
@@ -598,32 +494,6 @@ arr_submission_content = {
         },
         "description": "Did you run computational experiments?",
         "order": 46
-    },
-    "C1_model_size_and_budget": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you report the number of parameters in the models used, the total computational budget (e.g., GPU hours), and computing infrastructure used?",
-        "order": 47
-    },
-    "C1_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 48
     },
     "C2_experimental_setup_and_hyperparameters": {
         "value": {
@@ -676,32 +546,6 @@ arr_submission_content = {
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 52
-    },
-    "C4_parameters_for_packages": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation, such as NLTK, SpaCy, ROUGE, etc.), did you report the implementation, model, and parameter settings used?",
-        "order": 53
-    },
-    "C4_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 54
     },
     "D_human_subjects_including_annotators": {
         "value": {
@@ -821,32 +665,6 @@ arr_submission_content = {
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 63
     },
-    "D5_characteristics_of_annotators": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you report the basic demographic and geographic characteristics of the annotator population that is the source of the data?",
-        "order": 64
-    },
-    "D5_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
-            }
-        },
-        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 65
-    },
     "E_ai_assistants_in_research_or_writing": {
         "value": {
             "param": {
@@ -899,7 +717,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "I confirm that this submission adheres to ARR requirements. I also confirm that all authors have been notified of the requirement to register as a reviewer (for all authors), and the possibility of desk-rejection and (re-)submission bans for irresponsible reviewer behavior (for those selected for assignments, see https://aclrollingreview.org/incentives2025).\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
+        "description": "I confirm that this submission adheres to ARR requirements.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
         "order": 69
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
@@ -1992,6 +1810,20 @@ arr_ac_max_load_task["maximum_load_this_cycle"] = {
         "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
         "order": 1,
     }
+arr_ethics_max_load_task = deepcopy(arr_max_load_task)
+arr_ethics_max_load_task["maximum_load_this_cycle"] = {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                "optional": False,
+                "type": "integer",
+            }
+        },
+        "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
+        "order": 1,
+    }
+
 arr_sac_max_load_task = deepcopy(arr_max_load_task)
 del arr_sac_max_load_task["maximum_load_this_cycle_for_resubmissions"]
 del arr_sac_max_load_task["maximum_load_this_cycle"]
@@ -2282,8 +2114,20 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper appropriate for *ACL venues?",
+        "description": "This and the following questions help us to identify possible violations for which the paper may be desk rejected without review. \n\n Is the paper appropriate for *CL? ARR is NOT a general machine learning venue: submissions should make a clear contribution to computational processing of natural language.",
         "order": 1
+    },
+    "appropriateness_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper makes a contribution to computational processing of natural language.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is not relevant for *CL, please explain your reasoning to help the chairs consider the case.",
+        "order": 2
     },
     "formatting": {
         "value": {
@@ -2297,8 +2141,20 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html) Please note that ACL has separate LaTeX and Microsoft Word templates, and PDFs produced by these templates look different from each other.",
-        "order": 2
+        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html)",
+        "order": 3
+    },
+    "formatting_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is properly formatted.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is not appropriately formatted (e.g. some text is too small to be legible when printed on A4 paper), please describe the violation to help the chairs consider the case.",
+        "order": 4
     },
     "length": {
         "value": {
@@ -2312,8 +2168,20 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
-        "order": 3
+        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum; Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
+        "order": 5
+    },
+    "length_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is within the page limits.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is violating the page limit rules (e.g. appendix contains materials critical to understanding the main paper), please describe the violation to help the chairs consider the case.",
+        "order": 6
     },
     "anonymity": {
         "value": {
@@ -2328,7 +2196,19 @@ arr_ae_checklist = {
             }
         },
         "description": "Is the paper properly anonymized?",
-        "order": 4
+        "order": 7
+    },
+    "anonymity_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is properly anonymized.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper discloses the author identity somehow (e.g. self-citations, links to non-anonymous repositories), please describe the violation to help the chairs consider the case.",
+        "order": 8
     },
     "limitations": {
         "value": {
@@ -2343,7 +2223,46 @@ arr_ae_checklist = {
             }
         },
         "description": "Does the paper have a section entitled \"Limitations\"?",
-        "order": 5
+        "order": 9
+    },
+    "limitations_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper has the 'Limitations' section.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If this paper is missing the required 'Limitations' section, please indicate if you noticed a description of limitations elsewhere.",
+        "order": 10
+    },
+    "overall_level": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Does the submission seem to be a good-faith submission that merits full review?",
+        "order": 11
+    },
+    "overall_level_justification": {
+        "value": {
+            "param": {
+                "regex": ".{1,250}",
+                "optional": False,
+                "default": "N/A - this seems like a good-faith submission worthy of full review.",
+                "type": "string"
+            }
+        },
+        "description": "ARR is receiving many low-quality submissions -- some possibly generated -- that do not merit full review and put a strain on our volunteer reviewer resources. If you notice a submission that is clearly not in good faith, please indicate that the chairs should consider desk rejection, and provide your rationale.  Hallucinated citations are one of the possible indicators.",
+        "order": 12
     },
     "responsible_checklist": {
         "value": {
@@ -2358,49 +2277,19 @@ arr_ae_checklist = {
             }
         },
         "description": "Have the authors completed the responsible NLP research checklist appropriately?",
-        "order": 6
+        "order": 13
     },
     "potential_violation_justification": {
         "value": {
             "param": {
                 "regex": ".{1,250}",
                 "optional": False,
-                "default": "There are no violations with this submission",
+                "default": "N/A - the authors filled in the responsible NLP checklist appropriately.",
                 "type": "string"
             }
         },
-        "description": "Modify only if a violation is marked. If you have marked any violation on this checklist, please give a brief explanation of the issue",
-        "order": 7
-    },
-    "number_of_assignments": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No"
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "Does the submission have 3 reviewers?",
-        "order": 8
-    },
-    "diversity": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No"
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "Are the reviewers diverse, in regards to seniority, geographies and institutions? If not, answer 'no' and please modify the assignments",
-        "order": 9
+        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue",
+        "order": 14
     },
     "need_ethics_review": {
         "value": {
@@ -2414,20 +2303,50 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why below, and we will try to ensure that it receives a separate review.",
-        "order": 10
+        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why below, and we will try to ensure that it receives a separate review. Please refer to https://aclrollingreview.org/ethics-flagging-guidelines/",
+        "order": 15
     },
     "ethics_review_justification": {
         "value": {
             "param": {
                 "minLength": 1,
-                "default": "N/A (I answered 'no' to the previous question)",
+                "default": "N/A - this paper does not need an ethics review.",
                 "optional": False,
                 "type": "string"
             }
         },
         "description": "Please provide a meaningful justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
-        "order": 11
+        "order": 16
+    },
+    "number_of_assignments": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "This and the following questions aim to ensure that the submission is adequately handled, if it is accepted for review. \n\n Does the submission have 3 reviewers?",
+        "order": 17
+    },
+    "diversity": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Are the reviewers diverse with respect to seniority, geographies and institutions? If not, answer 'no' and please modify the assignments",
+        "order": 18
     },
     "resubmission": {
         "value": {
@@ -2443,7 +2362,7 @@ arr_ae_checklist = {
             }
         },
         "description": "If the paper is a resubmission, does the link to the previous submission work?",
-        "order": 12
+        "order": 19
     },
     "resubmission_reassignments": {
         "value": {
@@ -2459,7 +2378,7 @@ arr_ae_checklist = {
             }
         },
         "description": "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments",
-        "order": 13
+        "order": 20
     },
     "resubmission_notes": {
         "value": {
@@ -2474,10 +2393,10 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "If this is a resubmission, is it accompanied by revision notes listing the changes made? (field: 'explanation of revisions PDF').",
-        "order": 14
+        "description": "If this is a resubmission, is it accompanied by revision notes listing the changes made? (field: 'explanation of revisions PDF'). It should contain a good-faith attempt to incorporate reasonable feedback from the past cycle, or explain why it should be disregarded.",
+        "order": 21
     },
-    "comment": {
+    "other_issues": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -2485,10 +2404,11 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Any comments on any issues with this submission?",
-        "order": 15
+        "description": "Please let us know if you have any other serious concerns about this submission that should be considered by the chairs. Markdown formatting and latex formulas can be used.",
+        "order": 22
     }
 }
+
 
 
 arr_reviewer_checklist = {
@@ -2504,8 +2424,20 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper appropriate for *ACL venues?",
+        "description": "Is the paper appropriate for *CL? ARR is NOT a general machine learning venue: submissions should make a clear contribution to computational processing of natural language.",
         "order": 1
+    },
+    "appropriateness_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper makes a contribution to computational processing of natural language.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is not relevant for *CL, please explain your reasoning to help the chairs consider the case.",
+        "order": 2
     },
     "formatting": {
         "value": {
@@ -2519,8 +2451,20 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html) Please note that ACL has separate LaTeX and Microsoft Word templates, and PDFs produced by these templates look different from each other.",
-        "order": 2
+        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html)",
+        "order": 3
+    },
+    "formatting_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is properly formatted.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is not appropriately formatted (e.g. some text is too small to be legible when printed on A4 paper), please describe the violation to help the chairs consider the case.",
+        "order": 4
     },
     "length": {
         "value": {
@@ -2534,8 +2478,20 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
-        "order": 3
+        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum; Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
+        "order": 5
+    },
+    "length_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is within the page limits.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper is violating the page limit rules (e.g. appendix contains materials critical to understanding the main paper), please describe the violation to help the chairs consider the case.",
+        "order": 6
     },
     "anonymity": {
         "value": {
@@ -2550,7 +2506,19 @@ arr_reviewer_checklist = {
             }
         },
         "description": "Is the paper properly anonymized?",
-        "order": 4
+        "order": 7
+    },
+    "anonymity_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper is properly anonymized.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you believe this paper discloses the author identity somehow (e.g. self-citations, links to non-anonymous repositories), please describe the violation to help the chairs consider the case.",
+        "order": 8
     },
     "limitations": {
         "value": {
@@ -2565,7 +2533,46 @@ arr_reviewer_checklist = {
             }
         },
         "description": "Does the paper have a section entitled \"Limitations\"?",
-        "order": 5
+        "order": 9
+    },
+    "limitations_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A - this paper has the 'Limitations' section.",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If this paper is missing the required 'Limitations' section, please indicate if you noticed a description of limitations elsewhere.",
+        "order": 10
+    },
+    "overall_level": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Does the submission seem to be a good-faith submission that merits full review?",
+        "order": 11
+    },
+    "overall_level_justification": {
+        "value": {
+            "param": {
+                "regex": ".{1,250}",
+                "optional": False,
+                "default": "N/A - this seems like a good-faith submission worthy of full review.",
+                "type": "string"
+            }
+        },
+        "description": "ARR is receiving many low-quality submissions -- some possibly generated -- that do not merit full review and put a strain on our volunteer reviewer resources. If you notice a submission that is clearly not in good faith, please indicate that the chairs should consider desk rejection, and provide your rationale.  Hallucinated citations are one of the possible indicators.",
+        "order": 12
     },
     "responsible_checklist": {
         "value": {
@@ -2580,19 +2587,19 @@ arr_reviewer_checklist = {
             }
         },
         "description": "Have the authors completed the responsible NLP research checklist appropriately?",
-        "order": 6
+        "order": 13
     },
     "potential_violation_justification": {
         "value": {
             "param": {
                 "regex": ".{1,250}",
                 "optional": False,
-                "default": "There are no violations with this submission",
+                "default": "N/A - the authors filled in the responsible NLP checklist appropriately.",
                 "type": "string"
             }
         },
-        "description": "Modify only if a violation is marked. If you have marked any violation on this checklist, please give a brief explanation of the issue",
-        "order": 7
+        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue",
+        "order": 14
     },
     "need_ethics_review": {
         "value": {
@@ -2607,21 +2614,21 @@ arr_reviewer_checklist = {
             }
         },
         "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why below, and we will try to ensure that it receives a separate review. Please refer to https://aclrollingreview.org/ethics-flagging-guidelines/",
-        "order": 8
+        "order": 15
     },
     "ethics_review_justification": {
         "value": {
             "param": {
                 "minLength": 1,
-                "default": "N/A (I answered no to the previous question)",
+                "default": "N/A - this paper does not need an ethics review.",
                 "optional": False,
                 "type": "string"
             }
         },
         "description": "Please provide a meaningful justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
-        "order": 9
+        "order": 16
     },
-    "comment": {
+    "other_issues": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -2629,10 +2636,11 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Your comment or reply (max 10000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
-        "order": 10
+        "description": "Please let us know if you have any other serious concerns about this submission that should be considered by the chairs. Markdown formatting and latex formulas can be used.",
+        "order": 17
     }
 }
+
 
 arr_review_rating_content = {
     "I1_not_specific": {
@@ -3015,7 +3023,7 @@ arr_submitted_author_content = {
         "description": "If any of your co-authors are unable to complete this form, please provide their Openreview IDs in this question. Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.",
         "order": 2
     },
-    "confirm_you_are_willing_to_serve_as_a_reviewer_or_ac": {
+    "confirm_you_are_willing_to_serve_as_a_reviewer_or_AC": {
         "value": {
             "param": {
                 "input": "radio",
@@ -3023,7 +3031,8 @@ arr_submitted_author_content = {
                     "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified.",
                     "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified, but I would prefer to serve as an AC.",
                     "I will serve as a reviewer in this cycle if ARR considers me qualified, but I do not wish to be an AC.",
-                    "I am already serving in this ARR cycle as one of: senior area chair, ethics reviewer, ethics chair, editor in chief, technical team, support team, or editorial staff.",
+                    "I am already serving in this ARR cycle as one of: senior area chair, ethics reviewer, ethics chair, editor in chief, technical team, support team, or editorial staff, which I will specify in the next question.",
+                    "No, I cannot serve because I am unqualified (we will check this and if you are qualified you will be required to review).",
                     "No, I cannot serve because I am on parental leave.",
                     "No, I cannot serve because I am on family medical leave.",
                     "No, I cannot serve because I have a medical emergency.",
@@ -3036,10 +3045,10 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "description": "ARR now requires all authors to contribute to the review process if asked. For details see: https://aclrollingreview.org/exemptions2025 Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are already a reviewer or AC in ARR, please select one of the first two options to confirm you are willing to serve in this cycle. If you are unable to serve please select 'No...' and note that you must provide sufficient justification in the next question or otherwise your paper will be desk rejected.",
+        "description": "ARR now requires all authors to contribute to the review process if asked (see: https://aclrollingreview.org/incentives2026). Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are unable to serve please select the most appropriate option that starts with 'No'. **Note that for the last three options you must provide sufficient justification in the next question or your paper will be desk rejected.** If you are already a reviewer or AC in ARR, please select one of the first three options to confirm you are willing to serve in this cycle. Note: if you indicate you are unavailable in the unavailability form, we will overwrite your response based on your answers here.",
         "order": 3
     },
-    "details_of_reason_for_being_unavailable_to_serve": {
+    "details_of_reason_for_being_unable_to_serve_or_ARR_role": {
         "value": {
             "param": {
                 "optional": True,
@@ -3047,10 +3056,10 @@ arr_submitted_author_content = {
                 "input": "textarea"
             }
         },
-        "description": "If you answered 'No, I cannot serve ...' in the previous question, please provide details here, e.g., the name of the conference you are a PC for. Otherwise please leave this blank. If you believe you are not qualified, do not write that here, use the question below. If you are already serving in ARR, please use one of the first three options in the previous question. For details of what are and are not suitable reasons, see: https://aclrollingreview.org/exemptions2025",
+        "description": "If you chose 'No, I cannot serve ... which I will specify in the next question' above, please provide details here, e.g., the name of the conference you are a PC for. If you are already serving in this ARR cycle in a role other than reviewer or AC, please specify your role. Otherwise, please leave this blank. If you believe you are not qualified, do *not* write that here. **Without [a suitable explanation](https://aclrollingreview.org/exemptions2025), the request will be denied.**",
         "order": 4
     },
-    "serving_as_a_regular_or_emergency_reviewer_or_ac": {
+    "serving_as_a_regular_or_emergency_reviewer_or_AC": {
         "value": {
             "param": {
                 "input": "radio",
@@ -3195,7 +3204,7 @@ arr_submitted_author_content = {
         "description": "Please list the languages that fall under your expertise, separated by commas.",
         "order": 15
     },
-    "confirm_your_openreview_profile_contains_a_dblp_link": {
+    "confirm_your_openreview_profile_contains_a_DBLP_link": {
         "value": {
             "param": {
                 "input": "radio",
@@ -3211,7 +3220,7 @@ arr_submitted_author_content = {
         "description": "If there is a valid DBLP profile for you, your OpenReview profile must contain a link to it. If the profile is invalid, you must either import your papers to OpenReview or provide a valid ACL Anthology profile link.",
         "order": 16
     },
-    "provide_your_dblp_url": {
+    "provide_your_DBLP_URL": {
         "description": "If there is a valid DBLP profile for you, please provide it here. If the profile is invalid, e.g., because it has other people's papers in it, please leave this blank.",
         "value": {
             "param": {
@@ -3237,7 +3246,7 @@ arr_submitted_author_content = {
         "description": "If there is a valid Semantic Scholar profile for you, your OpenReview profile must contain a link to it. If the profile is invalid, you must either import your papers to OpenReview or provide a valid ACL Anthology profile link.",
         "order": 18
     },
-    "provide_your_semantic_scholar_url": {
+    "provide_your_semantic_scholar_URL": {
         "description": "If there is a valid Semantic Scholar profile for you, please provide it here. If the profile is invalid, e.g., because it has other people's papers in it, please leave this blank.",
         "value": {
             "param": {
@@ -3247,7 +3256,7 @@ arr_submitted_author_content = {
         },
         "order": 19
     },
-    "provide_your_acl_anthology_url": {
+    "provide_your_ACL_anthology_URL": {
         "description": "If there is a valid ACL Anthology profile for you, please provide it here. If the profile is invalid, e.g., because it has a other people's papers in it, please leave this blank.",
         "value": {
             "param": {
@@ -3263,7 +3272,8 @@ arr_submitted_author_content = {
             "param": {
                 "type": "string",
                 "enum": [
-                    "Yes, I wish to be attributed."
+                    "Yes, I wish to be attributed.",
+                    "No, I do not wish to be attributed."
                 ],
                 "input": "radio",
                 "optional": True

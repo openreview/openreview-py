@@ -592,6 +592,9 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
             writer.writerow(["Web Mining and Content Analysis",'Mining_Area_Chairs'])
             writer.writerow(["COI", 'COI_Area_Chairs'])
 
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@webconf.org', password=helpers.strong_password)
+        pc_client_v2.impersonate('ACM.org/TheWebConf/2024/Conference')
+        venue.client = pc_client_v2
         venue.set_track_sac_assignments(track_sac_file=os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'), conflict_policy='NeurIPS', conflict_n_years=3, track_ac_file=os.path.join(os.path.dirname(__file__), 'data/track_acs.csv'))
 
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Senior_Area_Chairs').members == ['~SAC_WebChairEleven1']
@@ -678,7 +681,10 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
             affinity_score_invitation = openreview_client.get_invitation(f'{ac_id}/-/Affinity_Score')
             assert affinity_score_invitation.edit['head']['param']['withContent'] == { 'track': track }
             assert affinity_score_invitation.readers == ['ACM.org/TheWebConf/2024/Conference', f'ACM.org/TheWebConf/2024/Conference/{ac_role.replace("Area_Chairs", "Senior_Area_Chairs")}']
-            assert affinity_score_invitation.edit['readers'] == ["ACM.org/TheWebConf/2024/Conference", f'ACM.org/TheWebConf/2024/Conference/{ac_role.replace("Area_Chairs", "Senior_Area_Chairs")}', "${2/tail}"]
+            assert affinity_score_invitation.edit['readers'] == [
+                "ACM.org/TheWebConf/2024/Conference", 
+                'ACM.org/TheWebConf/2024/Conference/Submission${{2/head}/number}/Senior_Area_Chairs', 
+                "${2/tail}"]
 
             ## Build constraints
             labels = ['NA+EUR', 'ASIA', 'Africa', 'SA']
@@ -726,6 +732,7 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
                 ))                                
         
         ## Build proposed assignments
+        pc_client_v2.impersonate('ACM.org/TheWebConf/2024/Conference')
         for submission in submissions:
             index = submission.number % 10
             if submission.number == 1 or submission.number == 101:
@@ -926,6 +933,7 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
 
 
         ## Build proposed assignments
+        pc_client_v2.impersonate('ACM.org/TheWebConf/2024/Conference')
         for submission in submissions:
             index = submission.number % 10
             if submission.number == 1 or submission.number == 101:

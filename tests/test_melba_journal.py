@@ -19,7 +19,7 @@ class TestJournal():
     def journal(self, openreview_client, helpers):
 
         eic_client=OpenReviewClient(username='adalca@mit.edu', password=helpers.strong_password)
-        eic_client.impersonate('MELBA/Editors_In_Chief')
+        eic_client.impersonate('MELBA')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'MELBA' })
 
@@ -111,7 +111,7 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
-        request_page(selenium, 'http://localhost:3030/group?id=MELBA', adrian_client.token, wait_for_element='tabs-container')
+        request_page(selenium, 'http://localhost:3030/group?id=MELBA', client=adrian_client, wait_for_element='tabs-container')
         tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
         assert len(tabs) == 4
         assert tabs[0].text == 'Your Consoles'

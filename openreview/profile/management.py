@@ -1709,7 +1709,8 @@ class ProfileManagement():
                                     { 'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0' },
                                     { 'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0' },
                                     { 'value': 'CC0 1.0', 'description': 'CC0 1.0' },
-                                    { 'value': 'WM2024 Conference', 'description': 'WM2024 Conference' } 
+                                    { 'value': 'WM2024 Conference', 'description': 'WM2024 Conference' },
+                                    { 'value': 'arXiv.org perpetual, non-exclusive license', 'description': 'arXiv.org perpetual, non-exclusive license' },
                                 ]
                             }
                         },
@@ -1736,7 +1737,7 @@ class ProfileManagement():
                             },
                             'authorids': {
                                 'order': 3,
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'description': 'Search author profile by name or profile ID. If the profile is not found, you can add the author by completing name as well as author email address.',
                                 'value': {
                                     'param': {
                                         'type': 'profile{}',
@@ -2024,7 +2025,7 @@ class ProfileManagement():
                             },
                             'authorids': {
                                 'order': 3,
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'description': 'Search author profile by name or profile ID. If the profile is not found, you can add the author by completing name as well as author email address.',
                                 'value': {
                                     'param': {
                                         'type': 'profile{}',
