@@ -992,9 +992,13 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    def setup_matching_invitations(self, committee_id, alternate_matching_group=None):
-        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+    def setup_matching_invitations(self):
 
+        if self.use_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
+            venue_matching.setup_matching_invitations()
+
+        venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
         venue_matching.setup_matching_invitations()
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
