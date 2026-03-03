@@ -1076,7 +1076,7 @@ For more details, please check the following links:
         updated_edit = openreview_client.post_edit(existing_edit)
         
         # Wait for the edit to be processed
-        helpers.await_queue_edit(openreview_client, edit_id=updated_edit.id)
+        helpers.await_queue_edit(openreview_client, edit_id=updated_edit['id'])
         
         # Verify the author group has been updated with the new author
         author_group = openreview_client.get_group(f'ABCD.cc/2025/Conference/Submission{submission.number}/Authors')
