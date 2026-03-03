@@ -1040,7 +1040,7 @@ For more details, please check the following links:
         assert len(messages) == 12        
 
     def test_edit_submission_updates_author_group(self, openreview_client, test_client, helpers):
-        '''Test that editing a submission to add a new author updates the author group'''
+        '''Test that editing an existing edit to add a new author updates the author group'''
         
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         
@@ -1057,21 +1057,20 @@ For more details, please check the following links:
         # Create a new user to add as co-author
         helpers.create_user('newauthor@example.com', 'NewAuthor', 'Example')
         
-        # Edit the submission to add the new author
-        edit = test_client.post_note_edit(
-            invitation='ABCD.cc/2025/Conference/-/Submission',
-            signatures=['~SomeFirstName_User1'],
-            note=openreview.api.Note(
-                id=submission.id,
-                content={
-                    'authorids': { 'value': list(submission.content['authorids']['value']) + ['~NewAuthor_Example1'] },
-                    'authors': { 'value': list(submission.content['authors']['value']) + ['NewAuthor Example'] }
-                }
-            )
-        )
+        # Get the existing edit for this submission
+        edits = test_client.get_note_edits(note_id=submission.id)
+        assert len(edits) > 0
+        existing_edit = edits[0]
+        
+        # Modify the edit to add the new author
+        existing_edit.note.content['authorids']['value'] = list(submission.content['authorids']['value']) + ['~NewAuthor_Example1']
+        existing_edit.note.content['authors']['value'] = list(submission.content['authors']['value']) + ['NewAuthor Example']
+        
+        # Post the modified edit
+        updated_edit = test_client.post_edit(existing_edit)
         
         # Wait for the edit to be processed
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=updated_edit.id)
         
         # Verify the author group has been updated with the new author
         author_group = openreview_client.get_group(f'ABCD.cc/2025/Conference/Submission{submission.number}/Authors')
