@@ -1066,6 +1066,12 @@ For more details, please check the following links:
         existing_edit.note.content['authorids']['value'] = list(submission.content['authorids']['value']) + ['~NewAuthor_Example1']
         existing_edit.note.content['authors']['value'] = list(submission.content['authors']['value']) + ['NewAuthor Example']
         
+        # Set readers and writers to None so the API populates them automatically with the new author
+        existing_edit.readers = None
+        existing_edit.writers = None
+        existing_edit.note.readers = None
+        existing_edit.note.writers = None
+        
         # Post the modified edit using openreview_client (super user) since the invitation is expired
         updated_edit = openreview_client.post_edit(existing_edit)
         
