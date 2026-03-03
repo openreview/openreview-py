@@ -103,3 +103,27 @@ class TestSimpleDualAnonymous():
         assert group.content['senior_area_chairs_name']['value'] == 'Senior_Action_Editors'
         assert group.content['sac_paper_assignments']['value'] == False
         assert group.content['senior_area_chairs_conflict_id']['value'] == 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Conflict'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Senior_Action_Editors'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors/Invited')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Senior_Action_Editors/Invited'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors/Declined')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Senior_Action_Editors/Declined'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Message')
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Members')
