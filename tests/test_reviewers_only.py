@@ -1057,8 +1057,8 @@ For more details, please check the following links:
         # Create a new user to add as co-author
         helpers.create_user('newauthor@example.com', 'NewAuthor', 'Example')
         
-        # Get the existing edit for this submission
-        edits = test_client.get_note_edits(note_id=submission.id)
+        # Get the existing edit for this submission with the Submission invitation
+        edits = openreview_client.get_note_edits(note_id=submission.id, invitation='ABCD.cc/2025/Conference/-/Submission')
         assert len(edits) > 0
         existing_edit = edits[0]
         
@@ -1066,8 +1066,8 @@ For more details, please check the following links:
         existing_edit.note.content['authorids']['value'] = list(submission.content['authorids']['value']) + ['~NewAuthor_Example1']
         existing_edit.note.content['authors']['value'] = list(submission.content['authors']['value']) + ['NewAuthor Example']
         
-        # Post the modified edit
-        updated_edit = test_client.post_edit(existing_edit)
+        # Post the modified edit using openreview_client (super user) since the invitation is expired
+        updated_edit = openreview_client.post_edit(existing_edit)
         
         # Wait for the edit to be processed
         helpers.await_queue_edit(openreview_client, edit_id=updated_edit.id)
