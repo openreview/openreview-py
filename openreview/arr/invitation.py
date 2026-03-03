@@ -186,6 +186,9 @@ class InvitationBuilder(object):
     def expire_invitation(self, invitation_id):
         return self.venue_invitation_builder.expire_invitation(invitation_id)
 
+    def unexpire_invitation(self, invitation_id):
+        return self.venue_invitation_builder.unexpire_invitation(invitation_id)
+
     def set_meta_invitation(self):
         return self.venue_invitation_builder.set_meta_invitation()
     
@@ -195,8 +198,14 @@ class InvitationBuilder(object):
     def set_submission_invitation(self):
         return self.venue_invitation_builder.set_submission_invitation()
 
+    def set_submission_deletion_invitation(self, submission_revision_stage):
+        return self.venue_invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
+
     def set_post_submission_invitation(self):
         return self.venue_invitation_builder.set_post_submission_invitation()
+
+    def set_submission_change_invitation(self, name, activation_date):
+        return self.venue_invitation_builder.set_submission_change_invitation(name, activation_date)
 
     def set_pc_submission_revision_invitation(self):
         return self.venue_invitation_builder.set_pc_submission_revision_invitation()
@@ -222,8 +231,14 @@ class InvitationBuilder(object):
     def set_official_comment_invitation(self):
         return self.venue_invitation_builder.set_official_comment_invitation()
 
+    def set_submission_message_invitation(self):
+        return self.venue_invitation_builder.set_submission_message_invitation()
+
     def set_public_comment_invitation(self):
         return self.venue_invitation_builder.set_public_comment_invitation()
+
+    def set_chat_invitation(self):
+        return self.venue_invitation_builder.set_chat_invitation()
 
     def set_decision_invitation(self):
         return self.venue_invitation_builder.set_decision_invitation()
@@ -371,6 +386,12 @@ class InvitationBuilder(object):
     def set_assignment_invitation(self, committee_id, submission_content=None):
         return self.venue_invitation_builder.set_assignment_invitation(committee_id, submission_content)
 
+    def set_group_matching_setup_invitations(self, committee_id):
+        return self.venue_invitation_builder.set_group_matching_setup_invitations(committee_id)
+
+    def set_group_recruitment_invitations(self, committee_name):
+        return self.venue_invitation_builder.set_group_recruitment_invitations(committee_name)
+
     def set_expertise_selection_invitations(self):
         return self.venue_invitation_builder.set_expertise_selection_invitations()
 
@@ -403,6 +424,15 @@ class InvitationBuilder(object):
 
     def set_reviewer_recommendation_invitation(self, start_date, due_date, total_recommendations):
         return self.venue_invitation_builder.set_reviewer_recommendation_invitation(start_date,  due_date,  total_recommendations)
-    
+
+    def create_metric_invitation(self, metric_name, committee_id=None, readers=None):
+        return self.venue_invitation_builder.create_metric_invitation(metric_name, committee_id, readers)
+
+    def set_iThenticate_plagiarism_check_invitation(self):
+        return self.venue_invitation_builder.set_iThenticate_plagiarism_check_invitation()
+
+    def set_edit_venue_group_invitations(self):
+        return self.venue_invitation_builder.set_edit_venue_group_invitations()
+
     def set_venue_template_invitations(self):
         return self.venue_invitation_builder.set_venue_template_invitations()
