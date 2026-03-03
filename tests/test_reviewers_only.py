@@ -1052,7 +1052,7 @@ For more details, please check the following links:
         author_group = openreview_client.get_group(f'ABCD.cc/2025/Conference/Submission{submission.number}/Authors')
         initial_members = set(author_group.members)
         assert '~SomeFirstName_User1' in initial_members
-        assert '~Andrea_Umass1' in initial_members
+        assert '~Andrea_Amazon1' in initial_members
         
         # Create a new user to add as co-author
         helpers.create_user('newauthor@example.com', 'NewAuthor', 'Example')
@@ -1080,7 +1080,7 @@ For more details, please check the following links:
         # The new author should be in the group
         assert '~NewAuthor_Example1' in updated_members
         assert '~SomeFirstName_User1' in updated_members
-        assert '~Andrea_Umass1' in updated_members
+        assert '~Andrea_Amazon1' in updated_members
         assert len(updated_members) == 3
 
     def test_reviewer_bidding(self, openreview_client, helpers, request_page, selenium):
