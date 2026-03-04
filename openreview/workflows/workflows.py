@@ -260,7 +260,8 @@ class Workflows():
                                 'param': {
                                     'type': 'string',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Area_Chairs'
+                                    'default': 'Area_Chairs',
+                                    'mismatchError': 'must only contain letters and underscores.'
                                 }
                             }
                         },

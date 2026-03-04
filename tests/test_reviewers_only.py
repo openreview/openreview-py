@@ -2462,4 +2462,41 @@ url={https://openreview.net/forum?id='''+submissions[0].id+'''}
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Program_Committee-0-1', count=2)
 
         tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Program_Committee')
-        assert len(tags) == 2         
+        assert len(tags) == 2
+
+    def test_release_decisions_to_public(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # assert 'everyone' was added to Decision_Release/Readers items by the submission release process
+        decision_release_readers_inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Release/Readers')
+        items = decision_release_readers_inv.edit['content']['readers']['value']['param']['items']
+        assert any(item.get('value') == 'everyone' for item in items)
+
+        # select everyone as the decision readers
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Decision_Release/Readers',
+            content={
+                'readers': {
+                    'value': ['everyone']
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision_Release-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=5)
+
+        decision_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Decision_Release')
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == ['everyone']
+
+        # assert only decisions for accepted papers are visible to everyone
+        decisions_sub1 = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision')
+        assert len(decisions_sub1) == 1
+        assert decisions_sub1[0].readers == ['everyone']
+
+        # assert decisions for rejected papers remain private
+        decisions_sub2 = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission2/-/Decision')
+        assert len(decisions_sub2) == 1
+        assert decisions_sub2[0].readers == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission2/Authors'
+        ]

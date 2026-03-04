@@ -139,3 +139,22 @@ def process(client, invitation):
             }
         )
     )
+
+    decision_release_readers_invitation = client.get_invitation(f'{decision_invitation.id}_Release/Readers')
+    current_items = decision_release_readers_invitation.edit['content']['readers']['value']['param']['items']
+    has_everyone = False
+    for item in current_items:
+        if item.get('description') == 'Program Chairs':
+            item['optional'] = True
+        if item.get('value') == 'everyone':
+            has_everyone = True
+    if not has_everyone:
+        current_items.append({'value': 'everyone', 'optional': True, 'description': 'Public'})
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            replacement=True,
+            invitation=decision_release_readers_invitation
+        )
