@@ -1327,6 +1327,8 @@ If you would like to change your decision, please follow the link in the previou
                             'members': {
                                 'param': {
                                     'regex': '.*',
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         }
