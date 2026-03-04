@@ -608,6 +608,47 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                 )
             )
 
+    def test_add_and_remove_program_chairs(self, openreview_client, helpers):
+
+        # add a program chair
+        pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        edit = pc_client.post_group_edit(
+            invitation='ABCD.cc/2025/Conference/Program_Chairs/-/Members',
+            signatures=['ABCD.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={
+                    'append': ['new_pc@abcd.cc']
+                }
+            ),
+        )
+
+        pc_group = pc_client.get_group('ABCD.cc/2025/Conference/Program_Chairs')
+        assert len(pc_group.members) == 2
+
+        # remove a program chair
+        edit = pc_client.post_group_edit(
+            invitation='ABCD.cc/2025/Conference/Program_Chairs/-/Members',
+            signatures=['ABCD.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={
+                    'remove': ['new_pc@abcd.cc', 'programchair@abcd.cc']
+                }
+            ),
+        )
+
+        pc_group = openreview_client.get_group('ABCD.cc/2025/Conference/Program_Chairs')
+        assert len(pc_group.members) == 0
+
+        edit = openreview_client.post_group_edit(
+            invitation='ABCD.cc/2025/Conference/Program_Chairs/-/Members',
+            signatures=['ABCD.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={
+                    'append': ['programchair@abcd.cc']
+                }
+            ),
+        )        
+
     def test_recruit_reviewers(self, openreview_client, helpers, selenium, request_page):
 
         # use invitation to recruit reviewers
