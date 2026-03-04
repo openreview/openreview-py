@@ -319,6 +319,9 @@ class GroupBuilder(object):
         if venue_group.content.get('enable_reviewers_reassignment'):
             content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')
 
+        if venue_group.content.get('reviewers_recommendation_id'):
+            content['reviewers_recommendation_id'] = venue_group.content.get('reviewers_recommendation_id')            
+
         if venue_group.content.get('reviewers_proposed_assignment_title'):
             content['reviewers_proposed_assignment_title'] = venue_group.content.get('reviewers_proposed_assignment_title')
 
