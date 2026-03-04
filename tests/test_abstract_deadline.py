@@ -41,6 +41,7 @@ class TestAbstractDeadline():
                     'full_submission_deadline': { 'value': openreview.tools.datetime_millis(full_submission_due_date) },
                     'reviewers_name': { 'value': 'Reviewers' },
                     'area_chairs_name': { 'value': 'Area_Chairs' },
+                    'senior_area_chairs_name': { 'value': 'Senior_Area_Chairs' },
                     'expected_submissions': { 'value': 20 },
                     'venue_organizer_agreement': { 
                         'value': [
