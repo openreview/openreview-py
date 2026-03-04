@@ -2280,7 +2280,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             message='Test message to all accepted authors')
         
         messages = openreview_client.get_messages(subject='Test message to all accepted authors')
-        assert len(messages) == 2
+        assert len(messages) == 3
 
     def test_email_decisions(self, openreview_client, helpers):
 
@@ -2407,7 +2407,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].content['_bibtex']['value'] == '''@inproceedings{
 user'''+str(year)+'''paper,
 title={Paper title 1},
-author={SomeFirstName User and Andrea Amazon},
+author={SomeFirstName User and Andrea Amazon and NewAuthor Example},
 booktitle={The ABCD Conference},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[0].id+'''}
