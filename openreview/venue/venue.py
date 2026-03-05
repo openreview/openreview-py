@@ -1161,7 +1161,16 @@ Total Errors: {len(errors)}
         self.invitation_builder.set_SAC_ethics_flag_invitation(sac_ethics_flag_duedate)
 
     def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
-        self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
+        recommendation_invitation = self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
+        self.client.post_group_edit(invitation=self.get_meta_invitation_id(),
+            signatures = [self.venue_id],
+            group = openreview.api.Group(
+                id = self.venue_id,
+                content = {
+                    'reviewers_recommendation_id': { 'value': recommendation_invitation.id },
+                }
+            )
+        )        
 
     def ithenticate_create_and_upload_submission(self):
         if not self.iThenticate_plagiarism_check:
