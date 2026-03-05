@@ -22,18 +22,19 @@ def process(client, invitation):
 
         if invitation.edit['note']['readers'] == ['everyone'] and submission.odate is None:
             updated_note.odate = now
-            updated_note.content = {
-                '_bibtex': {
-                    'value': openreview.tools.generate_bibtex(
-                        note=submission,
-                        venue_fullname=venue_name,
-                        year=str(datetime.datetime.now().year),
-                        url_forum=submission.forum,
-                        paper_status='under review',
-                        anonymous='readers' in submission.content['authors'] or 'readers' in invitation.edit.get('note', {}).get('content', {}).get('authors', {})
-                    )
+            if '_bibtex' in invitation.edit['note']['content']:
+                updated_note.content = {
+                    '_bibtex': {
+                        'value': openreview.tools.generate_bibtex(
+                            note=submission,
+                            venue_fullname=venue_name,
+                            year=str(datetime.datetime.now().year),
+                            url_forum=submission.forum,
+                            paper_status='under review',
+                            anonymous='readers' in submission.content['authors'] or 'readers' in invitation.edit.get('note', {}).get('content', {}).get('authors', {})
+                        )
+                    }
                 }
-            }
 
         client.post_note_edit(
             invitation=invitation.id,
