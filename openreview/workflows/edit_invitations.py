@@ -1513,7 +1513,7 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
         reply_readers = [
-            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
+            {'value': program_chairs_id, 'optional': True, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
@@ -1539,7 +1539,10 @@ class EditInvitationsBuilder(object):
         if include_signatures:
             reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
 
-        reply_readers.append({'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'})
+        reply_readers.extend([
+            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
+            {'value': 'everyone', 'optional': True, 'description': 'Public'}                  
+        ])
 
         invitation = Invitation(
             id = invitation_id,
@@ -1547,6 +1550,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('process/edit_note_readers_preprocess.py'),
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
