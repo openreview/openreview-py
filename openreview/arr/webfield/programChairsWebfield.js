@@ -1,5 +1,6 @@
 // Webfield component
 // loaded properly
+// ARR Webfield
 const automaticAssignment = domain.content.automatic_reviewer_assignment?.value
 const assignmentUrls = {}
 const areaChairsId = domain.content.area_chairs_id?.value

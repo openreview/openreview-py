@@ -1,4 +1,5 @@
 // Webfield component
+// ARR Webfield
 const committee_name = entity.id.split('/').slice(-1)[0]
 const committee_reviewer_name = committee_name.replace(domain.content.area_chairs_name?.value, domain.content.reviewers_name?.value)
 const committee_sac_name = committee_name.replace(domain.content.area_chairs_name?.value, domain.content.senior_area_chairs_name?.value)

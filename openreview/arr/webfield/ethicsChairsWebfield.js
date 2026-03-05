@@ -1,4 +1,5 @@
 // Webfield component
+// ARR Webfield
 const venueId = domain.id
 const ethicsReviewersId = `${venueId}/${domain.content.ethics_reviewers_name.value}`
 

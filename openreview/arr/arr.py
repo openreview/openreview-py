@@ -24,6 +24,7 @@ from openreview.stages.arr_content import hide_fields, arr_withdrawal_content
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
 SENIORITY_PUBLICATION_COUNT = 8
+WEBFIELD_MARKER = '//ARR Webfield'
 
 class ARR(object):
 
@@ -365,58 +366,68 @@ class ARR(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
             content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.venue_id,
-                    web=content
+            venue_group = openreview.tools.get_group(self.client, self.venue_id)
+            if WEBFIELD_MARKER not in venue_group.web:
+                self.client.post_group_edit(
+                    invitation=self.get_meta_invitation_id(),
+                    signatures=[self.venue_id],
+                    group=openreview.api.Group(
+                        id=self.venue_id,
+                        web=content
+                    )
                 )
-            )
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
             content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_program_chairs_id(),
-                    web=content
+            program_chairs_group = openreview.tools.get_group(self.client, self.get_program_chairs_id())
+            if WEBFIELD_MARKER not in program_chairs_group.web:
+                self.client.post_group_edit(
+                    invitation=self.get_meta_invitation_id(),
+                    signatures=[self.venue_id],
+                    group=openreview.api.Group(
+                        id=self.get_program_chairs_id(),
+                        web=content
+                    )
                 )
-            )
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
             content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_senior_area_chairs_id(),
-                    web=content
+            senior_area_chairs_group = openreview.tools.get_group(self.client, self.get_senior_area_chairs_id())
+            if WEBFIELD_MARKER not in senior_area_chairs_group.web:
+                self.client.post_group_edit(
+                    invitation=self.get_meta_invitation_id(),
+                    signatures=[self.venue_id],
+                    group=openreview.api.Group(
+                        id=self.get_senior_area_chairs_id(),
+                        web=content
+                    )
                 )
-            )
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
             content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_area_chairs_id(),
-                    web=content
+            area_chairs_group = openreview.tools.get_group(self.client, self.get_area_chairs_id())
+            if WEBFIELD_MARKER not in area_chairs_group.web:
+                self.client.post_group_edit(
+                    invitation=self.get_meta_invitation_id(),
+                    signatures=[self.venue_id],
+                    group=openreview.api.Group(
+                        id=self.get_area_chairs_id(),
+                        web=content
+                    )
                 )
-            )            
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
             content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_ethics_chairs_id(),
-                    web=content
+            ethics_chairs_group = openreview.tools.get_group(self.client, self.get_ethics_chairs_id())
+            if WEBFIELD_MARKER not in ethics_chairs_group.web:
+                self.client.post_group_edit(
+                    invitation=self.get_meta_invitation_id(),
+                    signatures=[self.venue_id],
+                    group=openreview.api.Group(
+                        id=self.get_ethics_chairs_id(),
+                        web=content
+                    )
                 )
-            )
 
         setup_arr_invitations(self.invitation_builder)
 

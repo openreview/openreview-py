@@ -1,4 +1,5 @@
 // Webfield component
+// ARR Webfield
 const tabs = [{
     name: 'Your Consoles',
     type: 'consoles'
