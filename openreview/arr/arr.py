@@ -12,6 +12,7 @@ from openreview import tools
 from .invitation import InvitationBuilder
 from .helpers import ARRWorkflow
 from openreview.venue.group import GroupBuilder
+from openreview.venue import matching
 from openreview.api import Group
 from openreview.api import Note
 from openreview.api import Invitation
@@ -549,6 +550,26 @@ class ARR(object):
     def create_ethics_review_stage(self):
         self.venue.ethics_review_stage = self.ethics_review_stage
         stage_value = self.venue.create_ethics_review_stage()
+        ethics_reviewers_group = self.client.get_group(self.get_ethics_reviewers_id())
+
+        hash_seed = None
+        invite_assignment_invitation = tools.get_invitation(self.client, self.get_assignment_id(self.get_ethics_reviewers_id(), invite=True))
+        if invite_assignment_invitation:
+            hash_seed = invite_assignment_invitation.content.get('hash_seed', {}).get('value')
+        if not hash_seed:
+            hash_seed = openreview.tools.create_hash_seed()
+
+        emergency_ethics_reviewers_name = f'Emergency_{self.get_ethics_reviewers_name(pretty=False)}'
+        conference_matching = matching.Matching(self, ethics_reviewers_group, None)
+        conference_matching.setup_invite_assignment(
+            hash_seed=hash_seed,
+            invited_committee_name=emergency_ethics_reviewers_name
+        )
+        self.group_builder.set_external_reviewer_recruitment_groups(
+            name=emergency_ethics_reviewers_name,
+            is_ethics_reviewer=True
+        )
+
         self.client.post_invitation_edit(
             invitations=self.venue.get_meta_invitation_id(),
             signatures=[self.venue_id],
