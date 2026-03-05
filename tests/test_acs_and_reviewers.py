@@ -831,6 +831,30 @@ note={under review}
             'EFGH.cc/2025/Conference/Submission1/Authors'
         ]
 
+        with pytest.raises(openreview.OpenReviewException, match=r'The "everyone" reader option cannot be included with other reader options.'):
+            pc_client.post_invitation_edit(
+                invitations='EFGH.cc/2025/Conference/-/Author_Rebuttal/Readers',
+                content={
+                    'readers': { 'value': ['everyone', 'EFGH.cc/2025/Conference/Program_Chairs'] }
+                }
+            )
+
+        # make rebuttals public
+        pc_client.post_invitation_edit(
+                invitations='EFGH.cc/2025/Conference/-/Author_Rebuttal/Readers',
+                content={
+                    'readers': { 'value': ['everyone'] }
+                }
+            )
+
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Author_Rebuttal-0-1', count=3)
+
+        invitations = openreview_client.get_invitations(invitation='EFGH.cc/2025/Conference/-/Author_Rebuttal')
+        assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('EFGH.cc/2025/Conference/Submission1/-/Author_Rebuttal')
+        assert invitation and invitation.edit['note']['readers'] == ['everyone']
+
     def test_metareview_stage(self, openreview_client, helpers):
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
