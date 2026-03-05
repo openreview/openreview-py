@@ -2129,11 +2129,6 @@ If you would like to change your decision, please follow the link in the previou
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')
                     }],
-                    'content': {
-                        'source': {
-                            'value': 'accepted_submissions'
-                        }
-                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/note/id}/number}/${4/content/authors_name/value}'],
