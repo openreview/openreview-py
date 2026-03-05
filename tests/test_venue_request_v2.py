@@ -25,10 +25,6 @@ class TestVenueRequest():
 
         helpers.await_queue()
 
-        # Add support group user to the support group object
-        support_group = client.get_group(support_group_id)
-        client.add_members_to_group(group=support_group, members=['~Support_User1'])
-
         now = datetime.datetime.now()
         due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)
         withdraw_exp_date = due_date + datetime.timedelta(days=1)
@@ -183,12 +179,6 @@ class TestVenueRequest():
         helpers.create_user('pc_venue_v2@mail.com', 'ProgramChair', 'User')
         pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc_venue_v2@mail.com', password=helpers.strong_password)
 
-        support_group = client.get_group(support_group_id)
-        client.add_members_to_group(group=support_group, members=['~Support_User1'])
-
-        support_members = client.get_group(support_group_id).members
-        assert support_members and len(support_members) == 1
-
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=3)
         abstract_due_date = now + datetime.timedelta(minutes=15)
@@ -280,10 +270,10 @@ class TestVenueRequest():
         assert messages[0]['content']['text'] == f'Thank you for choosing OpenReview to host your upcoming venue. We are reviewing your request and will post a comment on the request forum when the venue is deployed. You can access the request forum here: https://openreview.net/forum?id={request_form_note.forum}'
 
         messages = client.get_messages(
-            to='support@openreview.net',
             subject='A request for service has been submitted by TestVenue@OR2022'
         )
         assert messages and len(messages) == 1
+        assert messages[0]['content']['to'] == 'support@openreview.net'
         assert messages[0]['content']['text'].startswith(f'A request for service has been submitted by TestVenue@OR2022. Check it here: https://openreview.net/forum?id={request_form_note.forum}')
 
         comment_note = pc_client.post_note(openreview.Note(
@@ -306,10 +296,10 @@ class TestVenueRequest():
         helpers.await_queue()
 
         messages = client.get_messages(
-            to='support@openreview.net',
             subject='Comment posted to a service request: Test 2022 Venue'
         )
         assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'support@openreview.net'
         assert messages[0]['content']['text'] == f'''A comment was posted to a service request. 
 
 Comment title: Urgent\n\nComment: Please deploy ASAP.
@@ -361,10 +351,10 @@ Please note that with the exception of urgent issues, requests made on weekends 
         helpers.await_queue()
 
         messages = client.get_messages(
-            to='support@openreview.net',
             subject='Comment posted to a service request: Test 2022 Venue'
         )
         assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'support@openreview.net'
 
         messages = client.get_messages(
             to='pc_venue_v2@mail.com',
