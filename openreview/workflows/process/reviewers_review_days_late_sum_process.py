@@ -19,7 +19,10 @@ def process(client, invitation):
 
 
     venue_id = domain.id
-    review_invitation = client.get_invitation(review_invitation_id)
+    review_invitation = openreview.tools.get_invitation(client, review_invitation_id)
+    if not review_invitation:
+        print(f'No review invitation found with id {review_invitation_id}')
+        return
     review_duedate = datetime.datetime.fromtimestamp(review_invitation.edit['invitation']['duedate']/1000)
 
     ignore_venue_ids = [withdrawn_submission_venue_id, desk_rejected_submission_venue_id]

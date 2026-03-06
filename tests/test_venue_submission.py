@@ -35,6 +35,7 @@ class TestVenueSubmission():
 
         now = datetime.datetime.now()
         venue.submission_stage = SubmissionStage(
+            name='提交',
             double_blind=True,
             due_date=now + datetime.timedelta(minutes = 30),
             readers=[SubmissionStage.Readers.EVERYONE], 
@@ -118,7 +119,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         venue.create_meta_review_stage()
         venue.create_submission_revision_stage()
         venue.create_custom_stage()
-        assert openreview_client.get_group('TestVenue.cc')
+        group = openreview_client.get_group('TestVenue.cc')
+        assert '提交' == group.content['submission_name']['value']
         assert openreview_client.get_group('TestVenue.cc/Authors')
 
         helpers.create_user('venue_pc@mail.com', 'PC Venue', 'One')
@@ -179,13 +181,13 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     
     def test_submission_stage(self, venue, openreview_client, helpers):
 
-        assert openreview_client.get_invitation('TestVenue.cc/-/Submission')
+        assert openreview_client.get_invitation('TestVenue.cc/-/提交')
 
         helpers.create_user('celeste@maileleven.com', 'Celeste', 'MartinezEleven')
         author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)
 
         submission_note_1 = author_client.post_note_edit(
-            invitation='TestVenue.cc/-/Submission',
+            invitation='TestVenue.cc/-/提交',
             signatures= ['~Celeste_MartinezEleven1'],
             note=Note(
                 content={
@@ -203,13 +205,15 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert len(submission.readers) == 2
         assert 'TestVenue.cc' in submission.readers
         assert ['TestVenue.cc', '~Celeste_MartinezEleven1'] == submission.readers
+        assert submission.content['venue']['value'] == 'TestVenue 提交'
+        assert submission.content['venueid']['value'] == 'TestVenue.cc/提交'
 
         messages = openreview_client.get_messages(subject = 'TV 22 has received your submission titled Paper 1 Title')
         assert len(messages) == 1
         assert 'Your submission to TV 22 has been posted.' in messages[0]['content']['text']
 
         #update submission 1
-        updated_submission_note_1 = author_client.post_note_edit(invitation='TestVenue.cc/-/Submission',
+        updated_submission_note_1 = author_client.post_note_edit(invitation='TestVenue.cc/-/提交',
             signatures=['~Celeste_MartinezEleven1'],
             note=Note(id=submission.id,
                 content={
@@ -227,12 +231,12 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert len(messages) == 1
         assert 'Your submission to TV 22 has been updated.' in messages[0]['content']['text']
 
-        authors_group = openreview_client.get_group('TestVenue.cc/Submission1/Authors')
+        authors_group = openreview_client.get_group('TestVenue.cc/提交1/Authors')
         assert len(authors_group.members) == 1 and ['~Celeste_MartinezEleven1'] == authors_group.members
 
         with pytest.raises(openreview.OpenReviewException, match=r'authorids value/1 must match pattern "~.*"'):
             submission_note_2 = author_client.post_note_edit(
-                invitation='TestVenue.cc/-/Submission',
+                invitation='TestVenue.cc/-/提交',
                 signatures= ['~Celeste_MartinezEleven1'],
                 note=Note(
                     content={
@@ -246,7 +250,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             
         with pytest.raises(openreview.OpenReviewException, match=r'Profile Not Found: ~Melisa_BokEleven1'):
             submission_note_2 = author_client.post_note_edit(
-                invitation='TestVenue.cc/-/Submission',
+                invitation='TestVenue.cc/-/提交',
                 signatures= ['~Celeste_MartinezEleven1'],
                 note=Note(
                     content={
@@ -261,7 +265,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.create_user('melisa@maileleven.com', 'Melisa', 'BokEleven')
 
         submission_note_2 = author_client.post_note_edit(
-                invitation='TestVenue.cc/-/Submission',
+                invitation='TestVenue.cc/-/提交',
                 signatures= ['~Celeste_MartinezEleven1'],
                 note=Note(
                     content={
@@ -283,39 +287,39 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         venue.submission_stage.exp_date = datetime.datetime.now() + datetime.timedelta(seconds = 90)
         venue.create_submission_stage()
 
-        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Reviewers/-/Submission_Group-0-0')
-        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Area_Chairs/-/Submission_Group-0-0')
-        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Reviewers/-/Submission_Message-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_提交-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Reviewers/-/提交_Group-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Area_Chairs/-/提交_Group-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Reviewers/-/提交_Message-0-0')
 
-        assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
-        assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
-        assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
-        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Message')
+        assert openreview_client.get_group('TestVenue.cc/提交1/Authors')
+        assert openreview_client.get_group('TestVenue.cc/提交1/Reviewers')
+        assert openreview_client.get_group('TestVenue.cc/提交1/Area_Chairs')
+        assert openreview_client.get_invitation('TestVenue.cc/提交1/-/Message')
 
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 2
         submission = submissions[0]
         assert len(submission.readers) == 4
         assert 'TestVenue.cc' in submission.readers
-        assert 'TestVenue.cc/Submission1/Authors' in submission.readers        
+        assert 'TestVenue.cc/提交1/Authors' in submission.readers        
         assert 'TestVenue.cc/Reviewers' in submission.readers
         assert 'TestVenue.cc/Area_Chairs' in submission.readers
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Withdrawal-0-0')
         
-        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Withdrawal')
-        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal')
+        assert openreview_client.get_invitation('TestVenue.cc/提交1/-/Withdrawal')
+        assert openreview_client.get_invitation('TestVenue.cc/提交2/-/Withdrawal')
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Desk_Rejection-0-0')
 
-        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Desk_Rejection')
-        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection')
+        assert openreview_client.get_invitation('TestVenue.cc/提交1/-/Desk_Rejection')
+        assert openreview_client.get_invitation('TestVenue.cc/提交2/-/Desk_Rejection')
 
         ## post a submission after the deadline
         pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
         submission_note_3 = pc_client.post_note_edit(
-            invitation='TestVenue.cc/-/Submission',
+            invitation='TestVenue.cc/-/提交',
             signatures= ['~PC_Venue_One1'],
             note=Note(
                 content={
@@ -329,16 +333,15 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_3['id'])
 
-        assert openreview_client.get_group('TestVenue.cc/Submission3/Authors')
-        assert openreview_client.get_group('TestVenue.cc/Submission3/Reviewers')
-        assert openreview_client.get_group('TestVenue.cc/Submission3/Area_Chairs')
-        assert openreview_client.get_invitation('TestVenue.cc/Submission3/-/Withdrawal')
-        assert openreview_client.get_invitation('TestVenue.cc/Submission3/-/Desk_Rejection')
-
+        assert openreview_client.get_group('TestVenue.cc/提交3/Authors')
+        assert openreview_client.get_group('TestVenue.cc/提交3/Reviewers')
+        assert openreview_client.get_group('TestVenue.cc/提交3/Area_Chairs')
+        assert openreview_client.get_invitation('TestVenue.cc/提交3/-/Withdrawal')
+        assert openreview_client.get_invitation('TestVenue.cc/提交3/-/Desk_Rejection')
         # Test that email is not sent to openreview.net
         author_client = OpenReviewClient(username='openreview.net', password=helpers.strong_password)
         submission_note_4 = author_client.post_note_edit(
-                invitation='TestVenue.cc/-/Submission',
+                invitation='TestVenue.cc/-/提交',
                 signatures= ['~Super_User1'],
                 note=Note(
                     content={
@@ -355,15 +358,15 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         messages = openreview_client.get_messages(to='openreview.net')
         assert len(messages) == 0
 
-        openreview_client.add_members_to_group('TestVenue.cc/Submission1/Reviewers', ['reviewers@testvenue.cc'])
+        openreview_client.add_members_to_group('TestVenue.cc/提交1/Reviewers', ['reviewers@testvenue.cc'])
 
-        members = openreview_client.get_group('TestVenue.cc/Submission1/Reviewers').anon_members
+        members = openreview_client.get_group('TestVenue.cc/提交1/Reviewers').anon_members
         assert len(members) == 1
 
         openreview_client.post_message(
-            invitation='TestVenue.cc/Submission1/-/Message',
+            invitation='TestVenue.cc/提交1/-/Message',
             recipients=members,
-            parentGroup='TestVenue.cc/Submission1/Reviewers',
+            parentGroup='TestVenue.cc/提交1/Reviewers',
             subject='Test Message',
             message='This is a test message',
             signature='TestVenue.cc',
@@ -400,7 +403,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         venue.submission_stage.readers = [SubmissionStage.Readers.EVERYONE]
         venue.create_post_submission_stage()
 
-        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_提交-0-1', count=3)
 
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 4
@@ -442,14 +445,14 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             signatures = ['TestVenue.cc'],
             head = submissions[0].id,
             tail = '~Reviewer_Venue_One1',
-            readers = ['TestVenue.cc','TestVenue.cc/Submission1/Area_Chairs','~Reviewer_Venue_One1'],
-            writers = ['TestVenue.cc','TestVenue.cc/Submission1/Area_Chairs'],
+            readers = ['TestVenue.cc','TestVenue.cc/提交1/Area_Chairs','~Reviewer_Venue_One1'],
+            writers = ['TestVenue.cc','TestVenue.cc/提交1/Area_Chairs'],
             weight = 0.92,
             label = 'test-matching-1'
         ))
 
         assert proposed_assignment_edge
-        assert proposed_assignment_edge.nonreaders == ['TestVenue.cc/Submission1/Authors']
+        assert proposed_assignment_edge.nonreaders == ['TestVenue.cc/提交1/Authors']
 
         custom_load_edges = openreview_client.get_edges_count(invitation='TestVenue.cc/Reviewers/-/Custom_Max_Papers')
         assert custom_load_edges == 1
@@ -484,9 +487,9 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             print(i.id)
         assert len(invitations) == 4
         #assert invitation.cdate == new_cdate
-        invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        invitation = openreview_client.get_invitation('TestVenue.cc/提交1/-/Official_Review')
         assert invitation.cdate == new_cdate
-        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}"]
+        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/提交1/Area_Chairs", "${3/signatures}"]
 
         now = datetime.datetime.now()
         venue.review_stage = openreview.stages.ReviewStage(start_date=now - datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
@@ -495,10 +498,10 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=3)
 
         invitation = openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
-        assert invitation.edit['invitation']['edit']['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission${5/content/noteNumber/value}/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission${5/content/noteNumber/value}/Authors"]
+        assert invitation.edit['invitation']['edit']['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/提交${5/content/noteNumber/value}/Area_Chairs", "${3/signatures}", "TestVenue.cc/提交${5/content/noteNumber/value}/Authors"]
 
-        invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
-        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission1/Authors"]
+        invitation = openreview_client.get_invitation('TestVenue.cc/提交1/-/Official_Review')
+        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/提交1/Area_Chairs", "${3/signatures}", "TestVenue.cc/提交1/Authors"]
 
         ## If I change the super invitation, let's propagate the changes to the children
         openreview_client.post_invitation_edit(
@@ -522,7 +525,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                                                 "regex": ".{0,500}"
                                             }
                                         },
-                                        "readers": ['TestVenue.cc', "TestVenue.cc/Submission${4/number}/Area_Chairs"]
+                                        "readers": ['TestVenue.cc', "TestVenue.cc/提交${4/number}/Area_Chairs"]
                                     },
                                 }
                             }
@@ -534,15 +537,15 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=4)
 
-        invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
-        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission1/Authors"]
+        invitation = openreview_client.get_invitation('TestVenue.cc/提交1/-/Official_Review')
+        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/提交1/Area_Chairs", "${3/signatures}", "TestVenue.cc/提交1/Authors"]
         assert 'private_comment_to_acs' in invitation.edit['note']['content']
 
     def test_review_rebuttal_stage(self, venue, openreview_client, helpers):
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Rebuttal')
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Rebuttal was not found'):
-            assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Rebuttal')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/提交1/-/Rebuttal was not found'):
+            assert openreview_client.get_invitation('TestVenue.cc/提交1/-/Rebuttal')
 
         openreview_client.post_invitation_edit(
             invitations='TestVenue.cc/-/Edit',
@@ -563,13 +566,13 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Rebuttal-0-1', count=2)
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Rebuttal')
-        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Rebuttal')
+        assert openreview_client.get_invitation('TestVenue.cc/提交1/-/Rebuttal')
 
     def test_meta_review_stage(self, venue, openreview_client, helpers):
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Meta_Review was not found'):
-            assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Meta_Review')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/提交1/-/Meta_Review was not found'):
+            assert openreview_client.get_invitation('TestVenue.cc/提交1/-/Meta_Review')
 
         openreview_client.post_invitation_edit(
             invitations='TestVenue.cc/-/Edit',
@@ -590,7 +593,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Meta_Review-0-1', count=2)
         
         assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
-        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Meta_Review')
+        assert openreview_client.get_invitation('TestVenue.cc/提交1/-/Meta_Review')
 
     def test_comment_stage(self, venue, openreview_client, helpers):
 
@@ -618,17 +621,17 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Comment-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Public_Comment-0-1', count=1)
 
-        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
+        invitation = openreview_client.get_invitation(venue.id + '/提交1/-/Public_Comment')
         assert not invitation.expdate
-        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Official_Comment')
+        invitation = openreview_client.get_invitation(venue.id + '/提交1/-/Official_Comment')
         assert not invitation.expdate        
 
     def test_withdraw_submission(self, venue, openreview_client, helpers):
 
         author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)
 
-        withdraw_note = author_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Withdrawal',
-                                    signatures=['TestVenue.cc/Submission2/Authors'],
+        withdraw_note = author_client.post_note_edit(invitation='TestVenue.cc/提交2/-/Withdrawal',
+                                    signatures=['TestVenue.cc/提交2/Authors'],
                                     note=Note(
                                         content={
                                             'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
@@ -639,24 +642,23 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Withdrawn_Submission']
+        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交']
         assert note.readers == ['everyone']
-        assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
-        assert note.signatures == ['TestVenue.cc/Submission2/Authors']
-        assert note.content['venue']['value'] == 'TestVenue Withdrawn Submission'
-        assert note.content['venueid']['value'] == 'TestVenue.cc/Withdrawn_Submission'
+        assert note.writers == ['TestVenue.cc', 'TestVenue.cc/提交2/Authors']
+        assert note.signatures == ['TestVenue.cc/提交2/Authors']
+        assert note.content['venue']['value'] == 'TestVenue Withdrawn 提交'
+        assert note.content['venueid']['value'] == 'TestVenue.cc/Withdrawn_提交'
         assert 'readers' not in note.content['authors']
         assert 'readers' not in note.content['authorids']
 
-        helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Withdrawn_Submission')
-
-        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
+        helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Withdrawn_提交')
+        invitation = openreview_client.get_invitation('TestVenue.cc/提交2/-/Meta_Review')
         assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Official_Review')
         assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Official_Comment')
         assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())        
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Public_Comment')
         assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())        
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
@@ -681,12 +683,12 @@ For more information, click here https://openreview.net/forum?id={note.id}&noteI
 Please note that responding to this email will direct your reply to testvenue@contact.com.
 '''
 
-        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion')
+        assert openreview_client.get_invitation('TestVenue.cc/提交2/-/Withdrawal_Reversion')
 
         authors_group = openreview_client.get_group('TestVenue.cc/Authors')
-        assert 'TestVenue.cc/Submission2/Authors' not in authors_group.members
+        assert 'TestVenue.cc/提交2/Authors' not in authors_group.members
 
-        withdrawal_reversion_note = openreview_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Withdrawal_Reversion',
+        withdrawal_reversion_note = openreview_client.post_note_edit(invitation='TestVenue.cc/提交2/-/Withdrawal_Reversion',
                                     signatures=['TestVenue.cc/Program_Chairs'],
                                     note=Note(
                                         content={
@@ -696,27 +698,27 @@ Please note that responding to this email will direct your reply to testvenue@co
 
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
 
-        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
+        invitation = openreview_client.get_invitation('TestVenue.cc/提交2/-/Meta_Review')
         assert invitation.ddate is None
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Official_Review')
         assert invitation.ddate is None
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Official_Comment')
         assert invitation.ddate is None
         assert invitation.expdate is None       
 
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Public_Comment')
         assert invitation.ddate is None
         assert invitation.expdate is None 
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Withdrawn_Submission']
-        assert note.content['venue']['value'] == 'TestVenue Submission'
-        assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
+        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交']
+        assert note.content['venue']['value'] == 'TestVenue 提交'
+        assert note.content['venueid']['value'] == 'TestVenue.cc/提交'
 
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 restored by venue organizers')
@@ -725,13 +727,13 @@ Please note that responding to this email will direct your reply to testvenue@co
         assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
 
         authors_group = openreview_client.get_group('TestVenue.cc/Authors')
-        assert 'TestVenue.cc/Submission2/Authors' in authors_group.members
+        assert 'TestVenue.cc/提交2/Authors' in authors_group.members
 
     def test_desk_reject_submission(self, venue, openreview_client, helpers):
 
         pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
 
-        desk_reject_note = pc_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Desk_Rejection',
+        desk_reject_note = pc_client.post_note_edit(invitation='TestVenue.cc/提交2/-/Desk_Rejection',
                                     signatures=['TestVenue.cc/Program_Chairs'],
                                     note=Note(
                                         content={
@@ -743,26 +745,25 @@ Please note that responding to this email will direct your reply to testvenue@co
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Withdrawn_Submission', 'TestVenue.cc/-/Desk_Rejected_Submission']
+        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交', 'TestVenue.cc/-/Desk_Rejected_提交']
         assert note.readers == ['everyone']
-        assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
-        assert note.signatures == ['TestVenue.cc/Submission2/Authors']
-        assert note.content['venue']['value'] == 'TestVenue Desk Rejected Submission'
-        assert note.content['venueid']['value'] == 'TestVenue.cc/Desk_Rejected_Submission'
+        assert note.writers == ['TestVenue.cc', 'TestVenue.cc/提交2/Authors']
+        assert note.signatures == ['TestVenue.cc/提交2/Authors']
+        assert note.content['venue']['value'] == 'TestVenue Desk Rejected 提交'
+        assert note.content['venueid']['value'] == 'TestVenue.cc/Desk_Rejected_提交'
         assert 'readers' in note.content['authors']
         assert 'readers' in note.content['authorids']
-        assert note.content['authors']['readers'] == ["TestVenue.cc", "TestVenue.cc/Submission2/Authors"]
-        assert note.content['authorids']['readers'] == ["TestVenue.cc", "TestVenue.cc/Submission2/Authors"]
+        assert note.content['authors']['readers'] == ["TestVenue.cc", "TestVenue.cc/提交2/Authors"]
+        assert note.content['authorids']['readers'] == ["TestVenue.cc", "TestVenue.cc/提交2/Authors"]
+        helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Desk_Rejected_提交')
 
-        helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Desk_Rejected_Submission')
-
-        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
+        invitation = openreview_client.get_invitation('TestVenue.cc/提交2/-/Meta_Review')
         assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Official_Review')
         assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Official_Comment')
         assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Public_Comment')
         assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 desk-rejected by Program Chairs')
@@ -774,12 +775,12 @@ Please note that responding to this email will direct your reply to testvenue@co
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by Program Chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
 
-        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection_Reversion')
+        assert openreview_client.get_invitation('TestVenue.cc/提交2/-/Desk_Rejection_Reversion')
 
         authors_group = openreview_client.get_group('TestVenue.cc/Authors')
-        assert 'TestVenue.cc/Submission2/Authors' not in authors_group.members
+        assert 'TestVenue.cc/提交2/Authors' not in authors_group.members
 
-        desk_rejection_reversion_note = openreview_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Desk_Rejection_Reversion',
+        desk_rejection_reversion_note = openreview_client.post_note_edit(invitation='TestVenue.cc/提交2/-/Desk_Rejection_Reversion',
                                     signatures=['TestVenue.cc/Program_Chairs'],
                                     note=Note(
                                         content={
@@ -789,27 +790,27 @@ Please note that responding to this email will direct your reply to testvenue@co
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
 
-        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
+        invitation = openreview_client.get_invitation('TestVenue.cc/提交2/-/Meta_Review')
         assert invitation.ddate is None
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Official_Review')
         assert invitation.ddate is None
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Official_Comment')
         assert invitation.ddate is None
         assert invitation.expdate is None 
 
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        invitation =  openreview_client.get_invitation('TestVenue.cc/提交2/-/Public_Comment')
         assert invitation.ddate is None
         assert invitation.expdate is None 
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Withdrawn_Submission', 'TestVenue.cc/-/Desk_Rejected_Submission']
-        assert note.content['venue']['value'] == 'TestVenue Submission'
-        assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
+        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交', 'TestVenue.cc/-/Desk_Rejected_提交']
+        assert note.content['venue']['value'] == 'TestVenue 提交'
+        assert note.content['venueid']['value'] == 'TestVenue.cc/提交'
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 restored by venue organizers')
         assert len(messages) == 2
@@ -821,7 +822,7 @@ Please note that responding to this email will direct your reply to testvenue@co
         assert messages[1]['content']['text'] == f'The desk-rejected TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
 
         authors_group = openreview_client.get_group('TestVenue.cc/Authors')
-        assert 'TestVenue.cc/Submission2/Authors' in authors_group.members
+        assert 'TestVenue.cc/提交2/Authors' in authors_group.members
 
     def test_decision_stage(self, venue, openreview_client, helpers):
 
@@ -849,9 +850,9 @@ Please note that responding to this email will direct your reply to testvenue@co
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Decision-0-1', count=2)
 
-        assert openreview_client.get_invitation(venue.id + '/Submission1/-/Decision')
+        assert openreview_client.get_invitation(venue.id + '/提交1/-/Decision')
 
-        decision = openreview_client.get_notes(invitation=venue.id + '/Submission1/-/Decision')
+        decision = openreview_client.get_notes(invitation=venue.id + '/提交1/-/Decision')
         assert len(decision) == 1
         assert 'Accept (Oral)' == decision[0].content['decision']['value']
 
@@ -861,12 +862,11 @@ Please note that responding to this email will direct your reply to testvenue@co
 
     def test_submission_revision_stage(self, venue, client, openreview_client, helpers):
 
-        submissions = openreview_client.get_notes(invitation='TestVenue.cc/-/Submission', sort='number:asc')
+        submissions = openreview_client.get_notes(invitation='TestVenue.cc/-/提交', sort='number:asc')
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Revision')
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Camera_Ready_Revision was not found'):
-            assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Camera_Ready_Revision')
-
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/提交1/-/Camera_Ready_Revision was not found'):
+            assert openreview_client.get_invitation('TestVenue.cc/提交1/-/Camera_Ready_Revision')
         openreview_client.post_invitation_edit(
             invitations='TestVenue.cc/-/Edit',
             readers=['TestVenue.cc'],
@@ -886,13 +886,13 @@ Please note that responding to this email will direct your reply to testvenue@co
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Camera_Ready_Revision-0-1', count=2)
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Revision')
-        assert openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Revision')
-        assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission2/-/Camera_Ready_Revision')
+        assert openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/提交1/-/Camera_Ready_Revision')
+        assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/提交2/-/Camera_Ready_Revision')
 
         author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)
         # post revision for a submission without abstract
-        updated_submission = author_client.post_note_edit(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Revision',
-            signatures=['TestVenue.cc/Submission1/Authors'],
+        updated_submission = author_client.post_note_edit(invitation='TestVenue.cc/提交1/-/Camera_Ready_Revision',
+            signatures=['TestVenue.cc/提交1/Authors'],
             note=Note(
                 content={
                     'title': { 'value': 'Paper 1 Title REVISED AGAIN' },
@@ -923,8 +923,8 @@ To view your submission, click here: https://openreview.net/forum?id={updated_no
         assert submissions and len(submissions) == 4
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Verification')
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Camera_Ready_Verification was not found'):
-            assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Camera_Ready_Verification')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/提交1/-/Camera_Ready_Verification was not found'):
+            assert openreview_client.get_invitation('TestVenue.cc/提交1/-/Camera_Ready_Verification')
 
         openreview_client.post_invitation_edit(
             invitations='TestVenue.cc/-/Edit',
@@ -945,22 +945,22 @@ To view your submission, click here: https://openreview.net/forum?id={updated_no
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Camera_Ready_Verification-0-1', count=2)
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Verification')
-        invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Verification')
+        invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/提交1/-/Camera_Ready_Verification')
         assert invitation
         assert invitation.invitees == ['TestVenue.cc']
         assert invitation.edit['note']['readers'] == [
             'TestVenue.cc/Program_Chairs',
-            'TestVenue.cc/Submission1/Area_Chairs',
-            'TestVenue.cc/Submission1/Authors'
+            'TestVenue.cc/提交1/Area_Chairs',
+            'TestVenue.cc/提交1/Authors'
         ]
         assert 'verification' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
         assert invitation.edit['note']['replyto'] == submissions[0].id
-        assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission2/-/Camera_Ready_Verification')
+        assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/提交2/-/Camera_Ready_Verification')
 
         pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
 
-        verification = pc_client.post_note_edit(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Verification',
+        verification = pc_client.post_note_edit(invitation='TestVenue.cc/提交1/-/Camera_Ready_Verification',
             signatures=['TestVenue.cc/Program_Chairs'],
             note=Note(
                 content={
@@ -970,7 +970,7 @@ To view your submission, click here: https://openreview.net/forum?id={updated_no
 
         helpers.await_queue_edit(openreview_client, edit_id=verification['id'])
 
-        verification_note = openreview_client.get_notes(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Verification')[0]
+        verification_note = openreview_client.get_notes(invitation='TestVenue.cc/提交1/-/Camera_Ready_Verification')[0]
 
         messages = openreview_client.get_messages(subject='[TV 22] A camera ready verification has been received on your Paper Number: 1, Paper Title: "Paper 1 Title REVISED AGAIN"')
         assert len(messages) == 1

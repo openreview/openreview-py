@@ -3,6 +3,7 @@ def process(client, invitation):
     import re
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
+    title = domain.content['title']['value']
     short_name = domain.content['subtitle']['value']
 
     submission_venue_id = domain.content['submission_venue_id']['value']
@@ -66,6 +67,17 @@ def process(client, invitation):
         # only if note is accepted
         if submission.pdate is None and note_accepted:
             updated_note.pdate = now
+
+        updated_note.content['_bibtex'] = {
+            'value': openreview.tools.generate_bibtex(
+                note=submission,
+                venue_fullname=title,
+                year=str(datetime.datetime.now().year),
+                url_forum=submission.forum,
+                paper_status = 'accepted' if note_accepted else 'rejected',
+                anonymous=False
+            )
+        }            
 
         if note_accepted or source == 'all_submissions':
             client.post_note_edit(

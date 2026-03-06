@@ -154,13 +154,13 @@ class EditInvitationsBuilder(object):
                                 'type': 'object[]',
                                 'input': 'select',
                                 'items':  [
-                                    {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
-                                    {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
-                                    {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
-                                    {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
-                                    {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
-                                    {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                                    {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
+                                    {'value': {'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
+                                    {'value': {'value': 'CC BY-SA 4.0', 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                    {'value': {'value': 'CC BY-NC 4.0', 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                    {'value': {'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                    {'value': {'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                    {'value': {'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                    {'value': {'value': 'CC0 1.0', 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
                                 ]
                             }
                         },
@@ -186,6 +186,9 @@ class EditInvitationsBuilder(object):
 
         if process_file:
             invitation.process = self.get_process_content(process_file)
+        
+        # Add preprocess to validate venue/venueid cannot be deleted
+        invitation.preprocess = self.get_process_content('process/submission_form_fields_preprocess.js')
 
         if due_date:
             invitation.duedate = due_date
@@ -1199,17 +1202,8 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('process/edit_upload_date_process.py'),
             edit = {
                 'content': {
-                    'upload_date': {
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ]
-                            }
-                        }
-                    },
                     'decision_CSV': {
                         'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). Please do not add the column names as the first row',
                         'value': {
@@ -1228,9 +1222,6 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'upload_date': {
-                            'value': '${4/content/upload_date/value}'
-                        },
                         'decision_CSV': {
                             'value': '${4/content/decision_CSV/value}'
                         }
@@ -1254,17 +1245,8 @@ class EditInvitationsBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             preprocess = self.get_process_content('process/deploy_assignments_preprocess.py'),
-            process = self.get_process_content('process/edit_deploy_date_process.py'),
             edit = {
                 'content': {
-                    'deploy_date': {
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ]
-                            }
-                        }
-                    },
                     'match_name': {
                         'value': {
                             'param': {
@@ -1281,9 +1263,6 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'deploy_date': {
-                            'value': '${4/content/deploy_date/value}'
-                        },
                         'match_name': {
                             'value': '${4/content/match_name/value}'
                         }
@@ -1460,10 +1439,12 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_fields_email_template_invitation(self, super_invitation_id, due_date=None):
+    def set_edit_fields_email_template_invitation(self, super_invitation_id, due_date=None, is_review_invitation=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Fields_to_Include'
+
+        default_fields = ['review', 'rating', 'confidence'] if is_review_invitation else ['decision', 'comment']
 
         invitation = Invitation(
             id = invitation_id,
@@ -1477,7 +1458,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                     'type': 'string[]',
-                                    'enum': ['review', 'rating', 'confidence'] #default review fields
+                                    'enum': default_fields #default review fields
                                 }
                         }
                     }
@@ -1489,7 +1470,7 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'review_fields_to_include': {
+                        'fields_to_include': {
                             'value': ['${5/content/fields/value}']
                         }
                     }
@@ -1810,6 +1791,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('process/committee_recruitment_request_pre_process.js'),
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],

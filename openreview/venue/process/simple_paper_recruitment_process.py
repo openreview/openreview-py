@@ -109,7 +109,7 @@ The {committee_name} {preferred_name} that was invited {action_string} paper {su
 
 OpenReview Team'''
 
-                client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
+                client.post_message(subject, [f'{venue_id}/{submission_name}{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
             return
 
     elif (note.content['response']['value'] == 'No'):
@@ -147,7 +147,7 @@ Please go to the Area Chair console: https://openreview.net/group?id={venue_id}/
 
 OpenReview Team'''
 
-            client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
+            client.post_message(subject, [f'{venue_id}/{submission_name}{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
         return
 
     else:

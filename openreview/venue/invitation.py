@@ -519,6 +519,12 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 submission_invitation.edit['note']['license'] = submission_license
             elif len(submission_license) == 1:
                 submission_invitation.edit['note']['license'] = submission_license[0]
+            elif isinstance(submission_license, dict):
+                submission_invitation.edit['note']['license'] = {
+                    'param': {
+                        'enum': [submission_license]
+                    }
+                }
             else:
                 license_options = [ { "value": license, "description": license } for license in submission_license ]
                 submission_invitation.edit['note']['license'] = {
@@ -2279,8 +2285,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'script': self.invitation_edit_process
             }]
 
-        if self.venue.is_template_related_workflow() and not exp_date:
-            exp_date = tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))
+        if self.venue.is_template_related_workflow():
             invitation.description = 'Configure the time frame during which authors can withdraw their submission.'
 
         if exp_date:
@@ -2844,7 +2849,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['revision_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
@@ -4324,6 +4330,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         )
 
         recommendation_invitation = self.save_invitation(recommendation_invitation, replacement=True)
+        return recommendation_invitation
         
     def set_group_recruitment_invitations(self, committee_name):
         

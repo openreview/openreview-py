@@ -98,6 +98,12 @@ def process(client, edit, invitation):
                 invitation = publication.domain + '/-/Edit',
                 readers = [publication.domain],
                 signatures = [SUPPORT_USER_ID],
+                content = {
+                    "origin": {
+                        "value": "remove email process function",
+                        "readers": [SUPPORT_USER_ID]
+                    },
+                },
                 note = openreview.api.Note(
                     id=publication.id, 
                     content=content,

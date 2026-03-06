@@ -236,6 +236,9 @@ class Journal(object):
 
     def get_review_rating_enabling_id(self, number=None):
         return self.__get_invitation_id(name='Review_Rating_Enabling', number=number)
+    
+    def get_official_recommendation_enabling_id(self, number=None):
+        return self.__get_invitation_id(name='Official_Recommendation_Enabling', number=number)
 
     def get_accepted_id(self):
         return self.__get_invitation_id(name='Accepted')
@@ -479,6 +482,8 @@ class Journal(object):
         self.invitation_builder.set_note_comment_invitation(note)
         self.invitation_builder.release_submission_history(note)
         self.invitation_builder.expire_invitation(self.get_review_approval_id(note.number))
+        if not self.should_skip_official_recommendation():
+            self.invitation_builder.set_note_official_recommendation_enabling_invitation(note)
 
     def is_submission_public(self):
         return self.settings.get('submission_public', True)
@@ -569,6 +574,12 @@ class Journal(object):
 
     def get_official_recommendation_additional_fields(self):
         return self.settings.get('official_recommendation_additional_fields', {})
+
+    def get_official_recommendation_additional_validation(self):
+        return self.settings.get('official_recommendation_additional_validation', {})
+
+    def get_official_recommendation_description(self):
+        return self.settings.get('official_recommendation_description', '')
 
     def get_decision_additional_fields(self):
         return self.settings.get('decision_additional_fields', {})
@@ -882,136 +893,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
 '''
             self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
-    def setup_note_invitations(self):
-
-        note_invitations = self.client.get_all_invitations(prefix=f'{self.venue_id}/{self.submission_group_name}', domain=self.venue_id, type='note')
-        submissions_by_number = {s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id(), domain=self.venue_id)}
-
-        def find_number(tokens):
-            for token in tokens:
-                if token.startswith(self.submission_group_name):
-                    return int(token.replace(self.submission_group_name, ''))
-
-        for invitation in note_invitations:
-
-            tokens = invitation.id.split('/')
-            name = tokens[-1]
-            note_number = find_number(tokens)
-            submission = submissions_by_number.get(note_number)
-            replyto = None
-            if 'note' in invitation.edit and 'replyto' in invitation.edit['note']:
-                replyto = invitation.edit['note']['replyto']['const'] if 'const' in invitation.edit['note']['replyto'] else invitation.edit['note']['replyto']
-
-            if name and submission:
-
-                super_invitation_name = self.__get_invitation_id(name=name)
-                if invitation.id.endswith('/Assignment/Acknowledgement'):
-                    reviewer_id = tokens[-3]
-                    review_invitation = self.client.get_invitation(self.get_review_id(number=note_number))
-                    self.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(submission, reviewer_id, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)), review_duedate=datetime.datetime.fromtimestamp(int(review_invitation.duedate/1000)).strftime("%b %d, %Y"))
-
-                elif invitation.id.endswith('/-/Solicit_Review'):
-                    self.update_solicit_review(note_number, invitation)
-
-                elif invitation.id == self.get_review_approval_id(number=note_number):
-                    self.invitation_builder.set_note_review_approval_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif invitation.id == self.get_desk_rejection_approval_id(number=note_number):
-                    self.invitation_builder.set_note_desk_rejection_approval_invitation(submission, openreview.api.Note(id=replyto), duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif invitation.id == self.get_withdrawal_id(number=note_number):
-                    self.invitation_builder.set_note_withdrawal_invitation(submission)
-
-                elif invitation.id == self.get_desk_rejection_id(number=note_number):
-                    self.invitation_builder.set_note_desk_rejection_invitation(submission)
-
-                elif invitation.id == self.get_retraction_id(number=note_number):
-                    self.invitation_builder.set_note_retraction_invitation(submission)
-
-                elif invitation.id == self.get_retraction_release_id(number=note_number):
-                    self.invitation_builder.set_note_retraction_release_invitation(submission)
-
-                elif invitation.id == self.get_retraction_approval_id(number=note_number):
-                    self.invitation_builder.set_note_retraction_approval_invitation(submission, openreview.api.Note(id=replyto))
-
-                elif invitation.id == self.get_review_id(number=note_number):
-                    reviews = self.client.get_notes(invitation=invitation.id, limit=1)
-                    is_public = reviews and 'everyone' in reviews[0].readers
-                    self.invitation_builder.set_note_review_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-                    if is_public:
-                        invitation = self.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=invitation.id,
-                                signatures=[self.venue_id],
-                                edit={
-                                    'note': {
-                                        'readers': ['everyone']
-                                    }
-                                }
-                        ))
-
-                elif invitation.id == self.get_release_review_id(number=note_number):
-                    self.invitation_builder.set_note_release_review_invitation(submission)
-
-                elif invitation.id == self.get_reviewer_recommendation_id(number=note_number):
-                    self.invitation_builder.set_note_official_recommendation_invitation(submission, cdate=datetime.datetime.fromtimestamp(int(invitation.cdate/1000)), duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif invitation.id == self.get_solicit_review_id(number=note_number):
-                    self.invitation_builder.set_note_solicit_review_invitation(submission)
-
-                elif super_invitation_name == self.get_solicit_review_approval_id(number=note_number):
-                    replyto_note = self.client.get_note(replyto)
-                    self.invitation_builder.set_note_solicit_review_approval_invitation(submission, replyto_note, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif super_invitation_name == self.get_solicit_review_comment_id(number=note_number):
-                    replyto_note = self.client.get_note(replyto)
-                    self.invitation_builder.set_note_solicit_review_comment_invitation(submission, replyto_note)
-
-                elif invitation.id == self.get_revision_id(number=note_number):
-                    self.invitation_builder.set_note_revision_invitation(submission)
-
-                elif invitation.id == self.get_public_comment_id(number=note_number):
-                    self.invitation_builder.set_note_comment_invitation(submission)
-
-                elif invitation.id == self.get_official_comment_id(number=note_number):
-                    a = 1
-
-                elif invitation.id == self.get_moderation_id(number=note_number):
-                    a = 1
-
-                elif invitation.id == self.get_release_comment_id(number=note_number):
-                    self.invitation_builder.set_note_release_comment_invitation(submission)
-
-                elif invitation.id == self.get_ae_decision_id(number=note_number):
-                    self.invitation_builder.set_note_decision_invitation(submission, cdate=datetime.datetime.fromtimestamp(int(invitation.cdate/1000)), duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif invitation.id == self.get_release_decision_id(number=note_number):
-                    self.invitation_builder.set_note_decision_release_invitation(submission)
-
-                elif invitation.id == self.get_decision_approval_id(number=note_number):
-                    self.invitation_builder.set_note_decision_approval_invitation(submission, openreview.api.Note(id=replyto), duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif super_invitation_name == self.get_review_rating_id():
-                    self.invitation_builder.set_note_review_rating_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif invitation.id == self.get_camera_ready_revision_id(number=note_number):
-                    self.invitation_builder.set_note_camera_ready_revision_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif invitation.id == self.get_camera_ready_verification_id(number=note_number):
-                    self.invitation_builder.set_note_camera_ready_verification_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif invitation.id == self.get_authors_deanonymization_id(number=note_number):
-                    self.invitation_builder.set_note_authors_deanonymization_invitation(submission)
-
-                elif invitation.id == self.get_reviewer_assignment_id(number=note_number):
-                    self.invitation_builder.set_reviewer_assignment_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-
-                elif invitation.id == self.get_ae_recommendation_id(number=note_number):
-                    self.invitation_builder.set_ae_recommendation_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-                else:
-                    print(f'Builder not found for {invitation.id}')
-
-            else:
-                print(f'Name or invitation not found: {name}, {submission}')
-
     def setup_responsibility_acknowledgement_invitations(self):
 
         reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id(), domain=self.venue_id, type='note')
@@ -1112,6 +993,154 @@ Your {lower_formatted_invitation} on a submission has been {action}
         invitation.domain = None
         invitation.invitations = None
         self.invitation_builder.post_invitation_edit(invitation, replacement=True)
+
+    def release_reviews_process(self, submission):
+
+        number_of_reviewers = self.get_number_of_reviewers()
+
+        print('Release reviews...')
+        invitation = self.invitation_builder.set_note_release_review_invitation(submission)
+
+        print('Release comments...')
+        invitation = self.invitation_builder.set_note_release_comment_invitation(submission)
+
+        ## Enable official recommendation
+        print('Enable official recommendations')
+        if not self.should_skip_official_recommendation():
+            cdate = self.get_due_date(weeks = self.get_discussion_period_length())
+            duedate = cdate + datetime.timedelta(weeks=self.get_recommendation_period_length())
+            self.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
+            assigned_action_editor = openreview.tools.get_profiles(self.client, ids_or_emails=[submission.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=self.get_preferred_emails_invitation_id())[0]
+
+            review_visibility = 'public' if self.is_submission_public() else 'visible to all the reviewers'
+
+            ## Send email notifications to authors
+            print('Send emails to authors')
+            author_group = self.client.get_group(self.get_authors_id())
+            message=author_group.content['discussion_starts_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_id=submission.id,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                number_of_reviewers=number_of_reviewers,
+                review_visibility=review_visibility,
+                discussion_period_length=self.get_discussion_period_length(),
+                discussion_cdate=cdate.strftime("%b %d"),
+                recommendation_period_length=self.get_discussion_period_length() + self.get_recommendation_period_length(),
+                recommendation_duedate=duedate.strftime("%b %d"),
+                contact_info=self.contact_info,
+                assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_authors_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Reviewer responses and discussion for your {self.short_name} submission''',
+                message=message,
+                replyTo=self.contact_info if self.is_action_editor_anonymous() else assigned_action_editor.get_preferred_email(),
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+            ## Send email notifications to reviewers
+            print('Send emails to reviewers')
+            reviewer_group = self.client.get_group(self.get_reviewers_id())
+            message=reviewer_group.content['discussion_starts_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_id=submission.id,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                number_of_reviewers=number_of_reviewers,
+                review_visibility=review_visibility,
+                discussion_period_length=self.get_discussion_period_length(),
+                contact_info=self.contact_info,
+                assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_reviewers_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Start of author discussion for {self.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                message=message,
+                replyTo=assigned_action_editor.get_preferred_email(),
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+            ## Send email notifications to the action editor
+            print('Send emails to action editor')
+            ae_group = self.client.get_group(self.get_action_editors_id())
+            message=ae_group.content['discussion_starts_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_id=submission.id,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                number_of_reviewers=number_of_reviewers,
+                review_visibility=review_visibility,
+                discussion_period_length=self.get_discussion_period_length(),
+                contact_info=self.contact_info
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_action_editors_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Start of author discussion for {self.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                message=message,
+                replyTo=self.contact_info,
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+        else:
+            duedate = self.get_due_date(weeks = self.get_decision_period_length())
+
+            print('Skip to review rating')
+            self.invitation_builder.set_note_review_rating_invitation(submission, duedate)
+
+            print('Send email to AE')
+            ae_group = self.client.get_group(self.get_action_editors_id())
+            message=ae_group.content['review_rating_starts_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                decision_period_length=self.get_decision_period_length(),
+                decision_duedate=duedate.strftime("%b %d"),
+                invitation_url=f'https://openreview.net/forum?id={submission.id}&invitationId={self.get_ae_decision_id(number=submission.number)}',
+                contact_info=self.contact_info
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_action_editors_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Evaluate reviewers and submit decision for {self.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                message=message,
+                replyTo=self.contact_info,
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+        assigned_reviewers = self.client.get_group(id=self.get_reviewers_id(number=submission.number)).members
+        if len(assigned_reviewers) > number_of_reviewers:
+            print('Send another email to action editor')
+            message=ae_group.content['discussion_too_many_reviewers_email_template_script']['value'].format(
+                short_name=self.short_name,
+                submission_number=submission.number,
+                submission_title=submission.content['title']['value'],
+                website=self.website,
+                number_of_reviewers=number_of_reviewers,
+                contact_info=self.contact_info
+            )
+            self.client.post_message(
+                invitation=self.get_meta_invitation_id(),
+                recipients=[self.get_action_editors_id(number=submission.number)],
+                subject=f'''[{self.short_name}] Too many reviewers assigned to {self.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                message=message,
+                replyTo=self.contact_info,
+                signature=self.venue_id,
+                sender=self.get_message_sender()
+            )
+
+        self.invitation_builder.expire_invitation(self.get_official_recommendation_enabling_id(submission.number))
 
     def archive_assignments(self):
 

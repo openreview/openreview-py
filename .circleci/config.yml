@@ -8,47 +8,16 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "feature/mfa"
+    default: "main"
   python-version:
     type: string
     default: "3.13.1"
 
-jobs:
-  # test job
-  install-package:
-    parameters:
-      python-version:
-        type: string
-    docker:
-      - image: cimg/python:<<parameters.python-version>>-node
+# Reusable commands to reduce duplication between jobs
+commands:
+  setup-mongodb:
+    description: "Initialize MongoDB replica set"
     steps:
-      - checkout
-      - run:
-          name: Install Dependencies
-          command: |
-            pip install -e .
-      - run:
-          name: Verify Installation
-          command: python -c "import openreview"
-  build:
-    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
-    resource_class: large
-    parallelism: 10
-    working_directory: ~/openreview-py-repo
-    parameters:
-      python-version:
-        type: string
-    docker:
-      - image: cimg/python:<<parameters.python-version>>-node
-      - image: cimg/redis:7.2
-      - image: mongo:8.0
-        command: [ --replSet, rs0 ]
-      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
-        environment:
-          xpack.security.enabled: false
-          transport.host: localhost
-    steps:
-      - checkout
       - run:
           name: Initialize replica set
           command: |
@@ -67,6 +36,9 @@ jobs:
 
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
 
+  clone-repos:
+    description: "Clone OpenReview API repositories"
+    steps:
       - run:
           name: Install openreview-py
           command: |
@@ -85,7 +57,10 @@ jobs:
           name: Clone openreview-web
           command: |
             git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
-            cd ~/openreview-web && git checkout fix/mfa
+
+  create-directories:
+    description: "Create API directories"
+    steps:
       - run:
           name: Create API directories
           command: |
@@ -98,6 +73,10 @@ jobs:
             mkdir -p ~/openreview-v2/files/pdfs
             mkdir -p ~/openreview-v2/files/temp
             mkdir -p ~/openreview-py-repo/coverage
+
+  install-firefox:
+    description: "Install Firefox browser"
+    steps:
       - run:
           # source: https://support.mozilla.org/en-US/kb/install-firefox-linux#w_system-firefox-installation-for-advanced-users
           # source: https://ubuntu-mate.community/t/firefox-installation-guide-non-snap/25299
@@ -115,6 +94,10 @@ jobs:
             retry sudo apt-get install libdbus-glib-1-2
             echo export PATH="$PATH:/usr/local/bin/firefox" >> ~/.bashrc
             source ~/.bashrc
+
+  start-apis:
+    description: "Start and wait for API V1 and V2"
+    steps:
       - run:
           name: Start API V1
           command: |
@@ -139,6 +122,10 @@ jobs:
           command: |
             wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3001
             :
+
+  setup-openreview-web:
+    description: "Install, build, and start openreview-web"
+    steps:
       - run:
           name: Install openreview-web
           command: |
@@ -153,6 +140,10 @@ jobs:
             export NEXT_PORT=3030
             NODE_ENV=production SUPER_USER=openreview.net npm run start
           background: true
+
+  install-geckodriver:
+    description: "Install Firefox geckodriver"
+    steps:
       - run:
           name: Install Firefox driver
           command: |
@@ -165,16 +156,173 @@ jobs:
             wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
             tar -xvzf geckodriver*
             chmod +x geckodriver
+
+  install-pytest:
+    description: "Install pytest and dependencies"
+    steps:
+      - run:
+          name: Install pytest dependencies
+          command: |
+            cd ~/openreview-py-repo
+            mkdir -p test-reports
+            pip install -U pytest
+            pip install py
+            pip install selenium
+            pip install pytest-selenium
+            pip install -e .
+
+  copy-logs-on-failure:
+    description: "Copy API logs to artifacts on failure"
+    steps:
+      - run:
+          name: Copy API logs to artifacts
+          when: on_fail
+          command: |
+            cp ~/openreview/logs/* ~/openreview-py-repo/test-reports/ 2>/dev/null || true
+            cp ~/openreview-v2/logs/* ~/openreview-py-repo/test-reports/ 2>/dev/null || true
+
+  store-test-artifacts:
+    description: "Store test results and artifacts"
+    steps:
+      - store_test_results:
+          path: test-reports
+      - store_artifacts:
+          when: always
+          path: test-reports
+
+jobs:
+  # test job
+  install-package:
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: cimg/python:<<parameters.python-version>>-node
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: |
+            pip install -e .
+      - run:
+          name: Verify Installation
+          command: python -c "import openreview"
+  build-pr-tests:
+    # Run only tests from files that were modified/added in the PR
+    resource_class: large
+    working_directory: ~/openreview-py-repo
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: cimg/python:<<parameters.python-version>>-node
+      - image: cimg/redis:7.2
+      - image: mongo:8.0
+        command: [ --replSet, rs0 ]
+      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+        environment:
+          xpack.security.enabled: false
+          transport.host: localhost
+    steps:
+      - checkout
+      - run:
+          name: Detect modified test files
+          command: |
+            # Get the base branch for comparison
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              # Extract PR number from URL
+              PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | grep -oE '[0-9]+$')
+              # Fetch the base branch (usually main or master)
+              git fetch origin master:refs/remotes/origin/master 2>/dev/null || git fetch origin main:refs/remotes/origin/main 2>/dev/null || true
+              
+              # Get modified/added test files compared to master/main
+              MODIFIED_TESTS=$(git diff --name-only --diff-filter=AM origin/master...HEAD -- 'tests/test_*.py' 2>/dev/null || \
+                               git diff --name-only --diff-filter=AM origin/main...HEAD -- 'tests/test_*.py' 2>/dev/null || \
+                               echo "")
+            else
+              # For non-PR builds (e.g., master branch), skip this job
+              MODIFIED_TESTS=""
+            fi
+            
+            # Write the modified tests to a file for subsequent steps
+            echo "$MODIFIED_TESTS" > /tmp/modified_tests.txt
+            
+            if [ -z "$MODIFIED_TESTS" ]; then
+              echo "No test files were modified in this PR. Skipping PR-specific tests."
+              echo "skip" > /tmp/skip_pr_tests.txt
+            else
+              echo "Modified test files found:"
+              echo "$MODIFIED_TESTS"
+              echo "run" > /tmp/skip_pr_tests.txt
+            fi
+      - run:
+          name: Check if tests should run
+          command: |
+            if [ "$(cat /tmp/skip_pr_tests.txt)" = "skip" ]; then
+              echo "No modified test files - skipping test environment setup"
+              circleci-agent step halt
+            fi
+      - setup-mongodb
+      - clone-repos
+      - create-directories
+      - install-firefox
+      - start-apis
+      - setup-openreview-web
+      - install-geckodriver
+      - install-pytest
+      - run:
+          name: Run PR-specific tests
+          environment:
+            PYTHONUNBUFFERED: "1"
+          command: |
+            cd ~/openreview-py-repo
+            
+            # Read the modified test files
+            MODIFIED_TESTS=$(cat /tmp/modified_tests.txt | tr '\n' ' ')
+            
+            if [ -n "$MODIFIED_TESTS" ]; then
+              echo "Running tests from modified files: $MODIFIED_TESTS"
+              pytest $MODIFIED_TESTS --durations=0 -v -o junit_family=legacy \
+                --junitxml=test-reports/junit-pr-tests.xml \
+                --driver Firefox --driver-path tests/drivers/geckodriver
+            else
+              echo "No test files to run"
+            fi
+      - copy-logs-on-failure
+      - store-test-artifacts
+  build:
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
+    parallelism: 10
+    working_directory: ~/openreview-py-repo
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: cimg/python:<<parameters.python-version>>-node
+      - image: cimg/redis:7.2
+      - image: mongo:8.0
+        command: [ --replSet, rs0 ]
+      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+        environment:
+          xpack.security.enabled: false
+          transport.host: localhost
+    steps:
+      - checkout
+      - setup-mongodb
+      - clone-repos
+      - create-directories
+      - install-firefox
+      - start-apis
+      - setup-openreview-web
+      - install-geckodriver
+      - install-pytest
       - run:
           name: Run tests
           environment:
             PYTHONUNBUFFERED: "1"
           command: |
             cd ~/openreview-py-repo
-            mkdir test-reports
-            pip install py
-            pip install selenium
-            pip install -e ".[test]"
             
             # Container 0: ONLY test_journal.py (~22 min)
             if [ "$CIRCLE_NODE_INDEX" -eq 0 ]; then
@@ -197,17 +345,8 @@ jobs:
                 --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" \
                 --verbose --split-by=timings
             fi
-      - run:
-          name: Copy API logs to artifacts
-          when: on_fail
-          command: |
-            cp ~/openreview/logs/* ~/openreview-py-repo/test-reports/
-            cp ~/openreview-v2/logs/* ~/openreview-py-repo/test-reports/
-      - store_test_results:
-          path: test-reports
-      - store_artifacts:
-          when: always
-          path: test-reports
+      - copy-logs-on-failure
+      - store-test-artifacts
   deploy:
     working_directory: ~/openreview-py-repo
     docker:
@@ -232,9 +371,13 @@ workflows:
           matrix:
             parameters:
               python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-      - build:
+      - build-pr-tests:
           requires:
             - install-package
+          python-version: "3.10"
+      - build:
+          requires:
+            - build-pr-tests
           python-version: "3.10"
       - deploy:
           requires:
