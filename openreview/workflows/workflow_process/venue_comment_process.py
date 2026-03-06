@@ -65,7 +65,7 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
             
         client.post_message(
             invitation=f'{support_user}/-/Edit',
-            recipients=[support_user],
+            recipients=['support@openreview.net'],
             subject=subject,
             message=message
         )
