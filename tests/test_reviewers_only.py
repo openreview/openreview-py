@@ -113,9 +113,8 @@ class TestReviewersOnly():
         
         helpers.await_queue_edit(openreview_client, edit_id=request['id'])
 
-        messages = openreview_client.get_messages(subject='Your request for OpenReview service has been received.')
+        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='Your request for OpenReview service has been received.')
         assert len(messages) == 1
-        assert messages[0]['content']['to'] == 'programchair@abcd.cc'
 
         messages = openreview_client.get_messages(subject='A request for service has been submitted by ABCD 2025')
         assert len(messages) == 0        
