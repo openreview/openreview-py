@@ -556,6 +556,21 @@ For more details, please check the following links:
         assert domain_content['area_chairs_custom_max_papers_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Custom_Max_Papers'
         assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict/Dates')
         assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict/Policy')
+        assert 'area_chairs_conflict_policy' not in domain_content
+        assert 'area_chairs_conflict_n_years' not in domain_content
+
+        # select conflict policy
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Conflict/Policy',
+            content={
+                'conflict_policy': { 'value': 'Default' },
+                'conflict_n_years': { 'value': 0 }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, invitation=f'EFGH.cc/2025/Conference/Action_Editors/-/Conflict/Policy')
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Conflict-0-1', count=2)
+
+        domain_content = openreview_client.get_group('EFGH.cc/2025/Conference').content
         assert domain_content['area_chairs_conflict_policy']['value'] == 'Default'
         assert domain_content['area_chairs_conflict_n_years']['value'] == 0
 
@@ -568,12 +583,27 @@ For more details, please check the following links:
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Conflict-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Conflict-0-1', count=3)
 
         conflicts = pc_client.get_edges_count(invitation='EFGH.cc/2025/Conference/Action_Editors/-/Conflict')
         assert conflicts == 14
 
         openreview_client.add_members_to_group('EFGH.cc/2025/Conference/Reviewers', ['reviewer_one@efgh.cc', 'reviewer_two@efgh.cc', 'reviewer_three@efgh.cc'])
+
+        # select conflict policy
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Reviewers/-/Conflict/Policy',
+            content={
+                'conflict_policy': { 'value': 'Default' },
+                'conflict_n_years': { 'value': 1 }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, invitation=f'EFGH.cc/2025/Conference/Reviewers/-/Conflict/Policy')
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Conflict-0-1', count=2)
+
+        domain_content = openreview_client.get_group('EFGH.cc/2025/Conference').content
+        assert domain_content['reviewers_conflict_policy']['value'] == 'Default'
+        assert domain_content['reviewers_conflict_n_years']['value'] == 1
 
         # trigger date process for reviewer conflicts
         now = datetime.datetime.now()
@@ -584,7 +614,7 @@ For more details, please check the following links:
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Conflict-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Conflict-0-1', count=3)
 
         conflicts = pc_client.get_edges_count(invitation='EFGH.cc/2025/Conference/Reviewers/-/Conflict')
         assert conflicts == 14
@@ -848,15 +878,23 @@ For more details, please check the following links:
 
         now = datetime.datetime.now()
 
+        # upload decisions
         pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Decision_Upload/Decision_CSV',
-
             content={
-                'upload_date': { 'value': openreview.tools.datetime_millis(now) },
                 'decision_CSV': { 'value': url }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision_Upload-0-1', count=2)
+
+        # trigger decision upload process
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Decision_Upload/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision_Upload-0-1', count=3)
 
         helpers.await_queue_edit(openreview_client, invitation='EFGH.cc/2025/Conference/Submission1/-/Decision')
 

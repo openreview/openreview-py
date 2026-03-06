@@ -128,9 +128,16 @@ class TestVenueRequest():
         assert 'V2.cc/2030/Conference' in client.get_group('venues').members
         assert 'V2.cc' in client.get_group('host').members
 
-        # assert preferred emails groups were set correctly
+        # assert preferred emails groups were set correctly - should include all venue participants
         venue_group = openreview_client.get_group('V2.cc/2030/Conference')
-        assert 'preferred_emails_groups' in venue_group.content and venue_group.content['preferred_emails_groups'] == { 'value': ['V2.cc/2030/Conference/Authors'] }
+        assert 'preferred_emails_groups' in venue_group.content
+        preferred_emails_groups = venue_group.content['preferred_emails_groups']['value']
+        # Should include authors, reviewers, area chairs, senior area chairs, and publication chairs
+        assert 'V2.cc/2030/Conference/Authors' in preferred_emails_groups
+        assert 'V2.cc/2030/Conference/Reviewers' in preferred_emails_groups
+        assert 'V2.cc/2030/Conference/Area_Chairs' in preferred_emails_groups
+        assert 'V2.cc/2030/Conference/Senior_Area_Chairs' in preferred_emails_groups
+        assert 'V2.cc/2030/Conference/Publication_Chairs' in preferred_emails_groups
         assert 'preferred_emails_id' in venue_group.content and venue_group.content['preferred_emails_id'] == { 'value': 'V2.cc/2030/Conference/-/Preferred_Emails' }
 
         # Return venue details as a dict

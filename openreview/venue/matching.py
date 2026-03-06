@@ -1563,12 +1563,6 @@ class Matching(object):
                 },
                 'committee_role': {
                     'value': committee_role
-                },
-                'conflict_policy': {
-                    'value': 'Default'
-                },
-                'conflict_n_years': {
-                    'value': 0
                 }
             },
             edge = {
@@ -1633,18 +1627,6 @@ class Matching(object):
         )
 
         invitation = self.venue.invitation_builder.save_invitation(invitation, replacement=True)
-
-        self.client.post_group_edit(
-            invitation = venue.get_meta_invitation_id(),
-            signatures = [venue_id],
-            group = openreview.api.Group(
-                id = venue_id,
-                content = {
-                    f'{committee_role}_conflict_policy': { 'value': 'Default' },
-                    f'{committee_role}_conflict_n_years': { 'value': 0 }
-                }
-            )
-        )
 
         edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
         edit_invitations_builder.set_edit_conflict_settings_invitation(conflict_invitation_id)

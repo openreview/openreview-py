@@ -49,7 +49,7 @@ class TestSubmissionFormFieldsValidation():
                         }
                     },
                     "license": {
-                        "value": [{'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}]
+                        "value": [{'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}]
                     }
                 }
             )
@@ -98,7 +98,7 @@ class TestSubmissionFormFieldsValidation():
                         }
                     },
                     "license": {
-                        "value": [{'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}]
+                        "value": [{'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}]
                     }
                 }
             )
@@ -146,7 +146,7 @@ class TestSubmissionFormFieldsValidation():
                     }
                 },
                 "license": {
-                    "value": [{'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}]
+                    "value": [{'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}]
                 }
             }
         )
