@@ -272,7 +272,7 @@ class TestVenueRequest():
         messages = client.get_messages(
             subject='A request for service has been submitted by TestVenue@OR2022'
         )
-        assert messages and len(messages) == 0
+        assert len(messages) == 0
 
         comment_note = pc_client.post_note(openreview.Note(
             content={
