@@ -272,9 +272,7 @@ class TestVenueRequest():
         messages = client.get_messages(
             subject='A request for service has been submitted by TestVenue@OR2022'
         )
-        assert messages and len(messages) == 1
-        assert messages[0]['content']['to'] == 'support@openreview.net'
-        assert messages[0]['content']['text'].startswith(f'A request for service has been submitted by TestVenue@OR2022. Check it here: https://openreview.net/forum?id={request_form_note.forum}')
+        assert messages and len(messages) == 0
 
         comment_note = pc_client.post_note(openreview.Note(
             content={

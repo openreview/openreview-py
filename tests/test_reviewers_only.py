@@ -201,6 +201,7 @@ class TestReviewersOnly():
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment', count=3)
 
         messages = openreview_client.get_messages(subject='Your venue, ABCD 2025, is available in OpenReview')
         assert len(messages) == 1
