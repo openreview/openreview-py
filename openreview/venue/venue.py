@@ -607,7 +607,8 @@ class Venue(object):
                 multiReply=True,
                 allow_author_reorder=stage.author_reorder_after_first_deadline,
                 allow_license_edition=True,
-                source = {'venueid': self.get_submission_venue_id()}
+                source = {'venueid': self.get_submission_venue_id()},
+                authors_with_institutions=stage.authors_with_institutions
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
@@ -911,11 +912,11 @@ Total Errors: {len(errors)}
 
             if not is_release_authors(note_accepted) and self.submission_stage.double_blind:
                 anonymous = True
-                final_hide_fields.extend(['authors', 'authorids'])
+                final_hide_fields.extend(self.submission_stage.author_identifying_fields)
 
             for field, value in submission.content.items():
                 if field in final_hide_fields:
-                    if self.use_publication_chairs and field in ['authors', 'authorids'] and note_accepted:
+                    if self.use_publication_chairs and field in self.submission_stage.author_identifying_fields and note_accepted:
                         content[field] = {
                             'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()]
                         }
