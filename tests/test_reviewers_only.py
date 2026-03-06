@@ -1477,7 +1477,103 @@ For more details, please check the following links:
             helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
     def test_review_stage(self, openreview_client, helpers):
-        
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        assert invitation.edit['note']['content'] == {
+            'authors': {
+                'readers': [
+                    'ABCD.cc/2025/Conference',
+                    'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                ]
+            },
+            'authorids': {
+                'readers': [
+                    'ABCD.cc/2025/Conference',
+                    'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                ]
+            },
+            'pdf': {
+                'readers': {
+                    'param': {
+                        'const': {
+                            'delete': True
+                        }
+                    }
+                }
+            }
+        }
+
+        # edit submission change before reviewing content to hide subject_area
+        openreview_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Restrict_Field_Visibility',
+            content = {
+                'content_readers': {
+                    'value': {
+                        'authors': {
+                            'readers': [
+                                'ABCD.cc/2025/Conference',
+                                'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        },
+                        'authorids': {
+                            'readers': [
+                                'ABCD.cc/2025/Conference',
+                                'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        },
+                        'subject_areas': {
+                            'readers': [
+                                'ABCD.cc/2025/Conference',
+                                'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        },
+                        'pdf': {
+                            'readers': {
+                                'param': {
+                                    'const': {
+                                        'param': {
+                                            'const': { 'delete': True },
+                                        },
+                                    },
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        assert invitation.edit['note']['content'] == {
+            'authors': {
+                'readers': [
+                    'ABCD.cc/2025/Conference',
+                    'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                ]
+            },
+            'authorids': {
+                'readers': [
+                    'ABCD.cc/2025/Conference',
+                    'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                ]
+            },
+            'subject_areas': {
+                'readers': [
+                    'ABCD.cc/2025/Conference',
+                    'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                ]
+            },
+            'pdf': {
+                'readers': {
+                    'param': {
+                        'const': {
+                            'delete': True
+                        }
+                    }
+                }
+            }
+        }
+
         now = datetime.datetime.now()
         # manually trigger Submission_Chage_Before_Reviewing
         openreview_client.post_invitation_edit(
@@ -1497,6 +1593,8 @@ For more details, please check the following links:
         assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
         assert not 'readers' in submissions[0].content['pdf']
         assert submissions[0].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['subject_areas']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
@@ -2488,11 +2586,11 @@ url={https://openreview.net/forum?id='''+submissions[0].id+'''}
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum/Dates')
 
+          # Remove reviewer from reviewers group
+        openreview_client.remove_members_from_group('ABCD.cc/2025/Conference/Program_Committee', ['~ReviewerThree_ABCD1'])
+
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
-
-        ## Remove reviewer from reviewers group
-        openreview_client.remove_members_from_group('ABCD.cc/2025/Conference/Program_Committee', ['~ReviewerThree_ABCD1'])
 
         ## Review Count stage
         pc_client.post_invitation_edit(
@@ -2552,4 +2650,4 @@ url={https://openreview.net/forum?id='''+submissions[0].id+'''}
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Program_Committee-0-1', count=2)
 
         tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Program_Committee')
-        assert len(tags) == 2         
+        assert len(tags) == 2
