@@ -325,7 +325,7 @@ class TestKDDConference():
                 content={
                     'title': { 'value': 'Paper title 2 Updated' },
                     'abstract': { 'value': 'This is an abstract 2 updated' },
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrea@amazon.com'] },
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrea@apple.com'] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrea Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'corresponding_author': { 'value': '~SomeFirstName_User1'},
@@ -345,7 +345,7 @@ class TestKDDConference():
                                         f"KDD.org/2026/Research_Track_August/Submission1/Reviewers",
                                         f"KDD.org/2026/Research_Track_August/Submission1/Authors"]
 
-        andrea_client = helpers.create_user('andrea@amazon.com', 'Andrea', 'Mc')
+        andrea_client = helpers.create_user('andrea@apple.com', 'Andrea', 'Mc')
 
         helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
 
