@@ -609,7 +609,7 @@ class TestCVPRConference():
 
         venue.set_assignments(assignment_title='rev-matching', committee_id='thecvf.com/CVPR/2024/Conference/Reviewers', enable_reviewer_reassignment=True)
 
-        assert openreview_client.get_edges_count(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Assignment') == 6
+        assert openreview_client.get_edges_count(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Assignment') == 13
 
         # enable review stage first
         pc_client.post_note(openreview.Note(
@@ -1657,6 +1657,11 @@ class TestCVPRConference():
             'start': 2024,
             'end': None
         })
+        profile.content.setdefault('expertise', []).append({
+            'keywords': ['nlp'],
+            'start': 2025,
+            'end': None
+        })
         celeste_client.post_profile(profile)
 
         ## Profile with no conflict
@@ -1667,6 +1672,11 @@ class TestCVPRConference():
             'relation': 'Advisor',
             'name': 'Reviewer CVPROne',
             'username': '~Reviewer_CVPROne1',
+            'start': 2024,
+            'end': None
+        })
+        profile.content.setdefault('expertise', []).append({
+            'keywords': ['machine learning'],
             'start': 2024,
             'end': None
         })
@@ -1716,6 +1726,7 @@ class TestCVPRConference():
         messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Incomplete profile for paper 1')
         assert messages and len(messages) == 3
 
+        # Conflict detected after pending sign up and completing profile
         messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Conflict detected for paper 1')
         assert messages and len(messages) == 1
 
@@ -1754,6 +1765,11 @@ class TestCVPRConference():
             'name': 'SomeFirstName User',
             'username': '~SomeFirstName_User1',
             'start': 2024,
+            'end': None
+        })
+        profile.content.setdefault('expertise', []).append({
+            'keywords': ['nlp'],
+            'start': 2025,
             'end': None
         })
         rachel_client.post_profile(profile)
