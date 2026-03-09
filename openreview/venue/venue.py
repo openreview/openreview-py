@@ -1964,39 +1964,7 @@ OpenReview Team'''
 
                                             ## Check venue profile requirements
                                             min_requirements = venue_group.content.get('invited_reviewer_profile_minimum_requirements', {}).get('value')
-                                            is_incomplete = False
-
-                                            if min_requirements:
-                                                # { content.relations: 2, content.dblp: true, active: true }
-                                                for profile_path, expected_value in min_requirements.items():
-                                                    path_items = profile_path.split('.')
-                                                    actual_value = user_profile
-
-                                                    ## Resolve actual value from the profile
-                                                    for item in path_items:
-                                                        if isinstance(actual_value, openreview.Profile):
-                                                            actual_value = getattr(actual_value, item, None)
-                                                        elif isinstance(actual_value, dict):
-                                                            actual_value = actual_value.get(item)
-                                                        else:
-                                                            ## Can't traverse, but more items to resolve
-                                                            actual_value = None
-                                                        
-                                                        if actual_value is None:
-                                                            break
-
-                                                    ## Check against requirement
-                                                    ## Check number of entries
-                                                    if type(expected_value) == int:
-                                                        if not actual_value or not isinstance(actual_value, list) or len(actual_value) < expected_value:
-                                                            is_incomplete = True
-                                                            break
-                                                    ## Check if field exists in profile (e.g. links)
-                                                    elif expected_value is True and not actual_value:
-                                                        is_incomplete = True
-                                                        break
-                                                    else:
-                                                        print(f'Invalid path: {profile_path}')
+                                            is_incomplete = bool(min_requirements) and not openreview.tools.check_profile_minimum_requirements(user_profile, min_requirements)
 
                                             if is_incomplete:
                                                 print(f'Sending messages for incomplete profile {user_profile.id} for paper {edge.head}')

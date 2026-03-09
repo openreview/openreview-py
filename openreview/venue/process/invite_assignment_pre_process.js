@@ -30,7 +30,7 @@ async function process(client, edge, invitation) {
   const userProfile = profiles[0]
 
   // Check for complete profile, if no profile then go to pending sign up
-  if (!client.tools.isProfileComplete(userProfile, profileReqs)) {
+  if (profileReqs && !client.tools.checkProfileMinimumRequirements(userProfile, profileReqs)) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user has an incomplete profile according to venue standards` }))
   }
 

@@ -1566,10 +1566,9 @@ class TestCVPRConference():
                 content={
                     'invited_reviewer_profile_minimum_requirements': { 
                         'value': {
-                            'content.relations': 1,
-                            'content.publications': 1,
-                            'content.dblp': True,
-                            'active': True
+                            'relations': True,
+                            'publications': True,
+                            'expertise': True
                         } 
                     }
                 }
