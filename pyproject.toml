@@ -36,7 +36,9 @@ docs = [
 ]
 test = [
     "pytest",
+    "py",
     "pyotp",
+    "selenium",
     "pytest-selenium",
     "pytest-cov"
 ]

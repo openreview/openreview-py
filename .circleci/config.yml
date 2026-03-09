@@ -165,11 +165,7 @@ commands:
           command: |
             cd ~/openreview-py-repo
             mkdir -p test-reports
-            pip install -U pytest
-            pip install py
-            pip install selenium
-            pip install pytest-selenium
-            pip install -e .
+            pip install -e '.[test]'
 
   copy-logs-on-failure:
     description: "Copy API logs to artifacts on failure"
