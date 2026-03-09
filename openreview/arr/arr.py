@@ -433,7 +433,8 @@ class ARR(object):
             group=openreview.api.Group(
                 id=self.venue_id,
                 content={
-                    'allow_gurobi_solver': { 'value': True }
+                    'allow_gurobi_solver': { 'value': True },
+                    'meta_review_recommendation': { 'value': 'overall_assessment' }
                 }
             )
         )
