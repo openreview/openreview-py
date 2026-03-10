@@ -210,6 +210,13 @@ class ARR(object):
     def get_submission_id(self):
         return self.venue.get_submission_id()
 
+    def get_post_submission_id(self):
+        return self.venue.get_post_submission_id()
+
+    def get_preprint_post_submission_id(self):
+        submission_name = self.submission_stage.name if self.submission_stage else self.venue.submission_stage.name
+        return self.get_invitation_id(f'Preprint_Post_{submission_name}')
+
     def get_pc_submission_revision_id(self):
         return self.venue.get_pc_submission_revision_id()
 
@@ -476,7 +483,56 @@ class ARR(object):
 
     # For stage invitations, pass value to inner venue objects
     def create_submission_stage(self):
-        stage_value = self.venue.create_submission_stage()
+        self.invitation_builder.set_submission_invitation()
+        if self.venue.iThenticate_plagiarism_check:
+            self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
+        self.invitation_builder.set_withdrawal_invitation()
+        self.invitation_builder.set_desk_rejection_invitation()
+        self.invitation_builder.set_post_submission_invitation(
+            invitation_id=self.get_post_submission_id(),
+            source={
+                'venueid': self.get_submission_venue_id(),
+                'content': {
+                    'preprint': 'no'
+                }
+            }
+        )
+        self.invitation_builder.set_post_submission_invitation(
+            invitation_id=self.get_preprint_post_submission_id(),
+            source={
+                'venueid': self.get_submission_venue_id(),
+                'content': {
+                    'preprint': 'yes'
+                }
+            }
+        )
+        self.invitation_builder.set_pc_submission_revision_invitation()
+        self.invitation_builder.set_submission_reviewer_group_invitation()
+        self.invitation_builder.set_submission_message_invitation()
+        if self.use_area_chairs:
+            self.invitation_builder.set_submission_area_chair_group_invitation()
+        if self.use_senior_area_chairs:
+            self.invitation_builder.set_submission_senior_area_chair_group_invitation()
+        if self.expertise_selection_stage:
+            self.invitation_builder.set_expertise_selection_invitations()
+
+        if self.submission_stage.second_due_date:
+            stage = self.submission_stage
+            submission_revision_stage = openreview.stages.SubmissionRevisionStage(
+                name=f'Full_{stage.name}',
+                start_date=stage.exp_date,
+                due_date=stage.second_due_date,
+                additional_fields=stage.second_deadline_additional_fields if stage.second_deadline_additional_fields else stage.additional_fields,
+                remove_fields=stage.second_deadline_remove_fields if stage.second_deadline_remove_fields else stage.remove_fields,
+                only_accepted=False,
+                multiReply=True,
+                allow_author_reorder=stage.author_reorder_after_first_deadline,
+                allow_license_edition=True,
+                source={'venueid': self.get_submission_venue_id()}
+            )
+            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
+            self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
+
         invitation = self.client.get_invitation(self.get_submission_id())
         invitation.preprocess = self.invitation_builder.get_process_content('process/submission_preprocess.py')
         invitation.process = invitation.process + self.invitation_builder.get_process_content('process/submission_process_extension.py')
@@ -489,34 +545,25 @@ class ARR(object):
             replacement=False,
             invitation=invitation
         )
-        self._patch_post_submission_invitation()
-        return stage_value
 
     def create_post_submission_stage(self):
-        self.venue.create_post_submission_stage()
-        self._patch_post_submission_invitation()
-
-    def _patch_post_submission_invitation(self):
-        post_submission_id = self.venue.get_post_submission_id()
-        inv = self.client.get_invitation(post_submission_id)
-
-        arr_script = self.invitation_builder.get_process_content('process/post_submission_process.py')
-
-        updated_date_processes = []
-        for dp in inv.date_processes:
-            updated_dp = dict(dp)
-            updated_dp['script'] = arr_script
-            updated_date_processes.append(updated_dp)
-
-        inv.date_processes = updated_date_processes
-
-        self.client.post_invitation_edit(
-            invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=False,
-            invitation=inv
+        self.invitation_builder.set_post_submission_invitation(
+            invitation_id=self.get_post_submission_id(),
+            source={
+                'venueid': self.get_submission_venue_id(),
+                'content': {
+                    'preprint': 'no'
+                }
+            }
+        )
+        self.invitation_builder.set_post_submission_invitation(
+            invitation_id=self.get_preprint_post_submission_id(),
+            source={
+                'venueid': self.get_submission_venue_id(),
+                'content': {
+                    'preprint': 'yes'
+                }
+            }
         )
 
     def create_submission_revision_stage(self):
