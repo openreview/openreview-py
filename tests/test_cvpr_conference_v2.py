@@ -394,6 +394,9 @@ class TestCVPRConference():
         assert 'thecvf.com/CVPR/2024/Conference/Area_Chairs' in invitation.invitees
         assert 'thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs' in invitation.invitees
 
+        assert 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation' == venue.get_recommendation_id()
+        assert 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation' == openreview_client.get_group('thecvf.com/CVPR/2024/Conference').content['reviewers_recommendation_id']['value']
+
         ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         anon_groups = ac_client.get_groups(prefix='thecvf.com/CVPR/2024/Conference/Submission1/Area_Chair_', signatory='~AC_CVPROne1')
         anon_group_id = anon_groups[0].id          
