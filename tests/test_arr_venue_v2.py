@@ -266,6 +266,7 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Expertise_Selection')
 
         post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Post_Submission')
+        preprint_post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Post_Submission')
         assert 'TLDR' in post_submission_invitation.edit['note']['content']
         assert 'preprint' in post_submission_invitation.edit['note']['content']
         assert 'existing_preprints' in post_submission_invitation.edit['note']['content']
@@ -273,6 +274,8 @@ class TestARRVenueV2():
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
+        assert post_submission_invitation.content['source']['value']['content'] == {'preprint': 'no'}
+        assert preprint_post_submission_invitation.content['source']['value']['content'] == {'preprint': 'yes'}
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
@@ -350,6 +353,7 @@ class TestARRVenueV2():
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
 
         post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Post_Submission')
+        preprint_post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Post_Submission')
         assert 'TLDR' in post_submission_invitation.edit['note']['content']
         assert 'preprint' in post_submission_invitation.edit['note']['content']
         assert 'existing_preprints' in post_submission_invitation.edit['note']['content']
@@ -357,6 +361,8 @@ class TestARRVenueV2():
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
+        assert post_submission_invitation.content['source']['value']['content'] == {'preprint': 'no'}
+        assert preprint_post_submission_invitation.content['source']['value']['content'] == {'preprint': 'yes'}
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
@@ -2679,6 +2685,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Post_Submission-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Post_Submission-0-1', count=2)
 
         withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
         assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
