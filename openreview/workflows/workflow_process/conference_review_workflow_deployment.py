@@ -108,6 +108,7 @@ def process(client, edit, invitation):
 
     # create conflict and affinity score invitations
     venue.setup_matching_invitations()
+    venue.setup_all_committees_matching()
 
     venue.create_bid_stages()
 

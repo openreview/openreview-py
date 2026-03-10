@@ -172,6 +172,17 @@ class TestSimpleDualAnonymous():
 
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Message')
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Members')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Aggregate_Score')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Proposed_Assignment')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Custom_Max_Papers')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Custom_User_Demands')
+
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Message')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Members')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Aggregate_Score')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Proposed_Assignment')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Custom_Max_Papers')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Custom_User_Demands')
 
         domain_content = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference').content
         assert domain_content['reviewers_invited_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited'
