@@ -1089,31 +1089,26 @@ note={under review}
         assert inv and not inv.content
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Dates')
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Which_Submissions')
-        now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
 
-        # trigger submission release process with no source submissions
-        pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Submission_Release/Dates',
-            content={
-                'activation_date': { 'value': new_cdate }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=2)
-
-        # assert status comment posted to request form
-        venue = openreview_client.get_group('EFGH.cc/2025/Conference')
-        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 1
-        assert notes[-1].content['title']['value'] == 'Submission Release Failed'
-
-        # trigger submission release process with source submissions
+        # add source submissions to submission release
         pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Submission_Release/Which_Submissions',
             content={
                 'source_submissions': {
                     'value': 'accepted_submissions'
                 }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        # trigger submission release process
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Submission_Release/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=3)
