@@ -1564,7 +1564,7 @@ class TestCVPRConference():
             group=openreview.api.Group(
                 id='thecvf.com/CVPR/2024/Conference',
                 content={
-                    'invited_reviewer_profile_minimum_requirements': { 
+                    'profile_minimum_requirements': { 
                         'value': {
                             'relations': True,
                             'publications': True,

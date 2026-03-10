@@ -102,7 +102,7 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_custom_sections = False
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
-        self.invited_reviewer_profile_minimum_requirements = {}
+        self.profile_minimum_requirements = {}
 
     def set_main_settings(self, request_note):
         self.name = request_note.content['official_venue_name']['value']
@@ -1981,7 +1981,7 @@ OpenReview Team'''
                                                 venue_client.post_edge(invitation_edge)
 
                                             ## Check venue profile requirements
-                                            min_requirements = venue_group.content.get('invited_reviewer_profile_minimum_requirements', {}).get('value')
+                                            min_requirements = venue_group.content.get('profile_minimum_requirements', {}).get('value')
                                             is_incomplete = bool(min_requirements) and not openreview.tools.check_profile_minimum_requirements(user_profile, min_requirements)
 
                                             if is_incomplete:

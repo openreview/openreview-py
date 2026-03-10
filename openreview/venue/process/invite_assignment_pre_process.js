@@ -13,7 +13,7 @@ async function process(client, edge, invitation) {
   const conflictPolicy = domain.content?.[`${committeeRole}_conflict_policy`]?.value
   const conflictNYears = domain.content?.[`${committeeRole}_conflict_n_years`]?.value
   const quota = domain.content?.[`submission_assignment_max_${committeeRole}`]?.value
-  const profileReqs = domain.content.invited_reviewer_profile_minimum_requirements?.value
+  const profileReqs = domain.content.profile_minimum_requirements?.value
 
   if (edge.ddate && edge.label !== inviteLabel) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Cannot cancel the invitation since it has status: "${edge.label}"` }))
