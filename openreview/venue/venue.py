@@ -1005,10 +1005,10 @@ Total Errors: {len(errors)}
 
         if self.use_area_chairs:
             venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
-            venue_matching.setup(ignore_checks=True)
+            venue_matching.setup(skip_checks=True)
 
         venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
-        venue_matching.setup(ignore_checks=True)
+        venue_matching.setup(skip_checks=True)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         if committee_id is None:
