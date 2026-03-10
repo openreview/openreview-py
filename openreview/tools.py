@@ -295,7 +295,7 @@ def check_profile_minimum_requirements(profile, min_requirements):
     - 'history': profile must have at least 1 history entry
     - 'relations': profile must have at least 1 relations entry
     - 'expertise': profile must have at least 1 expertise entry
-    - 'publications': profile must have at least 1 public paper
+    - 'publications': profile must have at least 1 publication
     - 'active': profile must be active
 
     :param profile: Profile to check against requirements
@@ -308,12 +308,7 @@ def check_profile_minimum_requirements(profile, min_requirements):
         if not required:
             continue
 
-        if field == 'publications':
-            publications = profile.content.get('publications', [])
-            has_public = any('everyone' in pub.readers for pub in publications)
-            if not has_public:
-                return False
-        elif field in ('relations', 'expertise', 'history'):
+        if field in ('relations', 'expertise', 'history', 'publications'):
             if not profile.content.get(field):
                 return False
         elif field == 'active':
