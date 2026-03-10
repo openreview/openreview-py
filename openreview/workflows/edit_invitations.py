@@ -565,7 +565,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
     
-    def set_edit_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None):
+    def set_edit_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None, include_authors=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Readers'
@@ -601,10 +601,11 @@ class EditInvitationsBuilder(object):
         if include_signatures:
             reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
 
-        reply_readers.extend([
-            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
-            {'value': 'everyone', 'optional': True, 'description': 'Public'}
-        ])
+        if include_authors:
+            reply_readers.extend([
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
+                {'value': 'everyone', 'optional': True, 'description': 'Public'}
+            ])
 
         invitation = Invitation(
             id = invitation_id,

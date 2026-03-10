@@ -2423,9 +2423,21 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert '_bibtex' not in submissions[0].content
 
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release')
-        assert inv and inv.content['source']['value'] == 'accepted_submissions'
+        assert inv and not inv.content
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Which_Submissions')
+
+        #before triggering invitation, select which invitations to release
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Submission_Release/Which_Submissions',
+            content={
+                'source_submissions': {
+                    'value': 'accepted_submissions'
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
@@ -2435,7 +2447,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
