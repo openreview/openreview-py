@@ -8,7 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "v6.82.1"
+    default: "v6.82.0"
   python-version:
     type: string
     default: "3.13.1"
