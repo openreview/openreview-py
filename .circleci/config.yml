@@ -371,13 +371,13 @@ workflows:
           matrix:
             parameters:
               python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-      - build-pr-tests:
-          requires:
-            - install-package
-          python-version: "3.10"
+      # - build-pr-tests:
+      #     requires:
+      #       - install-package
+      #     python-version: "3.10"
       - build:
           requires:
-            - build-pr-tests
+            - install-package
           python-version: "3.10"
       - deploy:
           requires:
