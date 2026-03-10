@@ -1792,13 +1792,31 @@ Total Errors: {len(errors)}
     @classmethod
     def check_new_profiles(Venue, client):
 
-        def send_incomplete_profile_notification(venue_group, edge, submission, user_profile):
+        def send_incomplete_profile_notification(venue_group, edge, submission, user_profile, min_requirements):
+            missing = []
+            for field, required in (min_requirements or {}).items():
+                if not required:
+                    continue
+                if field == 'publications' and not user_profile.content.get('publications'):
+                    missing.append('You don\'t have a publication visible to the venue. You may import papers from DBLP or ORCID, see: https://docs.openreview.net/')
+                elif field == 'relations' and not user_profile.content.get('relations'):
+                    missing.append('You don\'t have a relation visible to the venue. Please add a relation or update the visibility.')
+                elif field == 'expertise' and not user_profile.content.get('expertise'):
+                    missing.append('You don\'t have any expertise keywords. Please add your areas of expertise.')
+                elif field == 'history' and not user_profile.content.get('history'):
+                    missing.append('You don\'t have any employment or education history. Please add at least one entry to your profile history.')
+                elif field == 'active' and (not user_profile.state or 'active' not in user_profile.state.lower()):
+                    missing.append('Your profile is not active. Please complete profile activation.')
+            missing_text = '\n'.join(f'- {m}' for m in missing)
+
             ## Send email to reviewer
             subject=f"[{venue_group.content['subtitle']['value']}] Incomplete profile for paper {submission.number}"
             message =f'''Hi {{{{fullname}}}},
 You have accepted the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
 
-However, your profile was found to be incomplete according to {venue_group.content['subtitle']['value']} standards and the assignment is pending your profile completion. Please review your venue's profile requirements and update your profile.
+However, your profile was found to be incomplete according to {venue_group.content['subtitle']['value']} standards and the assignment is pending your profile completion. Please address the following:
+
+{missing_text}
 
 If you have any questions, please contact us as info@openreview.net.
 
@@ -1968,7 +1986,7 @@ OpenReview Team'''
 
                                             if is_incomplete:
                                                 print(f'Sending messages for incomplete profile {user_profile.id} for paper {edge.head}')
-                                                send_incomplete_profile_notification(venue_group, edge, submission, user_profile)
+                                                send_incomplete_profile_notification(venue_group, edge, submission, user_profile, min_requirements)
                                             else:
                                                 ## Check conflicts
                                                 author_profiles = openreview.tools.get_profiles(venue_client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
