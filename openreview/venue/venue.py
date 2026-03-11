@@ -992,6 +992,40 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
+    def set_assignment_invitations(self, submission_deadline):
+
+        invitation_prefix = self.support_user.replace('Support', 'Template')
+
+        if self.use_area_chairs:
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+
+            self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.area_chairs_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
+                    'committee_name': { 'value': self.area_chairs_name },
+                    'committee_pretty_name': { 'value': self.get_area_chairs_name(pretty=True) }
+                },
+                await_process=True
+            )
+
+        self.invitation_builder.set_assignment_invitation(committee_id=self.get_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*2.2))
+        self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.reviewers_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.3) },
+                    'committee_name': { 'value': self.reviewers_name },
+                    'committee_pretty_name': { 'value': self.get_reviewers_name(pretty=True) }
+                },
+                await_process=True
+            )
+
     def setup_matching_invitations(self):
 
         if self.use_area_chairs:

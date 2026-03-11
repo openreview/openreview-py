@@ -648,6 +648,11 @@ class Matching(object):
             signatures = [venue.id],
             readers = [venue.id],
             writers = [venue.id],
+            content = {
+                'committee_name': {
+                    'value': self.match_group_name
+                }
+            },
             edit = {
                 'signatures': [venue.id],
                 'readers': [venue.id],
@@ -976,6 +981,9 @@ class Matching(object):
                 }
                 }
             }
+
+        if venue.is_template_related_workflow():
+            config_inv.process = venue.invitation_builder.get_process_content('../workflows/process/assignment_configuration_process.py')
 
         invitation = venue.invitation_builder.save_invitation(config_inv)
 

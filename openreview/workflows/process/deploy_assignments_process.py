@@ -11,7 +11,9 @@ def process(client, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     support_user = invitation.invitations[0].split('Template')[0] + 'Support'
-    committee_name = domain.get_content_value('reviewers_name')
+    deployment_invitation = client.get_invitation(invitation.id.split('/Match')[0])
+    committee_name = deployment_invitation.get_content_value('committee_name')
+    # committee_name = domain.get_content_value('reviewers_name')
     committee_id = f'{venue_id}/{committee_name}'
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     status_invitation_id = domain.get_content_value('status_invitation_id')
