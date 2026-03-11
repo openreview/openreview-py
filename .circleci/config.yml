@@ -218,7 +218,7 @@ jobs:
       - image: cimg/python:<<parameters.python-version>>-node
       - image: cimg/redis:7.2
       - image: mongo:8.0
-        command: [ --replSet, rs0 ]
+        command: [ --replSet, rs0, --wiredTigerCacheSizeGB, "0.5" ]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
@@ -302,7 +302,7 @@ jobs:
       - image: cimg/python:<<parameters.python-version>>-node
       - image: cimg/redis:7.2
       - image: mongo:8.0
-        command: [ --replSet, rs0 ]
+        command: [ --replSet, rs0, --wiredTigerCacheSizeGB, "0.5" ]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
