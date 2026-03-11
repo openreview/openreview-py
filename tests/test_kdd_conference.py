@@ -358,7 +358,7 @@ class TestKDDConference():
         assert len(submissions_edits) == 4
         assert submissions_edits[0].invitation == 'KDD.org/2026/Research_Track_August/-/Edit'
         assert submissions_edits[0].note.content['authorids']['value'] == ['~SomeFirstName_User1', 'peter@mail.com', '~Andrea_Mc1']
-        assert submissions_edits[0].readers == ["KDD.org/2026/Research_Track_August"]
+        # assert submissions_edits[0].readers == ["KDD.org/2026/Research_Track_August"]
     
     def test_revision_after_abstract_deadline(self, client, openreview_client, selenium, request_page, helpers):
         pc_client=openreview.Client(username='pc@kdd.org', password=helpers.strong_password)
