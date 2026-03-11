@@ -100,8 +100,11 @@ class Helpers:
         finished_status = ['error', 'ok']
         counter = 0
         wait_time = 0.5
-        cycles = 60 * 1 / wait_time # print every 1 minutes
-        while True:
+        max_wait_seconds = 300  # 5 minute timeout
+        max_cycles = int(max_wait_seconds / wait_time)
+        log_every = int(60 / wait_time)  # print every 1 minute
+        process_logs = []
+        while counter < max_cycles:
             process_logs = [l for l in super_client.get_process_logs(id=edit_id, invitation=invitation) if l.get('processIndex', 0) == process_index][:count]
             if len(process_logs) == count and all(process_log['status'] in finished_status for process_log in process_logs):
                 for process_log in process_logs:
@@ -109,13 +112,13 @@ class Helpers:
                     return
 
             time.sleep(wait_time)
-            if counter % cycles == 0:
+            if counter % log_every == 0:
                 print(f'Logs in API 2 queue: {len(process_logs)}', edit_id)
                 sys.stdout.flush()
 
             counter += 1
 
-        assert process_logs[0]['status'] == (expected_status), process_logs[0]['log']
+        raise TimeoutError(f'await_queue_edit timed out after {max_wait_seconds}s waiting for edit_id={edit_id}, invitation={invitation}. Last process logs: {process_logs}')
 
     # This method is used to check if the count value passed as param is correct. It can directly be used to
     # replace the await_queue_edit method in the tests.
