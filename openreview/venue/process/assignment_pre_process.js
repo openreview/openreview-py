@@ -65,9 +65,9 @@ async function process(client, edge, invitation) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can remove assignment, signatory groups not found for ${edge.tail}` }))
     }
 
-    const { notes } = await client.getNotes({ invitation: `${submissionGroupId}/-/` + reviewName, signatures: anonGroups[0].id, limit: 1 })
+    const { count: noteCount } = await client.getNotes({ invitation: `${submissionGroupId}/-/` + reviewName, signatures: anonGroups[0].id, count: true })
 
-    if (notes?.length > 0) {
+    if (noteCount > 0) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not remove assignment, the user ${edge.tail} already posted a ${reviewName.replace('_', ' ')}` }))
     }
   }
