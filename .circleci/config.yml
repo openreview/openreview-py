@@ -114,7 +114,7 @@ commands:
           name: Start API V2
           command: |
             cd ~/openreview-v2
-            npm run cleanStart
+            NODE_OPTIONS="--max-old-space-size=2048" npm run cleanStart
           background: true
       - run:
           name: Wait for API V2 to start
