@@ -3866,6 +3866,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ac_scores['~AC_ARROne1']['weight'] == 3
         assert rev_scores['~Reviewer_ARROne1']['weight'] == 3
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
 
         # For 2, assert that the affinity scores on June reviewers/aes is 0
@@ -3880,6 +3881,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ac_scores['~AC_ARRTwo1']['weight'] == 0
         assert rev_scores['~Reviewer_ARRTwo1']['weight'] == 0
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Senior_Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
 
         # Check for existence of track information
