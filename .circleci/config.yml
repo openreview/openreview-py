@@ -332,12 +332,12 @@ jobs:
                 --driver Firefox --driver-path tests/drivers/geckodriver
             fi
 
-            # # Container 1: ONLY test_arr_venue_v2.py (~38 min)
-            # if [ "$CIRCLE_NODE_INDEX" -eq 1 ]; then
-            #   pytest tests/test_arr_venue_v2.py --durations=0 -v -o junit_family=legacy \
-            #     --junitxml=test-reports/junit-arr.xml \
-            #     --driver Firefox --driver-path tests/drivers/geckodriver
-            # fi
+            # Container 1: ONLY test_arr_venue_v2.py (~38 min)
+            if [ "$CIRCLE_NODE_INDEX" -eq 1 ]; then
+              pytest tests/test_arr_venue_v2.py --durations=0 -v -o junit_family=legacy \
+                --junitxml=test-reports/junit-arr.xml \
+                --driver Firefox --driver-path tests/drivers/geckodriver
+            fi
 
             # # Containers 2-9: Everything else distributed by timings
             # if [ "$CIRCLE_NODE_INDEX" -ge 2 ]; then
