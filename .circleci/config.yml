@@ -102,7 +102,7 @@ commands:
           name: Start API V1
           command: |
             cd ~/openreview
-            npm run cleanStart
+            NODE_OPTIONS="--max-old-space-size=1024" npm run cleanStart
           background: true
       - run:
           name: Wait for API V1 to start
@@ -132,13 +132,13 @@ commands:
             cd ~/openreview-web
             npm install
             cp .env.example .env.local
-            NODE_ENV=production SUPER_USER=openreview.net npm run build
+            NODE_OPTIONS="--max-old-space-size=1024" NODE_ENV=production SUPER_USER=openreview.net npm run build
       - run:
           name: Start openreview-web
           command: |
             cd ~/openreview-web
             export NEXT_PORT=3030
-            NODE_ENV=production SUPER_USER=openreview.net npm run start
+            NODE_OPTIONS="--max-old-space-size=512" NODE_ENV=production SUPER_USER=openreview.net npm run start
           background: true
 
   install-geckodriver:
