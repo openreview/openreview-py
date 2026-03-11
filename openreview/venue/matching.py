@@ -979,7 +979,7 @@ class Matching(object):
 
         invitation = venue.invitation_builder.save_invitation(config_inv)
 
-    def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, skip_checks=False):
+    def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None):
 
         venue = self.venue
         client = self.client
@@ -1001,7 +1001,7 @@ class Matching(object):
 
         submissions = self._get_submissions()
 
-        if not skip_checks:
+        if not venue.is_template_related_workflow():
             if not self.match_group.members:
                 raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
             if self.alternate_matching_group:
