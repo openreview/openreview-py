@@ -341,7 +341,7 @@ jobs:
             
             # Containers 2-9: Everything else distributed by timings
             if [ "$CIRCLE_NODE_INDEX" -ge 2 ]; then
-              TEST_FILES=$(circleci tests glob "tests/test_*.py" | grep -v "test_journal.py\|test_arr_venue_v2.py")
+              TEST_FILES=$(circleci tests glob "tests/test_*.py" | grep -v "test_journal.py\|test_arr_venue_v2.py\|test_venue_with_tracks.py")
               echo "$TEST_FILES" | circleci tests run \
                 --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" \
                 --verbose --split-by=timings
