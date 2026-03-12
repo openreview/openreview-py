@@ -95,6 +95,17 @@ commands:
             echo export PATH="$PATH:/usr/local/bin/firefox" >> ~/.bashrc
             source ~/.bashrc
 
+  build-openreview-web:
+    description: "Install and build openreview-web (before APIs start)"
+    steps:
+      - run:
+          name: Install and build openreview-web
+          command: |
+            cd ~/openreview-web
+            npm install
+            cp .env.example .env.local
+            NODE_OPTIONS="--max-old-space-size=1024" NODE_ENV=production SUPER_USER=openreview.net npm run build
+
   start-apis:
     description: "Start and wait for API V1 and V2"
     steps:
@@ -102,19 +113,28 @@ commands:
           name: Start API V1
           command: |
             cd ~/openreview
-            NODE_OPTIONS="--max-old-space-size=1024" npm run cleanStart
+            # Container 0 in the parallel build job runs only test_journal.py which does not use API V1
+            if [ "${CIRCLE_NODE_TOTAL:-1}" -gt 1 ] && [ "${CIRCLE_NODE_INDEX:-0}" -eq 0 ]; then
+              echo "Skipping API V1 for journal-only container (saves ~1 GB)"
+            else
+              NODE_OPTIONS="--max-old-space-size=768" npm run cleanStart
+            fi
           background: true
       - run:
           name: Wait for API V1 to start
           shell: /bin/sh
           command: |
-            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3000
+            if [ "${CIRCLE_NODE_TOTAL:-1}" -gt 1 ] && [ "${CIRCLE_NODE_INDEX:-0}" -eq 0 ]; then
+              echo "API V1 not started, skipping wait"
+            else
+              wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3000
+            fi
             :
       - run:
           name: Start API V2
           command: |
             cd ~/openreview-v2
-            NODE_OPTIONS="--max-old-space-size=2048" npm run cleanStart
+            NODE_OPTIONS="--max-old-space-size=1536" npm run cleanStart
           background: true
       - run:
           name: Wait for API V2 to start
@@ -124,15 +144,8 @@ commands:
             :
 
   setup-openreview-web:
-    description: "Install, build, and start openreview-web"
+    description: "Start openreview-web"
     steps:
-      - run:
-          name: Install openreview-web
-          command: |
-            cd ~/openreview-web
-            npm install
-            cp .env.example .env.local
-            NODE_OPTIONS="--max-old-space-size=1024" NODE_ENV=production SUPER_USER=openreview.net npm run build
       - run:
           name: Start openreview-web
           command: |
@@ -267,6 +280,7 @@ jobs:
       - clone-repos
       - create-directories
       - install-firefox
+      - build-openreview-web
       - start-apis
       - setup-openreview-web
       - install-geckodriver
@@ -315,6 +329,7 @@ jobs:
       - clone-repos
       - create-directories
       - install-firefox
+      - build-openreview-web
       - start-apis
       - setup-openreview-web
       - install-geckodriver
