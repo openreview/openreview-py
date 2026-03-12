@@ -113,22 +113,13 @@ commands:
           name: Start API V1
           command: |
             cd ~/openreview
-            # Container 0 in the parallel build job runs only test_journal.py which does not use API V1
-            if [ "${CIRCLE_NODE_TOTAL:-1}" -gt 1 ] && [ "${CIRCLE_NODE_INDEX:-0}" -eq 0 ]; then
-              echo "Skipping API V1 for journal-only container (saves ~1 GB)"
-            else
-              NODE_OPTIONS="--max-old-space-size=768" npm run cleanStart
-            fi
+            NODE_OPTIONS="--max-old-space-size=768" npm run cleanStart
           background: true
       - run:
           name: Wait for API V1 to start
           shell: /bin/sh
           command: |
-            if [ "${CIRCLE_NODE_TOTAL:-1}" -gt 1 ] && [ "${CIRCLE_NODE_INDEX:-0}" -eq 0 ]; then
-              echo "API V1 not started, skipping wait"
-            else
-              wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3000
-            fi
+            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3000
             :
       - run:
           name: Start API V2
