@@ -131,7 +131,30 @@ def process(client, edit, invitation):
         deployed_label = [
             note for note in client.get_all_notes(invitation=f"{role}/-/Assignment_Configuration", domain=venue_id) if 'Deployed' in note.content['status']['value']
         ][0].content['title']['value']
-        aggregate_score_edges = client.get_all_edges(invitation=f"{role}/-/Aggregate_Score", label=deployed_label, tail=user, domain=venue_id)
+        submissions = client.get_all_notes(
+            invitation=f"{venue_id}/-/Submission",
+            details='directReplies',
+            domain=venue_id
+        )
+
+        eligible_submission_ids = []
+        for submission in submissions:
+            official_reviews = [
+                r for r in submission.details.get('directReplies', [])
+                if any('Official_Review' in i for i in r.get('invitations', []))
+            ]
+            if len(official_reviews) < 3:
+                eligible_submission_ids.append(submission.id)
+
+        aggregate_score_edges = []
+        for submission_id in eligible_submission_ids:
+            aggregate_score_edges.extend(client.get_all_edges(
+                invitation=f"{role}/-/Aggregate_Score",
+                label=deployed_label,
+                head=submission_id,
+                tail=user,
+                domain=venue_id
+            ))
 
         edges_to_post = []
         for edge in aggregate_score_edges:
