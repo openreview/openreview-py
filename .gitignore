@@ -19,3 +19,4 @@ TCA_key.json
 .claude/worktrees/
 .claude/settings.local.json
 .claude/agent-memory/
+.claude/test-runner-env.json
