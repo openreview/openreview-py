@@ -230,6 +230,7 @@ class TestNeurIPS2026Conference():
                 readers=['NeurIPS.cc/2026/Conference', 'NeurIPS.cc/2026/Conference/LLM'],
                 writers=['NeurIPS.cc/2026/Conference'],
                 signatures=['NeurIPS.cc/2026/Conference'],
+                signatories=['NeurIPS.cc/2026/Conference'],
                 members=[]
             )
         )
@@ -278,15 +279,53 @@ class TestNeurIPS2026Conference():
             writers=['NeurIPS.cc/2026/Conference'],
             signatures=['NeurIPS.cc/2026/Conference'],
             invitation=openreview.api.Invitation(
-                id='NeurIPS.cc/2026/Conference/Submission1/-/LLM_Interaction',
+                id=f'{anon_group_id_1}/-/LLM_Interaction',
+                process='''def process(client, edit, invitation):
+
+    domain = client.get_group(edit.domain)
+
+    if edit.signatures[0] == domain.id + '/LLM' or edit.signatures[0] == domain.id:
+        return
+
+    ## post a reply
+    replied_edit = client.post_note_edit(
+        invitation=invitation.id,
+        signatures=[domain.id + '/LLM'],
+        note=openreview.api.Note(
+            replyto=edit.note.id,
+            content={
+                'message': {
+                    'value': 'Thinking...'
+                }
+            }
+        )
+    )
+    import time
+
+    time.sleep(5)
+
+    replied_edit = client.get_note_edit(replied_edit['id'])
+
+    replied_edit.note.content['message']['value'] = f'Preparing response...'
+    replied_edit.note.id = None
+    client.post_edit(replied_edit)
+
+    time.sleep(5)
+
+    replied_edit.note.content['message']['value'] = f'Response from LLM to message {edit.note.content["message"]["value"]}'
+    replied_edit.note.id = None
+    client.post_edit(replied_edit)
+
+
+''',
                 invitees=[
                     'NeurIPS.cc/2026/Conference/LLM',
-                    'NeurIPS.cc/2026/Conference/Submission1/LLM_Interactive_Reviewers'
+                    anon_group_id_1
                 ],
                 readers=[
                     'NeurIPS.cc/2026/Conference',
                     'NeurIPS.cc/2026/Conference/LLM',
-                    'NeurIPS.cc/2026/Conference/Submission1/LLM_Interactive_Reviewers'
+                    anon_group_id_1
                 ],
                 writers=['NeurIPS.cc/2026/Conference'],
                 signatures=['NeurIPS.cc/2026/Conference'],
@@ -294,7 +333,7 @@ class TestNeurIPS2026Conference():
                     'signatures': {
                         'param': {
                             'items': [
-                                {'prefix': 'NeurIPS.cc/2026/Conference/Submission1/Reviewer_', 'optional': True},
+                                {'value': anon_group_id_1, 'optional': True},
                                 {'value': 'NeurIPS.cc/2026/Conference/LLM', 'optional': True}
                             ]
                         }
@@ -302,7 +341,7 @@ class TestNeurIPS2026Conference():
                     'readers': [
                         'NeurIPS.cc/2026/Conference',
                         'NeurIPS.cc/2026/Conference/LLM',
-                        '${2/signatures}'
+                        anon_group_id_1
                     ],
                     'writers': ['NeurIPS.cc/2026/Conference'],
                     'note': {
@@ -313,7 +352,11 @@ class TestNeurIPS2026Conference():
                             }
                         },
                         'signatures': ['${3/signatures}'],
-                        'readers': ['${3/readers}'],
+                        'readers': [
+                            'NeurIPS.cc/2026/Conference',
+                            'NeurIPS.cc/2026/Conference/LLM',
+                            anon_group_id_1
+                        ],
                         'writers': ['NeurIPS.cc/2026/Conference'],
                         'content': {
                             'message': {
@@ -334,7 +377,7 @@ class TestNeurIPS2026Conference():
 
         # Verify the invitation was created correctly
         llm_invitation = openreview_client.get_invitation(
-            'NeurIPS.cc/2026/Conference/Submission1/-/LLM_Interaction'
+            f'{anon_group_id_1}/-/LLM_Interaction'
         )
         assert llm_invitation
 
@@ -347,7 +390,7 @@ class TestNeurIPS2026Conference():
                     {
                         'id': 'discussion',
                         'label': 'Discussion',
-                        'filter': '-invitations:NeurIPS.cc/2026/Conference/Submission${note.number}/-/LLM_Interaction',
+                        'filter': '-invitations:NeurIPS.cc/2026/Conference/Submission${note.number}/Reviewer_${_}/-/LLM_Interaction',
                         'nesting': 3,
                         'sort': 'date-desc',
                         'layout': 'default',
@@ -356,12 +399,12 @@ class TestNeurIPS2026Conference():
                     {
                         'id': 'llm_interaction',
                         'label': 'LLM Interaction Chat',
-                        'filter': 'invitations:NeurIPS.cc/2026/Conference/Submission${note.number}/-/LLM_Interaction',
+                        'filter': f'invitations:{anon_group_id_1}/-/LLM_Interaction',
                         'nesting': 1,
                         'sort': 'date-asc',
                         'layout': 'chat',
                         'live': True,
-                        'expandedInvitations': ['NeurIPS.cc/2026/Conference/Submission${note.number}/-/LLM_Interaction']
+                        'expandedInvitations': [f'{anon_group_id_1}/-/LLM_Interaction']
                     }
                 ]
             )
