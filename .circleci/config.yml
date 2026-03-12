@@ -5,7 +5,7 @@ orbs:
 parameters:
   openreview-api-v1-branch:
     type: string
-    default: "master"
+    default: "0c8d9d5b4c51649f78c09a7fbe8e2fbdeb2b507a"
   openreview-api-v2-branch:
     type: string
     default: "52f5a852d7451412bdc241b11c6a6a7a55af5174"
@@ -57,6 +57,7 @@ commands:
           name: Clone openreview-web
           command: |
             git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+            cd ~/openreview-web && git checkout 1e910dc64417df2cc1bee423e893cf283d8f3650
 
   create-directories:
     description: "Create API directories"
