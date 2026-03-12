@@ -8,7 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "main"
+    default: "52f5a852d7451412bdc241b11c6a6a7a55af5174"
   python-version:
     type: string
     default: "3.13.1"
@@ -309,6 +309,9 @@ jobs:
           transport.host: localhost
     steps:
       - checkout
+      - run:
+          name: Checkout specific commit
+          command: git checkout 84c493e417ce275089b5f14e8a4f78e423677491
       - setup-mongodb
       - clone-repos
       - create-directories
