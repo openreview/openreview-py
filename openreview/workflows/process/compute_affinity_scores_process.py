@@ -38,6 +38,17 @@ def process(client, invitation):
 
     venue = openreview.helpers.get_venue(client, venue_id, support_user)
 
+    match_group = client.get_group(committee_id)
+
+    if not match_group.members:
+        print(f'No members found in the {committee_name} group. No affinnity scores were computed')
+        return
+
+    submissions, num_submissions = client.get_notes(content={ 'venueid': venue.get_submission_venue_id() }, limit=1, with_count=True, domain=venue_id)
+    if not num_submissions:
+        print(f'No submissions found for the venue {venue_id}. No affinity scores were computed')
+        return
+
     matching_status = {}
 
     try:
