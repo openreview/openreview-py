@@ -8,7 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "main"
+    default: "v6.79.2"
   python-version:
     type: string
     default: "3.13.1"
@@ -123,7 +123,7 @@ commands:
           name: Start API V2
           command: |
             cd ~/openreview-v2
-            NODE_OPTIONS="--max-old-space-size=1536" npm run cleanStart 2>&1 | tee /tmp/api-v2-startup.log
+            NODE_OPTIONS="--max-old-space-size=4096" npm run cleanStart 2>&1 | tee /tmp/api-v2-startup.log
           background: true
       - run:
           name: Wait for API V2 to start
