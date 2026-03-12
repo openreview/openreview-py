@@ -113,26 +113,22 @@ commands:
           name: Start API V1
           command: |
             cd ~/openreview
-            NODE_OPTIONS="--max-old-space-size=768" npm run cleanStart
+            NODE_OPTIONS="--max-old-space-size=768" npm run cleanStart 2>&1 | tee /tmp/api-v1-startup.log
           background: true
       - run:
           name: Wait for API V1 to start
-          shell: /bin/sh
           command: |
-            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3000
-            :
+            timeout 300 bash -c 'until grep -q "Setup Complete!" /tmp/api-v1-startup.log 2>/dev/null; do sleep 2; done'
       - run:
           name: Start API V2
           command: |
             cd ~/openreview-v2
-            NODE_OPTIONS="--max-old-space-size=1536" npm run cleanStart
+            NODE_OPTIONS="--max-old-space-size=1536" npm run cleanStart 2>&1 | tee /tmp/api-v2-startup.log
           background: true
       - run:
           name: Wait for API V2 to start
-          shell: /bin/sh
           command: |
-            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3001
-            :
+            timeout 300 bash -c 'until grep -q "Setup Complete!" /tmp/api-v2-startup.log 2>/dev/null; do sleep 2; done'
 
   setup-openreview-web:
     description: "Start openreview-web"
