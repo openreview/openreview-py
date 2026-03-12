@@ -13,7 +13,7 @@ cov.xml
 tests/drivers/geckodriver
 tests/data/*.csv
 TCA_key.json
-.vscode/
+.vscode/settings.json
 
 # Claude Code
 .claude/worktrees/
