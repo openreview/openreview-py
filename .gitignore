@@ -15,4 +15,8 @@ tests/data/*.csv
 TCA_key.json
 .vscode/launch.json
 .vscode/settings.json
+
+# Claude Code
+.claude/worktrees/
 .claude/settings.local.json
+.claude/agent-memory/

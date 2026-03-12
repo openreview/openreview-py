@@ -5,15 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "args": [ "tests/test_iclr_conference_v2.py" ],
             "name": "pytests",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "program": "/opt/homebrew/bin/pytest",
+            "python": "/opt/miniconda3/envs/openreview-py/bin/python",
+            "module": "pytest",
+            "args": ["tests/test_edges.py"],
             "console": "integratedTerminal",
             "justMyCode": true,
-            "purpose": [ "debug-test" ],
-            "env": {"PYTEST_ADDOPTS": "--no-cov"}
+            "purpose": ["debug-test"]
         }
     ]
 }
