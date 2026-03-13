@@ -42,8 +42,8 @@ class Assignment(object):
         affinity_score_edges = []
         entries = self.compute_affinity_scores(note, self.journal.get_action_editors_id(), job_id=job_id)
         for entry in entries:
-            action_editor = entry.get('user')
-            if note.id == entry.get('submission'):
+            action_editor = entry.get('entityB')
+            if note.id == entry.get('entityA'):
                 edge = Edge(invitation = self.journal.get_ae_affinity_score_id(),
                     readers = [venue_id, authors_id, action_editor],
                     writers = [venue_id],
@@ -95,8 +95,8 @@ class Assignment(object):
         affinity_score_edges = []
         entries = self.compute_affinity_scores(note, self.journal.get_reviewers_id(), job_id=job_id)
         for entry in entries:
-            reviewer = entry.get('user')
-            if note.id == entry.get('submission'):
+            reviewer = entry.get('entityB')
+            if note.id == entry.get('entityA'):
                 edge = Edge(invitation = self.journal.get_reviewer_affinity_score_id(),
                     readers = [venue_id, action_editors_id, reviewer],
                     nonreaders = [authors_id],

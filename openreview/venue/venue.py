@@ -1992,8 +1992,8 @@ OpenReview Team'''
         unique_scores = []
         seen_pairs = set()
         for r in results['results']:
-            paper_id_a = r['match_submission']
-            paper_id_b = r['submission']
+            paper_id_a = r['entityA']
+            paper_id_b = r['entityB']
             score = float(r['score'])
 
             # Remove self-matches
