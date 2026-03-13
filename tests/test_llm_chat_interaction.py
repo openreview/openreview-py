@@ -283,36 +283,9 @@ class TestLLMChatInteraction():
                 readers=['NeurIPS.cc/2026/Conference'],
                 writers=['NeurIPS.cc/2026/Conference'],
                 signatures=['NeurIPS.cc/2026/Conference'],
-                edit={
-                    'signatures': ['NeurIPS.cc/2026/Conference'],
-                    'readers': ['NeurIPS.cc/2026/Conference'],
-                    'writers': ['NeurIPS.cc/2026/Conference'],
-                    'content': {
-                        'note_id': {
-                            'value': {
-                                'param': {
-                                    'type': 'string'
-                                }
-                            }
-                        },
-                        'note_number': {
-                            'value': {
-                                'param': {
-                                    'type': 'integer'
-                                }
-                            }
-                        },
-                        'anon_group_id': {
-                            'value': {
-                                'param': {
-                                    'type': 'string'
-                                }
-                            }
-                        }
-                    },
-                    'invitation': {
-                        'id': '${2/content/anon_group_id/value}/-/LLM_Interaction',
-                        'process': '''def process(client, edit, invitation):
+                content={
+                    'process_script': {
+                        'value': '''def process(client, edit, invitation):
 
     domain = client.get_group(edit.domain)
 
@@ -347,8 +320,47 @@ class TestLLMChatInteraction():
     replied_edit.note.content['message']['value'] = f'Response from LLM to message {edit.note.content["message"]["value"]}'
     replied_edit.note.id = None
     client.post_edit(replied_edit)
-
-
+'''
+                    }
+                },
+                edit={
+                    'signatures': ['NeurIPS.cc/2026/Conference'],
+                    'readers': ['NeurIPS.cc/2026/Conference'],
+                    'writers': ['NeurIPS.cc/2026/Conference'],
+                    'content': {
+                        'note_id': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        },
+                        'note_number': {
+                            'value': {
+                                'param': {
+                                    'type': 'integer'
+                                }
+                            }
+                        },
+                        'anon_group_id': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        }
+                    },
+                    'invitation': {
+                        'id': '${2/content/anon_group_id/value}/-/LLM_Interaction',
+                        'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
 ''',
                         'invitees': [
                             'NeurIPS.cc/2026/Conference/LLM',
