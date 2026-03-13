@@ -154,7 +154,7 @@ def process(client, invitation):
     print(f'update {len(submissions)} submissions')
     openreview.tools.concurrent_requests(edit_submission, source_submissions, desc='post_submission_edit')
 
-    print(f'{len(submissions)} submissions updated successfully')
+    print(f'{len(source_submissions)} submissions updated successfully')
 
     decision_options = decision_invitation.content.get('decision_options', {}).get('value')
     decision_heading_map = { openreview.tools.decision_to_venue(short_name, o):o for o in decision_options}
