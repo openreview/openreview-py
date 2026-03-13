@@ -1,4 +1,5 @@
 // Webfield component
+// ARR Webfield
 const committee_name = entity.id.split('/').slice(-1)[0]
 const assignmentInvitation = domain.content.sac_paper_assignments?.value ? null : domain.content.senior_area_chairs_assignment_id?.value
 

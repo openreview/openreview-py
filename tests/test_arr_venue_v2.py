@@ -312,6 +312,21 @@ class TestARRVenueV2():
                 license = 'CC BY-SA 4.0'
         ))
 
+        area_chairs_group_id = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs'
+        original_area_chairs_webfield = openreview_client.get_group(area_chairs_group_id).web
+        custom_area_chairs_webfield = original_area_chairs_webfield + '// custom ARR Area Chairs webfield\n'
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id=area_chairs_group_id,
+                web=custom_area_chairs_webfield
+            )
+        )
+        assert openreview_client.get_group(area_chairs_group_id).web == custom_area_chairs_webfield
+
         # Update submission fields
         ## override file size for tests
         arr_submission_content['software']['value']['param']['maxSize'] = 50
@@ -348,6 +363,7 @@ class TestARRVenueV2():
             }
         ))
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
+        assert openreview_client.get_group(area_chairs_group_id).web == custom_area_chairs_webfield
 
         post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Post_Submission')
         assert 'TLDR' in post_submission_invitation.edit['note']['content']
