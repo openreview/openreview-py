@@ -114,7 +114,7 @@ def process(client, invitation):
                     'value': venue
                 }
             }
-            if submission.content.get('bibtex', {}).get('value'):
+            if submission.content.get('_bibtex', {}).get('value'):
                 note_content['_bibtex'] = {
                     'value': openreview.tools.generate_bibtex(
                         note=submission,

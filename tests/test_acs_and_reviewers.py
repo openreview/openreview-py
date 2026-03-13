@@ -773,6 +773,9 @@ For more details, please check the following links:
         grouped_edges = openreview_client.get_grouped_edges(invitation='EFGH.cc/2025/Conference/Action_Editors/-/Assignment', groupby='id')
         assert len(grouped_edges) == 10
 
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=2)
+
+
     def test_review_stage(self, openreview_client, helpers):
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
@@ -792,7 +795,7 @@ For more details, please check the following links:
                 'readers': { 'value': ['everyone'] }
             }
         )
-        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=3)
 
         now = datetime.datetime.now()
         # manually trigger Submission_Chage_Before_Reviewing
@@ -805,7 +808,7 @@ For more details, please check the following links:
                 signatures=['EFGH.cc/2025/Conference']
             )
         )
-        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
         assert submissions[0].readers == ['everyone']
@@ -1284,12 +1287,13 @@ url={https://openreview.net/forum?id='''
 anonymous'''+str(year)+'''paper,
 title={Paper title 3},
 author={Anonymous},
-booktitle={Submitted to The EFGH Conference},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''     
 
-        valid_bibtex = valid_bibtex +   submissions[0].forum + '''}
+        valid_bibtex = valid_bibtex +   submissions[2].forum + '''}
 }'''
+
+        assert submissions[2].content['_bibtex']['value'] == valid_bibtex  
 
         endorsement_tags = openreview_client.get_tags(invitation='EFGH.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags
