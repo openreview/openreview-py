@@ -3020,7 +3020,7 @@ class OpenReviewClient(object):
 
             if 'Completed' == status:
                 return self.get_expertise_results(job_id, baseurl=base_url)
-            if 'Error' == status:
+            if 'Error' in status:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
