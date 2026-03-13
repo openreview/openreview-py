@@ -2013,8 +2013,12 @@ def should_match_invitation_source(client, invitation, submission, note=None):
 
     source = get_invitation_source(invitation, domain)
 
-    if submission.content['venueid']['value'] not in source.get('venueid', []):
-        return False
+    if isinstance(source.get('venueid'), list):
+        if submission.content['venueid']['value'] not in source.get('venueid', []):
+            return False
+    elif isinstance(source.get('venueid'), str):
+        if submission.content['venueid']['value'] != source.get('venueid'):
+            return False
 
     if 'reply_to' in source and not note:
         return False
@@ -2055,6 +2059,7 @@ def should_match_invitation_source(client, invitation, submission, note=None):
     content_keys = invitation.edit.get('content', {}).keys()
     
     if not content_keys:
+        print('invitation has no content keys, skipping source matching')
         return False
     
     if 'withdrawalId' in content_keys:
