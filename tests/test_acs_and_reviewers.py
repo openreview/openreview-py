@@ -172,6 +172,17 @@ class TestSimpleDualAnonymous():
 
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Message')
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Members')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Aggregate_Score')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Proposed_Assignment')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Custom_Max_Papers')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Custom_User_Demands')
+
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Message')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Members')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Aggregate_Score')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Proposed_Assignment')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Custom_Max_Papers')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Custom_User_Demands')
 
         domain_content = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference').content
         assert domain_content['reviewers_invited_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited'
@@ -558,14 +569,6 @@ For more details, please check the following links:
 
         openreview_client.add_members_to_group('EFGH.cc/2025/Conference/Action_Editors', ['areachair_two@efgh.cc', 'areachair_three@efgh.cc'])
 
-        #upload affinity scores file
-        submissions = openreview_client.get_all_notes(content={'venueid': 'EFGH.cc/2025/Conference/Submission'})
-        with open(os.path.join(os.path.dirname(__file__), 'data/ac_scores_venue.csv'), 'w') as file_handle:
-            writer = csv.writer(file_handle)
-            for submission in submissions:
-                for rev in openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors').members:
-                    writer.writerow([submission.id, rev, round(random.random(), 2)])
-
         conflicts_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict')
         assert conflicts_invitation
         domain_content = openreview_client.get_group('EFGH.cc/2025/Conference').content
@@ -642,6 +645,133 @@ For more details, please check the following links:
         paper_conflicts = openreview_client.get_edges(invitation='EFGH.cc/2025/Conference/Reviewers/-/Conflict', head=submissions[0].id)
         assert 'EFGH.cc/2025/Conference/Submission1/Action_Editors' in paper_conflicts[0].readers
         assert paper_conflicts[0].readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Action_Editors',  paper_conflicts[0].tail]
+
+    def test_area_chairs_deployment(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Bid')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Assignment')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Assignment/Dates')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Proposed_Assignment')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Aggregate_Score')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Custom_Max_Papers')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Custom_User_Demands')
+        inv =  openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Assignment_Configuration')
+        assert inv and inv.content['committee_name']['value'] == 'Action_Editors'
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Action_Editors_Assignment_Deployment')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Action_Editors_Assignment_Deployment/Dates')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Action_Editors_Assignment_Deployment/Match')
+
+        #submit Assignment_Configuration
+        config_note = openreview_client.post_note_edit(
+            invitation='EFGH.cc/2025/Conference/Action_Editors/-/Assignment_Configuration',
+            readers=['EFGH.cc/2025/Conference'],
+            writers=['EFGH.cc/2025/Conference'],
+            signatures=['EFGH.cc/2025/Conference'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'ac-matching-1'},
+                    'user_demand': { 'value': '1'},
+                    'max_papers': { 'value': '10'},
+                    'min_papers': { 'value': '5'},
+                    'alternates': { 'value': '2'},
+                    'paper_invitation': { 'value': 'EFGH.cc/2025/Conference/-/Submission&content.venueid=EFGH.cc/2025/Conference/Submission'},
+                    'match_group': { 'value': 'EFGH.cc/2025/Conference/Action_Editors'},
+                    'scores_specification': {
+                        'value': {
+                            'EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score': {
+                                'weight': 1,
+                                'default': 0
+                            },
+                            'EFGH.cc/2025/Conference/Action_Editors/-/Bid': {
+                                'weight': 1,
+                                'default': 0,
+                                'translate_map': {
+                                    'Very High': 1.0,
+                                    'High': 0.5,
+                                    'Neutral': 0.0,
+                                    'Low': -0.5,
+                                    'Very Low': -1.0
+                                }
+                            }
+                        }
+                    },
+                    'aggregate_score_invitation': { 'value': 'EFGH.cc/2025/Conference/Action_Editors/-/Aggregate_Score'},
+                    'conflicts_invitation': { 'value': 'EFGH.cc/2025/Conference/Action_Editors/-/Conflict'},
+                    'solver': { 'value': 'FairFlow'},
+                    'status': { 'value': 'Initialized'},
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, invitation=f'EFGH.cc/2025/Conference/Action_Editors/-/Assignment_Configuration')
+
+        match_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Action_Editors_Assignment_Deployment/Match')
+        assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['ac-matching-1']
+
+        # post proposed assignments to test deployment process
+        submissions = pc_client.get_all_notes(content={'venueid': 'EFGH.cc/2025/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 10
+
+        ac = ['~ACOne_EFGH1', '~ACTwo_EFGH1', '~ACThree_EFGH1']
+        for idx in range(10):
+            openreview_client.post_edge(openreview.api.Edge(
+                    invitation = 'EFGH.cc/2025/Conference/Action_Editors/-/Proposed_Assignment',
+                    head =  submissions[idx].id,
+                    tail = ac[idx % 3],
+                    signatures = ['EFGH.cc/2025/Conference/Program_Chairs'],
+                    weight = 1,
+                    label = 'ac-matching-1'
+                ))
+
+        assert len(openreview_client.get_grouped_edges(
+            invitation='EFGH.cc/2025/Conference/Action_Editors/-/Proposed_Assignment',
+            groupby='id'
+        )) == 10
+
+        assert len(openreview_client.get_grouped_edges(
+            invitation='EFGH.cc/2025/Conference/Action_Editors/-/Assignment',
+            groupby='id'
+        )) == 0
+
+        #change status of configuration to complete
+        openreview_client.post_note_edit(
+            invitation='EFGH.cc/2025/Conference/-/Edit',
+            signatures=['EFGH.cc/2025/Conference'],
+            note=openreview.api.Note(
+                id=config_note['note']['id'],
+                content = {
+                    'status': {
+                        'value': 'Complete'
+                    }
+                }
+            )
+        )
+
+        # deploy assignments
+        openreview_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Action_Editors_Assignment_Deployment/Match',
+            content = {
+                'match_name': { 'value': 'ac-matching-1' }
+            }
+        )
+        helpers.await_queue_edit(openreview_client,  edit_id=f'EFGH.cc/2025/Conference/-/Action_Editors_Assignment_Deployment-0-1', count=2)
+
+        now = datetime.datetime.now()
+        now = openreview.tools.datetime_millis(now)
+
+        openreview_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Action_Editors_Assignment_Deployment/Dates',
+            content = {
+                'activation_date': { 'value': now },
+            }
+        )
+        helpers.await_queue_edit(openreview_client,  edit_id=f'EFGH.cc/2025/Conference/-/Action_Editors_Assignment_Deployment-0-1', count=3)
+
+        grouped_edges = openreview_client.get_grouped_edges(invitation='EFGH.cc/2025/Conference/Action_Editors/-/Assignment', groupby='id')
+        assert len(grouped_edges) == 10
 
     def test_review_stage(self, openreview_client, helpers):
 

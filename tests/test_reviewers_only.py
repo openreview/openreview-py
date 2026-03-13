@@ -350,6 +350,10 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Members')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Chairs/-/Members')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Aggregate_Score')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Proposed_Assignment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_Max_Papers')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_User_Demands')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee')
 
