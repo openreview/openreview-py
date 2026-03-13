@@ -167,8 +167,105 @@ class ARR(object):
         )
         workflow.set_workflow()
 
-    @staticmethod
-    def handle_insufficient_reviews(client, venue_id, meta_invitation_id, paper_number,
+    def process_author_response_extension(self, invitation):
+        """
+        Author Response Extension Management Process
+
+        This process runs on a cron schedule to:
+        1. Keep Official_Comment open for papers with <3 reviews
+        2. Keep Review_Issue_Report open for papers with <3 reviews
+        3. Close Official_Comment/Review_Issue_Report based on 3rd review date for papers with 3+ reviews
+
+        The process re-opens invitations if they were closed by other processes (e.g., setup_rebuttal_end.py)
+        """
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
+        cdate = invitation.cdate
+
+        # Check if invitation is active
+        if cdate > now:
+            print(f'Author response extension process not yet active, cdate: {cdate}')
+            return
+
+        # Fetch all submissions with replies
+        submissions = self.client.get_all_notes(
+            invitation=self.get_submission_id(),
+            details='directReplies',
+            sort='number:asc'
+        )
+
+        print(f'Processing {len(submissions)} total submissions')
+
+        # Read delays from invitation content
+        author_response_delay = invitation.content['author_response_delay_ms']['value']
+        reviewer_response_delay = invitation.content['reviewer_response_delay_ms']['value']
+        review_issue_report_delay = invitation.content['review_issue_report_delay_ms']['value']
+
+        # Constants for timing
+        two_weeks_millis = openreview.tools.datetime_millis(
+            datetime.datetime.now() + datetime.timedelta(days=14)
+        )
+
+        review_name = self.review_stage.child_invitations_name
+        comment_name = self.comment_stage.official_comment_name
+
+        # Process each submission
+        for submission in submissions:
+            paper_number = submission.number
+
+            try:
+                review_invitation_id = self.get_invitation_id(name=review_name, number=paper_number)
+                reviews = [
+                    openreview.api.Note.from_json(reply)
+                    for reply in submission.details.get('directReplies', [])
+                    if not reply.get('ddate') and review_invitation_id in reply.get('invitations', [])
+                ]
+
+                # Sort reviews by tcdate
+                reviews.sort(key=lambda r: r.tcdate or 0)
+
+                review_count = len(reviews)
+                print(f'Paper {paper_number}: {review_count} reviews found')
+
+                if review_count < 3:
+                    # CASE 1: Papers with < 3 reviews - keep everything open
+                    self.handle_insufficient_reviews(
+                        paper_number, reviews, comment_name, two_weeks_millis, now
+                    )
+                else:
+                    # CASE 2: Papers with 3+ reviews - use 3rd review timing
+                    third_review = reviews[2]
+                    third_review_tcdate = third_review.tcdate or 0
+
+                    print(f'Paper {paper_number}: Using 3rd review date {third_review_tcdate}')
+
+                    self.handle_sufficient_reviews(
+                        paper_number, reviews, comment_name,
+                        third_review_tcdate, now,
+                        author_response_delay, reviewer_response_delay, review_issue_report_delay
+                    )
+
+            except Exception as e:
+                print(f'Error processing paper {paper_number}: {str(e)}')
+                continue
+
+        print(f'Completed author response extension management for {self.id}')
+
+    def _get_review_issue_report_invitations(self, reviews):
+        for review in reviews:
+            review_number = review.number
+            if review_number is None or not review.invitations:
+                continue
+
+            review_prefix = review.invitations[0].replace('/-/', '/') + str(review_number)
+            invitation = openreview.tools.get_invitation(
+                self.client,
+                self.get_invitation_id(name='Review_Issue_Report', prefix=review_prefix)
+            )
+
+            if invitation:
+                yield review_number, invitation
+
+    def handle_insufficient_reviews(self, paper_number, reviews, comment_name,
                                     two_weeks_millis, now_millis):
         """
         Handle papers with < 3 reviews by keeping Official_Comment and Review_Issue_Report open
@@ -177,15 +274,15 @@ class ARR(object):
 
         # Open Official_Comment for authors
         try:
-            invitation = client.get_invitation(
-                f"{venue_id}/Submission{paper_number}/-/Official_Comment"
+            invitation = self.client.get_invitation(
+                self.get_invitation_id(name=comment_name, number=paper_number)
             )
 
             needs_update = False
             edit_params = {}
 
             # Check invitees
-            authors_group = f"{venue_id}/Submission{paper_number}/Authors"
+            authors_group = self.get_authors_id(paper_number)
             if authors_group not in invitation.invitees:
                 edit_params['invitees'] = {'add': [authors_group]}
                 needs_update = True
@@ -237,14 +334,14 @@ class ARR(object):
                 print(f'  - Adding Authors to Official_Comment signatures')
 
             if needs_update:
-                client.post_invitation_edit(
-                    invitations=meta_invitation_id,
-                    readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
+                self.client.post_invitation_edit(
+                    invitations=self.get_meta_invitation_id(),
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
                     invitation=openreview.api.Invitation(
                         id=invitation.id,
-                        signatures=[venue_id],
+                        signatures=[self.id],
                         **edit_params
                     )
                 )
@@ -255,54 +352,43 @@ class ARR(object):
         except Exception as e:
             print(f'  - Error updating Official_Comment for paper {paper_number}: {str(e)}')
 
-        # Open Review_Issue_Report invitations for each review (1-10)
-        for review_number in range(1, 11):
-            try:
-                invitation = client.get_invitation(
-                    f"{venue_id}/Submission{paper_number}/Official_Review{review_number}/-/Review_Issue_Report"
-                )
+        for review_number, invitation in self._get_review_issue_report_invitations(reviews):
+            needs_update = False
+            edit_params = {}
 
-                needs_update = False
-                edit_params = {}
+            # Check if not yet activated
+            if invitation.cdate > now_millis:
+                edit_params['cdate'] = now_millis
+                needs_update = True
+                print(f'  - Activating Review_Issue_Report for Review{review_number}')
 
-                # Check if not yet activated
-                if invitation.cdate > now_millis:
-                    edit_params['cdate'] = now_millis
-                    needs_update = True
-                    print(f'  - Activating Review_Issue_Report for Review{review_number}')
+            # Check if expired
+            if invitation.expdate is None or invitation.expdate <= now_millis:
+                edit_params['expdate'] = two_weeks_millis
+                needs_update = True
+                print(f'  - Setting Review_Issue_Report expdate to ~2 weeks for Review{review_number}')
 
-                # Check if expired
-                if invitation.expdate <= now_millis:
-                    edit_params['expdate'] = two_weeks_millis
-                    needs_update = True
-                    print(f'  - Setting Review_Issue_Report expdate to ~2 weeks for Review{review_number}')
-
-                if needs_update:
-                    client.post_invitation_edit(
-                        invitations=meta_invitation_id,
-                        readers=[venue_id],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        invitation=openreview.api.Invitation(
-                            id=invitation.id,
-                            signatures=[venue_id],
-                            **edit_params
-                        )
+            if needs_update:
+                self.client.post_invitation_edit(
+                    invitations=self.get_meta_invitation_id(),
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    invitation=openreview.api.Invitation(
+                        id=invitation.id,
+                        signatures=[self.id],
+                        **edit_params
                     )
-                    print(f'  - Updated Review_Issue_Report for Review{review_number}')
+                )
+                print(f'  - Updated Review_Issue_Report for Review{review_number}')
 
-            except Exception as e:
-                # Review invitation doesn't exist, skip silently
-                continue
-
-    @staticmethod
-    def handle_sufficient_reviews(client, venue_id, meta_invitation_id, paper_number,
-                                  third_review_tcdate, review_count, now_millis,
+    def handle_sufficient_reviews(self, paper_number, reviews, comment_name,
+                                  third_review_tcdate, now_millis,
                                   three_days_millis, four_days_millis, five_days_millis):
         """
         Handle papers with 3+ reviews by closing based on 3rd review date
         """
-        print(f'Paper {paper_number}: Checking based on 3rd review (total reviews: {review_count})')
+        print(f'Paper {paper_number}: Checking based on 3rd review (total reviews: {len(reviews)})')
 
         # Calculate closure dates
         author_response_close = third_review_tcdate + three_days_millis
@@ -315,13 +401,13 @@ class ARR(object):
 
         # Handle Official_Comment invitation
         try:
-            invitation = client.get_invitation(
-                f"{venue_id}/Submission{paper_number}/-/Official_Comment"
+            invitation = self.client.get_invitation(
+                self.get_invitation_id(name=comment_name, number=paper_number)
             )
 
             needs_update = False
             edit_params = {}
-            authors_group = f"{venue_id}/Submission{paper_number}/Authors"
+            authors_group = self.get_authors_id(paper_number)
 
             # Remove authors from invitees/signatures/outer readers after 3 days
             if now_millis > author_response_close:
@@ -377,14 +463,14 @@ class ARR(object):
                     print(f'  - Removing Authors from Official_Comment inner readers')
 
             if needs_update:
-                client.post_invitation_edit(
-                    invitations=meta_invitation_id,
-                    readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
+                self.client.post_invitation_edit(
+                    invitations=self.get_meta_invitation_id(),
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
                     invitation=openreview.api.Invitation(
                         id=invitation.id,
-                        signatures=[venue_id],
+                        signatures=[self.id],
                         **edit_params
                     )
                 )
@@ -395,30 +481,20 @@ class ARR(object):
         except Exception as e:
             print(f'  - Error updating Official_Comment for paper {paper_number}: {str(e)}')
 
-        # Handle Review_Issue_Report invitations (1-10 reviews)
-        for review_number in range(1, 11):
-            try:
-                invitation = client.get_invitation(
-                    f"{venue_id}/Submission{paper_number}/Official_Review{review_number}/-/Review_Issue_Report"
-                )
-
-                if invitation.expdate != review_issue_close:
-                    client.post_invitation_edit(
-                        invitations=meta_invitation_id,
-                        readers=[venue_id],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        invitation=openreview.api.Invitation(
-                            id=invitation.id,
-                            signatures=[venue_id],
-                            expdate=review_issue_close
-                        )
+        for review_number, invitation in self._get_review_issue_report_invitations(reviews):
+            if invitation.expdate != review_issue_close:
+                self.client.post_invitation_edit(
+                    invitations=self.get_meta_invitation_id(),
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    invitation=openreview.api.Invitation(
+                        id=invitation.id,
+                        signatures=[self.id],
+                        expdate=review_issue_close
                     )
-                    print(f'  - Set Review_Issue_Report expdate for Review{review_number}')
-
-            except Exception as e:
-                # Review invitation doesn't exist, skip silently
-                continue
+                )
+                print(f'  - Set Review_Issue_Report expdate for Review{review_number}')
 
     def get_id(self):
         return self.venue.get_id()

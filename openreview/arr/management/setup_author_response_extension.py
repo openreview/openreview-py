@@ -1,5 +1,4 @@
 def process(client, invitation):
-    from openreview.arr.arr import ARR
     """
     Author Response Extension Management Process
 
@@ -21,65 +20,16 @@ def process(client, invitation):
         print(f'Author response extension process not yet active, cdate: {cdate}')
         return
 
-    # Get domain and venue information
     domain = client.get_group(invitation.domain)
-    venue_id = domain.id
-    meta_invitation_id = domain.content['meta_invitation_id']['value']
+    request_form_id = domain.content['request_form_id']['value']
 
-    # Fetch all submissions with replies
-    submissions = client.get_all_notes(
-        invitation=f"{venue_id}/-/Submission",
-        details='directReplies',
-        sort='number:asc'
+    client_v1 = openreview.Client(
+        baseurl=openreview.tools.get_base_urls(client)[0],
+        token=client.token
     )
 
-    print(f'Processing {len(submissions)} total submissions')
+    request_form = client_v1.get_note(request_form_id)
+    support_group = request_form.invitation.split('/-/')[0]
+    venue = openreview.helpers.get_conference(client_v1, request_form_id, support_group)
 
-    # Read delays from invitation content
-    author_response_delay = invitation.content['author_response_delay_ms']['value']
-    reviewer_response_delay = invitation.content['reviewer_response_delay_ms']['value']
-    review_issue_report_delay = invitation.content['review_issue_report_delay_ms']['value']
-
-    # Constants for timing
-    TWO_WEEKS_MILLIS = openreview.tools.datetime_millis(
-        datetime.datetime.now() + datetime.timedelta(days=14)
-    )
-
-    # Process each submission
-    for submission in submissions:
-        paper_number = submission.number
-
-        try:
-            # Extract Official_Review notes from replies
-            reviews = [r for r in submission.details.get('directReplies', []) if any('Official_Review' in i for i in r.get('invitations', []))]
-
-            # Sort reviews by tcdate
-            reviews.sort(key=lambda r: r.get('tcdate', 0))
-
-            review_count = len(reviews)
-            print(f'Paper {paper_number}: {review_count} reviews found')
-
-            if review_count < 3:
-                # CASE 1: Papers with < 3 reviews - keep everything open
-                ARR.handle_insufficient_reviews(
-                    client, venue_id, meta_invitation_id, paper_number,
-                    TWO_WEEKS_MILLIS, now
-                )
-            else:
-                # CASE 2: Papers with 3+ reviews - use 3rd review timing
-                third_review = reviews[2]
-                third_review_tcdate = third_review.get('tcdate', 0)
-
-                print(f'Paper {paper_number}: Using 3rd review date {third_review_tcdate}')
-
-                ARR.handle_sufficient_reviews(
-                    client, venue_id, meta_invitation_id, paper_number,
-                    third_review_tcdate, review_count, now,
-                    author_response_delay, reviewer_response_delay, review_issue_report_delay
-                )
-
-        except Exception as e:
-            print(f'Error processing paper {paper_number}: {str(e)}')
-            continue
-
-    print(f'Completed author response extension management for {venue_id}')
+    venue.process_author_response_extension(invitation)
