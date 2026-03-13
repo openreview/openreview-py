@@ -6,7 +6,7 @@ import time
 from selenium.webdriver.common.by import By
 
 
-class TestNeurIPS2026Conference():
+class TestLLMChatInteraction():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
