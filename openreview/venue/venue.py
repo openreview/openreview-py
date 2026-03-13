@@ -11,6 +11,7 @@ from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 import numpy as np
+import editdistance
 import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
@@ -2063,8 +2064,10 @@ OpenReview Team'''
 
             # Write header
             writer.writerow([
-                f'{short_name_a} id', f'{short_name_b} id', 
+                f'{short_name_a} id', f'{short_name_b} id',
                 'Score',
+                'Title Word Edit Distance', 'Title Word Edit Distance Normalized',
+                'Abstract Word Edit Distance', 'Abstract Word Edit Distance Normalized',
                 'Matching Authors (if any)',
                 f'{short_name_a} authors', f'{short_name_b} authors',
                 f'{short_name_a} title', f'{short_name_b} title',
@@ -2104,9 +2107,24 @@ OpenReview Team'''
                 if author_overlap_only and not overlap:
                     continue
 
+                # Compute word-level edit distances
+                title_words_a = title_a.lower().split()
+                title_words_b = title_b.lower().split()
+                title_dist = editdistance.eval(title_words_a, title_words_b)
+                title_max_words = max(len(title_words_a), len(title_words_b))
+                title_norm = round(1 - title_dist / title_max_words, 4) if title_max_words > 0 else 1.0
+
+                abstract_words_a = abstract_a.lower().split()
+                abstract_words_b = abstract_b.lower().split()
+                abstract_dist = editdistance.eval(abstract_words_a, abstract_words_b)
+                abstract_max_words = max(len(abstract_words_a), len(abstract_words_b))
+                abstract_norm = round(1 - abstract_dist / abstract_max_words, 4) if abstract_max_words > 0 else 1.0
+
                 writer.writerow([
-                    paper_id_a, paper_id_b, 
-                    score, 
+                    paper_id_a, paper_id_b,
+                    round(score, 4),
+                    title_dist, title_norm,
+                    abstract_dist, abstract_norm,
                     overlap_str,
                     authors_str_a, authors_str_b,
                     title_a, title_b,

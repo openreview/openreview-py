@@ -21,7 +21,8 @@ dependencies = [
     "tld>=0.12",
     "pyjwt",
     "numpy",
-    "litellm==1.76.1"
+    "litellm==1.76.1",
+    "editdistance"
 ]
 
 [project.urls]
