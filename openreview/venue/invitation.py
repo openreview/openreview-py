@@ -4330,6 +4330,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         )
 
         recommendation_invitation = self.save_invitation(recommendation_invitation, replacement=True)
+        return recommendation_invitation
         
     def set_group_recruitment_invitations(self, committee_name):
         

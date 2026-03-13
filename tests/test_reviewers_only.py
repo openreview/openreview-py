@@ -608,6 +608,47 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                 )
             )
 
+    def test_add_and_remove_program_chairs(self, openreview_client, helpers):
+
+        # add a program chair
+        pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        edit = pc_client.post_group_edit(
+            invitation='ABCD.cc/2025/Conference/Program_Chairs/-/Members',
+            signatures=['ABCD.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={
+                    'append': ['new_pc@abcd.cc']
+                }
+            ),
+        )
+
+        pc_group = pc_client.get_group('ABCD.cc/2025/Conference/Program_Chairs')
+        assert len(pc_group.members) == 2
+
+        # remove a program chair
+        edit = pc_client.post_group_edit(
+            invitation='ABCD.cc/2025/Conference/Program_Chairs/-/Members',
+            signatures=['ABCD.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={
+                    'remove': ['new_pc@abcd.cc', 'programchair@abcd.cc']
+                }
+            ),
+        )
+
+        pc_group = openreview_client.get_group('ABCD.cc/2025/Conference/Program_Chairs')
+        assert len(pc_group.members) == 0
+
+        edit = openreview_client.post_group_edit(
+            invitation='ABCD.cc/2025/Conference/Program_Chairs/-/Members',
+            signatures=['ABCD.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={
+                    'append': ['programchair@abcd.cc']
+                }
+            ),
+        )        
+
     def test_recruit_reviewers(self, openreview_client, helpers, selenium, request_page):
 
         # use invitation to recruit reviewers
@@ -1038,6 +1079,55 @@ For more details, please check the following links:
         
         messages = openreview_client.get_messages(subject='Test message to all authors')
         assert len(messages) == 12        
+
+    def test_edit_submission_updates_author_group(self, openreview_client, test_client, helpers):
+        '''Test that editing an existing edit to add a new author updates the author group'''
+        
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        
+        # Get the first submission
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+        
+        # Check initial author group members
+        author_group = openreview_client.get_group(f'ABCD.cc/2025/Conference/Submission{submission.number}/Authors')
+        initial_members = set(author_group.members)
+        assert '~SomeFirstName_User1' in initial_members
+        assert '~Andrea_Amazon1' in initial_members
+        
+        # Create a new user to add as co-author
+        helpers.create_user('newauthor@example.com', 'NewAuthor', 'Example')
+        
+        # Get the existing edit for this submission with the Submission invitation
+        edits = openreview_client.get_note_edits(note_id=submission.id, invitation='ABCD.cc/2025/Conference/-/Submission')
+        assert len(edits) > 0
+        existing_edit = edits[0]
+        
+        # Modify the edit to add the new author
+        existing_edit.note.content['authorids']['value'] = list(submission.content['authorids']['value']) + ['~NewAuthor_Example1']
+        existing_edit.note.content['authors']['value'] = list(submission.content['authors']['value']) + ['NewAuthor Example']
+        
+        # Set readers and writers to None so the API populates them automatically with the new author
+        existing_edit.readers = None
+        existing_edit.writers = None
+        existing_edit.note.readers = None
+        existing_edit.note.writers = None
+        
+        # Post the modified edit using openreview_client (super user) since the invitation is expired
+        updated_edit = openreview_client.post_edit(existing_edit)
+        
+        # Wait for the edit to be processed
+        helpers.await_queue_edit(openreview_client, edit_id=updated_edit['id'], count=2)
+        
+        # Verify the author group has been updated with the new author
+        author_group = openreview_client.get_group(f'ABCD.cc/2025/Conference/Submission{submission.number}/Authors')
+        updated_members = set(author_group.members)
+        
+        # The new author should be in the group
+        assert '~NewAuthor_Example1' in updated_members
+        assert '~SomeFirstName_User1' in updated_members
+        assert '~Andrea_Amazon1' in updated_members
+        assert len(updated_members) == 3
 
     def test_reviewer_bidding(self, openreview_client, helpers, request_page, selenium):
 
@@ -2231,7 +2321,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             message='Test message to all accepted authors')
         
         messages = openreview_client.get_messages(subject='Test message to all accepted authors')
-        assert len(messages) == 2
+        assert len(messages) == 3
 
     def test_email_decisions(self, openreview_client, helpers):
 
@@ -2358,7 +2448,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].content['_bibtex']['value'] == '''@inproceedings{
 user'''+str(year)+'''paper,
 title={Paper title 1},
-author={SomeFirstName User and Andrea Amazon},
+author={SomeFirstName User and Andrea Amazon and NewAuthor Example},
 booktitle={The ABCD Conference},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[0].id+'''}
