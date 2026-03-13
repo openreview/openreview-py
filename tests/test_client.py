@@ -125,10 +125,15 @@ class TestClient():
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
         assert len(notes) == 0, 'notes is empty'
 
-    def test_get_profile(self, client, test_client):
+    def test_get_profile(self, client, test_client, openreview_client):
         profile = client.get_profile('test@mail.com')
         assert profile, "Could not get the profile by email"
         assert isinstance(profile, openreview.Profile)
+        assert profile.id == '~SomeFirstName_User1'
+
+        # Test case sensitivity
+        profile = openreview_client.get_profile('TEST@MAIL.COM')
+        assert profile, "Could not get the profile by capitalized email"
         assert profile.id == '~SomeFirstName_User1'
 
         profile = client.get_profile('~Super_User1')
@@ -142,7 +147,7 @@ class TestClient():
         assert openreview.tools.get_profile(client, '~Super_User1')
         assert not openreview.tools.get_profile(client, 'mbok@sss.edu')
 
-    def test_search_profiles(self, client, helpers):
+    def test_search_profiles(self, client, openreview_client, helpers):
         guest = openreview.Client()
         guest.register_user(email = 'mbok@mail.com', fullname= 'Melisa Bokk', password = helpers.strong_password)
         guest.register_user(email = 'andrew@mail.com', fullname = 'Andrew E McCallum', password = helpers.strong_password)
@@ -172,6 +177,10 @@ class TestClient():
         assert len(client.search_profiles(ids = ['~Melisa_Bok2'])) == 0
         assert len(client.search_profiles(emails = ['mail@mail.com'])) == 0
         assert len(client.search_profiles(first = 'Anna')) == 0
+
+        # Test case sensitivity
+        assert '~Melisa_Bokk1' == openreview_client.search_profiles(confirmedEmails = ['MBOK@MAIL.COM'])['mbok@mail.com'].id
+        assert '~Andrew_E_McCallum1' == openreview_client.search_profiles(emails = ['ANDREW@MAIL.COM'])['andrew@mail.com'][0].id
 
         helpers.create_user('user_a@mail.com', 'User', 'A', alternates=['users@alternate.com'])
         helpers.create_user('user_b@mail.com', 'User', 'B', alternates=['users@alternate.com'])
