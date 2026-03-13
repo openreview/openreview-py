@@ -579,8 +579,39 @@ class TestCVPRConference():
     def test_review_rating_stage(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
+        submissions = venue.get_submissions(sort='number:asc')
+
+        # Post revs for paper #1
+        for rev in ['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1']:
+            pc_client_v2.post_edge(openreview.api.Edge(
+                invitation = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Proposed_Assignment',
+                head = submissions[0].id,
+                tail = rev,
+                signatures = ['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                weight = 1,
+                label = 'rev-matching'
+            ))
+        
+        # Post revs for paper #2
+        for rev in ['~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1']:
+            pc_client_v2.post_edge(openreview.api.Edge(
+                invitation = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Proposed_Assignment',
+                head = submissions[1].id,
+                tail = rev,
+                signatures = ['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                weight = 1,
+                label = 'rev-matching'
+            ))
+
+        venue.set_assignments(assignment_title='rev-matching', committee_id='thecvf.com/CVPR/2024/Conference/Reviewers', enable_reviewer_reassignment=True)
+
+        assert openreview_client.get_edges_count(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Assignment') == 13
+
+        # enable review stage first
         pc_client.post_note(openreview.Note(
             content= {
                 'force': 'Yes',
@@ -829,8 +860,6 @@ class TestCVPRConference():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
-
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
 
         notes = pc_client_v2.get_notes(invitation=invitation.id)
         assert len(notes) == 1
@@ -1499,8 +1528,7 @@ class TestCVPRConference():
                 expdate=openreview.tools.datetime_millis(due_date + datetime.timedelta(days=1))
             )
         )
-      
-        
+
         # Secondary AC can't post meta review revision
         secondary_ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         secondary_ac_anon_group_id = secondary_ac_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_.*', signatory='ac1@cvpr.cc')[0].id
@@ -1520,3 +1548,278 @@ class TestCVPRConference():
                     }
                 )
             )
+
+    def test_invite_assignment_profile_requirements(self, client, openreview_client, helpers, test_client):
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        submissions = venue.get_submissions(sort='number:asc')
+
+        ## Add profile min requirements
+        openreview_client.post_group_edit(
+            invitation='thecvf.com/CVPR/2024/Conference/-/Edit',
+            signatures=['thecvf.com/CVPR/2024/Conference'],
+            group=openreview.api.Group(
+                id='thecvf.com/CVPR/2024/Conference',
+                content={
+                    'profile_minimum_requirements': { 
+                        'value': {
+                            'relations': True,
+                            'publications': True,
+                            'expertise': True
+                        } 
+                    }
+                }
+            )
+        )
+
+        ## Invite users with incomplete profile
+        ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
+        anon_group_id = ac_client.get_groups(prefix='thecvf.com/CVPR/2024/Conference/Submission1/Area_Chair_', signatory='~AC_CVPROne1')[0].id
+        edge = ac_client.post_edge(
+            openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='celeste@acm.org',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        edge = ac_client.post_edge(
+            openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='emily@acm.org',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        assert openreview_client.get_groups('thecvf.com/CVPR/2024/Conference/Emergency_Reviewers/Invited', member='celeste@acm.org')
+        assert openreview_client.get_groups('thecvf.com/CVPR/2024/Conference/Emergency_Reviewers/Invited', member='emily@acm.org')
+
+        ## Accept invitations
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Invitation to review paper titled "Paper title 1"')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation_fast(invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Assignment_Recruitment')
+
+        messages = openreview_client.get_messages(to='emily@acm.org', subject='[CVPR 2024] Invitation to review paper titled "Paper title 1"')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation_fast(invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Assignment_Recruitment')
+
+        ## Check pending profile creation
+        invite_edges=pc_client_v2.get_edges(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='celeste@acm.org')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Pending Sign Up'
+
+        celeste_client = helpers.create_user('celeste@acm.org', 'Celeste', 'ACM')
+        emily_client = helpers.create_user('emily@acm.org', 'Emily', 'ACM')
+
+        ## Run Job
+        openreview.venue.Venue.check_new_profiles(openreview_client)
+
+        ## Check that assignment is still pending sign up
+        invite_edges=pc_client_v2.get_edges(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='celeste@acm.org')
+        assert len(invite_edges) == 0
+
+        invite_edges=pc_client_v2.get_edges(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Celeste_ACM1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Pending Sign Up'
+
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Incomplete profile for paper 1')
+        assert messages and len(messages) == 1
+
+        ## Run Job again, check new message is sent
+        openreview.venue.Venue.check_new_profiles(openreview_client)
+
+        messages = openreview_client.get_messages(to='emily@acm.org', subject='[CVPR 2024] Incomplete profile for paper 1')
+        assert messages and len(messages) == 2
+
+        ## Update profiles
+
+        ## Profile with conflict
+        profile = celeste_client.get_profile()
+
+        profile.content['dblp'] = 'https://dblp.org/pid/000.html'
+        profile.content['relations'].append({
+            'relation': 'Advisor',
+            'name': 'SomeFirstName User',
+            'username': '~SomeFirstName_User1',
+            'start': 2024,
+            'end': None
+        })
+        profile.content.setdefault('expertise', []).append({
+            'keywords': ['nlp'],
+            'start': 2025,
+            'end': None
+        })
+        celeste_client.post_profile(profile)
+
+        ## Profile with no conflict
+        profile = emily_client.get_profile()
+
+        profile.content['dblp'] = 'https://dblp.org/pid/001.html'
+        profile.content['relations'].append({
+            'relation': 'Advisor',
+            'name': 'Reviewer CVPROne',
+            'username': '~Reviewer_CVPROne1',
+            'start': 2024,
+            'end': None
+        })
+        profile.content.setdefault('expertise', []).append({
+            'keywords': ['machine learning'],
+            'start': 2024,
+            'end': None
+        })
+        emily_client.post_profile(profile)
+
+        openreview.venue.Venue.check_new_profiles(openreview_client)
+
+        time.sleep(5)
+
+        ## Check new message sent because of missing publication
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Incomplete profile for paper 1')
+        assert messages and len(messages) == 3
+
+        ## Add publication to profiles
+        edit = celeste_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Celeste_ACM1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': f'Published paper title 1' },
+                    'abstract': { 'value': f'Published paper abstract 1' },
+                    'authors': { 'value': ['Celeste ACM', 'Emily ACM'] },
+                    'authorids': { 'value': ['~Celeste_ACM1', '~Emily_ACM1'] },
+                    'venue': { 'value': 'TheWebConf24' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+        openreview_client.post_note_edit(
+            invitation='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['openreview.net'],
+            note=openreview.api.Note(
+                id = edit['note']['id'],
+                content = {
+                    'venueid': { 'value': 'ACM.org/TheWebConf/2024/Conference' }
+                }
+            )
+        )
+
+        openreview.venue.Venue.check_new_profiles(openreview_client)
+
+        time.sleep(5)
+
+        # Check no new message was sent
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Incomplete profile for paper 1')
+        assert messages and len(messages) == 3
+
+        # Conflict detected after pending sign up and completing profile
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Conflict detected for paper 1')
+        assert messages and len(messages) == 1
+
+        invite_edges=pc_client.get_edges(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Celeste_ACM1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Conflict Detected'
+
+        messages = openreview_client.get_messages(to='emily@acm.org', subject='[CVPR 2024] Incomplete profile for paper 1')
+        assert messages and len(messages) == 3
+
+        messages = openreview_client.get_messages(to='emily@acm.org', subject='[CVPR 2024] You have been assigned as a Reviewer for paper number 1')
+        assert messages and len(messages) == 1
+
+        invite_edges=pc_client.get_edges(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Emily_ACM1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        ## Test invite assignment preprocess profile validation
+        rachel_client = helpers.create_user('rachel@acm.org', 'Rachel', 'ACM')
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite ~Rachel_ACM1, the user has an incomplete profile according to venue standards'):
+            edge = ac_client.post_edge(
+                openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='rachel@acm.org',
+                    label='Invitation Sent',
+                    weight=1
+            ))
+
+        ## Update profile, invite again, detect conflict
+        profile = rachel_client.get_profile()
+
+        profile.content['dblp'] = 'https://dblp.org/pid/002.html'
+        profile.content['relations'].append({
+            'relation': 'Advisor',
+            'name': 'SomeFirstName User',
+            'username': '~SomeFirstName_User1',
+            'start': 2024,
+            'end': None
+        })
+        profile.content.setdefault('expertise', []).append({
+            'keywords': ['nlp'],
+            'start': 2025,
+            'end': None
+        })
+        rachel_client.post_profile(profile)
+
+        # Checks for missing publication
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite ~Rachel_ACM1, the user has an incomplete profile according to venue standards'):
+            edge = ac_client.post_edge(
+                openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='rachel@acm.org',
+                    label='Invitation Sent',
+                    weight=1
+            ))
+        
+        ## Add publication to profile
+        edit = rachel_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Rachel_ACM1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2024, 4, 30)),
+                content = {
+                    'title': { 'value': f'Published paper title 2' },
+                    'abstract': { 'value': f'Published paper abstract 2' },
+                    'authors': { 'value': ['Rachel ACM'] },
+                    'authorids': { 'value': ['~Rachel_ACM1'] },
+                    'venue': { 'value': 'TheWebConf24' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+        openreview_client.post_note_edit(
+            invitation='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['openreview.net'],
+            note=openreview.api.Note(
+                id = edit['note']['id'],
+                content = {
+                    'venueid': { 'value': 'ACM.org/TheWebConf/2024/Conference' }
+                }
+            )
+        )
+
+        ## Detect conflict
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite ~Rachel_ACM1, the user has a conflict'):
+            edge = ac_client.post_edge(
+                openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='rachel@acm.org',
+                    label='Invitation Sent',
+                    weight=1
+            ))
