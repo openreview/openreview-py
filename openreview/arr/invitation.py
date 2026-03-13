@@ -195,11 +195,35 @@ class InvitationBuilder(object):
     def set_submission_invitation(self):
         return self.venue_invitation_builder.set_submission_invitation()
 
-    def set_post_submission_invitation(self):
-        return self.venue_invitation_builder.set_post_submission_invitation()
+    def set_post_submission_invitation(self, invitation_id=None, source=None):
+        return self.venue_invitation_builder.set_post_submission_invitation(
+            invitation_id=invitation_id,
+            source=source,
+            process_path='../arr/process/post_submission_process.py'
+        )
+
+    def set_preprint_post_submission_invitation(self):
+        return self.set_post_submission_invitation(
+            invitation_id=self.venue.get_preprint_post_submission_id(),
+            source={
+                'venueid': self.venue.get_submission_venue_id(),
+                'content': {
+                    'preprint': 'yes'
+                }
+            }
+        )
 
     def set_pc_submission_revision_invitation(self):
         return self.venue_invitation_builder.set_pc_submission_revision_invitation()
+
+    def set_submission_message_invitation(self):
+        return self.venue_invitation_builder.set_submission_message_invitation()
+
+    def set_iThenticate_plagiarism_check_invitation(self):
+        return self.venue_invitation_builder.set_iThenticate_plagiarism_check_invitation()
+
+    def set_submission_deletion_invitation(self, submission_revision_stage):
+        return self.venue_invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
 
     def set_review_invitation(self):
         return self.venue_invitation_builder.set_review_invitation()
