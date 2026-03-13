@@ -3,6 +3,7 @@ import openreview
 import pytest
 import datetime
 import time
+from selenium.webdriver.common.by import By
 
 
 class TestNeurIPS2026Conference():
@@ -198,7 +199,7 @@ class TestNeurIPS2026Conference():
         assert '~LLM_ReviewerSecond1' in reviewer_group.members
         assert '~LLM_ReviewerThird1' in reviewer_group.members
 
-    def test_llm_interaction_test(self, helpers, openreview_client):
+    def test_llm_interaction_test(self, helpers, openreview_client, selenium, request_page):
 
         # Get anon group IDs for reviewer1 and reviewer2
         reviewer1_client = openreview.api.OpenReviewClient(
@@ -269,18 +270,49 @@ class TestNeurIPS2026Conference():
         assert len(submissions) == 1
         submission = submissions[0]
 
-        # Create the LLM_Interaction note edit invitation with:
-        # - invitees: LLM group and LLM_Interactive_Reviewers group
-        # - note readers: LLM group and LLM_Interactive_Reviewers group
-        # - note content: just a message field
+        # Create the super 'NeurIPS.cc/2026/Conference/-/LLM_Interaction' invitation
+        # that creates a per-anon-group child invitation when instantiated
         openreview_client.post_invitation_edit(
             invitations='NeurIPS.cc/2026/Conference/-/Edit',
             readers=['NeurIPS.cc/2026/Conference'],
             writers=['NeurIPS.cc/2026/Conference'],
             signatures=['NeurIPS.cc/2026/Conference'],
             invitation=openreview.api.Invitation(
-                id=f'{anon_group_id_1}/-/LLM_Interaction',
-                process='''def process(client, edit, invitation):
+                id='NeurIPS.cc/2026/Conference/-/LLM_Interaction',
+                invitees=['NeurIPS.cc/2026/Conference'],
+                readers=['NeurIPS.cc/2026/Conference'],
+                writers=['NeurIPS.cc/2026/Conference'],
+                signatures=['NeurIPS.cc/2026/Conference'],
+                edit={
+                    'signatures': ['NeurIPS.cc/2026/Conference'],
+                    'readers': ['NeurIPS.cc/2026/Conference'],
+                    'writers': ['NeurIPS.cc/2026/Conference'],
+                    'content': {
+                        'note_id': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        },
+                        'note_number': {
+                            'value': {
+                                'param': {
+                                    'type': 'integer'
+                                }
+                            }
+                        },
+                        'anon_group_id': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        }
+                    },
+                    'invitation': {
+                        'id': '${2/content/anon_group_id/value}/-/LLM_Interaction',
+                        'process': '''def process(client, edit, invitation):
 
     domain = client.get_group(edit.domain)
 
@@ -318,54 +350,56 @@ class TestNeurIPS2026Conference():
 
 
 ''',
-                invitees=[
-                    'NeurIPS.cc/2026/Conference/LLM',
-                    anon_group_id_1
-                ],
-                readers=[
-                    'NeurIPS.cc/2026/Conference',
-                    'NeurIPS.cc/2026/Conference/LLM',
-                    anon_group_id_1
-                ],
-                writers=['NeurIPS.cc/2026/Conference'],
-                signatures=['NeurIPS.cc/2026/Conference'],
-                edit={
-                    'signatures': {
-                        'param': {
-                            'items': [
-                                {'value': anon_group_id_1, 'optional': True},
-                                {'value': 'NeurIPS.cc/2026/Conference/LLM', 'optional': True}
-                            ]
-                        }
-                    },
-                    'readers': [
-                        'NeurIPS.cc/2026/Conference',
-                        'NeurIPS.cc/2026/Conference/LLM',
-                        anon_group_id_1
-                    ],
-                    'writers': ['NeurIPS.cc/2026/Conference'],
-                    'note': {
-                        'forum': submission.id,
-                        'replyto': {
-                            'param': {
-                                'withForum': submission.id,
-                            }
-                        },
-                        'signatures': ['${3/signatures}'],
+                        'invitees': [
+                            'NeurIPS.cc/2026/Conference/LLM',
+                            '${3/content/anon_group_id/value}'
+                        ],
                         'readers': [
                             'NeurIPS.cc/2026/Conference',
                             'NeurIPS.cc/2026/Conference/LLM',
-                            anon_group_id_1
+                            '${3/content/anon_group_id/value}'
                         ],
                         'writers': ['NeurIPS.cc/2026/Conference'],
-                        'content': {
-                            'message': {
-                                'order': 1,
-                                'description': 'Message',
-                                'value': {
+                        'signatures': ['NeurIPS.cc/2026/Conference'],
+                        'edit': {
+                            'signatures': {
+                                'param': {
+                                    'items': [
+                                        {'value': '${7/content/anon_group_id/value}', 'optional': True},
+                                        {'value': 'NeurIPS.cc/2026/Conference/LLM', 'optional': True}
+                                    ]
+                                }
+                            },
+                            'readers': [
+                                'NeurIPS.cc/2026/Conference',
+                                'NeurIPS.cc/2026/Conference/LLM',
+                                '${4/content/anon_group_id/value}'
+                            ],
+                            'writers': ['NeurIPS.cc/2026/Conference'],
+                            'note': {
+                                'forum': '${4/content/note_id/value}',
+                                'replyto': {
                                     'param': {
-                                        'type': 'string',
-                                        'input': 'textarea'
+                                        'withForum': '${6/content/note_id/value}'
+                                    }
+                                },
+                                'signatures': ['${3/signatures}'],
+                                'readers': [
+                                    'NeurIPS.cc/2026/Conference',
+                                    'NeurIPS.cc/2026/Conference/LLM',
+                                    '${5/content/anon_group_id/value}'
+                                ],
+                                'writers': ['NeurIPS.cc/2026/Conference'],
+                                'content': {
+                                    'message': {
+                                        'order': 1,
+                                        'description': 'Message',
+                                        'value': {
+                                            'param': {
+                                                'type': 'string',
+                                                'input': 'textarea'
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -375,11 +409,42 @@ class TestNeurIPS2026Conference():
             )
         )
 
-        # Verify the invitation was created correctly
-        llm_invitation = openreview_client.get_invitation(
-            f'{anon_group_id_1}/-/LLM_Interaction'
+        # Verify the super invitation was created
+        llm_super_invitation = openreview_client.get_invitation('NeurIPS.cc/2026/Conference/-/LLM_Interaction')
+        assert llm_super_invitation
+
+        # Instantiate the super invitation for anon_group_id_1
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2026/Conference/-/LLM_Interaction',
+            readers=['NeurIPS.cc/2026/Conference'],
+            writers=['NeurIPS.cc/2026/Conference'],
+            signatures=['NeurIPS.cc/2026/Conference'],
+            content={
+                'note_id': {'value': submission.id},
+                'note_number': {'value': submission.number},
+                'anon_group_id': {'value': anon_group_id_1}
+            }
         )
-        assert llm_invitation
+
+        # Instantiate the super invitation for anon_group_id_2
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2026/Conference/-/LLM_Interaction',
+            readers=['NeurIPS.cc/2026/Conference'],
+            writers=['NeurIPS.cc/2026/Conference'],
+            signatures=['NeurIPS.cc/2026/Conference'],
+            content={
+                'note_id': {'value': submission.id},
+                'note_number': {'value': submission.number},
+                'anon_group_id': {'value': anon_group_id_2}
+            }
+        )
+
+        # Verify both child invitations were created
+        llm_invitation_1 = openreview_client.get_invitation(f'{anon_group_id_1}/-/LLM_Interaction')
+        assert llm_invitation_1
+
+        llm_invitation_2 = openreview_client.get_invitation(f'{anon_group_id_2}/-/LLM_Interaction')
+        assert llm_invitation_2
 
         openreview_client.post_invitation_edit(
             invitations='NeurIPS.cc/2026/Conference/-/Edit',
@@ -390,7 +455,7 @@ class TestNeurIPS2026Conference():
                     {
                         'id': 'discussion',
                         'label': 'Discussion',
-                        'filter': '-invitations:NeurIPS.cc/2026/Conference/Submission${note.number}/Reviewer_${_}/-/LLM_Interaction',
+                        'filter': '-invitations:NeurIPS.cc/2026/Conference/Submission${note.number}/Reviewer_.*/-/LLM_Interaction',
                         'nesting': 3,
                         'sort': 'date-desc',
                         'layout': 'default',
@@ -399,13 +464,35 @@ class TestNeurIPS2026Conference():
                     {
                         'id': 'llm_interaction',
                         'label': 'LLM Interaction Chat',
-                        'filter': f'invitations:{anon_group_id_1}/-/LLM_Interaction',
+                        'filter': 'invitations:NeurIPS.cc/2026/Conference/Submission${note.number}/Reviewer_.*/-/LLM_Interaction',
                         'nesting': 1,
                         'sort': 'date-asc',
                         'layout': 'chat',
                         'live': True,
-                        'expandedInvitations': [f'{anon_group_id_1}/-/LLM_Interaction']
+                        'expandedInvitations': ['NeurIPS.cc/2026/Conference/Submission${note.number}/Reviewer_.*/-/LLM_Interaction']
                     }
                 ]
             )
-        )        
+        )
+
+        # Selenium: login as reviewer1 and verify the LLM Interaction Chat tab is visible
+        request_page(
+            selenium,
+            'http://localhost:3030/forum?id=' + submission.id,
+            reviewer1_client,
+            by=By.LINK_TEXT,
+            wait_for_element='LLM Interaction Chat'
+        )
+        llm_tab = selenium.find_element(By.LINK_TEXT, 'LLM Interaction Chat')
+        assert llm_tab
+
+        # Selenium: login as reviewer2 and verify the LLM Interaction Chat tab is visible
+        request_page(
+            selenium,
+            'http://localhost:3030/forum?id=' + submission.id,
+            reviewer2_client,
+            by=By.LINK_TEXT,
+            wait_for_element='LLM Interaction Chat'
+        )
+        llm_tab = selenium.find_element(By.LINK_TEXT, 'LLM Interaction Chat')
+        assert llm_tab
