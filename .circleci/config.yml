@@ -74,6 +74,17 @@ commands:
             mkdir -p ~/openreview-v2/files/temp
             mkdir -p ~/openreview-py-repo/coverage
 
+  install-nodejs:
+    description: "Install Node.js 22 via NodeSource"
+    steps:
+      - run:
+          name: Install Node.js 22
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            node --version
+            npm --version
+
   install-firefox:
     description: "Install Firefox browser"
     steps:
@@ -197,7 +208,7 @@ jobs:
       python-version:
         type: string
     docker:
-      - image: cimg/python:<<parameters.python-version>>-node
+      - image: cimg/python:<<parameters.python-version>>
     steps:
       - checkout
       - run:
@@ -215,7 +226,7 @@ jobs:
       python-version:
         type: string
     docker:
-      - image: cimg/python:<<parameters.python-version>>-node
+      - image: cimg/python:<<parameters.python-version>>
       - image: cimg/redis:7.2
       - image: mongo:8.0
         command: [ --replSet, rs0 ]
@@ -262,6 +273,7 @@ jobs:
               echo "No modified test files - skipping test environment setup"
               circleci-agent step halt
             fi
+      - install-nodejs
       - setup-mongodb
       - clone-repos
       - create-directories
@@ -299,7 +311,7 @@ jobs:
       python-version:
         type: string
     docker:
-      - image: cimg/python:<<parameters.python-version>>-node
+      - image: cimg/python:<<parameters.python-version>>
       - image: cimg/redis:7.2
       - image: mongo:8.0
         command: [ --replSet, rs0 ]
@@ -309,6 +321,7 @@ jobs:
           transport.host: localhost
     steps:
       - checkout
+      - install-nodejs
       - setup-mongodb
       - clone-repos
       - create-directories
