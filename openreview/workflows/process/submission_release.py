@@ -115,6 +115,9 @@ def process(client, invitation):
                 }
             }
             if submission.content.get('_bibtex', {}).get('value'):
+                anonymous = True
+                if not submission.content.get('authors', {}).get('readers', []):
+                    anonymous = False
                 note_content['_bibtex'] = {
                     'value': openreview.tools.generate_bibtex(
                         note=submission,
@@ -122,7 +125,7 @@ def process(client, invitation):
                         year=str(datetime.datetime.now().year),
                         url_forum=submission.forum,
                         paper_status = 'rejected',
-                        anonymous=True
+                        anonymous=anonymous
                     )
                 }
             client.post_note_edit(
