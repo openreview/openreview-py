@@ -2038,11 +2038,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['~EthicsReviewer_ARROne1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': 4 },
+                        'maximum_load_this_cycle': { 'value': 2 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     }
                 )
-            ) 
+            )
         reviewer_note_edit = reviewer_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_Alternate_ARROne1'],
@@ -2083,7 +2083,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
-        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {4}
+        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {2}
         assert '~Reviewer_ARROne1' in august_reviewer_edges
         assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {4}
         assert '~AC_ARRTwo1' in august_ac_edges
@@ -2096,7 +2096,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                     id = ethics_reviewer_note_edit['note']['id'],
                     content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
+                        'maximum_load_this_cycle': { 'value': 3 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     }
                 )
@@ -2133,7 +2133,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
-        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {5}
+        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {3}
         assert '~Reviewer_ARROne1' in august_reviewer_edges
         assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {5}
         assert '~AC_ARRTwo1' in august_ac_edges
@@ -2147,7 +2147,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     id = ethics_reviewer_note_edit['note']['id'],
                     ddate = openreview.tools.datetime_millis(now),
                     content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
+                        'maximum_load_this_cycle': { 'value': 3 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     }
                 )
@@ -3866,6 +3866,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ac_scores['~AC_ARROne1']['weight'] == 3
         assert rev_scores['~Reviewer_ARROne1']['weight'] == 3
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
 
         # For 2, assert that the affinity scores on June reviewers/aes is 0
@@ -3880,6 +3881,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ac_scores['~AC_ARRTwo1']['weight'] == 0
         assert rev_scores['~Reviewer_ARRTwo1']['weight'] == 0
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Senior_Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
 
         # Check for existence of track information
@@ -5038,11 +5040,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         messages = openreview_client.get_messages(to='reviewerethics@aclrollingreview.com', subject='[ARR - August 2023] Your ethics review has been received on your assigned Paper number: 3, Paper title: "Paper title 3"')
         assert messages and len(messages) == 1
 
-        # allow ethics chairs to invite ethics reviewers
-        conference_matching = matching.Matching(venue, openreview_client.get_group(venue.get_ethics_reviewers_id()), None)
-        conference_matching.setup_invite_assignment(hash_seed='1234', invited_committee_name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
-        venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}', is_ethics_reviewer=True)
-
+        # Ethics invite-assignment and emergency groups should be available after ethics stage setup.
         group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers')
         assert group
         assert group.readers == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs', 'aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers']

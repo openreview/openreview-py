@@ -494,6 +494,7 @@ class OpenReviewClient(object):
                 att = 'id'
             else:
                 att = 'email'
+                email_or_id = email_or_id.lower()
             params[att] = email_or_id
         response = self.session.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -587,6 +588,7 @@ class OpenReviewClient(object):
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
         if emails:
+            emails = [email.lower() for email in emails]
             full_response = []
             for email_batch in batches(emails):
                 response = self.session.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
@@ -601,6 +603,7 @@ class OpenReviewClient(object):
             return profiles_by_email
 
         if confirmedEmails:
+            confirmedEmails = [email.lower() for email in confirmedEmails]
             full_response = []
             for email_batch in batches(confirmedEmails):
                 response = self.session.post(self.profiles_search_url, json = {'confirmedEmails': email_batch}, headers = self.headers)
