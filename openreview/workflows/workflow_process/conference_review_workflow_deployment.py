@@ -214,18 +214,6 @@ def process(client, edit, invitation):
         }
     )
 
-    # client.post_invitation_edit(
-    #     invitations=f'{invitation_prefix}/-/Reviewers_Assignment_Configuration',
-    #     signatures=[invitation_prefix],
-    #     content={
-    #         'venue_id': { 'value': venue_id },
-    #         'name': { 'value': 'Assignment_Configuration' },
-    #         'submission_name': { 'value': 'Submission' },
-    #         'reviewers_name': { 'value': reviewers_name }
-    #     },
-    #     await_process=True
-    # )
-
     # remove PC access to editing the note and make note visible to PC group and Support
     client.post_note_edit(
         invitation=f'{support_user}/-/Edit',
