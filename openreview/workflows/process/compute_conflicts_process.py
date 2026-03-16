@@ -41,6 +41,17 @@ def process(client, invitation):
 
     venue = openreview.helpers.get_venue(client, venue_id, support_user)
 
+    match_group = client.get_group(committee_id)
+
+    if not match_group.members:
+        print(f'No members found in the {committee_name} group. No conflicts were computed')
+        return
+
+    submissions, num_submissions = client.get_notes(content={ 'venueid': venue.get_submission_venue_id() }, limit=1, with_count=True, domain=venue_id)
+    if not num_submissions:
+        print(f'No submissions found for the venue {venue_id}. No conflicts were computed')
+        return
+
     matching_status = {}
 
     try:
@@ -61,8 +72,6 @@ def process(client, invitation):
             matching_status['error'] = str(e)
 
     if 'error' not in matching_status:
-        match_group = client.get_group(committee_id)
-
         if len(matching_status['no_profiles']):
             num_revs = len(match_group.members) - len(matching_status['no_profiles'])
             print(f'Conflicts were successfully computed for {num_revs} users. The following users do not have a profile:', ''.join(matching_status['no_profiles']))
