@@ -144,6 +144,8 @@ class ARR(object):
         self.venue.submission_stage = self.submission_stage
         self.venue.review_stage = self.review_stage
         self.venue.bid_stages = self.bid_stages
+        if self.meta_review_stage and self.meta_review_stage.recommendation_field_name == 'recommendation':
+            self.meta_review_stage.recommendation_field_name = 'overall_assessment'
         self.venue.meta_review_stage = self.meta_review_stage
         self.venue.comment_stage = self.comment_stage
         self.venue.decision_stage = self.decision_stage
@@ -433,8 +435,7 @@ class ARR(object):
             group=openreview.api.Group(
                 id=self.venue_id,
                 content={
-                    'allow_gurobi_solver': { 'value': True },
-                    'meta_review_recommendation': { 'value': 'overall_assessment' }
+                    'allow_gurobi_solver': { 'value': True }
                 }
             )
         )
