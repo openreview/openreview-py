@@ -5,10 +5,10 @@ orbs:
 parameters:
   openreview-api-v1-branch:
     type: string
-    default: "feature/moderation-by-support"
+    default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "feature/moderation-by-support"
+    default: "main"
   python-version:
     type: string
     default: "3.13.1"
