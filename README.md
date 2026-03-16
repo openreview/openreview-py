@@ -48,10 +48,10 @@ Running the openreview-py test suite requires some initial setup. First, the Ope
 - [OpenReview API V2](https://github.com/openreview/openreview-api)
 - [OpenReview Web](https://github.com/openreview/openreview-web)
 
-Next, `pytest` along with `pytest-selenium` and `pytest-cov` have to be installed. These packages can be installed with `pip`:
+Next, install the package with test dependencies:
 
 ```bash
-pip install pytest pytest-selenium pytest-cov
+pip install -e ".[test]"
 ```
 
 Finally, you must download the proper Firefox Selenium driver for your OS [from GitHub](https://github.com/mozilla/geckodriver/releases), and place the `geckodriver` executable in the directory `openreview-py/tests/drivers`. When you are done your folder structure should look like this:

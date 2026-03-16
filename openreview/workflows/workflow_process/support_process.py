@@ -5,7 +5,7 @@ def process(client, edit, invitation):
 
     note = client.get_note(edit.note.id)
     print(note.forum)
-    baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+    baseurl = openreview.tools.get_site_url(client)
 
 
     note_edits = client.get_note_edits(note_id=note.id, invitation=invitation.id, sort='tcdate:asc')
