@@ -2,13 +2,7 @@ def process(client, edit, invitation):
 
     SUPPORT_USER_ID = ''
     REMOVAL_DECISION_INVITATION_ID = ''
-    baseurl_v1 = 'http://localhost:3000'
-
-    if 'https://devapi' in client.baseurl:
-        baseurl_v1 = 'https://devapi.openreview.net'
-    if 'https://api' in client.baseurl:
-        baseurl_v1 = 'https://api.openreview.net'                
-
+    baseurl_v1 = openreview.tools.get_base_urls(client)[0]
     client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
 
     print('Check if the name can be automatically accepted')
