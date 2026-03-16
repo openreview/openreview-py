@@ -392,37 +392,6 @@ class ARRWorkflow(object):
             "order": 57,
             "required": False
         },
-        "SAC_metareview_issue_start_date": {
-            "description": "When should the form for SAC to make structured complaints about metareviews open?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 58,
-            "required": False
-        },
-        "SAC_metareview_issue_exp_date": {
-            "description": "When should the form for SAC to make structured complaints about metareviews close?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 59,
-            "required": False
-        },
-        "author_response_extension_start_date": {
-            "description": "When should the author response extension management process become active? This should start just before the standard author response period ends.",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 60,
-            "required": False
-        },
-        "author_response_extension_end_date": {
-            "description": "When should the author response extension management process stop running?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 61,
-            "required": False
-        },
-        "author_response_extension_cron": {
-            "description": "Cron expression for how frequently the author response extension process should check papers (e.g., '0 */4 * * *' for every 4 hours). Leave empty to use default hourly schedule.",
-            "value-regex": ".*",
-            "order": 62,
-            "required": False
-        },
-
 }
 
 
@@ -1102,26 +1071,6 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('metareview_issue_start_date'),
                 exp_date=self.configuration_note.content.get('metareview_issue_exp_date')
-            ),
-            ARRStage(
-                type=ARRStage.Type.CUSTOM_STAGE,
-                required_fields=['SAC_metareview_issue_start_date', 'SAC_metareview_issue_exp_date'],
-                super_invitation_id=f"{self.venue_id}/-/SAC_Meta-Review_Issue_Report",
-                stage_arguments={
-                    'name': 'SAC_Meta-Review_Issue_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
-                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
-                    'invitees': [openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED],
-                    'readers': [
-                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                        openreview.stages.CustomStage.Participants.SIGNATURES
-                    ],
-                    'content': arr_metareview_rating_content,
-                    'notify_readers': True,
-                    'email_sacs': True
-                },
-                start_date=self.configuration_note.content.get('SAC_metareview_issue_start_date'),
-                exp_date=self.configuration_note.content.get('SAC_metareview_issue_exp_date')
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
