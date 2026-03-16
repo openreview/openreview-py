@@ -2347,7 +2347,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'Accepted',
                             'Declined.*',
                             'Pending Sign Up',
-                            'Conflict Detected'
+                            'Conflict Detected',
+                            'Already Assigned'
                         ],
                         'default': 'Invitation Sent'
                     }
