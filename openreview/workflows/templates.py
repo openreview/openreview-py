@@ -263,7 +263,6 @@ class Templates():
                                     'edit': {
                                         'note': {
                                             'readers': [
-                                                '${9/content/venue_id/value}/Program_Chairs',
                                                 '${9/content/additional_readers/value}',
                                                 '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/reviewers_name/value}',
                                                 '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/authors_name/value}'

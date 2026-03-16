@@ -133,7 +133,7 @@ class SubmissionStage(object):
         if self.Readers.EVERYONE in self.readers:
             return ['everyone']
 
-        submission_readers=[conference.id]
+        submission_readers=[]
         is_accepted = decision and openreview.tools.is_accept_decision(decision, accept_options)
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
@@ -571,7 +571,7 @@ class SubmissionRevisionStage():
         if self.revision_history_readers:
             return self.revision_history_readers
 
-        return [venue.id, venue.get_authors_id(number=number)]
+        return [venue.get_authors_id(number=number)]
 
     
     def get_content(self, api_version='2', conference=None):
@@ -710,7 +710,7 @@ class ReviewStage(object):
         if self.public:
             return ['everyone']
 
-        readers = [ conference.get_program_chairs_id()]
+        readers = []
 
         if conference.use_senior_area_chairs:
             readers.append(conference.get_senior_area_chairs_id(number = number))
@@ -838,7 +838,7 @@ class EthicsReviewStage(object):
         if self.release_to_public:
             return ['everyone']
 
-        readers = [ conference.get_program_chairs_id()]
+        readers = []
 
         if self.release_to_reviewers == self.Readers.ALL_COMMITTEE:
             if conference.use_senior_area_chairs:
@@ -1062,7 +1062,7 @@ class ReviewRatingStage(object):
         if self.public:
             return ['everyone']
 
-        readers = [ conference.get_program_chairs_id()]
+        readers = []
 
         if conference.use_area_chairs:
             readers.append('{signatures}')
@@ -1363,7 +1363,6 @@ class MetaReviewStage(object):
 
         if self.release_to_reviewers is not MetaReviewStage.Readers.NO_REVIEWERS:
             readers.append(self._get_reviewer_readers(conference, number))
-        readers.append(conference.get_program_chairs_id())
 
         return readers
     
@@ -1458,7 +1457,7 @@ class DecisionStage(object):
         if self.public:
             return ['everyone']
 
-        readers = [ conference.get_program_chairs_id()]
+        readers = []
         if self.release_to_area_chairs and conference.use_senior_area_chairs:
             readers.append(conference.get_senior_area_chairs_id(number = number))
 

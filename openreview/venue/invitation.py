@@ -145,8 +145,8 @@ class InvitationBuilder(object):
 
         content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
-        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/note/content/authorids/value}']
-        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']
+        edit_readers = ['everyone'] if submission_stage.create_groups else ['${2/note/content/authorids/value}']
+        note_readers = ['everyone'] if submission_stage.create_groups else ['${2/content/authorids/value}']
 
         submission_id = submission_stage.get_submission_id(self.venue)
         submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.now())
@@ -5159,7 +5159,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'readers': { 'param': { 'const': { 'delete': True } } }
             }
 
-        readers = [venue_id]
+        readers = []
         if venue.use_senior_area_chairs:
             readers.append(venue.get_senior_area_chairs_id(number))
         if venue.use_area_chairs:
@@ -5180,7 +5180,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }],
             edit = {
                 'signatures': [venue_id],
-                'readers': [venue_id, venue.get_authors_id('${{2/note/id}/number}')],
+                'readers': [venue.get_authors_id('${{2/note/id}/number}')],
                 'writers': [venue_id],
                 'note': {
                     'id': {

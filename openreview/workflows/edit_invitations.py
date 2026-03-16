@@ -265,9 +265,7 @@ class EditInvitationsBuilder(object):
         authors_name = self.get_content_value('authors_name', 'Authors')
         reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
 
-        readers_items = [
-            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
-        ]
+        readers_items = []
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
@@ -559,9 +557,7 @@ class EditInvitationsBuilder(object):
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
-        reply_readers = [
-            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
-        ]
+        reply_readers = []
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
@@ -874,9 +870,7 @@ class EditInvitationsBuilder(object):
         authors_name = self.get_content_value('authors_name', 'Authors')
         reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
 
-        readers_items = [
-            {'value': f'{venue_id}/Program_Chairs', 'optional': False, 'description': 'Program Chairs'}
-        ]
+        readers_items = []
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
@@ -1493,9 +1487,7 @@ class EditInvitationsBuilder(object):
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
-        reply_readers = [
-            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
-        ]
+        reply_readers = []
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
