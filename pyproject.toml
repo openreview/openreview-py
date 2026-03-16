@@ -34,6 +34,14 @@ docs = [
     "sphinx_rtd_theme",
     "nbformat"
 ]
+test = [
+    "pytest",
+    "py",
+    "pyotp",
+    "selenium",
+    "pytest-selenium",
+    "pytest-cov"
+]
 
 [tool.setuptools.package-data]
 "openreview" = ["*"]
