@@ -28,8 +28,6 @@ def process(client, invitation):
         token=client.token
     )
 
-    request_form = client_v1.get_note(request_form_id)
-    support_group = request_form.invitation.split('/-/')[0]
-    venue = openreview.helpers.get_conference(client_v1, request_form_id, support_group)
+    venue = openreview.helpers.get_conference(client_v1, request_form_id)
 
     venue.process_author_response_extension(invitation)
