@@ -2024,12 +2024,8 @@ def should_match_invitation_source(client, invitation, submission, note=None):
 
     source = get_invitation_source(invitation, domain)
 
-    if isinstance(source.get('venueid'), list):
-        if submission.content['venueid']['value'] not in source.get('venueid', []):
-            return False
-    elif isinstance(source.get('venueid'), str):
-        if submission.content['venueid']['value'] != source.get('venueid'):
-            return False
+    if submission.content['venueid']['value'] not in source.get('venueid', []):
+        return False
 
     if 'reply_to' in source and not note:
         return False
