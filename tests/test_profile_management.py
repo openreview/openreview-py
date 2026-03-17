@@ -1646,7 +1646,7 @@ computation and memory.
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
-                    'authors': { 'value': ['John Alternate Last', 'Test Client'] },
+                    'authors': { 'value': ['John Alternate Last', 'Test Client', 'Another Author'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
                 },
@@ -1739,7 +1739,7 @@ The OpenReview Team.
         assert len(publications) == 2
         assert '~John_Last1' in publications[0].writers
         assert '~John_Last1' in publications[0].signatures
-        assert ['John Last', 'Test Client'] == publications[0].content['authors']['value']
+        assert ['John Last', 'Test Client', 'Another Author'] == publications[0].content['authors']['value']
         assert ['~John_Last1', 'test@mail.com', 'another@mail.com'] == publications[0].content['authorids']['value']
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
@@ -3368,7 +3368,7 @@ The OpenReview Team.
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
-                    'authors': { 'value': ['Harold Last', 'Test Client'] },
+                    'authors': { 'value': ['Harold Last', 'Test Client', 'Another Author'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
                 },
@@ -3445,7 +3445,7 @@ The OpenReview Team.
         assert ['~SomeFirstName_User1', '~Paul_Last1', '~Harold_Last1'] == publications[0].content['authorids']['value']
         assert '~Harold_Last1' in publications[1].writers
         assert '~Harold_Last1' in publications[1].signatures
-        assert ['Harold Last', 'Test Client'] == publications[1].content['authors']['value']
+        assert ['Harold Last', 'Test Client', 'Another Author'] == publications[1].content['authors']['value']
         assert ['~Harold_Last1', 'test@mail.com', 'another@mail.com'] == publications[1].content['authorids']['value']
         assert ['Harold Last', 'Test Client'] == publications[2].content['authors']['value']
         assert ['~Harold_Last1', 'test@mail.com'] == publications[2].content['authorids']['value']
