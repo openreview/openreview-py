@@ -108,21 +108,11 @@ def process(client, edit, invitation):
 
     # create conflict and affinity score invitations
     venue.setup_matching_invitations()
+    venue.setup_all_committees_matching()
 
     venue.create_bid_stages()
 
-    venue.invitation_builder.set_assignment_invitation(committee_id=venue.get_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': f'{reviewers_name}_Assignment_Deployment' },
-            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.5) }
-        },
-        await_process=True
-    )
+    venue.set_assignment_invitations(submission_deadline)
 
     venue.create_submission_change_invitation(name='Submission_Change_Before_Reviewing', activation_date=submission_deadline + (60*60*1000*24*7*3))
 
@@ -224,20 +214,7 @@ def process(client, edit, invitation):
         }
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewers_Assignment_Configuration',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Assignment_Configuration' },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': reviewers_name }
-        },
-        await_process=True
-    )
-
     # remove PC access to editing the note and make note visible to PC group and Support
-    
     client.post_note_edit(
         invitation=f'{support_user}/-/Edit',
         signatures=[venue_id],
@@ -262,7 +239,7 @@ def process(client, edit, invitation):
         )
     )
 
-    baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+    baseurl = openreview.tools.get_site_url(client)
 
     # edit Comment invitation to have PC group as readers
     client.post_invitation_edit(
