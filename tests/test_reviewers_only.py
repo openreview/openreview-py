@@ -1042,7 +1042,7 @@ For more details, please check the following links:
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Program_Committee')]
         assert len(reviewer_groups) == 10
 
-         # hide data_release from reviewers
+        # hide data_release from reviewers
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
@@ -1081,7 +1081,6 @@ For more details, please check the following links:
 
         desk_rejection_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Desk_Rejection')
         assert len(desk_rejection_invitations) == 10
-
 
         ## test message all authors
         pc_client.post_message(
@@ -1499,6 +1498,20 @@ For more details, please check the following links:
             helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
     def test_review_stage(self, openreview_client, helpers):
+
+        # manually mark a submission as rejected, make sure it is ignored by Submission_Change_Before_Reviewing
+        submission = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', number=10)[0]
+        openreview_client.post_note_edit(
+            invitation='ABCD.cc/2025/Conference/-/Edit',
+            signatures=['ABCD.cc/2025/Conference'],
+            note=openreview.api.Note(
+                id=submission.id,
+                content={
+                    'venueid': { 'value': 'ABCD.cc/2025/Conference/Rejected_Submission' },
+                    'venue': { 'value': 'Submitted to ABCD 2025' }
+                }
+            )
+        )
         
         now = datetime.datetime.now()
         # manually trigger Submission_Chage_Before_Reviewing
@@ -1519,6 +1532,10 @@ For more details, please check the following links:
         assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
         assert not 'readers' in submissions[0].content['pdf']
         assert submissions[0].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+
+        # submission #1 still has previous readers
+        assert submissions[-1].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Program_Committee', 'ABCD.cc/2025/Conference/Submission10/Authors']
+        assert submissions[-1].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission10/Authors']
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
@@ -1857,7 +1874,8 @@ For more details, please check the following links:
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Comment-0-1', count=3)
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Official_Comment')
-        assert len(invitations) == 10
+        # these get created only for active papers, should we add a source to the official comment?
+        assert len(invitations) == 9
         inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/Submission1/-/Official_Comment')
 
         assert inv
@@ -2130,7 +2148,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Rebuttal-0-1', count=3)
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Author_Rebuttal')
-        assert len(invitations) == 10
+        assert len(invitations) == 9
 
         invitation  = openreview_client.get_invitation('ABCD.cc/2025/Conference/Submission1/-/Author_Rebuttal')
         assert invitation and invitation.edit['readers'] == [
@@ -2235,7 +2253,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             writer.writerow([submissions[0].number, 'Accept', comment['Accept']])
             writer.writerow([submissions[1].number, 'Revision Needed', comment['Revision Needed']])
             writer.writerow([submissions[2].number, 'Reject', comment['Reject']])
-            for submission in submissions[3:]:
+            for submission in submissions[3:-1]:
                 decision = random.choice(decisions)
                 writer.writerow([submission.number, decision, comment[decision]])
 
@@ -2275,6 +2293,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference/Program_Chairs'
         ]
         assert decision[0].nonreaders == ['ABCD.cc/2025/Conference/Submission1/Authors']
+
+        assert not openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission10/-/Decision', sort='number:asc')
 
         decision_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Decision_Release')
         assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
