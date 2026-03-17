@@ -34,19 +34,3 @@ def process(client, edit, invitation):
         subject=f'Your request for OpenReview service has been received.',
         message=f'''Thank you for choosing OpenReview to host your upcoming venue. We are reviewing your request and will post a comment on the request forum and send you an email when the venue is deployed. You can access the request forum here: {baseurl}/forum?id={note.id}'''
     )
-
-    short_name = note.content['abbreviated_venue_name']['value']
-    # send email to support
-    message = f'''A request for service has been submitted by {short_name}. Access the request here: {baseurl}/forum?id={note.id}
-
-'''
-    for key, value in note.content.items():
-            message += "\n{k}: {v}".format(k=key, v=value['value'])
-
-    client.post_message(
-        invitation=f'{support_user}/-/Edit',
-        signature=support_user,
-        recipients=[support_user],
-        subject=f'A request for service has been submitted by {short_name}',
-        message=message
-    )
