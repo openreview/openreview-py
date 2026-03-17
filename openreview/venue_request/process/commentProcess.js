@@ -23,7 +23,7 @@ function(){
 
     if (note.signatures[0] !== SUPPORT_GROUP) {
       var support_message = {
-        groups: [SUPPORT_GROUP],
+        groups: [SUPPORT_GROUP + '/Recipients'],
         subject: 'Comment posted to a service request: ' + forumNote.content.title,
         message: 'A comment was posted to a service request. \n\nComment title: ' + commentTitle + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
       };
