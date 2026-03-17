@@ -101,6 +101,7 @@ class OpenReviewClient(object):
         self.group_edits_url = self.baseurl + '/groups/edits'
         self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
+        self.domains_restriction_url = self.baseurl + '/domains/restriction'
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
         self.mfa_challenge_url = self.baseurl + '/mfa/challenge'
         self.mfa_verify_url = self.baseurl + '/mfa/verify'
@@ -2080,6 +2081,34 @@ class OpenReviewClient(object):
         response = self.session.post(self.venues_url, json=venue, headers=self.headers)
         response = self.__handle_response(response)
 
+        return response.json()
+
+    def restrict(self, id):
+        """
+        Restricts a domain/venue, preventing non-authorized users from accessing its data.
+
+        :param id: the domain/venue ID to restrict
+        :type id: str
+
+        :return: the API response
+        :rtype: dict
+        """
+        response = self.session.post(self.domains_restriction_url, json={'domain': id, 'action': 'restrict'}, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def unrestrict(self, id):
+        """
+        Removes the restriction from a domain/venue, restoring normal data access.
+
+        :param id: the domain/venue ID to unrestrict
+        :type id: str
+
+        :return: the API response
+        :rtype: dict
+        """
+        response = self.session.post(self.domains_restriction_url, json={'domain': id, 'action': 'unrestrict'}, headers=self.headers)
+        response = self.__handle_response(response)
         return response.json()
 
     def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
