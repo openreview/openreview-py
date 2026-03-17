@@ -184,6 +184,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert openreview_client.get_invitation('TestVenue.cc/-/提交')
 
         helpers.create_user('celeste@maileleven.com', 'Celeste', 'MartinezEleven')
+        helpers.create_user('celeste@mailetwelve.com', 'Celeste', 'MartinezTwelve')
         author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)
 
         submission_note_1 = author_client.post_note_edit(
@@ -219,7 +220,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                 content={
                     'title': { 'value': 'Paper 1 Title UPDATED' },
                     'authors': { 'value': ['Celeste MartinezEleven', 'Celeste MartinezTwelve']},
-                    'authorids': { 'value': ['~Celeste_MartinezEleven1', '~Celeste_MartinezEleven1']},
+                    'authorids': { 'value': ['~Celeste_MartinezEleven1', '~Celeste_MartinezTwelve1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'keywords': {'value': ['aa'] }
                 }
@@ -228,11 +229,11 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
 
         messages = openreview_client.get_messages(subject = 'TV 22 has received your submission titled Paper 1 Title UPDATED')
-        assert len(messages) == 1
+        assert len(messages) == 2
         assert 'Your submission to TV 22 has been updated.' in messages[0]['content']['text']
 
         authors_group = openreview_client.get_group('TestVenue.cc/提交1/Authors')
-        assert len(authors_group.members) == 1 and ['~Celeste_MartinezEleven1'] == authors_group.members
+        assert len(authors_group.members) == 2 and '~Celeste_MartinezEleven1' in authors_group.members and '~Celeste_MartinezTwelve1' in authors_group.members
 
         with pytest.raises(openreview.OpenReviewException, match=r'authorids value/1 must match pattern "~.*"'):
             submission_note_2 = author_client.post_note_edit(
