@@ -723,32 +723,6 @@ class GroupBuilder(object):
                             members=members
                             )
             self.post_group(preferred_emails_readers_group)
-    
-    def create_blocked_profile_status_group(self):
-        venue_id = self.venue_id
-
-        blocked_profile_status_group_id = self.venue.get_blocked_profile_status_id()
-        blocked_profile_status_group = openreview.tools.get_group(self.client, blocked_profile_status_group_id)
-        if not blocked_profile_status_group:
-            blocked_profile_status_group=Group(id=blocked_profile_status_group_id,
-                            readers=[venue_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[],
-                            web='''
-// Webfield component
-return {
-  component: 'TagsViewer',
-  version: 1,
-  properties: {
-    instructions:'These are the instructions',
-    title: 'This is a title'
-  }
-}
-'''
-                            )
-            self.post_group(blocked_profile_status_group)
 
     def add_to_active_venues(self):
         active_venues = self.client.get_group('active_venues')
