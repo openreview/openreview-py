@@ -102,6 +102,12 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_custom_sections = False
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
+        venue_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
+        self.homepage_webfield_path = os.path.join(venue_webfield_dir, 'homepageWebfield.js')
+        self.program_chairs_webfield_path = os.path.join(venue_webfield_dir, 'programChairsWebfield.js')
+        self.senior_area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'seniorAreaChairsWebfield.js')
+        self.area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'areachairsWebfield.js')
+        self.ethics_chairs_webfield_path = os.path.join(venue_webfield_dir, 'ethicsChairsWebfield.js')
 
     def set_main_settings(self, request_note):
         self.name = request_note.content['official_venue_name']['value']
