@@ -29,8 +29,9 @@ return {
 
 **A few tips:**
 
-- Positive bids ("High" and "Very High") will, in most cases, increase the likelihood that you will be assigned that paper.
-- Negative bids ("Low" and "Very Low") will, in most cases, decrease the likelihood that you will be assigned that paper.`
+${conflictInvitationId ? '- Papers for which you have a conflict of interest are not shown.\n' : ''}- Positive bids ("High" and "Very High") will, in most cases, increase the likelihood that you will be assigned that paper.
+- Negative bids ("Low" and "Very Low") will, in most cases, decrease the likelihood that you will be assigned that paper.
+${affinityScoreId ? '- Papers are sorted based on keyword similarity with the papers that you provided in the Expertise Selection Interface.' : ''}`
     },
     venueId: domain.id,
     submissionVenueId: domain.content.submission_venue_id?.value,
