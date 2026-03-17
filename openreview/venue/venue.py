@@ -662,12 +662,8 @@ class Venue(object):
         decision_file = self.decision_stage.decisions_file
         if decision_file:
 
-            baseurl = 'http://localhost:3000'
-            if 'https://devapi' in self.client.baseurl:
-                baseurl = 'https://devapi.openreview.net'
-            if 'https://api' in self.client.baseurl:
-                baseurl = 'https://api.openreview.net'
-            api1_client = openreview.Client(baseurl=baseurl, token=self.client.token)
+            baseurl_v1 = openreview.tools.get_base_urls(self.client)[0]
+            api1_client = openreview.Client(baseurl=baseurl_v1, token=self.client.token)
 
             if '/attachment' in decision_file:
                 decisions = api1_client.get_attachment(id=self.request_form_id, field_name='decisions_file')
@@ -993,6 +989,40 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
+    def set_assignment_invitations(self, submission_deadline):
+
+        invitation_prefix = self.support_user.replace('Support', 'Template')
+
+        if self.use_area_chairs:
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+
+            self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.area_chairs_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
+                    'committee_name': { 'value': self.area_chairs_name },
+                    'committee_pretty_name': { 'value': self.get_area_chairs_name(pretty=True) }
+                },
+                await_process=True
+            )
+
+        self.invitation_builder.set_assignment_invitation(committee_id=self.get_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*2.2))
+        self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.reviewers_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.3) },
+                    'committee_name': { 'value': self.reviewers_name },
+                    'committee_pretty_name': { 'value': self.get_reviewers_name(pretty=True) }
+                },
+                await_process=True
+            )
+
     def setup_matching_invitations(self):
 
         if self.use_area_chairs:
@@ -1001,6 +1031,15 @@ Total Errors: {len(errors)}
 
         venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
         venue_matching.setup_matching_invitations()
+
+    def setup_all_committees_matching(self):
+
+        if self.use_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
+            venue_matching.setup()
+
+        venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
+        venue_matching.setup()
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         if committee_id is None:
@@ -1162,7 +1201,16 @@ Total Errors: {len(errors)}
         self.invitation_builder.set_SAC_ethics_flag_invitation(sac_ethics_flag_duedate)
 
     def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
-        self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
+        recommendation_invitation = self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
+        self.client.post_group_edit(invitation=self.get_meta_invitation_id(),
+            signatures = [self.venue_id],
+            group = openreview.api.Group(
+                id = self.venue_id,
+                content = {
+                    'reviewers_recommendation_id': { 'value': recommendation_invitation.id },
+                }
+            )
+        )        
 
     def ithenticate_create_and_upload_submission(self):
         if not self.iThenticate_plagiarism_check:
