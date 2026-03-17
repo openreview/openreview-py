@@ -158,7 +158,7 @@ return {
   version: 1,
   properties: {
     tagInvitation: entity.id,
-    instructions:'Profiles blocked from participating in venues. This tag is added by support staff after reviewing the user\'s profile and activity history. If you think this is a mistake, please contact support.',
+    instructions:'Profiles blocked from participating in venues. This tag is added by support staff after reviewing the user\\'s profile and activity history. If you think this is a mistake, please contact support.',
     title: 'Blocked Profiles',
   }
 }
