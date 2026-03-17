@@ -2517,6 +2517,7 @@ The OpenReview Team.
         assert openreview_client.get_group('~Paul_Last1').members == ['paul@profile.org']
         assert openreview_client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
+        assert openreview_client.get_group('ACMM.org/2023/Conference/Blocked_Profile_Status')
 
         openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
 

@@ -430,6 +430,9 @@ class Venue(object):
     
     def get_iThenticate_plagiarism_check_invitation_id(self):
         return self.get_invitation_id('iThenticate_Plagiarism_Check')
+    
+    def get_blocked_profile_status_id(self):
+        return f'{self.venue_id}/Blocked_Profile_Status'
 
     def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
         committee = []
@@ -546,7 +549,9 @@ class Venue(object):
 
         if self.preferred_emails_groups:
             self.invitation_builder.set_preferred_emails_invitation()
-            self.group_builder.create_preferred_emails_readers_group()            
+            self.group_builder.create_preferred_emails_readers_group()
+
+        self.group_builder.create_blocked_profile_status_group()            
 
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
