@@ -126,10 +126,10 @@ class GroupBuilder(object):
             self.client.add_members_to_group('venues', venue_id)
             root_id = groups[0].id
             if root_id == root_id.lower():
-                root_id = groups[1].id        
+                root_id = groups[1].id
             self.client.add_members_to_group('host', root_id)
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
+            with open(self.venue.homepage_webfield_path) as f:
                 content = f.read()
                 self.post_group(openreview.api.Group(
                     id = venue_group.id,
@@ -411,7 +411,7 @@ class GroupBuilder(object):
                             signatories=[pc_group_id, venue_id],
                             members=program_chair_ids
                             )
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
+            with open(self.venue.program_chairs_webfield_path) as f:
                 content = f.read()
                 pc_group.web = content
                 self.post_group(pc_group)
@@ -594,10 +594,10 @@ class GroupBuilder(object):
                                 members=[]
                             )
 
-                with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+                with open(self.venue.area_chairs_webfield_path) as f:
                     content = f.read()
                     area_chairs_group.web = content
-                    self.post_group(area_chairs_group)                  
+                    self.post_group(area_chairs_group)
 
     def create_senior_area_chairs_group(self):
 
@@ -631,10 +631,10 @@ class GroupBuilder(object):
                                 members=[]
                             )
 
-                with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
+                with open(self.venue.senior_area_chairs_webfield_path) as f:
                     content = f.read()
                     senior_area_chairs_group.web = content
-                    self.post_group(senior_area_chairs_group)                
+                    self.post_group(senior_area_chairs_group)
 
     def create_ethics_reviewers_group(self):
         venue_id = self.venue.id
@@ -668,7 +668,7 @@ class GroupBuilder(object):
                             members=[]
                         )
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
+            with open(self.venue.ethics_chairs_webfield_path) as f:
                 content = f.read()
                 ethics_chairs_group.web = content
                 self.post_group(ethics_chairs_group)
