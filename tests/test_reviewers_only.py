@@ -860,6 +860,30 @@ For more details, please check the following links:
         messages = openreview_client.get_messages(subject = '[ABCD 2025] Reminder: Invitation to serve as expert Reviewer')
         assert len(messages) == 2
 
+        ## Invite a blocked profile
+        helpers.create_user('blockeduser@profile.org', 'Blocked', 'User', alternates=[], institution='google.com')
+        openreview_client.moderate_profile('~Blocked_User1', 'block')
+
+        edit = openreview_client.post_group_edit(
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
+                content={
+                    'invitee_details': { 'value':  'reviewer_two@abcd.cc\n~Blocked_User1' },
+                    'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as Reviewer' },
+                    'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        assert '~Blocked_User1' not in openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Invited').members
+
+        # The auto reminder completes without error
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        messages = openreview_client.get_messages(to='reviewer_two@abcd.cc', subject='[Reminder][ABCD 2025] Invitation to serve as Reviewer')
+        assert len(messages) == 1
+        assert not openreview_client.get_messages(to='blockeduser@profile.org', subject='[Reminder][ABCD 2025] Invitation to serve as Reviewer')
+
         # invite only users who are already invited or members
         edit = openreview_client.post_group_edit(
 
