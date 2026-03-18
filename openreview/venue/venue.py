@@ -103,6 +103,12 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_custom_sections = False
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
+        venue_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
+        self.homepage_webfield_path = os.path.join(venue_webfield_dir, 'homepageWebfield.js')
+        self.program_chairs_webfield_path = os.path.join(venue_webfield_dir, 'programChairsWebfield.js')
+        self.senior_area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'seniorAreaChairsWebfield.js')
+        self.area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'areachairsWebfield.js')
+        self.ethics_chairs_webfield_path = os.path.join(venue_webfield_dir, 'ethicsChairsWebfield.js')
 
     def set_main_settings(self, request_note):
         self.name = request_note.content['official_venue_name']['value']
@@ -663,12 +669,8 @@ class Venue(object):
         decision_file = self.decision_stage.decisions_file
         if decision_file:
 
-            baseurl = 'http://localhost:3000'
-            if 'https://devapi' in self.client.baseurl:
-                baseurl = 'https://devapi.openreview.net'
-            if 'https://api' in self.client.baseurl:
-                baseurl = 'https://api.openreview.net'
-            api1_client = openreview.Client(baseurl=baseurl, token=self.client.token)
+            baseurl_v1 = openreview.tools.get_base_urls(self.client)[0]
+            api1_client = openreview.Client(baseurl=baseurl_v1, token=self.client.token)
 
             if '/attachment' in decision_file:
                 decisions = api1_client.get_attachment(id=self.request_form_id, field_name='decisions_file')
