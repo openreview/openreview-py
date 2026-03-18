@@ -1,9 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import openreview
-import pytest
 import datetime
-import time
-from selenium.webdriver.common.by import By
 
 
 class TestLLMChatInteraction():
