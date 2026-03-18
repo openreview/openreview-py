@@ -2109,8 +2109,8 @@ OpenReview Team'''
             writer.writerow([
                 f'{short_name_a} id', f'{short_name_b} id',
                 'Score',
-                'Title Word Edit Distance', 'Title Word Edit Distance Normalized',
-                'Abstract Word Edit Distance', 'Abstract Word Edit Distance Normalized',
+                'Title Word Edit Distance', 'Title Word Edit Distance Similarity',
+                'Abstract Word Edit Distance', 'Abstract Word Edit Distance Similarity',
                 'Matching Authors (if any)',
                 f'{short_name_a} authors', f'{short_name_b} authors',
                 f'{short_name_a} title', f'{short_name_b} title',
