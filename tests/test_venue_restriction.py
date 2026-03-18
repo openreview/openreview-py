@@ -126,13 +126,13 @@ class TestVenueRestriction():
         pc_client.restrict('RESTRICT.cc/2025/Conference')
 
         # Author should no longer be able to access the submission data
-        notes_after_author = author_client.get_notes(invitation='RESTRICT.cc/2025/Conference/-/Submission')
+        #notes_after_author = author_client.get_notes(invitation='RESTRICT.cc/2025/Conference/-/Submission')
         #assert len(notes_after_author) == 0, 'Author should not have access to notes after restriction'
 
         # PC should still be able to access the submission data
         notes_after_pc = pc_client.get_notes(invitation='RESTRICT.cc/2025/Conference/-/Submission')
-        #assert len(notes_after_pc) == 1, 'PC should still have access to notes after restriction'
-        #assert notes_after_pc[0].id == submission_id
+        assert len(notes_after_pc) == 1, 'PC should still have access to notes after restriction'
+        assert notes_after_pc[0].id == submission_id
 
         # Super client (admin) should also still have access
         notes_after_super = openreview_client.get_notes(invitation='RESTRICT.cc/2025/Conference/-/Submission')
@@ -163,10 +163,10 @@ class TestVenueRestriction():
         )
 
         # Assert the h1 shows the logged-in author's own name, not another user's.
-        # assert title_h1.text == 'Author Restrict', (
-        #     f'Expected profile title to be "Author Restrict" but got "{title_h1.text}". '
-        #     'Possible regression: page is showing a different user\'s profile.'
-        # )
+        assert title_h1.text == 'Author Restrict', (
+            f'Expected profile title to be "Author Restrict" but got "{title_h1.text}". '
+            'Possible regression: page is showing a different user\'s profile.'
+        )
 
     def test_submission_as_pc(self, openreview_client, helpers):
         """
