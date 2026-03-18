@@ -2126,7 +2126,8 @@ OpenReview Team'''
 
                 # Fetch metadata
                 title_a = papers_by_id_a[paper_id_a].content['title']['value']
-                abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value'].replace("\n", "\\n")
+                raw_abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value']
+                abstract_a = raw_abstract_a.replace("\n", "\\n")
                 # Use profile ID if available, otherwise use author ID in paper
                 authors_list_a = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
@@ -2136,7 +2137,8 @@ OpenReview Team'''
                 authors_str_a = '|'.join(authors_list_a)
 
                 title_b = papers_by_id_b[paper_id_b].content['title']['value']
-                abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value'].replace("\n", "\\n")
+                raw_abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value']
+                abstract_b = raw_abstract_b.replace("\n", "\\n")
                 authors_list_b = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
@@ -2159,8 +2161,8 @@ OpenReview Team'''
                 title_max_words = max(len(title_words_a), len(title_words_b))
                 title_norm = round(1 - title_dist / title_max_words, 4) if title_max_words > 0 else 1.0
 
-                abstract_words_a = abstract_a.lower().split()
-                abstract_words_b = abstract_b.lower().split()
+                abstract_words_a = raw_abstract_a.lower().split()
+                abstract_words_b = raw_abstract_b.lower().split()
                 abstract_dist = editdistance.eval(abstract_words_a, abstract_words_b)
                 abstract_max_words = max(len(abstract_words_a), len(abstract_words_b))
                 abstract_norm = round(1 - abstract_dist / abstract_max_words, 4) if abstract_max_words > 0 else 1.0
