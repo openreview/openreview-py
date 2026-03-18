@@ -14,11 +14,28 @@ import pytest
 
 class TestProfileManagement():
 
-    def test_create_profile(self, client, openreview_client, helpers):
+    @pytest.fixture(scope="class")
+    def support_client(self, openreview_client, helpers):
+
+        support_client = helpers.create_user('chris@support.org', 'Chris', 'Support', alternates=[], institution='openreview.net')
+        openreview_client.post_group_edit(
+            invitation = 'openreview.net/-/Edit',
+            signatures = ['openreview.net'],
+            group = openreview.api.Group(
+                id = 'openreview.net/Support',
+                members={
+                    'append': ['~Chris_Support1']
+                }
+            )
+        )
+
+        return support_client
+
+    def test_create_profile(self, client, openreview_client, helpers, support_client):
 
         amelia_client = helpers.create_user('amelia@profile.org', 'Amelia', 'One', alternates=[], institution='google.com')
 
-        openreview_client.post_tag(
+        support_client.post_tag(
             openreview.api.Tag(
                 invitation='openreview.net/Support/-/Profile_Moderation_Label',
                 signature='openreview.net/Support',
@@ -27,12 +44,12 @@ class TestProfileManagement():
             )
         )
 
-        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')
+        tags = support_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')
         assert len(tags) == 1
 
         tag = tags[0]
         tag.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        tag = openreview_client.post_tag(tag)
+        tag = support_client.post_tag(tag)
 
         assert len(client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')) == 0
 
@@ -1495,7 +1512,7 @@ computation and memory.
         assert '~Sarah_Racz1' == note.content['authorids']['value'][2]
 
 
-    def test_remove_alternate_name(self, openreview_client, test_client, helpers):
+    def test_remove_alternate_name(self, openreview_client, support_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
 
@@ -1629,7 +1646,7 @@ computation and memory.
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
-                    'authors': { 'value': ['John Alternate Last', 'Test Client'] },
+                    'authors': { 'value': ['John Alternate Last', 'Test Client', 'Another Author'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
                 },
@@ -1702,7 +1719,7 @@ The OpenReview Team.
 '''
 
         ## Accept the request
-        decision_note = openreview_client.post_note_edit(
+        decision_note = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -1722,7 +1739,7 @@ The OpenReview Team.
         assert len(publications) == 2
         assert '~John_Last1' in publications[0].writers
         assert '~John_Last1' in publications[0].signatures
-        assert ['John Last', 'Test Client'] == publications[0].content['authors']['value']
+        assert ['John Last', 'Test Client', 'Another Author'] == publications[0].content['authors']['value']
         assert ['~John_Last1', 'test@mail.com', 'another@mail.com'] == publications[0].content['authorids']['value']
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
@@ -1878,11 +1895,11 @@ The OpenReview Team.
         assert note.content['status']['value'] == 'Accepted'
 
 
-    def test_remove_name_and_rename_profile_id(self, client, openreview_client, helpers):
+    def test_remove_name_and_rename_profile_id(self, support_client, openreview_client, helpers):
 
         ana_client = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
 
-        openreview_client.post_tag(
+        support_client.post_tag(
             openreview.api.Tag(
                 invitation='openreview.net/Support/-/Profile_Moderation_Label',
                 signature='openreview.net/Support',
@@ -1992,7 +2009,7 @@ The OpenReview Team.
 '''
 
         ## Accept the request
-        decision_note = openreview_client.post_note_edit(
+        decision_note = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -2050,7 +2067,7 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_request_remove_name_and_decline(self, openreview_client, helpers):
+    def test_request_remove_name_and_decline(self, openreview_client, support_client, helpers):
 
         peter_client = helpers.create_user('peter@profile.org', 'Peter', 'Last', alternates=[], institution='google.com')
 
@@ -2113,7 +2130,7 @@ The OpenReview Team.
 '''
 
         ## Decline the request
-        decision_note = openreview_client.post_note_edit(
+        decision_note = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -2145,7 +2162,7 @@ Regards,
 The OpenReview Team.
 '''
 
-    def test_remove_name_from_merged_profile(self, openreview_client, helpers):
+    def test_remove_name_from_merged_profile(self, openreview_client, support_client, helpers):
 
         ella_client = helpers.create_user('ella@profile.org', 'Ella', 'Last', alternates=[], institution='google.com')
 
@@ -2214,7 +2231,7 @@ The OpenReview Team.
         assert len(publications) == 1
 
 
-        openreview_client.merge_profiles('~Ella_Last1', '~Ela_Last1')
+        support_client.merge_profiles('~Ella_Last1', '~Ela_Last1')
         profile = ella_client.get_profile()
         assert len(profile.content['names']) == 3
         profile.content['names'][0]['username'] == '~Ella_Last1'
@@ -2260,7 +2277,7 @@ The OpenReview Team.
 '''
 
         ## Accept the request
-        decision_note = openreview_client.post_note_edit(
+        decision_note = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -2315,7 +2332,7 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_remove_duplicated_name(self, openreview_client, helpers):
+    def test_remove_duplicated_name(self, openreview_client, support_client, helpers):
 
         javier_client = helpers.create_user('javier@profile.org', 'Javier', 'Last', alternates=[], institution='google.com')
 
@@ -2377,7 +2394,7 @@ The OpenReview Team.
         assert len(publications) == 1
 
 
-        openreview_client.merge_profiles('~Javier_Last1', '~Javier_Last2')
+        support_client.merge_profiles('~Javier_Last1', '~Javier_Last2')
         profile = javier_client.get_profile()
         assert len(profile.content['names']) == 3
         profile.content['names'][0]['username'] == '~Javier_Last1'
@@ -2413,7 +2430,7 @@ The OpenReview Team.
 '''
 
         ## Accept the request
-        decision_note = openreview_client.post_note_edit(
+        decision_note = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -2463,7 +2480,7 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_rename_publications_from_api2(self, test_client, helpers, openreview_client):
+    def test_rename_publications_from_api2(self, test_client, helpers, openreview_client, support_client):
 
         journal=Journal(openreview_client, 'CABJ', '1234', contact_info='cabj@mail.org', full_name='Transactions on Machine Learning Research', short_name='CABJ', submission_name='Submission')
         journal.setup(support_role='test@mail.com', editors=[])
@@ -2504,7 +2521,7 @@ The OpenReview Team.
         openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
 
         ## post block status tag
-        tag = openreview_client.post_tag(
+        tag = support_client.post_tag(
             openreview.api.Tag(
                 invitation='openreview.net/Support/-/Profile_Blocked_Status',
                 signature='openreview.net/Support',
@@ -2516,7 +2533,7 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=tag.id)
 
-        tags = openreview_client.get_tags(profile='~Paul_Alternate_Last1')
+        tags = support_client.get_tags(profile='~Paul_Alternate_Last1')
         assert len(tags) == 1
         assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
 
@@ -2753,7 +2770,7 @@ The OpenReview Team.
 '''
 
         ## Accept the request
-        decision_note = openreview_client.post_note_edit(
+        decision_note = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -2845,7 +2862,7 @@ The OpenReview Team.
 
         assert openreview_client.get_edges(invitation='CABJ/Reviewers/-/Assignment_Availability', tail='~Paul_Last1')[0].label == 'Unavailable'
 
-    def test_remove_name_and_update_relations(self, openreview_client, helpers):
+    def test_remove_name_and_update_relations(self, openreview_client, helpers, support_client):
 
         juan_client = helpers.create_user('juan@profile.org', 'Juan', 'Last', alternates=[], institution='google.com')
 
@@ -2910,7 +2927,7 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, request_note['id'])         
 
-        decision_note = openreview_client.post_note_edit(
+        decision_note = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -2956,7 +2973,7 @@ The OpenReview Team.
         assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'
 
 
-    def test_remove_name_and_accept_automatically(self, openreview_client, helpers):
+    def test_remove_name_and_accept_automatically(self, openreview_client, helpers, support_client):
 
         nara_client = helpers.create_user('nara@profile.org', 'Nara', 'Last', alternates=[], institution='google.com')
 
@@ -2994,7 +3011,7 @@ The OpenReview Team.
         note = nara_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
-    def test_remove_name_and_do_not_accept_automatically(self, openreview_client, helpers):
+    def test_remove_name_and_do_not_accept_automatically(self, openreview_client, helpers, support_client):
 
         mara_client = helpers.create_user('mara@profile.org', 'Mara', 'Last', alternates=[], institution='google.com')
 
@@ -3049,7 +3066,7 @@ The OpenReview Team.
         assert note.content['status']['value'] == 'Pending'        
 
 
-    def test_merge_profiles(self, openreview_client, helpers):
+    def test_merge_profiles(self, openreview_client, helpers, support_client):
 
         rachel_client = helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
         profile = rachel_client.get_profile()
@@ -3095,7 +3112,7 @@ The OpenReview Team.
 '''
 
         ## Accept the request
-        edit = openreview_client.post_note_edit(
+        edit = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Merge_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -3120,7 +3137,7 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_merge_profiles_as_guest(self, openreview_client, helpers):
+    def test_merge_profiles_as_guest(self, openreview_client, helpers, support_client):
 
         helpers.create_user('marina@profile.org', 'Marina', 'Last', alternates=[], institution='google.com')
         helpers.create_user('marina@gmail.com', 'Marina', 'Last', alternates=[], institution='google.com')
@@ -3154,7 +3171,7 @@ The OpenReview Team.
 '''
 
         ## Reject the request
-        edit = openreview_client.post_note_edit(
+        edit = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Merge_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -3183,7 +3200,7 @@ The OpenReview Team.
 '''
 
 
-    def test_merge_profiles_ignore_request(self, openreview_client, helpers):
+    def test_merge_profiles_ignore_request(self, openreview_client, helpers, support_client):
 
         melisa_client = helpers.create_user('melisa@profile.org', 'Melisa', 'Last', alternates=[], institution='google.com')
         profile = melisa_client.get_profile()
@@ -3229,7 +3246,7 @@ The OpenReview Team.
 '''
 
         ## Accept the request
-        edit = openreview_client.post_note_edit(
+        edit = support_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Merge_Decision',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -3244,7 +3261,7 @@ The OpenReview Team.
         messages = openreview_client.get_messages(to='melisa@profile.org', subject='Profile merge request has been accepted')
         assert len(messages) == 0
 
-    def test_remove_email_address(self, openreview_client, helpers):
+    def test_remove_email_address(self, openreview_client, helpers, support_client):
 
         harold_client = helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
         profile = harold_client.get_profile()
@@ -3286,7 +3303,7 @@ The OpenReview Team.
 
         ## Try to remove the unexisting name and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~Harold_Lastt1'):
-            openreview_client.post_note_edit(
+            support_client.post_note_edit(
                 invitation = 'openreview.net/Support/-/Profile_Email_Removal',
                 signatures=['openreview.net/Support'],
                 note = openreview.api.Note(
@@ -3300,7 +3317,7 @@ The OpenReview Team.
 
         ## Try to remove the name that is marked as preferred and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Email haroldd@profile.org not found in profile ~Harold_Last1'):
-            openreview_client.post_note_edit(
+            support_client.post_note_edit(
                 invitation = 'openreview.net/Support/-/Profile_Email_Removal',
                 signatures=['openreview.net/Support'],
                 note = openreview.api.Note(
@@ -3314,7 +3331,7 @@ The OpenReview Team.
 
         ## Try to remove the name that doesn't match with the username and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Email harold@profile.org is already the preferred email in profile ~Harold_Last1'):
-            openreview_client.post_note_edit(
+            support_client.post_note_edit(
                 invitation = 'openreview.net/Support/-/Profile_Email_Removal',
                 signatures=['openreview.net/Support'],
                 note = openreview.api.Note(
@@ -3351,7 +3368,7 @@ The OpenReview Team.
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
-                    'authors': { 'value': ['Harold Last', 'Test Client'] },
+                    'authors': { 'value': ['Harold Last', 'Test Client', 'Another Author'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
                 },
@@ -3409,7 +3426,7 @@ The OpenReview Team.
         publications = openreview_client.get_notes(content={ 'authorids': '~Harold_Last1'})
         assert len(publications) == 3
 
-        edit = openreview_client.post_note_edit(
+        edit = support_client.post_note_edit(
             invitation = 'openreview.net/Support/-/Profile_Email_Removal',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -3428,7 +3445,7 @@ The OpenReview Team.
         assert ['~SomeFirstName_User1', '~Paul_Last1', '~Harold_Last1'] == publications[0].content['authorids']['value']
         assert '~Harold_Last1' in publications[1].writers
         assert '~Harold_Last1' in publications[1].signatures
-        assert ['Harold Last', 'Test Client'] == publications[1].content['authors']['value']
+        assert ['Harold Last', 'Test Client', 'Another Author'] == publications[1].content['authors']['value']
         assert ['~Harold_Last1', 'test@mail.com', 'another@mail.com'] == publications[1].content['authorids']['value']
         assert ['Harold Last', 'Test Client'] == publications[2].content['authors']['value']
         assert ['~Harold_Last1', 'test@mail.com'] == publications[2].content['authorids']['value']
@@ -3463,7 +3480,7 @@ The OpenReview Team.
         assert openreview_client.get_group('~Harold_Last1').members == ['harold@profile.org']
         assert openreview_client.get_group('harold@profile.org').members == ['~Harold_Last1']
 
-    def test_remove_email_from_merged_profile(self, openreview_client, helpers):
+    def test_remove_email_from_merged_profile(self, openreview_client, helpers, support_client):
 
         tidus_client = helpers.create_user('tidus@profile.org', 'Tidus', 'Mondragon', alternates=[], institution='google.com')
 
@@ -3474,9 +3491,9 @@ The OpenReview Team.
 
         helpers.create_user('tidus_two@profile.org', 'Tidus', 'Chapa', alternates=[], institution='deepmind.com')
 
-        openreview_client.merge_profiles('~Tidus_Mondragon1', '~Tidus_Chapa1')
+        support_client.merge_profiles('~Tidus_Mondragon1', '~Tidus_Chapa1')
 
-        edit = openreview_client.post_note_edit(
+        edit = support_client.post_note_edit(
             invitation = 'openreview.net/Support/-/Profile_Email_Removal',
             signatures=['openreview.net/Support'],
             note = openreview.api.Note(
@@ -3494,7 +3511,7 @@ The OpenReview Team.
 
         tidus_client.post_profile(profile)
 
-    def test_update_relation_after_signup(self, helpers):
+    def test_update_relation_after_signup(self, helpers, support_client):
 
         carlos_client = helpers.create_user('carlos@profile.org', 'Carlos', 'Last', alternates=[], institution='google.com')
 
@@ -3761,13 +3778,13 @@ The OpenReview Team.
         assert profile.state == 'Active Automatic'        
 
 
-    def test_post_tag_for_blocked_profile(self, openreview_client, helpers):
+    def test_post_tag_for_blocked_profile(self, openreview_client, support_client, helpers):
         
         helpers.create_user('lina@profile.org', 'Lina', 'First', alternates=[], institution='google.com')
 
-        openreview_client.moderate_profile('~Lina_First1', 'block')
+        support_client.moderate_profile('~Lina_First1', 'block')
 
-        tag = openreview_client.post_tag(
+        tag = support_client.post_tag(
             openreview.api.Tag(
                 invitation='openreview.net/Support/-/Profile_Blocked_Status',
                 signature='openreview.net/Support',
