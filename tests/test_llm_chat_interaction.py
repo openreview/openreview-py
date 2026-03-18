@@ -196,7 +196,8 @@ class TestLLMChatInteraction():
         assert '~LLM_ReviewerSecond1' in reviewer_group.members
         assert '~LLM_ReviewerThird1' in reviewer_group.members
 
-    def test_llm_interaction_test(self, helpers, openreview_client, selenium, request_page):
+
+    def test_llm_interaction_chat_tab_visible(self, helpers, openreview_client, selenium, request_page):
 
         # Get anon group IDs for reviewer1 and reviewer2
         reviewer1_client = openreview.api.OpenReviewClient(
