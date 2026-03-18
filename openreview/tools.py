@@ -1975,7 +1975,7 @@ def get_invitation_source(invitation, domain):
     meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
     rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
 
-    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else { 'venueid': submission_venue_id }
+    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else {}
 
     ## Deprecated, user source as dictionary
     if isinstance(source, str):
@@ -2024,6 +2024,9 @@ def should_match_invitation_source(client, invitation, submission, note=None):
 
     source = get_invitation_source(invitation, domain)
 
+    if not source:
+        return False
+
     if submission.content['venueid']['value'] not in source.get('venueid', []):
         return False
 
@@ -2062,10 +2065,6 @@ def should_match_invitation_source(client, invitation, submission, note=None):
         if is_accept_decision(decision_value, accept_options) != with_decision_accept:
             return False
 
-    note_invitation = invitation.edit.get('note') or invitation.edit.get('invitation', {}).get('edit', {}).get('note')
-    if not note_invitation:
-        return False
-    
     content_keys = invitation.edit.get('content', {}).keys()
     
     if 'withdrawalId' in content_keys:

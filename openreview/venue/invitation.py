@@ -429,6 +429,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.get_process_content('process/post_submission_process.py')
             }],
+            content = {
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_submission_venue_id()
+                    }
+                }
+            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id, self.venue.get_authors_id('${{2/note/id}/number}')],
