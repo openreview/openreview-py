@@ -5896,6 +5896,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
             sort='number:asc'
         )
+        included_submission = submissions[99]
         excluded_submission = submissions[100]
 
         reviewer_two_client = openreview.api.OpenReviewClient(username='reviewer2@aclrollingreview.com', password=helpers.strong_password)
@@ -6032,9 +6033,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            score_edge_heads = {edge.head for edge in pc_client_v2.get_edges(invitation=f"{role}/-/Emergency_Score", tail=user)}
             assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
             assert len(score_edges[user]) == 100
+            assert included_submission.id in score_edge_heads
+            assert excluded_submission.id not in score_edge_heads
 
             # Test editing note
             user_note_edit = user_client.post_note_edit(
@@ -6071,9 +6075,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            score_edge_heads = {edge.head for edge in pc_client_v2.get_edges(invitation=f"{role}/-/Emergency_Score", tail=user)}
             assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
             assert len(score_edges[user]) == 100
+            assert included_submission.id in score_edge_heads
+            assert excluded_submission.id not in score_edge_heads
 
             # Test set agreement to no
             user_note_edit = user_client.post_note_edit(
