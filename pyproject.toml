@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openreview-py"
-version = "1.58.0"
+version = "1.59.0"
 description = "OpenReview API Python client library"
 authors = [{name = "OpenReview Team", email = "info@openreview.net"}]
 license = {text = "MIT"}
@@ -33,6 +33,14 @@ docs = [
     "sphinx",
     "sphinx_rtd_theme",
     "nbformat"
+]
+test = [
+    "pytest",
+    "py",
+    "pyotp",
+    "selenium",
+    "pytest-selenium",
+    "pytest-cov"
 ]
 
 [tool.setuptools.package-data]

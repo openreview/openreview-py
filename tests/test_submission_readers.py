@@ -15,10 +15,6 @@ class TestSubmissionReaders():
 
         helpers.await_queue()
 
-        # Add support group user to the support group object
-        support_group = client.get_group(support_group_id)
-        client.add_members_to_group(group=support_group, members=['~Support_User1'])
-
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
 

@@ -3383,7 +3383,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if cdate:
             invitation.cdate = cdate
         if self.venue.is_template_related_workflow():
-            baseurl = self.client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+            baseurl = tools.get_site_url(self.client)
             link = f'{baseurl}/assignments?group={committee_id}'
             invitation.description = f'<span>Create draft assignments <a href={link}>here</a>.</span>'
         self.save_invitation(invitation, replacement=True)
@@ -4330,6 +4330,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         )
 
         recommendation_invitation = self.save_invitation(recommendation_invitation, replacement=True)
+        return recommendation_invitation
         
     def set_group_recruitment_invitations(self, committee_name):
         
@@ -5175,7 +5176,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             description = description,
             date_processes = [{
                 'dates': ["#{4/cdate}", self.update_date_string],
-                    'script': self.get_process_content('../workflows/process/submission_change_process.py')
+                    'script': self.get_process_content('../venue/process/post_submission_process.py')
             }],
             edit = {
                 'signatures': [venue_id],
