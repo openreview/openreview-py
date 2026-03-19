@@ -1216,6 +1216,8 @@ class Matching(object):
         proposed_assignment_invitation_id = assignment_configuration_note.content.get('assignment_invitation', {}).get('value')
         assignment_invitation_id = assignment_configuration_note.content.get('deployed_assignment_invitation', {}).get('value')
         deployed_assignment_groups_invitation_id = assignment_configuration_note.content.get('deployed_assignment_groups_invitation', {}).get('value')
+        sac_group_invitation_id = venue.get_invitation_id(f'{venue.submission_stage.name}_Group', prefix=venue.get_senior_area_chairs_id())
+
         role_name = committee_id.split('/')[-1]
         
         is_reviewer = False
@@ -1270,16 +1272,14 @@ class Matching(object):
                         sac_assignments = sac_assignment_edges.get(assigned_user, [])
                         for sac_assignment in sac_assignments:
                             assigned_sac = sac_assignment['tail']
-                            sac_group_id = venue.get_senior_area_chairs_id(number=paper.number)
                             client.post_group_edit(
-                                invitation = venue.get_meta_invitation_id(),
-                                readers = [venue.venue_id],
-                                writers = [venue.venue_id],
-                                signatures = [venue.venue_id],
-                                group = openreview.api.Group(
-                                    id = sac_group_id,
-                                    members = [assigned_sac]
-                                )
+                                invitation=sac_group_invitation_id,
+                                content={
+                                    'noteId': { 'value': paper.id },
+                                    'noteNumber': { 'value': paper.number },
+                                    'members': { 'value': [assigned_sac] }
+                                },
+                                group=openreview.api.Group()
                             )
                     paper_assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,

@@ -1150,10 +1150,6 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert 'authors' not in submissions[0].content
         assert 'financial_aid'not in submissions[0].content
 
-        assert client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
-        assert client.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
-        assert client.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
-
         active_venues = pc_client.get_group('active_venues')
         assert 'ICML.cc/2023/Conference' in active_venues.members
 
@@ -1662,6 +1658,30 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         openreview.tools.post_bulk_edges(client=openreview_client, edges=reviewers_proposed_edges)
 
+        ## Create assignment configuration note for AC matching
+        openreview_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment_Configuration',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'ac-matching' },
+                    'user_demand': { 'value': '1' },
+                    'max_papers': { 'value': '6' },
+                    'min_papers': { 'value': '0' },
+                    'alternates': { 'value': '2' },
+                    'paper_invitation': { 'value': 'ICML.cc/2023/Conference/-/Submission&content.venueid=ICML.cc/2023/Conference/Submission' },
+                    'match_group': { 'value': 'ICML.cc/2023/Conference/Area_Chairs' },
+                    'aggregate_score_invitation': { 'value': 'ICML.cc/2023/Conference/Area_Chairs/-/Aggregate_Score' },
+                    'conflicts_invitation': { 'value': 'ICML.cc/2023/Conference/Area_Chairs/-/Conflict' },
+                    'solver': { 'value': 'MinMax' },
+                    'status': { 'value': 'Complete' },
+                    'deployed_assignment_groups_invitation': { 'value': 'ICML.cc/2023/Conference/Area_Chairs/-/Submission_Group' },
+                }
+            )
+        )
+
         venue.set_assignments(assignment_title='ac-matching', committee_id='ICML.cc/2023/Conference/Area_Chairs')
 
         ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
@@ -1951,6 +1971,30 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Submission1/External_Reviewers', member='melisa@icml.cc')
         assert openreview_client.get_groups('ICML.cc/2023/Conference/External_Reviewers', member='melisa@icml.cc')
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='melisa@icml.cc')
+
+        ## Create assignment configuration note for reviewer matching
+        openreview_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment_Configuration',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'reviewer-matching' },
+                    'user_demand': { 'value': '1' },
+                    'max_papers': { 'value': '6' },
+                    'min_papers': { 'value': '0' },
+                    'alternates': { 'value': '2' },
+                    'paper_invitation': { 'value': 'ICML.cc/2023/Conference/-/Submission&content.venueid=ICML.cc/2023/Conference/Submission' },
+                    'match_group': { 'value': 'ICML.cc/2023/Conference/Reviewers' },
+                    'aggregate_score_invitation': { 'value': 'ICML.cc/2023/Conference/Reviewers/-/Aggregate_Score' },
+                    'conflicts_invitation': { 'value': 'ICML.cc/2023/Conference/Reviewers/-/Conflict' },
+                    'solver': { 'value': 'MinMax' },
+                    'status': { 'value': 'Complete' },
+                    'deployed_assignment_groups_invitation': { 'value': 'ICML.cc/2023/Conference/Reviewers/-/Submission_Group' },
+                }
+            )
+        )
 
         venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
 
