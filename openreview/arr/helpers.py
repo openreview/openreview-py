@@ -46,6 +46,7 @@ from openreview.stages.arr_content import (
 )
 
 from openreview.stages.default_content import comment_v2
+from openreview.arr import METAREVIEW_RECOMMENDATION_FIELD
 
 class ARRWorkflow(object):
     UPDATE_WAIT_TIME = 5000
@@ -1211,7 +1212,7 @@ class ARRWorkflow(object):
                         'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                         'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                         'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-                        'recommendation_field_name': 'overall_assessment',
+                        'recommendation_field_name': METAREVIEW_RECOMMENDATION_FIELD,
                         'additional_meta_review_form_options': arr_metareview_content,
                         'remove_meta_review_form_options': ['recommendation', 'confidence']
                     },
