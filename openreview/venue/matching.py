@@ -444,7 +444,7 @@ class Matching(object):
         reduced_load_notes = self.client.get_all_notes(invitation=self.venue.get_recruitment_id(self.match_group.id), sort='tcdate:asc', domain=self.venue.venue_id)
         for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
             if 'reduced_load' in note.content:
-                reduced_loads[note.content['user']['value']] = note.content['reduced_load']['value']
+                reduced_loads[note.content.get('user', {}).get('value', note.signatures[0])] = note.content['reduced_load']['value']
 
         print ('Reduced loads received: ', len(reduced_loads))
 
