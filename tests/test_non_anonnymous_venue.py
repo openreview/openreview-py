@@ -97,8 +97,6 @@ class TestNonAnonymousVenue():
         venue.create_submission_stage()
 
         helpers.await_queue_edit(openreview_client, 'TestNonAnonymousVenue.cc/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'TestNonAnonymousVenue.cc/Reviewers/-/Submission_Group-0-0')
-        helpers.await_queue_edit(openreview_client, 'TestNonAnonymousVenue.cc/Area_Chairs/-/Submission_Group-0-0')
 
         assert openreview_client.get_group('TestNonAnonymousVenue.cc/Submission1/Authors')
         assert openreview_client.get_group('TestNonAnonymousVenue.cc/Submission1/Reviewers')
