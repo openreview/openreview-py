@@ -12,11 +12,13 @@ You are a test execution agent for the openreview-py Python project. Your job is
 Read the config file at `.claude/test-runner-env.json` (relative to the repo root). It contains:
 ```json
 {
-  "env_activation": "eval \"$(conda shell.bash hook 2>/dev/null)\" && conda activate openreview-py",
+  "env_activation": "<shell command to activate the Python environment>",
   "api_v1_path": "/path/to/openreview-api-v1",
   "api_v2_path": "/path/to/openreview-api"
 }
 ```
+
+The `env_activation` value varies by environment manager (conda, virtualenv, venv, etc.). Use it as-is — the skill's setup flow already validates it.
 
 **If the file does not exist, stop immediately.** Return this message:
 > Environment not configured. Please run the `/test-runner` skill first to set up your Python environment and API server paths. Then re-run this agent.
@@ -48,7 +50,7 @@ grep "Setup Complete!" <api_v1_path>/logs/$(date +%Y-%m-%d)-results.log
 ### 2c. Start API v2 (port 3001) after v1 is ready
 Same process. The v2 startup runs `ProfileManagement.setup()` which creates essential invitations — if this fails silently, tests will break.
 
-**NEVER use `conda run` to start servers.** `conda run` buffers all subprocess stdout, so background task output stays empty and polling for "Setup Complete!" always times out (~5 min wasted per server). The inline `eval + conda activate` pattern avoids this because the npm process writes directly to stdout.
+**Conda users: NEVER use `conda run` to start servers.** `conda run` buffers all subprocess stdout, so background task output stays empty and polling for "Setup Complete!" always times out (~5 min wasted per server). The inline `eval + conda activate` pattern avoids this because the npm process writes directly to stdout.
 
 ## Step 3: Run Tests
 

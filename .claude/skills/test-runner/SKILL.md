@@ -14,7 +14,7 @@ Check if the environment config file exists at `.claude/test-runner-env.json` (r
 If the file exists, read it and skip to Step 3. It has this structure:
 ```json
 {
-  "env_activation": "eval \"$(conda shell.bash hook 2>/dev/null)\" && conda activate openreview-py",
+  "env_activation": "<shell command to activate the Python environment>",
   "api_v1_path": "/path/to/openreview-api-v1",
   "api_v2_path": "/path/to/openreview-api"
 }
@@ -26,17 +26,20 @@ If the file does not exist, proceed to Step 2.
 
 Ask the user for three pieces of information:
 
-1. **Python environment activation command** — the shell command to activate a Python environment where openreview-py is installed. Examples: `conda activate openreview-py`, `source .venv/bin/activate`, or `none` if using system Python.
+1. **Python environment activation command** — the shell command to activate a Python environment where openreview-py is installed. Common examples:
+   - **virtualenv / venv**: `source /path/to/.venv/bin/activate`
+   - **conda**: `conda activate openreview-py`
+   - **System Python**: `true` (no-op, if openreview-py is installed globally)
 
 2. **Path to `openreview-api-v1` repository** — this serves API v1 on port 3000.
 
 3. **Path to `openreview-api` repository** — this serves API v2 on port 3001.
 
-**Important for conda users:** If the user provides a bare `conda activate <env>` command, convert it to the inline form before saving:
+**Note for conda users:** If the user provides a bare `conda activate <env>` command, convert it to the inline form before saving:
 ```
 eval "$(conda shell.bash hook 2>/dev/null)" && conda activate <env>
 ```
-This is necessary because fresh shell sessions (including subagents) don't have conda initialized. The `eval` hook sets up conda so that `conda activate` works. Without this, commands will fail with "conda: command not found" or the environment won't actually activate.
+Fresh shell sessions (including subagents) don't have conda initialized. The `eval` hook sets up conda so that `conda activate` works. Without this, commands will fail with "conda: command not found" or the environment won't actually activate. This conversion is not needed for virtualenv/venv — `source` works in any shell.
 
 After collecting the info, verify the environment works:
 ```bash
