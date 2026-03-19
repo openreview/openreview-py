@@ -6138,43 +6138,45 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert user not in score_edges
             assert all(weight < 10 for weight in aggregate_score_edges[user])
 
-        if reviewer_one_review_edit:
-            reviewer_one_delete_edit = reviewer_client.post_note_edit(
-                invitation=official_review_invitation,
-                signatures=[reviewer_one_anon_id],
-                note=openreview.api.Note(
-                    id=reviewer_one_review_edit['note']['id'],
-                    content=deepcopy(official_review_content),
-                    ddate=openreview.tools.datetime_millis(datetime.datetime.now())
-                )
+        reviewer_one_delete_edit = reviewer_client.post_note_edit(
+            invitation=official_review_invitation,
+            signatures=[reviewer_one_anon_id],
+            note=openreview.api.Note(
+                id=reviewer_one_review_edit['note']['id'],
+                content=deepcopy(official_review_content),
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now())
             )
-            helpers.await_queue_edit(openreview_client, edit_id=reviewer_one_delete_edit['id'])
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_one_delete_edit['id'])
 
-        if reviewer_two_review_edit:
-            reviewer_two_delete_edit = reviewer_two_client.post_note_edit(
-                invitation=official_review_invitation,
-                signatures=[reviewer_two_anon_id],
-                note=openreview.api.Note(
-                    id=reviewer_two_review_edit['note']['id'],
-                    content=deepcopy(official_review_content),
-                    ddate=openreview.tools.datetime_millis(datetime.datetime.now())
-                )
+        reviewer_two_delete_edit = reviewer_two_client.post_note_edit(
+            invitation=official_review_invitation,
+            signatures=[reviewer_two_anon_id],
+            note=openreview.api.Note(
+                id=reviewer_two_review_edit['note']['id'],
+                content=deepcopy(official_review_content),
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now())
             )
-            helpers.await_queue_edit(openreview_client, edit_id=reviewer_two_delete_edit['id'])
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_two_delete_edit['id'])
 
-        if reviewer_three_review_edit:
-            reviewer_three_delete_edit = reviewer_three_client.post_note_edit(
-                invitation=official_review_invitation,
-                signatures=[reviewer_three_anon_id],
-                note=openreview.api.Note(
-                    id=reviewer_three_review_edit['note']['id'],
-                    content=deepcopy(official_review_content),
-                    ddate=openreview.tools.datetime_millis(datetime.datetime.now())
-                )
+        reviewer_three_delete_edit = reviewer_three_client.post_note_edit(
+            invitation=official_review_invitation,
+            signatures=[reviewer_three_anon_id],
+            note=openreview.api.Note(
+                id=reviewer_three_review_edit['note']['id'],
+                content=deepcopy(official_review_content),
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now())
             )
-            helpers.await_queue_edit(openreview_client, edit_id=reviewer_three_delete_edit['id'])
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_three_delete_edit['id'])
 
-            assert len(pc_client_v2.get_notes(invitation=official_review_invitation)) == 0
+        openreview_client.remove_members_from_group(
+            'aclweb.org/ACL/ARR/2023/August/Submission101/Reviewers',
+            ['~Reviewer_ARROne1', '~Reviewer_ARRTwo1', '~Reviewer_ARRThree1']
+        )
+
+        assert len(pc_client_v2.get_notes(invitation=official_review_invitation)) == 0
 
     def test_review_issue_forms(self, client, openreview_client, helpers, test_client):
         now = datetime.datetime.now()
