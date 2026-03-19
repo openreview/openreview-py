@@ -1009,7 +1009,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 },
                 'recommendation_field_name': {
-                    'value': meta_review_stage.recommendation_field_name
+                    'value': 'recommendation'
                 }
             },
             edit={
@@ -1133,7 +1133,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         'param': {
                             'type': 'string',
                             'regex': '.*',
-                            'default': meta_review_stage.recommendation_field_name
+                            'default': 'recommendation'
                         }
                     }
                 }
