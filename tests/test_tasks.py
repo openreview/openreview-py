@@ -29,6 +29,7 @@ class TestTasks():
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status')
 
         now = datetime.datetime.now()
+        start_date = now + datetime.timedelta(minutes=40)
         due_date = now + datetime.timedelta(days=2)
 
         request = pc_client.post_note_edit(invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow',
@@ -42,7 +43,7 @@ class TestTasks():
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
                     'program_chair_emails': { 'value': ['programchair@tasks.cc'] },
                     'contact_email': { 'value': 'tasks2025.programchairs@gmail.com' },
-                    'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
+                    'submission_start_date': { 'value': openreview.tools.datetime_millis(start_date) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewers_name': { 'value': 'Program_Committee' },
                     'area_chairs_name': { 'value': 'Area_Chairs' },
@@ -146,11 +147,95 @@ class TestTasks():
         assert 'invitation_edit_script' in invitation.content
 
         submission_inv = openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Submission')
-        assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(now)
+        assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(start_date)
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
         assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
+
+        form_fields_inv = openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Submission/Form_Fields')
+        assert form_fields_inv.duedate == submission_inv.cdate - (30*60*1000)
 
         assert openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Decision')
         assert openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Withdrawal')
         assert openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Desk_Rejection')
+
+    def test_redeploy_with_past_dates(self, openreview_client, helpers):
+
+        submission_inv = openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Submission')
+        start_date = submission_inv.cdate
+
+        super_id = 'openreview.net'
+        support_group_id = super_id + '/Support'
+
+        venue_group = openreview.tools.get_group(openreview_client, 'Tasks.cc/2025/Conference')
+        request_id = venue_group.content['request_form_id']['value']
+        request = openreview_client.get_note(request_id)
+
+        # edit invitation to allow redeployment
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/Support/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id = 'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
+                edit = {
+                    'note': {
+                        'content': {
+                            'redeployment': {
+                                'value': {
+                                    'param':{
+                                        'type': 'boolean',
+                                        'enum': [True, False],
+                                        'input': 'radio',
+                                        'optional': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        # update request form with past dates
+        now = datetime.datetime.now()
+        past_start_date = now - datetime.timedelta(days=5)
+        past_due_date = now - datetime.timedelta(days=1)
+
+        openreview_client.post_note_edit(
+            invitation='openreview.net/Support/-/Edit',
+            signatures=['~Super_User1'],
+            note=openreview.api.Note(
+                id=request.id,
+                content={
+                    'submission_start_date': { 'value': openreview.tools.datetime_millis(past_start_date) },
+                    'submission_deadline': { 'value': openreview.tools.datetime_millis(past_due_date) },
+                }
+            ))
+
+        # re-deploy the venue with past dates
+        edit = openreview_client.post_note_edit(
+            invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
+            signatures=[support_group_id],
+            note=openreview.api.Note(
+                id=request.id,
+                content={
+                    'venue_id': { 'value': 'Tasks.cc/2025/Conference' },
+                    'redeployment': { 'value': True }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        venue_group = openreview.tools.get_group(openreview_client, 'Tasks.cc/2025/Conference')
+        assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'Tasks.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
+
+        submission_inv = openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Submission')
+        assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(past_start_date)
+        assert submission_inv.duedate == openreview.tools.datetime_millis(past_due_date)
+        assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
+
+        # duedate should still be based on the original submission start date, not the updated one
+        original_form_fields_duedate = openreview.tools.datetime_millis(start_date) - (30*60*1000)
+        form_fields_inv = openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Submission/Form_Fields')
+        assert form_fields_inv.duedate != submission_inv.cdate - (30*60*1000)
+        assert form_fields_inv.duedate == original_form_fields_duedate

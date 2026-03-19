@@ -118,7 +118,8 @@ class EditInvitationsBuilder(object):
         if process_file:
             invitation.process = self.get_process_content(process_file)
 
-        if due_date:
+        # add due_date only if it is in the future
+        if due_date and due_date > tools.datetime_millis(datetime.datetime.now()):
             invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=True)
@@ -190,7 +191,8 @@ class EditInvitationsBuilder(object):
         # Add preprocess to validate venue/venueid cannot be deleted
         invitation.preprocess = self.get_process_content('process/submission_form_fields_preprocess.js')
 
-        if due_date:
+        # add due_date only if it is in the future
+        if due_date and due_date > tools.datetime_millis(datetime.datetime.now()):
             invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=False)
@@ -251,7 +253,8 @@ class EditInvitationsBuilder(object):
             }
         )
 
-        if due_date:
+        # add due_date only if it is in the future
+        if due_date and due_date > tools.datetime_millis(datetime.datetime.now()):
             invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=False)
