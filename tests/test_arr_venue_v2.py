@@ -9,6 +9,7 @@ import csv
 import sys
 from copy import deepcopy
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -6293,12 +6294,87 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'above and beyond' in great_ac_note.content['justification']['value']
     
     def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
+        venue_id = 'aclweb.org/ACL/ARR/2023/August'
         pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        pc_console_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        submissions = pc_client.get_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc')
         submissions_by_number = {s.number : s for s in submissions}
         submissions_by_id = {s.id : s for s in submissions}
         now = datetime.datetime.now()
         now_millis = openreview.tools.datetime_millis(now)
+
+        def assert_submission_query(console_group_id, console_client, query_text, expected_numbers):
+            request_page(
+                selenium,
+                f'http://localhost:3030/group?id={console_group_id}#submission-status',
+                console_client,
+                wait_for_element='header'
+            )
+            selenium.find_element(By.LINK_TEXT, 'Submission Status').click()
+            paper_status = WebDriverWait(selenium, 10).until(
+                lambda driver: driver.find_element(By.ID, 'submission-status')
+            )
+            search_input = paper_status.find_element(By.CLASS_NAME, 'search-input')
+            search_input.clear()
+            search_input.send_keys(query_text)
+            search_input.send_keys(Keys.ENTER)
+
+            def get_displayed_paper_numbers(driver):
+                note_numbers = driver.find_element(By.ID, 'submission-status').find_elements(By.CLASS_NAME, 'note-number')
+                return [int(note_number.text) for note_number in note_numbers]
+
+            assert WebDriverWait(selenium, 20).until(
+                lambda driver: get_displayed_paper_numbers(driver) == expected_numbers
+            )
+
+        submission_number = 2
+        expected_submission_numbers = [submission_number]
+        submission_reviewers = openreview_client.get_group(
+            f'{venue_id}/Submission{submission_number}/Reviewers'
+        ).members
+        assert set(submission_reviewers) == {'~Reviewer_ARROne1', '~Reviewer_ARRTwo1'}
+        assert openreview_client.get_group(
+            f'{venue_id}/Submission{submission_number}/Senior_Area_Chairs'
+        ).members == ['~SAC_ARRTwo1']
+        assert len(pc_client.get_notes(invitation=f'{venue_id}/Submission{submission_number}/-/Official_Review')) == 0
+        assert len(pc_client.get_notes(invitation=f'{venue_id}/Submission{submission_number}/-/Delay_Notification')) == 1
+        assert len(pc_client.get_notes(invitation=f'{venue_id}/Submission{submission_number}/-/Emergency_Declaration')) == 1
+        expected_remaining_reviewer_count = len(submission_reviewers) - 1
+        sac_console_client = openreview.Client(
+            username='sac2@aclrollingreview.com',
+            password=helpers.strong_password
+        )
+
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            f'+number={submission_number} AND reviewerEmergencyDeclarationCount=1 AND allEmergencyDeclarationCount=1',
+            expected_submission_numbers
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            f'+number={submission_number} AND reviewerDelayNotificationCount=1 AND allDelayNotificationCount=1',
+            expected_submission_numbers
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            f'+number={submission_number} AND assignedReviewersAfterEmergencyDeclarationsCount={expected_remaining_reviewer_count}',
+            expected_submission_numbers
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            f'+number={submission_number} AND completedReviewsOrDelayNotificationsCount=1',
+            expected_submission_numbers
+        )
+        assert_submission_query(
+            f'{venue_id}/Senior_Area_Chairs',
+            sac_console_client,
+            f'+number={submission_number} AND reviewerDelayNotificationCount=1 AND allDelayNotificationCount=1',
+            expected_submission_numbers
+        )
     
         ## Build missing data
         # Reviewer who is available and responded to emergency form
@@ -6477,7 +6553,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         def send_email(email_option, role):
             role_tab_id_format = role.replace('_', '-')
             role_message_id_format = role.replace('_', '')
-            request_page(selenium, f"http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Program_Chairs#{role_tab_id_format}-status", pc_client, wait_for_element='header')
+            request_page(selenium, f"http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Program_Chairs#{role_tab_id_format}-status", pc_console_client, wait_for_element='header')
             status_table = selenium.find_element(By.ID, f'{role_tab_id_format}-status')
             reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role_message_id_format}s')
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')

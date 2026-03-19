@@ -189,6 +189,138 @@ return {
         return hasReply;
       })
       return metaReviewReplies?.length??0;
+      `,
+      reviewerEmergencyDeclarationCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+
+      const participantMatchesReply = (participant, reply) => {
+        const replySignature = reply?.signatures?.[0];
+        if (!replySignature) {
+          return false;
+        }
+
+        return [participant?.anonymizedGroup, participant?.preferredId].filter(Boolean).includes(replySignature);
+      };
+
+      return reviewers.filter(reviewer => {
+        return replies.some(reply => {
+          const hasReply = (reply?.invitations ?? []).some(invitation => invitation.includes('Emergency_Declaration'));
+          return hasReply && participantMatchesReply(reviewer, reply);
+        });
+      }).length;
+      `,
+      allEmergencyDeclarationCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+      const areaChairs = row.metaReviewData?.areaChairs ?? [];
+      const secondaryAreaChairs = row.metaReviewData?.secondaryAreaChairs ?? [];
+      const participants = [...reviewers, ...areaChairs, ...secondaryAreaChairs];
+
+      const participantMatchesReply = (participant, reply) => {
+        const replySignature = reply?.signatures?.[0];
+        if (!replySignature) {
+          return false;
+        }
+
+        return [participant?.anonymizedGroup, participant?.preferredId].filter(Boolean).includes(replySignature);
+      };
+
+      return participants.filter(participant => {
+        return replies.some(reply => {
+          const hasReply = (reply?.invitations ?? []).some(invitation => invitation.includes('Emergency_Declaration'));
+          return hasReply && participantMatchesReply(participant, reply);
+        });
+      }).length;
+      `,
+      reviewerDelayNotificationCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+
+      const participantMatchesReply = (participant, reply) => {
+        const replySignature = reply?.signatures?.[0];
+        if (!replySignature) {
+          return false;
+        }
+
+        return [participant?.anonymizedGroup, participant?.preferredId].filter(Boolean).includes(replySignature);
+      };
+
+      return reviewers.filter(reviewer => {
+        return replies.some(reply => {
+          const hasReply = (reply?.invitations ?? []).some(invitation => invitation.includes('Delay_Notification'));
+          return hasReply && participantMatchesReply(reviewer, reply);
+        });
+      }).length;
+      `,
+      allDelayNotificationCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+      const areaChairs = row.metaReviewData?.areaChairs ?? [];
+      const secondaryAreaChairs = row.metaReviewData?.secondaryAreaChairs ?? [];
+      const participants = [...reviewers, ...areaChairs, ...secondaryAreaChairs];
+
+      const participantMatchesReply = (participant, reply) => {
+        const replySignature = reply?.signatures?.[0];
+        if (!replySignature) {
+          return false;
+        }
+
+        return [participant?.anonymizedGroup, participant?.preferredId].filter(Boolean).includes(replySignature);
+      };
+
+      return participants.filter(participant => {
+        return replies.some(reply => {
+          const hasReply = (reply?.invitations ?? []).some(invitation => invitation.includes('Delay_Notification'));
+          return hasReply && participantMatchesReply(participant, reply);
+        });
+      }).length;
+      `,
+      assignedReviewersAfterEmergencyDeclarationsCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+
+      const participantMatchesReply = (participant, reply) => {
+        const replySignature = reply?.signatures?.[0];
+        if (!replySignature) {
+          return false;
+        }
+
+        return [participant?.anonymizedGroup, participant?.preferredId].filter(Boolean).includes(replySignature);
+      };
+
+      const reviewerEmergencyDeclarationCount = reviewers.filter(reviewer => {
+        return replies.some(reply => {
+          const hasReply = (reply?.invitations ?? []).some(invitation => invitation.includes('Emergency_Declaration'));
+          return hasReply && participantMatchesReply(reviewer, reply);
+        });
+      }).length;
+
+      return Math.max(0, reviewers.length - reviewerEmergencyDeclarationCount);
+      `,
+      completedReviewsOrDelayNotificationsCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+      const officialReviews = row.officialReviews ?? [];
+
+      const participantMatchesReply = (participant, reply) => {
+        const replySignature = reply?.signatures?.[0];
+        if (!replySignature) {
+          return false;
+        }
+
+        return [participant?.anonymizedGroup, participant?.preferredId].filter(Boolean).includes(replySignature);
+      };
+
+      return reviewers.filter(reviewer => {
+        const hasOfficialReview = officialReviews.some(review => review?.anonymousId === reviewer?.anonymousId);
+        const hasDelayNotification = replies.some(reply => {
+          const hasReply = (reply?.invitations ?? []).some(invitation => invitation.includes('Delay_Notification'));
+          return hasReply && participantMatchesReply(reviewer, reply);
+        });
+
+        return hasOfficialReview || hasDelayNotification;
+      }).length;
       `
     },
     reviewerEmailFuncs: [
