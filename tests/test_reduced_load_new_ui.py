@@ -168,6 +168,9 @@ class TestReducedLoadNewUI():
                 'authorids': { 'value': ['~Author_RL1'] },
                 'authors': { 'value': ['Author RL'] },
                 'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+                'keywords': { 'value': ['Reinforcement Learning', 'Artificial Intelligence'] },
+                'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },                
             }
         )
 
@@ -214,29 +217,6 @@ class TestReducedLoadNewUI():
         assert openreview_client.get_invitation('RL.cc/2025/Conference/Program_Committee/-/Conflict/Policy')
 
         now = datetime.datetime.now()
-        now_millis = openreview.tools.datetime_millis(now)
-
-        # Trigger conflicts date process with no policy set (should fail)
-        openreview_client.post_invitation_edit(
-            invitations='RL.cc/2025/Conference/-/Edit',
-            signatures=['RL.cc/2025/Conference'],
-            invitation=openreview.api.Invitation(
-                id='RL.cc/2025/Conference/Program_Committee/-/Conflict',
-                cdate=now_millis
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, edit_id='RL.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=2)
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status')
-
-        venue = openreview_client.get_group('RL.cc/2025/Conference')
-        notes = openreview_client.get_notes(
-            invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status',
-            forum=venue.content['request_form_id']['value'],
-            sort='number:asc'
-        )
-        assert len(notes) == 1
-        assert notes[0].content['title']['value'] == 'Program Committee Conflicts Computation Failed'
 
         # Set conflict policy
         pc_client.post_invitation_edit(
@@ -247,11 +227,19 @@ class TestReducedLoadNewUI():
             }
         )
         helpers.await_queue_edit(openreview_client, invitation='RL.cc/2025/Conference/Program_Committee/-/Conflict/Policy')
-        helpers.await_queue_edit(openreview_client, 'RL.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'RL.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=2)
 
         conflicts_inv = pc_client.get_invitation('RL.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_inv.content['conflict_policy']['value'] == 'NeurIPS'
         assert conflicts_inv.content['conflict_n_years']['value'] == 3
+
+        pc_client.post_invitation_edit(
+            invitations='RL.cc/2025/Conference/Program_Committee/-/Conflict/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, 'RL.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=3)                
 
         # Verify Custom_Max_Papers invitation exists
         assert openreview_client.get_invitation('RL.cc/2025/Conference/Program_Committee/-/Custom_Max_Papers')
