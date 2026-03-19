@@ -29,13 +29,23 @@ Do not attempt to guess paths or environments. Do not ask the user questions —
 
 The `cleanStart` script wipes the database and creates fresh test fixtures, so servers must be restarted every time.
 
-### 2a. Kill stale processes
+### 2a. Kill stale API processes
 ```bash
 lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 lsof -ti:3001 | xargs kill -9 2>/dev/null || true
 ```
 
-### 2b. Start API v1 (port 3000) first
+### 2b. Check for openreview-web (port 3030)
+Many tests (especially selenium-based UI tests) require the openreview-web frontend running on port 3030. Check if it's running:
+```bash
+lsof -ti:3030
+```
+If nothing is listening on port 3030, **stop immediately** and return this message:
+> No service detected on port 3030. Many tests require the openreview-web frontend server. Please start it (`npm run dev` in the openreview-web repo with `NEXT_PORT=3030`) and re-run this agent.
+
+If a process is already listening on 3030, proceed — do not kill or restart it.
+
+### 2c. Start API v1 (port 3000) first
 Launch in the background using the Bash tool with `run_in_background: true`:
 ```bash
 <env_activation> && cd <api_v1_path> && npm run cleanStart
@@ -47,7 +57,7 @@ This returns a **task ID**. Use the TaskOutput tool with that task ID to poll fo
 grep "Setup Complete!" <api_v1_path>/logs/$(date +%Y-%m-%d)-results.log
 ```
 
-### 2c. Start API v2 (port 3001) after v1 is ready
+### 2d. Start API v2 (port 3001) after v1 is ready
 Same process. The v2 startup runs `ProfileManagement.setup()` which creates essential invitations — if this fails silently, tests will break.
 
 **Conda users: NEVER use `conda run` to start servers.** `conda run` buffers all subprocess stdout, so background task output stays empty and polling for "Setup Complete!" always times out (~5 min wasted per server). The inline `eval + conda activate` pattern avoids this because the npm process writes directly to stdout.
