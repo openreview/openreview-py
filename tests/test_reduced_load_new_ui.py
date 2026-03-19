@@ -73,6 +73,7 @@ class TestReducedLoadNewUI():
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment', count=1)
         helpers.await_queue_edit(openreview_client, 'RL.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'RL.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'RL.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
