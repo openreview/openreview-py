@@ -2136,7 +2136,7 @@ def create_replyto_invitations(client, submission, note):
 
 def create_forum_invitations(client, submission):
     
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active() and i.date_processes]
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active()]
 
     for invitation in invitation_invitations:
         print('processing invitation: ', invitation.id)

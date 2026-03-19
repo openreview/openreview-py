@@ -43,78 +43,40 @@ def process(client, invitation):
         print('Reviewer assignments have already been deployed')
         return
     
-    matching_configurations = [x for x in client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration', domain=venue_id) if x.content['title']['value']==match_name]    
-    if not matching_configurations:
-        print('No matching configuration found with the provided match name')
-        return
-    
-    matching_configuration = matching_configurations[0]
+    venue = openreview.helpers.get_venue(client, venue_id, support_user)
 
-    client.post_note_edit(
-        invitation=meta_invitation_id,
+    venue.set_assignments(
+        assignment_title=match_name,
+        committee_id=committee_id,
+        overwrite=True,
+        enable_reviewer_reassignment=True,
+    )
+
+    #update change before reviewing cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
         signatures=[venue_id],
-        note=openreview.api.Note(
-            id=matching_configuration.id,
-            content = {
-                'status': {
-                    'value': 'Deploying'
-                }
-            }
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Submission_Change_Before_Reviewing',
+            cdate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes=30)),
+            signatures=[venue_id]
         )
-    )    
+    )
 
-    try:
-        venue = openreview.helpers.get_venue(client, venue_id, support_user)
-
-        venue.set_assignments(
-            assignment_title=match_name,
-            committee_id=committee_id,
-            overwrite=True,
-            enable_reviewer_reassignment=True,
-        )
-
-        #update change before reviewing cdate
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=f'{venue_id}/-/Submission_Change_Before_Reviewing',
-                cdate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes=30)),
-                signatures=[venue_id]
-            )
-        )
-    except Exception as e:
-        print(e)
-        # edit assignment configuration and set status as complete
+    # edit assignment configuration and set status as complete
+    matching_configuration = [x for x in client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration', domain=venue_id) if x.content['title']['value']==match_name]    
+    if matching_configuration:
         client.post_note_edit(
             invitation=meta_invitation_id,
             signatures=[venue_id],
             note=openreview.api.Note(
-                id=matching_configuration.id,
+                id=matching_configuration[0].id,
                 content = {
                     'status': {
-                        'value': 'Deployment Error'
-                    },
-                    'error_message': {
-                        'value': str(e)
+                        'value': 'Deployed'
                     }
                 }
             )
         )
-        return
-
-    # edit assignment configuration and set status as complete
-    client.post_note_edit(
-        invitation=meta_invitation_id,
-        signatures=[venue_id],
-        note=openreview.api.Note(
-            id=matching_configuration.id,
-            content = {
-                'status': {
-                    'value': 'Deployed'
-                }
-            }
-        )
-    )
 
     print('Reviewer assignments deployed successfully')

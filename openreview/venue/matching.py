@@ -805,17 +805,6 @@ class Matching(object):
                                 }
                             }
                         },
-                        'deployed_assignment_groups_invitation': {
-                            'order': 12,
-                            'description': 'Invitation to store deployed paper user assignments',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'const': venue.get_invitation_id(f'{venue.submission_stage.name}_Group', prefix=self.match_group.id),
-                                    'hidden': True
-                                }
-                            }
-                        },
                         'invite_assignment_invitation': {
                             'order': 13,
                             'description': 'Invitation used to invite external or emergency reviewers',
@@ -1204,69 +1193,59 @@ class Matching(object):
         return invite_assignment_invitation
 
     def deploy_assignments(self, assignment_title, overwrite):
-    
+
         venue = self.venue
-        client = self.venue.client
+        client = self.client
 
-        assignment_configuration_note = [x for x in client.get_all_notes(invitation=f'{self.match_group.id}/-/Assignment_Configuration', domain=venue.id) if x.content['title']['value']==assignment_title][0]
-
-        assignment_title = assignment_configuration_note.content.get('assignment_label', {}).get('value')
-        committee_id = assignment_configuration_note.content.get('match_group', {}).get('value')
-        paper_invitation_id = assignment_configuration_note.content.get('paper_invitation', {}).get('value')
-        proposed_assignment_invitation_id = assignment_configuration_note.content.get('assignment_invitation', {}).get('value')
-        assignment_invitation_id = assignment_configuration_note.content.get('deployed_assignment_invitation', {}).get('value')
-        deployed_assignment_groups_invitation_id = assignment_configuration_note.content.get('deployed_assignment_groups_invitation', {}).get('value')
+        committee_id=self.match_group.id
         role_name = committee_id.split('/')[-1]
-        
-        is_reviewer = False
-        is_area_chair = False
-        is_senior_area_chair = False
-        if role_name in venue.reviewer_roles:
-            review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
-            is_reviewer = True
-        elif role_name in venue.area_chair_roles:
+        review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
+        reviewer_name = venue.reviewers_name
+        if role_name in venue.area_chair_roles:
+            reviewer_name = venue.area_chairs_name
             review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
-            is_area_chair = True
-        elif role_name in venue.senior_area_chair_roles:
-            is_senior_area_chair = True
+        elif self.is_senior_area_chair:
+            reviewer_name = venue.senior_area_chairs_name
             
-        papers = client.get_all_notes(invitation=venue.get_submission_id(), details='directReplies')
+        papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), domain=venue.id,
             groupby='head', select=None)} if not venue.sac_paper_assignments else {}
         reviews = []
-        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=proposed_assignment_invitation_id, domain=venue.id,
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id), domain=venue.id,
             label=assignment_title, groupby='head', select=None)}
+        assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None, domain=venue.id)}
 
         print('Check if there are reviews posted')
-        if not is_senior_area_chair:
+        if not self.is_senior_area_chair:
             print('get review notes')
             reviews = [(openreview.api.Note.from_json(reply), s) for s in papers for reply in s.details['directReplies'] if venue.get_invitation_id(name=review_name, number=s.number) in reply['invitations']]
             print(len(reviews))
 
-        # if overwrite:
-        #     if reviews:
-        #         raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
-        #     ## Remove the members from the groups based on the current assignments
-        #     # for paper in tqdm(papers, total=len(papers)):
-        #     #     if paper.id in current_assignment_edges:
-        #     #         paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
-        #     #         current_edges=current_assignment_edges[paper.id]
-        #     #         for current_edge in current_edges:
-        #     #             client.remove_members_from_group(paper_committee_id, current_edge['tail'])
-        #     #     else:
-        #     #         print('assignment not found', paper.id)
-        #     ## Delete current assignment edges with a ddate in case we need to do rollback
-        #     client.delete_edges(invitation=assignment_invitation_id, wait_to_finish=True, soft_delete=True)
+        if overwrite:
+            if reviews:
+                raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
+            ## Remove the members from the groups based on the current assignments
+            for paper in tqdm(papers, total=len(papers)):
+                if paper.id in current_assignment_edges:
+                    paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
+                    current_edges=current_assignment_edges[paper.id]
+                    for current_edge in current_edges:
+                        client.remove_members_from_group(paper_committee_id, current_edge['tail'])
+                else:
+                    print('assignment not found', paper.id)
+            ## Delete current assignment edges with a ddate in case we need to do rollback
+            client.delete_edges(invitation=assignment_invitation_id, wait_to_finish=True, soft_delete=True)
 
         def process_paper_assignments(paper):
             paper_assignment_edges = []
             if paper.id in proposed_assignment_edges:
+                paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
                 assigned_users = []
                 for proposed_edge in proposed_edges:
                     assigned_user = proposed_edge['tail']
-                    if is_area_chair and sac_assignment_edges:
+                    if self.is_area_chair and sac_assignment_edges:
                         sac_assignments = sac_assignment_edges.get(assigned_user, [])
                         for sac_assignment in sac_assignments:
                             assigned_sac = sac_assignment['tail']
@@ -1292,15 +1271,7 @@ class Matching(object):
                         weight=proposed_edge.get('weight')
                     ))
                     assigned_users.append(assigned_user)
-                    client.post_group_edit(
-                        invitation=deployed_assignment_groups_invitation_id,
-                        content={
-                            'noteId': { 'value': paper.id },
-                            'noteNumber': { 'value': paper.number },
-                            'members': { 'value': assigned_users }
-                        },
-                        group=openreview.api.Group()
-                    )
+                client.add_members_to_group(paper_committee_id, assigned_users)
                 return paper_assignment_edges
             else:
                 print('assignment not found', paper.id)
@@ -1312,8 +1283,8 @@ class Matching(object):
         openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
 
         # Remove reviewers_proposed_assignment_title if deploying reviewer assignments
-        if is_reviewer:
-            client.post_group_edit(
+        if self.is_reviewer:
+            self.client.post_group_edit(
                 invitation = venue.get_meta_invitation_id(),
                 signatures = [venue.venue_id],
                 group = openreview.api.Group(
