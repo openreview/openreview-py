@@ -65,7 +65,7 @@ Same process. The v2 startup runs `ProfileManagement.setup()` which creates esse
 ## Step 3: Run Tests
 
 ```bash
-<env_activation> && cd <openreview_py_path> && pytest <test_target> -v
+<env_activation> && pytest <test_target> -v
 ```
 
 - **Single file**: `pytest tests/<filename>.py -v`
