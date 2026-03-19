@@ -104,7 +104,7 @@ class TestReducedLoadNewUI():
         # Verify the invitation was updated
         recruitment_inv = openreview_client.get_invitation('RL.cc/2025/Conference/Program_Committee/-/Recruitment_Response')
         assert recruitment_inv.content['allow_accept_with_reduced_load']['value'] == True
-        assert recruitment_inv.edit['note']['content']['reduced_load']['value']['param']['enum'] == ['${9/content/reduced_load_options/value}']
+        assert recruitment_inv.edit['note']['content']['reduced_load']['value']['param']['enum'] == ['1', '2', '3']
 
         # Recruit one reviewer
         edit = openreview_client.post_group_edit(
@@ -154,3 +154,112 @@ class TestReducedLoadNewUI():
         request_page(selenium, 'http://localhost:3030/group?id=RL.cc/2025/Conference/Program_Committee', reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 submission' in header.text
+
+    def test_post_submission(self, openreview_client, helpers):
+
+        helpers.create_user('author_rl@mail.cc', 'Author', 'RL')
+        author_client = openreview.api.OpenReviewClient(username='author_rl@mail.cc', password=helpers.strong_password)
+
+        note = openreview.api.Note(
+            license='CC BY 4.0',
+            content={
+                'title': { 'value': 'Test Paper for RL Conference' },
+                'abstract': { 'value': 'This is a test abstract for the RL Conference submission.' },
+                'authorids': { 'value': ['~Author_RL1'] },
+                'authors': { 'value': ['Author RL'] },
+                'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+            }
+        )
+
+        author_client.post_note_edit(
+            invitation='RL.cc/2025/Conference/-/Submission',
+            signatures=['~Author_RL1'],
+            note=note
+        )
+
+        helpers.await_queue_edit(openreview_client, invitation='RL.cc/2025/Conference/-/Submission', count=1)
+
+        submissions = openreview_client.get_notes(invitation='RL.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 1
+
+        # Expire the submission deadline so matching setup can proceed
+        pc_client = openreview.api.OpenReviewClient(username='pc_rl@mail.cc', password=helpers.strong_password)
+        now = datetime.datetime.now()
+
+        edit = pc_client.post_invitation_edit(
+            invitations='RL.cc/2025/Conference/-/Submission/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
+                'due_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=31)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        # Activate post submission process
+        pc_client.post_invitation_edit(
+            invitations='RL.cc/2025/Conference/-/Submission_Change_Before_Bidding/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='RL.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
+
+    def test_setup_matching(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='pc_rl@mail.cc', password=helpers.strong_password)
+
+        # Verify conflict and affinity score invitations exist
+        assert openreview_client.get_invitation('RL.cc/2025/Conference/Program_Committee/-/Conflict')
+        assert openreview_client.get_invitation('RL.cc/2025/Conference/Program_Committee/-/Conflict/Dates')
+        assert openreview_client.get_invitation('RL.cc/2025/Conference/Program_Committee/-/Conflict/Policy')
+
+        now = datetime.datetime.now()
+        now_millis = openreview.tools.datetime_millis(now)
+
+        # Trigger conflicts date process with no policy set (should fail)
+        openreview_client.post_invitation_edit(
+            invitations='RL.cc/2025/Conference/-/Edit',
+            signatures=['RL.cc/2025/Conference'],
+            invitation=openreview.api.Invitation(
+                id='RL.cc/2025/Conference/Program_Committee/-/Conflict',
+                cdate=now_millis
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='RL.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status')
+
+        venue = openreview_client.get_group('RL.cc/2025/Conference')
+        notes = openreview_client.get_notes(
+            invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status',
+            forum=venue.content['request_form_id']['value'],
+            sort='number:asc'
+        )
+        assert len(notes) == 1
+        assert notes[0].content['title']['value'] == 'Program Committee Conflicts Computation Failed'
+
+        # Set conflict policy
+        pc_client.post_invitation_edit(
+            invitations='RL.cc/2025/Conference/Program_Committee/-/Conflict/Policy',
+            content={
+                'conflict_policy': { 'value': 'NeurIPS' },
+                'conflict_n_years': { 'value': 3 }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, invitation='RL.cc/2025/Conference/Program_Committee/-/Conflict/Policy')
+        helpers.await_queue_edit(openreview_client, 'RL.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=3)
+
+        conflicts_inv = pc_client.get_invitation('RL.cc/2025/Conference/Program_Committee/-/Conflict')
+        assert conflicts_inv.content['conflict_policy']['value'] == 'NeurIPS'
+        assert conflicts_inv.content['conflict_n_years']['value'] == 3
+
+        # Verify Custom_Max_Papers invitation exists
+        assert openreview_client.get_invitation('RL.cc/2025/Conference/Program_Committee/-/Custom_Max_Papers')
+
+        # Check Custom_Max_Papers edge for the reviewer who accepted with reduced_load=1
+        custom_max_papers_edges = openreview_client.get_edges(
+            invitation='RL.cc/2025/Conference/Program_Committee/-/Custom_Max_Papers',
+            tail='~Reviewer_RL1'
+        )
+        assert len(custom_max_papers_edges) == 1
+        assert custom_max_papers_edges[0].weight == 1

@@ -22,5 +22,5 @@ def process(client, edit, invitation):
             raise openreview.OpenReviewException(f'No matching configuration found with the title {match_name}. Select a valid configuration to deploy.')
         
         status = config_to_deploy.content.get('status', {}).get('value', '')
-        if status != 'Complete':
+        if status not in ['Complete', 'Deployment Error']:
             raise openreview.OpenReviewException(f'The matching configuration with title "{match_name}" does not have status "Complete".')
