@@ -1533,7 +1533,7 @@ For more details, please check the following links:
         assert not 'readers' in submissions[0].content['pdf']
         assert submissions[0].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
 
-        # submission #1 still has previous readers
+        # submission #10 still has previous readers
         assert submissions[-1].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Program_Committee', 'ABCD.cc/2025/Conference/Submission10/Authors']
         assert submissions[-1].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission10/Authors']
 
@@ -1874,7 +1874,7 @@ For more details, please check the following links:
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Comment-0-1', count=3)
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Official_Comment')
-        # these get created only for active papers, should we add a source to the official comment?
+        # these get created only for active papers
         assert len(invitations) == 9
         inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/Submission1/-/Official_Comment')
 
