@@ -250,7 +250,20 @@ class TestARRVenueV2():
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
-        assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').web
+        ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert 'Emergency_Score' in ac_group.web
+
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/August/Area_Chairs',
+                web=ac_group.web + '\n//This is an additional change to the web field that should not be overwritten by future edits'
+            )
+        )
+        ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert 'Emergency_Score' in ac_group.web
+        assert '//This is an additional change to the web field that should not be overwritten by future edits' in ac_group.web        
 
         assert '~Program_ARRChair1' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August').impersonators
 
@@ -357,6 +370,13 @@ class TestARRVenueV2():
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
+
+        assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
+        ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert 'Emergency_Score' in ac_group.web
+        assert '//This is an additional change to the web field that should not be overwritten by future edits' in ac_group.web
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
