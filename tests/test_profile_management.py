@@ -2206,7 +2206,7 @@ The OpenReview Team.
 
         ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ela', 'Last', alternates=[], institution='deepmind.com')
 
-        profile = ella_client_2.get_profile()
+        profile = ella_client_2.get_profile(ella_client_2.profile.id)
         assert '~Ela_Last1' == profile.id
 
         assert openreview_client.get_group('~Ela_Last1').members == ['ella_two@profile.org']
@@ -2372,7 +2372,7 @@ The OpenReview Team.
         assert len(publications) == 1
 
         javier_client_2 = helpers.create_user('javier_two@profile.org', 'Javier', 'Last', alternates=[], institution='deepmind.com')
-        profile = javier_client_2.get_profile()
+        profile = javier_client_2.get_profile(javier_client_2.profile.id)
         assert '~Javier_Last2' == profile.id
 
         javier_client_2.post_note_edit(
@@ -3695,7 +3695,7 @@ The OpenReview Team.
         akshat_client_1 = helpers.create_user('akshat_1@profile.org', 'Akshat', 'First', alternates=[], institution='google.com')
         akshat_client_2 = helpers.create_user('akshat_2@profile.org', 'Akshat', 'Last', alternates=[], institution='google.com')
 
-        profile = akshat_client_1.get_profile()
+        profile = akshat_client_1.get_profile(akshat_client_1.profile.id)
         profile.content['homepage'] = 'https://akshat.google.com'
         profile.content['emails'].append('akshat_2@profile.org')
         akshat_client_1.post_profile(profile)
@@ -3723,7 +3723,7 @@ The OpenReview Team.
         ## As the owner of the profile
         akshat_client_1.activate_email_with_token('akshat_2@profile.org', '000000')
 
-        profile = akshat_client_1.get_profile()
+        profile = akshat_client_1.get_profile(akshat_client_1.profile.id)
         assert profile.content['emailsConfirmed'] == ['akshat_1@profile.org', 'akshat_2@profile.org']
         assert len(profile.content['names']) == 2
         assert profile.content['names'][0]['username'] == '~Akshat_First1'
