@@ -5313,6 +5313,65 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
         anon_id = reviewer_client.get_groups(prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewer_', signatory='~Reviewer_ARRTwo1')[0].id
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Links are not allowed in official comments that are visible to authors.'):
+            reviewer_client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=[anon_id],
+                note=openreview.api.Note(
+                    replyto=submissions[1].id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                    ],
+                    content={
+                        "comment": { "value": "Please see https://example.com/details for more information."}
+                    }
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Links are not allowed in official comments that are visible to authors.'):
+            test_client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'],
+                note=openreview.api.Note(
+                    replyto=submissions[1].id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                    ],
+                    content={
+                        "comment": { "value": "Please see [this note](https://example.com/details)." }
+                    }
+                )
+            )
+
+        comment_edit = pc_client_v2.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Official_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Area_Chairs'
+                ],
+                content={
+                    "comment": { "value": "Internal discussion: https://example.com/internal-doc" }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
         clients = [reviewer_client, test_client]
         signatures = [anon_id, f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors']
         root_note_id = None
