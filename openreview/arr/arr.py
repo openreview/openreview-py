@@ -485,6 +485,7 @@ class ARR(object):
 
     def create_comment_stage(self):
         self.venue.comment_stage = self.comment_stage
+        self.venue.comment_stage.preprocess_path = '../arr/process/comment_pre_process.js'
         self.venue.comment_stage.process_path = '../arr/process/comment_process.py'
         return self.venue.create_comment_stage()
 
