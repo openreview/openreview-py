@@ -130,9 +130,10 @@ class OpenReviewClient(object):
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
             try:
-                self.user = jwt.decode(self.token, options={"verify_signature": False}).get('user', {})
+                payload = jwt.decode(self.token, options={"verify_signature": False})
+                self.user = payload.get('user', payload)
                 user_id = self.user.get('profile', {}).get('id') or self.user.get('id')
-                self.profile = self.get_profile(user_id)
+                self.profile = self.get_profile(user_id) if user_id else None
             except:
                 self.profile = None
         else:
