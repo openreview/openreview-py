@@ -410,8 +410,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
 
     rows.push({
       checked: { noteId: submission.id, checked: false },
-      submissionNumber: { number: parseInt(number)},
-      submission: formattedSubmission,
+      submissionNumber: { number: parseInt(number) },
+      submission: { ...formattedSubmission, ...{ beyondPdf: submission.content.beyond_pdf?.value !== undefined } },
       reviewProgressData: {
         noteId: submission.id,
         paperNumber: number,
@@ -489,7 +489,11 @@ var renderData = function(venueStatusData) {
       function(data) {
         return '<strong class="note-number">' + data.number + '</strong>';
       },
-      Handlebars.templates.noteSummary,
+      function(data) {
+        var noteSummary = Handlebars.templates.noteSummary(data);
+        var beyondPdfTag = data.beyondPdf ? '<span class="badge" style="background-color: #3f6978">Beyond PDF</span>' : '';
+        return noteSummary + beyondPdfTag;
+      },
       Handlebars.templates.noteReviewers,
       Handlebars.templates.noteMetaReviewStatus,
       function(data) {
