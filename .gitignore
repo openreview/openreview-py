@@ -14,3 +14,4 @@ tests/drivers/geckodriver
 tests/data/*.csv
 TCA_key.json
 .vscode/launch.json
+.vscode/settings.json

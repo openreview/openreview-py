@@ -1192,7 +1192,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         
         # Author comment
         author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
-        profile = author_client.get_profile()
+        profile = author_client.get_profile(author_client.profile.id)
         profile.content['names'].append(
             {
                 'fullname': 'Peter NewLastName',
@@ -1447,7 +1447,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         # Invite SPC3 to paper1
         spc_client = openreview.api.OpenReviewClient(username='senior_program_committee3@aaai.com', password=helpers.strong_password)
-        profile = spc_client.get_profile()
+        profile = spc_client.get_profile(spc_client.profile.id)
         profile.content['history'].append(
             {
                 'position': 'Engineer', 
@@ -1472,7 +1472,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
             ))
 
         # Update year to outside range of conflict_N_years
-        profile = spc_client.get_profile()
+        profile = spc_client.get_profile(spc_client.profile.id)
         profile.content['history'][1]['end'] = now.year-5
         spc_client.post_profile(profile)
 
