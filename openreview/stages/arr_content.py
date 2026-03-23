@@ -1,6 +1,8 @@
 from copy import deepcopy
 from datetime import datetime
 
+arr_metareview_recommendation_field = 'overall_assessment'
+
 arr_tracks = [
     "Clinical and Biomedical Applications",
     "Computational Social Science and Cultural Analytics",
