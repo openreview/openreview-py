@@ -336,7 +336,7 @@ class TestProfileManagement():
                 )
             ) 
 
-        profile = kate_client.get_profile()
+        profile = kate_client.get_profile(kate_client.profile.id)
 
         profile.content['homepage'] = 'https://kate.google.com'
         profile.content['names'].append({
@@ -1486,7 +1486,7 @@ computation and memory.
                 )
             )
 
-        profile = sarah_client.get_profile()
+        profile = sarah_client.get_profile(sarah_client.profile.id)
 
         profile.content['homepage'] = 'https://sarah.google.com'
         profile.content['names'].append({
@@ -1516,7 +1516,7 @@ computation and memory.
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
 
-        profile = john_client.get_profile()
+        profile = john_client.get_profile(john_client.profile.id)
 
         profile.content['homepage'] = 'https://john.google.com'
         profile.content['names'].append({
@@ -1791,7 +1791,7 @@ The OpenReview Team.
         ##Make another profile with the same name:
         john_two_client = helpers.create_user('john2@profile.org', 'John', 'Last', alternates=[], institution='google.com')
 
-        profile = john_two_client.get_profile()
+        profile = john_two_client.get_profile(john_two_client.profile.id)
 
         profile.content['homepage'] = 'https://john.google.com'
         profile.content['names'].append({
@@ -1811,7 +1811,7 @@ The OpenReview Team.
 
 
         #Try to automatically remove a name with different spacing/capitalization
-        profile=john_two_client.get_profile()
+        profile=john_two_client.get_profile(john_two_client.profile.id)
         profile.content['names'].append(
             {'fullname':'johnlast'}
             )
@@ -1911,7 +1911,7 @@ The OpenReview Team.
         tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Last1')
         assert len(tags) == 1
     
-        profile = ana_client.get_profile()
+        profile = ana_client.get_profile(ana_client.profile.id)
 
         profile.content['homepage'] = 'https://ana.google.com'
         profile.content['names'].append({
@@ -2071,7 +2071,7 @@ The OpenReview Team.
 
         peter_client = helpers.create_user('peter@profile.org', 'Peter', 'Last', alternates=[], institution='google.com')
 
-        profile = peter_client.get_profile()
+        profile = peter_client.get_profile(peter_client.profile.id)
 
         profile.content['homepage'] = 'https://peter.google.com'
         profile.content['names'].append({
@@ -2166,7 +2166,7 @@ The OpenReview Team.
 
         ella_client = helpers.create_user('ella@profile.org', 'Ella', 'Last', alternates=[], institution='google.com')
 
-        profile = ella_client.get_profile()
+        profile = ella_client.get_profile(ella_client.profile.id)
 
         profile.content['homepage'] = 'https://ella.google.com'
         profile.content['names'].append({
@@ -2206,7 +2206,7 @@ The OpenReview Team.
 
         ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ela', 'Last', alternates=[], institution='deepmind.com')
 
-        profile = ella_client_2.get_profile()
+        profile = ella_client_2.get_profile(ella_client_2.profile.id)
         assert '~Ela_Last1' == profile.id
 
         assert openreview_client.get_group('~Ela_Last1').members == ['ella_two@profile.org']
@@ -2232,7 +2232,7 @@ The OpenReview Team.
 
 
         support_client.merge_profiles('~Ella_Last1', '~Ela_Last1')
-        profile = ella_client.get_profile()
+        profile = ella_client.get_profile(ella_client.profile.id)
         assert len(profile.content['names']) == 3
         profile.content['names'][0]['username'] == '~Ella_Last1'
         profile.content['names'][0]['preferred'] == True
@@ -2336,7 +2336,7 @@ The OpenReview Team.
 
         javier_client = helpers.create_user('javier@profile.org', 'Javier', 'Last', alternates=[], institution='google.com')
 
-        profile = javier_client.get_profile()
+        profile = javier_client.get_profile(javier_client.profile.id)
 
         profile.content['homepage'] = 'https://javier.google.com'
         profile.content['names'].append({
@@ -2372,7 +2372,7 @@ The OpenReview Team.
         assert len(publications) == 1
 
         javier_client_2 = helpers.create_user('javier_two@profile.org', 'Javier', 'Last', alternates=[], institution='deepmind.com')
-        profile = javier_client_2.get_profile()
+        profile = javier_client_2.get_profile(javier_client_2.profile.id)
         assert '~Javier_Last2' == profile.id
 
         javier_client_2.post_note_edit(
@@ -2395,7 +2395,7 @@ The OpenReview Team.
 
 
         support_client.merge_profiles('~Javier_Last1', '~Javier_Last2')
-        profile = javier_client.get_profile()
+        profile = javier_client.get_profile(javier_client.profile.id)
         assert len(profile.content['names']) == 3
         profile.content['names'][0]['username'] == '~Javier_Last1'
         profile.content['names'][1]['username'] == '~Javier_Alternate_Last1'
@@ -2500,7 +2500,7 @@ The OpenReview Team.
         venue.create_registration_stages()        
         
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
-        profile = paul_client.get_profile()
+        profile = paul_client.get_profile(paul_client.profile.id)
 
         profile.content['homepage'] = 'https://paul.google.com'
         profile.content['names'].append({
@@ -2866,7 +2866,7 @@ The OpenReview Team.
 
         juan_client = helpers.create_user('juan@profile.org', 'Juan', 'Last', alternates=[], institution='google.com')
 
-        profile = juan_client.get_profile()
+        profile = juan_client.get_profile(juan_client.profile.id)
 
         profile.content['homepage'] = 'https://juan.google.com'
         profile.content['names'].append({
@@ -2899,7 +2899,7 @@ The OpenReview Team.
 
         john_client = openreview.api.OpenReviewClient(username='john@profile.org', password=helpers.strong_password)
 
-        profile = john_client.get_profile()
+        profile = john_client.get_profile(john_client.profile.id)
 
         profile.content['relations'].append({
             'relation': 'Advisor',
@@ -2950,7 +2950,7 @@ The OpenReview Team.
         assert profile.content['names'][0]['username'] == '~Juan_Alternate_Last1' 
 
         john_client = openreview.api.OpenReviewClient(username='john@profile.org', password=helpers.strong_password)
-        profile = john_client.get_profile()
+        profile = john_client.get_profile(john_client.profile.id)
         assert len(profile.content['relations']) == 2
         assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             
         assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'
@@ -2967,7 +2967,7 @@ The OpenReview Team.
             }
         }
         john_client.post_profile(profile) 
-        profile = john_client.get_profile()                                      
+        profile = john_client.get_profile(john_client.profile.id)                                      
         assert len(profile.content['relations']) == 2
         assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             
         assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'
@@ -2977,7 +2977,7 @@ The OpenReview Team.
 
         nara_client = helpers.create_user('nara@profile.org', 'Nara', 'Last', alternates=[], institution='google.com')
 
-        profile = nara_client.get_profile()
+        profile = nara_client.get_profile(nara_client.profile.id)
 
         profile.content['homepage'] = 'https://nara.google.com'
         profile.content['names'].append({
@@ -3015,7 +3015,7 @@ The OpenReview Team.
 
         mara_client = helpers.create_user('mara@profile.org', 'Mara', 'Last', alternates=[], institution='google.com')
 
-        profile = mara_client.get_profile()
+        profile = mara_client.get_profile(mara_client.profile.id)
 
         profile.content['homepage'] = 'https://mara.google.com'
         profile.content['names'].append({
@@ -3069,7 +3069,7 @@ The OpenReview Team.
     def test_merge_profiles(self, openreview_client, helpers, support_client):
 
         rachel_client = helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
-        profile = rachel_client.get_profile()
+        profile = rachel_client.get_profile(rachel_client.profile.id)
 
         profile.content['homepage'] = 'https://rachel.google.com'
         profile.content['names'].append({
@@ -3203,7 +3203,7 @@ The OpenReview Team.
     def test_merge_profiles_ignore_request(self, openreview_client, helpers, support_client):
 
         melisa_client = helpers.create_user('melisa@profile.org', 'Melisa', 'Last', alternates=[], institution='google.com')
-        profile = melisa_client.get_profile()
+        profile = melisa_client.get_profile(melisa_client.profile.id)
 
         profile.content['homepage'] = 'https://melisa.google.com'
         profile.content['names'].append({
@@ -3264,7 +3264,7 @@ The OpenReview Team.
     def test_remove_email_address(self, openreview_client, helpers, support_client):
 
         harold_client = helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
-        profile = harold_client.get_profile()
+        profile = harold_client.get_profile(harold_client.profile.id)
 
         profile.content['homepage'] = 'https://harold.google.com'
         profile.content['emails'].append('alternate_harold@profile.org')
@@ -3484,7 +3484,7 @@ The OpenReview Team.
 
         tidus_client = helpers.create_user('tidus@profile.org', 'Tidus', 'Mondragon', alternates=[], institution='google.com')
 
-        profile = tidus_client.get_profile()
+        profile = tidus_client.get_profile(tidus_client.profile.id)
         profile.content['homepage'] = 'https://carlos.google.com'
 
         tidus_client.post_profile(profile)
@@ -3507,7 +3507,7 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        profile = tidus_client.get_profile()
+        profile = tidus_client.get_profile(tidus_client.profile.id)
 
         tidus_client.post_profile(profile)
 
@@ -3515,7 +3515,7 @@ The OpenReview Team.
 
         carlos_client = helpers.create_user('carlos@profile.org', 'Carlos', 'Last', alternates=[], institution='google.com')
 
-        profile = carlos_client.get_profile()
+        profile = carlos_client.get_profile(carlos_client.profile.id)
 
         profile.content['homepage'] = 'https://carlos.google.com'
         profile.content['relations'].append({
@@ -3661,7 +3661,7 @@ The OpenReview Team.
 
         xukun_client = helpers.create_user('xukun@profile.org', 'Xukun', 'First', alternates=[], institution='google.com')
 
-        profile = xukun_client.get_profile()
+        profile = xukun_client.get_profile(xukun_client.profile.id)
         profile.content['homepage'] = 'https://xukun.com'
         profile.content['emails'].append('xukun@gmail.com')
         xukun_client.post_profile(profile)
@@ -3680,7 +3680,7 @@ The OpenReview Team.
         ## As owner of the profile
         xukun_client.activate_email_with_token('xukun@gmail.com', '000000')
         
-        profile = xukun_client.get_profile()
+        profile = xukun_client.get_profile(xukun_client.profile.id)
         assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
 
         ## create a group and try to confirm
@@ -3695,7 +3695,7 @@ The OpenReview Team.
         akshat_client_1 = helpers.create_user('akshat_1@profile.org', 'Akshat', 'First', alternates=[], institution='google.com')
         akshat_client_2 = helpers.create_user('akshat_2@profile.org', 'Akshat', 'Last', alternates=[], institution='google.com')
 
-        profile = akshat_client_1.get_profile()
+        profile = akshat_client_1.get_profile(akshat_client_1.profile.id)
         profile.content['homepage'] = 'https://akshat.google.com'
         profile.content['emails'].append('akshat_2@profile.org')
         akshat_client_1.post_profile(profile)
@@ -3723,7 +3723,7 @@ The OpenReview Team.
         ## As the owner of the profile
         akshat_client_1.activate_email_with_token('akshat_2@profile.org', '000000')
 
-        profile = akshat_client_1.get_profile()
+        profile = akshat_client_1.get_profile(akshat_client_1.profile.id)
         assert profile.content['emailsConfirmed'] == ['akshat_1@profile.org', 'akshat_2@profile.org']
         assert len(profile.content['names']) == 2
         assert profile.content['names'][0]['username'] == '~Akshat_First1'
