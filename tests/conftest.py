@@ -4,7 +4,6 @@ import inspect
 import sys
 import time
 import json
-import jwt
 from urllib.parse import quote, unquote
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -348,8 +347,7 @@ def request_page():
             selenium.get('http://localhost:3030')
             token = client.token.replace('Bearer ', '')
             selenium.add_cookie({'name': 'openreview.accessToken', 'value': token, 'path': '/', 'sameSite': 'Lax', 'httpOnly': True})
-            user_payload = jwt.decode(token, options={"verify_signature": False})
-            selenium.add_cookie({'name': 'openreview.user', 'value': quote(json.dumps(user_payload)), 'path': '/', 'sameSite': 'Lax'})
+            selenium.add_cookie({'name': 'openreview.user', 'value': quote(json.dumps(client.user)), 'path': '/', 'sameSite': 'Lax'})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
