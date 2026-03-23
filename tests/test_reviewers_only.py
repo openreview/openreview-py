@@ -113,6 +113,12 @@ class TestReviewersOnly():
         
         helpers.await_queue_edit(openreview_client, edit_id=request['id'])
 
+        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='Your request for OpenReview service has been received.')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(subject='A request for service has been submitted by ABCD 2025')
+        assert len(messages) == 0        
+
         request = openreview_client.get_note(request['note']['id'])
         assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
@@ -152,12 +158,13 @@ class TestReviewersOnly():
         comment = openreview_client.get_note(comment_edit['note']['id'])
         assert comment.readers == ['openreview.net/Support', 'programchair@abcd.cc']
 
-        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a request for service: The ABCD Conference')
+        messages = openreview_client.get_messages(subject='Comment posted to a request for service: The ABCD Conference')
         assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'support@openreview.net'
 
-        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='Comment posted to your request for service: The ABCD Conference')
+        messages = openreview_client.get_messages(subject='Comment posted to your request for service: The ABCD Conference')
         assert len(messages) == 1
-
+        assert messages[0]['content']['to'] == 'programchair@abcd.cc'
         #post comment as support
         comment_edit = openreview_client.post_note_edit(
             invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment',
@@ -173,11 +180,14 @@ class TestReviewersOnly():
 
         helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
-        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a request for service: The ABCD Conference')
+        messages = openreview_client.get_messages(subject='Comment posted to a request for service: The ABCD Conference')
         assert len(messages) == 1  # no new message should be sent to support
+        assert messages[0]['content']['to'] == 'support@openreview.net'
 
-        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='Comment posted to your request for service: The ABCD Conference')
+        messages = openreview_client.get_messages(subject='Comment posted to your request for service: The ABCD Conference')
         assert len(messages) == 2
+        assert messages[0]['content']['to'] == 'programchair@abcd.cc'
+        assert messages[1]['content']['to'] == 'programchair@abcd.cc'
 
         # deploy the venue
         edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
@@ -190,6 +200,11 @@ class TestReviewersOnly():
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment', count=3)
+
+        messages = openreview_client.get_messages(subject='Your venue, ABCD 2025, is available in OpenReview')
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'programchair@abcd.cc'
 
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
@@ -350,6 +365,10 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Members')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Chairs/-/Members')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Aggregate_Score')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Proposed_Assignment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_Max_Papers')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_User_Demands')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee')
 
@@ -393,8 +412,9 @@ class TestReviewersOnly():
         comment_id = comment_edit['note']['id']
         venue_id = request_form.content['venue_id']['value']
 
-        messages = openreview_client.get_messages(to='support@openreview.net', subject='[ABCD.cc/2025/Conference] Comment posted to a request for service: The ABCD Conference')
+        messages = openreview_client.get_messages(subject='[ABCD.cc/2025/Conference] Comment posted to a request for service: The ABCD Conference')
         assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'support@openreview.net'
         assert messages[0]['content']['text'] == f'''A comment was posted to a service request.
 
 Comment title: Comment from Program Chair
@@ -840,6 +860,30 @@ For more details, please check the following links:
         messages = openreview_client.get_messages(subject = '[ABCD 2025] Reminder: Invitation to serve as expert Reviewer')
         assert len(messages) == 2
 
+        ## Invite a blocked profile
+        helpers.create_user('blockeduser@profile.org', 'Blocked', 'User', alternates=[], institution='google.com')
+        openreview_client.moderate_profile('~Blocked_User1', 'block')
+
+        edit = openreview_client.post_group_edit(
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
+                content={
+                    'invitee_details': { 'value':  'reviewer_two@abcd.cc\n~Blocked_User1' },
+                    'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as Reviewer' },
+                    'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        assert '~Blocked_User1' not in openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Invited').members
+
+        # The auto reminder completes without error
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        messages = openreview_client.get_messages(to='reviewer_two@abcd.cc', subject='[Reminder][ABCD 2025] Invitation to serve as Reviewer')
+        assert len(messages) == 1
+        assert not openreview_client.get_messages(to='blockeduser@profile.org', subject='[Reminder][ABCD 2025] Invitation to serve as Reviewer')
+
         # invite only users who are already invited or members
         edit = openreview_client.post_group_edit(
 
@@ -855,7 +899,7 @@ For more details, please check the following links:
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Recruitment request status for ABCD 2025 Program Committee Group')
-        assert len(messages) == 3
+        assert len(messages) == 4
         assert messages[-1]['content']['text'] == f'''The recruitment request process for the Program Committee Group has been completed.
 
 Invited: 0

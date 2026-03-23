@@ -102,6 +102,12 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_custom_sections = False
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
+        venue_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
+        self.homepage_webfield_path = os.path.join(venue_webfield_dir, 'homepageWebfield.js')
+        self.program_chairs_webfield_path = os.path.join(venue_webfield_dir, 'programChairsWebfield.js')
+        self.senior_area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'seniorAreaChairsWebfield.js')
+        self.area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'areachairsWebfield.js')
+        self.ethics_chairs_webfield_path = os.path.join(venue_webfield_dir, 'ethicsChairsWebfield.js')
 
     def set_main_settings(self, request_note):
         self.name = request_note.content['official_venue_name']['value']
@@ -241,6 +247,8 @@ class Venue(object):
         return self.get_invitation_id('PC_Revision')
 
     def get_recruitment_id(self, committee_id):
+        if self.is_template_related_workflow():
+            return self.get_invitation_id('Recruitment_Response', prefix=committee_id)        
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
     def get_expertise_selection_id(self, committee_id):
@@ -424,9 +432,6 @@ class Venue(object):
 
     def get_desk_rejected_id(self):
         return self.get_invitation_id(f'Desk_Rejected_{self.submission_stage.name}')
-    
-    def get_group_recruitment_id(self, committee_name):
-        return self.get_invitation_id(name='Recruitment', prefix=self.get_committee_id_invited(committee_name))
     
     def get_iThenticate_plagiarism_check_invitation_id(self):
         return self.get_invitation_id('iThenticate_Plagiarism_Check')
@@ -662,12 +667,8 @@ class Venue(object):
         decision_file = self.decision_stage.decisions_file
         if decision_file:
 
-            baseurl = 'http://localhost:3000'
-            if 'https://devapi' in self.client.baseurl:
-                baseurl = 'https://devapi.openreview.net'
-            if 'https://api' in self.client.baseurl:
-                baseurl = 'https://api.openreview.net'
-            api1_client = openreview.Client(baseurl=baseurl, token=self.client.token)
+            baseurl_v1 = openreview.tools.get_base_urls(self.client)[0]
+            api1_client = openreview.Client(baseurl=baseurl_v1, token=self.client.token)
 
             if '/attachment' in decision_file:
                 decisions = api1_client.get_attachment(id=self.request_form_id, field_name='decisions_file')
@@ -992,6 +993,40 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
+    def set_assignment_invitations(self, submission_deadline):
+
+        invitation_prefix = self.support_user.replace('Support', 'Template')
+
+        if self.use_area_chairs:
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+
+            self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.area_chairs_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
+                    'committee_name': { 'value': self.area_chairs_name },
+                    'committee_pretty_name': { 'value': self.get_area_chairs_name(pretty=True) }
+                },
+                await_process=True
+            )
+
+        self.invitation_builder.set_assignment_invitation(committee_id=self.get_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*2.2))
+        self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.reviewers_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.3) },
+                    'committee_name': { 'value': self.reviewers_name },
+                    'committee_pretty_name': { 'value': self.get_reviewers_name(pretty=True) }
+                },
+                await_process=True
+            )
+
     def setup_matching_invitations(self):
 
         if self.use_area_chairs:
@@ -1000,6 +1035,15 @@ Total Errors: {len(errors)}
 
         venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
         venue_matching.setup_matching_invitations()
+
+    def setup_all_committees_matching(self):
+
+        if self.use_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
+            venue_matching.setup()
+
+        venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
+        venue_matching.setup()
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         if committee_id is None:

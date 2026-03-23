@@ -444,7 +444,7 @@ class Matching(object):
         reduced_load_notes = self.client.get_all_notes(invitation=self.venue.get_recruitment_id(self.match_group.id), sort='tcdate:asc', domain=self.venue.venue_id)
         for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
             if 'reduced_load' in note.content:
-                reduced_loads[note.content['user']['value']] = note.content['reduced_load']['value']
+                reduced_loads[note.content.get('user', {}).get('value', note.signatures[0])] = note.content['reduced_load']['value']
 
         print ('Reduced loads received: ', len(reduced_loads))
 
@@ -648,6 +648,11 @@ class Matching(object):
             signatures = [venue.id],
             readers = [venue.id],
             writers = [venue.id],
+            content = {
+                'committee_name': {
+                    'value': self.match_group_name
+                }
+            },
             edit = {
                 'signatures': [venue.id],
                 'readers': [venue.id],
@@ -977,6 +982,9 @@ class Matching(object):
                 }
             }
 
+        if venue.is_template_related_workflow():
+            config_inv.process = venue.invitation_builder.get_process_content('../workflows/process/assignment_configuration_process.py')
+
         invitation = venue.invitation_builder.save_invitation(config_inv)
 
     def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None):
@@ -1001,15 +1009,16 @@ class Matching(object):
 
         submissions = self._get_submissions()
 
-        if not self.match_group.members:
-            raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
-        if self.alternate_matching_group:
-            other_matching_group = self.client.get_group(self.alternate_matching_group)
-            other_matching_group = openreview.tools.replace_members_with_ids(client, other_matching_group)
-            if not other_matching_group.members:
-                raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
-        elif not submissions:
-            raise openreview.OpenReviewException('Submissions not found.')
+        if not venue.is_template_related_workflow():
+            if not self.match_group.members:
+                raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
+            if self.alternate_matching_group:
+                other_matching_group = self.client.get_group(self.alternate_matching_group)
+                other_matching_group = openreview.tools.replace_members_with_ids(client, other_matching_group)
+                if not other_matching_group.members:
+                    raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
+            elif not submissions:
+                raise openreview.OpenReviewException('Submissions not found.')
 
         type_affinity_scores = type(compute_affinity_scores)
 
