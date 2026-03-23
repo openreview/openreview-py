@@ -33,7 +33,8 @@ def process(client, edit, invitation):
 
     def remind_reviewer(invitee):
 
-        invitee_profile_id = committee_invitee_profiles.get(invitee, { id: invitee }).id
+        invitee_profile = committee_invitee_profiles.get(invitee)
+        invitee_profile_id = invitee_profile.id if invitee_profile else invitee
 
         if not invitee_profile_id in committee_invited_profiles:
             return None
