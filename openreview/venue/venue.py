@@ -247,6 +247,8 @@ class Venue(object):
         return self.get_invitation_id('PC_Revision')
 
     def get_recruitment_id(self, committee_id):
+        if self.is_template_related_workflow():
+            return self.get_invitation_id('Recruitment_Response', prefix=committee_id)        
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
     def get_expertise_selection_id(self, committee_id):
@@ -430,9 +432,6 @@ class Venue(object):
 
     def get_desk_rejected_id(self):
         return self.get_invitation_id(f'Desk_Rejected_{self.submission_stage.name}')
-    
-    def get_group_recruitment_id(self, committee_name):
-        return self.get_invitation_id(name='Recruitment', prefix=self.get_committee_id_invited(committee_name))
     
     def get_iThenticate_plagiarism_check_invitation_id(self):
         return self.get_invitation_id('iThenticate_Plagiarism_Check')

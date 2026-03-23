@@ -8,6 +8,7 @@ import time
 from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
+    arr_metareview_recommendation_field,
     arr_submission_content,
     arr_registration_task_forum,
     arr_registration_task,
@@ -1211,6 +1212,7 @@ class ARRWorkflow(object):
                         'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                         'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                         'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                        'recommendation_field_name': arr_metareview_recommendation_field,
                         'additional_meta_review_form_options': arr_metareview_content,
                         'remove_meta_review_form_options': ['recommendation', 'confidence']
                     },
