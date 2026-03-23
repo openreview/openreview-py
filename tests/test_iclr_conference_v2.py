@@ -21,7 +21,6 @@ class TestICLRConference():
         helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
         pc_client = openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
 
-
         helpers.create_user('sac10@gmail.com', 'SAC', 'ICLROne')
         helpers.create_user('sac2@iclr.cc', 'SAC', 'ICLRTwo')
         helpers.create_user('ac1@iclr.cc', 'AC', 'ICLROne')
