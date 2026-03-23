@@ -4,6 +4,7 @@ import inspect
 import sys
 import time
 import json
+import jwt
 from urllib.parse import quote, unquote
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -345,14 +346,10 @@ def request_page():
     def request(selenium, url, client = None, alert=False, by=By.ID, wait_for_element='content'):
         if client:
             selenium.get('http://localhost:3030')
-            selenium.add_cookie({'name': 'openreview.accessToken', 'value': client.token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax', 'httpOnly': True})
-            selenium.add_cookie({'name': 'openreview.user', 'value': quote(json.dumps(client.user)), 'path': '/', 'sameSite': 'Lax'})
-
-            cookies = selenium.get_cookies()
-            user_cookie = next((c for c in cookies if c['name'] == 'openreview.user'), None)
-            decoded_json = json.loads(unquote(user_cookie['value']))
-            print('COOOOKIE', user_cookie)            
-            print(decoded_json)            
+            token = client.token.replace('Bearer ', '')
+            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token, 'path': '/', 'sameSite': 'Lax', 'httpOnly': True})
+            user_payload = jwt.decode(token, options={"verify_signature": False})
+            selenium.add_cookie({'name': 'openreview.user', 'value': quote(json.dumps(user_payload)), 'path': '/', 'sameSite': 'Lax'})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
@@ -371,5 +368,7 @@ def request_page():
             time.sleep(5) ## temporally sleep time to wait until the whole page is loaded
         except TimeoutException:
             print("Timed out waiting for page to load")
+            print("Current URL:", selenium.current_url)
+            print("Page source (first 2000 chars):", selenium.page_source[:2000])
 
     return request
