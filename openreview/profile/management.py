@@ -91,7 +91,7 @@ return {
   properties: {
     tagInvitation: entity.id,
     instructions:'Profiles that were tagged by support staff for moderation reasons.',
-    title: 'Moderation Labels',
+    title: 'Moderation Labels'
   }
 }
 '''
