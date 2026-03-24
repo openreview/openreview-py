@@ -31,6 +31,31 @@ pip install -e .
 
 > Note: Depending on your Python installation you may need to use the command  `pip3` instead of `pip`.
 
+### Production / CI Installation
+
+For reproducible deployments, install the package using the pinned lock file as constraints:
+
+```bash
+pip install -c requirements.txt .
+```
+
+### Updating Dependencies
+
+This project uses [pip-tools](https://pip-tools.readthedocs.io/) to manage dependency versions. `pyproject.toml` declares compatible version ranges, while `requirements.txt` (production) and `requirements-dev.txt` (test + docs) contain the exact pinned versions.
+
+To update all dependencies to the latest compatible versions:
+
+```bash
+pip-compile pyproject.toml -o requirements.txt --strip-extras
+pip-compile pyproject.toml --extra test --extra docs -o requirements-dev.txt --strip-extras
+```
+
+To update a single package:
+
+```bash
+pip-compile --upgrade-package requests pyproject.toml -o requirements.txt --strip-extras
+```
+
 Usage
 -----
 

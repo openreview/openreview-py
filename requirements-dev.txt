@@ -1,0 +1,239 @@
+alabaster==1.0.0
+    # via sphinx
+attrs==26.1.0
+    # via
+    #   jsonschema
+    #   outcome
+    #   referencing
+    #   trio
+babel==2.18.0
+    # via sphinx
+beautifulsoup4==4.14.3
+    # via nbconvert
+bleach==6.3.0
+    # via nbconvert
+certifi==2026.2.25
+    # via
+    #   requests
+    #   selenium
+charset-normalizer==3.4.6
+    # via requests
+coverage==7.13.5
+    # via pytest-cov
+defusedxml==0.7.1
+    # via nbconvert
+deprecated==1.3.1
+    # via openreview-py (pyproject.toml)
+docutils==0.22.4
+    # via
+    #   nbsphinx
+    #   sphinx
+    #   sphinx-rtd-theme
+fastjsonschema==2.21.2
+    # via nbformat
+future==1.0.0
+    # via openreview-py (pyproject.toml)
+h11==0.16.0
+    # via wsproto
+idna==3.11
+    # via
+    #   requests
+    #   trio
+imagesize==2.0.0
+    # via sphinx
+iniconfig==2.3.0
+    # via pytest
+jinja2==3.1.6
+    # via
+    #   nbconvert
+    #   nbsphinx
+    #   pytest-html
+    #   sphinx
+jsonschema==4.26.0
+    # via nbformat
+jsonschema-specifications==2025.9.1
+    # via jsonschema
+jupyter-client==8.8.0
+    # via nbclient
+jupyter-core==5.9.1
+    # via
+    #   jupyter-client
+    #   nbclient
+    #   nbconvert
+    #   nbformat
+jupyterlab-pygments==0.3.0
+    # via nbconvert
+markupsafe==3.0.3
+    # via
+    #   jinja2
+    #   nbconvert
+mistune==3.2.0
+    # via nbconvert
+nbclient==0.10.4
+    # via nbconvert
+nbconvert==7.17.0
+    # via nbsphinx
+nbformat==5.10.4
+    # via
+    #   nbclient
+    #   nbconvert
+    #   nbsphinx
+    #   openreview-py (pyproject.toml)
+nbsphinx==0.9.8
+    # via openreview-py (pyproject.toml)
+numpy==2.4.3
+    # via openreview-py (pyproject.toml)
+outcome==1.3.0.post0
+    # via
+    #   trio
+    #   trio-websocket
+packaging==26.0
+    # via
+    #   nbconvert
+    #   pytest
+    #   sphinx
+pandocfilters==1.5.1
+    # via nbconvert
+platformdirs==4.9.4
+    # via jupyter-core
+pluggy==1.6.0
+    # via
+    #   pytest
+    #   pytest-cov
+py==1.11.0
+    # via openreview-py (pyproject.toml)
+pycryptodome==3.23.0
+    # via openreview-py (pyproject.toml)
+pygments==2.19.2
+    # via
+    #   nbconvert
+    #   pytest
+    #   sphinx
+pyjwt==2.12.1
+    # via openreview-py (pyproject.toml)
+pylatexenc==2.10
+    # via openreview-py (pyproject.toml)
+pyotp==2.9.0
+    # via openreview-py (pyproject.toml)
+pysocks==1.7.1
+    # via urllib3
+pytest==9.0.2
+    # via
+    #   openreview-py (pyproject.toml)
+    #   pytest-base-url
+    #   pytest-cov
+    #   pytest-html
+    #   pytest-metadata
+    #   pytest-selenium
+    #   pytest-variables
+pytest-base-url==2.1.0
+    # via pytest-selenium
+pytest-cov==7.1.0
+    # via openreview-py (pyproject.toml)
+pytest-html==4.2.0
+    # via pytest-selenium
+pytest-metadata==3.1.1
+    # via pytest-html
+pytest-selenium==4.1.0
+    # via openreview-py (pyproject.toml)
+pytest-variables==3.1.0
+    # via pytest-selenium
+python-dateutil==2.9.0.post0
+    # via jupyter-client
+pyzmq==27.1.0
+    # via jupyter-client
+referencing==0.37.0
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+requests==2.32.5
+    # via
+    #   openreview-py (pyproject.toml)
+    #   pytest-base-url
+    #   pytest-selenium
+    #   sphinx
+roman-numerals==4.1.0
+    # via sphinx
+rpds-py==0.30.0
+    # via
+    #   jsonschema
+    #   referencing
+selenium==4.41.0
+    # via
+    #   openreview-py (pyproject.toml)
+    #   pytest-selenium
+six==1.17.0
+    # via python-dateutil
+sniffio==1.3.1
+    # via trio
+snowballstemmer==3.0.1
+    # via sphinx
+sortedcontainers==2.4.0
+    # via trio
+soupsieve==2.8.3
+    # via beautifulsoup4
+sphinx==9.1.0
+    # via
+    #   nbsphinx
+    #   openreview-py (pyproject.toml)
+    #   sphinx-rtd-theme
+    #   sphinxcontrib-jquery
+sphinx-rtd-theme==3.1.0
+    # via openreview-py (pyproject.toml)
+sphinxcontrib-applehelp==2.0.0
+    # via sphinx
+sphinxcontrib-devhelp==2.0.0
+    # via sphinx
+sphinxcontrib-htmlhelp==2.1.0
+    # via sphinx
+sphinxcontrib-jquery==4.1
+    # via sphinx-rtd-theme
+sphinxcontrib-jsmath==1.0.1
+    # via sphinx
+sphinxcontrib-qthelp==2.0.0
+    # via sphinx
+sphinxcontrib-serializinghtml==2.0.0
+    # via sphinx
+tenacity==9.1.4
+    # via pytest-selenium
+tinycss2==1.4.0
+    # via bleach
+tld==0.13.2
+    # via openreview-py (pyproject.toml)
+tornado==6.5.5
+    # via jupyter-client
+tqdm==4.67.3
+    # via openreview-py (pyproject.toml)
+traitlets==5.14.3
+    # via
+    #   jupyter-client
+    #   jupyter-core
+    #   nbclient
+    #   nbconvert
+    #   nbformat
+    #   nbsphinx
+trio==0.33.0
+    # via
+    #   selenium
+    #   trio-websocket
+trio-websocket==0.12.2
+    # via selenium
+typing-extensions==4.15.0
+    # via
+    #   beautifulsoup4
+    #   referencing
+    #   selenium
+urllib3==2.6.3
+    # via
+    #   requests
+    #   selenium
+webencodings==0.5.1
+    # via
+    #   bleach
+    #   tinycss2
+websocket-client==1.9.0
+    # via selenium
+wrapt==2.1.2
+    # via deprecated
+wsproto==1.3.2
+    # via trio-websocket
