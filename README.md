@@ -56,6 +56,13 @@ To update a single package:
 pip-compile --upgrade-package requests pyproject.toml -o requirements.txt --strip-extras
 ```
 
+> **Note:** `pip-compile` resolves for the Python version of the running interpreter, so the numpy pin in the generated lock files will only match that version. After running `pip-compile`, manually replace the numpy line in both lock files with environment-marked entries:
+> ```
+> numpy==2.0.2 ; python_version < '3.10'
+> numpy==2.2.6 ; python_version == '3.10'
+> numpy==2.4.3 ; python_version >= '3.11'
+> ```
+
 Usage
 -----
 
