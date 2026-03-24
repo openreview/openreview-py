@@ -211,6 +211,7 @@ class TestSimpleDualAnonymous():
             'EFGH.cc/2025/Conference/Reviewers',
             'EFGH.cc/2025/Conference/Submission${{2/id}/number}/Authors'
         ]
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Readers')
         invitation = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
         assert invitation.edit['note']['readers'] == [
             'EFGH.cc/2025/Conference',
@@ -423,6 +424,21 @@ For more details, please check the following links:
         )
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
 
+        # release papers to assigned committees but forget to include PCs as readers
+        with pytest.raises(openreview.OpenReviewException, match=r'If "everyone" is not selected as reader, the Program Chairs must be included as readers.'):
+            pc_client.post_invitation_edit(
+                invitations='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Readers',
+                content= {
+                    'readers': {
+                        'value': [
+                            'EFGH.cc/2025/Conference/Action_Editors',
+                            'EFGH.cc/2025/Conference/Reviewers',
+                            'EFGH.cc/2025/Conference/Submission${{2/id}/number}/Authors'
+                        ]
+                    }
+                }
+            )
+
         # manually update cdate of post submission invitations
         pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Dates',
@@ -480,6 +496,8 @@ For more details, please check the following links:
         assert submissions[0].content['email_sharing']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['data_release']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['pdf']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
+        assert not submissions[0].odate
+        assert '_bibtex' not in submissions[0].content
 
         submission_groups = openreview_client.get_all_groups(prefix='EFGH.cc/2025/Conference/Submission')
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
@@ -755,9 +773,29 @@ For more details, please check the following links:
         grouped_edges = openreview_client.get_grouped_edges(invitation='EFGH.cc/2025/Conference/Action_Editors/-/Assignment', groupby='id')
         assert len(grouped_edges) == 10
 
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=2)
+
+
     def test_review_stage(self, openreview_client, helpers):
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The "everyone" reader option cannot be included with other reader options.'):
+            pc_client.post_invitation_edit(
+                invitations='EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Readers',
+                content={
+                    'readers': { 'value': ['everyone', 'EFGH.cc/2025/Conference'] }
+                }
+            )
+
+        # release papers to the public
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Readers',
+            content={
+                'readers': { 'value': ['everyone'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=3)
 
         now = datetime.datetime.now()
         # manually trigger Submission_Chage_Before_Reviewing
@@ -770,10 +808,24 @@ For more details, please check the following links:
                 signatures=['EFGH.cc/2025/Conference']
             )
         )
-        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
-        assert submissions[0].readers == ['EFGH.cc/2025/Conference','EFGH.cc/2025/Conference/Submission1/Action_Editors', 'EFGH.cc/2025/Conference/Submission1/Reviewers', 'EFGH.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].readers == ['everyone']
+        assert submissions[0].odate
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@inproceedings{
+anonymous'''+str(year)+'''paper,
+title={Paper title 1},
+author={Anonymous},
+booktitle={Submitted to The EFGH Conference},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''     
+
+        valid_bibtex = valid_bibtex +   submissions[0].forum + '''},
+note={under review}
+}'''
+        assert submissions[0].content['_bibtex']['value'] == valid_bibtex  
 
         # create child invitations
         now = datetime.datetime.now()
@@ -873,6 +925,35 @@ For more details, please check the following links:
             'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
         ]
 
+        # allow PCs to release reviews to the public
+        with pytest.raises(openreview.OpenReviewException, match=r'The "everyone" reader option cannot be included with other reader options.'):
+            pc_client.post_invitation_edit(
+                invitations='EFGH.cc/2025/Conference/-/Official_Review_Release/Readers',
+                content = {
+                    'readers': {
+                        'value':  [
+                            'EFGH.cc/2025/Conference/Program_Chairs',
+                            'everyone'
+                        ]
+                    }
+                }
+            )
+
+        # check PCs can release reviews to the public
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Official_Review_Release/Readers',
+            content = {
+                'readers': {
+                    'value':  ['everyone']
+                }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Official_Review_Release-0-1', count=2)
+
+        review_release_inv = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Official_Review_Release')
+        assert review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == ['everyone']
+
     def test_rebuttal_stage(self, openreview_client, helpers):
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
@@ -911,6 +992,30 @@ For more details, please check the following links:
             'EFGH.cc/2025/Conference/Submission1/Reviewers',
             'EFGH.cc/2025/Conference/Submission1/Authors'
         ]
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The "everyone" reader option cannot be included with other reader options.'):
+            pc_client.post_invitation_edit(
+                invitations='EFGH.cc/2025/Conference/-/Author_Rebuttal/Readers',
+                content={
+                    'readers': { 'value': ['everyone', 'EFGH.cc/2025/Conference/Program_Chairs'] }
+                }
+            )
+
+        # make rebuttals public
+        pc_client.post_invitation_edit(
+                invitations='EFGH.cc/2025/Conference/-/Author_Rebuttal/Readers',
+                content={
+                    'readers': { 'value': ['everyone'] }
+                }
+            )
+
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Author_Rebuttal-0-1', count=3)
+
+        invitations = openreview_client.get_invitations(invitation='EFGH.cc/2025/Conference/-/Author_Rebuttal')
+        assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('EFGH.cc/2025/Conference/Submission1/-/Author_Rebuttal')
+        assert invitation and invitation.edit['note']['readers'] == ['everyone']
 
     def test_metareview_stage(self, openreview_client, helpers):
 
@@ -1105,12 +1210,7 @@ For more details, please check the following links:
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
-        assert submissions[0].readers == [
-            'EFGH.cc/2025/Conference',
-            'EFGH.cc/2025/Conference/Submission1/Action_Editors',
-            'EFGH.cc/2025/Conference/Submission1/Reviewers',
-            'EFGH.cc/2025/Conference/Submission1/Authors'
-        ]
+        assert submissions[0].readers == ['everyone']
         assert not submissions[0].pdate
         assert submissions[0].content['authors']['readers'] == [
             'EFGH.cc/2025/Conference',
@@ -1119,19 +1219,32 @@ For more details, please check the following links:
         assert submissions[0].content['venueid']['value'] == 'EFGH.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'EFGH 2025 Conference Submission'
         inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release')
-        assert inv and inv.content['source']['value'] == 'accepted_submissions'
+        assert inv and not inv.content
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Dates')
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Which_Submissions')
+
+        # add source submissions to submission release
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Submission_Release/Which_Submissions',
+            content={
+                'source_submissions': {
+                    'value': 'accepted_submissions'
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
+        # trigger submission release process
         pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Submission_Release/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -1140,6 +1253,18 @@ For more details, please check the following links:
         assert 'readers' not in submissions[0].content['authors']
         assert submissions[0].content['venueid']['value'] == 'EFGH.cc/2025/Conference'
         assert submissions[0].content['venue']['value'] == 'EFGH 2025 Oral'
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@inproceedings{
+user'''+str(year)+'''paper,
+title={Paper title 1},
+author={SomeFirstName User and Leonardo Google},
+booktitle={The EFGH Conference},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''     
+
+        valid_bibtex = valid_bibtex +   submissions[0].forum + '''}
+}'''
+        assert submissions[0].content['_bibtex']['value'] == valid_bibtex  
 
         assert submissions[1].readers == ['everyone']
         assert submissions[1].pdate
@@ -1148,12 +1273,8 @@ For more details, please check the following links:
         assert submissions[1].content['venueid']['value'] == 'EFGH.cc/2025/Conference'
         assert submissions[1].content['venue']['value'] == 'EFGH 2025 Poster'
 
-        assert submissions[2].readers == [
-            'EFGH.cc/2025/Conference',
-            'EFGH.cc/2025/Conference/Submission3/Action_Editors',
-            'EFGH.cc/2025/Conference/Submission3/Reviewers',
-            'EFGH.cc/2025/Conference/Submission3/Authors'
-        ]
+        assert submissions[2].readers == ['everyone']
+        assert submissions[2].odate
         assert not submissions[2].pdate
         assert submissions[2].content['authors']['readers'] == [
             'EFGH.cc/2025/Conference',
@@ -1161,6 +1282,18 @@ For more details, please check the following links:
         ]
         assert submissions[2].content['venueid']['value'] == 'EFGH.cc/2025/Conference/Rejected_Submission'
         assert submissions[2].content['venue']['value'] == 'Submitted to EFGH 2025'
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@misc{
+anonymous'''+str(year)+'''paper,
+title={Paper title 3},
+author={Anonymous},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''     
+
+        valid_bibtex = valid_bibtex +   submissions[2].forum + '''}
+}'''
+
+        assert submissions[2].content['_bibtex']['value'] == valid_bibtex  
 
         endorsement_tags = openreview_client.get_tags(invitation='EFGH.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags
