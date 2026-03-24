@@ -9,7 +9,7 @@ description = "OpenReview API Python client library"
 authors = [{name = "OpenReview Team", email = "info@openreview.net"}]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 dependencies = [
     "pycryptodome",
@@ -21,7 +21,7 @@ dependencies = [
     "tld>=0.12",
     "pyjwt",
     "numpy",
-    "litellm>=1.76.0,<1.80.0"
+    "litellm>=1.76.0,<2.0.0"
 ]
 
 [project.urls]
