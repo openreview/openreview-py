@@ -246,7 +246,7 @@ class Helpers:
 
         time.sleep(2)
 
-        errors = selenium.find_elements(By.CLASS_NAME, 'rc-notification-notice-content')
+        errors = selenium.find_elements(By.CLASS_NAME, 'ant-notification-notice-content')
         if expected_error_message:
             assert expected_error_message == errors[0].text
         else:
