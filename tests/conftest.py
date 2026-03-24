@@ -366,7 +366,5 @@ def request_page():
             time.sleep(5) ## temporally sleep time to wait until the whole page is loaded
         except TimeoutException:
             print("Timed out waiting for page to load")
-            print("Current URL:", selenium.current_url)
-            print("Page source (first 2000 chars):", selenium.page_source[:2000])
 
     return request
