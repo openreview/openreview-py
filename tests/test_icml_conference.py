@@ -607,7 +607,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         openreview_client.add_members_to_group('~Reviewer_ICMLOne1', 'reviewer1@gmail.com')
         openreview_client.add_members_to_group('reviewer1@gmail.com', '~Reviewer_ICMLOne1')
 
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
         profile.content['preferredEmail'] = 'reviewer1@gmail.com'
         reviewer_client.post_profile(profile)
@@ -615,7 +615,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2023/Conference/-/Preferred_Emails')[0]
         assert edge.tail == 'reviewer1@gmail.com'
 
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
         profile.content['preferredEmail'] = 'reviewer1@icml.cc'
         reviewer_client.post_profile(profile)
@@ -1938,6 +1938,9 @@ OpenReview Team
 Please note that responding to this email will direct your reply to pc@icml.cc.
 '''
 
+        messages = openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] You have been assigned as a Reviewer for paper number 1')
+        assert messages and len(messages) == 1
+
         messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer Melisa ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
@@ -2214,10 +2217,28 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(assignment_edges) == 5
 
         messages = openreview_client.get_messages(to='celeste@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
-        assert not messages
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Celeste ICML,
+Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1 Version 2.
 
+Please go to the ICML 2023 Reviewers Console and check your pending tasks: https://openreview.net/group?id=ICML.cc/2023/Conference/Reviewers
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
+        messages = openreview_client.get_messages(to='celeste@icml.cc', subject='[ICML 2023] You have been assigned as a Reviewer for paper number 1')
+        assert messages and len(messages) == 1
+        
+        messages = openreview_client.get_messages(to='celeste@icml.cc', subject='[ICML 2023] Reviewer Celeste ICML signed up and is assigned to paper 1')
+        assert messages and len(messages) == 1
+        
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Reviewer Celeste ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
+        
+
         assert messages[0]['content']['text'] == '''Hi AC ICMLTwo,
 The Reviewer Celeste ICML that you invited to review paper 1 has accepted the invitation, signed up and is now assigned to the paper 1.
 
