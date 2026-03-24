@@ -6168,6 +6168,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         venue_id = 'aclweb.org/ACL/ARR/2023/August'
         submissions = pc_client_v2.get_all_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc', details='replies')
         now = datetime.datetime.now()
+        config_invitation = pc_client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration')
+        assert 'author_response_extension_start_date' in config_invitation.reply['content']
+        assert 'author_response_extension_end_date' in config_invitation.reply['content']
+        assert 'author_response_extension_cron' in config_invitation.reply['content']
 
         ## Step 1: Enable author response extension and verify invitation structure
         pc_client.post_note(
@@ -6204,6 +6208,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ## Step 2: Test < 3 reviews case — process should re-open Official_Comment for papers with < 3 reviews
         ## Pick a submission with < 3 reviews
         few_reviews_submission = submissions[1]
+        assert len([
+            reply for reply in few_reviews_submission.details['replies']
+            if any('Official_Review' in i for i in reply.get('invitations', []))
+        ]) < 3
 
         authors_group = 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors'
         comment_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Official_Comment')

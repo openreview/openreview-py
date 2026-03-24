@@ -417,6 +417,37 @@ class ARR(object):
             edit_params = {}
             authors_group = self.get_authors_id(paper_number)
 
+            if now_millis <= author_response_close:
+                if authors_group not in invitation.invitees:
+                    edit_params['invitees'] = {'add': [authors_group]}
+                    needs_update = True
+                    print(f'  - Adding Authors to Official_Comment invitees')
+
+                if authors_group not in invitation.readers:
+                    if 'readers' not in edit_params:
+                        edit_params['readers'] = {}
+                    edit_params['readers']['add'] = [authors_group]
+                    needs_update = True
+                    print(f'  - Adding Authors to Official_Comment outer readers')
+
+                current_signatures = invitation.edit['signatures']['param']['items']
+                signature_values = [
+                    item.get('prefix') if 'prefix' in item else item.get('value', '')
+                    for item in current_signatures
+                ]
+                if not any('Authors' in sig for sig in signature_values):
+                    if 'edit' not in edit_params:
+                        edit_params['edit'] = {}
+                    edit_params['edit']['signatures'] = {
+                        'param': {
+                            'items': current_signatures + [
+                                {'value': authors_group, 'optional': True}
+                            ]
+                        }
+                    }
+                    needs_update = True
+                    print(f'  - Adding Authors to Official_Comment signatures')
+
             # Remove authors from invitees/signatures/outer readers after 3 days
             if now_millis > author_response_close:
                 if authors_group in invitation.invitees:
@@ -452,6 +483,19 @@ class ARR(object):
                     }
                     needs_update = True
                     print(f'  - Removing Authors from Official_Comment signatures')
+
+            if now_millis <= reviewer_response_close:
+                current_readers = invitation.edit['note']['readers']['param']['enum']
+                if authors_group not in current_readers:
+                    if 'edit' not in edit_params:
+                        edit_params['edit'] = {}
+                    if 'note' not in edit_params['edit']:
+                        edit_params['edit']['note'] = {}
+                    edit_params['edit']['note']['readers'] = {
+                        'param': {'enum': current_readers + [authors_group]}
+                    }
+                    needs_update = True
+                    print(f'  - Adding Authors to Official_Comment inner readers')
 
             # Remove authors from inner readers after 4 days
             if now_millis > reviewer_response_close:

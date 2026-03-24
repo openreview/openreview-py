@@ -321,6 +321,24 @@ class ARRWorkflow(object):
             "order": 45,
             "required": False
         },
+        "author_response_extension_start_date": {
+            "description": "When should the author response extension manager start running?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 58,
+            "required": False
+        },
+        "author_response_extension_end_date": {
+            "description": "When should the author response extension manager stop running?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 59,
+            "required": False
+        },
+        "author_response_extension_cron": {
+            "description": "What cron expression should be used to rerun the author response extension manager?",
+            "value-regex": ".*",
+            "order": 60,
+            "required": False
+        },
         "emergency_metareviewing_start_date": {
             "description": "When should the emergency metareviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
@@ -687,7 +705,7 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=['author_response_extension_start_date', 'author_response_extension_end_date'],
+                required_fields=['author_response_extension_start_date', 'author_response_extension_end_date', 'author_response_extension_cron'],
                 super_invitation_id=f"{self.venue_id}/-/Author_Response_Extension_Manager",
                 stage_arguments={
                     'content': {
