@@ -532,6 +532,9 @@ class Journal(object):
 
     def get_submission_length(self):
         return self.settings.get('submission_length', [])
+    
+    def should_force_active_profiles(self):
+        return self.settings.get('force_active_profiles', False)
 
     def get_website_url(self, key):
         return self.settings.get('website_urls', {}).get(key)

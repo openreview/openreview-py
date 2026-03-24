@@ -1112,6 +1112,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
 
+        if self.journal.should_force_active_profiles():
+            invitation.edit['note']['content']['authorids']['value']['param'] = {
+                'type': "profile{}",
+                'minValidState': 'Active'
+            }
+
         self.save_invitation(invitation)
 
     def set_ae_assignment(self, assignment_delay):
