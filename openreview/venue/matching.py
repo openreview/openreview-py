@@ -626,7 +626,7 @@ class Matching(object):
                     scores = [[entry.get('entityB', entry.get('submission_member')), entry.get('entityA', entry.get('match_member')), entry['score']] for entry in result['results']]
                     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
 
-                scores = [[entry.get('entityA', entry.get('submission')), entry.get('entityB', entry.get('user')), entry['score']] for entry in result['results']]
+                scores = [[entry.get('entityB', entry.get('submission')), entry.get('entityA', entry.get('user')), entry['score']] for entry in result['results']]
                 return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
             if 'Error' in status:
                 raise openreview.OpenReviewException('There was an error computing scores, description: ' + desc)
