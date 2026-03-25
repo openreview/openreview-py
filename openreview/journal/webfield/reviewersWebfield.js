@@ -128,7 +128,10 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
 
     rows.push({
       submissionNumber: { number: number},
-      submission: formattedSubmission,
+      submission: ({
+	...formattedSubmission,
+	beyondPdf: submission.content.beyond_pdf?.value !== undefined
+}),
       reviewStatus: {
         invitationUrl: reviewInvitation && '/forum?id=' + submission.forum + '&noteId=' + submission.forum + '&invitationId=' + reviewInvitation.id + '&referrer=' + referrerUrl,
         review: review,
@@ -182,7 +185,11 @@ var renderData = function(venueStatusData) {
       function(data) {
         return '<strong class="note-number">' + data.number + '</strong>';
       },
-      Handlebars.templates.noteSummary,
+      function(data) {
+        var noteSummary = Handlebars.templates.noteSummary(data);
+        var beyondPdfTag = data.beyondPdf ? '<span class="badge" style="background-color: #3f6978">Beyond PDF</span>' : '';
+        return noteSummary + beyondPdfTag;
+      },
       function(data) {
         if (data.review) {
           var recommendationHtml = '';
