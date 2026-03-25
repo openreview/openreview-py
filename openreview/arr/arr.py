@@ -20,7 +20,7 @@ from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
-from openreview.stages.arr_content import hide_fields, arr_withdrawal_content
+from openreview.stages.arr_content import hide_fields, arr_withdrawal_content, arr_metareview_recommendation_field
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -146,6 +146,7 @@ class ARR(object):
         self.venue.review_stage = self.review_stage
         self.venue.bid_stages = self.bid_stages
         self.venue.meta_review_stage = self.meta_review_stage
+        self.meta_review_stage.recommendation_field_name = arr_metareview_recommendation_field
         self.venue.comment_stage = self.comment_stage
         self.venue.decision_stage = self.decision_stage
         self.venue.submission_revision_stage = self.submission_revision_stage
@@ -156,6 +157,13 @@ class ARR(object):
 
         self.venue.expertise_selection_stage = self.expertise_selection_stage
         self.venue.preferred_emails_groups = self.preferred_emails_groups
+
+        arr_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
+        self.venue.homepage_webfield_path = os.path.join(arr_webfield_dir, 'homepageWebfield.js')
+        self.venue.program_chairs_webfield_path = os.path.join(arr_webfield_dir, 'programChairsWebfield.js')
+        self.venue.senior_area_chairs_webfield_path = os.path.join(arr_webfield_dir, 'seniorAreaChairsWebfield.js')
+        self.venue.area_chairs_webfield_path = os.path.join(arr_webfield_dir, 'areachairsWebfield.js')
+        self.venue.ethics_chairs_webfield_path = os.path.join(arr_webfield_dir, 'ethicsChairsWebfield.js')
 
     def set_arr_stages(self, configuration_note):
         workflow = ARRWorkflow(
@@ -337,9 +345,6 @@ class ARR(object):
     def get_desk_rejected_id(self):
         return self.venue.get_desk_rejected_id()
 
-    def get_group_recruitment_id(self, committee_name):
-        return self.venue.get_group_recruitment_id(committee_name)
-
     def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
         return self.venue.get_participants(number, with_program_chairs, with_authors)
 
@@ -363,61 +368,6 @@ class ARR(object):
 
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.venue_id,
-                    web=content
-                )
-            )
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_program_chairs_id(),
-                    web=content
-                )
-            )
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_senior_area_chairs_id(),
-                    web=content
-                )
-            )
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_area_chairs_id(),
-                    web=content
-                )
-            )            
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_ethics_chairs_id(),
-                    web=content
-                )
-            )
 
         setup_arr_invitations(self.invitation_builder)
 
