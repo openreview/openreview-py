@@ -1938,13 +1938,6 @@ OpenReview Team
 Please note that responding to this email will direct your reply to pc@icml.cc.
 '''
 
-        assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Melisa_ICML1')
-        assert len(assignment_edges) == 1
-        helpers.await_queue_edit(openreview_client, assignment_edges[0].id)
-
-        messages = openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] You have been assigned as a Reviewer for paper number 1')
-        assert messages and len(messages) == 1
-
         messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer Melisa ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
@@ -2367,6 +2360,13 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         messages = openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] Reviewer Invitation accepted for paper 1')
         assert len(messages) == 1
+
+        assignment_edges = openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Rachel_ICML2')
+        assert len(assignment_edges) == 1
+        helpers.await_queue_edit(openreview_client, assignment_edges[0].id)
+
+        messages = openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] You have been assigned as a Reviewer for paper number 1')
+        assert messages and len(messages) == 1
 
         invite_edges=openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Rachel_ICML2')
         assert len(invite_edges) == 1
