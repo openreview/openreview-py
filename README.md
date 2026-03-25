@@ -39,6 +39,12 @@ For reproducible deployments, install the package using the pinned lock file as 
 pip install -c requirements.txt .
 ```
 
+For development (editable install with pinned dependencies):
+
+```bash
+pip install -c requirements.txt -e .
+```
+
 ### Updating Dependencies
 
 This project uses [pip-tools](https://pip-tools.readthedocs.io/) to manage dependency versions. `pyproject.toml` declares compatible version ranges, while `requirements.txt` (production) and `requirements-dev.txt` (test + docs) contain the exact pinned versions.
