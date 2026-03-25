@@ -10,7 +10,6 @@ from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
-import statistics
 import editdistance
 import openreview
 from openreview import tools
@@ -2057,7 +2056,7 @@ OpenReview Team'''
         print(f'Applying {top_percent_cutoff}% score cutoff')
 
         scores_only = [s for (_, _, s) in unique_scores]
-        cutoff = statistics.quantiles(scores_only, n=100)[int(100-top_percent_cutoff)-1] if len(scores_only) > 1 else scores_only[0]
+        cutoff = tools._percentile(scores_only, 100 - top_percent_cutoff)
         filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
         print(f'{len(unique_scores)} scores before cutoff')
