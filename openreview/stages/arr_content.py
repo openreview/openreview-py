@@ -1,6 +1,8 @@
 from copy import deepcopy
 from datetime import datetime
 
+arr_metareview_recommendation_field = 'overall_assessment'
+
 arr_tracks = [
     "Clinical and Biomedical Applications",
     "Computational Social Science and Cultural Analytics",
@@ -16,12 +18,9 @@ arr_tracks = [
     "Language Modeling",
     "LLM agents",
     "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-    "LLM Efficiency",
-    "Low-resource Methods for NLP",
     "Machine Learning for NLP",
     "Machine Translation",
-    "Mathematical, Symbolic, Neurosymbolic, and Logical Reasoning",
-    "Multilinguality and Language Diversity",
+    "Multilingualism and Cross-Lingual NLP",
     "Multimodality and Language Grounding to Vision, Robotics and Beyond",
     "NLP and Code Models",
     "NLP and Symbolic Reasoning",
@@ -29,13 +28,12 @@ arr_tracks = [
     "Phonology, Morphology and Word Segmentation",
     "Question Answering",
     "Resources and Evaluation",
-    "Retrieval-Augmented Language Models",
-    "Safety and Alignment in LLMs",
-    "Semantics: Lexical, Sentence-level Semantics, Textual Inference and Other areas",
+    "Semantics: Lexical and Sentence-Level",
     "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-    "Speech Processing and Spoken Language Understanding",
-    "Special Theme (conference specific)",
-    "Summarization"
+    "Summarization",
+    "Speech Recognition, Text-to-Speech and Spoken Language Understanding",
+    "Syntax: Tagging, Chunking and Parsing",
+    "Special Theme (conference specific)"
 ]
 
 arr_submission_content = {
@@ -838,7 +836,7 @@ arr_official_review_content = {
             }
         },
         "order": 1,
-        "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n Note that the reviewer names are anonymous to the authors, but are VISIBLE to the senior researchers serving as area chairs, senior chairs and program chairs. Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs (https://aclrollingreview.org/authors#step2.2). Highly problematic reviews may result in penalties, and great reviews may result in awards (https://aclrollingreview.org/incentives2025) \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
+        "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n Note that the reviewer names are anonymous to the authors, but are VISIBLE to the senior researchers serving as area chairs, senior chairs and program chairs. Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs (https://aclrollingreview.org/authors#step2.2). Highly problematic reviews may result in penalties, and great reviews may result in awards (https://aclrollingreview.org/incentives2025). ARR is currently experimenting with a review assistant tool, which you may optionally use to check for some common review issues (https://revas.mbzuai.ac.ae/). \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
     },
     "summary_of_strengths": {
         "value": {
@@ -1340,7 +1338,8 @@ arr_official_review_content = {
                 "input": "radio",
                 "enum": [
                     "I did not use any generative AI tools for this review",
-                    "I used a privacy-preserving tool exclusively for the use case(s) approved by PEC policy, such as language edits"
+                    "I used a privacy-preserving tool exclusively for the use case(s) approved by PEC policy, such as language edits",
+                    "I used the Revas tool to check for review issues (https://revas.mbzuai.ac.ae)"
                 ],
                 "optional": False,
                 "type": "string"
@@ -1810,6 +1809,20 @@ arr_ac_max_load_task["maximum_load_this_cycle"] = {
         "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
         "order": 1,
     }
+arr_ethics_max_load_task = deepcopy(arr_max_load_task)
+arr_ethics_max_load_task["maximum_load_this_cycle"] = {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                "optional": False,
+                "type": "integer",
+            }
+        },
+        "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
+        "order": 1,
+    }
+
 arr_sac_max_load_task = deepcopy(arr_max_load_task)
 del arr_sac_max_load_task["maximum_load_this_cycle_for_resubmissions"]
 del arr_sac_max_load_task["maximum_load_this_cycle"]
