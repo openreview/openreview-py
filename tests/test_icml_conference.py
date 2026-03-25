@@ -2226,9 +2226,6 @@ OpenReview Team
 
 Please note that responding to this email will direct your reply to pc@icml.cc.
 '''
-        messages = openreview_client.get_messages(to='celeste@icml.cc', subject='[ICML 2023] Reviewer Celeste ICML signed up and is assigned to paper 1')
-        assert messages and len(messages) == 1
-
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Reviewer Celeste ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
 
