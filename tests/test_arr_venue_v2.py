@@ -5893,7 +5893,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Check to make sure no emails were sent
         messages = openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')
-        assert len(messages) == flagged_messages + 1 
+        assert len(messages) == flagged_messages + 1
         messages = openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')
         assert len(messages) == unflagged_messages
 

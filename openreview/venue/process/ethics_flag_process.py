@@ -68,7 +68,7 @@ def process(client, edit, invitation):
                         if release_to_ethics_chairs:
                             final_readers.append(ethics_chairs_id)
 
-                    print('review_name:', invitation_name)
+                    print('invitation_name:', invitation_name)
                     paper_invitation_edit = client.post_invitation_edit(
                             invitations=review_invitation.id,
                             readers=[venue_id],
