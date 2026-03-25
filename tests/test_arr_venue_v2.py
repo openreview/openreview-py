@@ -394,7 +394,7 @@ class TestARRVenueV2():
         assert 'keywords' not in submission_invitation.edit['note']['content']
 
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
-        assert 'recommendation' == domain.content['meta_review_recommendation']['value']
+        assert 'overall_assessment' == domain.content['meta_review_recommendation']['value']
 
         # Build current cycle invitations
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
@@ -5767,6 +5767,24 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
+
+        request_page(
+            selenium,
+            'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Area_Chairs#assigned-submissions',
+            ac_client,
+            wait_for_element='assigned-submissions'
+        )
+        note_row_4 = selenium.find_element(
+            By.XPATH,
+            '//div[@id="assigned-submissions"]//table[contains(@class, "areachair-console-table")]'
+            '//tr[.//a[normalize-space()="Paper title 4"]]'
+        )
+        assert note_row_4
+        assert '4' == note_row_4.find_element(By.CLASS_NAME, 'note-number').text
+        assert 'Paper title 4' == note_row_4.find_element(By.LINK_TEXT, 'Paper title 4').text
+        meta_review_status = note_row_4.find_element(By.CLASS_NAME, 'areachair-console-meta-review')
+        assert meta_review_status
+        assert 'Overall Assessment:' in meta_review_status.text
 
         # Make reviews public
         pc_client.post_note(
