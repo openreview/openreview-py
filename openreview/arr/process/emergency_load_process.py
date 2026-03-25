@@ -131,19 +131,27 @@ def process(client, edit, invitation):
         deployed_label = [
             note for note in client.get_all_notes(invitation=f"{role}/-/Assignment_Configuration", domain=venue_id) if 'Deployed' in note.content['status']['value']
         ][0].content['title']['value']
+        submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
+        review_name = domain.content.get('review_name', {}).get('value', 'Official_Review')
         submissions = client.get_all_notes(
-            invitation=f"{venue_id}/-/Submission",
-            details='directReplies',
+            invitation=f"{venue_id}/-/{submission_name}",
             domain=venue_id
         )
+        official_reviews = list(openreview.tools.efficient_iterget(
+            client.get_notes,
+            desc='Getting V2 Notes',
+            parent_invitations=f"{venue_id}/-/{review_name}",
+            domain=venue_id
+        ))
+        review_counts = {}
+        for review in official_reviews:
+            if review.forum not in review_counts:
+                review_counts[review.forum] = 0
+            review_counts[review.forum] += 1
 
         eligible_submission_ids = []
         for submission in submissions:
-            official_reviews = [
-                r for r in submission.details.get('directReplies', [])
-                if any('Official_Review' in i for i in r.get('invitations', []))
-            ]
-            if len(official_reviews) < 3:
+            if review_counts.get(submission.id, 0) < 3:
                 eligible_submission_ids.append(submission.id)
 
         aggregate_score_edges = []
