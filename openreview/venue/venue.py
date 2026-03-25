@@ -10,7 +10,7 @@ from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
-import numpy as np
+import statistics
 import editdistance
 import openreview
 from openreview import tools
@@ -1639,7 +1639,7 @@ Total Errors: {len(errors)}
 
                     review_period_days = (review_duedate - assignment_cdate).days
                     if review_period_days > 0:
-                        review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+                        review_days_late.append(max((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
                 invitation = f'{reviewers_id}/-/{review_assignment_count_name}',
@@ -1668,7 +1668,7 @@ Total Errors: {len(errors)}
             review_days_late_tags.append(openreview.api.Tag(
                 invitation = f'{reviewers_id}/-/{review_days_late_count_name}',
                 profile = reviewer_id,
-                weight = int(np.sum(review_days_late)),
+                weight = int(sum(review_days_late)),
                 readers = [venue_id, f'{reviewers_id}/{review_days_late_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
                 nonreaders = [f'{reviewers_id}/{review_days_late_count_name}/NonReaders'],
@@ -1677,7 +1677,7 @@ Total Errors: {len(errors)}
             num_assigned,
             num_reviews,
             num_comments,
-            np.sum(review_days_late))
+            sum(review_days_late))
 
         self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
@@ -1781,7 +1781,7 @@ Total Errors: {len(errors)}
 
                     review_period_days = (review_duedate - assignment_cdate).days
                     if review_period_days > 0:
-                        review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+                        review_days_late.append(max((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
                 invitation = f'{committee_id}/-/{review_assignment_count_name}',
@@ -1810,7 +1810,7 @@ Total Errors: {len(errors)}
             review_days_late_tags.append(openreview.api.Tag(
                 invitation = f'{committee_id}/-/{review_days_late_count_name}',
                 profile = reviewer_id,
-                weight = int(np.sum(review_days_late)),
+                weight = int(sum(review_days_late)),
                 readers = [venue_id, f'{committee_id}/{review_days_late_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
                 nonreaders = [f'{committee_id}/{review_days_late_count_name}/NonReaders'],
@@ -1819,7 +1819,7 @@ Total Errors: {len(errors)}
             num_assigned,
             num_reviews,
             num_comments,
-            np.sum(review_days_late))
+            sum(review_days_late))
 
         self.client.delete_tags(invitation=f'{committee_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
@@ -2057,7 +2057,7 @@ OpenReview Team'''
         print(f'Applying {top_percent_cutoff}% score cutoff')
 
         scores_only = [s for (_, _, s) in unique_scores]
-        cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
+        cutoff = statistics.quantiles(scores_only, n=100)[int(100-top_percent_cutoff)-1] if len(scores_only) > 1 else scores_only[0]
         filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
         print(f'{len(unique_scores)} scores before cutoff')
