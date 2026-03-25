@@ -246,7 +246,7 @@ class Helpers:
 
         time.sleep(2)
 
-        errors = selenium.find_elements(By.CLASS_NAME, 'rc-notification-notice-content')
+        errors = selenium.find_elements(By.CLASS_NAME, 'ant-notification-notice-content')
         if expected_error_message:
             assert expected_error_message == errors[0].text
         else:
@@ -345,14 +345,9 @@ def request_page():
     def request(selenium, url, client = None, alert=False, by=By.ID, wait_for_element='content'):
         if client:
             selenium.get('http://localhost:3030')
-            selenium.add_cookie({'name': 'openreview.accessToken', 'value': client.token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax', 'httpOnly': True})
+            token = client.token.replace('Bearer ', '')
+            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token, 'path': '/', 'sameSite': 'Lax', 'httpOnly': True})
             selenium.add_cookie({'name': 'openreview.user', 'value': quote(json.dumps(client.user)), 'path': '/', 'sameSite': 'Lax'})
-
-            cookies = selenium.get_cookies()
-            user_cookie = next((c for c in cookies if c['name'] == 'openreview.user'), None)
-            decoded_json = json.loads(unquote(user_cookie['value']))
-            print('COOOOKIE', user_cookie)            
-            print(decoded_json)            
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
