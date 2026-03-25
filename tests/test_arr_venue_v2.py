@@ -5795,7 +5795,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         # Explicitly flag this submission for ethics review via an official review,
-        # then verify the ethics review readership.
+        # then verify the meta review readership adds ethics chairs
         openreview_client.add_members_to_group(venue.get_reviewers_id(number=4), ['~Reviewer_ARROne1'])
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_signature = reviewer_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission4/Reviewer_', signatory='~Reviewer_ARROne1')[0].id
@@ -5843,7 +5843,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in meta_review.readers
-        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' in meta_review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' not in meta_review.readers
         request_page(
             selenium,
             'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Area_Chairs#assigned-submissions',
