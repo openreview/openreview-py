@@ -2551,9 +2551,10 @@ year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[1].id+'''}
 }'''
 
+        # submissio #10 is ignored by Submission Release because its venueid is not active
         assert submissions[-1].readers == [
             'ABCD.cc/2025/Conference',
-            'ABCD.cc/2025/Conference/Submission10/Program_Committee',
+            'ABCD.cc/2025/Conference/Program_Committee',
             'ABCD.cc/2025/Conference/Submission10/Authors'
         ]
         assert not submissions[-1].pdate
@@ -2561,8 +2562,6 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission10/Authors'
         ]
-        assert submissions[-1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
-        assert submissions[-1].content['venue']['value'] == 'ABCD 2025 Conference Submission'
         assert '_bibtex' not in submissions[-1].content
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')

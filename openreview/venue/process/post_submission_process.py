@@ -2,7 +2,7 @@ def process(client, invitation):
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    submission_venue_id = domain.content['submission_venue_id']['value']
+    submission_id = domain.content['submission_id']['value']
     submission_name = domain.content['submission_name']['value']
     venue_name = domain.content['title']['value']
 
@@ -42,8 +42,7 @@ def process(client, invitation):
         )
     
     ## Release the submissions to specified readers if venueid is still submission
-    source = openreview.tools.get_invitation_source(invitation, domain)
-    all_submissions = client.get_all_notes(invitation=f'{venue_id}/-/{submission_name}', sort='number:asc', domain=venue_id)
+    all_submissions = client.get_all_notes(invitation=submission_id, sort='number:asc', domain=venue_id)
 
     filtered_submissions = [paper for paper in all_submissions if openreview.tools.should_match_invitation_source(client, invitation, paper)]
 
