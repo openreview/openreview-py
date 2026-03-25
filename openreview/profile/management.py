@@ -159,7 +159,7 @@ return {
   properties: {
     tagInvitation: entity.id,
     instructions:'Profiles blocked from participating in venues. This tag is added by support staff after reviewing the user\\'s profile and activity history. If you think this is a mistake, please contact support.',
-    title: 'Blocked Profiles',
+    title: 'Blocked Profiles'
   }
 }
 '''
@@ -209,7 +209,7 @@ return {
   properties: {
     tagInvitation: entity.id,
     instructions:'Profiles that have been activated because another OpenReview user vouched for them.',
-    title: 'Vouched Profiles',
+    title: 'Vouched Profiles'
   }
 }
 '''
