@@ -87,12 +87,6 @@ nbformat==5.10.4
     #   openreview-py (pyproject.toml)
 nbsphinx==0.9.8
     # via openreview-py (pyproject.toml)
-numpy==2.0.2 ; python_version < '3.10'
-    # via openreview-py (pyproject.toml)
-numpy==2.2.6 ; python_version == '3.10'
-    # via openreview-py (pyproject.toml)
-numpy==2.4.3 ; python_version >= '3.11'
-    # via openreview-py (pyproject.toml)
 outcome==1.3.0.post0
     # via
     #   trio
