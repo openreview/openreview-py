@@ -1508,14 +1508,6 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
-                    },
-                     'message_reply_to': {
-                        'order': 3,
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1540,7 +1532,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'message': {
-                        'replyTo': '${3/content/message_reply_to/value}',
+                        'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
@@ -1628,13 +1620,6 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
-                    },
-                     'message_reply_to': {
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1659,7 +1644,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'message': {
-                        'replyTo': '${3/content/message_reply_to/value}',
+                        'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
