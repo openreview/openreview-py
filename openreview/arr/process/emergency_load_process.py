@@ -137,12 +137,10 @@ def process(client, edit, invitation):
             invitation=f"{venue_id}/-/{submission_name}",
             domain=venue_id
         )
-        official_reviews = list(openreview.tools.efficient_iterget(
-            client.get_notes,
-            desc='Getting V2 Notes',
+        official_reviews = client.get_all_notes(
             parent_invitations=f"{venue_id}/-/{review_name}",
             domain=venue_id
-        ))
+        )
         review_counts = {}
         for review in official_reviews:
             if review.forum not in review_counts:

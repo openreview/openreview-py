@@ -1546,6 +1546,7 @@ class OpenReviewClient(object):
             paperhash = None,
             forum = None,
             invitation = None,
+            parent_invitations = None,
             replyto = None,
             signature = None,
             transitive_members = None,
@@ -1573,6 +1574,8 @@ class OpenReviewClient(object):
         :type forum: str, optional
         :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
         :type invitation: str, optional
+        :param parent_invitations: An Invitation ID. If provided, returns Notes whose parentInvitations field contains the given Invitation ID.
+        :type parent_invitations: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
         :type replyto: str, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
@@ -1613,6 +1616,8 @@ class OpenReviewClient(object):
             params['forum'] = forum
         if invitation is not None:
             params['invitation'] = invitation
+        if parent_invitations is not None:
+            params['parent_invitations'] = parent_invitations
         if replyto is not None:
             params['replyto'] = replyto
         if signature is not None:
