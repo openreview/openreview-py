@@ -2173,7 +2173,7 @@ def singularize(word):
         return word[:-1]
     return word
 
-def _percentile(data, percent):
+def percentile(data, percent):
     """Return the percentile value from *data* using linear interpolation,
     matching the behaviour of numpy.percentile with the default 'linear' method.
 

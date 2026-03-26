@@ -2056,7 +2056,7 @@ OpenReview Team'''
         print(f'Applying {top_percent_cutoff}% score cutoff')
 
         scores_only = [s for (_, _, s) in unique_scores]
-        cutoff = tools._percentile(scores_only, 100 - top_percent_cutoff)
+        cutoff = tools.percentile(scores_only, 100 - top_percent_cutoff)
         filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
         print(f'{len(unique_scores)} scores before cutoff')
