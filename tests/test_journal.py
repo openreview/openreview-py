@@ -6264,7 +6264,7 @@ note={Expert Certification}
                 }
             ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'], process_index=1)
 
         submission_id = submission_note['note']['id']
 
