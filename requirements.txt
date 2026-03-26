@@ -14,12 +14,6 @@ future==1.0.0
     # via openreview-py (pyproject.toml)
 idna==3.11
     # via requests
-numpy==2.0.2 ; python_version < '3.10'
-    # via openreview-py (pyproject.toml)
-numpy==2.2.6 ; python_version == '3.10'
-    # via openreview-py (pyproject.toml)
-numpy==2.4.3 ; python_version >= '3.11'
-    # via openreview-py (pyproject.toml)
 pycryptodome==3.23.0
     # via openreview-py (pyproject.toml)
 pyjwt==2.12.1

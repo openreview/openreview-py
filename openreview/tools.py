@@ -2170,4 +2170,26 @@ def singularize(word):
         return word[:-2]
     elif word.endswith('s'):
         return word[:-1]
-    return word                    
+    return word
+
+def percentile(data, percent):
+    """Return the percentile value from *data* using linear interpolation,
+    matching the behaviour of numpy.percentile with the default 'linear' method.
+
+    *percent* may be an int or float in [0, 100].
+    *data* must be a non-empty sequence of numbers.
+    """
+    if not data:
+        raise ValueError("data must be non-empty")
+    sorted_data = sorted(data)
+    n = len(sorted_data)
+    if n == 1:
+        return sorted_data[0]
+    # NumPy linear interpolation: index = percent/100 * (n - 1)
+    idx = percent / 100.0 * (n - 1)
+    lo = int(idx)
+    hi = lo + 1
+    if hi >= n:
+        return sorted_data[-1]
+    frac = idx - lo
+    return sorted_data[lo] + frac * (sorted_data[hi] - sorted_data[lo])
