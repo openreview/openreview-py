@@ -1534,6 +1534,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 },
                 'comment_process_script': {
                     'value': self.get_process_content(comment_stage.process_path)
+                },
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                    }
                 }
             },
             edit={
@@ -1989,6 +1994,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process
             }],
+            content={
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                    }
+                }
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
