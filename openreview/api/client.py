@@ -129,9 +129,11 @@ class OpenReviewClient(object):
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
-            self.user = jwt.decode(self.token, options={"verify_signature": False})
             try:
-                self.profile = self.get_profile()
+                payload = jwt.decode(self.token, options={"verify_signature": False})
+                self.user = payload.get('user', payload)
+                user_id = self.user.get('profile', {}).get('id') or self.user.get('id')
+                self.profile = self.get_profile(user_id) if user_id else None
             except:
                 self.profile = None
         else:
@@ -3076,15 +3078,17 @@ class OpenReviewClient(object):
             call_count = 0
             status_response = self.get_expertise_status(job_id, baseurl=base_url)
             status = status_response.get('status')
-            while status not in ['Completed', 'Error'] and call_count < call_max:
+            status_text = status if isinstance(status, str) else ''
+            while 'Completed' != status_text and 'Error' not in status_text and call_count < call_max:
                 time.sleep(60)
-                status_response = self.get_expertise_status(job_id)
+                status_response = self.get_expertise_status(job_id, baseurl=base_url)
                 status = status_response.get('status')
+                status_text = status if isinstance(status, str) else ''
                 call_count += 1
 
-            if 'Completed' == status:
+            if 'Completed' == status_text:
                 return self.get_expertise_results(job_id, baseurl=base_url)
-            if 'Error' == status:
+            if 'Error' in status_text:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))

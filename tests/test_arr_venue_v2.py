@@ -394,7 +394,7 @@ class TestARRVenueV2():
         assert 'keywords' not in submission_invitation.edit['note']['content']
 
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
-        assert 'recommendation' == domain.content['meta_review_recommendation']['value']
+        assert 'overall_assessment' == domain.content['meta_review_recommendation']['value']
 
         # Build current cycle invitations
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
@@ -911,7 +911,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
+                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
                 }
             )
         )
@@ -928,7 +928,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'NLP and Code Models'] },
+                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models'] },
                 }
             )
         )
@@ -967,7 +967,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
                 }
             )
         )
@@ -982,7 +982,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
                 }
             )
         )
@@ -997,7 +997,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
                 }
             )
         )
@@ -4379,7 +4379,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             ))
         # Add conflict to profile, invite user
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer7@aclrollingreview.com', password=helpers.strong_password)
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['history'].append(
             {
                 'position': 'Engineer', 
@@ -4405,7 +4405,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         
         # Accept reviewer 3 invitation
         # Update year to outside range of conflict_N_years
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['history'][1]['end'] = now.year-5
         reviewer_client.post_profile(profile)
 
@@ -5826,6 +5826,24 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
+
+        request_page(
+            selenium,
+            'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Area_Chairs#assigned-submissions',
+            ac_client,
+            wait_for_element='assigned-submissions'
+        )
+        note_row_4 = selenium.find_element(
+            By.XPATH,
+            '//div[@id="assigned-submissions"]//table[contains(@class, "areachair-console-table")]'
+            '//tr[.//a[normalize-space()="Paper title 4"]]'
+        )
+        assert note_row_4
+        assert '4' == note_row_4.find_element(By.CLASS_NAME, 'note-number').text
+        assert 'Paper title 4' == note_row_4.find_element(By.LINK_TEXT, 'Paper title 4').text
+        meta_review_status = note_row_4.find_element(By.CLASS_NAME, 'areachair-console-meta-review')
+        assert meta_review_status
+        assert 'Overall Assessment:' in meta_review_status.text
 
         # Make reviews public
         pc_client.post_note(
