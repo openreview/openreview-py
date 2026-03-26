@@ -125,15 +125,6 @@ Thanks,
 
 {signature}'''
 
-        
-        if paper_reviewer_invited_id:
-            paper_reviewers_invited_id=paper_reviewer_invited_id.replace('{number}', str(submission.number))
-            ## Paper invited group
-            client.add_members_to_group(paper_reviewers_invited_id, [user_profile.id])
-
-        if committee_invited_id:
-            ## General invited group
-            client.add_members_to_group(committee_invited_id, [user_profile.id])
 
         ## - Update edge to INVITED_LABEL
         edge.label=invited_label
@@ -174,6 +165,15 @@ OpenReview Team'''
         ## - Send email after successful edge update
         response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, parentGroup=committee_invited_id, replyTo=contact, sender=sender)
 
+        if paper_reviewer_invited_id:
+            paper_reviewers_invited_id=paper_reviewer_invited_id.replace('{number}', str(submission.number))
+            ## Paper invited group
+            client.add_members_to_group(paper_reviewers_invited_id, [user_profile.id])
+
+        if committee_invited_id:
+            ## General invited group
+            client.add_members_to_group(committee_invited_id, [user_profile.id])
+    
     if edge.ddate and edge.label == invited_label:
 
         ## Get the submission
