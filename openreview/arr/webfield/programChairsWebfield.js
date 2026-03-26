@@ -191,6 +191,35 @@ return {
       return metaReviewReplies?.length??0;
       `
     },
+    areaChairStatusPropertiesAllowed: {
+      number: ['number'],
+      name: ['areaChairProfile.preferredName'],
+      seniorAreaChairs: ['seniorAreaChair.seniorAreaChairId'],
+
+      assignedPaperCount: `
+        return row.notes?.length ?? 0
+      `,
+
+      completedACChecklistCount: `
+        return (row.notes ?? []).filter((paper) => {
+          return (paper?.note?.details?.replies ?? []).some((reply) => {
+            return (reply?.invitations ?? []).some((invitation) => {
+              return invitation.includes('Action_Editor_Checklist')
+            })
+          })
+        }).length
+      `,
+
+      missingACChecklistCount: `
+        return (row.notes ?? []).filter((paper) => {
+          return !(paper?.note?.details?.replies ?? []).some((reply) => {
+            return (reply?.invitations ?? []).some((invitation) => {
+              return invitation.includes('Action_Editor_Checklist')
+            })
+          })
+        }).length
+      `,
+    },
     reviewerEmailFuncs: [
       {
         label: 'Reviewers with assignments', filterFunc: `
