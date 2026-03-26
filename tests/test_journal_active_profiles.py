@@ -263,3 +263,75 @@ class TestJournalActiveProfiles():
                         'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
                     }
                 ))
+
+    def test_inactive_profiles(self, openreview_client, journal, helpers):
+
+        openreview_client.post_invitation_edit(
+            invitations='JAPR/-/Edit',
+            signatures=['JAPR'],
+            invitation=openreview.api.Invitation(
+                id='JAPR/-/Submission',
+                edit={
+                    'note': {
+                        'content': {
+                            'authorids': {
+                                'value': {
+                                    'param': {
+                                        'type': 'profile{}',
+                                        'minValidState': 'Inactive'
+                                    }
+                                },
+                                'description': "Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile.",
+                                'order': 4,
+                                'readers': [
+                                    'JAPR',
+                                    'JAPR/Paper${4/number}/Action_Editors',
+                                    'JAPR/Paper${4/number}/Authors'
+                                ]
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        jonas_client = OpenReviewClient(username='jonas@maileight.com', password=helpers.strong_password)
+
+        # post submission with rejected profile
+        submission_note_2 = jonas_client.post_note_edit(invitation='JAPR/-/Submission',
+            signatures=['~Jonas_Author1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Profile Clustering with Graph Neural Networks' },
+                    'abstract': { 'value': 'A novel approach to clustering user profiles using graph neural networks.' },
+                    'authors': { 'value': ['Jonas Author', 'Grace Author']},
+                    'authorids': { 'value': ['~Jonas_Author1', '~Grace_Author1']},
+                    'pdf': {'value': '/pdf/' + 'q' * 40 +'.pdf' },
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
+        note_id_2 = submission_note_2['note']['id']
+
+        # Block author profile
+        openreview_client.moderate_profile('~Rosa_Author1', 'block')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'authorids value/2 ~Rosa_Author1 has "Blocked" state which does not meet the minimum required state of Inactive'):
+            ## Post submission 3
+            submission_note_3 = jonas_client.post_note_edit(invitation='JAPR/-/Submission',
+                signatures=['~Jonas_Author1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'Temporal Analysis of Profile Activity Patterns' },
+                        'abstract': { 'value': 'We study temporal patterns in user profile activity across social platforms.' },
+                        'authors': { 'value': ['Jonas Author', 'Grace Author', 'Rosa Author']},
+                        'authorids': { 'value': ['~Jonas_Author1', '~Grace_Author1', '~Rosa_Author1']},
+                        'pdf': {'value': '/pdf/' + 'r' * 40 +'.pdf' },
+                        'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                        'human_subjects_reporting': { 'value': 'Not applicable'},
+                        'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
+                    }
+                ))
