@@ -205,16 +205,6 @@ class InvitationBuilder(object):
             process_path='../arr/process/post_submission_process.py'
         )
 
-    def set_preprint_post_submission_invitation(self):
-        return self.set_post_submission_invitation(
-            invitation_id=self.venue.get_preprint_post_submission_id(),
-            source={
-                'venueid': self.venue.get_submission_venue_id(),
-                'content': {
-                    'preprint': 'yes'
-                }
-            }
-        )
     def set_submission_deletion_invitation(self, submission_revision_stage):
         return self.venue_invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
 

@@ -5,7 +5,7 @@ def process(client, invitation):
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    submission_venue_id = domain.content['submission_venue_id']['value']
+    submission_id = domain.content['submission_id']['value']
     venue_name = domain.content['title']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     program_chairs_id = domain.content['program_chairs_id']['value']
@@ -24,34 +24,10 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
-    source = openreview.tools.get_invitation_source(invitation, domain)
-
     client_v1 = openreview.Client(
         baseurl=openreview.tools.get_base_urls(client)[0],
         token=client.token
     )
-
-    def get_source_submissions():
-        venueids = source.get('venueid', submission_venue_id)
-        submissions = client.get_all_notes(
-            content={'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids)},
-            domain=venue_id
-        )
-
-        for key, value in source.get('content', {}).items():
-            submissions = [s for s in submissions if s.content.get(key, {}).get('value') == value]
-
-        return submissions
-
-    submissions = get_source_submissions()
-
-    def post_submission_edit(submission):
-        updated_note = openreview.api.Note(id=submission.id)
-        client.post_note_edit(
-            invitation=invitation.id,
-            note=updated_note,
-            signatures=[venue_id]
-        )
 
     def get_paper_authors_group_id(number):
         return f"{venue_id}/{submission_name}{number}/{authors_name}"
@@ -152,41 +128,12 @@ def process(client, invitation):
             note=updated_note
         )
 
-    preprint_source = source.get('content', {}).get('preprint')
-    if preprint_source == 'yes':
-        print(f'Processing {len(submissions)} preprint submissions')
-        openreview.tools.concurrent_requests(
-            release_preprint_submission,
-            submissions,
-            desc='arr_post_submission_preprints'
-        )
-    elif preprint_source == 'no':
-        print(f'Processing {len(submissions)} non-preprint submissions')
-        openreview.tools.concurrent_requests(
-            post_submission_edit,
-            submissions,
-            desc='arr_post_submission_non_preprints'
-        )
-    else:
-        preprints = []
-        non_preprints = []
-        for note in submissions:
-            if note.content.get('preprint', {}).get('value') == 'yes':
-                preprints.append(note)
-            else:
-                non_preprints.append(note)
+    all_submissions = client.get_all_notes(invitation=submission_id, sort='number:asc', domain=venue_id)
+    submissions = [paper for paper in all_submissions if openreview.tools.should_match_invitation_source(client, invitation, paper)]
 
-        print(f'Processing {len(non_preprints)} non-preprint submissions')
-        print(f'Processing {len(preprints)} preprint submissions')
-
-        openreview.tools.concurrent_requests(
-            post_submission_edit,
-            non_preprints,
-            desc='arr_post_submission_non_preprints'
-        )
-
-        openreview.tools.concurrent_requests(
-            release_preprint_submission,
-            preprints,
-            desc='arr_post_submission_preprints'
-        )
+    print(f'Processing {len(submissions)} preprint submissions')
+    openreview.tools.concurrent_requests(
+        release_preprint_submission,
+        submissions,
+        desc='arr_post_submission_preprints'
+    )

@@ -443,18 +443,14 @@ class ARR(object):
             invitation_id=self.get_post_submission_id(),
             source={
                 'venueid': self.get_submission_venue_id(),
-                'content': {
-                    'preprint': 'no'
-                }
+                'preprint': 'no'
             }
         )
         self.invitation_builder.set_post_submission_invitation(
             invitation_id=self.get_preprint_post_submission_id(),
             source={
                 'venueid': self.get_submission_venue_id(),
-                'content': {
-                    'preprint': 'yes'
-                }
+                'preprint': 'yes'
             }
         )
         self.invitation_builder.set_pc_submission_revision_invitation()
@@ -502,18 +498,14 @@ class ARR(object):
             invitation_id=self.get_post_submission_id(),
             source={
                 'venueid': self.get_submission_venue_id(),
-                'content': {
-                    'preprint': 'no'
-                }
+                'preprint': 'no'
             }
         )
         self.invitation_builder.set_post_submission_invitation(
             invitation_id=self.get_preprint_post_submission_id(),
             source={
                 'venueid': self.get_submission_venue_id(),
-                'content': {
-                    'preprint': 'yes'
-                }
+                'preprint': 'yes'
             }
         )
 
