@@ -219,6 +219,10 @@ return {
           })
         }).length
       `,
+
+      missingMetaReviewCount: `
+        return (row.notes?.length ?? 0) - (row.numCompletedMetaReviews ?? 0)
+      `,
     },
     reviewerEmailFuncs: [
       {
