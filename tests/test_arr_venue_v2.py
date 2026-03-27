@@ -6348,25 +6348,25 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert_submission_query(
             f'{venue_id}/Program_Chairs',
             pc_console_client,
-            f'+number={submission_number} AND reviewerEmergencyDeclarationCount=1 AND allEmergencyDeclarationCount=1',
+            f'+number={submission_number} AND reviewerEmergencyDeclarationCount=1',
             expected_submission_numbers
         )
         assert_submission_query(
             f'{venue_id}/Program_Chairs',
             pc_console_client,
-            f'+number={submission_number} AND reviewerDelayNotificationCount=1 AND allDelayNotificationCount=1',
+            f'+number={submission_number} AND reviewerDelayNotificationCount=1',
             expected_submission_numbers
         )
         assert_submission_query(
             f'{venue_id}/Program_Chairs',
             pc_console_client,
-            f'+number={submission_number} AND assignedReviewersAfterEmergencyDeclarationsCount={expected_remaining_reviewer_count}',
+            f'+number={submission_number} AND assignedReviewersMinusEmergencyDeclarationsCount={expected_remaining_reviewer_count}',
             expected_submission_numbers
         )
         assert_submission_query(
             f'{venue_id}/Program_Chairs',
             pc_console_client,
-            f'+number={submission_number} AND completedReviewsOrDelayNotificationsCount=1',
+            f'+number={submission_number} AND completedReviewsPlusDelayNotificationsCount=1',
             expected_submission_numbers
         )
         assert_submission_query(

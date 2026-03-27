@@ -218,36 +218,6 @@ return {
 
       return reviewersWithEmergencyDeclaration.size;
       `,
-      allEmergencyDeclarationCount: `
-      const replies = row.note?.details?.replies ?? [];
-      const reviewers = row.reviewers ?? [];
-      const areaChairs = row.metaReviewData?.areaChairs ?? [];
-      const participants = [...reviewers, ...areaChairs];
-      const signatureToParticipantIndex = new Map();
-      const participantsWithEmergencyDeclaration = new Set();
-
-      participants.forEach((participant, participantIndex) => {
-        if (participant?.anonymizedGroup) {
-          signatureToParticipantIndex.set(participant.anonymizedGroup, participantIndex);
-        }
-        if (participant?.preferredId) {
-          signatureToParticipantIndex.set(participant.preferredId, participantIndex);
-        }
-      });
-
-      replies.forEach(reply => {
-        const replySignature = reply?.signatures?.[0];
-        const isEmergencyDeclaration = (reply?.invitations ?? []).some(invitation => invitation.includes('Emergency_Declaration'));
-
-        if (!isEmergencyDeclaration || !signatureToParticipantIndex.has(replySignature)) {
-          return;
-        }
-
-        participantsWithEmergencyDeclaration.add(signatureToParticipantIndex.get(replySignature));
-      });
-
-      return participantsWithEmergencyDeclaration.size;
-      `,
       reviewerDelayNotificationCount: `
       const replies = row.note?.details?.replies ?? [];
       const reviewers = row.reviewers ?? [];
@@ -276,37 +246,7 @@ return {
 
       return reviewersWithDelayNotification.size;
       `,
-      allDelayNotificationCount: `
-      const replies = row.note?.details?.replies ?? [];
-      const reviewers = row.reviewers ?? [];
-      const areaChairs = row.metaReviewData?.areaChairs ?? [];
-      const participants = [...reviewers, ...areaChairs];
-      const signatureToParticipantIndex = new Map();
-      const participantsWithDelayNotification = new Set();
-
-      participants.forEach((participant, participantIndex) => {
-        if (participant?.anonymizedGroup) {
-          signatureToParticipantIndex.set(participant.anonymizedGroup, participantIndex);
-        }
-        if (participant?.preferredId) {
-          signatureToParticipantIndex.set(participant.preferredId, participantIndex);
-        }
-      });
-
-      replies.forEach(reply => {
-        const replySignature = reply?.signatures?.[0];
-        const isDelayNotification = (reply?.invitations ?? []).some(invitation => invitation.includes('Delay_Notification'));
-
-        if (!isDelayNotification || !signatureToParticipantIndex.has(replySignature)) {
-          return;
-        }
-
-        participantsWithDelayNotification.add(signatureToParticipantIndex.get(replySignature));
-      });
-
-      return participantsWithDelayNotification.size;
-      `,
-      assignedReviewersAfterEmergencyDeclarationsCount: `
+      assignedReviewersMinusEmergencyDeclarationsCount: `
       const replies = row.note?.details?.replies ?? [];
       const reviewers = row.reviewers ?? [];
       const signatureToReviewerIndex = new Map();
@@ -334,7 +274,7 @@ return {
 
       return Math.max(0, reviewers.length - reviewersWithEmergencyDeclaration.size);
       `,
-      completedReviewsOrDelayNotificationsCount: `
+      completedReviewsPlusDelayNotificationsCount: `
       const replies = row.note?.details?.replies ?? [];
       const reviewers = row.reviewers ?? [];
       const officialReviews = row.officialReviews ?? [];
