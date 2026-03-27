@@ -35,6 +35,8 @@ The following authors are blocked from submitting to {journal.short_name}:
 
 Please review their submission and take appropriate action.
 Link: https://openreview.net/forum?id={submission.id}
-'''
+''',
+                replyTo=journal.contact_info,
+                sender=journal.get_message_sender()
             )
     
