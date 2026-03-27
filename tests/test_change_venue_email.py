@@ -201,12 +201,12 @@ Program Chairs'''
         assert 'new-contact@venueemail.cc' in messages[0]['content']['text']
         assert messages[0]['content']['replyTo'] == 'new-contact@venueemail.cc'
 
-    def check_message_invitations(self, openreview_client, helpers):
+    def test_check_message_invitations(self, openreview_client, helpers):
 
         authors_message_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/Authors/-/Message')
         assert authors_message_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
-        authors_accepted_message_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/Authors_Accepted/-/Message')
+        authors_accepted_message_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/Authors/Accepted/-/Message')
         assert authors_accepted_message_inv.message['replyTo']['param']['regex'] ==r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
         reviewers_message_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/Reviewers/-/Message')
