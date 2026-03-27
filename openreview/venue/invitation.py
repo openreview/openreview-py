@@ -429,6 +429,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.get_process_content('process/post_submission_process.py')
             }],
+            content = {
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_submission_venue_id()
+                    }
+                }
+            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id, self.venue.get_authors_id('${{2/note/id}/number}')],
@@ -1527,6 +1534,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 },
                 'comment_process_script': {
                     'value': self.get_process_content(comment_stage.process_path)
+                },
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                    }
                 }
             },
             edit={
@@ -1982,6 +1994,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process
             }],
+            content={
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                    }
+                }
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -5187,6 +5206,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers = [venue_id],
             cdate = activation_date,
             description = description,
+            content = {
+                'source': {
+                    'value': {
+                        'venueid': venue.get_submission_venue_id()
+                    }
+                }
+            },
             date_processes = [{
                 'dates': ["#{4/cdate}", self.update_date_string],
                     'script': self.get_process_content('../venue/process/post_submission_process.py')
