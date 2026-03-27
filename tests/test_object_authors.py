@@ -561,3 +561,34 @@ class TestObjectAuthors():
                 )
             )
             helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+    def test_remove_authorids(self, openreview_client, helpers):
+        """Remove authorids from all submissions via the meta invitation.
+
+        Server-side processes needed authorids during submission and post-submission,
+        but the web UI should see only object authors (no authorids).
+        """
+
+        submissions = openreview_client.get_notes(
+            invitation='ICLR.cc/2025/Conference/-/Submission', sort='number:asc'
+        )
+
+        for submission in submissions:
+            openreview_client.post_note_edit(
+                invitation='ICLR.cc/2025/Conference/-/Edit',
+                signatures=['ICLR.cc/2025/Conference'],
+                note=openreview.api.Note(
+                    id=submission.id,
+                    content={
+                        'authorids': { 'delete': True }
+                    }
+                )
+            )
+
+        # Verify authorids is gone
+        updated = openreview_client.get_notes(
+            invitation='ICLR.cc/2025/Conference/-/Submission', sort='number:asc'
+        )
+        for note in updated:
+            assert 'authorids' not in note.content
+            assert isinstance(note.content['authors']['value'][0], dict)
