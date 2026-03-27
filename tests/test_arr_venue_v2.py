@@ -2809,6 +2809,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Note_From_EICs-0-1', count=2)
 
         submission_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
@@ -2979,6 +2980,81 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'aclweb.org/ACL/ARR/2023/August', 
             'aclweb.org/ACL/ARR/2023/August/Submission6/Authors'
         ]
+
+        note_from_eics_invitation = openreview_client.get_invitation(
+            f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Note_From_EICs'
+        )
+        assert note_from_eics_invitation
+        assert note_from_eics_invitation.edit['signatures']['param']['items'] == [
+            {
+                'value': 'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                'optional': True
+            }
+        ]
+        assert note_from_eics_invitation.edit['note']['readers']['param']['items'] == [
+            {
+                'value': 'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                'optional': False
+            },
+            {
+                'value': f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                'optional': False
+            },
+            {
+                'value': f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                'optional': True
+            }
+        ]
+        assert note_from_eics_invitation.edit['note']['content']['attachment']['value']['param'] == {
+            'type': 'file',
+            'maxSize': 50,
+            'extensions': ['pdf'],
+            'optional': True,
+            'deletable': True
+        }
+
+        attachment_url = pc_client.put_attachment(
+            os.path.join(os.path.dirname(__file__), 'data/paper.pdf'),
+            note_from_eics_invitation.id,
+            'attachment'
+        )
+
+        note_from_eics_edit = pc_client_v2.post_note_edit(
+            invitation=note_from_eics_invitation.id,
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=submissions[1].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs'
+                ],
+                content={
+                    'title': {'value': 'Note from EICs'},
+                    'comment': {'value': 'Please focus on the forum discussion before making a recommendation.'},
+                    'attachment': {'value': attachment_url}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=note_from_eics_edit['id'])
+
+        note_from_eics = openreview_client.get_note(note_from_eics_edit['note']['id'])
+        assert note_from_eics.readers == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+            f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs'
+        ]
+        assert note_from_eics.content['attachment']['value'] == attachment_url
+        note_from_eics_subject = f'[ARR - August 2023] Program Chairs commented on a paper in your area. Paper Number: {submissions[1].number}, Paper Title: "{submissions[1].content["title"]["value"]}"'
+        assert len(
+            openreview_client.get_messages(
+                to='ac2@aclrollingreview.com',
+                subject=note_from_eics_subject
+            )
+        ) == 1
+        assert len(openreview_client.get_messages(to='sac2@aclrollingreview.com', subject=note_from_eics_subject)) == 0
 
         # Post comment as PCs for the first submission
         comment_edit = pc_client_v2.post_note_edit(

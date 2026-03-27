@@ -28,6 +28,7 @@ def process(client, edit, invitation):
 
     submission = client.get_note(edit.note.forum, details='replies')
     comment = client.get_note(edit.note.id)
+    parent_invitation = client.get_invitation(invitation.invitations[0])
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
     ### TODO: Fix this, we should notify the use when the review is updated
@@ -88,10 +89,23 @@ Comment: {comment.content['comment']['value']}
 
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
 
+    email_program_chairs = parent_invitation.get_content_value('email_program_chairs')
+    email_senior_area_chairs = parent_invitation.get_content_value('email_senior_area_chairs')
+    email_area_chairs = parent_invitation.get_content_value('email_area_chairs')
+    email_reviewers = parent_invitation.get_content_value('email_reviewers')
+    email_authors = parent_invitation.get_content_value('email_authors')
+
+    if email_area_chairs is None:
+        email_area_chairs = True
+    if email_reviewers is None:
+        email_reviewers = True
+    if email_authors is None:
+        email_authors = True
+
     if comment_threshold is None or (signed_by_author and comment_count <= comment_threshold) or (signed_by_reviewer and comment_count <= comment_threshold) or not (signed_by_author or signed_by_reviewer):
         program_chairs_id = domain.get_content_value('program_chairs_id')
         minimum_number_of_readers = 3 if domain.get_content_value('senior_area_chairs_name') else 2
-        email_PC = domain.get_content_value('comment_email_pcs') or (domain.get_content_value('direct_comment_email_pcs') and len(comment.readers) == minimum_number_of_readers)
+        email_PC = email_program_chairs or domain.get_content_value('comment_email_pcs') or (domain.get_content_value('direct_comment_email_pcs') and len(comment.readers) == minimum_number_of_readers)
         if email_PC and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
             client.post_message(
                 invitation=meta_invitation_id,
@@ -107,7 +121,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
         paper_senior_area_chairs_group = openreview.tools.get_group(client, paper_senior_area_chairs_id)
 
-        email_SAC = ((len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers) or domain.get_content_value('comment_email_sacs'))
+        email_SAC = ((len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers) or email_senior_area_chairs or domain.get_content_value('comment_email_sacs'))
         if paper_senior_area_chairs_group and senior_area_chairs_name and email_SAC:
             client.post_message(
                 invitation=meta_invitation_id,
@@ -123,7 +137,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         area_chairs_name = domain.get_content_value('area_chairs_name')
         paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
         paper_area_chairs_group = openreview.tools.get_group(client, paper_area_chairs_id)
-        if paper_area_chairs_group and area_chairs_name and (paper_area_chairs_id in comment.readers or 'everyone' in comment.readers):
+        if email_area_chairs and paper_area_chairs_group and area_chairs_name and (paper_area_chairs_id in comment.readers or 'everyone' in comment.readers):
             client.post_message(
                 invitation=meta_invitation_id,
                 recipients=[paper_area_chairs_id],
@@ -139,7 +153,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
     paper_reviewers_group = openreview.tools.get_group(client, paper_reviewers_id)
     paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
     paper_reviewers_submitted_group = openreview.tools.get_group(client, paper_reviewers_submitted_id)
-    if paper_reviewers_group and ('everyone' in comment.readers or paper_reviewers_id in comment.readers):
+    if email_reviewers and paper_reviewers_group and ('everyone' in comment.readers or paper_reviewers_id in comment.readers):
         client.post_message(
             invitation=meta_invitation_id,
             recipients=[paper_reviewers_id],
@@ -150,7 +164,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             signature=venue_id,
             sender=sender
         )
-    elif paper_reviewers_submitted_group and paper_reviewers_submitted_id in comment.readers:
+    elif email_reviewers and paper_reviewers_submitted_group and paper_reviewers_submitted_id in comment.readers:
         client.post_message(
             invitation=meta_invitation_id,
             recipients=[paper_reviewers_submitted_id],
@@ -161,7 +175,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             signature=venue_id,
             sender=sender
         )
-    else:
+    elif email_reviewers:
         anon_reviewers = [reader for reader in comment.readers if reader.find(reviewers_anon_name) >=0]
         anon_reviewers_group = client.get_groups(prefix=f'{paper_group_id}/{reviewers_anon_name}.*')
         if anon_reviewers_group and anon_reviewers:
@@ -189,7 +203,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
 
     #send email to paper authors
     paper_authors_id = f'{paper_group_id}/{authors_name}'
-    if paper_authors_id in comment.readers or 'everyone' in comment.readers:
+    if email_authors and (paper_authors_id in comment.readers or 'everyone' in comment.readers):
         client.post_message(
             invitation=meta_invitation_id,
             recipients=submission.content['authorids']['value'],

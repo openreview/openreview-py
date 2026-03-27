@@ -1,7 +1,23 @@
 from copy import deepcopy
 from datetime import datetime
+from openreview.stages.default_content import comment_v2
 
 arr_metareview_recommendation_field = 'overall_assessment'
+
+arr_note_from_eics_content = deepcopy(comment_v2)
+arr_note_from_eics_content['attachment'] = {
+    'order': 3,
+    'description': '(Optional) Upload a PDF attachment for the assigned senior area chairs and area chairs.',
+    'value': {
+        'param': {
+            'type': 'file',
+            'maxSize': 50,
+            'extensions': ['pdf'],
+            'optional': True,
+            'deletable': True
+        }
+    }
+}
 
 arr_tracks = [
     "Clinical and Biomedical Applications",

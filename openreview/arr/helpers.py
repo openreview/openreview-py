@@ -40,6 +40,7 @@ from openreview.stages.arr_content import (
     hide_fields,
     arr_submitted_author_forum,
     arr_submitted_author_content,
+    arr_note_from_eics_content,
     arr_delay_notification_content,
     arr_emergency_declaration_content,
     arr_great_or_irresponsible_ac_content,
@@ -922,6 +923,28 @@ class ARRWorkflow(object):
                 exp_date=self.configuration_note.content.get('reviewer_nomination_end_date')
             ),
             ARRStage(
+                type=ARRStage.Type.COMMENT_STAGE,
+                required_fields=['commentary_start_date', 'commentary_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/Note_From_EICs",
+                stage_arguments={
+                    'official_comment_name': 'Note_From_EICs',
+                    'reader_selection': True,
+                    'check_mandatory_readers': False,
+                    'invitees': [],
+                    'readers': [
+                        openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'email_pcs': False,
+                    'email_sacs': False,
+                    'description': 'Program Chairs can post a note with an optional PDF attachment for the assigned senior area chairs and area chairs. Select which chair groups should be able to read the note under "Readers". Program Chairs are always included as readers.',
+                    'content': arr_note_from_eics_content
+                },
+                start_date=self.configuration_note.content.get('commentary_start_date'),
+                exp_date=self.configuration_note.content.get('commentary_end_date'),
+                process='process/comment_process.py'
+            ),
+            ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
                 required_fields=['commentary_start_date', 'commentary_end_date'],
                 super_invitation_id=f"{self.venue_id}/-/Author-Editor_Confidential_Comment",
@@ -1451,6 +1474,7 @@ class ARRStage(object):
         PROCESS_INVITATION = 3
         SUBMISSION_REVISION_STAGE = 4
         SUBMISSION_METADATA_REVISION_STAGE = 5
+        COMMENT_STAGE = 6
 
     class Participants(Enum):
         EVERYONE = 0
@@ -1590,6 +1614,9 @@ class ARRStage(object):
             self.stage_arguments['start_date'] = self._format_date(self.start_date)
             self.stage_arguments['due_date'] = self._format_date(self.due_date)
             self.stage_arguments['exp_date'] = self._format_date(self.exp_date)
+        elif self.type == ARRStage.Type.COMMENT_STAGE:
+            self.stage_arguments['start_date'] = self.start_date
+            self.stage_arguments['end_date'] = self.exp_date
         elif self.type == ARRStage.Type.REGISTRATION_STAGE:
             self.stage_arguments['start_date'] = self.start_date
             self.stage_arguments['due_date'] = self.due_date
@@ -1689,6 +1716,7 @@ class ARRStage(object):
                 ]
                 return [date for idx, date in enumerate(all_dates) if idx not in skip_idxs]
             elif self.type in [
+                ARRStage.Type.COMMENT_STAGE,
                 ARRStage.Type.CUSTOM_STAGE,
                 ARRStage.Type.STAGE_NOTE,
                 ARRStage.Type.SUBMISSION_REVISION_STAGE,
@@ -1750,6 +1778,7 @@ class ARRStage(object):
                 )
             )
         elif self.type in [
+            ARRStage.Type.COMMENT_STAGE,
             ARRStage.Type.CUSTOM_STAGE,
             ARRStage.Type.SUBMISSION_REVISION_STAGE,
             ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE
@@ -1839,6 +1868,40 @@ class ARRStage(object):
                     process_script = self.process,
                     preprocess_script = self.preprocess
                 )
+            elif self.type == ARRStage.Type.COMMENT_STAGE:
+                stage_arguments = self.stage_arguments.copy()
+                content = stage_arguments.pop('content')
+                comment_stage = openreview.stages.CommentStage(**stage_arguments)
+                previous_comment_stage = venue.comment_stage
+                try:
+                    venue.comment_stage = comment_stage
+                    if self.process:
+                        comment_stage.process_path = f'../arr/{self.process}'
+                    if self.preprocess:
+                        comment_stage.preprocess_path = f'../arr/{self.preprocess}'
+
+                    invitation_builder.set_official_comment_invitation()
+
+                    client.post_invitation_edit(
+                        invitations=venue.get_meta_invitation_id(),
+                        readers=[venue.id],
+                        writers=[venue.id],
+                        signatures=[venue.id],
+                        invitation=openreview.api.Invitation(
+                            id=self.super_invitation_id,
+                            edit={
+                                'invitation': {
+                                    'edit': {
+                                        'note': {
+                                            'content': content
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    )
+                finally:
+                    venue.comment_stage = previous_comment_stage
             elif self.type == ARRStage.Type.STAGE_NOTE:
                 stage_note = openreview.Note(**self.stage_arguments)
                 client_v1.post_note(stage_note)
