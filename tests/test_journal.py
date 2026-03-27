@@ -6278,6 +6278,8 @@ The following authors are blocked from submitting to TMLR:
 
 Please review their submission and take appropriate action.
 Link: https://openreview.net/forum?id={submission_id}
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         messages = openreview_client.get_messages(to='raia@mail.com', subject = '[TMLR] Submission by a blocked author received, titled Paper title')
@@ -6290,4 +6292,6 @@ The following authors are blocked from submitting to TMLR:
 
 Please review their submission and take appropriate action.
 Link: https://openreview.net/forum?id={submission_id}
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
