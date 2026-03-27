@@ -11,20 +11,20 @@ Run pytest tests for the openreview-py project. This skill ensures the environme
 
 Check if the environment config file exists at `.claude/test-runner-env.json` (relative to the repo root). This file stores the Python environment activation command and API repository paths.
 
-If the file exists, read it and skip to Step 3. It has this structure:
+If the file exists, read it and check it has all four fields below. If `web_path` is missing (legacy config), proceed to Step 2 to collect just that field. If the file does not exist, proceed to Step 2 for full setup.
+
 ```json
 {
   "env_activation": "<shell command to activate the Python environment>",
   "api_v1_path": "/path/to/openreview-api-v1",
-  "api_v2_path": "/path/to/openreview-api"
+  "api_v2_path": "/path/to/openreview-api",
+  "web_path": "/path/to/openreview-web"
 }
 ```
 
-If the file does not exist, proceed to Step 2.
-
 ## Step 2: Set Up Environment (first time only)
 
-Ask the user for three pieces of information:
+Ask the user for the missing pieces of information (all four if new setup, or just the missing fields if migrating):
 
 1. **Python environment activation command** — the shell command to activate a Python environment where openreview-py is installed. Common examples:
    - **virtualenv / venv**: `source /path/to/.venv/bin/activate`
@@ -34,6 +34,8 @@ Ask the user for three pieces of information:
 2. **Path to `openreview-api-v1` repository** — this serves API v1 on port 3000.
 
 3. **Path to `openreview-api` repository** — this serves API v2 on port 3001.
+
+4. **Path to `openreview-web` repository** — this serves the web frontend on port 3030.
 
 **Note for conda users:** If the user provides a bare `conda activate <env>` command, convert it to the inline form before saving:
 ```
@@ -51,7 +53,7 @@ Save the config to `.claude/test-runner-env.json` so this setup only happens onc
 
 ## Step 3: Delegate to the test-runner agent
 
-Once the config file exists, launch the **test-runner agent** using the Agent tool. The agent handles everything else autonomously in the background: killing stale server processes, starting API v1 and v2 with `cleanStart`, polling for readiness, and running the requested tests.
+Once the config file exists with all four fields, launch the **test-runner agent** using the Agent tool. The agent runs pytest in the background. Server setup is handled automatically by a `PreToolUse` hook — the hook runs `.claude/scripts/setup-testing.sh` before any pytest command, which kills and restarts all services (ports 3000, 3001, 3030) and waits for them to be ready.
 
 Pass the user's test target in the agent prompt. Examples:
 - "Run tests in tests/test_client.py"
