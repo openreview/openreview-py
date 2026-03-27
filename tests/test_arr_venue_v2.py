@@ -93,7 +93,7 @@ ARR_CAMERA_READY_MARKUP_PREPROCESS = r'''async function process(client, edit, in
   return Promise.resolve();
 }'''
 
-ARR_CAMERA_READY_PREPROCESS_LOADER = '''async function process(client, edit, invitation) {
+ARR_CAMERA_READY_PREPROCESS_CONTENT_SCRIPT = '''async function process(client, edit, invitation) {
   client.throwErrors = true;
   const { invitations } = await client.getInvitations({ id: invitation.invitations[0] });
   const metaInvitation = invitations[0];
@@ -101,19 +101,6 @@ ARR_CAMERA_READY_PREPROCESS_LOADER = '''async function process(client, edit, inv
   eval(`var process = ${script}`);
   await process(client, edit, invitation);
 }'''
-
-
-def build_camera_ready_revision_content(submission, invitation_content, title=None, abstract=None):
-    content = {
-        'title': {'value': title if title is not None else submission.content['title']['value']},
-        'abstract': {'value': abstract if abstract is not None else submission.content['abstract']['value']}
-    }
-
-    for field in ['authors', 'authorids', 'keywords', 'paper_link', 'supplementary_material']:
-        if field in invitation_content and field in submission.content:
-            content[field] = {'value': submission.content[field]['value']}
-
-    return content
 
 # API2 template from ICML
 class TestARRVenueV2():
@@ -7021,10 +7008,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         notes = pc_client_v2.get_notes(forum=submssion3.id, domain='aclweb.org/ACL/ARR/2023/August')
         assert len(notes) == 5 # submission + review + 3 reports
-
-        commitment_venue_id = 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment'
-        commitment_submissions = openreview_client.get_notes(invitation=f'{commitment_venue_id}/-/Submission', sort='number:asc')
-        assert commitment_submissions
+        commitment_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission', sort='number:asc')
 
         venue = openreview.helpers.get_conference(client, request_form_note.forum)
         venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
@@ -7034,29 +7018,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             only_accepted=False
         )
         venue.create_submission_revision_stage()
-        helpers.await_queue_edit(openreview_client, f'{commitment_venue_id}/-/Camera_Ready_Revision-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, f'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Camera_Ready_Revision-0-1', count=1)
 
         camera_ready_submission = commitment_submissions[0]
-        camera_ready_invitation_id = f'{commitment_venue_id}/Submission{camera_ready_submission.number}/-/Camera_Ready_Revision'
-        camera_ready_invitation = None
-        for _ in range(10):
-            try:
-                camera_ready_invitation = openreview_client.get_invitation(camera_ready_invitation_id)
-            except openreview.OpenReviewException:
-                camera_ready_invitation = None
-            if camera_ready_invitation:
-                break
-            time.sleep(1)
-        assert camera_ready_invitation
+        camera_ready_invitation = openreview_client.get_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Submission1/-/Camera_Ready_Revision')
 
         openreview_client.post_invitation_edit(
             invitations=venue.get_meta_invitation_id(),
-            readers=[commitment_venue_id],
-            writers=[commitment_venue_id],
-            signatures=[commitment_venue_id],
+            readers=['aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment'],
+            writers=['aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment'],
+            signatures=['aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment'],
             replacement=False,
             invitation=openreview.api.Invitation(
-                id=f'{commitment_venue_id}/-/Camera_Ready_Revision',
+                id=f'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Camera_Ready_Revision',
                 content={
                     'revision_preprocess_script': {
                         'value': ARR_CAMERA_READY_MARKUP_PREPROCESS
@@ -7064,23 +7038,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 },
                 edit={
                     'invitation': {
-                        'preprocess': ARR_CAMERA_READY_PREPROCESS_LOADER
+                        'preprocess': ARR_CAMERA_READY_PREPROCESS_CONTENT_SCRIPT
                     }
                 }
             )
         )
-        camera_ready_parent_invitation = None
-        camera_ready_invitation = None
-        for _ in range(10):
-            try:
-                camera_ready_parent_invitation = openreview_client.get_invitation(f'{commitment_venue_id}/-/Camera_Ready_Revision')
-                camera_ready_invitation = openreview_client.get_invitation(camera_ready_invitation_id)
-            except openreview.OpenReviewException:
-                camera_ready_parent_invitation = None
-                camera_ready_invitation = None
-            if camera_ready_parent_invitation and camera_ready_invitation and camera_ready_invitation.preprocess:
-                break
-            time.sleep(1)
+        camera_ready_parent_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Camera_Ready_Revision')
+        camera_ready_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Submission1/-/Camera_Ready_Revision')
 
         assert camera_ready_parent_invitation
         assert 'revision_preprocess_script' in camera_ready_parent_invitation.content
@@ -7092,10 +7056,21 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'revision_preprocess_script' in camera_ready_invitation.preprocess
         assert 'client.getInvitations' in camera_ready_invitation.preprocess
 
+        def build_camera_ready_revision_content(submission, title=None, abstract=None):
+            content = {
+                'title': {'value': title if title is not None else submission.content['title']['value']},
+                'abstract': {'value': abstract if abstract is not None else submission.content['abstract']['value']}
+            }
+
+            for field in ['authors', 'authorids', 'keywords', 'paper_link', 'supplementary_material']:
+                content[field] = {'value': submission.content[field]['value']}
+
+            return content
+
         def post_camera_ready_revision(title=None, abstract=None):
             return test_client.post_note_edit(
-                invitation=camera_ready_invitation_id,
-                signatures=[f'{commitment_venue_id}/Submission{camera_ready_submission.number}/Authors'],
+                invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Submission1/-/Camera_Ready_Revision',
+                signatures=['aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Submission1/Authors'],
                 note=openreview.api.Note(
                     content=build_camera_ready_revision_content(
                         camera_ready_submission,
