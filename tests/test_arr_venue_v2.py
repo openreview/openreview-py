@@ -7043,6 +7043,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, f'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Camera_Ready_Revision-0-1', count=2)
         camera_ready_parent_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Camera_Ready_Revision')
         camera_ready_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Submission1/-/Camera_Ready_Revision')
 
