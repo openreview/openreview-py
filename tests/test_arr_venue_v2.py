@@ -250,7 +250,20 @@ class TestARRVenueV2():
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
-        assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').web
+        ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert 'Emergency_Score' in ac_group.web
+
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/August/Area_Chairs',
+                web=ac_group.web + '\n//This is an additional change to the web field that should not be overwritten by future edits'
+            )
+        )
+        ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert 'Emergency_Score' in ac_group.web
+        assert '//This is an additional change to the web field that should not be overwritten by future edits' in ac_group.web        
 
         assert '~Program_ARRChair1' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August').impersonators
 
@@ -364,6 +377,13 @@ class TestARRVenueV2():
         assert post_submission_invitation.content['source']['value']['content'] == {'preprint': 'no'}
         assert preprint_post_submission_invitation.content['source']['value']['content'] == {'preprint': 'yes'}
 
+        assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
+        ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert 'Emergency_Score' in ac_group.web
+        assert '//This is an additional change to the web field that should not be overwritten by future edits' in ac_group.web
+
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
         assert header_div
@@ -380,7 +400,7 @@ class TestARRVenueV2():
         assert 'keywords' not in submission_invitation.edit['note']['content']
 
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
-        assert 'recommendation' == domain.content['meta_review_recommendation']['value']
+        assert 'overall_assessment' == domain.content['meta_review_recommendation']['value']
 
         # Build current cycle invitations
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
@@ -897,7 +917,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
+                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
                 }
             )
         )
@@ -914,7 +934,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'NLP and Code Models'] },
+                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models'] },
                 }
             )
         )
@@ -953,7 +973,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
                 }
             )
         )
@@ -968,7 +988,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
                 }
             )
         )
@@ -983,7 +1003,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
                 }
             )
         )
@@ -3791,6 +3811,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ac_scores['~AC_ARROne1']['weight'] == 3
         assert rev_scores['~Reviewer_ARROne1']['weight'] == 3
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
 
         # For 2, assert that the affinity scores on June reviewers/aes is 0
@@ -3805,6 +3826,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ac_scores['~AC_ARRTwo1']['weight'] == 0
         assert rev_scores['~Reviewer_ARRTwo1']['weight'] == 0
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Senior_Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
 
         # Check for existence of track information
@@ -4282,7 +4304,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             ))
         # Add conflict to profile, invite user
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer7@aclrollingreview.com', password=helpers.strong_password)
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['history'].append(
             {
                 'position': 'Engineer', 
@@ -4308,7 +4330,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         
         # Accept reviewer 3 invitation
         # Update year to outside range of conflict_N_years
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['history'][1]['end'] = now.year-5
         reviewer_client.post_profile(profile)
 
@@ -4963,11 +4985,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         messages = openreview_client.get_messages(to='reviewerethics@aclrollingreview.com', subject='[ARR - August 2023] Your ethics review has been received on your assigned Paper number: 3, Paper title: "Paper title 3"')
         assert messages and len(messages) == 1
 
-        # allow ethics chairs to invite ethics reviewers
-        conference_matching = matching.Matching(venue, openreview_client.get_group(venue.get_ethics_reviewers_id()), None)
-        conference_matching.setup_invite_assignment(hash_seed='1234', invited_committee_name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
-        venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}', is_ethics_reviewer=True)
-
+        # Ethics invite-assignment and emergency groups should be available after ethics stage setup.
         group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers')
         assert group
         assert group.readers == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs', 'aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers']
@@ -5674,6 +5692,24 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
+
+        request_page(
+            selenium,
+            'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Area_Chairs#assigned-submissions',
+            ac_client,
+            wait_for_element='assigned-submissions'
+        )
+        note_row_4 = selenium.find_element(
+            By.XPATH,
+            '//div[@id="assigned-submissions"]//table[contains(@class, "areachair-console-table")]'
+            '//tr[.//a[normalize-space()="Paper title 4"]]'
+        )
+        assert note_row_4
+        assert '4' == note_row_4.find_element(By.CLASS_NAME, 'note-number').text
+        assert 'Paper title 4' == note_row_4.find_element(By.LINK_TEXT, 'Paper title 4').text
+        meta_review_status = note_row_4.find_element(By.CLASS_NAME, 'areachair-console-meta-review')
+        assert meta_review_status
+        assert 'Overall Assessment:' in meta_review_status.text
 
         # Make reviews public
         pc_client.post_note(

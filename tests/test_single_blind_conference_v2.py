@@ -25,10 +25,6 @@ class TestSingleBlindVenueV2():
 
         helpers.await_queue()
 
-        # Add support group user to the support group object
-        support_group = client.get_group(support_group_id)
-        client.add_members_to_group(group=support_group, members=['~Support_User1'])
-
         now = datetime.datetime.now()
         due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)
         withdraw_exp_date = due_date + datetime.timedelta(days=1)
