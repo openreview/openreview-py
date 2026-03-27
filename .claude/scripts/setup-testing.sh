@@ -37,6 +37,7 @@ echo "Starting openreview-web on port 3030..."
 cd "$WEB_PATH"
 SUPER_USER=openreview.net npx next dev --port 3030 > $PROJECT_DIR/.claude/logs/openreview-web.log 2>&1 &
 WEB_PID=$!
+disown $WEB_PID
 
 # Poll for port 3030
 ELAPSED=0
@@ -52,17 +53,15 @@ while ! lsof -ti:3030 >/dev/null 2>&1; do
 done
 echo "openreview-web is listening on port 3030 (${ELAPSED}s)"
 
-# Today's log file used by both API servers
-TODAY_LOG="$(date +%Y-%m-%d)-results.log"
-
 # ---- Start API v1 (port 3000) ----
 echo "Starting API v1 on port 3000..."
-V1_LOG="$API_V1_PATH/logs/$TODAY_LOG"
+V1_LOG="$PROJECT_DIR/.claude/logs/api-v1-stdout.log"
 cd "$API_V1_PATH"
-bash -c "$ENV_ACTIVATION && npm run cleanStart" >/dev/null 2>&1 &
+bash -c "$ENV_ACTIVATION && npm run cleanStart" > "$V1_LOG" 2>&1 &
 V1_PID=$!
+disown $V1_PID
 
-# Poll for "Setup Complete!" in API v1's own log file
+# Poll for "Setup Complete!" in stdout (the string is printed to stdout, not the server's log file)
 ELAPSED=0
 TIMEOUT=120
 while ! grep -q "Setup Complete!" "$V1_LOG" 2>/dev/null; do
@@ -81,12 +80,13 @@ echo "API v1 is ready on port 3000 (${ELAPSED}s)"
 
 # ---- Start API v2 (port 3001) ----
 echo "Starting API v2 on port 3001..."
-V2_LOG="$API_V2_PATH/logs/$TODAY_LOG"
+V2_LOG="$PROJECT_DIR/.claude/logs/api-v2-stdout.log"
 cd "$API_V2_PATH"
-bash -c "$ENV_ACTIVATION && npm run cleanStart" >/dev/null 2>&1 &
+bash -c "$ENV_ACTIVATION && npm run cleanStart" > "$V2_LOG" 2>&1 &
 V2_PID=$!
+disown $V2_PID
 
-# Poll for "Setup Complete!" in API v2's own log file
+# Poll for "Setup Complete!" in stdout (the string is printed to stdout, not the server's log file)
 ELAPSED=0
 TIMEOUT=120
 while ! grep -q "Setup Complete!" "$V2_LOG" 2>/dev/null; do
