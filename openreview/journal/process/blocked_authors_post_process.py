@@ -24,7 +24,7 @@ def process(client, edit, invitation):
         if blocked_authors:
             client.post_message(
                 invitation=journal.get_meta_invitation_id(),
-                signature=journal.get_id(),
+                signature=journal.venue_id,
                 recipients=[journal.get_editors_in_chief_id()],
                 subject=f'''[{journal.short_name}] Submission by a blocked author received, titled {submission.content['title']['value']}''',
                 message=f'''Hi {{{{fullname}}}},
