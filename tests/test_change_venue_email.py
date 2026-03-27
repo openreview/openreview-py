@@ -42,7 +42,7 @@ class TestChangeVenueEmail():
                     'contact_email': { 'value': 'venueemail2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(start_date) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewers_name': { 'value': 'Program_Committee' },
+                    'reviewers_name': { 'value': 'Reviewers' },
                     'area_chairs_name': { 'value': 'Area_Chairs' },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'VenueEmail.cc/2024/Conference' },
@@ -93,11 +93,11 @@ class TestChangeVenueEmail():
 
         helpers.await_queue_edit(openreview_client, 'VenueEmail.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'VenueEmail.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
-        helpers.await_queue_edit(openreview_client, 'VenueEmail.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'VenueEmail.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'VenueEmail.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
 
         venue_group = openreview.tools.get_group(openreview_client, 'VenueEmail.cc/2025/Conference')
-        assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'VenueEmail.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
+        assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'VenueEmail.cc/2025/Conference/Reviewers/-/Recruitment_Response'
         assert all(key in venue_group.content for key in ['reviewers_declined_id', 'reviewers_invited_id', 'reviewers_invited_message_id'])
 
         request_note = openreview_client.get_note(request.id)
@@ -139,3 +139,81 @@ class TestChangeVenueEmail():
 
         decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Decision_Notification')
         assert decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+
+    def test_recruitment_invitations(self, openreview_client, helpers):
+
+        recruitment_request_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/Reviewers/-/Recruitment_Request')
+        assert recruitment_request_inv.edit['content']['invite_message_body_template']['value']['param']['default'] == '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of VenueEmail 2025 to serve as Reviewer. As a respected researcher in the area, we hope you will accept and help us make VenueEmail 2025 a success.
+
+You are also welcome to submit papers, so please also consider submitting to VenueEmail 2025.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact {{venue_email}}.
+
+Cheers!
+
+Program Chairs'''
+
+        # test recruitment emails are sent with correct replyto email
+        pc_client = openreview.api.OpenReviewClient(username='programchair@venueemail.cc', password=helpers.strong_password)
+
+        edit = pc_client.post_group_edit(
+            invitation='VenueEmail.cc/2025/Conference/Reviewers/-/Recruitment_Request',
+            content={
+                'invitee_details': { 'value': 'reviewer_one@venueemail.cc, ReviewerOne VenueEmail\nreviewer_two@venueemail.cc, ReviewerTwo VenueEmail' },
+                'invite_message_subject_template': { 'value': '[VenueEmail 2025] Invitation to serve as Reviewer' },
+                'invite_message_body_template': { 'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of VenueEmail 2025 to serve as Reviewer.\n\nTo respond the invitation, please click on the following link:\n\n{{invitation_url}}\n\nIf you have any questions, please contact {{venue_email}}.\n\nCheers!\nProgram Chairs' },
+            },
+            group=openreview.api.Group()
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        messages = openreview_client.get_messages(to='reviewer_one@venueemail.cc', subject='[VenueEmail 2025] Invitation to serve as Reviewer')
+        assert len(messages) == 1
+        assert 'new-contact@venueemail.cc' in messages[0]['content']['text']
+        assert messages[0]['content']['replyTo'] == 'new-contact@venueemail.cc'
+
+        messages = openreview_client.get_messages(to='reviewer_two@venueemail.cc', subject='[VenueEmail 2025] Invitation to serve as Reviewer')
+        assert len(messages) == 1
+        assert 'new-contact@venueemail.cc' in messages[0]['content']['text']
+        assert messages[0]['content']['replyTo'] == 'new-contact@venueemail.cc'
+
+        # check reminder email is sent with correct replyto email
+        messages = openreview_client.get_messages(to='reviewer_one@venueemail.cc', subject='[Reminder][VenueEmail 2025] Invitation to serve as Reviewer')
+        assert len(messages) == 1
+        assert 'new-contact@venueemail.cc' in messages[0]['content']['text']
+        assert messages[0]['content']['replyTo'] == 'new-contact@venueemail.cc'
+
+        messages = openreview_client.get_messages(to='reviewer_two@venueemail.cc', subject='[Reminder][VenueEmail 2025] Invitation to serve as Reviewer')
+        assert len(messages) == 1
+        assert 'new-contact@venueemail.cc' in messages[0]['content']['text']
+        assert messages[0]['content']['replyTo'] == 'new-contact@venueemail.cc'
+
+    def check_message_invitations(self, openreview_client, helpers):
+
+        authors_message_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/Authors/-/Message')
+        assert authors_message_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+
+        authors_accepted_message_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/Authors_Accepted/-/Message')
+        assert authors_accepted_message_inv.message['replyTo']['param']['regex'] ==r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+
+        reviewers_message_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/Reviewers/-/Message')
+        assert reviewers_message_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+
+        reviewers_invited_message_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/Reviewers/Invited/-/Message')
+        assert reviewers_invited_message_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+
+        venue_message_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Message')
+        assert venue_message_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'

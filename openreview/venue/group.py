@@ -389,7 +389,6 @@ class GroupBuilder(object):
                 signatures=[self.openreview_template],
                 content={
                     'venue_id': { 'value': venue_id },
-                    'message_reply_to': { 'value': self.venue.contact },
                     'venue_short_name': { 'value': self.venue.short_name },
                     'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
                 },
@@ -476,7 +475,6 @@ class GroupBuilder(object):
                 content={
                     'venue_id': { 'value': venue_id },
                     'group_id': { 'value': authors_id },
-                    'message_reply_to': { 'value': self.venue.contact  },
                     'venue_short_name': { 'value': self.venue.short_name },
                     'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
                 },
@@ -490,7 +488,6 @@ class GroupBuilder(object):
                 content={
                     'venue_id': { 'value': venue_id },
                     'group_id': { 'value': authors_accepted_id },
-                    'message_reply_to': { 'value': self.venue.contact  },
                     'venue_short_name': { 'value': self.venue.short_name },
                     'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
                 },
