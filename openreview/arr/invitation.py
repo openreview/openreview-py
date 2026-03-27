@@ -22,6 +22,7 @@ class InvitationBuilder(object):
     REVIEWER_LICENSE_NAME = 'License_Agreement'
     METAREVIEWER_LICENSE_NAME = 'Metareview_License_Agreement'
     RECOGNITION_NAME = 'Recognition_Request'
+    REPORT_EVALUATION_NAME = 'Report_Evaluation'
     SUBMITTED_AUTHORS_NAME = 'Submitted_Author_Form'
 
     def __init__(self, venue, update_wait_time=5000):
@@ -163,17 +164,29 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         process_invitation_id = arr_stage.super_invitation_id
 
-        process_invitation = Invitation(
-            id=process_invitation_id,
-            invitees = [venue_id],
-            signatures = ['~Super_User1'],
-            readers = [venue_id],
-            writers = ['~Super_User1'],
-            cdate = openreview.tools.datetime_millis(arr_stage.start_date),
-            date_processes=[{ 
+        process_invitation_arguments = {
+            'id': process_invitation_id,
+            'invitees': [venue_id],
+            'readers': [venue_id],
+            'signatures': ['~Super_User1'] if arr_stage.process else [venue_id],
+            'writers': ['~Super_User1'] if arr_stage.process else [venue_id]
+        }
+
+        if arr_stage.start_date:
+            process_invitation_arguments['cdate'] = openreview.tools.datetime_millis(arr_stage.start_date)
+        if arr_stage.due_date:
+            process_invitation_arguments['duedate'] = openreview.tools.datetime_millis(arr_stage.due_date)
+        if arr_stage.exp_date:
+            process_invitation_arguments['expdate'] = openreview.tools.datetime_millis(arr_stage.exp_date)
+
+        if arr_stage.process:
+            process_invitation_arguments['date_processes'] = [{
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.get_process_content(arr_stage.process)
-            }],            
+            }]
+
+        process_invitation = Invitation(
+            **process_invitation_arguments,
             **arr_stage.stage_arguments
         )
 
