@@ -1840,7 +1840,6 @@ Total Errors: {len(errors)}
             self.expire_invitation(recruitment_invitation.id)
 
 class ConferenceBuilder(object):
-
     def __init__(self, client, support_user=None):
         self.client = client
         self.client_v2 = openreview.api.OpenReviewClient(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
