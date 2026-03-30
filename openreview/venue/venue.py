@@ -10,7 +10,7 @@ from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
-import numpy as np
+import editdistance
 import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
@@ -551,7 +551,7 @@ class Venue(object):
 
         if self.preferred_emails_groups:
             self.invitation_builder.set_preferred_emails_invitation()
-            self.group_builder.create_preferred_emails_readers_group()            
+            self.group_builder.create_preferred_emails_readers_group()        
 
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
@@ -1638,7 +1638,7 @@ Total Errors: {len(errors)}
 
                     review_period_days = (review_duedate - assignment_cdate).days
                     if review_period_days > 0:
-                        review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+                        review_days_late.append(max((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
                 invitation = f'{reviewers_id}/-/{review_assignment_count_name}',
@@ -1667,7 +1667,7 @@ Total Errors: {len(errors)}
             review_days_late_tags.append(openreview.api.Tag(
                 invitation = f'{reviewers_id}/-/{review_days_late_count_name}',
                 profile = reviewer_id,
-                weight = int(np.sum(review_days_late)),
+                weight = int(sum(review_days_late)),
                 readers = [venue_id, f'{reviewers_id}/{review_days_late_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
                 nonreaders = [f'{reviewers_id}/{review_days_late_count_name}/NonReaders'],
@@ -1676,7 +1676,7 @@ Total Errors: {len(errors)}
             num_assigned,
             num_reviews,
             num_comments,
-            np.sum(review_days_late))
+            sum(review_days_late))
 
         self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
@@ -1780,7 +1780,7 @@ Total Errors: {len(errors)}
 
                     review_period_days = (review_duedate - assignment_cdate).days
                     if review_period_days > 0:
-                        review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+                        review_days_late.append(max((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
                 invitation = f'{committee_id}/-/{review_assignment_count_name}',
@@ -1809,7 +1809,7 @@ Total Errors: {len(errors)}
             review_days_late_tags.append(openreview.api.Tag(
                 invitation = f'{committee_id}/-/{review_days_late_count_name}',
                 profile = reviewer_id,
-                weight = int(np.sum(review_days_late)),
+                weight = int(sum(review_days_late)),
                 readers = [venue_id, f'{committee_id}/{review_days_late_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
                 nonreaders = [f'{committee_id}/{review_days_late_count_name}/NonReaders'],
@@ -1818,7 +1818,7 @@ Total Errors: {len(errors)}
             num_assigned,
             num_reviews,
             num_comments,
-            np.sum(review_days_late))
+            sum(review_days_late))
 
         self.client.delete_tags(invitation=f'{committee_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
@@ -2056,7 +2056,7 @@ OpenReview Team'''
         print(f'Applying {top_percent_cutoff}% score cutoff')
 
         scores_only = [s for (_, _, s) in unique_scores]
-        cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
+        cutoff = tools.percentile(scores_only, 100 - top_percent_cutoff)
         filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
         print(f'{len(unique_scores)} scores before cutoff')
@@ -2107,8 +2107,10 @@ OpenReview Team'''
 
             # Write header
             writer.writerow([
-                f'{short_name_a} id', f'{short_name_b} id', 
+                f'{short_name_a} id', f'{short_name_b} id',
                 'Score',
+                'Title Word Edit Distance', 'Title Word Edit Distance Similarity',
+                'Abstract Word Edit Distance', 'Abstract Word Edit Distance Similarity',
                 'Matching Authors (if any)',
                 f'{short_name_a} authors', f'{short_name_b} authors',
                 f'{short_name_a} title', f'{short_name_b} title',
@@ -2122,7 +2124,8 @@ OpenReview Team'''
 
                 # Fetch metadata
                 title_a = papers_by_id_a[paper_id_a].content['title']['value']
-                abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value'].replace("\n", "\\n")
+                raw_abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value']
+                abstract_a = raw_abstract_a.replace("\n", "\\n")
                 # Use profile ID if available, otherwise use author ID in paper
                 authors_list_a = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
@@ -2132,7 +2135,8 @@ OpenReview Team'''
                 authors_str_a = '|'.join(authors_list_a)
 
                 title_b = papers_by_id_b[paper_id_b].content['title']['value']
-                abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value'].replace("\n", "\\n")
+                raw_abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value']
+                abstract_b = raw_abstract_b.replace("\n", "\\n")
                 authors_list_b = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
@@ -2148,9 +2152,24 @@ OpenReview Team'''
                 if author_overlap_only and not overlap:
                     continue
 
+                # Compute word-level edit distances
+                title_words_a = title_a.lower().split()
+                title_words_b = title_b.lower().split()
+                title_dist = editdistance.eval(title_words_a, title_words_b)
+                title_max_words = max(len(title_words_a), len(title_words_b))
+                title_norm = round(1 - title_dist / title_max_words, 4) if title_max_words > 0 else 1.0
+
+                abstract_words_a = raw_abstract_a.lower().split()
+                abstract_words_b = raw_abstract_b.lower().split()
+                abstract_dist = editdistance.eval(abstract_words_a, abstract_words_b)
+                abstract_max_words = max(len(abstract_words_a), len(abstract_words_b))
+                abstract_norm = round(1 - abstract_dist / abstract_max_words, 4) if abstract_max_words > 0 else 1.0
+
                 writer.writerow([
-                    paper_id_a, paper_id_b, 
-                    score, 
+                    paper_id_a, paper_id_b,
+                    round(score, 4),
+                    title_dist, title_norm,
+                    abstract_dist, abstract_norm,
                     overlap_str,
                     authors_str_a, authors_str_b,
                     title_a, title_b,

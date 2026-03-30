@@ -42,7 +42,7 @@ commands:
       - run:
           name: Install openreview-py
           command: |
-            pip install ~/openreview-py-repo
+            pip install -c ~/openreview-py-repo/requirements.txt ~/openreview-py-repo
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
@@ -176,7 +176,7 @@ commands:
           command: |
             cd ~/openreview-py-repo
             mkdir -p test-reports
-            pip install -e '.[test]'
+            pip install -c requirements-dev.txt -e '.[test]'
 
   copy-logs-on-failure:
     description: "Copy API logs to artifacts on failure"
