@@ -103,6 +103,6 @@ def process(client, invitation):
                 )
     
     ## Release the submissions to the public when the value for preprint is yes
-    submissions = [s for s in client.get_all_notes(content= { 'venueid': submission_venue_id }) if s.content.get('preprint', {}).get('value') == 'yes']
+    submissions = [s for s in client.get_all_notes(content= { 'venueid': submission_venue_id }, domain=venue_id) if s.content.get('preprint', {}).get('value') == 'yes']
     print(f'update {len(submissions)} submissions')
     openreview.tools.concurrent_requests(post_submission_edit, submissions, desc='post_submission_edit')    

@@ -22,6 +22,32 @@ from concurrent.futures import ThreadPoolExecutor
 import random
 import string
 from deprecated.sphinx import deprecated
+import jwt
+
+# --- URL Constants ---
+PROD_API_V1 = 'https://api.openreview.net'
+PROD_API_V2 = 'https://api2.openreview.net'
+PROD_SITE   = 'https://openreview.net'
+
+DEV_API_V1 = 'https://api.dev.openreview.net'
+DEV_API_V2 = 'https://api2.dev.openreview.net'
+DEV_SITE   = 'https://dev.openreview.net'
+
+LOCAL_API_V1 = 'http://localhost:3000'
+LOCAL_API_V2 = 'http://localhost:3001'
+LOCAL_SITE   = 'http://localhost:3030'
+
+# Remote-only lists (exclude localhost) used by client guards
+V1_REMOTE_URLS = [PROD_API_V1, DEV_API_V1]
+V2_REMOTE_URLS = [PROD_API_V2, DEV_API_V2]
+
+def _identify_environment(baseurl):
+    """Return 'dev', 'prod', or 'local' based on baseurl."""
+    if any(url in baseurl for url in [DEV_API_V1, DEV_API_V2]):
+        return 'dev'
+    if any(url in baseurl for url in [PROD_API_V1, PROD_API_V2]):
+        return 'prod'
+    return 'local'
 
 def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
@@ -139,15 +165,7 @@ def get_profile(client, value, with_publications=False):
     try:
         profile = client.get_profile(value)
         if with_publications:
-            baseurl_v1 = 'http://localhost:3000'
-            baseurl_v2 = 'http://localhost:3001'
-
-            if 'https://devapi' in client.baseurl:
-                baseurl_v1 = 'https://devapi.openreview.net'
-                baseurl_v2 = 'https://devapi2.openreview.net'
-            if 'https://api' in client.baseurl:
-                baseurl_v1 = 'https://api.openreview.net'
-                baseurl_v2 = 'https://api2.openreview.net'
+            baseurl_v1, baseurl_v2 = get_base_urls(client)
 
             client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
             #client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
@@ -220,15 +238,7 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
     ## Get publications for all the profiles
     profiles = list(profile_by_id.values())
     if with_publications:
-        baseurl_v1 = 'http://localhost:3000'
-        baseurl_v2 = 'http://localhost:3001'
-
-        if 'https://devapi' in client.baseurl:
-            baseurl_v1 = 'https://devapi.openreview.net'
-            baseurl_v2 = 'https://devapi2.openreview.net'
-        if 'https://api' in client.baseurl:
-            baseurl_v1 = 'https://api.openreview.net'
-            baseurl_v2 = 'https://api2.openreview.net'
+        baseurl_v1, baseurl_v2 = get_base_urls(client)
 
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
@@ -1361,7 +1371,13 @@ def recruit_user(client, user,
 
     client.post_message(recruitment_message_subject, [user], personalized_message, parentGroup=comittee_invited_id, replyTo=contact_email, invitation=message_invitation, signature=message_signature)
 
-def get_user_hash_key(user, hash_seed):
+def get_user_hash_key(user, hash_seed, invitation=None):
+    if invitation is not None:
+        jwt_payload = {
+            "group": user,
+            "invitation": invitation,
+        }
+        return jwt.encode(jwt_payload, hash_seed, algorithm="HS256")
     hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
     return hashkey
 
@@ -1811,8 +1827,9 @@ def pretty_id(group_id):
     for token in tokens:
         transformed_token=re.sub(r'\..+', '', token).replace('-', '').replace('_', ' ')
         letters_only=re.sub(r'\d|\W', '', transformed_token)
+        has_no_ascii=not re.search(r'[a-zA-Z0-9]', transformed_token)
 
-        if letters_only != transformed_token.lower():
+        if letters_only != transformed_token.lower() or (has_no_ascii and transformed_token):
             transformed_tokens.append(transformed_token)
 
 
@@ -1910,18 +1927,20 @@ def get_own_reviews(client):
     return links
 
 def get_base_urls(client):
+    env = _identify_environment(client.baseurl)
+    if env == 'dev':
+        return [DEV_API_V1, DEV_API_V2]
+    if env == 'prod':
+        return [PROD_API_V1, PROD_API_V2]
+    return [LOCAL_API_V1, LOCAL_API_V2]
 
-    baseurl_v1 = 'http://localhost:3000'
-    baseurl_v2 = 'http://localhost:3001'
-
-    if 'https://devapi' in client.baseurl:
-        baseurl_v1 = 'https://devapi.openreview.net'
-        baseurl_v2 = 'https://devapi2.openreview.net'
-    if 'https://api' in client.baseurl:
-        baseurl_v1 = 'https://api.openreview.net'
-        baseurl_v2 = 'https://api2.openreview.net'
-
-    return [baseurl_v1, baseurl_v2]
+def get_site_url(client):
+    env = _identify_environment(client.baseurl)
+    if env == 'dev':
+        return DEV_SITE
+    if env == 'prod':
+        return PROD_SITE
+    return LOCAL_SITE
 
 def resend_emails(client, request_id, groups):
     message_requests = client.get_message_requests(id=request_id)
@@ -1956,7 +1975,7 @@ def get_invitation_source(invitation, domain):
     meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
     rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
 
-    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else { 'venueid': submission_venue_id }
+    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else {}
 
     ## Deprecated, user source as dictionary
     if isinstance(source, str):
@@ -2005,6 +2024,9 @@ def should_match_invitation_source(client, invitation, submission, note=None):
 
     source = get_invitation_source(invitation, domain)
 
+    if not source:
+        return False
+
     if submission.content['venueid']['value'] not in source.get('venueid', []):
         return False
 
@@ -2043,11 +2065,7 @@ def should_match_invitation_source(client, invitation, submission, note=None):
         if is_accept_decision(decision_value, accept_options) != with_decision_accept:
             return False
 
-    
     content_keys = invitation.edit.get('content', {}).keys()
-    
-    if not content_keys:
-        return False
     
     if 'withdrawalId' in content_keys:
         return False
@@ -2058,10 +2076,10 @@ def should_match_invitation_source(client, invitation, submission, note=None):
     if 'noteReaders' in content_keys:
         return False
     
-    if 'noteId' not in content_keys:
+    if content_keys and 'noteId' not in content_keys:
         return False
     
-    if 'noteNumber' not in content_keys:
+    if content_keys and 'noteNumber' not in content_keys:
         return False
 
     if note and 'replyto' not in content_keys:
@@ -2087,7 +2105,7 @@ def is_forum_invitation(invitation):
 
 def create_replyto_invitations(client, submission, note):
 
-    venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation') if i.is_active()]
+    venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation', domain=note.domain) if i.is_active()]
 
     for invitation in venue_invitations:
         print('processing invitation: ', invitation.id)
@@ -2117,7 +2135,7 @@ def create_replyto_invitations(client, submission, note):
 
 def create_forum_invitations(client, submission):
     
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation') if i.is_active()]
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active()]
 
     for invitation in invitation_invitations:
         print('processing invitation: ', invitation.id)
@@ -2152,4 +2170,26 @@ def singularize(word):
         return word[:-2]
     elif word.endswith('s'):
         return word[:-1]
-    return word                    
+    return word
+
+def percentile(data, percent):
+    """Return the percentile value from *data* using linear interpolation,
+    matching the behaviour of numpy.percentile with the default 'linear' method.
+
+    *percent* may be an int or float in [0, 100].
+    *data* must be a non-empty sequence of numbers.
+    """
+    if not data:
+        raise ValueError("data must be non-empty")
+    sorted_data = sorted(data)
+    n = len(sorted_data)
+    if n == 1:
+        return sorted_data[0]
+    # NumPy linear interpolation: index = percent/100 * (n - 1)
+    idx = percent / 100.0 * (n - 1)
+    lo = int(idx)
+    hi = lo + 1
+    if hi >= n:
+        return sorted_data[-1]
+    frac = idx - lo
+    return sorted_data[lo] + frac * (sorted_data[hi] - sorted_data[lo])

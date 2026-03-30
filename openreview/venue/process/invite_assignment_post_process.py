@@ -39,9 +39,10 @@ def process_update(client, edge, invitation, existing_edge):
         user = edge.tail
         print(f'Get profile for {user}')
         user_profile=openreview.tools.get_profile(client, user)
-        inviter_id=openreview.tools.pretty_id(edge.signatures[0])
         inviter_profile=openreview.tools.get_profile(client, edge.tauthor) if should_get_inviter_profile else None
-        inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else edge.signatures[0]
+        inviter_id=openreview.tools.pretty_id(edge.signatures[0])
+        # When AC identity is hidden, use pretty_id for both values to avoid redundancy
+        inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else inviter_id
 
         if not user_profile:
             user_profile=openreview.Profile(id=user,
@@ -83,6 +84,10 @@ def process_update(client, edge, invitation, existing_edge):
 Abstract: {submission.content['abstract']['value']}
 ''' if 'abstract' in submission.content else ''
             
+            # Build signature - show only one line if inviter_id and inviter_preferred_name are the same
+            signature = inviter_id if inviter_id == inviter_preferred_name else f'''{inviter_id}
+{inviter_preferred_name}'''
+            
             message=f'''Hi {preferred_name},
 
 You were invited {action_string} the paper number: {submission.number}, title: "{submission.content['title']['value']}".
@@ -91,8 +96,7 @@ You were invited {action_string} the paper number: {submission.number}, title: "
 
 Thanks,
 
-{inviter_id}
-{inviter_preferred_name}'''
+{signature}'''
 
         
         if paper_reviewer_invited_id:
@@ -126,9 +130,10 @@ Thanks,
         user = edge.tail
         print(f'Get profile for {user}')
         user_profile=openreview.tools.get_profile(client, user)
-        inviter_id=openreview.tools.pretty_id(edge.signatures[0])
         inviter_profile=openreview.tools.get_profile(client, edge.tauthor) if should_get_inviter_profile else None
-        inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else edge.signatures[0]
+        inviter_id=openreview.tools.pretty_id(edge.signatures[0])
+        # When AC identity is hidden, use pretty_id for both values to avoid redundancy
+        inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else inviter_id
 
         if not user_profile:
             user_profile=openreview.Profile(id=user,
@@ -153,6 +158,10 @@ Thanks,
 
         ## Send email
         subject=f'[{short_phrase}] Invitation canceled {action_string} paper titled "{submission.content["title"]["value"]}"'
+        # Build signature - show only one line if inviter_id and inviter_preferred_name are the same
+        signature = inviter_id if inviter_id == inviter_preferred_name else f'''{inviter_id}
+{inviter_preferred_name}'''
+        
         message=f'''Hi {preferred_name},
 
 You were previously invited {action_string} the paper number: {submission.number}, title: "{submission.content['title']['value']}".
@@ -160,7 +169,6 @@ While we appreciate your help, we no longer need you {action_string} this paper.
 
 Thanks,
 
-{inviter_id}
-{inviter_preferred_name}'''
+{signature}'''
 
         response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact, sender=sender)

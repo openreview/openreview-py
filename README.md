@@ -31,6 +31,44 @@ pip install -e .
 
 > Note: Depending on your Python installation you may need to use the command  `pip3` instead of `pip`.
 
+### Production / CI Installation
+
+For reproducible deployments, install the package using the pinned lock file as constraints:
+
+```bash
+pip install -c requirements.txt .
+```
+
+For development (editable install with pinned dependencies):
+
+```bash
+pip install -c requirements.txt -e .
+```
+
+### Updating Dependencies
+
+This project uses [pip-tools](https://pip-tools.readthedocs.io/) to manage dependency versions. `pyproject.toml` declares compatible version ranges, while `requirements.txt` (production) and `requirements-dev.txt` (test + docs) contain the exact pinned versions.
+
+To update all dependencies to the latest compatible versions:
+
+```bash
+pip-compile pyproject.toml -o requirements.txt --strip-extras
+pip-compile pyproject.toml --extra test --extra docs -o requirements-dev.txt --strip-extras
+```
+
+To update a single package:
+
+```bash
+pip-compile --upgrade-package requests pyproject.toml -o requirements.txt --strip-extras
+```
+
+> **Note:** `pip-compile` resolves for the Python version of the running interpreter, so the numpy pin in the generated lock files will only match that version. After running `pip-compile`, manually replace the numpy line in both lock files with environment-marked entries:
+> ```
+> numpy==2.0.2 ; python_version < '3.10'
+> numpy==2.2.6 ; python_version == '3.10'
+> numpy==2.4.3 ; python_version >= '3.11'
+> ```
+
 Usage
 -----
 
@@ -48,10 +86,10 @@ Running the openreview-py test suite requires some initial setup. First, the Ope
 - [OpenReview API V2](https://github.com/openreview/openreview-api)
 - [OpenReview Web](https://github.com/openreview/openreview-web)
 
-Next, `pytest` along with `pytest-selenium` and `pytest-cov` have to be installed. These packages can be installed with `pip`:
+Next, install the package with test dependencies:
 
 ```bash
-pip install pytest pytest-selenium pytest-cov
+pip install -e ".[test]"
 ```
 
 Finally, you must download the proper Firefox Selenium driver for your OS [from GitHub](https://github.com/mozilla/geckodriver/releases), and place the `geckodriver` executable in the directory `openreview-py/tests/drivers`. When you are done your folder structure should look like this:

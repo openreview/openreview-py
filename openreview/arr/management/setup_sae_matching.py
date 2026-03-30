@@ -31,7 +31,7 @@ def process(client, invitation):
         token=client.token
     )
 
-    if client.get_edges_count(invitation=f"{senior_area_chairs_id}/-/Affinity_Score") <= 0:
+    if client.get_edges_count(invitation=f"{senior_area_chairs_id}/-/Affinity_Score", domain=venue_id) <= 0:
         print(f"no affinity scores for {senior_area_chairs_id}")
         return
 
@@ -39,6 +39,7 @@ def process(client, invitation):
     support_group = request_form.invitation.split('/-/')[0]
     venue = openreview.helpers.get_conference(client_v1, request_form_id, support_group)
     submissions = venue.get_submissions()
+    resubmissions = get_resubmissions(submissions, previous_url_field)
 
     skip_scores = defaultdict(list)
 
@@ -62,7 +63,7 @@ def process(client, invitation):
     # Build load map
     id_to_load_note = {}
     for role_id in [senior_area_chairs_id]:
-        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
+        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}", domain=venue_id) ## Assume only 1 note per user
         for note in load_notes:
             if note.signatures[0] not in name_to_id:
                 continue
@@ -73,7 +74,7 @@ def process(client, invitation):
     track_to_ids = {}
     for role_id in [senior_area_chairs_id]:
         track_to_ids[role_id] = defaultdict(list)
-        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}")
+        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}", domain=venue_id)
         for note in registration_notes:
             if note.signatures[0] not in name_to_id:
                 continue
@@ -94,6 +95,28 @@ def process(client, invitation):
     track_edge_readers = {
         senior_area_chairs_id: [venue_id]
     }
+
+    # Grant current-cycle SACs read access to previous-cycle submissions.
+    for submission in resubmissions:
+        previous_id = submission.content[previous_url_field]['value'].split('?id=')[1].split('&')[0]
+        try:
+            previous_submission = client_v1.get_note(previous_id)
+            previous_venue_id = previous_submission.invitation.split('/-/')[0]
+            previous_sac = openreview.tools.get_group(client_v1, f"{previous_venue_id}/Paper{previous_submission.number}/Senior_Area_Chairs")
+            current_client = client_v1
+        except:
+            previous_submission = client.get_note(previous_id)
+            previous_venue_id = previous_submission.domain
+            previous_sac = openreview.tools.get_group(client, f"{previous_venue_id}/Submission{previous_submission.number}/Senior_Area_Chairs")
+            current_client = client
+
+        if previous_sac is None:
+            print(f"no previous SAC for {submission.id}")
+            continue
+
+        current_sac_group = venue.get_senior_area_chairs_id(number=submission.number)
+        if current_sac_group not in previous_sac.members:
+            current_client.add_members_to_group(previous_sac, current_sac_group)
 
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():

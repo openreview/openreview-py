@@ -14,17 +14,18 @@ def process(client, edit, invitation):
     submission_duedate = datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000)
 
     full_submission_deadline = note.content.get('full_submission_deadline', {}).get('value')
-    full_submission_duedate = datetime.datetime.fromtimestamp(full_submission_deadline/1000) if full_submission_deadline else None        
+    full_submission_duedate = datetime.datetime.fromtimestamp(full_submission_deadline/1000) if full_submission_deadline else None
+
+    submission_deadline_datetime = full_submission_duedate if full_submission_duedate else submission_duedate
 
     venue.submission_stage =  openreview.stages.SubmissionStage(
         start_date=submission_cdate,
         due_date=submission_duedate,
         second_due_date=full_submission_duedate,
+        withdraw_submission_exp_date=submission_deadline_datetime + datetime.timedelta(weeks=52),
         double_blind=True,
         force_profiles=True
     )
-
-    submission_deadline_datetime = full_submission_duedate if full_submission_duedate else submission_duedate
 
     authors_name = venue.authors_name
     reviewers_name = venue.reviewers_name
@@ -105,26 +106,13 @@ def process(client, edit, invitation):
     submission_deadline = full_submission_deadline if full_submission_deadline else note.content['submission_deadline']['value']
     venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=submission_deadline + (30*60*1000))
 
-    # AC conflict and affinity score invitations
-    if venue.use_area_chairs:
-        venue.setup_matching_invitations(venue.get_area_chairs_id())
-
-    venue.setup_matching_invitations(venue.get_reviewers_id())
+    # create conflict and affinity score invitations
+    venue.setup_matching_invitations()
+    venue.setup_all_committees_matching()
 
     venue.create_bid_stages()
 
-    venue.invitation_builder.set_assignment_invitation(committee_id=venue.get_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': f'{reviewers_name}_Assignment_Deployment' },
-            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.5) }
-        },
-        await_process=True
-    )
+    venue.set_assignment_invitations(submission_deadline)
 
     venue.create_submission_change_invitation(name='Submission_Change_Before_Reviewing', activation_date=submission_deadline + (60*60*1000*24*7*3))
 
@@ -166,6 +154,23 @@ def process(client, edit, invitation):
     venue.create_review_rebuttal_stage()
     if venue.meta_review_stage:
         venue.create_meta_review_stage()
+
+        client.post_invitation_edit(
+            invitations=f'{invitation_prefix}/-/Note_Release',
+            signatures=[invitation_prefix],
+            content={
+                'venue_id': { 'value': venue_id },
+                'name': { 'value': f'{venue.meta_review_stage.name}_Release' },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5.2) },
+                'submission_name': { 'value': 'Submission' },
+                'stage_name': { 'value': 'Meta_Review' },
+                'reviewers_name': { 'value': reviewers_name },
+                'authors_name': { 'value': authors_name },
+                'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
+                'description': { 'value': 'This step runs automatically at its "activation date", and releases meta reviews to the specified readers.' }
+            },
+            await_process=True
+        )
     venue.create_decision_stage()
 
     client.post_invitation_edit(
@@ -226,20 +231,7 @@ def process(client, edit, invitation):
         }
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewers_Assignment_Configuration',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Assignment_Configuration' },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': reviewers_name }
-        },
-        await_process=True
-    )
-
     # remove PC access to editing the note and make note visible to PC group and Support
-    
     client.post_note_edit(
         invitation=f'{support_user}/-/Edit',
         signatures=[venue_id],
@@ -264,9 +256,9 @@ def process(client, edit, invitation):
         )
     )
 
-    baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+    baseurl = openreview.tools.get_site_url(client)
 
-    #edit Comment invitation to have PC group as readers
+    # edit Comment invitation to have PC group as readers
     client.post_invitation_edit(
         invitations=f'{support_user}/-/Edit',
         signatures=[support_user],
@@ -287,7 +279,7 @@ def process(client, edit, invitation):
         )
     )
 
-    # # update all comments to have the PC group as readers
+    # update all comments to have the PC group as readers
     comments = client.get_notes(invitation=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment')
     for comment in comments:
         client.post_note_edit(

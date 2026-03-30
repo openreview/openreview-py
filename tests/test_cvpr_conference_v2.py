@@ -536,6 +536,11 @@ class TestCVPRConference():
         assert messages and len(messages) == 1
         assert '~AC_CVPROne1' not in messages[0]['content']['text']
         assert 'AC CVPROne' not in messages[0]['content']['text']
+        # Check that the signature uses pretty_id version of the anon group
+        assert 'CVPR 2024 Conference Submission1 Area Chair' in messages[0]['content']['text']
+        # Check that the raw anon_group_id is not in the signature (bottom of message after "Thanks,")
+        message_signature = messages[0]['content']['text'].split('Thanks,')[-1]
+        assert anon_group_id not in message_signature
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation_fast(invitation_url, accept=True)

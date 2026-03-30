@@ -9,6 +9,7 @@ else:
 from importlib.metadata import version as get_package_version, PackageNotFoundError
 
 from . import tools
+from . import mfa
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -22,6 +23,18 @@ import traceback
 class OpenReviewException(Exception):
     pass
 
+class MfaRequiredException(OpenReviewException):
+    """Raised when MFA is required but no code provider is available."""
+    def __init__(self, mfa_pending_token, mfa_methods, preferred_method):
+        self.mfa_pending_token = mfa_pending_token
+        self.mfa_methods = mfa_methods
+        self.preferred_method = preferred_method
+        super().__init__({
+            'name': 'MfaRequiredError',
+            'message': f'MFA verification required. Available methods: {", ".join(mfa_methods)}. '
+                       f'Interactive login required (TTY).'
+        })
+
 class LogRetry(Retry):
      
     def __init__(self, *args, **kwargs):
@@ -33,6 +46,7 @@ class LogRetry(Retry):
 
         # Call the parent class method to perform the actual retry increment
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
+
 class Client(object):
     """
     :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL`
@@ -48,9 +62,10 @@ class Client(object):
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
         self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL', 'http://localhost:3000')
-        if 'https://api2.openreview.net' in self.baseurl or 'https://devapi2.openreview.net' in self.baseurl:
-            correct_baseurl = self.baseurl.replace('api2', 'api')
+        if any(url in self.baseurl for url in tools.V2_REMOTE_URLS):
+            correct_baseurl = tools.get_base_urls(self)[0]
             raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the new client openreview.api.OpenReviewClient')
+        self.baseurl_v2 = tools.get_base_urls(self)[1]
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -81,6 +96,8 @@ class Client(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.infer_notes_url = self.baseurl + '/notes/infer'
         self.domains_rename = self.baseurl + '/domains/rename'
+        self.mfa_challenge_url = self.baseurl_v2 + '/mfa/challenge'
+        self.mfa_verify_url = self.baseurl_v2 + '/mfa/verify'
 
         # Build User-Agent string: openreview-py/{package_version} (Python/{python_version})
         try:
@@ -107,9 +124,11 @@ class Client(object):
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
-            self.user = jwt.decode(self.token, options={"verify_signature": False})
             try:
-                self.profile = self.get_profile()
+                payload = jwt.decode(self.token, options={"verify_signature": False})
+                self.user = payload.get('user', payload)
+                user_id = self.user.get('profile', {}).get('id') or self.user.get('id')
+                self.profile = self.get_profile(user_id) if user_id else None
             except:
                 self.profile = None
         else:
@@ -130,7 +149,7 @@ class Client(object):
         self.token = str(response['token'])
         self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
-        self.user = jwt.decode(self.token, options={"verify_signature": False})
+        self.user = response['user']
         return response
 
     def __handle_response(self,response):
@@ -152,6 +171,56 @@ class Client(object):
                 }
             raise OpenReviewException(error)
 
+    def __request_mfa_challenge(self, mfa_pending_token, method):
+        """Trigger MFA challenge (e.g., send email OTP)."""
+        payload = {'mfaPendingToken': mfa_pending_token, 'method': method}
+        response = self.session.post(self.mfa_challenge_url, headers=self.headers, json=payload)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def __verify_mfa(self, mfa_pending_token, method, code):
+        """Verify MFA code and complete login."""
+        payload = {'mfaPendingToken': mfa_pending_token, 'method': method, 'code': code}
+        response = self.session.post(self.mfa_verify_url, headers=self.headers, json=payload)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def __resolve_mfa(self, mfa_pending_token, mfa_methods, preferred_method):
+        """Resolve MFA via interactive prompt."""
+        supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]
+        if not supported:
+            raise OpenReviewException({
+                'name': 'MfaError',
+                'message': f'No supported MFA methods. Server offered: {", ".join(mfa_methods)}'
+            })
+
+        if not mfa._is_interactive():
+            raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
+
+        method = mfa._default_mfa_method_chooser(mfa_methods, preferred_method)
+        if not method:
+            raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
+
+        if method == 'passkey':
+            return self.__resolve_passkey(mfa_pending_token)
+        if method == 'emailOtp':
+            self.__request_mfa_challenge(mfa_pending_token, 'emailOtp')
+            print('A verification code has been sent to your email.')
+        code = mfa._default_mfa_code_prompt(method)
+        if not code:
+            raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
+        return self.__verify_mfa(mfa_pending_token, method, code)
+
+    def __resolve_passkey(self, mfa_pending_token):
+        """Handle passkey authentication via browser flow."""
+        result = mfa._passkey_browser_flow(self, mfa_pending_token)
+        if result and result.get('token'):
+            return result
+        raise OpenReviewException({
+            'name': 'MfaError',
+            'message': 'Passkey authentication failed or timed out.'
+        })
+
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
@@ -162,7 +231,9 @@ class Client(object):
 
     def login_user(self,username=None, password=None, expiresIn=None):
         """
-        Logs in a registered user
+        Logs in a registered user. If MFA is enabled for the account, this method
+        will attempt to complete MFA verification automatically using the configured
+        an interactive terminal prompt.
 
         :param username: OpenReview username
         :type username: str, optional
@@ -175,9 +246,24 @@ class Client(object):
         :rtype: dict
         """
         user = { 'id': username, 'password': password, 'expiresIn': expiresIn }
-        response = self.session.post(self.login_url, headers=self.headers, json=user)
+        login_url = self.baseurl_v2 + '/login'
+        try:
+            response = self.session.post(login_url, headers=self.headers, json=user)
+        except requests.exceptions.ConnectionError:
+            if self.baseurl_v2 != self.baseurl:
+                response = self.session.post(self.login_url, headers=self.headers, json=user)
+            else:
+                raise
         response = self.__handle_response(response)
         json_response = response.json()
+
+        if json_response.get('mfaPending'):
+            json_response = self.__resolve_mfa(
+                json_response['mfaPendingToken'],
+                json_response['mfaMethods'],
+                json_response.get('preferredMethod')
+            )
+
         self.__handle_token(json_response)
         return json_response
 

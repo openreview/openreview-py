@@ -31,7 +31,7 @@ def process(client, invitation):
         print('invitation is not yet active and no child invitations created', cdate)
         return
 
-    submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
+    submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies', domain=domain.id)
     child_invitation_name = invitation.edit['invitation']['id'].split('/-/')[-1]
 
     llm_pdf_responses = [reply for s in submissions for reply in s.details['directReplies'] if reply['invitations'][0].endswith(f'/-/{child_invitation_name}')]

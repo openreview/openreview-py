@@ -227,8 +227,8 @@ class TestICMLConference():
                 },
                 'license': {
                     'value':  [
-                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}
+                        {'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0'},
+                        {'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0'}
                     ]
                 }
             }
@@ -301,7 +301,8 @@ class TestICMLConference():
                 },
                 group=openreview.api.Group()
             )
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])        
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)       
 
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Senior_Area_Chairs').members) == 0
         group = openreview_client.get_group('ICML.cc/2025/Conference/Senior_Area_Chairs/Invited')
@@ -311,11 +312,22 @@ class TestICMLConference():
         messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Senior Area Chair')
         assert len(messages) == 2
 
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+
         for message in messages:
             text = message['content']['text']
 
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-            helpers.respond_invitation_fast(invitation_url, accept=True)
+            guest_key = invitation_url.split('&key=')[1]
+            guest_client.post_note_edit_as_guest(token=guest_key, edit={
+                'signatures': [message['content']['to']],
+                'invitation': 'ICML.cc/2025/Conference/Senior_Area_Chairs/-/Recruitment_Response',
+                'note': {
+                    'content': {
+                        'response': { 'value': 'Yes'}
+                    }
+                }
+            })
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Recruitment_Response', count=2)
 
@@ -344,6 +356,7 @@ class TestICMLConference():
                 group=openreview.api.Group()
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs').members) == 0
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs/Invited').members) == 2
@@ -351,11 +364,22 @@ class TestICMLConference():
         messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Area Chair')
         assert len(messages) == 2
 
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+        
         for message in messages:
             text = message['content']['text']
 
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-            helpers.respond_invitation_fast(invitation_url, accept=True)
+            guest_key = invitation_url.split('&key=')[1]
+            guest_client.post_note_edit_as_guest(token=guest_key, edit={
+                'signatures': [message['content']['to']],
+                'invitation': 'ICML.cc/2025/Conference/Area_Chairs/-/Recruitment_Response',
+                'note': {
+                    'content': {
+                        'response': { 'value': 'Yes'}
+                    }
+                }
+            })
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Area_Chairs/-/Recruitment_Response', count=2)
 
@@ -398,6 +422,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 group=openreview.api.Group()
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers').members) == 0
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Invited').members) == 6
@@ -406,11 +431,23 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Reviewer')
         assert len(messages) == 6
 
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+
         for message in messages:
             text = message['content']['text']
 
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-            helpers.respond_invitation_fast(invitation_url, accept=True, quota=1)
+            guest_key = invitation_url.split('&key=')[1]
+            guest_client.post_note_edit_as_guest(token=guest_key, edit={
+                'signatures': [message['content']['to']],
+                'invitation': 'ICML.cc/2025/Conference/Reviewers/-/Recruitment_Response',
+                'note': {
+                    'content': {
+                        'response': { 'value': 'Yes'},
+                        'reduced_load': { 'value': '1'}
+                    }
+                }
+            })
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Reviewers/-/Recruitment_Response', count=6)
 
@@ -423,7 +460,16 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         messages = openreview_client.get_messages(to = 'reviewer6@yahoo.com', subject = '[ICML 2025] Invitation to serve as Reviewer')
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-        helpers.respond_invitation_fast(invitation_url, accept=False)
+        guest_key = invitation_url.split('&key=')[1]
+        guest_client.post_note_edit_as_guest(token=guest_key, edit={
+            'signatures': [messages[0]['content']['to']],
+            'invitation': 'ICML.cc/2025/Conference/Reviewers/-/Recruitment_Response',
+            'note': {
+                'content': {
+                    'response': { 'value': 'No'}
+                }
+            }
+        })
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Reviewers/-/Recruitment_Response', count=7)
 
@@ -458,7 +504,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         openreview_client.add_members_to_group('~Reviewer_ICMLOne1', 'reviewer1@gmail.com')
         openreview_client.add_members_to_group('reviewer1@gmail.com', '~Reviewer_ICMLOne1')
 
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
         profile.content['preferredEmail'] = 'reviewer1@gmail.com'
         reviewer_client.post_profile(profile)
@@ -466,7 +512,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
         assert edge.tail == 'reviewer1@gmail.com'
 
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
         profile.content['preferredEmail'] = 'reviewer1@icml.cc'
         reviewer_client.post_profile(profile)
@@ -1041,8 +1087,9 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                     'subject_areas': { 'value': submission.content['subject_areas']['value'] },
                     'position_paper_track': { 'value': submission.content['position_paper_track']['value'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
-                }
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                },
+                license = 'CC BY-NC-ND 4.0'
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])

@@ -44,11 +44,11 @@ def process(client, invitation):
         def filter_by_source(source):
 
             venueids = source.get('venueid', [submission_venue_id]) ## we should always have a venueid
-            source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies')
+            source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies', domain=venue_id)
 
             ## Keep backward compatibility with 'all_submissions' before and after running the post_decision_stage
             if not source_submissions:
-                source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='replies')
+                source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='replies', domain=venue_id)
             
             if 'with_decision_accept' in source:
                 source_submissions = [s for s in source_submissions 
@@ -190,7 +190,7 @@ def process(client, invitation):
 
     notes = get_children_notes()
 
-    current_child_invitations = client.get_all_invitations(invitation=invitation.id)
+    current_child_invitations = client.get_all_invitations(invitation=invitation.id, domain=venue_id)
 
     print(f'create or update {len(notes)} child invitations')
     posted_invitations = openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')

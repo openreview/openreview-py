@@ -10,7 +10,7 @@ from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
-import numpy as np
+import editdistance
 import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
@@ -102,6 +102,12 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_custom_sections = False
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
+        venue_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
+        self.homepage_webfield_path = os.path.join(venue_webfield_dir, 'homepageWebfield.js')
+        self.program_chairs_webfield_path = os.path.join(venue_webfield_dir, 'programChairsWebfield.js')
+        self.senior_area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'seniorAreaChairsWebfield.js')
+        self.area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'areachairsWebfield.js')
+        self.ethics_chairs_webfield_path = os.path.join(venue_webfield_dir, 'ethicsChairsWebfield.js')
 
     def set_main_settings(self, request_note):
         self.name = request_note.content['official_venue_name']['value']
@@ -241,6 +247,8 @@ class Venue(object):
         return self.get_invitation_id('PC_Revision')
 
     def get_recruitment_id(self, committee_id):
+        if self.is_template_related_workflow():
+            return self.get_invitation_id('Recruitment_Response', prefix=committee_id)        
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
     def get_expertise_selection_id(self, committee_id):
@@ -425,9 +433,6 @@ class Venue(object):
     def get_desk_rejected_id(self):
         return self.get_invitation_id(f'Desk_Rejected_{self.submission_stage.name}')
     
-    def get_group_recruitment_id(self, committee_name):
-        return self.get_invitation_id(name='Recruitment', prefix=self.get_committee_id_invited(committee_name))
-    
     def get_iThenticate_plagiarism_check_invitation_id(self):
         return self.get_invitation_id('iThenticate_Plagiarism_Check')
 
@@ -480,10 +485,10 @@ class Venue(object):
 
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
-            accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
+            accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details, domain=self.venue_id)
             if len(accepted_notes) == 0:
                 accepted_notes = []
-                notes = self.client.get_all_notes(content={ 'venueid': f'{self.get_submission_venue_id()}'}, sort=sort, details='directReplies')
+                notes = self.client.get_all_notes(content={ 'venueid': f'{self.get_submission_venue_id()}'}, sort=sort, details='directReplies', domain=self.venue_id)
                 for note in notes:
                     for reply in note.details['directReplies']:
                         if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
@@ -493,7 +498,7 @@ class Venue(object):
             return accepted_notes
 
         if venueid:
-            return self.client.get_all_notes(content={ 'venueid': venueid}, sort=sort, details=details)
+            return self.client.get_all_notes(content={ 'venueid': venueid}, sort=sort, details=details, domain=self.venue_id)
         
         venueids = [
             self.get_submission_venue_id(),
@@ -501,7 +506,7 @@ class Venue(object):
             self.get_rejected_submission_venue_id()
         ]
 
-        return self.client.get_all_notes(content={ 'venueid': ','.join(venueids)}, sort=sort, details=details)
+        return self.client.get_all_notes(content={ 'venueid': ','.join(venueids)}, sort=sort, details=details, domain=self.venue_id)
 
     #use to expire revision invitations from request form
     def expire_invitation(self, invitation_id):
@@ -546,7 +551,7 @@ class Venue(object):
 
         if self.preferred_emails_groups:
             self.invitation_builder.set_preferred_emails_invitation()
-            self.group_builder.create_preferred_emails_readers_group()            
+            self.group_builder.create_preferred_emails_readers_group()        
 
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
@@ -663,12 +668,8 @@ class Venue(object):
         decision_file = self.decision_stage.decisions_file
         if decision_file:
 
-            baseurl = 'http://localhost:3000'
-            if 'https://devapi' in self.client.baseurl:
-                baseurl = 'https://devapi.openreview.net'
-            if 'https://api' in self.client.baseurl:
-                baseurl = 'https://api.openreview.net'
-            api1_client = openreview.Client(baseurl=baseurl, token=self.client.token)
+            baseurl_v1 = openreview.tools.get_base_urls(self.client)[0]
+            api1_client = openreview.Client(baseurl=baseurl_v1, token=self.client.token)
 
             if '/attachment' in decision_file:
                 decisions = api1_client.get_attachment(id=self.request_form_id, field_name='decisions_file')
@@ -993,10 +994,57 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    def setup_matching_invitations(self, committee_id, alternate_matching_group=None):
-        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+    def set_assignment_invitations(self, submission_deadline):
 
+        invitation_prefix = self.support_user.replace('Support', 'Template')
+
+        if self.use_area_chairs:
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+
+            self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.area_chairs_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
+                    'committee_name': { 'value': self.area_chairs_name },
+                    'committee_pretty_name': { 'value': self.get_area_chairs_name(pretty=True) }
+                },
+                await_process=True
+            )
+
+        self.invitation_builder.set_assignment_invitation(committee_id=self.get_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*2.2))
+        self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.reviewers_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.3) },
+                    'committee_name': { 'value': self.reviewers_name },
+                    'committee_pretty_name': { 'value': self.get_reviewers_name(pretty=True) }
+                },
+                await_process=True
+            )
+
+    def setup_matching_invitations(self):
+
+        if self.use_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
+            venue_matching.setup_matching_invitations()
+
+        venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
         venue_matching.setup_matching_invitations()
+
+    def setup_all_committees_matching(self):
+
+        if self.use_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
+            venue_matching.setup()
+
+        venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
+        venue_matching.setup()
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         if committee_id is None:
@@ -1158,7 +1206,16 @@ Total Errors: {len(errors)}
         self.invitation_builder.set_SAC_ethics_flag_invitation(sac_ethics_flag_duedate)
 
     def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
-        self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
+        recommendation_invitation = self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
+        self.client.post_group_edit(invitation=self.get_meta_invitation_id(),
+            signatures = [self.venue_id],
+            group = openreview.api.Group(
+                id = self.venue_id,
+                content = {
+                    'reviewers_recommendation_id': { 'value': recommendation_invitation.id },
+                }
+            )
+        )        
 
     def ithenticate_create_and_upload_submission(self):
         if not self.iThenticate_plagiarism_check:
@@ -1176,6 +1233,7 @@ Total Errors: {len(errors)}
         edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             groupby="head",
+            domain=self.id
         )
         edges_dict = {edge["id"]["head"]: edge["values"] for edge in edges}
 
@@ -1297,18 +1355,21 @@ Total Errors: {len(errors)}
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             label="Error_Upload_PROCESSING_ERROR",
             groupby="tail",
+            domain=self.id
         )
 
         similarity_error_edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             label="Error_Similarity_PROCESSING_ERROR",
             groupby="tail",
+            domain=self.id
         )
 
         created_state_edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             label="Created",
             groupby="tail",
+            domain=self.id
         )
 
         edges.extend(similarity_error_edges)
@@ -1396,6 +1457,7 @@ Total Errors: {len(errors)}
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             label="File Uploaded",
             groupby="tail",
+            domain=self.id
         )
 
         for edge in tqdm(edges):
@@ -1443,6 +1505,7 @@ Total Errors: {len(errors)}
         edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             groupby="tail",
+            domain=self.id
         )
 
         label_value_not_equal_counter = 0
@@ -1464,6 +1527,7 @@ Total Errors: {len(errors)}
         edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             groupby="tail",
+            domain=self.id
         )
 
         for e in tqdm(edges):
@@ -1519,11 +1583,11 @@ Total Errors: {len(errors)}
 
         submission_id = self.get_submission_id()
         submission_name = self.submission_stage.name
-        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies')}
+        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies', domain=venue_id)}
         
         reviewer_assignment_id = self.get_assignment_id(reviewers_id, deployed=True)
-        assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
-        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
+        assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail', domain=venue_id) }
+        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id(), domain=venue_id)
 
         all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.reviewers_name)}' in g.id ]
         all_anon_reviewer_group_members = []
@@ -1575,7 +1639,7 @@ Total Errors: {len(errors)}
 
                     review_period_days = (review_duedate - assignment_cdate).days
                     if review_period_days > 0:
-                        review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+                        review_days_late.append(max((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
                 invitation = f'{reviewers_id}/-/{review_assignment_count_name}',
@@ -1604,7 +1668,7 @@ Total Errors: {len(errors)}
             review_days_late_tags.append(openreview.api.Tag(
                 invitation = f'{reviewers_id}/-/{review_days_late_count_name}',
                 profile = reviewer_id,
-                weight = int(np.sum(review_days_late)),
+                weight = int(sum(review_days_late)),
                 readers = [venue_id, f'{reviewers_id}/{review_days_late_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
                 nonreaders = [f'{reviewers_id}/{review_days_late_count_name}/NonReaders'],
@@ -1613,7 +1677,7 @@ Total Errors: {len(errors)}
             num_assigned,
             num_reviews,
             num_comments,
-            np.sum(review_days_late))
+            sum(review_days_late))
 
         self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
@@ -1657,11 +1721,11 @@ Total Errors: {len(errors)}
 
         submission_id = self.get_submission_id()
         submission_name = self.submission_stage.name
-        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies')}
+        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies', domain=venue_id)}
         
         reviewer_assignment_id = self.get_assignment_id(committee_id, deployed=True)
-        assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
-        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
+        assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail', domain=venue_id) }
+        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id(), domain=venue_id)
 
         all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.area_chairs_name)}' in g.id ]
         all_anon_reviewer_group_members = []
@@ -1717,7 +1781,7 @@ Total Errors: {len(errors)}
 
                     review_period_days = (review_duedate - assignment_cdate).days
                     if review_period_days > 0:
-                        review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+                        review_days_late.append(max((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
                 invitation = f'{committee_id}/-/{review_assignment_count_name}',
@@ -1746,7 +1810,7 @@ Total Errors: {len(errors)}
             review_days_late_tags.append(openreview.api.Tag(
                 invitation = f'{committee_id}/-/{review_days_late_count_name}',
                 profile = reviewer_id,
-                weight = int(np.sum(review_days_late)),
+                weight = int(sum(review_days_late)),
                 readers = [venue_id, f'{committee_id}/{review_days_late_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
                 nonreaders = [f'{committee_id}/{review_days_late_count_name}/NonReaders'],
@@ -1755,7 +1819,7 @@ Total Errors: {len(errors)}
             num_assigned,
             num_reviews,
             num_comments,
-            np.sum(review_days_late))
+            sum(review_days_late))
 
         self.client.delete_tags(invitation=f'{committee_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
@@ -1880,7 +1944,7 @@ OpenReview Team'''
                 
                 print(f'Check active venue {venue_group.id}')
 
-                edge_invitations = client.get_all_invitations(prefix=venue_id, type='edge')
+                edge_invitations = client.get_all_invitations(prefix=venue_id, type='edge', domain=venue_id)
                 invite_assignment_invitations = [inv.id for inv in edge_invitations if inv.id.endswith('Invite_Assignment')]
 
                 for invite_assignment_invitation_id in invite_assignment_invitations:
@@ -1889,7 +1953,7 @@ OpenReview Team'''
                     invite_assignment_invitation = openreview.tools.get_invitation(client, invite_assignment_invitation_id)
 
                     if invite_assignment_invitation:
-                        grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation.id, label='Pending Sign Up', groupby='tail')
+                        grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation.id, label='Pending Sign Up', groupby='tail', domain=venue_id)
                         print('Pending sign up edges found', len(grouped_edges))
 
                         for grouped_edge in grouped_edges:
@@ -1973,8 +2037,8 @@ OpenReview Team'''
         unique_scores = []
         seen_pairs = set()
         for r in results['results']:
-            paper_id_a = r['match_submission']
-            paper_id_b = r['submission']
+            paper_id_a = r.get('entityA', r.get('match_submission'))
+            paper_id_b = r.get('entityB', r.get('submission'))
             score = float(r['score'])
 
             # Remove self-matches
@@ -1993,7 +2057,7 @@ OpenReview Team'''
         print(f'Applying {top_percent_cutoff}% score cutoff')
 
         scores_only = [s for (_, _, s) in unique_scores]
-        cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
+        cutoff = tools.percentile(scores_only, 100 - top_percent_cutoff)
         filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
         print(f'{len(unique_scores)} scores before cutoff')
@@ -2044,8 +2108,10 @@ OpenReview Team'''
 
             # Write header
             writer.writerow([
-                f'{short_name_a} id', f'{short_name_b} id', 
+                f'{short_name_a} id', f'{short_name_b} id',
                 'Score',
+                'Title Word Edit Distance', 'Title Word Edit Distance Similarity',
+                'Abstract Word Edit Distance', 'Abstract Word Edit Distance Similarity',
                 'Matching Authors (if any)',
                 f'{short_name_a} authors', f'{short_name_b} authors',
                 f'{short_name_a} title', f'{short_name_b} title',
@@ -2059,7 +2125,8 @@ OpenReview Team'''
 
                 # Fetch metadata
                 title_a = papers_by_id_a[paper_id_a].content['title']['value']
-                abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value'].replace("\n", "\\n")
+                raw_abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value']
+                abstract_a = raw_abstract_a.replace("\n", "\\n")
                 # Use profile ID if available, otherwise use author ID in paper
                 authors_list_a = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
@@ -2069,7 +2136,8 @@ OpenReview Team'''
                 authors_str_a = '|'.join(authors_list_a)
 
                 title_b = papers_by_id_b[paper_id_b].content['title']['value']
-                abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value'].replace("\n", "\\n")
+                raw_abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value']
+                abstract_b = raw_abstract_b.replace("\n", "\\n")
                 authors_list_b = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
@@ -2085,9 +2153,24 @@ OpenReview Team'''
                 if author_overlap_only and not overlap:
                     continue
 
+                # Compute word-level edit distances
+                title_words_a = title_a.lower().split()
+                title_words_b = title_b.lower().split()
+                title_dist = editdistance.eval(title_words_a, title_words_b)
+                title_max_words = max(len(title_words_a), len(title_words_b))
+                title_norm = round(1 - title_dist / title_max_words, 4) if title_max_words > 0 else 1.0
+
+                abstract_words_a = raw_abstract_a.lower().split()
+                abstract_words_b = raw_abstract_b.lower().split()
+                abstract_dist = editdistance.eval(abstract_words_a, abstract_words_b)
+                abstract_max_words = max(len(abstract_words_a), len(abstract_words_b))
+                abstract_norm = round(1 - abstract_dist / abstract_max_words, 4) if abstract_max_words > 0 else 1.0
+
                 writer.writerow([
-                    paper_id_a, paper_id_b, 
-                    score, 
+                    paper_id_a, paper_id_b,
+                    round(score, 4),
+                    title_dist, title_norm,
+                    abstract_dist, abstract_norm,
                     overlap_str,
                     authors_str_a, authors_str_b,
                     title_a, title_b,

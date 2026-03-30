@@ -849,3 +849,78 @@ class TestTools():
 
         filtered_publications = openreview.tools.filter_publications_by_year(publications, 2018)
         assert len(filtered_publications) == 0
+
+    def test_percentile_empty_data_raises(self):
+        with pytest.raises(ValueError, match="data must be non-empty"):
+            openreview.tools.percentile([], 50)
+
+    def test_percentile_single_element(self):
+        assert openreview.tools.percentile([42], 0) == 42
+        assert openreview.tools.percentile([42], 50) == 42
+        assert openreview.tools.percentile([42], 100) == 42
+
+    def test_percentile_two_elements_boundaries(self):
+        assert openreview.tools.percentile([10, 20], 0) == 10
+        assert openreview.tools.percentile([10, 20], 100) == 20
+
+    def test_percentile_two_elements_interpolation(self):
+        assert openreview.tools.percentile([10, 20], 50) == 15.0
+        assert openreview.tools.percentile([10, 20], 25) == 12.5
+        assert openreview.tools.percentile([10, 20], 75) == 17.5
+
+    def test_percentile_linear_interpolation(self):
+        # For [0, 1, 2, 3, 4], percentile 10 => index 0.4 => 0 + 0.4*(1-0) = 0.4
+        data = [0, 1, 2, 3, 4]
+        assert openreview.tools.percentile(data, 10) == pytest.approx(0.4)
+        assert openreview.tools.percentile(data, 50) == pytest.approx(2.0)
+        assert openreview.tools.percentile(data, 90) == pytest.approx(3.6)
+
+    def test_percentile_unsorted_input(self):
+        assert openreview.tools.percentile([4, 2, 0, 3, 1], 50) == pytest.approx(2.0)
+
+    def test_percentile_duplicates(self):
+        assert openreview.tools.percentile([5, 5, 5, 5], 50) == 5
+        assert openreview.tools.percentile([5, 5, 5, 5], 0) == 5
+        assert openreview.tools.percentile([5, 5, 5, 5], 100) == 5
+
+    def test_percentile_float_percent(self):
+        data = [10, 20, 30, 40, 50]
+        result = openreview.tools.percentile(data, 33.3)
+        # index = 0.333 * 4 = 1.332 => 20 + 0.332 * (30-20) = 23.32
+        assert result == pytest.approx(23.32)
+
+    def test_percentile_matches_numpy(self):
+        """Verify against known numpy.percentile results for a representative dataset."""
+        data = [14, 27, 3, 88, 45, 62, 9, 71, 33, 56]
+        # sorted: [3, 9, 14, 27, 33, 45, 56, 62, 71, 88]
+        expected = {
+            0: 3.0,
+            10: 8.4,       # idx=0.9 => 3 + 0.9*(9-3) = 8.4
+            25: 17.25,     # idx=2.25 => 14 + 0.25*(27-14) = 17.25
+            50: 39.0,      # idx=4.5 => 33 + 0.5*(45-33) = 39.0
+            75: 60.5,      # idx=6.75 => 56 + 0.75*(62-56) = 60.5
+            90: 72.7,      # idx=8.1 => 71 + 0.1*(88-71) = 72.7
+            100: 88.0,
+        }
+        for p, exp in expected.items():
+            assert openreview.tools.percentile(data, p) == pytest.approx(exp, abs=1e-9), (
+                f"percentile({data}, {p}) expected {exp}, got {openreview.tools.percentile(data, p)}"
+            )
+
+    def test_percentile_large_dataset(self):
+        data = list(range(101))  # 0..100
+        # For [0..100], percentile p should equal p (since index = p/100 * 100 = p)
+        assert openreview.tools.percentile(data, 0) == 0
+        assert openreview.tools.percentile(data, 50) == 50
+        assert openreview.tools.percentile(data, 99) == 99
+        assert openreview.tools.percentile(data, 100) == 100
+
+    def test_percentile_negative_values(self):
+        data = [-10, -5, 0, 5, 10]
+        assert openreview.tools.percentile(data, 50) == pytest.approx(0.0)
+        assert openreview.tools.percentile(data, 0) == -10
+        assert openreview.tools.percentile(data, 100) == 10
+
+    def test_percentile_float_data(self):
+        data = [0.1, 0.2, 0.3, 0.4, 0.5]
+        assert openreview.tools.percentile(data, 50) == pytest.approx(0.3)

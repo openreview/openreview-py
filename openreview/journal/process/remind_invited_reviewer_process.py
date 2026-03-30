@@ -2,7 +2,7 @@ def process(client, invitation):
 
     print('Remind invited reviewers')
     journal = openreview.journal.Journal()
-    grouped_edges = client.get_grouped_edges(invitation=journal.get_reviewer_invite_assignment_id(), label='Invitation Sent', groupby='id')
+    grouped_edges = client.get_grouped_edges(invitation=journal.get_reviewer_invite_assignment_id(), label='Invitation Sent', groupby='id', domain=journal.venue_id)
     
     if len(grouped_edges) == 0:
         return
