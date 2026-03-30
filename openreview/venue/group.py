@@ -723,7 +723,7 @@ class GroupBuilder(object):
                             members=members
                             )
             self.post_group(preferred_emails_readers_group)
-    
+
     def add_to_active_venues(self):
         active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
