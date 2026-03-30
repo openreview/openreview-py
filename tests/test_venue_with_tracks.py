@@ -1027,15 +1027,4 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
         assert invite_edges[0].label == 'Accepted'
 
         messages = openreview_client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Reviewer Assignment confirmed for paper 1')
-        assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Celeste ACM,
-Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1.
-
-Please go to the TheWebConf24 Reviewers Console and check your pending tasks: https://openreview.net/group?id=ACM.org/TheWebConf/2024/Conference/COI_Reviewers
-
-If you would like to change your decision, please click the Decline link in the previous invitation email.
-
-OpenReview Team
-
-Please note that responding to this email will direct your reply to pc@webconf.org.
-'''
+        assert not messages
