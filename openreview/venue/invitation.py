@@ -429,6 +429,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.get_process_content('process/post_submission_process.py')
             }],
+            content = {
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_submission_venue_id()
+                    }
+                }
+            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id, self.venue.get_authors_id('${{2/note/id}/number}')],
@@ -733,11 +740,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 review_invitation_id,
                 content,
                 process_file='../workflows/workflow_process/edit_review_field_names_process.py',
-                preprocess_file='../workflows/workflow_process/edit_review_field_names_pre_process.py',
-                due_date=review_cdate-1800000)
-            edit_invitations_builder.set_edit_reply_readers_invitation(review_invitation_id, due_date=review_cdate-1800000)  # 30 min before cdate
-            edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id, due_date=review_cdate-1800000)
-            edit_invitations_builder.set_edit_dates_invitation(review_invitation_id, due_date=review_cdate-1800000)
+                preprocess_file='../workflows/workflow_process/edit_review_field_names_pre_process.py')
+            edit_invitations_builder.set_edit_reply_readers_invitation(review_invitation_id)
+            edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id)
+            edit_invitations_builder.set_edit_dates_invitation(review_invitation_id)
 
         return invitation
 
@@ -1528,6 +1534,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 },
                 'comment_process_script': {
                     'value': self.get_process_content(comment_stage.process_path)
+                },
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                    }
                 }
             },
             edit={
@@ -1983,6 +1994,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process
             }],
+            content={
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                    }
+                }
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -5188,6 +5206,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers = [venue_id],
             cdate = activation_date,
             description = description,
+            content = {
+                'source': {
+                    'value': {
+                        'venueid': venue.get_submission_venue_id()
+                    }
+                }
+            },
             date_processes = [{
                 'dates': ["#{4/cdate}", self.update_date_string],
                     'script': self.get_process_content('../venue/process/post_submission_process.py')
@@ -5220,8 +5245,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         self.save_invitation(invitation, replacement=False)
 
         edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
-        edit_invitations_builder.set_edit_submission_field_readers_invitation(invitation.id, due_date=activation_date-1800000)
-        edit_invitations_builder.set_edit_dates_one_level_invitation(invitation.id, due_date=activation_date-1800000)
+        edit_invitations_builder.set_edit_submission_field_readers_invitation(invitation.id)
+        edit_invitations_builder.set_edit_dates_one_level_invitation(invitation.id)
         edit_invitations_builder.set_edit_submission_readers_invitation(invitation.id, include_assigned_committee)
 
     def set_venue_template_invitations(self):
