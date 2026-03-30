@@ -15,11 +15,11 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     domain = client.get_group(venue_id)
     venue = openreview.venue.Venue(client, venue_id, support_user)
 
-    venue.name = domain.content['title']['value']
-    venue.short_name = domain.content['subtitle']['value']
-    venue.website = domain.content['website']['value']
-    venue.contact = domain.content['contact']['value']
-    venue.location = domain.content['location']['value']
+    venue.name = domain.content.get('title', {}).get('value')
+    venue.short_name = domain.content.get('subtitle', {}).get('value')
+    venue.website = domain.content.get('website', {}).get('value')
+    venue.contact = domain.content.get('contact', {}).get('value')
+    venue.location = domain.content.get('location', {}).get('value')
     venue.request_form_id = domain.content.get('request_form_id', {}).get('value')
     venue.request_form_invitation = domain.content.get('request_form_invitation', {}).get('value')
     venue.use_area_chairs = 'area_chairs_id' in domain.content
