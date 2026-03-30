@@ -208,11 +208,6 @@ class TestARRVenueV2():
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'submission_license': ['CC BY-SA 4.0'],
-                "preferred_emails_groups": [
-                    "aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs",
-                    "aclweb.org/ACL/ARR/2023/August/Area_Chairs",
-                    "aclweb.org/ACL/ARR/2023/August/Reviewers"
-                ],
                 'comment_notification_threshold': '3',
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
@@ -253,8 +248,22 @@ class TestARRVenueV2():
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Preferred_Emails_Readers')
 
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
-        assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').web
+        ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert 'Emergency_Score' in ac_group.web
+
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/August/Area_Chairs',
+                web=ac_group.web + '\n//This is an additional change to the web field that should not be overwritten by future edits'
+            )
+        )
+        ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert 'Emergency_Score' in ac_group.web
+        assert '//This is an additional change to the web field that should not be overwritten by future edits' in ac_group.web        
 
         assert '~Program_ARRChair1' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August').impersonators
 
@@ -362,6 +371,13 @@ class TestARRVenueV2():
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
 
+        assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
+        ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert 'Emergency_Score' in ac_group.web
+        assert '//This is an additional change to the web field that should not be overwritten by future edits' in ac_group.web
+
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
         assert header_div
@@ -378,7 +394,7 @@ class TestARRVenueV2():
         assert 'keywords' not in submission_invitation.edit['note']['content']
 
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
-        assert 'recommendation' == domain.content['meta_review_recommendation']['value']
+        assert 'overall_assessment' == domain.content['meta_review_recommendation']['value']
 
         # Build current cycle invitations
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
@@ -388,9 +404,14 @@ class TestARRVenueV2():
         assert domain.content['ethics_chairs_id']['value'] == venue.get_ethics_chairs_id()
         assert domain.content['ethics_chairs_name']['value'] == venue.ethics_chairs_name
         assert domain.content['ethics_reviewers_name']['value'] == venue.ethics_reviewers_name
+        assert domain.content['ethics_reviewers_id']['value'] == venue.get_ethics_reviewers_id()
         assert domain.content['anon_ethics_reviewer_name']['value'] == venue.anon_ethics_reviewers_name()
         assert domain.content['submission_assignment_max_reviewers']['value'] == 3
-
+        
+        # Verify that ethics reviewers and ethics chairs are in the preferred_emails_groups
+        preferred_emails_groups = domain.content['preferred_emails_groups']['value']
+        assert venue.get_ethics_reviewers_id() in preferred_emails_groups
+        assert venue.get_ethics_chairs_id() in preferred_emails_groups
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
 
         now = datetime.datetime.now()
@@ -655,7 +676,7 @@ class TestARRVenueV2():
                 'TLDR': { 'value': 'This is a tldr '},
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 'paper_type': { 'value': 'Short' },
-                'research_area': { 'value': 'Code Models' },
+                'research_area': { 'value': 'NLP and Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -671,23 +692,16 @@ class TestARRVenueV2():
                 "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
                 "A2_potential_risks": { 'value': 'Yes' },
                 "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-                "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
-                "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
-                "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
                 "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
-                "B5_documentation_of_artifacts": { 'value': 'Yes' },
                 "B6_statistics_for_data": { 'value': 'Yes' },
                 "C_computational_experiments": { 'value': 'Yes' },
-                "C1_model_size_and_budget": { 'value': 'Yes' },
                 "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
                 "C3_descriptive_statistics": { 'value': 'Yes' },
-                "C4_parameters_for_packages": { 'value': 'Yes' },
                 "D_human_subjects_including_annotators": { 'value': 'Yes' },
                 "D1_instructions_given_to_participants": { 'value': 'Yes' },
                 "D2_recruitment_and_payment": { 'value': 'Yes' },
                 "D3_data_consent": { 'value': 'Yes' },
                 "D4_ethics_review_board_approval": { 'value': 'Yes' },
-                "D5_characteristics_of_annotators": { 'value': 'Yes' },
                 "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
                 "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                 "author_submission_checklist": { 'value': 'yes' },
@@ -882,7 +896,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'Information Extraction and Retrieval'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Information Extraction'] },
                 }
             )
         )
@@ -897,7 +911,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models', 'Dialogue and Interactive Systems'] },
+                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
                 }
             )
         )
@@ -914,7 +928,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models'] },
+                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models'] },
                 }
             )
         )
@@ -938,7 +952,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'NLP Applications'] },
                 }
             )
         )
@@ -953,7 +967,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
                 }
             )
         )
@@ -968,7 +982,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
                 }
             )
         )
@@ -983,7 +997,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
+                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
                 }
             )
         )
@@ -1346,7 +1360,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
             'paper_type': { 'value': 'Short' },
-            'research_area': { 'value': 'Code Models' },
+            'research_area': { 'value': 'NLP and Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
             'languages_studied': { 'value': 'A language' },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -1362,23 +1376,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
             "A2_potential_risks": { 'value': 'Yes' },
             "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-            "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
-            "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
-            "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
             "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
-            "B5_documentation_of_artifacts": { 'value': 'Yes' },
             "B6_statistics_for_data": { 'value': 'Yes' },
             "C_computational_experiments": { 'value': 'Yes' },
-            "C1_model_size_and_budget": { 'value': 'Yes' },
             "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
             "C3_descriptive_statistics": { 'value': 'Yes' },
-            "C4_parameters_for_packages": { 'value': 'Yes' },
             "D_human_subjects_including_annotators": { 'value': 'Yes' },
             "D1_instructions_given_to_participants": { 'value': 'Yes' },
             "D2_recruitment_and_payment": { 'value': 'Yes' },
             "D3_data_consent": { 'value': 'Yes' },
             "D4_ethics_review_board_approval": { 'value': 'Yes' },
-            "D5_characteristics_of_annotators": { 'value': 'Yes' },
             "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
             "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
             "author_submission_checklist": { 'value': 'yes' },
@@ -1646,7 +1653,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
             'paper_type': { 'value': 'Short' },
-            'research_area': { 'value': 'Code Models' },
+            'research_area': { 'value': 'NLP and Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
             'languages_studied': { 'value': 'A language' },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -1662,23 +1669,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
             "A2_potential_risks": { 'value': 'Yes' },
             "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-            "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
-            "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
-            "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
             "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
-            "B5_documentation_of_artifacts": { 'value': 'Yes' },
             "B6_statistics_for_data": { 'value': 'Yes' },
             "C_computational_experiments": { 'value': 'Yes' },
-            "C1_model_size_and_budget": { 'value': 'Yes' },
             "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
             "C3_descriptive_statistics": { 'value': 'Yes' },
-            "C4_parameters_for_packages": { 'value': 'Yes' },
             "D_human_subjects_including_annotators": { 'value': 'Yes' },
             "D1_instructions_given_to_participants": { 'value': 'Yes' },
             "D2_recruitment_and_payment": { 'value': 'Yes' },
             "D3_data_consent": { 'value': 'Yes' },
             "D4_ethics_review_board_approval": { 'value': 'Yes' },
-            "D5_characteristics_of_annotators": { 'value': 'Yes' },
             "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
             "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
             "author_submission_checklist": { 'value': 'yes' },
@@ -1962,6 +1962,34 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert '~Reviewer_ARRFour1' in [note.signatures[0] for note in august_reviewer_license_notes]
         assert '~Reviewer_ARRFive1' not in [note.signatures[0] for note in august_reviewer_license_notes]
 
+        # Trigger preferred email computation by updating the invitation cdate
+        openreview_client.post_invitation_edit(
+            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+        
+        helpers.await_queue_edit(openreview_client, edit_id='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails-0-0', count=2)
+        
+        # Verify that preferred email edges are created for ethics chair and ethics reviewer
+        ethics_chair_edges = openreview_client.get_edges(head='~EthicsChair_ARROne1', invitation='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails')
+        assert len(ethics_chair_edges) == 1
+        assert ethics_chair_edges[0].tail == 'ec1@aclrollingreview.com'
+        
+        ethics_reviewer_edges = openreview_client.get_edges(head='~EthicsReviewer_ARROne1', invitation='aclweb.org/ACL/ARR/2023/August/-/Preferred_Emails')
+        assert len(ethics_reviewer_edges) == 1
+        assert ethics_reviewer_edges[0].tail == 'reviewerethics@aclrollingreview.com'
+        
+        # Verify that the Preferred_Emails_Readers group includes ethics chairs and publication chairs
+        preferred_emails_readers_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Preferred_Emails_Readers')
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in preferred_emails_readers_group.members
+        assert 'aclweb.org/ACL/ARR/2023/August/Publication_Chairs' not in preferred_emails_readers_group.members
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers' not in preferred_emails_readers_group.members
+
+
     def test_unavailability_process_functions(self, client, openreview_client, helpers):
         # Update the process functions for each of the unavailability forms, set up the custom max papers
         # invitations and test that each note posts an edge
@@ -2030,11 +2058,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['~EthicsReviewer_ARROne1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': 4 },
+                        'maximum_load_this_cycle': { 'value': 2 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     }
                 )
-            ) 
+            )
         reviewer_note_edit = reviewer_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_Alternate_ARROne1'],
@@ -2075,7 +2103,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
-        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {4}
+        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {2}
         assert '~Reviewer_ARROne1' in august_reviewer_edges
         assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {4}
         assert '~AC_ARRTwo1' in august_ac_edges
@@ -2088,7 +2116,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                     id = ethics_reviewer_note_edit['note']['id'],
                     content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
+                        'maximum_load_this_cycle': { 'value': 3 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     }
                 )
@@ -2125,7 +2153,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
-        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {5}
+        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {3}
         assert '~Reviewer_ARROne1' in august_reviewer_edges
         assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {5}
         assert '~AC_ARRTwo1' in august_ac_edges
@@ -2139,7 +2167,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     id = ethics_reviewer_note_edit['note']['id'],
                     ddate = openreview.tools.datetime_millis(now),
                     content = {
-                        'maximum_load_this_cycle': { 'value': 5 },
+                        'maximum_load_this_cycle': { 'value': 3 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     }
                 )
@@ -2303,7 +2331,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'TLDR': { 'value': 'This is a tldr ' + str(i) },
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 'paper_type': { 'value': 'Short' },
-                'research_area': { 'value': 'Code Models' },
+                'research_area': { 'value': 'NLP and Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -2324,23 +2352,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
                 "A2_potential_risks": { 'value': 'Yes' },
                 "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-                "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
-                "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
-                "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
                 "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
-                "B5_documentation_of_artifacts": { 'value': 'Yes' },
                 "B6_statistics_for_data": { 'value': 'Yes' },
                 "C_computational_experiments": { 'value': 'Yes' },
-                "C1_model_size_and_budget": { 'value': 'Yes' },
                 "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
                 "C3_descriptive_statistics": { 'value': 'Yes' },
-                "C4_parameters_for_packages": { 'value': 'Yes' },
                 "D_human_subjects_including_annotators": { 'value': 'Yes' },
                 "D1_instructions_given_to_participants": { 'value': 'Yes' },
                 "D2_recruitment_and_payment": { 'value': 'Yes' },
                 "D3_data_consent": { 'value': 'Yes' },
                 "D4_ethics_review_board_approval": { 'value': 'Yes' },
-                "D5_characteristics_of_annotators": { 'value': 'Yes' },
                 "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
                 "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                 "author_submission_checklist": { 'value': 'yes' },
@@ -2504,9 +2525,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatures=['~SomeFirstName_User1'],
             note=openreview.api.Note(
                 content={
-                    'confirm_you_are_willing_to_serve_as_a_reviewer_or_ac': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
-                    'details_of_reason_for_being_unavailable_to_serve': {'value': ""},
-                    'serving_as_a_regular_or_emergency_reviewer_or_ac': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
+                    'confirm_you_are_willing_to_serve_as_a_reviewer_or_AC': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
+                    'details_of_reason_for_being_unable_to_serve_or_ARR_role': {'value': ""},
+                    'serving_as_a_regular_or_emergency_reviewer_or_AC': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
                     'indicate_emergency_reviewer_load': {'value': "3"},
                     'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
                     'are_you_a_student': {'value': "Yes, I am a Masters student."},
@@ -2514,13 +2535,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'confirm_your_profile_has_past_domains': {'value': "Yes"},
                     'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
                     'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
-                    'indicate_your_research_areas': {'value': ["Code Models"]},
+                    'indicate_your_research_areas': {'value': ["NLP and Code Models"]},
                     'indicate_languages_you_study': {'value': "English"},
-                    'confirm_your_openreview_profile_contains_a_dblp_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
-                    'provide_your_dblp_url': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
+                    'provide_your_DBLP_URL': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
                     'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
-                    'provide_your_semantic_scholar_url': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
-                    'provide_your_acl_anthology_url': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
+                    'provide_your_semantic_scholar_URL': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
+                    'provide_your_ACL_anthology_URL': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
                     'attribution': {'value': "Yes, I wish to be attributed."},
                     'agreement': {'value': "I agree"},
                 }
@@ -2553,9 +2574,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                     content={
-                        'confirm_you_are_willing_to_serve_as_a_reviewer_or_ac': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
-                        'details_of_reason_for_being_unavailable_to_serve': {'value': ""},
-                        'serving_as_a_regular_or_emergency_reviewer_or_ac': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
+                        'confirm_you_are_willing_to_serve_as_a_reviewer_or_AC': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
+                        'details_of_reason_for_being_unable_to_serve_or_ARR_role': {'value': ""},
+                        'serving_as_a_regular_or_emergency_reviewer_or_AC': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
                         'indicate_emergency_reviewer_load': {'value': '3'},
                         'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
                         'are_you_a_student': {'value': "Yes, I am a Masters student."},
@@ -2565,11 +2586,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
                         'indicate_your_research_areas': {'value': ["Generation"]},
                         'indicate_languages_you_study': {'value': "English"},
-                        'confirm_your_openreview_profile_contains_a_dblp_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
-                        'provide_your_dblp_url': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
+                        'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
+                        'provide_your_DBLP_URL': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
                         'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
-                        'provide_your_semantic_scholar_url': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
-                        'provide_your_acl_anthology_url': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
+                        'provide_your_semantic_scholar_URL': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
+                        'provide_your_ACL_anthology_URL': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
                         'attribution': {'value': "Yes, I wish to be attributed."},
                         'agreement': {'value': "I agree"},
                     }
@@ -3074,7 +3095,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "abstract": { "value": "This is an abstract 1" },
             "TLDR": { "value": "This is a tldr 1" },
             "paper_type": { "value": "Short" },
-            "research_area": { "value": "Code Models" },
+            "research_area": { "value": "NLP and Code Models" },
             "research_area_keywords": { "value": "A keyword" },
             "languages_studied": { "value": "A language" },
             "reassignment_request_area_chair": { "value": "No, I want the same area chair from our previous submission (subject to their availability)." },
@@ -3093,23 +3114,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "A1_limitations_section": { "value": "This paper has a limitations section." },
             "A2_potential_risks": { "value": "Yes" },
             "B_use_or_create_scientific_artifacts": { "value": "Yes" },
-            "B1_cite_creators_of_artifacts": { "value": "Yes" },
-            "B2_discuss_the_license_for_artifacts": { "value": "Yes" },
-            "B3_artifact_use_consistent_with_intended_use": { "value": "Yes" },
             "B4_data_contains_personally_identifying_info_or_offensive_content": { "value": "Yes" },
-            "B5_documentation_of_artifacts": { "value": "Yes" },
             "B6_statistics_for_data": { "value": "Yes" },
             "C_computational_experiments": { "value": "Yes" },
-            "C1_model_size_and_budget": { "value": "Yes" },
             "C2_experimental_setup_and_hyperparameters": { "value": "Yes" },
             "C3_descriptive_statistics": { "value": "Yes" },
-            "C4_parameters_for_packages": { "value": "Yes" },
             "D_human_subjects_including_annotators": { "value": "Yes" },
             "D1_instructions_given_to_participants": { "value": "Yes" },
             "D2_recruitment_and_payment": { "value": "Yes" },
             "D3_data_consent": { "value": "Yes" },
             "D4_ethics_review_board_approval": { "value": "Yes" },
-            "D5_characteristics_of_annotators": { "value": "Yes" },
             "E_ai_assistants_in_research_or_writing": { "value": "Yes" },
             "E1_information_about_use_of_ai_assistants": { "value": "Yes" },
             "author_submission_checklist": { "value": "yes" },
@@ -3370,6 +3384,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict')
+        reviewer_assignment_configuration = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Configuration')
+        assert 'FairIR' in reviewer_assignment_configuration.edit['note']['content']['solver']['value']['param']['enum']
 
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 14 # All 7 reviewers will conflict with submissions 1/101 because of domain of SAC
         ## Extra 101 conflicts from new reviewer which is an author of all submissions
@@ -3379,7 +3395,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(affinity_scores) == 101 * 7 ## submissions * reviewers
 
         # Post assignment configuration notes
-        openreview_client.post_note_edit(
+        reviewer_assignment_config_edit = openreview_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Configuration',
             readers=[august_venue.id],
             writers=[august_venue.id],
@@ -3395,11 +3411,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "match_group": { "value": 'aclweb.org/ACL/ARR/2023/August/Reviewers'},
                     "aggregate_score_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score'},
                     "conflicts_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict'},
-                    "solver": { "value": 'FairFlow'},
+                    "solver": { "value": 'FairIR'},
                     "status": { "value": 'Deployed'},
                 }
             )
         )
+        assert reviewer_assignment_config_edit['note']['content']['solver']['value'] == 'FairIR'
         openreview_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment_Configuration',
             readers=[august_venue.id],
@@ -3869,6 +3886,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ac_scores['~AC_ARROne1']['weight'] == 3
         assert rev_scores['~Reviewer_ARROne1']['weight'] == 3
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
 
         # For 2, assert that the affinity scores on June reviewers/aes is 0
@@ -3883,6 +3901,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ac_scores['~AC_ARRTwo1']['weight'] == 0
         assert rev_scores['~Reviewer_ARRTwo1']['weight'] == 0
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Senior_Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
 
         # Check for existence of track information
@@ -4360,7 +4379,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             ))
         # Add conflict to profile, invite user
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer7@aclrollingreview.com', password=helpers.strong_password)
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['history'].append(
             {
                 'position': 'Engineer', 
@@ -4386,7 +4405,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         
         # Accept reviewer 3 invitation
         # Update year to outside range of conflict_N_years
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['history'][1]['end'] = now.year-5
         reviewer_client.post_profile(profile)
 
@@ -4594,7 +4613,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         only_required_fields = ['number_of_assignments', 'diversity']
 
         default_fields = {field: True for field in violation_fields + only_required_fields}
+        default_fields['overall_level'] = True
         default_fields['need_ethics_review'] = False
+        checklist_default_justifications = {
+            'appropriateness_justification': {'value': 'N/A - this paper makes a contribution to computational processing of natural language.'},
+            'formatting_justification': {'value': 'N/A - this paper is properly formatted.'},
+            'length_justification': {'value': 'N/A - this paper is within the page limits.'},
+            'anonymity_justification': {'value': 'N/A - this paper is properly anonymized.'},
+            'limitations_justification': {'value': "N/A - this paper has the 'Limitations' section."},
+            'overall_level_justification': {'value': 'N/A - this seems like a good-faith submission worthy of full review.'},
+            'potential_violation_justification': {'value': 'N/A - the authors filled in the responsible NLP checklist appropriately.'},
+            'ethics_review_justification': {'value': 'N/A - this paper does not need an ethics review.'}
+        }
         test_submission = submissions[1]
 
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
@@ -4620,8 +4650,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         def post_checklist(chk_client, chk_inv, user, tested_field=None, ddate=None, existing_note=None, override_fields=None):
             def generate_checklist_content(tested_field=None):
                 ret_content = {field: {'value':'Yes'} if default_fields[field] else {'value':'No'} for field in default_fields}
-                ret_content['potential_violation_justification'] = {'value': 'There are no violations with this submission'}
-                ret_content['ethics_review_justification'] = {'value': 'N/A (I answered no to the previous question)'}
+                ret_content.update(deepcopy(checklist_default_justifications))
 
                 if tested_field:
                     ret_content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
@@ -4672,8 +4701,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Test checklist pre-process
         force_justifications = {
-                'potential_violation_justification': {'value': 'There are no violations with this submission'},
-                'ethics_review_justification': {'value': 'N/A (I answered no to the previous question)'}
+                'potential_violation_justification': {'value': 'N/A - the authors filled in the responsible NLP checklist appropriately.'},
+                'ethics_review_justification': {'value': 'N/A - this paper does not need an ethics review.'}
         }
         with pytest.raises(openreview.OpenReviewException, match=r'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging.'):
             post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', override_fields=force_justifications)
@@ -5031,11 +5060,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         messages = openreview_client.get_messages(to='reviewerethics@aclrollingreview.com', subject='[ARR - August 2023] Your ethics review has been received on your assigned Paper number: 3, Paper title: "Paper title 3"')
         assert messages and len(messages) == 1
 
-        # allow ethics chairs to invite ethics reviewers
-        conference_matching = matching.Matching(venue, openreview_client.get_group(venue.get_ethics_reviewers_id()), None)
-        conference_matching.setup_invite_assignment(hash_seed='1234', invited_committee_name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
-        venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}', is_ethics_reviewer=True)
-
+        # Ethics invite-assignment and emergency groups should be available after ethics stage setup.
         group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers')
         assert group
         assert group.readers == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs', 'aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers']
@@ -5137,15 +5162,22 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )[0]
         chk_content = {
             "appropriateness" : { "value" : "Yes" },
+            "appropriateness_justification" : { "value" : "N/A - this paper makes a contribution to computational processing of natural language." },
             "formatting" : { "value" : "Yes" },
+            "formatting_justification" : { "value" : "N/A - this paper is properly formatted." },
             "length" : { "value" : "Yes" },
+            "length_justification" : { "value" : "N/A - this paper is within the page limits." },
             "anonymity" : { "value" : "Yes" },
+            "anonymity_justification" : { "value" : "N/A - this paper is properly anonymized." },
             "responsible_checklist" : { "value" : "Yes" },
             "limitations" : { "value" : "Yes" },
+            "limitations_justification" : { "value" : "N/A - this paper has the 'Limitations' section." },
+            "overall_level" : { "value" : "Yes" },
+            "overall_level_justification" : { "value" : "N/A - this seems like a good-faith submission worthy of full review." },
             "number_of_assignments" : { "value" : "Yes" },
             "diversity" : { "value" : "Yes" },
             "need_ethics_review" : { "value" : "Yes" },
-            "potential_violation_justification" : { "value" : "There are no violations with this submission" },
+            "potential_violation_justification" : { "value" : "N/A - the authors filled in the responsible NLP checklist appropriately." },
             "ethics_review_justification" : { "value" : "There is an issue" }
         }
         chk_edit = ac_client.post_note_edit(
@@ -5736,6 +5768,24 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
+        request_page(
+            selenium,
+            'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Area_Chairs#assigned-submissions',
+            ac_client,
+            wait_for_element='assigned-submissions'
+        )
+        note_row_4 = selenium.find_element(
+            By.XPATH,
+            '//div[@id="assigned-submissions"]//table[contains(@class, "areachair-console-table")]'
+            '//tr[.//a[normalize-space()="Paper title 4"]]'
+        )
+        assert note_row_4
+        assert '4' == note_row_4.find_element(By.CLASS_NAME, 'note-number').text
+        assert 'Paper title 4' == note_row_4.find_element(By.LINK_TEXT, 'Paper title 4').text
+        meta_review_status = note_row_4.find_element(By.CLASS_NAME, 'areachair-console-meta-review')
+        assert meta_review_status
+        assert 'Overall Assessment:' in meta_review_status.text
+
         # Make reviews public
         pc_client.post_note(
             openreview.Note(
@@ -5779,16 +5829,17 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
+        exp_date = due_date + datetime.timedelta(days=1)
 
         pc_client.post_note(
             openreview.Note(
                 content={
                     'emergency_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_reviewing_exp_date': (exp_date).strftime('%Y/%m/%d %H:%M'),
                     'emergency_metareviewing_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'emergency_metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'emergency_metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_metareviewing_exp_date': (exp_date).strftime('%Y/%m/%d %H:%M'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -5808,6 +5859,17 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registered_Load')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area')
+
+        rounded_due_date = datetime.datetime.strptime(due_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        rounded_exp_date = datetime.datetime.strptime(exp_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        expected_due_millis = openreview.tools.datetime_millis(rounded_due_date)
+        expected_exp_millis = openreview.tools.datetime_millis(rounded_exp_date)
+        reviewer_emergency_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement')
+        metareviewer_emergency_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Metareviewer_Agreement')
+        assert reviewer_emergency_invitation.duedate == expected_due_millis
+        assert reviewer_emergency_invitation.expdate == expected_exp_millis
+        assert metareviewer_emergency_invitation.duedate == expected_due_millis
+        assert metareviewer_emergency_invitation.expdate == expected_exp_millis
         
         # Test posting new notes and finding the edges
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
@@ -5860,7 +5922,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         content = {
                             'emergency_load': { 'value': 0 },
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
-                            'research_area': { 'value': ['Code Models'] }
+                            'research_area': { 'value': ['NLP and Code Models'] }
                         }
                     )
                 )
@@ -5884,7 +5946,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 2 },
-                        'research_area': { 'value': ['Code Models'] }
+                        'research_area': { 'value': ['NLP and Code Models'] }
                     }
                 )
             )
@@ -5904,7 +5966,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 assert cmp_edges[user][0] == 6
             assert cmp_original == reg_original + emg_original
             assert len(area_edges[user]) == 1
-            assert area_edges[user][0] == 'Code Models'
+            assert area_edges[user][0] == 'NLP and Code Models'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
@@ -5921,7 +5983,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': ['Code Models', 'Machine Translation'] }
+                        'research_area': { 'value': ['NLP and Code Models', 'Machine Translation'] }
                     }
                 )
             )
@@ -5942,7 +6004,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert emg_edges[user][0] != emg_original
             assert cmp_edges[user][0] == reg_edges[user][0] + emg_edges[user][0]
             assert len(area_edges[user]) == 2
-            assert area_edges[user][0] == 'Code Models'
+            assert area_edges[user][0] == 'NLP and Code Models'
             assert area_edges[user][1] == 'Machine Translation'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
@@ -5988,7 +6050,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': ['Code Models', 'Machine Translation'] }
+                        'research_area': { 'value': ['NLP and Code Models', 'Machine Translation'] }
                     }
                 )
             )
@@ -6299,7 +6361,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Code Models', 'Machine Translation'] }
+                    'research_area': { 'value': ['NLP and Code Models', 'Machine Translation'] }
                 }
             )
         )
@@ -6346,7 +6408,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Code Models', 'Machine Translation'] }
+                    'research_area': { 'value': ['NLP and Code Models', 'Machine Translation'] }
                 }
             )
         )
@@ -6391,15 +6453,22 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     "appropriateness" : { "value" : "Yes" },
+                    "appropriateness_justification" : { "value" : "N/A - this paper makes a contribution to computational processing of natural language." },
                     "formatting" : { "value" : "Yes" },
+                    "formatting_justification" : { "value" : "N/A - this paper is properly formatted." },
                     "length" : { "value" : "Yes" },
+                    "length_justification" : { "value" : "N/A - this paper is within the page limits." },
                     "anonymity" : { "value" : "Yes" },
+                    "anonymity_justification" : { "value" : "N/A - this paper is properly anonymized." },
                     "responsible_checklist" : { "value" : "Yes" },
                     "limitations" : { "value" : "Yes" },
+                    "limitations_justification" : { "value" : "N/A - this paper has the 'Limitations' section." },
+                    "overall_level" : { "value" : "Yes" },
+                    "overall_level_justification" : { "value" : "N/A - this seems like a good-faith submission worthy of full review." },
                     "number_of_assignments" : { "value" : "Yes" },
                     "diversity" : { "value" : "Yes" },
                     "need_ethics_review" : { "value" : "No" },
-                    "potential_violation_justification" : { "value" : "There are no violations with this submission" },
+                    "potential_violation_justification" : { "value" : "N/A - the authors filled in the responsible NLP checklist appropriately." },
                     "ethics_review_justification" : { "value" : "There is an issue" }
                 }
             )
@@ -6436,7 +6505,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Code Models'] }
+                    'research_area': { 'value': ['NLP and Code Models'] }
                 }
             )
         )

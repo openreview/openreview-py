@@ -8,6 +8,7 @@ import time
 from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
+    arr_metareview_recommendation_field,
     arr_submission_content,
     arr_registration_task_forum,
     arr_registration_task,
@@ -16,6 +17,7 @@ from openreview.stages.arr_content import (
     arr_reviewer_ac_recognition_task_forum,
     arr_reviewer_ac_recognition_task,
     arr_max_load_task_forum,
+    arr_ethics_max_load_task,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
     arr_sac_max_load_task,
@@ -391,19 +393,6 @@ class ARRWorkflow(object):
             "order": 57,
             "required": False
         },
-        "SAC_metareview_issue_start_date": {
-            "description": "When should the form for SAC to make structured complaints about metareviews open?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 58,
-            "required": False
-        },
-        "SAC_metareview_issue_exp_date": {
-            "description": "When should the form for SAC to make structured complaints about metareviews close?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 59,
-            "required": False
-        },
-
 }
 
 
@@ -815,7 +804,7 @@ class ARRWorkflow(object):
                     'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
                     'instructions': arr_max_load_task_forum['instructions'],
                     'title': venue.get_ethics_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
-                    'additional_fields': arr_max_load_task,
+                    'additional_fields': arr_ethics_max_load_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 due_date=self.configuration_note.content.get('maximum_load_due_date'),
@@ -880,7 +869,7 @@ class ARRWorkflow(object):
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
                 group_id=venue.get_reviewers_id(),
-                required_fields=['emergency_reviewing_start_date', 'emergency_reviewing_due_date', 'emergency_reviewing_due_date'],
+                required_fields=['emergency_reviewing_start_date', 'emergency_reviewing_due_date', 'emergency_reviewing_exp_date'],
                 super_invitation_id=f"{venue.get_reviewers_id()}/-/{self.invitation_builder.EMERGENCY_REVIEWING_NAME}",
                 stage_arguments={   
                     'committee_id': venue.get_reviewers_id(),
@@ -892,14 +881,14 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('emergency_reviewing_start_date'),
                 due_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
-                exp_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
+                exp_date=self.configuration_note.content.get('emergency_reviewing_exp_date'),
                 process='process/emergency_load_process.py',
                 preprocess='process/emergency_load_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
                 group_id=venue.get_area_chairs_id(),
-                required_fields=['emergency_metareviewing_start_date', 'emergency_metareviewing_due_date', 'emergency_metareviewing_due_date'],
+                required_fields=['emergency_metareviewing_start_date', 'emergency_metareviewing_due_date', 'emergency_metareviewing_exp_date'],
                 super_invitation_id=f"{venue.get_area_chairs_id()}/-/{self.invitation_builder.EMERGENCY_METAREVIEWING_NAME}",
                 stage_arguments={   
                     'committee_id': venue.get_area_chairs_id(),
@@ -911,7 +900,7 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('emergency_metareviewing_start_date'),
                 due_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
-                exp_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
+                exp_date=self.configuration_note.content.get('emergency_metareviewing_exp_date'),
                 process='process/emergency_load_process.py',
                 preprocess='process/emergency_load_preprocess.py'
             ),
@@ -1070,26 +1059,6 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
-                required_fields=['SAC_metareview_issue_start_date', 'SAC_metareview_issue_exp_date'],
-                super_invitation_id=f"{self.venue_id}/-/SAC_Meta-Review_Issue_Report",
-                stage_arguments={
-                    'name': 'SAC_Meta-Review_Issue_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
-                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
-                    'invitees': [openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED],
-                    'readers': [
-                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                        openreview.stages.CustomStage.Participants.SIGNATURES
-                    ],
-                    'content': arr_metareview_rating_content,
-                    'notify_readers': True,
-                    'email_sacs': True
-                },
-                start_date=self.configuration_note.content.get('SAC_metareview_issue_start_date'),
-                exp_date=self.configuration_note.content.get('SAC_metareview_issue_exp_date')
-            ),
-            ARRStage(
-                type=ARRStage.Type.CUSTOM_STAGE,
                 required_fields=['delay_notification_start_date', 'delay_notification_exp_date'],
                 super_invitation_id=f"{self.venue_id}/-/Delay_Notification",
                 stage_arguments={
@@ -1243,6 +1212,7 @@ class ARRWorkflow(object):
                         'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                         'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                         'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                        'recommendation_field_name': arr_metareview_recommendation_field,
                         'additional_meta_review_form_options': arr_metareview_content,
                         'remove_meta_review_form_options': ['recommendation', 'confidence']
                     },

@@ -340,7 +340,7 @@ class Matching(object):
         ## for AC conflicts, check SAC conflicts too
         sac_user_info_by_id = {}
         if self.is_area_chair:
-            sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), groupby='head', select=None)}
+            sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), groupby='head', select=None, domain=self.venue.venue_id) }
             if sacs_by_ac:
                 sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.senior_area_chairs_id).members, with_publications=True, with_relations=True)
                 if self.sac_profile_info:
@@ -349,7 +349,7 @@ class Matching(object):
                 else:
                     sac_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in sac_user_profiles }
 
-            pcs_by_sac = { g['id']['head']: g['values'][0]['tail'] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_program_chairs_id(), deployed=True), groupby='head', select=None)}
+            pcs_by_sac = { g['id']['head']: g['values'][0]['tail'] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_program_chairs_id(), deployed=True), groupby='head', select=None, domain=self.venue.venue_id) }
             if pcs_by_sac:
                 pc_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_program_chairs_id()).members, with_publications=True, with_relations=True)   
                 pc_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in pc_user_profiles }
@@ -430,7 +430,7 @@ class Matching(object):
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
         # Perform sanity check
-        edges_posted = self.client.get_edges_count(invitation=invitation_id)
+        edges_posted = self.client.get_edges_count(invitation=invitation_id, domain=self.venue.venue_id)
         if edges_posted < len(edges):
             raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
         return invitation
@@ -438,13 +438,13 @@ class Matching(object):
     def _build_custom_max_papers(self, user_profiles):
         invitation=self._create_edge_invitation(self.venue.get_custom_max_papers_id(self.match_group.id))
         invitation_id = invitation.id
-        current_custom_max_edges={ e['id']['tail']: Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation_id, groupby='tail', select=None)}
+        current_custom_max_edges={ e['id']['tail']: Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation_id, groupby='tail', select=None, domain=self.venue.venue_id)}
 
         reduced_loads = {}
-        reduced_load_notes = self.client.get_all_notes(invitation=self.venue.get_recruitment_id(self.match_group.id), sort='tcdate:asc')
+        reduced_load_notes = self.client.get_all_notes(invitation=self.venue.get_recruitment_id(self.match_group.id), sort='tcdate:asc', domain=self.venue.venue_id)
         for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
             if 'reduced_load' in note.content:
-                reduced_loads[note.content['user']['value']] = note.content['reduced_load']['value']
+                reduced_loads[note.content.get('user', {}).get('value', note.signatures[0])] = note.content['reduced_load']['value']
 
         print ('Reduced loads received: ', len(reduced_loads))
 
@@ -537,7 +537,7 @@ class Matching(object):
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check
-        edges_posted = self.client.get_edges_count(invitation=invitation_id)
+        edges_posted = self.client.get_edges_count(invitation=invitation_id, domain=self.venue.venue_id)
         if edges_posted < len(edges):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
         return invitation
@@ -581,7 +581,7 @@ class Matching(object):
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check
-        edges_posted = self.client.get_edges_count(invitation=invitation_id)
+        edges_posted = self.client.get_edges_count(invitation=invitation_id, domain=self.venue.venue_id)
         if edges_posted < len(edges):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
         return invitation
@@ -623,10 +623,10 @@ class Matching(object):
                 matching_status['no_publications'] = result['metadata']['no_publications']
 
                 if self.alternate_matching_group:
-                    scores = [[entry['submission_member'], entry['match_member'], entry['score']] for entry in result['results']]
+                    scores = [[entry.get('entityB', entry.get('submission_member')), entry.get('entityA', entry.get('match_member')), entry['score']] for entry in result['results']]
                     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
 
-                scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
+                scores = [[entry.get('entityB', entry.get('submission')), entry.get('entityA', entry.get('user')), entry['score']] for entry in result['results']]
                 return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
             if 'Error' in status:
                 raise openreview.OpenReviewException('There was an error computing scores, description: ' + desc)
@@ -648,6 +648,11 @@ class Matching(object):
             signatures = [venue.id],
             readers = [venue.id],
             writers = [venue.id],
+            content = {
+                'committee_name': {
+                    'value': self.match_group_name
+                }
+            },
             edit = {
                 'signatures': [venue.id],
                 'readers': [venue.id],
@@ -977,6 +982,9 @@ class Matching(object):
                 }
             }
 
+        if venue.is_template_related_workflow():
+            config_inv.process = venue.invitation_builder.get_process_content('../workflows/process/assignment_configuration_process.py')
+
         invitation = venue.invitation_builder.save_invitation(config_inv)
 
     def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None):
@@ -1001,15 +1009,16 @@ class Matching(object):
 
         submissions = self._get_submissions()
 
-        if not self.match_group.members:
-            raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
-        if self.alternate_matching_group:
-            other_matching_group = self.client.get_group(self.alternate_matching_group)
-            other_matching_group = openreview.tools.replace_members_with_ids(client, other_matching_group)
-            if not other_matching_group.members:
-                raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
-        elif not submissions:
-            raise openreview.OpenReviewException('Submissions not found.')
+        if not venue.is_template_related_workflow():
+            if not self.match_group.members:
+                raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
+            if self.alternate_matching_group:
+                other_matching_group = self.client.get_group(self.alternate_matching_group)
+                other_matching_group = openreview.tools.replace_members_with_ids(client, other_matching_group)
+                if not other_matching_group.members:
+                    raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
+            elif not submissions:
+                raise openreview.OpenReviewException('Submissions not found.')
 
         type_affinity_scores = type(compute_affinity_scores)
 
@@ -1199,13 +1208,13 @@ class Matching(object):
             reviewer_name = venue.senior_area_chairs_name
             
         papers = self._get_submissions(details='directReplies')
-        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
+        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), domain=venue.id,
             groupby='head', select=None)} if not venue.sac_paper_assignments else {}
         reviews = []
-        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id), domain=venue.id,
             label=assignment_title, groupby='head', select=None)}
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
-        current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
+        current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None, domain=venue.id)}
 
         print('Check if there are reviews posted')
         if not self.is_senior_area_chair:
@@ -1293,10 +1302,10 @@ class Matching(object):
 
         print('undeploy_sac_assignments')
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
-            label=assignment_title, groupby='head', select=None)}
+            label=assignment_title, groupby='head', select=None, domain=venue.id)}
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: { v['tail']: v['id'] for v in g['values'] } for g in client.get_grouped_edges(invitation=assignment_invitation_id,
-            groupby='head', select=None)}
+            groupby='head', select=None, domain=venue.id)}
 
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
@@ -1313,7 +1322,7 @@ class Matching(object):
         print('deploy_sac_assignments', assignment_title)
 
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
-            label=assignment_title, groupby='head', select=None)}
+            label=assignment_title, groupby='head', select=None, domain=venue.id)}
         assignment_edges = []
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
 
@@ -1350,13 +1359,13 @@ class Matching(object):
             
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
-            groupby='head', select=None)} if not venue.sac_paper_assignments else {}
+            groupby='head', select=None, domain=venue.id)} if not venue.sac_paper_assignments else {}
         reviews = []
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: { v['tail']: v['id'] for v in g['values'] } for g in client.get_grouped_edges(invitation=assignment_invitation_id,
-            groupby='head', select=None)}
+            groupby='head', select=None, domain=venue.id)}
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
-            label=assignment_title, groupby='head', select=None)}
+            label=assignment_title, groupby='head', select=None, domain=venue.id)}
 
         print('Check if there are reviews posted')
         if not self.is_senior_area_chair:
@@ -1406,7 +1415,7 @@ class Matching(object):
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.match_group_name}''')
 
         #get the default max papers from the assignment configuration if possible
-        current_matching_configuration = [x for x in self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration') if x.content['title']['value']==assignment_title]
+        current_matching_configuration = [x for x in self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration', domain=self.venue.id) if x.content['title']['value']==assignment_title]
         if current_matching_configuration:
             default_max_papers = int(current_matching_configuration[0].content['max_papers']['value'])
             max_load_name = self.venue.get_custom_max_papers_id(self.match_group_name)
@@ -1563,12 +1572,6 @@ class Matching(object):
                 },
                 'committee_role': {
                     'value': committee_role
-                },
-                'conflict_policy': {
-                    'value': 'Default'
-                },
-                'conflict_n_years': {
-                    'value': 0
                 }
             },
             edge = {
@@ -1633,18 +1636,6 @@ class Matching(object):
         )
 
         invitation = self.venue.invitation_builder.save_invitation(invitation, replacement=True)
-
-        self.client.post_group_edit(
-            invitation = venue.get_meta_invitation_id(),
-            signatures = [venue_id],
-            group = openreview.api.Group(
-                id = venue_id,
-                content = {
-                    f'{committee_role}_conflict_policy': { 'value': 'Default' },
-                    f'{committee_role}_conflict_n_years': { 'value': 0 }
-                }
-            )
-        )
 
         edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
         edit_invitations_builder.set_edit_conflict_settings_invitation(conflict_invitation_id)

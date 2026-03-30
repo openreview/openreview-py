@@ -182,8 +182,8 @@ class TestKDDConference():
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]] },
-                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'adriana@' + domains[i]] },
+                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Adriana Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'corresponding_author': { 'value': '~SomeFirstName_User1'}
                 }
@@ -325,8 +325,8 @@ class TestKDDConference():
                 content={
                     'title': { 'value': 'Paper title 2 Updated' },
                     'abstract': { 'value': 'This is an abstract 2 updated' },
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com'] },
-                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'adriana@amazon.com'] },
+                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Adriana Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'corresponding_author': { 'value': '~SomeFirstName_User1'},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -343,7 +343,22 @@ class TestKDDConference():
                                         f"KDD.org/2026/Research_Track_August/Submission1/Senior_Area_Chairs",
                                         f"KDD.org/2026/Research_Track_August/Submission1/Area_Chairs",
                                         f"KDD.org/2026/Research_Track_August/Submission1/Reviewers",
-                                        f"KDD.org/2026/Research_Track_August/Submission1/Authors"]            
+                                        f"KDD.org/2026/Research_Track_August/Submission1/Authors"]
+
+        andriana_client = helpers.create_user('adriana@amazon.com', 'Adriana', 'Mc')
+
+        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
+
+        submission = andriana_client.get_note(submission.id)
+
+        assert submission.content['authorids']['value'] == ['~SomeFirstName_User1', 'peter@mail.com', '~Adriana_Mc1']
+        assert submission.content['authorids']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission1/Authors"]
+
+        submissions_edits = openreview_client.get_note_edits(note_id=submission.id)
+        assert len(submissions_edits) == 4
+        assert submissions_edits[0].invitation == 'KDD.org/2026/Research_Track_August/-/Edit'
+        assert submissions_edits[0].note.content['authorids']['value'] == ['~SomeFirstName_User1', 'peter@mail.com', '~Adriana_Mc1']
+        assert submissions_edits[0].readers == ["KDD.org/2026/Research_Track_August"]
     
     def test_revision_after_abstract_deadline(self, client, openreview_client, selenium, request_page, helpers):
         pc_client=openreview.Client(username='pc@kdd.org', password=helpers.strong_password)

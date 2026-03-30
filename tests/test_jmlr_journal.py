@@ -18,7 +18,7 @@ class TestJMLRJournal():
     def journal(self, openreview_client, helpers):
 
         eic_client=OpenReviewClient(username='rajarshi@mail.com', password=helpers.strong_password)
-        eic_client.impersonate('JMLR/Editors_In_Chief')
+        eic_client.impersonate('JMLR')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'JMLR' })
 

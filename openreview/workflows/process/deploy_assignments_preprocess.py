@@ -2,7 +2,9 @@ def process(client, edit, invitation):
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    reviewers_id = domain.get_content_value('reviewers_id')
+    deployment_invitation = client.get_invitation(invitation.id.split('/Match')[0])
+    committee_name = deployment_invitation.get_content_value('committee_name')
+    committee_id = f'{venue_id}/{committee_name}'
 
     match_name = edit.content.get('match_name', {}).get('value')
 
@@ -11,7 +13,7 @@ def process(client, edit, invitation):
         config_to_deploy = None
 
         # get all Assignment_Configuration notes
-        notes = client.get_all_notes(invitation=f'{reviewers_id}/-/Assignment_Configuration')
+        notes = client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration', domain=venue_id)
         for note in notes:
             if match_name == note.content['title']['value']:
                 config_to_deploy = note

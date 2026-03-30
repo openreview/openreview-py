@@ -148,7 +148,7 @@ def process(client, invitation):
         token=client.token
     )
 
-    if client.get_edges_count(invitation=f"{reviewers_id}/-/Affinity_Score") <= 0:
+    if client.get_edges_count(invitation=f"{reviewers_id}/-/Affinity_Score", domain=venue_id) <= 0:
         print(f"no affinity scores for {reviewers_id}")
         return
 
@@ -182,7 +182,7 @@ def process(client, invitation):
     # Build load map
     id_to_load_note = {}
     for role_id in [reviewers_id]:
-        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
+        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}", domain=venue_id) ## Assume only 1 note per user
         for note in load_notes:
             if note.signatures[0] not in name_to_id:
                 continue
@@ -193,7 +193,7 @@ def process(client, invitation):
     track_to_ids = {}
     for role_id in [reviewers_id]:
         track_to_ids[role_id] = defaultdict(list)
-        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}")
+        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}", domain=venue_id)
         for note in registration_notes:
             if note.signatures[0] not in name_to_id:
                 continue
@@ -300,7 +300,7 @@ def process(client, invitation):
             })
             rev_cmp = {
                 g['id']['tail'] : g['values'][0]
-                for g in current_client.get_grouped_edges(invitation=rev_cmp_inv, select='id,weight', groupby='tail')
+                for g in current_client.get_grouped_edges(invitation=rev_cmp_inv, select='id,weight', groupby='tail', domain=venue_id)
             }
             result['reviewer_exception_updates'].append({
                 'reviewer_id': reviewer_id,
@@ -339,7 +339,7 @@ def process(client, invitation):
 
         rev_scores = {
             g['id']['tail'] : g['values'][0]
-            for g in current_client.get_grouped_edges(invitation=rev_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail')
+            for g in current_client.get_grouped_edges(invitation=rev_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail', domain=venue_id)
         }
         
         # Handle reviewer reassignment
