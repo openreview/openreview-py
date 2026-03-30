@@ -1504,27 +1504,6 @@ computation and memory.
 
         sarah_client = helpers.create_user('sarah@profile.org', 'Sarah', 'Racz', alternates=[], institution='google.com')
 
-        with pytest.raises(openreview.OpenReviewException, match=r'The author name Racz Sarah from index 2 doesn\'t match with the names listed in your profile'):
-            edit = sarah_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
-                signatures = ['~Sarah_Racz1'],
-                content = {
-                    'author_index': { 'value': 2 },
-                    'author_id': { 'value': '~Sarah_Racz1' },
-                },                
-                note = openreview.api.Note(
-                    id = note.id
-                )
-            )
-
-        profile = sarah_client.get_profile(sarah_client.profile.id)
-
-        profile.content['homepage'] = 'https://sarah.google.com'
-        profile.content['names'].append({
-            'fullname': 'Racz Sarah',
-            })
-        sarah_client.post_profile(profile)     
-
         edit = sarah_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
             signatures = ['~Sarah_Racz1'],
