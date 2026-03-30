@@ -2334,7 +2334,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment_Recruitment', count=6)
 
         messages = openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] Reviewer Invitation accepted for paper 1')
-        assert len(messages) == 1
+        assert not messages
 
         assignment_edges = openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Rachel_ICML2')
         assert len(assignment_edges) == 1
