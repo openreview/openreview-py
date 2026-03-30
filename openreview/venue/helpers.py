@@ -1,4 +1,5 @@
-import openreview
+from .venue import Venue
+
 
 def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     """
@@ -12,8 +13,10 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     Returns:
         openreview.venue.Venue instance
     """
+    from .. import stages
+
     domain = client.get_group(venue_id)
-    venue = openreview.venue.Venue(client, venue_id, support_user)
+    venue = Venue(client, venue_id, support_user)
 
     venue.name = domain.content['title']['value']
     venue.short_name = domain.content['subtitle']['value']
@@ -53,7 +56,7 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
             preferred_emails_groups.append(venue.get_publication_chairs_id())
         venue.preferred_emails_groups = preferred_emails_groups
 
-    venue.submission_stage = openreview.stages.SubmissionStage(
+    venue.submission_stage = stages.SubmissionStage(
         name=domain.content.get('submission_name', {}).get('value', 'Submission'),
     )
     return venue
