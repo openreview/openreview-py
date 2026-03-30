@@ -287,8 +287,8 @@ class TestARRVenueV2():
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
-        assert post_submission_invitation.content['source']['value'] == {'venueid': 'aclweb.org/ACL/ARR/2023/August/Submission', 'preprint': 'no'}
-        assert preprint_post_submission_invitation.content['source']['value'] == {'venueid': 'aclweb.org/ACL/ARR/2023/August/Submission', 'preprint': 'yes'}
+        assert post_submission_invitation.content['source']['value'] == {'venueid': 'aclweb.org/ACL/ARR/2023/August/Submission', 'content': {'preprint': 'no'}}
+        assert preprint_post_submission_invitation.content['source']['value'] == {'venueid': 'aclweb.org/ACL/ARR/2023/August/Submission', 'content': {'preprint': 'yes'}}
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
@@ -374,8 +374,8 @@ class TestARRVenueV2():
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
-        assert post_submission_invitation.content['source']['value'] == {'venueid': 'aclweb.org/ACL/ARR/2023/August/Submission', 'preprint': 'no'}
-        assert preprint_post_submission_invitation.content['source']['value'] == {'venueid': 'aclweb.org/ACL/ARR/2023/August/Submission', 'preprint': 'yes'}
+        assert post_submission_invitation.content['source']['value'] == {'venueid': 'aclweb.org/ACL/ARR/2023/August/Submission', 'content': {'preprint': 'no'}}
+        assert preprint_post_submission_invitation.content['source']['value'] == {'venueid': 'aclweb.org/ACL/ARR/2023/August/Submission', 'content': {'preprint': 'yes'}}
 
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web

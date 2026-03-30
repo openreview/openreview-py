@@ -198,10 +198,30 @@ class InvitationBuilder(object):
     def set_submission_invitation(self):
         return self.venue_invitation_builder.set_submission_invitation()
 
-    def set_post_submission_invitation(self, invitation_id=None, source=None):
+    def set_post_submission_invitation(self, invitation_id=None, source=None, process_path='process/post_submission_process.py'):
+        if source is None:
+            source = {
+                'venueid': self.venue.get_submission_venue_id(),
+                'content':{
+                    'preprint': 'no'
+                }
+            }
+
         return self.venue_invitation_builder.set_post_submission_invitation(
             invitation_id=invitation_id,
             source=source,
+            process_path=process_path
+        )
+
+    def set_preprint_post_submission_invitation(self):
+        return self.set_post_submission_invitation(
+            invitation_id=self.venue.get_preprint_post_submission_id(),
+            source={
+                'venueid': self.venue.get_submission_venue_id(),
+                'content':{
+                    'preprint': 'yes'
+                }
+            },
             process_path='../arr/process/post_submission_process.py'
         )
 

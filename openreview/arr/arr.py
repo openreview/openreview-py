@@ -439,20 +439,8 @@ class ARR(object):
             self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
-        self.invitation_builder.set_post_submission_invitation(
-            invitation_id=self.get_post_submission_id(),
-            source={
-                'venueid': self.get_submission_venue_id(),
-                'preprint': 'no'
-            }
-        )
-        self.invitation_builder.set_post_submission_invitation(
-            invitation_id=self.get_preprint_post_submission_id(),
-            source={
-                'venueid': self.get_submission_venue_id(),
-                'preprint': 'yes'
-            }
-        )
+        self.invitation_builder.set_post_submission_invitation()
+        self.invitation_builder.set_preprint_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
         self.invitation_builder.set_submission_reviewer_group_invitation()
         self.invitation_builder.set_submission_message_invitation()
@@ -494,20 +482,8 @@ class ARR(object):
         )
 
     def create_post_submission_stage(self):
-        self.invitation_builder.set_post_submission_invitation(
-            invitation_id=self.get_post_submission_id(),
-            source={
-                'venueid': self.get_submission_venue_id(),
-                'preprint': 'no'
-            }
-        )
-        self.invitation_builder.set_post_submission_invitation(
-            invitation_id=self.get_preprint_post_submission_id(),
-            source={
-                'venueid': self.get_submission_venue_id(),
-                'preprint': 'yes'
-            }
-        )
+        self.invitation_builder.set_post_submission_invitation()
+        self.invitation_builder.set_preprint_post_submission_invitation()
 
     def create_submission_revision_stage(self):
         self.venue.submission_revision_stage = self.submission_revision_stage
