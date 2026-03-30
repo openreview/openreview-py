@@ -132,7 +132,7 @@ class TestJournalActiveProfiles():
                             'assignment_delay_after_submitted_review': 0.0001,   # ~ 1 minute
                             'max_solicit_review_per_month': 3,
                             'enable_blocked_authors': True,
-                            'force_active_profiles': True
+                            'min_profile_valid_state': 'Active'
                         }
                     }
                 }
@@ -172,10 +172,7 @@ class TestJournalActiveProfiles():
         assert openreview_client.get_edges_count(invitation='JAPR/-/Preferred_Emails') == 0
 
         invitation = openreview_client.get_invitation('JAPR/-/Submission')
-
-        assert invitation.post_processes
-
-        openreview_client.add_members_to_group('JAPR/Submission_Banned_Users', ['rosa@mailnine.com'])
+        assert invitation.edit['note']['content']['authorids']['value']['param']['minValidState'] == 'Active'
 
     def test_post_submissions(self, openreview_client, journal, helpers):
 
@@ -266,34 +263,87 @@ class TestJournalActiveProfiles():
 
     def test_inactive_profiles(self, openreview_client, journal, helpers):
 
-        openreview_client.post_invitation_edit(
-            invitations='JAPR/-/Edit',
-            signatures=['JAPR'],
-            invitation=openreview.api.Invitation(
-                id='JAPR/-/Submission',
-                edit={
-                    'note': {
-                        'content': {
-                            'authorids': {
-                                'value': {
-                                    'param': {
-                                        'type': 'profile{}',
-                                        'minValidState': 'Inactive'
-                                    }
-                                },
-                                'description': "Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile.",
-                                'order': 4,
-                                'readers': [
-                                    'JAPR',
-                                    'JAPR/Paper${4/number}/Action_Editors',
-                                    'JAPR/Paper${4/number}/Authors'
-                                ]
-                            }
+        pc_client = OpenReviewClient(username='lucia@mail.com', password=helpers.strong_password)
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'JAPR' })[0]
+
+        request_form = openreview_client.post_note_edit(invitation= 'openreview.net/Support/-/Journal_Request',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                signatures = ['openreview.net/Support'],
+                id = request_form.id,
+                content = {
+                    'official_venue_name': {'value': 'Journal of Active Profiles Research'},
+                    'abbreviated_venue_name' : {'value': 'JAPR'},
+                    'venue_id': {'value': 'JAPR'},
+                    'contact_info': {'value': 'tmlr@jmlr.org'},
+                    'secret_key': {'value': openreview.tools.create_hash_seed()},
+                    'support_role': {'value': '~Marco_Support1' },
+                    'editors': {'value': ['~Lucia_EIC1', '~Tomoko_EIC1'] },
+                    'website': {'value': 'jmlr.org/tmlr' },
+                    'settings': {
+                        'value': {
+                            'submission_public': True,
+                            'assignment_delay': 5,
+                            'submission_name': 'Submission',
+                            'submission_license': 'CC BY-SA 4.0',
+                            'eic_submission_notification': False,
+                            'certifications': [
+                                'Featured Certification',
+                                'Reproducibility Certification',
+                                'Survey Certification'
+                            ],
+                            'eic_certifications': [
+                                'Outstanding Certification'
+                            ],
+                            'event_certifications': [
+                                'lifelong-ml.cc/CoLLAs/2023/Journal_Track'
+                            ],
+                            'submission_length': [
+                                'Regular submission (no more than 12 pages of main content)',
+                                'Long submission (more than 12 pages of main content)',
+                                'Beyond PDF submission (pageless, webpage-style content)'
+                            ],
+                            'issn': '2835-8856',
+                            'website_urls': {
+                                'editorial_board': 'https://jmlr.org/tmlr/editorial-board.html',
+                                'evaluation_criteria': 'https://jmlr.org/tmlr/editorial-policies.html#evaluation',
+                                'reviewer_guide': 'https://jmlr.org/tmlr/reviewer-guide.html',
+                                'editorial_policies': 'https://jmlr.org/tmlr/editorial-policies.html',
+                                'faq': 'https://jmlr.org/tmlr/contact.html',
+                                'videos': 'https://tmlr.infinite-conf.org',
+                                'certifications_criteria': 'https://jmlr.org/tmlr/editorial-policies.html#certifications'
+                            },
+                            'editors_email': 'tmlr-editors@jmlr.org',
+                            'skip_ac_recommendation': False,
+                            'number_of_reviewers': 3,
+                            'reviewers_max_papers': 6,
+                            'ae_recommendation_period': 1,
+                            'under_review_approval_period': 1,
+                            'reviewer_assignment_period': 1,
+                            'review_period': 2,
+                            'discussion_period' : 2,
+                            'recommendation_period': 2,
+                            'decision_period': 1,
+                            'camera_ready_period': 4,
+                            'camera_ready_verification_period': 1,
+                            'archived_action_editors': True,
+                            'archived_reviewers': True,
+                            'expert_reviewers': True,
+                            'external_reviewers': True,
+                            'expertise_model': 'specter2+scincl',
+                            'assignment_delay_after_submitted_review': 0.0001,   # ~ 1 minute
+                            'max_solicit_review_per_month': 3,
+                            'enable_blocked_authors': True,
+                            'min_profile_valid_state': 'Inactive'
                         }
                     }
                 }
-            )
-        )
+            ))
+
+        helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        invitation = openreview_client.get_invitation('JAPR/-/Submission')
+        assert invitation.edit['note']['content']['authorids']['value']['param']['minValidState'] == 'Inactive'
 
         jonas_client = OpenReviewClient(username='jonas@maileight.com', password=helpers.strong_password)
 
