@@ -412,9 +412,9 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
       checked: { noteId: submission.id, checked: false },
       submissionNumber: { number: parseInt(number) },
       submission: ({
-	...formattedSubmission,
-	beyondPdf: submission.content.beyond_pdf?.value !== undefined
-}),
+        ...formattedSubmission,
+        beyondPdf: submission.content.beyond_pdf?.value !== undefined
+      }),
       reviewProgressData: {
         noteId: submission.id,
         paperNumber: number,

@@ -129,9 +129,9 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
     rows.push({
       submissionNumber: { number: number},
       submission: ({
-	...formattedSubmission,
-	beyondPdf: submission.content.beyond_pdf?.value !== undefined
-}),
+        ...formattedSubmission,
+        beyondPdf: submission.content.beyond_pdf?.value !== undefined
+      }),
       reviewStatus: {
         invitationUrl: reviewInvitation && '/forum?id=' + submission.forum + '&noteId=' + submission.forum + '&invitationId=' + reviewInvitation.id + '&referrer=' + referrerUrl,
         review: review,
