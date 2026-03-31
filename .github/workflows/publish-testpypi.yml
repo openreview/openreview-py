@@ -16,6 +16,9 @@ on:
         description: The version to publish (e.g., 1.59.1)
         required: true
         type: string
+  push:
+    branches:
+      - fix/publish-pip
 
 permissions:
   contents: read
