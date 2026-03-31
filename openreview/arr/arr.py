@@ -495,7 +495,7 @@ class ARR(object):
                     print(f'  - Adding Authors to Official_Comment inner readers')
 
             # Remove authors from inner readers after 4 days
-            if now_millis > reviewer_response_close:
+            if now_millis > reviewer_response_close and now_millis > author_response_close:
                 current_readers = invitation.edit['note']['readers']['param']['enum']
                 if any('Authors' in reader for reader in current_readers):
                     filtered_readers = [
