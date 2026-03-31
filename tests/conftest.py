@@ -98,9 +98,10 @@ class Helpers:
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
         finished_status = ['error', 'ok']
+        process_logs = []
         counter = 0
         wait_time = 0.5
-        max_iterations = timeout / wait_time
+        max_iterations = int(timeout / wait_time) or 1
         cycles = 60 * 1 / wait_time # print every 1 minutes
         while counter < max_iterations:
             process_logs = [l for l in super_client.get_process_logs(id=edit_id, invitation=invitation) if l.get('processIndex', 0) == process_index][:count]
