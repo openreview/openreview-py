@@ -2012,15 +2012,15 @@ def get_invitation_source(invitation, domain):
         source['content'][key] = value
     ##
 
-    print('transformed source', source)
     return source
 
-def should_match_invitation_source(client, invitation, submission, note=None):
+def should_match_invitation_source(client, invitation, submission, note=None, domain=None):
     """
     Checks if the invitation source matches the submission and note.
     """
 
-    domain = client.get_group(submission.domain)
+    if domain is None:
+        domain = client.get_group(submission.domain)
 
     source = get_invitation_source(invitation, domain)
 
