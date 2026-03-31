@@ -16,9 +16,9 @@ on:
         description: The version to publish (e.g., 1.59.1)
         required: true
         type: string
-  push:
-    branches:
-      - fix/publish-pip
+  # push:
+  #   branches:
+  #     - fix/publish-pip
 
 permissions:
   contents: read
@@ -71,3 +71,4 @@ jobs:
         with:
           packages-dir: dist/
           repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
