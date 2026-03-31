@@ -20,7 +20,7 @@ from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
-from openreview.stages.arr_content import hide_fields, arr_withdrawal_content
+from openreview.stages.arr_content import hide_fields, arr_withdrawal_content, arr_metareview_recommendation_field
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -146,6 +146,7 @@ class ARR(object):
         self.venue.review_stage = self.review_stage
         self.venue.bid_stages = self.bid_stages
         self.venue.meta_review_stage = self.meta_review_stage
+        self.meta_review_stage.recommendation_field_name = arr_metareview_recommendation_field
         self.venue.comment_stage = self.comment_stage
         self.venue.decision_stage = self.decision_stage
         self.venue.submission_revision_stage = self.submission_revision_stage
@@ -343,9 +344,6 @@ class ARR(object):
 
     def get_desk_rejected_id(self):
         return self.venue.get_desk_rejected_id()
-
-    def get_group_recruitment_id(self, committee_name):
-        return self.venue.get_group_recruitment_id(committee_name)
 
     def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
         return self.venue.get_participants(number, with_program_chairs, with_authors)

@@ -389,7 +389,6 @@ class GroupBuilder(object):
                 signatures=[self.openreview_template],
                 content={
                     'venue_id': { 'value': venue_id },
-                    'message_reply_to': { 'value': self.venue.contact },
                     'venue_short_name': { 'value': self.venue.short_name },
                     'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
                 },
@@ -476,7 +475,6 @@ class GroupBuilder(object):
                 content={
                     'venue_id': { 'value': venue_id },
                     'group_id': { 'value': authors_id },
-                    'message_reply_to': { 'value': self.venue.contact  },
                     'venue_short_name': { 'value': self.venue.short_name },
                     'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
                 },
@@ -490,7 +488,6 @@ class GroupBuilder(object):
                 content={
                     'venue_id': { 'value': venue_id },
                     'group_id': { 'value': authors_accepted_id },
-                    'message_reply_to': { 'value': self.venue.contact  },
                     'venue_short_name': { 'value': self.venue.short_name },
                     'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
                 },
@@ -723,7 +720,7 @@ class GroupBuilder(object):
                             members=members
                             )
             self.post_group(preferred_emails_readers_group)
-    
+
     def add_to_active_venues(self):
         active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
