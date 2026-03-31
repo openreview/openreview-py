@@ -50,6 +50,7 @@ from openreview.stages.default_content import comment_v2
 
 class ARRWorkflow(object):
     UPDATE_WAIT_TIME = 5000
+    DEFAULT_AUTHOR_RESPONSE_EXTENSION_CRON = '0 */12 * * *'
     CONFIGURATION_INVITATION_CONTENT = {
         "form_expiration_date": {
             "description": "What should the default expiration date be? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). All dates on this form should be in this format.",
@@ -335,6 +336,7 @@ class ARRWorkflow(object):
         },
         "author_response_extension_cron": {
             "description": "What cron expression should be used to rerun the author response extension manager?",
+            "value": DEFAULT_AUTHOR_RESPONSE_EXTENSION_CRON,
             "value-regex": ".*",
             "order": 60,
             "required": False
@@ -705,7 +707,7 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=['author_response_extension_start_date', 'author_response_extension_end_date', 'author_response_extension_cron'],
+                required_fields=['author_response_extension_start_date', 'author_response_extension_end_date'],
                 super_invitation_id=f"{self.venue_id}/-/Author_Response_Extension_Manager",
                 stage_arguments={
                     'content': {
@@ -717,7 +719,10 @@ class ARRWorkflow(object):
                 start_date=self.configuration_note.content.get('author_response_extension_start_date'),
                 exp_date=self.configuration_note.content.get('author_response_extension_end_date'),
                 process='management/setup_author_response_extension.py',
-                cron=self.configuration_note.content.get('author_response_extension_cron')
+                cron=self.configuration_note.content.get(
+                    'author_response_extension_cron',
+                    self.DEFAULT_AUTHOR_RESPONSE_EXTENSION_CRON
+                )
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,

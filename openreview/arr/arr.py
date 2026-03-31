@@ -261,9 +261,6 @@ class ARR(object):
     def _get_review_issue_report_invitations(self, reviews):
         for review in reviews:
             review_number = review.number
-            if review_number is None or not review.invitations:
-                continue
-
             review_prefix = review.invitations[0].replace('/-/', '/') + str(review_number)
             invitation = openreview.tools.get_invitation(
                 self.client,
@@ -484,7 +481,7 @@ class ARR(object):
                     needs_update = True
                     print(f'  - Removing Authors from Official_Comment signatures')
 
-            if now_millis <= reviewer_response_close:
+            if now_millis <= reviewer_response_close or now_millis <= author_response_close:
                 current_readers = invitation.edit['note']['readers']['param']['enum']
                 if authors_group not in current_readers:
                     if 'edit' not in edit_params:

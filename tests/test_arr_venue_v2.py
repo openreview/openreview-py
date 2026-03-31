@@ -6172,14 +6172,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'author_response_extension_start_date' in config_invitation.reply['content']
         assert 'author_response_extension_end_date' in config_invitation.reply['content']
         assert 'author_response_extension_cron' in config_invitation.reply['content']
+        assert config_invitation.reply['content']['author_response_extension_cron']['value'] == '0 */12 * * *'
 
-        ## Step 1: Enable author response extension and verify invitation structure
+        ## Step 1: Enable author response extension and verify invitation structure/default cron
         pc_client.post_note(
             openreview.Note(
                 content={
                     'author_response_extension_start_date': (now - datetime.timedelta(minutes=1)).strftime('%Y/%m/%d %H:%M'),
-                    'author_response_extension_end_date': (now + datetime.timedelta(days=14)).strftime('%Y/%m/%d %H:%M'),
-                    'author_response_extension_cron': '0 */4 * * *'
+                    'author_response_extension_end_date': (now + datetime.timedelta(days=14)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -6201,6 +6201,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         process_inv = openreview_client.get_invitation(f'{venue_id}/-/Author_Response_Extension_Manager')
         assert process_inv.date_processes
         assert process_inv.expdate
+        assert any(
+            date_process.get('cron') == '0 */12 * * *'
+            for date_process in process_inv.date_processes
+        )
         assert process_inv.content['author_response_delay_ms']['value'] == 259200000
         assert process_inv.content['reviewer_response_delay_ms']['value'] == 345600000
         assert process_inv.content['review_issue_report_delay_ms']['value'] == 432000000
@@ -6361,48 +6365,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             helpers.await_queue_edit(openreview_client, edit_id=rev_edit['id'])
             review_edits.append(rev_edit)
 
-        ## Step 5: Test author_response_delay — set to 0 and verify Official_Comment closes for >= 3 reviews paper
-        openreview_client.post_invitation_edit(
-            invitations=f'{venue_id}/-/Edit',
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=f'{venue_id}/-/Author_Response_Extension_Manager',
-                content={
-                    'author_response_delay_ms': {'value': 0}
-                }
-            )
-        )
-
-        helpers.await_queue_edit(
-            openreview_client,
-            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
-            count=3,
-            process_index=0
-        )
-
-        submissions = pc_client_v2.get_all_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc', details='replies')
-        target_submission = submissions[0]  # Refresh target submission
-        assert len([r for r in target_submission.details.get('replies', []) if any('Official_Review' in i for i in r.get('invitations', []))]) >= 3
-
-        ## target_submission (>= 3 reviews): Authors should be removed from invitees, outer readers, signatures
-        target_authors = 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors'
-        comment_inv_target = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Official_Comment')
-        assert target_authors not in comment_inv_target.invitees
-        assert target_authors not in comment_inv_target.readers
-        target_sig_values = [
-            item.get('prefix') if 'prefix' in item else item.get('value', '')
-            for item in comment_inv_target.edit['signatures']['param']['items']
-        ]
-        assert not any(target_authors == sig for sig in target_sig_values)
-
-        ## few_reviews_submission (< 3 reviews): Authors should still be present
-        few_authors = f'{venue_id}/Submission{few_reviews_submission.number}/Authors'
-        comment_inv_few = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Official_Comment')
-        assert few_authors in comment_inv_few.invitees
-
-        ## Step 6: Test reviewer_response_delay — set to 0 and verify inner readers removal for >= 3 reviews paper
+        ## Step 5: Test reviewer_response_delay while author response is still open
         openreview_client.post_invitation_edit(
             invitations=f'{venue_id}/-/Edit',
             readers=[venue_id],
@@ -6419,7 +6382,104 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(
             openreview_client,
             invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=3,
+            process_index=0
+        )
+
+        target_authors = 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors'
+        comment_inv_target = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Official_Comment')
+        assert target_authors in comment_inv_target.invitees
+        assert target_authors in comment_inv_target.readers
+        target_sig_values = [
+            item.get('prefix') if 'prefix' in item else item.get('value', '')
+            for item in comment_inv_target.edit['signatures']['param']['items']
+        ]
+        assert any(target_authors == sig for sig in target_sig_values)
+        target_inner_readers = comment_inv_target.edit['note']['readers']['param']['enum']
+        assert target_authors in target_inner_readers
+
+        ## Step 6: Restore reviewer_response_delay, then close the author response window only
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
+                content={
+                    'reviewer_response_delay_ms': {
+                        'value': process_inv.content['reviewer_response_delay_ms']['value']
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
             count=4,
+            process_index=0
+        )
+
+        ## Step 7: Test author_response_delay — set to 0 and verify Official_Comment closes for >= 3 reviews paper
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
+                content={
+                    'author_response_delay_ms': {'value': 0}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=5,
+            process_index=0
+        )
+
+        submissions = pc_client_v2.get_all_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc', details='replies')
+        target_submission = submissions[0]  # Refresh target submission
+        assert len([r for r in target_submission.details.get('replies', []) if any('Official_Review' in i for i in r.get('invitations', []))]) >= 3
+
+        ## target_submission (>= 3 reviews): Authors should be removed from invitees, outer readers, signatures
+        comment_inv_target = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Official_Comment')
+        assert target_authors not in comment_inv_target.invitees
+        assert target_authors not in comment_inv_target.readers
+        target_sig_values = [
+            item.get('prefix') if 'prefix' in item else item.get('value', '')
+            for item in comment_inv_target.edit['signatures']['param']['items']
+        ]
+        assert not any(target_authors == sig for sig in target_sig_values)
+        assert target_authors in comment_inv_target.edit['note']['readers']['param']['enum']
+
+        ## few_reviews_submission (< 3 reviews): Authors should still be present
+        few_authors = f'{venue_id}/Submission{few_reviews_submission.number}/Authors'
+        comment_inv_few = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Official_Comment')
+        assert few_authors in comment_inv_few.invitees
+
+        ## Step 8: Test reviewer_response_delay — set to 0 and verify inner readers removal for >= 3 reviews paper
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
+                content={
+                    'reviewer_response_delay_ms': {'value': 0}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=6,
             process_index=0
         )
 
@@ -6427,7 +6487,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         inner_readers = comment_inv_target.edit['note']['readers']['param']['enum']
         assert target_authors not in inner_readers
 
-        ## Step 7: Test review_issue_report_delay — set to 0 and verify Review_Issue_Report expdate
+        ## Step 9: Test review_issue_report_delay — set to 0 and verify Review_Issue_Report expdate
         openreview_client.post_invitation_edit(
             invitations=f'{venue_id}/-/Edit',
             readers=[venue_id],
@@ -6444,7 +6504,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(
             openreview_client,
             invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
-            count=5,
+            count=7,
             process_index=0
         )
 
