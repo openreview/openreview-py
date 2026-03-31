@@ -1028,3 +1028,9 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
 
         messages = openreview_client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Reviewer Assignment confirmed for paper 1')
         assert not messages
+
+        assignment_edge = pc_client_v2.get_edges(invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Assignment', head=submissions[0].id, tail='~Celeste_ACM1')[0]
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
+
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] You have been assigned as a Reviewer for paper number 1')
+        assert messages and len(messages) == 1
