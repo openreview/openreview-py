@@ -551,7 +551,7 @@ class Venue(object):
 
         if self.preferred_emails_groups:
             self.invitation_builder.set_preferred_emails_invitation()
-            self.group_builder.create_preferred_emails_readers_group()            
+            self.group_builder.create_preferred_emails_readers_group()        
 
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
