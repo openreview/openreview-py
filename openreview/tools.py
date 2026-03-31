@@ -2012,7 +2012,6 @@ def get_invitation_source(invitation, domain):
         source['content'][key] = value
     ##
 
-    print('transformed source', source)
     return source
 
 def should_match_invitation_source(client, invitation, submission, note=None, domain=None):
