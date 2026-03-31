@@ -2942,15 +2942,17 @@ class Profile(object):
         return username
 
     def get_preferred_email(self):
-        preferred_email=self.content.get('preferredEmail')
+        preferred_email = self.content.get('preferredEmail')
         if preferred_email:
             return preferred_email
 
-        if self.content['emailsConfirmed']:
-            return self.content['emailsConfirmed'][0]
+        emails_confirmed = self.content.get('emailsConfirmed')
+        if emails_confirmed:
+            return emails_confirmed[0]
 
-        if self.content['emails']:
-            return self.content['emails'][0]
+        emails = self.content.get('emails')
+        if emails:
+            return emails[0]
 
         return None
     
