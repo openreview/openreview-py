@@ -11,14 +11,8 @@ name: Upload Python Package
 on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    # inputs:
-    #   version:
-    #     description: The version to publish (e.g., 1.59.1)
-    #     required: true
-    #     type: string
-  # push:
-  #   branches:
-  #     - fix/publish-pip
+  # Allows other workflows to call this workflow
+  workflow_call:
 
 permissions:
   contents: read
@@ -60,16 +54,7 @@ jobs:
       url: https://test.pypi.org/p/openreview-py
 
     steps:
-      # - uses: actions/checkout@v4
-      - name: Check if version is new
-        id: check_version
-        uses: pypi-actions/pyproject-check-version@v4
-        with:
-          package_name: openreview-py
-          index-url: https://test.pypi.org/simple/
-
       - name: Retrieve release distributions
-        if: steps.check_version.outputs.version_is_new == 'true'
         uses: actions/download-artifact@v4
         with:
           name: release-dists
