@@ -6299,7 +6299,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'author_response_extension_start_date' in config_invitation.reply['content']
         assert 'author_response_extension_end_date' in config_invitation.reply['content']
         assert 'author_response_extension_cron' in config_invitation.reply['content']
-        assert config_invitation.reply['content']['author_response_extension_cron']['value'] == '0 */12 * * *'
+        assert config_invitation.reply['content']['author_response_extension_cron']['default'] == '0 */12 * * *'
 
         ## Step 1: Enable author response extension and verify invitation structure/default cron
         pc_client.post_note(
@@ -6328,10 +6328,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         process_inv = openreview_client.get_invitation(f'{venue_id}/-/Author_Response_Extension_Manager')
         assert process_inv.date_processes
         assert process_inv.expdate
-        assert any(
-            date_process.get('cron') == '0 */12 * * *'
-            for date_process in process_inv.date_processes
-        )
+        assert process_inv.date_processes[1]['cron'] == '0 */12 * * *'
         assert process_inv.content['author_response_delay_ms']['value'] == 259200000
         assert process_inv.content['reviewer_response_delay_ms']['value'] == 345600000
         assert process_inv.content['review_issue_report_delay_ms']['value'] == 432000000

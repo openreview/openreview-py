@@ -336,7 +336,7 @@ class ARRWorkflow(object):
         },
         "author_response_extension_cron": {
             "description": "What cron expression should be used to rerun the author response extension manager?",
-            "value": DEFAULT_AUTHOR_RESPONSE_EXTENSION_CRON,
+            "default": DEFAULT_AUTHOR_RESPONSE_EXTENSION_CRON,
             "value-regex": ".*",
             "order": 60,
             "required": False
