@@ -14,7 +14,6 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'group_id': { 'value': edit.group.id },
-            'message_reply_to': { 'value': domain.content['contact']['value'] },
             'venue_short_name': { 'value': domain.content['subtitle']['value'] },
             'venue_from_email': { 'value': f"{domain.content['subtitle']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()}-notifications@openreview.net" }
         },
