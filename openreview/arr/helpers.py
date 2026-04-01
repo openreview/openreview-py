@@ -549,7 +549,7 @@ class ARRWorkflow(object):
                     'writers': [venue_id],
                     'invitees': invitees,
                     'maxReplies': 1,
-                    'expdate': '${3/content/expdate/value}',
+                    'expdate': '${2/content/expdate/value}',
                     'edit': {
                         'signatures': {
                             'param': {
