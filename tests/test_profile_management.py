@@ -597,7 +597,20 @@ class TestProfileManagement():
             {"fullname": "Melisa Bok", "username": ""},
             {"fullname": "Xukun Liu", "username": ""},
             {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
-        ]                
+        ]
+
+        notes = andrew_client.search_notes('AI Conference')
+        assert len(notes) == 1
+        assert notes[0].id == note.id
+        assert notes[0].content['authors']['value'] == [
+            {"fullname": "Nihar B. Shah", "username": ""},
+            {"fullname": "Melisa Bok", "username": ""},
+            {"fullname": "Xukun Liu", "username": ""},
+            {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
+        ]
+        assert 'authorids' in notes[0].content
+        assert 'value' not in notes[0].content['authorids']
+
 
     @pytest.mark.skip(reason="Skipping this test until we decide to enable comments")
     def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
