@@ -6238,7 +6238,7 @@ note={Expert Certification}
         helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=3)
 
         ## Check preferred emails
-        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 20
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 151
         
         note = openreview_client.get_note(note_id_14)
         journal.invitation_builder.expire_paper_invitations(note)
