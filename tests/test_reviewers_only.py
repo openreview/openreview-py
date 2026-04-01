@@ -2087,6 +2087,7 @@ To view this paper, please go to https://openreview.net/forum?id={submissions[0]
 
 Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
 '''
+        assert messages[0]['content']['replyTo'] == 'abcd2025.programchairs@gmail.com'
 
     def test_rebuttal_stage(self, openreview_client, test_client, helpers):
 

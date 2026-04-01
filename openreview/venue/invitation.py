@@ -3587,6 +3587,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
             registration_content = registration_stage.get_content(api_version='2', conference=self.venue)
 
+            committee_name = venue.get_committee_name(committee_id, pretty=True)
+
             registration_invitation_id = venue.get_invitation_id(name=f'{registration_stage.name}', prefix=committee_id)
             invitation=Invitation(id=registration_invitation_id,
                 invitees=[committee_id],
@@ -3598,6 +3600,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 expdate = tools.datetime_millis(expdate) if expdate else None,
                 maxReplies = 1,
                 minReplies = 1,
+                description = f'Configure the content of the {committee_name} registration form, set the date/time when the registration is available, when it is due, and when it is no longer available. Change the registration form title and instructions [here]({tools.get_site_url(self.client)}/forum?id={forum_note_id}).',
                 edit={
                     'signatures': { 'param': { 'regex': '~.*' }},
                     'readers': [venue_id, '${2/signatures}'],
@@ -3628,7 +3631,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
             if self.venue.is_template_related_workflow():
                 edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
-                edit_invitations_builder.set_edit_dates_invitation(registration_invitation_id, due_date=None)
+                edit_invitations_builder.set_edit_dates_one_level_invitation(registration_invitation_id, include_due_date=True, include_exp_date=True)
                 edit_invitations_builder.set_edit_content_invitation(registration_invitation_id)
 
     def set_paper_recruitment_invitation(self, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
