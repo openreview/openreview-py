@@ -11,14 +11,8 @@ on:
         required: false
         default: master
         type: string
-  # Allows other workflows to call this workflow
-  workflow_call:
-    inputs:
-      tag:
-        description: The branch, tag, or commit hash to deploy
-        required: false
-        default: master
-        type: string
+  repository_dispatch:
+    types: [openreview-py-updated]
 
 jobs:
   deploy:

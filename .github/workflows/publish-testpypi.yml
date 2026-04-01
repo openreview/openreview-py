@@ -9,10 +9,10 @@
 name: Upload Python Package
 
 on:
+  release:
+    types: [published]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  # Allows other workflows to call this workflow
-  workflow_call:
 
 permissions:
   contents: read
