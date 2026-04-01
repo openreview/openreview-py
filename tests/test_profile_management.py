@@ -81,7 +81,7 @@ class TestProfileManagement():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         note = test_client_v2.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
@@ -92,6 +92,7 @@ class TestProfileManagement():
         assert 'venue' in note.content
         assert 'venueid' in note.content
         assert 'html' in note.content
+        assert note.external_ids is None
 
         andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com')
 
@@ -137,7 +138,7 @@ class TestProfileManagement():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         note = andrew_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
@@ -161,6 +162,7 @@ class TestProfileManagement():
             "",
             "~Andrew_McCallum1"
         ]
+        assert note.external_ids is None
 
         haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu')
 
@@ -465,7 +467,7 @@ class TestProfileManagement():
         assert 'html' in note.content
         assert 'abstract' not in note.content
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com', dblp_url='https://dblp.org/pid/m/AndrewMcCallum')
 
@@ -515,7 +517,7 @@ class TestProfileManagement():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         note = andrew_client.get_note(edit['note']['id'])
 
@@ -608,8 +610,7 @@ class TestProfileManagement():
             {"fullname": "Xukun Liu", "username": ""},
             {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
         ]
-        assert 'authorids' in notes[0].content
-        assert 'value' not in notes[0].content['authorids']
+        assert 'authorids' not in notes[0].content
 
 
     @pytest.mark.skip(reason="Skipping this test until we decide to enable comments")
