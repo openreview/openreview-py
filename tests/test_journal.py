@@ -6264,7 +6264,7 @@ note={Expert Certification}
                 }
             ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'], process_index=1)
 
         submission_id = submission_note['note']['id']
 
@@ -6278,6 +6278,9 @@ The following authors are blocked from submitting to TMLR:
 
 Please review their submission and take appropriate action.
 Link: https://openreview.net/forum?id={submission_id}
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         messages = openreview_client.get_messages(to='raia@mail.com', subject = '[TMLR] Submission by a blocked author received, titled Paper title')
@@ -6290,4 +6293,7 @@ The following authors are blocked from submitting to TMLR:
 
 Please review their submission and take appropriate action.
 Link: https://openreview.net/forum?id={submission_id}
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''

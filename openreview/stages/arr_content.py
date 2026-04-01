@@ -1,6 +1,8 @@
 from copy import deepcopy
 from datetime import datetime
 
+arr_metareview_recommendation_field = 'overall_assessment'
+
 arr_tracks = [
     "Clinical and Biomedical Applications",
     "Computational Social Science and Cultural Analytics",
@@ -16,12 +18,9 @@ arr_tracks = [
     "Language Modeling",
     "LLM agents",
     "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-    "LLM Efficiency",
-    "Low-resource Methods for NLP",
     "Machine Learning for NLP",
     "Machine Translation",
-    "Mathematical, Symbolic, Neurosymbolic, and Logical Reasoning",
-    "Multilinguality and Language Diversity",
+    "Multilingualism and Cross-Lingual NLP",
     "Multimodality and Language Grounding to Vision, Robotics and Beyond",
     "NLP and Code Models",
     "NLP and Symbolic Reasoning",
@@ -29,13 +28,12 @@ arr_tracks = [
     "Phonology, Morphology and Word Segmentation",
     "Question Answering",
     "Resources and Evaluation",
-    "Retrieval-Augmented Language Models",
-    "Safety and Alignment in LLMs",
-    "Semantics: Lexical, Sentence-level Semantics, Textual Inference and Other areas",
+    "Semantics: Lexical and Sentence-Level",
     "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-    "Speech Processing and Spoken Language Understanding",
-    "Special Theme (conference specific)",
-    "Summarization"
+    "Summarization",
+    "Speech Recognition, Text-to-Speech and Spoken Language Understanding",
+    "Syntax: Tagging, Chunking and Parsing",
+    "Special Theme (conference specific)"
 ]
 
 arr_submission_content = {
