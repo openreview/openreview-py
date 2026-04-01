@@ -36,6 +36,6 @@ async function process(client, edit, invitation) {
       }
     });
   } catch (error) {
-    console.log('Error during data extraction or posting note edit: ', error);
+    console.log(`Error during data extraction or posting note edit: ${error}`);
   }
 }
