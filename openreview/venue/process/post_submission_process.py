@@ -44,7 +44,7 @@ def process(client, invitation):
     ## Release the submissions to specified readers if venueid is still submission
     all_submissions = client.get_all_notes(invitation=submission_id, sort='number:asc', domain=venue_id)
 
-    filtered_submissions = [paper for paper in all_submissions if openreview.tools.should_match_invitation_source(client, invitation, paper)]
+    filtered_submissions = [paper for paper in all_submissions if openreview.tools.should_match_invitation_source(client, invitation, paper, domain=domain)]
 
     if not filtered_submissions:
         print('No submissions were updated since there are no active submissions')

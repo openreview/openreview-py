@@ -146,8 +146,7 @@ def process(client, edit, invitation):
             'name': { 'value': 'Author_Reviews_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5.1) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'from_email': { 'value': from_email },
-            'message_reply_to': { 'value': note.content['contact_email']['value'] },
+            'from_email': { 'value': from_email }
         }
     )
 
@@ -209,8 +208,7 @@ def process(client, edit, invitation):
             'name': { 'value': 'Author_Decision_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'from_email': { 'value': from_email },
-            'message_reply_to': { 'value': note.content['contact_email']['value'] }
+            'from_email': { 'value': from_email }
         }
     )
 
