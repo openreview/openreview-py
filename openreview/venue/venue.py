@@ -1903,26 +1903,6 @@ OpenReview Team'''
                     external_paper_committee_id=paper_reviewer_invited_id.replace('/Invited', '').replace('{number}', str(submission.number))
                     client.add_members_to_group(external_paper_committee_id, edge.tail)
 
-                if assigment_label:
-                    instructions=f'The {short_phrase} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.'
-                else:
-                    instructions=f'Please go to the {short_phrase} Reviewers Console and check your pending tasks: https://openreview.net/group?id={reviewers_id}'
-
-                print('send confirmation email')
-                ## Send email to reviewer
-                subject=f'[{short_phrase}] {reviewer_name} Assignment confirmed for paper {submission.number}'
-                message =f'''Hi {{{{fullname}}}},
-Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
-
-{instructions}
-
-If you would like to change your decision, please click the Decline link in the previous invitation email.
-
-OpenReview Team'''
-
-                ## - Send email
-                response = client.post_message(subject, [edge.tail], message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id, replyTo=venue_group.content['contact']['value'], sender=venue_group.content['message_sender']['value'])
-
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}'
                 message =f'''Hi {{{{fullname}}}},
