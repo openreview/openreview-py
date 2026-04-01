@@ -1359,7 +1359,7 @@ note={Withdrawn}
         helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=2)
 
         ## Check preferred emails
-        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 13
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 16
 
         ## David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -6238,7 +6238,7 @@ note={Expert Certification}
         helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=3)
 
         ## Check preferred emails
-        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 17        
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 20
         
         note = openreview_client.get_note(note_id_14)
         journal.invitation_builder.expire_paper_invitations(note)
