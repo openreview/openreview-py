@@ -6269,25 +6269,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert report_evaluation_invitation.edit['note']['replyto'] == review_issue_note.id
         assert report_evaluation_invitation.edit['note']['content']['justified_issues']['value']['param']['enum'] == expected_issue_options
 
-        ac_client = None
-        ac_signature = None
-        for email, profile_id in [
-            ('ac1@aclrollingreview.com', '~AC_ARROne1'),
-            ('ac2@aclrollingreview.com', '~AC_ARRTwo1'),
-            ('ac3@aclrollingreview.com', '~AC_ARRThree1')
-        ]:
-            current_ac_client = openreview.api.OpenReviewClient(username=email, password=helpers.strong_password)
-            anon_groups = current_ac_client.get_groups(
-                prefix='aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chair_',
-                signatory=profile_id
-            )
-            if anon_groups:
-                ac_client = current_ac_client
-                ac_signature = anon_groups[0].id
-                break
-
-        assert ac_client
-        assert ac_signature
+        ac_client = openreview.api.OpenReviewClient(username='ac2@aclrollingreview.com', password=helpers.strong_password)
+        anon_groups = ac_client.get_groups(
+            prefix='aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chair_',
+            signatory='~AC_ARRTwo1'
+        )
+        ac_signature = anon_groups[0].id
 
         report_evaluation_edit = ac_client.post_note_edit(
             invitation=report_evaluation_invitation_id,
