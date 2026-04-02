@@ -322,8 +322,10 @@ class TestReviewersOnly():
             'ABCD.cc/2025/Conference/Program_Committee',
             'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Authors'
         ]
+        assert post_submission_inv.content['source']['value']['venueid'] == 'ABCD.cc/2025/Conference/Submission'
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        assert invitation and invitation.content['source']['value']['venueid'] == 'ABCD.cc/2025/Conference/Submission'
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Restrict_Field_Visibility')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review_Release')
@@ -1064,7 +1066,7 @@ For more details, please check the following links:
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Program_Committee')]
         assert len(reviewer_groups) == 10
 
-         # hide data_release from reviewers
+        # hide data_release from reviewers
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
@@ -1103,7 +1105,6 @@ For more details, please check the following links:
 
         desk_rejection_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Desk_Rejection')
         assert len(desk_rejection_invitations) == 10
-
 
         ## test message all authors
         pc_client.post_message(
@@ -1522,6 +1523,20 @@ For more details, please check the following links:
             helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
     def test_review_stage(self, openreview_client, helpers):
+
+        # manually mark a submission as rejected, make sure it is ignored by Submission_Change_Before_Reviewing
+        submission = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', number=10)[0]
+        openreview_client.post_note_edit(
+            invitation='ABCD.cc/2025/Conference/-/Edit',
+            signatures=['ABCD.cc/2025/Conference'],
+            note=openreview.api.Note(
+                id=submission.id,
+                content={
+                    'venueid': { 'value': 'ABCD.cc/2025/Conference/Rejected_Submission' },
+                    'venue': { 'value': 'Submitted to ABCD 2025' }
+                }
+            )
+        )
         
         now = datetime.datetime.now()
         # manually trigger Submission_Chage_Before_Reviewing
@@ -1542,6 +1557,10 @@ For more details, please check the following links:
         assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
         assert not 'readers' in submissions[0].content['pdf']
         assert submissions[0].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+
+        # submission #10 still has previous readers
+        assert submissions[-1].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Program_Committee', 'ABCD.cc/2025/Conference/Submission10/Authors']
+        assert submissions[-1].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission10/Authors']
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
@@ -1880,6 +1899,7 @@ For more details, please check the following links:
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Comment-0-1', count=3)
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Official_Comment')
+        # these get created only for all papers since we added source now
         assert len(invitations) == 10
         inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/Submission1/-/Official_Comment')
 
@@ -2067,6 +2087,7 @@ To view this paper, please go to https://openreview.net/forum?id={submissions[0]
 
 Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
 '''
+        assert messages[0]['content']['replyTo'] == 'abcd2025.programchairs@gmail.com'
 
     def test_rebuttal_stage(self, openreview_client, test_client, helpers):
 
@@ -2153,7 +2174,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Rebuttal-0-1', count=3)
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Author_Rebuttal')
-        assert len(invitations) == 10
+        assert len(invitations) == 9
 
         invitation  = openreview_client.get_invitation('ABCD.cc/2025/Conference/Submission1/-/Author_Rebuttal')
         assert invitation and invitation.edit['readers'] == [
@@ -2301,6 +2322,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference/Program_Chairs'
         ]
         assert decision[0].nonreaders == ['ABCD.cc/2025/Conference/Submission1/Authors']
+
+        assert not openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission10/-/Decision', sort='number:asc')
 
         decision_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Decision_Release')
         assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
@@ -2529,9 +2552,10 @@ year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[1].id+'''}
 }'''
 
+        # submissio #10 is ignored by Submission Release because its venueid is not active
         assert submissions[-1].readers == [
             'ABCD.cc/2025/Conference',
-            'ABCD.cc/2025/Conference/Submission10/Program_Committee',
+            'ABCD.cc/2025/Conference/Program_Committee',
             'ABCD.cc/2025/Conference/Submission10/Authors'
         ]
         assert not submissions[-1].pdate
@@ -2539,8 +2563,6 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission10/Authors'
         ]
-        assert submissions[-1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
-        assert submissions[-1].content['venue']['value'] == 'ABCD 2025 Conference Submission'
         assert '_bibtex' not in submissions[-1].content
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')

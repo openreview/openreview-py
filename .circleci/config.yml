@@ -362,18 +362,12 @@ jobs:
             fi
       - copy-logs-on-failure
       - store-test-artifacts
-  deploy:
+  deploy-dev:
     working_directory: ~/openreview-py-repo
     docker:
       - image: cimg/python:3.11.0
     steps:
       - checkout
-      - run:
-          name: Deploy to pip
-          command: |
-            pip install build twine
-            python -m build --wheel
-            twine upload dist/* --skip-existing
       - run:
           name: Deploy to dev instance
           command: |
@@ -394,7 +388,7 @@ workflows:
           requires:
             - build-pr-tests
           python-version: "3.10"
-      - deploy:
+      - deploy-dev:
           requires:
             - build
           filters:
