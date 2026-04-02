@@ -157,20 +157,18 @@ return {
 
       return reviewersWithEmergencyDeclaration.size;
       `,
-      allEmergencyDeclarationCount: `
+      areaChairEmergencyDeclarationCount: `
       const replies = row.note?.details?.replies ?? [];
-      const reviewers = row.reviewers ?? [];
       const areaChairs = row.metaReviewData?.areaChairs ?? [];
-      const participants = [...reviewers, ...areaChairs];
-      const signatureToParticipantIndex = new Map();
-      const participantsWithEmergencyDeclaration = new Set();
+      const signatureToAreaChairIndex = new Map();
+      const areaChairsWithEmergencyDeclaration = new Set();
 
-      participants.forEach((participant, participantIndex) => {
-        if (participant?.anonymizedGroup) {
-          signatureToParticipantIndex.set(participant.anonymizedGroup, participantIndex);
+      areaChairs.forEach((areaChair, areaChairIndex) => {
+        if (areaChair?.anonymizedGroup) {
+          signatureToAreaChairIndex.set(areaChair.anonymizedGroup, areaChairIndex);
         }
-        if (participant?.preferredId) {
-          signatureToParticipantIndex.set(participant.preferredId, participantIndex);
+        if (areaChair?.preferredId) {
+          signatureToAreaChairIndex.set(areaChair.preferredId, areaChairIndex);
         }
       });
 
@@ -178,14 +176,14 @@ return {
         const replySignature = reply?.signatures?.[0];
         const isEmergencyDeclaration = (reply?.invitations ?? []).some(invitation => invitation.includes('Emergency_Declaration'));
 
-        if (!isEmergencyDeclaration || !signatureToParticipantIndex.has(replySignature)) {
+        if (!isEmergencyDeclaration || !signatureToAreaChairIndex.has(replySignature)) {
           return;
         }
 
-        participantsWithEmergencyDeclaration.add(signatureToParticipantIndex.get(replySignature));
+        areaChairsWithEmergencyDeclaration.add(signatureToAreaChairIndex.get(replySignature));
       });
 
-      return participantsWithEmergencyDeclaration.size;
+      return areaChairsWithEmergencyDeclaration.size;
       `,
       reviewerDelayNotificationCount: `
       const replies = row.note?.details?.replies ?? [];
@@ -215,20 +213,18 @@ return {
 
       return reviewersWithDelayNotification.size;
       `,
-      allDelayNotificationCount: `
+      areaChairDelayNotificationCount: `
       const replies = row.note?.details?.replies ?? [];
-      const reviewers = row.reviewers ?? [];
       const areaChairs = row.metaReviewData?.areaChairs ?? [];
-      const participants = [...reviewers, ...areaChairs];
-      const signatureToParticipantIndex = new Map();
-      const participantsWithDelayNotification = new Set();
+      const signatureToAreaChairIndex = new Map();
+      const areaChairsWithDelayNotification = new Set();
 
-      participants.forEach((participant, participantIndex) => {
-        if (participant?.anonymizedGroup) {
-          signatureToParticipantIndex.set(participant.anonymizedGroup, participantIndex);
+      areaChairs.forEach((areaChair, areaChairIndex) => {
+        if (areaChair?.anonymizedGroup) {
+          signatureToAreaChairIndex.set(areaChair.anonymizedGroup, areaChairIndex);
         }
-        if (participant?.preferredId) {
-          signatureToParticipantIndex.set(participant.preferredId, participantIndex);
+        if (areaChair?.preferredId) {
+          signatureToAreaChairIndex.set(areaChair.preferredId, areaChairIndex);
         }
       });
 
@@ -236,14 +232,14 @@ return {
         const replySignature = reply?.signatures?.[0];
         const isDelayNotification = (reply?.invitations ?? []).some(invitation => invitation.includes('Delay_Notification'));
 
-        if (!isDelayNotification || !signatureToParticipantIndex.has(replySignature)) {
+        if (!isDelayNotification || !signatureToAreaChairIndex.has(replySignature)) {
           return;
         }
 
-        participantsWithDelayNotification.add(signatureToParticipantIndex.get(replySignature));
+        areaChairsWithDelayNotification.add(signatureToAreaChairIndex.get(replySignature));
       });
 
-      return participantsWithDelayNotification.size;
+      return areaChairsWithDelayNotification.size;
       `,
       assignedReviewersAfterEmergencyDeclarationsCount: `
       const replies = row.note?.details?.replies ?? [];

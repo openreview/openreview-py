@@ -6514,6 +6514,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatory='~AC_ARROne1'
         )
         assert len(submission2_area_chair_anon_groups) == 1
+        submission2_area_chair_anon_id = submission2_area_chair_anon_groups[0].id
         assert openreview_client.get_group(
             f'{venue_id}/Submission{submission_number}/Senior_Area_Chairs'
         ).members == ['~SAC_ARRTwo1']
@@ -6533,6 +6534,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             for reply in submission.details['replies']
             if any('Emergency_Declaration' in invitation for invitation in reply['invitations'])
         ] == [submission2_reviewer_one_anon_id]
+        assert [
+            reply['signatures'][0]
+            for reply in submission.details['replies']
+            if any('Delay_Notification' in invitation for invitation in reply['invitations'])
+            and reply['signatures'][0] == submission2_area_chair_anon_id
+        ] == []
+        assert [
+            reply['signatures'][0]
+            for reply in submission.details['replies']
+            if any('Emergency_Declaration' in invitation for invitation in reply['invitations'])
+            and reply['signatures'][0] == submission2_area_chair_anon_id
+        ] == []
         assert pc_client.get_notes(invitation=f'{venue_id}/Submission{submission_number}/-/Official_Review') == []
 
         assert openreview_client.get_group(
@@ -6577,6 +6590,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatory='~AC_ARRTwo1'
         )
         assert len(submission3_area_chair_anon_groups) == 1
+        submission3_area_chair_anon_id = submission3_area_chair_anon_groups[0].id
         assert openreview_client.get_group(
             f'{venue_id}/Submission3/Senior_Area_Chairs'
         ).members == ['~SAC_ARRTwo1']
@@ -6594,6 +6608,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             reply['signatures'][0]
             for reply in submission.details['replies']
             if any('Emergency_Declaration' in invitation for invitation in reply['invitations'])
+        ] == []
+        assert [
+            reply['signatures'][0]
+            for reply in submission.details['replies']
+            if any('Delay_Notification' in invitation for invitation in reply['invitations'])
+            and reply['signatures'][0] == submission3_area_chair_anon_id
+        ] == []
+        assert [
+            reply['signatures'][0]
+            for reply in submission.details['replies']
+            if any('Emergency_Declaration' in invitation for invitation in reply['invitations'])
+            and reply['signatures'][0] == submission3_area_chair_anon_id
         ] == []
         assert [
             note.signatures[0]
@@ -6620,7 +6646,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert_submission_query(
             f'{venue_id}/Program_Chairs',
             pc_console_client,
+            '+number=2 AND areaChairEmergencyDeclarationCount=0',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
             '+number=2 AND reviewerDelayNotificationCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=2 AND areaChairDelayNotificationCount=0',
             [2]
         )
         assert_submission_query(
@@ -6638,13 +6676,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert_submission_query(
             f'{venue_id}/Program_Chairs',
             pc_console_client,
-            '+number=2 AND reviewerEmergencyDeclarationCount=1 AND reviewerDelayNotificationCount=1 AND assignedReviewersMinusEmergencyDeclarationsCount=1 AND completedReviewsPlusDelayNotificationsCount=1',
+            '+number=2 AND reviewerEmergencyDeclarationCount=1 AND areaChairEmergencyDeclarationCount=0 AND reviewerDelayNotificationCount=1 AND areaChairDelayNotificationCount=0 AND assignedReviewersMinusEmergencyDeclarationsCount=1 AND completedReviewsPlusDelayNotificationsCount=1',
             [2]
         )
         assert_submission_query(
             f'{venue_id}/Program_Chairs',
             pc_console_client,
-            '+number=3 AND reviewerEmergencyDeclarationCount=0 AND reviewerDelayNotificationCount=0 AND assignedReviewersMinusEmergencyDeclarationsCount=1 AND completedReviewsPlusDelayNotificationsCount=1',
+            '+number=3 AND reviewerEmergencyDeclarationCount=0 AND areaChairEmergencyDeclarationCount=0 AND reviewerDelayNotificationCount=0 AND areaChairDelayNotificationCount=0 AND assignedReviewersMinusEmergencyDeclarationsCount=1 AND completedReviewsPlusDelayNotificationsCount=1',
             [3]
         )
         assert_submission_query(
@@ -6656,7 +6694,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert_submission_query(
             f'{venue_id}/Senior_Area_Chairs',
             sac_console_client,
-            '+number=2 AND allEmergencyDeclarationCount=1',
+            '+number=2 AND areaChairEmergencyDeclarationCount=0',
             [2]
         )
         assert_submission_query(
@@ -6668,7 +6706,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert_submission_query(
             f'{venue_id}/Senior_Area_Chairs',
             sac_console_client,
-            '+number=2 AND allDelayNotificationCount=1',
+            '+number=2 AND areaChairDelayNotificationCount=0',
             [2]
         )
         assert_submission_query(
@@ -6686,13 +6724,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert_submission_query(
             f'{venue_id}/Senior_Area_Chairs',
             sac_console_client,
-            '+number=2 AND reviewerEmergencyDeclarationCount=1 AND allEmergencyDeclarationCount=1 AND reviewerDelayNotificationCount=1 AND allDelayNotificationCount=1 AND assignedReviewersAfterEmergencyDeclarationsCount=1 AND completedReviewsOrDelayNotificationsCount=1',
+            '+number=2 AND reviewerEmergencyDeclarationCount=1 AND areaChairEmergencyDeclarationCount=0 AND reviewerDelayNotificationCount=1 AND areaChairDelayNotificationCount=0 AND assignedReviewersAfterEmergencyDeclarationsCount=1 AND completedReviewsOrDelayNotificationsCount=1',
             [2]
         )
         assert_submission_query(
             f'{venue_id}/Senior_Area_Chairs',
             sac_console_client,
-            '+number=3 AND reviewerEmergencyDeclarationCount=0 AND allEmergencyDeclarationCount=0 AND reviewerDelayNotificationCount=0 AND allDelayNotificationCount=0 AND assignedReviewersAfterEmergencyDeclarationsCount=1 AND completedReviewsOrDelayNotificationsCount=1',
+            '+number=3 AND reviewerEmergencyDeclarationCount=0 AND areaChairEmergencyDeclarationCount=0 AND reviewerDelayNotificationCount=0 AND areaChairDelayNotificationCount=0 AND assignedReviewersAfterEmergencyDeclarationsCount=1 AND completedReviewsOrDelayNotificationsCount=1',
             [3]
         )
     
