@@ -24,6 +24,7 @@ def process(client, edit, invitation):
         if blocked_authors:
             client.post_message(
                 invitation=journal.get_meta_invitation_id(),
+                signature=journal.venue_id,
                 recipients=[journal.get_editors_in_chief_id()],
                 subject=f'''[{journal.short_name}] Submission by a blocked author received, titled {submission.content['title']['value']}''',
                 message=f'''Hi {{{{fullname}}}},
@@ -34,6 +35,8 @@ The following authors are blocked from submitting to {journal.short_name}:
 
 Please review their submission and take appropriate action.
 Link: https://openreview.net/forum?id={submission.id}
-'''
+''',
+                replyTo=journal.contact_info,
+                sender=journal.get_message_sender()
             )
     

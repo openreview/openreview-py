@@ -24,6 +24,7 @@ To view the comment, click here: https://openreview.net/forum?id={forum_note.id}
 
         client.post_message(
             invitation=f'{support_user}/-/Edit',
+            signature=support_user,
             recipients=comment.readers,
             ignoreRecipients = [support_user],
             subject=f'''Your venue, {forum_note.content['abbreviated_venue_name']['value']}, is available in OpenReview''',
@@ -36,6 +37,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
     else:
         client.post_message(
             invitation=f'{support_user}/-/Edit',
+            signature=support_user,
             recipients=comment.readers,
             ignoreRecipients = [support_user],
             subject=f'''Comment posted to your request for service: {forum_note.content['title']['value']}''',
@@ -65,6 +67,7 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
             
         client.post_message(
             invitation=f'{support_user}/-/Edit',
+            signature=support_user,
             recipients=[f'{support_user}/Recipients'],
             subject=subject,
             message=message
