@@ -19,22 +19,14 @@ services:
       pod:
         condition: service_healthy
     healthcheck:
-      test: mongosh --eval "db.adminCommand('ping')" --quiet
+      test: >
+        mongosh --quiet --eval "
+          try { rs.status().ok && 1 }
+          catch(e) { rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]}); sleep(2000); rs.status().ok && 1 }
+        "
       interval: 5s
-      timeout: 5s
+      timeout: 10s
       retries: 10
-
-  mongo-init:
-    image: mongo:8.0
-    network_mode: "service:pod"
-    depends_on:
-      mongo:
-        condition: service_healthy
-    restart: "no"
-    entrypoint:
-      - mongosh
-      - --eval
-      - "try { rs.status() } catch(e) { rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]}) }"
 
   redis:
     image: redis:7.2
@@ -71,8 +63,8 @@ services:
       dockerfile: Dockerfile.api
     network_mode: "service:pod"
     depends_on:
-      mongo-init:
-        condition: service_completed_successfully
+      mongo:
+        condition: service_healthy
       redis:
         condition: service_healthy
       elasticsearch:
@@ -88,7 +80,7 @@ services:
       - /mnt/src/.git
       - /mnt/openreview-py/.git
     healthcheck:
-      test: wget -qO- http://localhost:3000 || exit 1
+      test: wget -qS --spider http://localhost:3000 2>&1 | grep -q "HTTP/" || exit 1
       interval: 10s
       timeout: 5s
       retries: 30
@@ -114,7 +106,7 @@ services:
       - /mnt/src/.git
       - /mnt/openreview-py/.git
     healthcheck:
-      test: wget -qO- http://localhost:3001 || exit 1
+      test: wget -qS --spider http://localhost:3001 2>&1 | grep -q "HTTP/" || exit 1
       interval: 10s
       timeout: 5s
       retries: 30
@@ -135,7 +127,6 @@ services:
       - ../../openreview-web:/mnt/src:ro
       - ./scripts:/docker/scripts:ro
       - web-node-modules:/app/node_modules
-      - web-next-build:/app/.next
     tmpfs:
       - /mnt/src/.git
     healthcheck:
@@ -168,4 +159,3 @@ volumes:
   api-v1-node-modules:
   api-v2-node-modules:
   web-node-modules:
-  web-next-build:

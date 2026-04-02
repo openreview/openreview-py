@@ -17,16 +17,10 @@ if [ "$LOCK_HASH" != "$CACHED_HASH" ]; then
     echo "=== Installing npm dependencies ==="
     npm ci
     echo "$LOCK_HASH" > /app/node_modules/.lock-hash
-    # Rebuild .next when deps change
-    echo "=== Building Next.js ==="
-    NODE_ENV=production SUPER_USER=openreview.net npm run build
-elif [ ! -d /app/.next ]; then
-    echo "=== Building Next.js ==="
-    NODE_ENV=production SUPER_USER=openreview.net npm run build
 else
-    echo "=== Using cached Next.js build ==="
+    echo "=== npm dependencies up to date, skipping install ==="
 fi
 
-echo "=== Starting web server ==="
+echo "=== Starting web dev server ==="
 export NEXT_PORT=3030
-NODE_ENV=production SUPER_USER=openreview.net exec npm run start
+SUPER_USER=openreview.net exec npm run dev

@@ -10,8 +10,10 @@ rsync -a --exclude='.git' --exclude='node_modules' --exclude='logs' \
 mkdir -p /app/logs /app/files/attachments /app/files/pdfs /app/files/temp
 
 # Install openreview-py (needed by PythonShell in setup scripts)
+# Copy to writable temp dir since source is mounted read-only
 echo "=== Installing openreview-py ==="
-pip3 install --break-system-packages -q /mnt/openreview-py
+rsync -a --exclude='.git' --exclude='__pycache__' --exclude='*.egg-info' /mnt/openreview-py/ /tmp/openreview-py/
+pip3 install --break-system-packages -q /tmp/openreview-py
 
 # npm install with caching (skip if package-lock.json unchanged)
 LOCK_HASH=$(md5sum /app/package-lock.json | cut -d' ' -f1)
