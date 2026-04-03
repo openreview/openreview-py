@@ -154,7 +154,7 @@ class TestAbstractDeadline():
                 invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission/Dates',
                 content={
                     'activation_date': { 'value': submission_inv.cdate },
-                    'due_date': { 'value': {"delete": True} }
+                    'due_date': { 'value': None }
                 }
             )
 
