@@ -24,11 +24,6 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
-    client_v1 = openreview.Client(
-        baseurl=openreview.tools.get_base_urls(client)[0],
-        token=client.token
-    )
-
     def get_paper_authors_group_id(number):
         return f"{venue_id}/{submission_name}{number}/{authors_name}"
 
@@ -43,35 +38,21 @@ def process(client, invitation):
             readers.append(get_paper_authors_group_id(number))
         return readers
 
-    def get_explanation_of_revisions_readers(submission):
-        """
-        Always replace current-cycle Reviewers with Reviewers/Submitted for this field
+    def get_submission_reviewers_group_id(submission):
+        reviewer_group_id = f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}"
+        wants_new_reviewers = submission.content.get('reassignment_request_reviewers', {}).get('value', '').startswith('Yes')
+        if wants_new_reviewers:
+            reviewer_group_id = f"{reviewer_group_id}/{reviewers_submitted_name}"
+        return reviewer_group_id
 
-        If previous_URL exists and author doesn't want new reviewers:
-          include previous-cycle Reviewers/Submitted
-        """
+    def get_explanation_of_revisions_readers(submission):
         readers = [
             program_chairs_id,
             f"{venue_id}/{submission_name}{submission.number}/{senior_area_chairs_name}",
             f"{venue_id}/{submission_name}{submission.number}/{area_chairs_name}",
-            f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}/{reviewers_submitted_name}",
+            get_submission_reviewers_group_id(submission),
             get_paper_authors_group_id(submission.number)
         ]
-
-        paper_link = submission.content.get('previous_URL', {}).get('value')
-        wants_new_reviewers = submission.content.get('reassignment_request_reviewers', {}).get('value', '').startswith('Yes')
-
-        if paper_link and not wants_new_reviewers:
-            paper_forum = paper_link.split('?id=')[-1]
-            arr_submission_v1 = openreview.tools.get_note(client_v1, paper_forum)
-            if arr_submission_v1:
-                v1_domain = arr_submission_v1.invitation.split('/-/')[0]
-                readers.append(f"{v1_domain}/Paper{arr_submission_v1.number}/{reviewers_name}/{reviewers_submitted_name}")
-            arr_submission_v2 = openreview.tools.get_note(client, paper_forum)
-            if arr_submission_v2:
-                v2_domain = arr_submission_v2.domain
-                readers.append(f"{v2_domain}/{submission_name}{arr_submission_v2.number}/{reviewers_name}/{reviewers_submitted_name}")
-
         return readers
 
     def release_preprint_submission(submission):

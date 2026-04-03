@@ -2432,6 +2432,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note.content['authors']['value'].append('SAC ARROne')
                 note.content['authorids']['value'].append('~SAC_ARROne1')
 
+            if i == 4:
+                note.content['reassignment_request_reviewers']['value'] = 'No, I want the same set of reviewers from our previous submission (subject to their availability)'
+
             if i == 6: ## Remove resubmission information from content
                 del note.content['previous_URL']
                 del note.content['explanation_of_revisions_PDF']
@@ -2893,6 +2896,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
                 "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
             }
+
+        assert submissions[3].readers == ['everyone']
+        assert set(submissions[3].content['explanation_of_revisions_PDF']['readers']) == {
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission4/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission4/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        }
 
         assert submissions[5].readers is not None
         assert submissions[5].readers == ['everyone']
