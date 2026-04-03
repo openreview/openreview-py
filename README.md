@@ -98,7 +98,7 @@ cd docker
 docker compose run --build --rm test
 
 # Run a specific test file
-docker compose run --build --rm test tests/test_double_blind_conference.py
+docker compose run --build --rm test tests/test_client.py
 
 # Run a specific test
 docker compose run --build --rm test tests/test_client.py::TestClient::test_get_groups -v
@@ -172,5 +172,5 @@ pytest
 To run a single set of tests from a file, you can include the file name as an argument. For example:
 
 ```bash
-pytest tests/test_double_blind_conference.py
+pytest tests/test_client.py
 ```
