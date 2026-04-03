@@ -89,19 +89,19 @@ The easiest way to run the integration tests is with Docker Compose. This requir
 └── openreview-py         # this repo
 ```
 
-Then run tests from the `docker/` directory:
+Then run tests using the `run-tests.sh` script:
 
 ```bash
 cd docker
 
 # Run all tests
-docker compose run --build --rm test
+./run-tests.sh
 
 # Run a specific test file
-docker compose run --build --rm test tests/test_client.py
+./run-tests.sh tests/test_client.py
 
 # Run a specific test
-docker compose run --build --rm test tests/test_client.py::TestClient::test_get_groups -v
+./run-tests.sh tests/test_client.py::TestClient::test_get_groups -v
 
 # Tear down services (keep volumes for faster next run)
 docker compose down
@@ -110,9 +110,9 @@ docker compose down
 docker compose down -v
 ```
 
-Docker Compose starts MongoDB, Redis, Elasticsearch, both API servers, and the web frontend automatically. All services share a network namespace so `localhost` works everywhere, reusing the same `circleci.json` configs used in CI.
+The script starts infrastructure services (MongoDB, Redis, Elasticsearch, web frontend) once and keeps them running. Each test run restarts only the API servers — which cleans the database and recreates the necessary objects via `npm run cleanStart`. All services share a network namespace so `localhost` works everywhere, reusing the same `circleci.json` configs used in CI.
 
-> Note: The first run takes several minutes to pull images and install dependencies. Subsequent runs are much faster thanks to cached named volumes for `node_modules`.
+> Note: The first run takes several minutes to pull images and install dependencies. Subsequent runs are much faster thanks to cached named volumes for `node_modules` and Python virtual environments.
 
 Run Tests Locally
 -----------------

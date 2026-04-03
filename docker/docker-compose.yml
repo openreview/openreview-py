@@ -76,6 +76,7 @@ services:
       - ../:/mnt/openreview-py:ro
       - ./scripts:/docker/scripts:ro
       - api-v1-node-modules:/app/node_modules
+      - api-v1-venv:/opt/venv
     tmpfs:
       - /mnt/src/.git
       - /mnt/openreview-py/.git
@@ -102,6 +103,7 @@ services:
       - ../:/mnt/openreview-py:ro
       - ./scripts:/docker/scripts:ro
       - api-v2-node-modules:/app/node_modules
+      - api-v2-venv:/opt/venv
     tmpfs:
       - /mnt/src/.git
       - /mnt/openreview-py/.git
@@ -150,6 +152,7 @@ services:
     volumes:
       - ../:/mnt/src:ro
       - ./scripts:/docker/scripts:ro
+      - test-venv:/opt/venv
     tmpfs:
       - /mnt/src/.git
     shm_size: 2g
@@ -157,5 +160,8 @@ services:
 
 volumes:
   api-v1-node-modules:
+  api-v1-venv:
   api-v2-node-modules:
+  api-v2-venv:
   web-node-modules:
+  test-venv:

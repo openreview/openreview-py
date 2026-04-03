@@ -9,11 +9,30 @@ rsync -a --exclude='.git' --exclude='node_modules' --exclude='logs' \
 # Create writable directories
 mkdir -p /app/logs /app/files/attachments /app/files/pdfs /app/files/temp
 
-# Install openreview-py (needed by PythonShell in setup scripts)
-# Copy to writable temp dir since source is mounted read-only
-echo "=== Installing openreview-py ==="
+# Install openreview-py into a persistent venv (needed by PythonShell)
+# Editable install: .py changes are picked up without reinstall.
+# Only runs full pip install when pyproject.toml changes (new deps).
+VENV=/opt/venv
 rsync -a --exclude='.git' --exclude='__pycache__' --exclude='*.egg-info' /mnt/openreview-py/ /tmp/openreview-py/
-pip3 install --break-system-packages -q /tmp/openreview-py
+
+if [ ! -f "$VENV/bin/activate" ]; then
+    python3 -m venv "$VENV"
+fi
+
+PY_HASH=$(md5sum /tmp/openreview-py/pyproject.toml | cut -d' ' -f1)
+CACHED_PY_HASH=""
+[ -f "$VENV/.hash" ] && CACHED_PY_HASH=$(cat "$VENV/.hash")
+if [ "$PY_HASH" != "$CACHED_PY_HASH" ]; then
+    echo "=== Installing openreview-py ==="
+    "$VENV/bin/pip" install -q -e /tmp/openreview-py
+    echo "$PY_HASH" > "$VENV/.hash"
+else
+    echo "=== openreview-py up to date, skipping install ==="
+fi
+
+# Make venv's python available to PythonShell
+export VIRTUAL_ENV="$VENV"
+export PATH="$VENV/bin:$PATH"
 
 # npm install with caching (skip if package-lock.json unchanged)
 LOCK_HASH=$(md5sum /app/package-lock.json | cut -d' ' -f1)
