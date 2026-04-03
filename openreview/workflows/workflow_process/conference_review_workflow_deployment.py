@@ -146,14 +146,30 @@ def process(client, edit, invitation):
             'name': { 'value': 'Author_Reviews_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5.1) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'from_email': { 'value': from_email },
-            'message_reply_to': { 'value': note.content['contact_email']['value'] },
+            'from_email': { 'value': from_email }
         }
     )
 
     venue.create_review_rebuttal_stage()
     if venue.meta_review_stage:
         venue.create_meta_review_stage()
+
+        client.post_invitation_edit(
+            invitations=f'{invitation_prefix}/-/Note_Release',
+            signatures=[invitation_prefix],
+            content={
+                'venue_id': { 'value': venue_id },
+                'name': { 'value': f'{venue.meta_review_stage.name}_Release' },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5.2) },
+                'submission_name': { 'value': 'Submission' },
+                'stage_name': { 'value': 'Meta_Review' },
+                'reviewers_name': { 'value': reviewers_name },
+                'authors_name': { 'value': authors_name },
+                'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
+                'description': { 'value': 'This step runs automatically at its "activation date", and releases meta reviews to the specified readers.' }
+            },
+            await_process=True
+        )
     venue.create_decision_stage()
 
     client.post_invitation_edit(
@@ -192,8 +208,7 @@ def process(client, edit, invitation):
             'name': { 'value': 'Author_Decision_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'from_email': { 'value': from_email },
-            'message_reply_to': { 'value': note.content['contact_email']['value'] }
+            'from_email': { 'value': from_email }
         }
     )
 

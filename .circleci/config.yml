@@ -42,7 +42,7 @@ commands:
       - run:
           name: Install openreview-py
           command: |
-            pip install ~/openreview-py-repo
+            pip install -c ~/openreview-py-repo/requirements.txt ~/openreview-py-repo
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
@@ -176,7 +176,7 @@ commands:
           command: |
             cd ~/openreview-py-repo
             mkdir -p test-reports
-            pip install -e '.[test]'
+            pip install -c requirements-dev.txt -e '.[test]'
 
   copy-logs-on-failure:
     description: "Copy API logs to artifacts on failure"
@@ -254,8 +254,14 @@ jobs:
             # Write the modified tests to a file for subsequent steps
             echo "$MODIFIED_TESTS" > /tmp/modified_tests.txt
             
+            FILE_COUNT=$(echo "$MODIFIED_TESTS" | grep -c . || true)
+
             if [ -z "$MODIFIED_TESTS" ]; then
               echo "No test files were modified in this PR. Skipping PR-specific tests."
+              echo "skip" > /tmp/skip_pr_tests.txt
+            elif [ "$FILE_COUNT" -gt 3 ]; then
+              echo "Too many modified test files ($FILE_COUNT). Deferring to full build job."
+              echo "$MODIFIED_TESTS"
               echo "skip" > /tmp/skip_pr_tests.txt
             else
               echo "Modified test files found:"
@@ -356,18 +362,12 @@ jobs:
             fi
       - copy-logs-on-failure
       - store-test-artifacts
-  deploy:
+  deploy-dev:
     working_directory: ~/openreview-py-repo
     docker:
       - image: cimg/python:3.11.0
     steps:
       - checkout
-      - run:
-          name: Deploy to pip
-          command: |
-            pip install build twine
-            python -m build --wheel
-            twine upload dist/* --skip-existing
       - run:
           name: Deploy to dev instance
           command: |
@@ -388,7 +388,7 @@ workflows:
           requires:
             - build-pr-tests
           python-version: "3.10"
-      - deploy:
+      - deploy-dev:
           requires:
             - build
           filters:
