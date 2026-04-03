@@ -148,6 +148,16 @@ class TestAbstractDeadline():
 
         submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission')
 
+        with pytest.raises(openreview.OpenReviewException, match=r'The field due_date value cannot be empty or missing'):
+        # try to remove submission deadline, should not be allowed
+            edit = pc_client.post_invitation_edit(
+                invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission/Dates',
+                content={
+                    'activation_date': { 'value': submission_inv.cdate },
+                    'due_date': { 'value': None }
+                }
+            )
+
         # extend Submission duedate with Submission/Deadline invitation
         edit = pc_client.post_invitation_edit(
             invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission/Dates',
