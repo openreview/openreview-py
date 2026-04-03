@@ -4,10 +4,7 @@ import openreview
 
 class TestVenueDeployment():
 
-    def test_deploy_venue(self, openreview_client, helpers):
-
-        super_id = 'openreview.net'
-        support_group_id = super_id + '/Support'
+    def test_request_form_date_validation(self, openreview_client, helpers):
 
         helpers.create_user('programchair@venuedeployment.cc', 'ProgramChair', 'VenueDeployment')
         pc_client = openreview.api.OpenReviewClient(username='programchair@venuedeployment.cc', password=helpers.strong_password)
