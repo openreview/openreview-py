@@ -77,22 +77,63 @@ The openreview-py library can be used to easily access and modify any data store
 For more information, see [the official reference](https://openreview-py.readthedocs.io/en/latest/).
 You can also check the [OpenReview docs](https://docs.openreview.net/getting-started/using-the-api/installing-and-instantiating-the-python-client) for examples and How-To Guides
 
-Test Setup
-----------
+Run Tests with Docker (Recommended)
+------------------------------------
 
-Running the openreview-py test suite requires some initial setup. First, the OpenReview API V1, OpenReview API V2 and OpenReview Web frontend must be cloned and configured to run on ports 3000, 3001 and 3030 respectively. For more information on how to install and configure those services see the README for each project:
+The easiest way to run the integration tests is with Docker Compose. This requires [Docker](https://docs.docker.com/get-docker/) and that the following sibling repositories are cloned next to `openreview-py`:
+
+```bash
+├── openreview-api        # https://github.com/openreview/openreview-api
+├── openreview-api-v1     # https://github.com/openreview/openreview-api-v1
+├── openreview-web        # https://github.com/openreview/openreview-web
+└── openreview-py         # this repo
+```
+
+Then run tests from the `docker/` directory:
+
+```bash
+cd docker
+
+# Run all tests
+docker compose run --build --rm test
+
+# Run a specific test file
+docker compose run --build --rm test tests/test_double_blind_conference.py
+
+# Run a specific test
+docker compose run --build --rm test tests/test_client.py::TestClient::test_get_groups -v
+
+# Tear down services (keep volumes for faster next run)
+docker compose down
+
+# Full clean (remove volumes too)
+docker compose down -v
+```
+
+Docker Compose starts MongoDB, Redis, Elasticsearch, both API servers, and the web frontend automatically. All services share a network namespace so `localhost` works everywhere, reusing the same `circleci.json` configs used in CI.
+
+> Note: The first run takes several minutes to pull images and install dependencies. Subsequent runs are much faster thanks to cached named volumes for `node_modules`.
+
+Run Tests Locally
+-----------------
+
+To run tests without Docker, you need to manually start the required services.
+
+### Test Setup
+
+The OpenReview API V1, OpenReview API V2, and OpenReview Web frontend must be cloned and configured to run on ports 3000, 3001, and 3030 respectively. For more information on how to install and configure those services see the README for each project:
 
 - [OpenReview API V1](https://github.com/openreview/openreview-api-v1)
 - [OpenReview API V2](https://github.com/openreview/openreview-api)
 - [OpenReview Web](https://github.com/openreview/openreview-web)
 
-Next, install the package with test dependencies:
+Install the package with test dependencies:
 
 ```bash
 pip install -e ".[test]"
 ```
 
-Finally, you must download the proper Firefox Selenium driver for your OS [from GitHub](https://github.com/mozilla/geckodriver/releases), and place the `geckodriver` executable in the directory `openreview-py/tests/drivers`. When you are done your folder structure should look like this:
+Download the proper Firefox Selenium driver for your OS [from GitHub](https://github.com/mozilla/geckodriver/releases), and place the `geckodriver` executable in the directory `openreview-py/tests/drivers`. When you are done your folder structure should look like this:
 
 ```bash
 ├── openreview-py
@@ -102,10 +143,9 @@ Finally, you must download the proper Firefox Selenium driver for your OS [from 
 │   │   │    └── geckodriver
 ```
 
-Run Tests
----------
+### Running Tests
 
-Once the test setup above is complete you should be ready to run the test suite. To do so, start both OpenReview API versions running:
+Start both OpenReview API versions and the web frontend:
 
 Inside the OpenReview API V1 directory
 ```bash
