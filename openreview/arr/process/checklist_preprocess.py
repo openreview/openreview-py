@@ -12,12 +12,6 @@ def process(client, edit, invitation):
     'responsible_checklist': 'Responsible Checklist',
     'limitations': 'Limitations'
   }
-  if False in [note.content.get(field, {}).get('value', 'Yes') == 'Yes' for field in violation_fields]:
-    violated_fields = [format_field[field] for field in violation_fields if note.content.get(field, {}).get('value', 'Yes') == 'No']
-    potential_violation_justification = str(note.content.get('potential_violation_justification', {}).get('value', 'N/A')).strip()
-    if potential_violation_justification.lower().startswith('n/a') or len(potential_violation_justification) <= 0:
-      exception_string = f"You have indicated a potential violation with the following fields: {', '.join(violated_fields)}. Please enter a brief explanation under \"Potential Violation Justification\""
-      raise openreview.OpenReviewException(exception_string)
     
   needs_ethics_review = edit.note.content.get('need_ethics_review', {}).get('value', 'No') == 'Yes'
   if needs_ethics_review and 'N/A' in edit.note.content.get('ethics_review_justification', {}).get('value', 'N/A'):

@@ -4602,14 +4602,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         violation_fields = ['appropriateness', 'formatting', 'length', 'anonymity', 'responsible_checklist', 'limitations'] # TODO: move to domain or somewhere?
-        format_field = {
-            'appropriateness': 'Appropriateness',
-            'formatting': 'Formatting',
-            'length': 'Length',
-            'anonymity': 'Anonymity',
-            'responsible_checklist': 'Responsible Checklist',
-            'limitations': 'Limitations'
-        }
         only_required_fields = ['number_of_assignments', 'diversity']
 
         default_fields = {field: True for field in violation_fields + only_required_fields}
@@ -4706,9 +4698,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         }
         with pytest.raises(openreview.OpenReviewException, match=r'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging.'):
             post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', override_fields=force_justifications)
-        for field in violation_fields:
-            with pytest.raises(openreview.OpenReviewException, match=rf'You have indicated a potential violation with the following fields: {format_field[field]}. Please enter a brief explanation under \"Potential Violation Justification\"'):
-                post_checklist(user_client, checklist_inv, user, tested_field=field, override_fields=force_justifications)
                 
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
