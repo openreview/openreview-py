@@ -191,9 +191,7 @@ notes = client.get_notes(invitation='VenueID/-/Submission')
 
 # Get ALL notes (handles pagination automatically)
 all_notes = client.get_all_notes(invitation='VenueID/-/Submission')
-
-# Memory-efficient iterator for large result sets
-for note in openreview.tools.iterget_notes(client, invitation='VenueID/-/Submission'):
+for note in all_notes:
     print(note.content['title']['value'])
 ```
 
@@ -344,9 +342,11 @@ edge = client.post_edge(Edge(
 ### Post bulk edges
 
 ```python
+from openreview.api import Edge
+
 edges = []
 for paper_id, reviewer_id, score in affinity_scores:
-    edges.append(openreview.Edge(
+    edges.append(Edge(
         invitation='VenueID/Reviewers/-/Affinity_Score',
         readers=['VenueID', reviewer_id],
         writers=['VenueID'],
@@ -410,54 +410,50 @@ client.delete_edges(
 
 ---
 
-## Conference Workflow
+## Venue Workflow
 
-### Create venue via request form
+### Create venue via the new UI
 
 ```python
 import openreview
+from openreview.api import Note
 
-request_form = client.post_note(openreview.Note(
-    invitation='openreview.net/Support/-/Request_Form',
+# Step 1: PC submits venue request
+request = pc_client.post_note_edit(
+    invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow',
     signatures=['~PC_Name1'],
-    readers=['openreview.net/Support', '~PC_Name1', 'pc2@example.com'],
-    writers=[],
-    content={
-        'title': 'Conference 2025',
-        'Official Venue Name': 'Conference 2025',
-        'Abbreviated Venue Name': 'Conf25',
-        'Official Website URL': 'https://conf25.org',
-        'program_chair_emails': ['pc1@example.com', 'pc2@example.com'],
-        'contact_email': 'pc1@example.com',
-        'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
-        'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
-        'Venue Start Date': '2025/07/01',
-        'Submission Deadline': '2025/03/15',
-        'Location': 'Vienna, Austria',
-        'submission_reviewer_assignment': 'Automatic',
-        'Author and Reviewer Anonymity': 'Double-blind',
-        'Open Reviewing Policy': 'Submissions and reviews should both be private.',
-        'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
-        'Expected Submissions': '500',
-        'api_version': '2',
-        'submission_license': ['CC BY 4.0']
-    }
-))
-```
+    note=Note(
+        content={
+            'official_venue_name': {'value': 'Conference 2025'},
+            'abbreviated_venue_name': {'value': 'Conf25'},
+            'venue_website_url': {'value': 'https://conf25.org'},
+            'location': {'value': 'Vienna, Austria'},
+            'venue_start_date': {'value': openreview.tools.datetime_millis(
+                datetime.datetime(2025, 7, 1))},
+            'submission_deadline': {'value': openreview.tools.datetime_millis(
+                datetime.datetime(2025, 3, 15, 23, 59))},
+            'program_chair_emails': {'value': ['pc1@example.com', 'pc2@example.com']},
+            'contact_email': {'value': 'pc1@example.com'},
+            'area_chairs_name': {'value': 'Area_Chairs'},
+            'reviewers_name': {'value': 'Reviewers'},
+            'expected_submissions': {'value': '500'},
+            'how_did_you_hear_about_us': {'value': 'Other'},
+            'venue_organizer_agreement': {'value': ['I agree']}
+        }
+    )
+)
 
-### Deploy venue
-
-```python
-deploy_note = client.post_note(openreview.Note(
-    content={'venue_id': 'Conf25.cc/2025/Conference'},
-    forum=request_form.forum,
-    invitation=f'openreview.net/Support/-/Request{request_form.number}/Deploy',
-    readers=['openreview.net/Support'],
-    referent=request_form.forum,
-    replyto=request_form.forum,
+# Step 2: Support deploys the venue (creates all groups and invitations)
+deploy = openreview_client.post_note_edit(
+    invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
     signatures=['openreview.net/Support'],
-    writers=['openreview.net/Support']
-))
+    note=Note(
+        id=request['note']['id'],
+        content={
+            'venue_id': {'value': 'Conf25.cc/2025/Conference'}
+        }
+    )
+)
 # After deployment, groups and invitations are created automatically
 ```
 
@@ -466,7 +462,7 @@ deploy_note = client.post_note(openreview.Note(
 ```python
 venue.recruit_reviewers(
     title='[Conf25] Invitation to Review',
-    message='Dear {fullname},\n\nYou are invited to review for Conf25.\n\nClick here: {invitation_url}\n\nThanks,\nProgram Chairs',
+    message='Dear {{fullname}},\n\nYou are invited to review for Conf25.\n\nClick here: {{invitation_url}}\n\nThanks,\nProgram Chairs',
     invitees=['reviewer1@example.com', 'reviewer2@example.com', '~Known_Reviewer1'],
     reviewers_name='Reviewers',
     contact_info='pc1@example.com',
@@ -593,7 +589,8 @@ venue.unset_assignments(
 
 ```python
 # Bulk-post decisions from CSV (columns: paper_number, decision, comment)
-venue.post_decisions(decisions_file='decisions.csv')
+with open('decisions.csv', 'rb') as f:
+    venue.post_decisions(decisions_file=f.read())
 
 # Update submissions with decision metadata (venueid, readers, bibtex)
 venue.post_decision_stage(
@@ -605,9 +602,9 @@ venue.post_decision_stage(
 venue.send_decision_notifications(
     decision_options=['Accept (Oral)', 'Accept (Poster)', 'Reject'],
     messages={
-        'Accept (Oral)': 'Congratulations! Your paper {{title}} ({{forum_url}}) has been accepted as an oral.',
-        'Accept (Poster)': 'Congratulations! Your paper {{title}} ({{forum_url}}) has been accepted as a poster.',
-        'Reject': 'We regret to inform you that your paper {{title}} ({{forum_url}}) was not accepted.'
+        'Accept (Oral)': 'Congratulations! Your paper {{submission_title}} ({{forum_url}}) has been accepted as an oral.',
+        'Accept (Poster)': 'Congratulations! Your paper {{submission_title}} ({{forum_url}}) has been accepted as a poster.',
+        'Reject': 'We regret to inform you that your paper {{submission_title}} ({{forum_url}}) was not accepted.'
     }
 )
 ```

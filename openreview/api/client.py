@@ -1719,8 +1719,7 @@ class OpenReviewClient(object):
         """Get a list of Edit objects for a Note matching the filters provided.
 
         Returns edits that match all the criteria passed in the parameters. When
-        ``with_count`` is True and no offset is set, returns a tuple of
-        ``(edits, count)``.
+        ``with_count`` is True, returns a tuple of ``(edits, count)``.
 
         :param note_id: ID of the Note whose edits to retrieve.
         :type note_id: str, optional

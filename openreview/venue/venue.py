@@ -630,7 +630,7 @@ class Venue(object):
 
         :param title: Email subject line for the recruitment message.
         :type title: str
-        :param message: Email body template. May contain placeholders like ``{accept_url}`` and ``{decline_url}``.
+        :param message: Email body template. May contain placeholders like ``{{accept_url}}``, ``{{decline_url}}``, ``{{invitation_url}}``, ``{{fullname}}``, and ``{{contact_info}}``.
         :type message: str
         :param invitees: Email addresses or profile IDs to recruit.
         :type invitees: list[str], optional
@@ -644,8 +644,8 @@ class Venue(object):
         :type retry_declined: bool, optional
         :param contact_info: Contact email shown in the recruitment message.
         :type contact_info: str, optional
-        :param reduced_load_on_decline: List of reduced-load options offered when declining.
-        :type reduced_load_on_decline: list[int], optional
+        :param reduced_load_on_decline: List of reduced-load options offered when declining (e.g. ``['1', '2', '3']``).
+        :type reduced_load_on_decline: list[str], optional
         :param allow_accept_with_reduced_load: If True, allow accepting with a reduced review load.
         :type allow_accept_with_reduced_load: bool, optional
         :param default_load: Default review load (currently unused).
@@ -654,8 +654,8 @@ class Venue(object):
         :type allow_overlap_official_committee: bool, optional
         :param accept_recruitment_template: Custom template for the acceptance page.
         :type accept_recruitment_template: str, optional
-        :return: Tuple of (invited list, already-invited list, errors dict).
-        :rtype: tuple
+        :return: Dictionary with keys ``invited``, ``reminded``, ``already_invited``, ``already_member``, ``errors``.
+        :rtype: dict
         """
         return self.recruitment.invite_committee(title,
             message,

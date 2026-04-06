@@ -1461,7 +1461,7 @@ class Client(object):
         :type with_count: bool, optional
 
         :return: List of Tag objects, or ``(list[Tag], int)`` when ``with_count=True``.
-        :rtype: list[Tag]
+        :rtype: list[Tag] | tuple[list[Tag], int]
         """
         params = {}
 
@@ -1546,7 +1546,7 @@ class Client(object):
         :type trash: bool, optional
 
         :return: List of Edge objects, or ``(list[Edge], int)`` when ``with_count=True``.
-        :rtype: list[Edge]
+        :rtype: list[Edge] | tuple[list[Edge], int]
         """
         params = {}
 

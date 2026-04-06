@@ -154,7 +154,7 @@ Each role has specific readers/writers permissions at each workflow stage. Autho
 Notes:
 - `get_notes(invitation=..., content=..., ...)` — returns list, max 1000 results
 - `get_all_notes(...)` — returns all matching notes, handles pagination internally
-- `openreview.tools.iterget_notes(client, ...)` — returns iterator (memory-efficient for large sets)
+- `client.get_all_notes(...)` — returns all matching notes, handles pagination automatically
 - `get_note(id)` — single note by ID
 
 Groups:
@@ -175,7 +175,7 @@ Profiles:
 - `openreview.tools.get_profile(client, value)` — returns None if not found (safe)
 - `search_profiles(confirmedEmails=..., emails=..., ids=..., term=..., first=..., last=...)` — returns dict (for email searches) or list (for other params)
 
-Important: `get_notes()` returns at most 1000 items. Use `get_all_notes()` or `iterget_notes()` for larger result sets.
+Important: `get_notes()` returns at most 1000 items. Use `get_all_notes()` for larger result sets.
 
 ## Writing Data (Edit Pattern)
 
@@ -218,12 +218,12 @@ Many edits trigger server-side process functions (defined in invitation `process
 - Process functions can cascade: one edit may trigger creation of new invitations, groups, or edges.
 - Without awaiting, subsequent operations that depend on process results will encounter race conditions.
 
-## Conference Workflow
+## Venue Workflow
 
 Standard conference stages in order:
 
-1. Venue Request: Post a request form to `openreview.net/Support/-/Request_Form` with venue name, dates, committee config, anonymity settings.
-2. Deploy: Post deploy note to `openreview.net/Support/-/Request{N}/Deploy`. Creates venue group, committee groups (Authors, Reviewers, Area_Chairs, Senior_Area_Chairs), and submission invitation.
+1. Venue Request: PC posts a note edit to `openreview.net/Support/Venue_Request/-/Conference_Review_Workflow` with venue name, dates, committee config. All fields use snake_case and `{'value': ...}` format.
+2. Deploy: Support posts a note edit to `openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment` with the `venue_id`. Creates venue group, committee groups (Authors, Reviewers, Area_Chairs, Senior_Area_Chairs), and submission invitation.
 3. Recruit Committee: Invite SACs, then ACs, then Reviewers. Each receives email with acceptance link. Recruitment supports reduced load options.
 4. Registration (optional): Committee members fill registration forms with expertise, availability.
 5. Submission: Authors post papers via `{VenueID}/-/Submission`. Optional two-stage: abstract deadline then full submission.
@@ -379,7 +379,7 @@ From `openreview.tools`:
 - Deleting protected form fields (`venue`, `venueid`) — the preprocess script blocks this with an error.
 - Using expired tokens without re-authentication — raises `TokenExpiredError`.
 - Mixing v1 and v2 URLs — using `api.openreview.net` with `openreview.api.OpenReviewClient` raises an error.
-- Using `get_notes()` when expecting more than 1000 results — silently truncates. Use `get_all_notes()` or `iterget_notes()` instead.
+- Using `get_notes()` when expecting more than 1000 results — silently truncates. Use `get_all_notes()` instead.
 - Activating decision invitations before all reviewer ratings are submitted (in journals) — the decision invitation is gated on ratings completion.
 - Directly modifying group members without `add_members_to_group()` / `remove_members_from_group()` — use the idempotent helper methods.
 - Accessing `note.content['field']` without `['value']` — returns the wrapper dict, not the actual data.
