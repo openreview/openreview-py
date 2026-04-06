@@ -563,7 +563,7 @@ class Journal(object):
         Side effects: sends recruitment emails and adds invitees to the
         Action_Editors/Invited group.
 
-        :param message: The email body template (supports ``{accept_url}`` and ``{decline_url}`` placeholders).
+        :param message: The email body template (supports ``{{accept_url}}``, ``{{decline_url}}``, ``{{fullname}}``, and ``{{invitation_url}}`` placeholders).
         :type message: str
         :param subject: The email subject line.
         :type subject: str
@@ -585,7 +585,7 @@ class Journal(object):
         Side effects: sends recruitment emails and adds invitees to the
         Reviewers/Invited group.
 
-        :param message: The email body template (supports ``{accept_url}`` and ``{decline_url}`` placeholders).
+        :param message: The email body template (supports ``{{accept_url}}``, ``{{decline_url}}``, ``{{fullname}}``, and ``{{invitation_url}}`` placeholders).
         :type message: str
         :param subject: The email subject line.
         :type subject: str

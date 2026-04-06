@@ -977,7 +977,7 @@ def iterget_edges (client,
     :type trash: bool, optional
 
     :return: Iterator over Edge objects matching the provided filters.
-    :rtype: iterator[Edge]
+    :rtype: iterget
     """
     params = {}
     if invitation is not None:
@@ -1400,7 +1400,7 @@ def recruit_user(client, user,
     :type recruitment_message_content: str
     :param recruitment_invitation_id: Invitation ID used in the recruitment URL.
     :type recruitment_invitation_id: str
-    :param comittee_invited_id: Group ID for the invited committee group, used as parentGroup for the message.
+    :param comittee_invited_id: Group ID for the invited committee group, used as parentGroup for the message. (Note: parameter name is a legacy misspelling of "committee".)
     :type comittee_invited_id: str
     :param contact_email: Contact email address substituted into ``{{contact_info}}`` and used as the replyTo address.
     :type contact_email: str

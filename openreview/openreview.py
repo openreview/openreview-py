@@ -2157,7 +2157,7 @@ class Client(object):
     def get_process_logs(self, id = None, invitation = None, status = None):
         """Retrieve process function execution logs. Requires Super User permissions.
 
-        :param id: Process log entry ID.
+        :param id: Note ID that triggered the process function.
         :type id: str, optional
         :param invitation: Invitation ID whose process function produced the logs.
         :type invitation: str, optional

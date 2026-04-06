@@ -758,7 +758,8 @@ class Venue(object):
     def create_withdraw_invitations(self, reveal_authors=None, reveal_submission=None, email_pcs=None, hide_fields=[]):
         """Create withdrawal invitations allowing authors to withdraw submissions.
 
-        .. deprecated:: Use :meth:`create_submission_stage` instead, which sets up withdrawal invitations automatically.
+        .. deprecated::
+            Use :meth:`create_submission_stage` instead, which sets up withdrawal invitations automatically.
 
         :param reveal_authors: Ignored (deprecated parameter).
         :param reveal_submission: Ignored (deprecated parameter).
@@ -766,11 +767,12 @@ class Venue(object):
         :param hide_fields: Ignored (deprecated parameter).
         """
         return self.invitation_builder.set_withdrawal_invitation()
-    
+
     def create_desk_reject_invitations(self, reveal_authors=None, reveal_submission=None, hide_fields=[]):
         """Create desk-rejection invitations allowing program chairs to desk-reject submissions.
 
-        .. deprecated:: Use :meth:`create_submission_stage` instead, which sets up desk-rejection invitations automatically.
+        .. deprecated::
+            Use :meth:`create_submission_stage` instead, which sets up desk-rejection invitations automatically.
 
         :param reveal_authors: Ignored (deprecated parameter).
         :param reveal_submission: Ignored (deprecated parameter).

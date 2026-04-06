@@ -2658,7 +2658,7 @@ class OpenReviewClient(object):
         **Only for Super User.** Returns log entries for process functions
         triggered by edits or invitation date processes.
 
-        :param id: Edit ID (the ``id`` returned by a ``post_*_edit`` call) to retrieve logs for.
+        :param id: Edit ID (the ``id`` returned by a ``post_*_edit`` call) that triggered the process function.
         :type id: str, optional
         :param invitation: Invitation ID to filter logs by the invitation whose process function produced them.
         :type invitation: str, optional

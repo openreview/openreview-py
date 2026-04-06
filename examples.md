@@ -415,8 +415,12 @@ client.delete_edges(
 ### Create venue via the new UI
 
 ```python
+import datetime
 import openreview
-from openreview.api import Note
+from openreview.api import OpenReviewClient, Note
+
+pc_client = OpenReviewClient(baseurl='https://api2.openreview.net', username='pc@example.com', password='...')
+support_client = OpenReviewClient(baseurl='https://api2.openreview.net', username='support_client@example.com', password='...')
 
 # Step 1: PC submits venue request
 request = pc_client.post_note_edit(
@@ -444,7 +448,7 @@ request = pc_client.post_note_edit(
 )
 
 # Step 2: Support deploys the venue (creates all groups and invitations)
-deploy = openreview_client.post_note_edit(
+deploy = support_client.post_note_edit(
     invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
     signatures=['openreview.net/Support'],
     note=Note(
