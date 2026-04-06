@@ -248,10 +248,13 @@ class TestARRVenueV2():
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Preferred_Emails_Readers')
 
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert '/-/Type' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
+        assert '/-/Type' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
         ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
         assert 'Emergency_Score' in ac_group.web
+        assert '/-/Type' in ac_group.web
 
         openreview_client.post_group_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
@@ -467,6 +470,10 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Recognition_Request').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Metareview_License_Agreement').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Type')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Type')
+        assert not openreview.tools.get_invitation(openreview_client, 'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Type')
+        assert not openreview.tools.get_invitation(openreview_client, 'aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers/-/Type')
 
         # Pin 2023 and 2024 into next available year
         task_array = [
@@ -4186,14 +4193,77 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assignment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment')
         assert 'sync_sac_id' not in assignment_invitation.content
 
-        # Remove an AC and replace
         sac_client = openreview.api.OpenReviewClient(username = 'sac2@aclrollingreview.com', password=helpers.strong_password)
+
+        existing_reviewer_assignments = openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+            head=submissions[0].id,
+            tail='~Reviewer_ARRFour1'
+        )
+        assert len(existing_reviewer_assignments) == 1
+        existing_reviewer_assignment = existing_reviewer_assignments[0]
+        assert len(openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Type',
+            head=existing_reviewer_assignment.head,
+            tail=existing_reviewer_assignment.tail
+        )) == 0
+
         assert len(sac_client.get_edges(invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment', head=submissions[1].id, tail='~AC_ARRTwo1')) == 1
         ac_edge = sac_client.get_edges(invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment', head=submissions[1].id, tail='~AC_ARRTwo1')[0]
+        assert len(openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Type',
+            head=ac_edge.head,
+            tail=ac_edge.tail
+        )) == 0
+
+        emergency_assignment_deadline = datetime.datetime.strptime(
+            datetime.datetime.now().strftime('%Y/%m/%d %H:%M'),
+            '%Y/%m/%d %H:%M'
+        )
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'emergency_assignment_deadline': emergency_assignment_deadline.strftime('%Y/%m/%d %H:%M')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+        helpers.await_queue()
+
+        domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
+        assert domain.content['emergency_assignment_deadline']['value'] == openreview.tools.datetime_millis(emergency_assignment_deadline)
+        assert len(openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Type',
+            head=existing_reviewer_assignment.head,
+            tail=existing_reviewer_assignment.tail
+        )) == 0
+        assert len(openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Type',
+            head=ac_edge.head,
+            tail=ac_edge.tail
+        )) == 0
+
+        august_venue.venue.group_builder.create_venue_group()
+        helpers.await_queue()
+        domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
+        assert domain.content['emergency_assignment_deadline']['value'] == openreview.tools.datetime_millis(emergency_assignment_deadline)
+
+        # Remove an AC and replace
         ac_edge.ddate = openreview.tools.datetime_millis(openreview.tools.datetime.datetime.now())
         openreview_client.post_edge(ac_edge)
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment')
+        assert len(openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Type',
+            head=ac_edge.head,
+            tail=ac_edge.tail
+        )) == 0
 
         edge = openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
@@ -4206,6 +4276,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=edge.id)
 
         assert len(sac_client.get_edges(invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment', head=submissions[1].id, tail='~AC_ARROne1')) == 1
+        ac_type_edges = openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Type',
+            head=submissions[1].id,
+            tail='~AC_ARROne1'
+        )
+        assert len(ac_type_edges) == 1
+        assert ac_type_edges[0].label == 'Emergency'
         assert len(sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members) == 1
         assert sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members[0] == '~AC_ARROne1'
 
@@ -4472,11 +4549,32 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             weight = 1
         ))
         helpers.await_queue_edit(openreview_client, edit_id=test_assignment_edge.id)
-        
+        reviewer_type_edges = openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Type',
+            head=submissions[1].id,
+            tail='~Reviewer_ARRFive1'
+        )
+        assert len(reviewer_type_edges) == 1
+        assert reviewer_type_edges[0].label == 'Emergency'
+
         ## Delete that assignment edge
         test_assignment_edge.ddate = openreview.tools.datetime_millis(now)
         openreview_client.post_edge(test_assignment_edge)
         helpers.await_queue_edit(openreview_client, edit_id=test_assignment_edge.id)
+        deadline = time.time() + 30
+        reviewer_type_edges = openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Type',
+            head=submissions[1].id,
+            tail='~Reviewer_ARRFive1'
+        )
+        while reviewer_type_edges and time.time() < deadline:
+            time.sleep(0.5)
+            reviewer_type_edges = openreview_client.get_edges(
+                invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Type',
+                head=submissions[1].id,
+                tail='~Reviewer_ARRFive1'
+            )
+        assert len(reviewer_type_edges) == 0
         
         ## Post a new invite assignment edge (should succeed with quota = 4)
         test_invite_edge = openreview_client.post_edge(openreview.api.Edge(
