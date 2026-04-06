@@ -2,6 +2,7 @@ async function process(client, edit, invitation) {
   client.throwErrors = true;
   
   const authorIndex = edit.content.author_index.value;
+  const authorName = edit.content.author_name.value;
   
   const { notes } = await client.getNotes({ id: edit.note.id });
   const publication = notes[0];
@@ -20,6 +21,11 @@ async function process(client, edit, invitation) {
   const usernames = userProfile.content.names.map(name => name.username);
 
   const authorUsername = publication.content.authors.value[authorIndex]?.username;
+
+  if (Tools.prettyId(authorUsername) !== authorName) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author username ${authorUsername} from index ${authorIndex} doesn't match with the author name ${authorName}` }));
+  }
+
   if (!usernames.some(username => username === authorUsername)) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${authorUsername} from index ${authorIndex} doesn't match with the names listed in your profile` }));
   }

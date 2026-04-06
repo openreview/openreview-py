@@ -579,6 +579,20 @@ class TestProfileManagement():
             {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
         ]
 
+        with pytest.raises(openreview.OpenReviewException, match=r'The author username ~Nihar_B._Shah1 from index 0 doesn\'t match with the author name Nihar Shah'): 
+            edit = nihar_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Author_Removal',
+                signatures = ['~Nihar_B._Shah1'],
+                content = {
+                    'author_index': { 'value': 0 },
+                    'author_id': { 'value': '' },
+                    'author_name': { 'value': 'Nihar Shah' },
+                },
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
         edit = nihar_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/Author_Removal',
             signatures = ['~Nihar_B._Shah1'],
