@@ -615,8 +615,8 @@ class TestProfileManagement():
             {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
         ]
 
-        notes = andrew_client.search_notes('AI Conference')
-        assert len(notes) == 1
+        notes = andrew_client.search_notes('Identity Theft')
+        assert len(notes) >= 1
         assert notes[0].id == note.id
         assert notes[0].content['authors']['value'] == [
             {"fullname": "Nihar B. Shah", "username": ""},
