@@ -1,0 +1,408 @@
+# openreview-py
+
+> Python client for the OpenReview academic peer review platform.
+> Manages peer review workflows for conferences (NeurIPS, ICLR, ICML, AAAI, etc.) and journals (TMLR, JMLR, DMLR, etc.).
+> Covers the full lifecycle: submission, review, assignment, decision, publication.
+> Install: `pip install openreview-py`
+> See examples.md for code snippets.
+
+## Two API Versions
+
+- v1 API: `openreview.Client(baseurl='https://api.openreview.net')` — legacy, port 3000 locally
+- v2 API: `openreview.api.OpenReviewClient(baseurl='https://api2.openreview.net')` — current/recommended, port 3001 locally
+- All new venues use v2 (`api_version: '2'`). Use v2 unless working with legacy data.
+- The clients share model classes but differ in method signatures.
+- Using a v1 URL with the v2 client (or vice versa) raises OpenReviewException with guidance.
+
+## Authentication
+
+- Username/password: `OpenReviewClient(username='...', password='...')`
+- Token auth: `OpenReviewClient(token='...')` — takes precedence over username/password
+- Environment variables: `OPENREVIEW_USERNAME`, `OPENREVIEW_PASSWORD`, `OPENREVIEW_API_BASEURL_V2` (v2), `OPENREVIEW_API_BASEURL` (v1)
+- Token expiration: `tokenExpiresIn` in seconds, max 1 week, default 1 hour (v2). Expired tokens raise `TokenExpiredError`.
+- MFA support: TOTP and Email OTP methods, resolved interactively. Non-interactive mode raises `MfaRequiredException` with `mfa_methods`, `mfa_pending_token`, `preferred_method`.
+- Profile IDs follow the format `~FirstName_LastName1` where the trailing number disambiguates.
+- Guest access (no auth): `OpenReviewClient()` — can read public data only.
+
+## Core Data Model
+
+### Notes
+Primary content objects — papers, reviews, decisions, comments, venue requests.
+- `id`: unique identifier (assigned by server)
+- `forum`: root note ID (the submission this note belongs to)
+- `replyto`: parent note ID (for threaded replies)
+- `content`: dict of `{'field_name': {'value': actual_data}}`
+- `invitations`: list of invitation IDs that created/modified this note
+- `readers`, `writers`, `signatures`: permission lists
+- `nonreaders`: explicitly excluded readers
+- `number`: sequential number (e.g., submission number)
+- `cdate`/`mdate`/`ddate`: creation/modification/deletion timestamps (epoch ms)
+- `tcdate`/`tmdate`: true (immutable) creation/modification timestamps
+- `pdate`: publication date, `odate`: original date
+- `license`: content license string
+
+### Groups
+Collections of members with permissions. Groups are hierarchical — a group ID is also a namespace.
+- `id`: unique identifier (e.g., `VenueID/Reviewers`)
+- `members`: list of emails, profile IDs (`~...`), or other group IDs
+- `signatories`: who can sign as this group
+- `readers`, `writers`, `signatures`: permission lists
+- `anonids`: anonymous member identifiers (True/False)
+- `domain`: the venue this group belongs to
+- `content`: optional structured metadata
+
+### Invitations
+Define what edits are allowed, by whom, and when.
+- `id`: unique identifier (e.g., `VenueID/-/Submission`)
+- `invitees`: who can post edits (group IDs, profile IDs, emails)
+- `noninvitees`: explicitly excluded invitees
+- `edit`: template for note/group/edge edits
+- `edge`: template for direct edge creation
+- `duedate`: submission deadline (epoch ms)
+- `expdate`: hard cutoff after which no submissions (epoch ms)
+- `cdate`: when invitation becomes active (epoch ms)
+- `process`: server-side script triggered after edit is posted
+- `preprocess`: server-side validation script run before edit is saved
+- `readers`, `writers`, `signatures`: permission lists
+
+### Edges
+Pairwise relationships — affinity scores, assignments, bids, conflicts.
+- `head`: note ID or group ID (the "from" entity)
+- `tail`: profile ID or group ID (the "to" entity)
+- `invitation`: the invitation that allows this edge
+- `weight`: numeric value (convention: 1 for assignment, -1 for conflict)
+- `label`: categorical value (e.g., 'High', 'Low', 'Conflict')
+- `readers`, `writers`, `signatures`: permission lists
+- `nonreaders`: explicitly excluded readers (typically authors for conflict-of-interest)
+
+### Tags
+Metadata annotations on notes or profiles.
+- `invitation`: the invitation that allows this tag
+- `tag`: the tag value string
+- `forum`: note ID this tag is attached to
+- `replyto`: parent note for threaded tags
+- `signatures`, `readers`, `writers`: permission lists
+- Deletion via setting `ddate` (soft delete)
+
+### Profiles
+User identities.
+- `id`: profile ID (`~FirstName_LastName1`)
+- `content.names`: list of `{fullname, username, preferred}` dicts
+- `content.emails`: list of associated email addresses
+- `content.preferredEmail`: primary contact email
+- `content.history`: list of position records (institution, role, dates)
+- `content.relations`: list of related profiles (coauthors, advisors)
+- `content.homepage`: personal website URL
+- `content.dblp`: DBLP profile URL
+
+### Edits
+Wrappers that record changes to notes, groups, or invitations. All mutations in v2 go through edits.
+- `invitation`: the invitation authorizing this edit
+- `signatures`: who is making the edit
+- `note`/`group`/`invitation`: the object being created or modified
+- `readers`, `writers`: who can see/modify this edit record
+
+## Content Structure
+
+v2 content uses `{'field_name': {'value': actual_data}}` consistently:
+- Access: `note.content['title']['value']`
+- Nested: `note.content['authors']['value']` returns a list
+- Never access `note.content['title']` directly — always go through `['value']`
+
+Invitation content templates define allowed parameters:
+- `{'title': {'value': {'param': {'type': 'string', 'regex': '.*'}}}}`
+- Supported param types: `string`, `integer`, `boolean`, `file`, `date`, `string[]`, `object[]`, `profile[]`, `group[]`, `note[]`
+- Param constraints: `regex`, `enum`, `maxLength`, `minLength`, `minimum`, `maximum`, `optional`, `deletable`, `markdown`, `input` (text/textarea/radio/checkbox/select)
+
+## Date Handling
+
+- All dates are Unix epoch milliseconds (integer), not seconds.
+- `openreview.tools.datetime_millis(dt)` converts a datetime object to millis.
+- `openreview.tools.timestamp_GMT(year, month, day, hour, minute)` creates absolute timestamps.
+- Key date fields: `cdate` (creation), `mdate` (modification), `ddate` (deletion/soft-delete), `pdate` (publication), `odate` (original).
+- Invitation dates: `cdate` (when active), `duedate` (deadline), `expdate` (hard cutoff).
+- Convention: `expdate = duedate + 30 minutes` as a grace period.
+- Invitation date ordering: `cdate <= duedate <= expdate`.
+
+## Permission Model
+
+Every object has:
+- `readers`: list of group/profile IDs that can see this object
+- `writers`: list of group/profile IDs that can modify this object
+- `signatures`: list of group/profile IDs that created this object (acts as provenance)
+- `nonreaders`: explicitly excluded groups (overrides readers)
+
+Special groups:
+- `everyone`: all users including anonymous
+- `~`: all logged-in users
+- `(anonymous)`: anonymous signature
+- `(guest)`: guest users
+
+Anonymous reviewer groups: `{VenueID}/Paper{N}/Reviewer_{hash}` — hide reviewer identity from authors.
+
+Role hierarchy (highest to lowest privilege):
+- Editors-in-Chief / Program Chairs
+- Senior Area Chairs
+- Area Chairs / Action Editors
+- Reviewers
+- Authors
+
+Each role has specific readers/writers permissions at each workflow stage. Authors are typically added as `nonreaders` on reviewer assignment edges to enforce conflict-of-interest isolation.
+
+## Reading Data
+
+Notes:
+- `get_notes(invitation=..., content=..., ...)` — returns list, max 1000 results
+- `get_all_notes(...)` — returns all matching notes, handles pagination internally
+- `openreview.tools.iterget_notes(client, ...)` — returns iterator (memory-efficient for large sets)
+- `get_note(id)` — single note by ID
+
+Groups:
+- `get_group(id)` — single group
+- `get_groups(prefix=..., member=..., signatory=...)` — filter groups
+
+Invitations:
+- `get_invitation(id)` — single invitation
+- `get_invitations(replyForum=..., prefix=...)` — filter invitations
+
+Edges:
+- `get_edges(invitation=..., head=..., tail=..., label=...)` — filter edges
+- `get_edges_count(...)` — count without fetching
+- `openreview.tools.iterget_edges(client, ...)` — iterator
+
+Profiles:
+- `get_profile(email_or_id)` — raises OpenReviewException if not found
+- `openreview.tools.get_profile(client, value)` — returns None if not found (safe)
+- `search_profiles(confirmedEmails=..., emails=..., ids=..., term=..., first=..., last=...)` — returns dict (for email searches) or list (for other params)
+
+Important: `get_notes()` returns at most 1000 items. Use `get_all_notes()` or `iterget_notes()` for larger result sets.
+
+## Writing Data (Edit Pattern)
+
+All mutations in v2 go through edit methods:
+
+- `post_note_edit(invitation, signatures, note=Note(...), readers=..., writers=..., await_process=False)`
+  - `invitation` (str): the invitation ID authorizing this edit
+  - `signatures` (list): who is making the edit
+  - `note` (Note): the note data to create or modify
+  - Returns a dict: `result['id']` is the edit ID, `result['note']['id']` is the note ID
+
+- `post_invitation_edit(invitations, readers=..., writers=..., signatures=..., invitation=Invitation(...))`
+  - `invitations` (str): the meta-invitation ID (note: plural param name, but singular string value)
+  - `invitation` (Invitation): the invitation object to create or modify
+
+- `post_group_edit(invitation, signatures=..., group=Group(...), readers=..., writers=...)`
+  - `invitation` (str): the invitation authorizing this edit
+  - `group` (Group): the group data to create or modify
+
+Group membership shortcuts (idempotent — adding existing or removing absent members is a no-op):
+- `add_members_to_group(group_or_id, members)` — accepts single string or list
+- `remove_members_from_group(group_or_id, members)` — accepts single string or list
+
+Edge operations:
+- `post_edge(edge)` — post a single edge
+- `post_edges(edges)` — post a list of edges
+
+## Bulk Operations
+
+- `openreview.tools.post_bulk_edges(client, edges, batch_size=50000)` — batched edge posting for large sets
+- `openreview.tools.concurrent_requests(func, params)` — threaded parallel execution with progress bar
+- `delete_edges(invitation=..., label=..., head=..., tail=..., wait_to_finish=True)` — bulk deletion by filter
+
+## Async Processing
+
+Many edits trigger server-side process functions (defined in invitation `process` scripts). These run asynchronously after the edit is saved.
+
+- Use `await_process=True` on edit calls to block until the server process completes: `post_note_edit(..., await_process=True)`
+- The edit response is a dict. Access the edit ID via `result['id']` and the note ID via `result['note']['id']`.
+- Process functions can cascade: one edit may trigger creation of new invitations, groups, or edges.
+- Without awaiting, subsequent operations that depend on process results will encounter race conditions.
+
+## Conference Workflow
+
+Standard conference stages in order:
+
+1. Venue Request: Post a request form to `openreview.net/Support/-/Request_Form` with venue name, dates, committee config, anonymity settings.
+2. Deploy: Post deploy note to `openreview.net/Support/-/Request{N}/Deploy`. Creates venue group, committee groups (Authors, Reviewers, Area_Chairs, Senior_Area_Chairs), and submission invitation.
+3. Recruit Committee: Invite SACs, then ACs, then Reviewers. Each receives email with acceptance link. Recruitment supports reduced load options.
+4. Registration (optional): Committee members fill registration forms with expertise, availability.
+5. Submission: Authors post papers via `{VenueID}/-/Submission`. Optional two-stage: abstract deadline then full submission.
+6. Post-Submission: Locks fields, adjusts readers (add reviewers/ACs to submission readers), hides specified fields (keywords, PDF).
+7. Bidding: Reviewers/ACs express paper preferences via bid edges (labels: Very High, High, Low, Very Low).
+8. Matching: `venue.setup_committee_matching(committee_id, compute_conflicts=True)` computes affinity scores and conflicts.
+9. Assignment: Post assignment edges to `{VenueID}/Reviewers/-/Assignment` with head=paper, tail=reviewer.
+10. Review: Reviewers submit official reviews via `{VenueID}/Submission{N}/-/Official_Review`.
+11. Rebuttal (optional): Authors respond to reviews.
+12. Meta-Review: ACs synthesize reviewer feedback.
+13. Decision: PCs post accept/reject decisions.
+14. Post-Decision: Release decisions, create camera-ready invitations, publish accepted papers.
+
+Committee structure options:
+- Hierarchical: SAC → AC → Reviewer (NeurIPS, ICML, AAAI)
+- Two-tier: AC → Reviewer (EMNLP, KDD)
+- Flat: Reviewer only (workshops)
+
+Anonymity options:
+- Double-blind: authors and reviewers anonymous to each other
+- Single-blind: reviewers anonymous, authors visible
+- No anonymity: all identities visible (workshops)
+
+### Venue Class (Programmatic Setup)
+
+For programmatic venue management without the support request form, use `openreview.venue.Venue`:
+
+```python
+venue = openreview.venue.Venue(client, venue_id, support_user)
+```
+
+Key methods in lifecycle order:
+1. `venue.setup(program_chair_ids, publication_chairs_ids)` — bootstrap all venue groups, invitations, and permissions
+2. `venue.create_submission_stage()` — create submission invitation and related pipeline (withdrawal, desk rejection, post-submission)
+3. `venue.recruit_reviewers(title, message, invitees, reviewers_name, ...)` — send recruitment emails with accept/decline links
+4. `venue.create_bid_stages()` — create bidding invitations for committee preference elicitation
+5. `venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts)` — compute affinity scores, conflicts, and create matching configuration
+6. `venue.set_assignments(assignment_title, committee_id)` — deploy proposed assignments as official assignments
+7. `venue.create_review_stage()` — create review invitation
+8. `venue.create_meta_review_stage()` — create meta-review invitation for area chairs
+9. `venue.create_decision_stage()` — create decision invitation; optionally bulk-imports decisions from CSV
+10. `venue.post_decisions(decisions_file)` — bulk-post decisions from a CSV file with columns: paper_number, decision, comment
+11. `venue.post_decision_stage(reveal_authors_accepted, submission_readers)` — update submissions with decision metadata (venueid, venue, readers, bibtex)
+12. `venue.send_decision_notifications(decision_options, messages)` — email authors per-decision notification templates
+
+Additional operations:
+- `venue.create_comment_stage()` — enable official/public comments
+- `venue.create_ethics_review_stage()` — full ethics review pipeline with flagging and matching
+- `venue.create_registration_stages()` — committee registration forms
+- `venue.setup_assignment_recruitment(committee_id, hash_seed, due_date)` — invite-based per-paper reviewer recruitment
+- `venue.unset_assignments(assignment_title, committee_id)` — revert deployed assignments
+- `venue.compute_reviewers_stats()` / `venue.compute_acs_stats()` — post reviewer/AC performance metrics as tags
+- `venue.get_submissions(accepted=True)` — retrieve submissions, optionally filtered by acceptance
+- `venue.expire_invitation(invitation_id)` — close an invitation immediately
+
+## Journal Workflow
+
+Standard journal stages in order:
+
+1. Submit: Author posts paper to `{JournalID}/-/Submission` with title, abstract, authors, PDF, competing interests, human subjects reporting.
+2. Author Recommends AE: Author posts recommendation edges to `{JournalID}/Action_Editors/-/Recommendation`.
+3. EIC Assigns AE: EIC posts assignment edge to `{JournalID}/Action_Editors/-/Assignment` with weight=1.
+4. Review Approval: AE decides via `{JournalID}/Paper{N}/-/Review_Approval` — "Appropriate for Review" or "Desk Reject".
+5. Under Review: Automatic state transition. Paper venueid changes from `Submitted` to `Under_Review`.
+6. AE Assigns Reviewers: AE posts reviewer assignment edges to `{JournalID}/Reviewers/-/Assignment`.
+7. Reviews: Reviewers submit reviews via `{JournalID}/Paper{N}/-/Review`.
+8. Official Recommendation (if enabled): Reviewers provide explicit recommendations.
+9. Ratings: AE rates each review via `{ReviewerAnonGroup}/-/Rating`. Decision invitation only activates after all ratings are submitted.
+10. Decision: AE submits decision via `{JournalID}/Paper{N}/-/Decision` with recommendation (Accept as is / Revise / Reject) and optional certifications (Featured, Reproducibility, Survey).
+11. Camera-Ready: Authors submit revision via `{JournalID}/Paper{N}/-/Camera_Ready_Revision`.
+12. Verification: Publication chair verifies camera-ready via `{JournalID}/Paper{N}/-/Camera_Ready_Verification`.
+
+Journal-specific concepts:
+- Certifications: Featured, Reproducibility, Survey, Outstanding (journal-specific subsets)
+- Assignment delay: configurable wait before AE assignment (0-5 days)
+- Submission license: CC BY-SA 4.0, CC BY 4.0, etc.
+- Number of reviewers: typically 2-3 depending on journal
+- Anonymous groups: `{JournalID}/Paper{N}/Action_Editor_{hash}`, `{JournalID}/Paper{N}/Reviewer_{hash}`
+- Matching edges: Affinity_Score, Conflict, Custom_Max_Papers, Assignment_Availability
+
+Journal configuration varies:
+- TMLR: 3 reviewers, public submissions, author anonymity off, official recommendations on
+- JMLR: 3 reviewers, private submissions, skip official recommendations
+- DMLR: 2 reviewers, private submissions, skip camera-ready verification
+- TACL: 3 reviewers, pre-review author revisions allowed
+- MELBA: 3 reviewers, author anonymity on, publication chairs verify camera-ready
+- SLADS: 2 reviewers, AE anonymity on, submission types required
+
+### Journal Class (Programmatic Setup)
+
+For programmatic journal management, use `openreview.journal.Journal`:
+
+```python
+journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name, ...)
+```
+
+Key methods in lifecycle order:
+1. `journal.setup(support_role, editors, assignment_delay)` — bootstrap all journal groups, invitations, and group variables
+2. `journal.invite_action_editors(message, subject, invitees)` — send AE recruitment emails
+3. `journal.invite_reviewers(message, subject, invitees)` — send reviewer recruitment emails
+4. `journal.setup_ae_matching(label)` — configure AE-to-paper matching (affinity scores, conflicts, quotas)
+5. `journal.set_assignments(assignment_title)` — deploy proposed AE assignments
+6. `journal.setup_author_submission(note)` — process a new submission (create per-paper groups, invitations, trigger expertise computation)
+7. `journal.setup_under_review_submission(note)` — transition to "Under Review" (enable review invitation, public comments, solicit-review)
+8. `journal.setup_ae_assignment(note)` — compute AE affinity scores and conflict edges for a submission
+9. `journal.setup_reviewer_assignment(note)` — compute reviewer affinity scores and conflict edges for a submission
+10. `journal.release_reviews_process(submission)` — release reviews to authors and open the discussion/decision phase
+
+Additional operations:
+- `journal.get_bibtex(note, new_venue_id, anonymous, certifications)` — generate BibTeX citation based on venue status
+- `journal.notify_readers(edit, content_fields)` — send email notifications when a note is posted or edited
+- `journal.archive_assignments()` — archive edges for all completed submissions
+- `journal.run_reviewer_stats(end_cdate, output_file)` — generate reviewer performance CSV
+- `journal.run_action_editors_stats(end_cdate, output_file)` — generate AE performance CSV
+- `journal.get_late_invitees(invitation_id)` — find people who haven't responded to an invitation
+- `journal.unset_assignments(assignment_title)` — revert AE assignments
+- `journal.set_impersonators(impersonators)` — configure venue group impersonation
+
+## Utility Functions
+
+From `openreview.tools`:
+- `generate_bibtex(note, venue_id, year, paper_status, anonymous, baseurl, names_reversed=False, editor=None)` — BibTeX entry from a note
+- `get_profile(client, value)` — safe profile lookup, returns None on miss
+- `get_profiles(client, ids_or_emails, as_dict=False)` — batch profile lookup
+- `get_conflicts(author_profiles, user_profile, policy=...)` — detect conflicts of interest
+- `pretty_id(group_id)` — human-readable name from group ID
+- `datetime_millis(dt)` — datetime to epoch milliseconds
+- `concurrent_requests(func, params)` — parallel execution with progress bar
+- `post_bulk_edges(client, edges, batch_size=50000)` — batched edge posting with progress bar
+- `post_bulk_tags(client, tags, batch_size=50000)` — batched tag posting with progress bar
+
+## Constraints and Invariants
+
+- Group operations (add/remove members) are idempotent. Adding an existing member or removing an absent member is a no-op.
+- Soft deletion via `ddate` field (set to timestamp). Items with ddate are hidden by default; use `trash=True` to include them in queries.
+- Protected fields: `venue` and `venueid` in submission content cannot be deleted via Form_Fields invitation.
+- Invitation date ordering: `cdate <= duedate <= expdate`. Convention: `expdate = duedate + 30 minutes`.
+- AuthorID validation: must match profile IDs (`~...`) or valid email addresses. Accented characters in emails are rejected.
+- Edge weight conventions: `1` for assignment, `-1` for conflict, `0` for completed/inactive.
+- Profile ID format: `~FirstName_LastName1` where the number disambiguates.
+- Maximum 1000 items per `get_*()` call. Use `get_all_*()` or `iterget_*()` for larger result sets.
+- Content field access: always `note.content['field']['value']` in v2. Never `note.content['field']` directly.
+- All dates in epoch milliseconds (not seconds).
+- Form_Fields duedate is calculated as submission_start - 30 minutes.
+- After deployment, venue groups follow the pattern: `{VenueID}`, `{VenueID}/Authors`, `{VenueID}/Reviewers`, `{VenueID}/Area_Chairs`, `{VenueID}/Senior_Area_Chairs`, `{VenueID}/Program_Chairs`.
+- Per-paper groups: `{VenueID}/Submission{N}/Authors`, `{VenueID}/Submission{N}/Reviewers`, `{VenueID}/Submission{N}/Area_Chairs`.
+
+## Anti-Patterns to Avoid
+
+- Missing `await_process=True` after edits that trigger process functions — leads to race conditions where subsequent operations see stale state.
+- Posting edits without proper signatures — the server validates that signatures match the authenticated user's permissions.
+- Assigning conflicted reviewers — conflicts are checked server-side and the assignment will be rejected.
+- Deleting protected form fields (`venue`, `venueid`) — the preprocess script blocks this with an error.
+- Using expired tokens without re-authentication — raises `TokenExpiredError`.
+- Mixing v1 and v2 URLs — using `api.openreview.net` with `openreview.api.OpenReviewClient` raises an error.
+- Using `get_notes()` when expecting more than 1000 results — silently truncates. Use `get_all_notes()` or `iterget_notes()` instead.
+- Activating decision invitations before all reviewer ratings are submitted (in journals) — the decision invitation is gated on ratings completion.
+- Directly modifying group members without `add_members_to_group()` / `remove_members_from_group()` — use the idempotent helper methods.
+- Accessing `note.content['field']` without `['value']` — returns the wrapper dict, not the actual data.
+- Posting notes with `content={'title': 'value'}` instead of `content={'title': {'value': 'value'}}` — the nested structure is required in v2.
+
+## Security Constraints
+
+- Author nonreaders on edges: assignment and affinity edges set `nonreaders` to include the paper's authors, preventing conflict-of-interest information leakage.
+- Blind review enforcement: readers/nonreaders on notes control what each role can see at each stage. Double-blind hides both author and reviewer identities.
+- Name validation for author claims: DBLP author coreference validates that the claiming user's name matches the paper's author list.
+- Role-based access: every operation is gated by the user's membership in the appropriate group. Non-members receive permission errors.
+- iThenticate integration: plagiarism checks with EULA agreement required before submission (when enabled).
+- Profile merge is one-way: secondary profile is merged into primary. The operation cannot be reversed.
+- Recruitment invitations use HMAC-signed URLs to prevent unauthorized responses.
+
+## URL Constants
+
+- Production v1: `https://api.openreview.net`
+- Production v2: `https://api2.openreview.net`
+- Production web: `https://openreview.net`
+- Dev v1: `https://api.dev.openreview.net`
+- Dev v2: `https://api2.dev.openreview.net`
+- Dev web: `https://dev.openreview.net`
+- Local v1: `http://localhost:3000`
+- Local v2: `http://localhost:3001`
+- Local web: `http://localhost:3030`
