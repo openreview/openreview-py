@@ -101,7 +101,7 @@ class OpenReviewClient(object):
         self.group_edits_url = self.baseurl + '/groups/edits'
         self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
-        self.domains_restriction_url = self.baseurl + '/domains/restriction'
+        self.domains_restriction = self.baseurl + '/domains/restriction'
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
         self.mfa_challenge_url = self.baseurl + '/mfa/challenge'
         self.mfa_verify_url = self.baseurl + '/mfa/verify'
@@ -2100,7 +2100,7 @@ class OpenReviewClient(object):
         :return: the API response
         :rtype: dict
         """
-        response = self.session.post(self.domains_restriction_url, json={'domain': venue_id, 'action': 'restrict'}, headers=self.headers)
+        response = self.session.post(self.domains_restriction, json={'domain': venue_id, 'action': 'restrict'}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -2114,7 +2114,7 @@ class OpenReviewClient(object):
         :return: the API response
         :rtype: dict
         """
-        response = self.session.post(self.domains_restriction_url, json={'domain': venue_id, 'action': 'unrestrict'}, headers=self.headers)
+        response = self.session.post(self.domains_restriction, json={'domain': venue_id, 'action': 'unrestrict'}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
