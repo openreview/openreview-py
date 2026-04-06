@@ -9,6 +9,7 @@ const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 const browseInvitations = [
   domain.content.reviewers_affinity_score_id?.value,
   domain.content.reviewers_conflict_id?.value,
+  `${reviewersId}/-/Type`,
   `${reviewersId}/-/Emergency_Score`,
   `${reviewersId}/-/Research_Area`,
   `${reviewersId}/-/Status`,
@@ -40,6 +41,7 @@ if (areaChairName) {
   const browseInvitations = [
     domain.content.area_chairs_affinity_score_id?.value,
     domain.content.area_chairs_conflict_id?.value,
+    `${areaChairsId}/-/Type`,
     `${areaChairsId}/-/Emergency_Score`,
     `${areaChairsId}/-/Research_Area`,
     `${areaChairsId}/-/Status`,
