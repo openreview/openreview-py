@@ -159,7 +159,7 @@ class TestVenueRestriction():
 
         # Wait for the title-container h1 to be present in the DOM.
         title_h1 = WebDriverWait(selenium, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, '.title-container h1'))
+            EC.presence_of_element_located((By.TAG_NAME, 'h1'))
         )
 
         # Assert the h1 shows the logged-in author's own name, not another user's.
