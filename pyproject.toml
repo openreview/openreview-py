@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openreview-py"
-version = "1.59.1"
+version = "2.0.1"
 description = "OpenReview API Python client library"
 authors = [{name = "OpenReview Team", email = "info@openreview.net"}]
 license = {text = "MIT"}
@@ -20,7 +20,7 @@ dependencies = [
     "pylatexenc>=2.10,<3",
     "tld>=0.12,<1",
     "pyjwt>=2.0,<3",
-    "numpy>=2.0"
+    "editdistance>=0.8.1,<1"
 ]
 
 [project.urls]

@@ -5992,6 +5992,87 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
         assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
 
+        submissions = pc_client_v2.get_all_notes(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+            sort='number:asc'
+        )
+        included_submission = submissions[99]
+        excluded_submission = submissions[100]
+
+        reviewer_two_client = openreview.api.OpenReviewClient(username='reviewer2@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_three_client = openreview.api.OpenReviewClient(username='reviewer3@aclrollingreview.com', password=helpers.strong_password)
+
+        openreview_client.add_members_to_group(
+            'aclweb.org/ACL/ARR/2023/August/Submission101/Reviewers',
+            ['~Reviewer_ARROne1', '~Reviewer_ARRTwo1', '~Reviewer_ARRThree1']
+        )
+
+        reviewer_one_anon_id = reviewer_client.get_groups(
+            prefix='aclweb.org/ACL/ARR/2023/August/Submission101/Reviewer_',
+            signatory='~Reviewer_ARROne1'
+        )[0].id
+        reviewer_two_anon_id = reviewer_two_client.get_groups(
+            prefix='aclweb.org/ACL/ARR/2023/August/Submission101/Reviewer_',
+            signatory='~Reviewer_ARRTwo1'
+        )[0].id
+        reviewer_three_anon_id = reviewer_three_client.get_groups(
+            prefix='aclweb.org/ACL/ARR/2023/August/Submission101/Reviewer_',
+            signatory='~Reviewer_ARRThree1'
+        )[0].id
+
+        official_review_invitation = 'aclweb.org/ACL/ARR/2023/August/Submission101/-/Official_Review'
+        official_review_content = {
+            "confidence": {"value": 5},
+            "paper_summary": {"value": 'some summary'},
+            "summary_of_strengths": {"value": 'some strengths'},
+            "summary_of_weaknesses": {"value": 'some weaknesses'},
+            "comments_suggestions_and_typos": {"value": 'some comments'},
+            "soundness": {"value": 1},
+            "excitement": {"value": 1.5},
+            "overall_assessment": {"value": 1},
+            "ethical_concerns": {"value": 'There are no concerns with this submission'},
+            "reproducibility": {"value": 1},
+            "datasets": {"value": 1},
+            "software": {"value": 1},
+            "needs_ethics_review": {"value": 'No'},
+            "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
+            "Knowledge_of_paper": {"value": "After the review process started"},
+            "Knowledge_of_paper_source": {"value": ["A research talk"]},
+            "impact_of_knowledge_of_paper": {"value": "A lot"},
+            "reviewer_certification": {"value": "Yes"},
+            "secondary_reviewer": {"value": ["~Reviewer_ARRFour1"]},
+            "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
+        }
+
+        reviewer_one_review_edit = reviewer_client.post_note_edit(
+            invitation=official_review_invitation,
+            signatures=[reviewer_one_anon_id],
+            note=openreview.api.Note(
+                content=deepcopy(official_review_content)
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_one_review_edit['id'])
+
+        reviewer_two_review_edit = reviewer_two_client.post_note_edit(
+            invitation=official_review_invitation,
+            signatures=[reviewer_two_anon_id],
+            note=openreview.api.Note(
+                content=deepcopy(official_review_content)
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_two_review_edit['id'])
+
+        reviewer_three_review_edit = reviewer_three_client.post_note_edit(
+            invitation=official_review_invitation,
+            signatures=[reviewer_three_anon_id],
+            note=openreview.api.Note(
+                content=deepcopy(official_review_content)
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_three_review_edit['id'])
+
+        assert len(pc_client_v2.get_notes(invitation=official_review_invitation)) == 3
+
         for case in test_cases:
             role, inv_name, user_client, user, signature = case['role'], case['invitation_name'], case['client'], case['user'], case['signature']
 
@@ -6052,9 +6133,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            score_edge_heads = {edge.head for edge in pc_client_v2.get_edges(invitation=f"{role}/-/Emergency_Score", tail=user)}
             assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
-            assert len(score_edges[user]) == 101
+            assert len(score_edges[user]) == 100
+            assert included_submission.id in score_edge_heads
+            assert excluded_submission.id not in score_edge_heads
 
             # Test editing note
             user_note_edit = user_client.post_note_edit(
@@ -6091,9 +6175,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            score_edge_heads = {edge.head for edge in pc_client_v2.get_edges(invitation=f"{role}/-/Emergency_Score", tail=user)}
             assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
-            assert len(score_edges[user]) == 101
+            assert len(score_edges[user]) == 100
+            assert included_submission.id in score_edge_heads
+            assert excluded_submission.id not in score_edge_heads
 
             # Test set agreement to no
             user_note_edit = user_client.post_note_edit(
@@ -6150,6 +6237,46 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
             assert user not in score_edges
             assert all(weight < 10 for weight in aggregate_score_edges[user])
+
+        reviewer_one_delete_edit = reviewer_client.post_note_edit(
+            invitation=official_review_invitation,
+            signatures=[reviewer_one_anon_id],
+            note=openreview.api.Note(
+                id=reviewer_one_review_edit['note']['id'],
+                content=deepcopy(official_review_content),
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_one_delete_edit['id'])
+
+        reviewer_two_delete_edit = reviewer_two_client.post_note_edit(
+            invitation=official_review_invitation,
+            signatures=[reviewer_two_anon_id],
+            note=openreview.api.Note(
+                id=reviewer_two_review_edit['note']['id'],
+                content=deepcopy(official_review_content),
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_two_delete_edit['id'])
+
+        reviewer_three_delete_edit = reviewer_three_client.post_note_edit(
+            invitation=official_review_invitation,
+            signatures=[reviewer_three_anon_id],
+            note=openreview.api.Note(
+                id=reviewer_three_review_edit['note']['id'],
+                content=deepcopy(official_review_content),
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_three_delete_edit['id'])
+
+        openreview_client.remove_members_from_group(
+            'aclweb.org/ACL/ARR/2023/August/Submission101/Reviewers',
+            ['~Reviewer_ARROne1', '~Reviewer_ARRTwo1', '~Reviewer_ARRThree1']
+        )
+
+        assert len(pc_client_v2.get_notes(invitation=official_review_invitation)) == 0
 
     def test_review_issue_forms(self, client, openreview_client, helpers, test_client):
         now = datetime.datetime.now()
