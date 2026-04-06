@@ -2090,31 +2090,31 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def restrict(self, id):
+    def restrict(self, venue_id):
         """
         Restricts a domain/venue, preventing non-authorized users from accessing its data.
 
-        :param id: the domain/venue ID to restrict
-        :type id: str
+        :param venue_id: the domain/venue ID to restrict
+        :type venue_id: str
 
         :return: the API response
         :rtype: dict
         """
-        response = self.session.post(self.domains_restriction_url, json={'domain': id, 'action': 'restrict'}, headers=self.headers)
+        response = self.session.post(self.domains_restriction_url, json={'domain': venue_id, 'action': 'restrict'}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
-    def unrestrict(self, id):
+    def unrestrict(self, venue_id):
         """
         Removes the restriction from a domain/venue, restoring normal data access.
 
-        :param id: the domain/venue ID to unrestrict
-        :type id: str
+        :param venue_id: the domain/venue ID to unrestrict
+        :type venue_id: str
 
         :return: the API response
         :rtype: dict
         """
-        response = self.session.post(self.domains_restriction_url, json={'domain': id, 'action': 'unrestrict'}, headers=self.headers)
+        response = self.session.post(self.domains_restriction_url, json={'domain': venue_id, 'action': 'unrestrict'}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 

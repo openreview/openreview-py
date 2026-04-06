@@ -1,4 +1,3 @@
-import pytest
 import datetime
 import openreview
 from openreview.api import OpenReviewClient
