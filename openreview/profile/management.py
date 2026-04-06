@@ -325,7 +325,8 @@ return {
                                                     'username': '${7/content/author_id/value}'
                                                 }
                                             }
-                                        }
+                                        },
+                                        'hidden': True
                                     }
                                 }
                             }
@@ -346,7 +347,7 @@ return {
                 writers=[self.public_article_group_id],
                 signatures=[self.public_article_group_id],
                 invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.support_group_id],
-                preprocess=self.get_process_content('process/author_coreference_pre_process.js'),
+                preprocess=self.get_process_content('process/author_removal_pre_process.js'),
                 edit={
                     'readers': ['everyone'],
                     'signatures': {
@@ -410,7 +411,8 @@ return {
                                                     'username': '${7/content/author_id/value}'
                                                 }
                                             }
-                                        }
+                                        },
+                                        'hidden': True
                                     }
                                 }
                             }

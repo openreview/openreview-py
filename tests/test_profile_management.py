@@ -1515,8 +1515,37 @@ computation and memory.
         note = josiah_client.get_note(edit['note']['id'])
         assert note.external_ids == ['doi:10.1103/physreva.109.022426']
         assert note.content['authors']['value'][0] == {'fullname': 'Josiah Couch', 'username': '~Josiah_Couch1'}
+        assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': 'https://orcid.org/orcid-search/search?searchQuery=Sarah Racz'}
 
         sarah_client = helpers.create_user('sarah@profile.org', 'Sarah', 'Racz', alternates=[], institution='google.com')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author id ~Sarah_Middle_Racz1 doesn\'t match with the names listed in your profile'):
+            edit = sarah_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+                signatures = ['~Sarah_Racz1'],
+                content = {
+                    'author_index': { 'value': 2 },
+                    'author_id': { 'value': '~Sarah_Middle_Racz1' },
+                    'author_name': { 'value': 'Sarah Middle Racz' },
+                },
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author id ~Sarah_Racz1 doesn\'t match with the author name Sarah Middle Racz'):
+            edit = sarah_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+                signatures = ['~Sarah_Racz1'],
+                content = {
+                    'author_index': { 'value': 2 },
+                    'author_id': { 'value': '~Sarah_Racz1' },
+                    'author_name': { 'value': 'Sarah Middle Racz' },
+                },
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )            
 
         edit = sarah_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/Authorship_Claim',

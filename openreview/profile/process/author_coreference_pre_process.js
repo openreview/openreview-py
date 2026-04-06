@@ -3,7 +3,12 @@ async function process(client, edit, invitation) {
   
   const authorIndex = edit.content.author_index.value;
   const authorId = edit.content.author_id.value;
+  const authorName = edit.content.author_name.value;
 
+  if (Tools.prettyId(authorId) !== authorName) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author id ${authorId} doesn't match with the author name ${authorName}` }));
+  }
+  
   const { notes } = await client.getNotes({ id: edit.note.id });
   const publication = notes[0];
 
@@ -21,23 +26,15 @@ async function process(client, edit, invitation) {
   const usernames = userProfile.content.names.map(name => name.username);
   const names = userProfile.content.names.map(name => name.fullname);
 
-  if (authorId === '') {
-    const authorUsername = publication.content.authors.value[authorIndex]?.username;
-    if (!usernames.some(username => username === authorUsername)) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${authorUsername} from index ${authorIndex} doesn't match with the names listed in your profile` }));
-    }
-    return;
-  }
-
   const usernameIndex = usernames.indexOf(authorId);
 
   if (usernameIndex === -1) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author id ${authorId} doesn't match with the names listed in your profile` }));
   }
 
-  const authorName = publication.content.authors.value[authorIndex]?.fullname;
-  const nameIndex = names.indexOf(authorName);
+  const publicationAuthorName = publication.content.authors.value[authorIndex]?.fullname;
+  const nameIndex = names.indexOf(publicationAuthorName);
   if (nameIndex === -1) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${authorName} from index ${authorIndex} doesn't match with the names listed in your profile` }));
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${publicationAuthorName} from index ${authorIndex} doesn't match with the names listed in your profile` }));
   }
 }
