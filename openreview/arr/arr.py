@@ -554,7 +554,14 @@ class ARR(object):
         return self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
-        return self.venue.set_assignments(assignment_title,  committee_id, enable_reviewer_reassignment, overwrite)
+        match_group = self.client.get_group(committee_id)
+        assignment_invitation = self.client.get_invitation(self.get_assignment_id(match_group.id))
+        conference_matching = matching.Matching(
+            self,
+            match_group,
+            submission_content=assignment_invitation.edit.get('head', {}).get('param', {}).get('withContent')
+        )
+        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
     def unset_assignments(self, assignment_title, committee_id):
         return self.venue.unset_assignments(assignment_title, committee_id)
