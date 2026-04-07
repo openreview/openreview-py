@@ -2734,13 +2734,13 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
         assert len(anon_groups) == 1
-        assert anon_groups[0].readers == ['V2.cc/2030/Conference',
-                                          'V2.cc/2030/Conference/Program_Chairs',
+        assert anon_groups[0].readers == ['V2.cc/2030/Conference', 
+                                          'V2.cc/2030/Conference/Program_Chairs', 
                                           'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
                                           'V2.cc/2030/Conference/Submission1/Area_Chairs',
                                           'V2.cc/2030/Conference/Submission1/Reviewers',
                                           anon_groups[0].id]
-
+        
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
         request_page(selenium=selenium, url="http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers", client=reviewer_client, wait_for_element='header')
@@ -2785,8 +2785,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
         assert len(anon_groups) == 1
-        assert anon_groups[0].readers == ['V2.cc/2030/Conference',
-                                          'V2.cc/2030/Conference/Program_Chairs',
+        assert anon_groups[0].readers == ['V2.cc/2030/Conference', 
+                                          'V2.cc/2030/Conference/Program_Chairs', 
                                           'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
                                           'V2.cc/2030/Conference/Submission1/Area_Chairs',
                                           anon_groups[0].id]
