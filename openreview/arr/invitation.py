@@ -213,16 +213,111 @@ class InvitationBuilder(object):
         )
 
     def set_preprint_post_submission_invitation(self):
-        return self.venue_invitation_builder.set_post_submission_invitation(
-            invitation_id=self.venue.get_preprint_post_submission_id(),
-            source={
-                'venueid': self.venue.get_submission_venue_id(),
-                'content':{
-                    'preprint': 'yes'
+        if self.venue.is_template_related_workflow():
+            return
+
+        venue_id = self.venue_id
+        submission_stage = self.venue.submission_stage
+        submission_id = submission_stage.get_submission_id(self.venue)
+        invitation_id = self.venue.get_preprint_post_submission_id()
+        source = {
+            'venueid': self.venue.get_submission_venue_id(),
+            'content': {
+                'preprint': 'yes'
+            }
+        }
+        post_submission_cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
+        number_param = '${{4/id}/number}'
+        authors_id = self.venue.get_authors_id(number_param)
+        hidden_field_names = submission_stage.get_hidden_field_names()
+        note_content = {
+            field: {
+                'readers': [venue_id, authors_id]
+            } for field in hidden_field_names
+        }
+        committee_readers = [
+            self.venue.get_program_chairs_id(),
+            self.venue.get_senior_area_chairs_id(number_param),
+            self.venue.get_area_chairs_id(number_param),
+            self.venue.get_reviewers_id(number_param),
+            authors_id
+        ]
+
+        existing_invitation = tools.get_invitation(self.client, invitation_id)
+        if existing_invitation and 'content' in existing_invitation.edit['note']:
+            for field, value in existing_invitation.edit['note']['content'].items():
+                if field not in hidden_field_names and 'readers' in value:
+                    note_content[field] = {
+                        'readers': {
+                            'param': {
+                                'const': {
+                                    'delete': True
+                                }
+                            }
+                        }
+                    }
+
+        for field in hide_fields_from_public:
+            note_content[field] = {
+                'readers': committee_readers
+            }
+
+        note_content['_bibtex'] = {
+            'value': {
+                'param': {
+                    'type': 'string',
+                    'maxLength': 200000,
+                    'input': 'textarea',
+                    'optional': True,
+                    'deletable': True
+                }
+            }
+        }
+
+        invitation = Invitation(
+            id=invitation_id,
+            invitees=[venue_id],
+            signatures=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            cdate=post_submission_cdate,
+            date_processes=[{
+                'dates': ["#{4/cdate}", self.update_date_string],
+                'script': self.get_process_content('../venue/process/post_submission_process.py')
+            }],
+            content={
+                'source': {
+                    'value': source
                 }
             },
-            process_path='../arr/process/post_submission_process.py'
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id, self.venue.get_authors_id('${{2/note/id}/number}')],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': submission_id,
+                            'optional': True
+                        }
+                    },
+                    'odate': {
+                        'param': {
+                            'range': [0, 9999999999999],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': [self.venue.get_authors_id('${{2/id}/number}')],
+                    'readers': ['everyone'],
+                    'writers': [venue_id, self.venue.get_authors_id('${{2/id}/number}')],
+                    'content': note_content
+                }
+            }
         )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
 
     def set_submission_deletion_invitation(self, submission_revision_stage):
         return self.venue_invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
