@@ -49,6 +49,7 @@ class TestRegistrationStep():
                     'reviewers_name': { 'value': 'Reviewers' },
                     'area_chairs_support': { 'value': True },
                     'area_chairs_name': { 'value': 'Action_Editors' },
+                    'senior_area_chairs_name': { 'value': 'Senior_Area_Chairs' },
                     'expected_submissions': { 'value': 500 },
                     'venue_organizer_agreement': {
                         'value': [
