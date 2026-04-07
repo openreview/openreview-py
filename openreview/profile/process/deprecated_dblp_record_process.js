@@ -17,7 +17,7 @@ async function process(client, edit, invitation) {
   if (authorids) {
     note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid);
   }
-  // Remove externalIds to void duplicate key errors
+  // Remove externalIds to avoid duplicate key errors
   delete note.externalId;
 
   const html = note.content.html?.value;
