@@ -22,8 +22,8 @@ class TestSimpleDualAnonymous():
         helpers.create_user('reviewer_three@iclr.cc', 'Reviewer', 'ICLRThree')
         helpers.create_user('areachair_one@iclr.cc', 'AC', 'ICLROne')
         helpers.create_user('areachair_two@iclr.cc', 'AC', 'ICLRTwo')
-        helpers.create_user('seniorareachair_one@iclr.cc', 'SAC', 'ICLROne')
-        helpers.create_user('seniorareachair_two@iclr.cc', 'SAC', 'ICLRTwo')
+        helpers.create_user('senioractioneditor_one@iclr.cc', 'SAE', 'ICLROne')
+        helpers.create_user('senioractioneditor_two@iclr.cc', 'SAE', 'ICLRTwo')
         pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
@@ -48,6 +48,7 @@ class TestSimpleDualAnonymous():
                     'contact_email': { 'value': 'iclr2026.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
+                    'full_submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
                     'reviewers_name': { 'value': 'Reviewers' },
                     'area_chairs_support': { 'value': True },
                     'area_chairs_name': { 'value': 'Action_Editors' },
@@ -69,7 +70,7 @@ class TestSimpleDualAnonymous():
                     }
                 }
             ))
-        
+
         helpers.await_queue_edit(openreview_client, edit_id=request['id'])
 
         # deploy the venue
@@ -81,7 +82,7 @@ class TestSimpleDualAnonymous():
                     'venue_id': { 'value': 'ICLR.cc/2026/Conference' }
                 }
             ))
-        
+
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference')
@@ -135,3 +136,141 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Action_Editors/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Expertise_Selection')
+
+    def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
+
+        # use invitation to recruit reviewers
+        edit = openreview_client.post_group_edit(
+
+                invitation='ICLR.cc/2026/Conference/Senior_Action_Editors/-/Recruitment_Request',
+                content={
+                    'invitee_details': { 'value':  'senioractioneditor_one@iclr.cc, SAE ICLROne\nsenioractioneditor_two@iclr.cc, SAE ICLRTwo\nSAC@mail.com\nceleste_martinez1\ninvalid_emäil@iclr.cc' },
+                    'invite_message_subject_template': { 'value': '[ICLR 2026] Invitation to serve as Senior Action Editor' },
+                    'invite_message_body_template': { 'value': 'Dear {{fullname}},\n\nWe are pleased to invite you to serve as a Senior Action Editor for the ICLR 2026 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nICLR 2026 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        invited_group = openreview_client.get_group('ICLR.cc/2026/Conference/Senior_Action_Editors/Invited')
+        assert set(invited_group.members) == {'~SAE_ICLROne1', '~SAE_ICLRTwo1', 'sac@mail.com'}
+        assert openreview_client.get_group('ICLR.cc/2026/Conference/Senior_Action_Editors/Declined').members == []
+        assert openreview_client.get_group('ICLR.cc/2026/Conference/Senior_Action_Editors').members == []
+
+        edits = openreview_client.get_group_edits(group_id='ICLR.cc/2026/Conference/Senior_Action_Editors/Invited', sort='tcdate:desc')
+
+        messages = openreview_client.get_messages(to='programchair@iclr.cc', subject = 'Recruitment request status for ICLR 2026 Senior Action Editor Group')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''The recruitment request process for the Senior Action Editor Group has been completed.
+
+Invited: 3
+Already invited: 0
+Already member: 0
+Errors: 2
+
+For more details, please check the following links:
+
+- [recruitment request details](https://openreview.net/group/revisions?id=ICLR.cc/2026/Conference/Senior_Action_Editors&editId={edit['id']})
+- [invited list](https://openreview.net/group/revisions?id=ICLR.cc/2026/Conference/Senior_Action_Editors/Invited&editId={edits[0].id})
+- [all invited list](https://openreview.net/group/edit?id=ICLR.cc/2026/Conference/Senior_Action_Editors/Invited)'''
+
+    def test_submissions(self, client, openreview_client, helpers, test_client):
+
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
+        for domain in domains:
+            helpers.create_user(f'eddie@{domain}', 'Eddie', f'{domain.split(".")[0].capitalize()}')
+
+        for i in range(1,11):
+            note = openreview.api.Note(
+                license = 'CC BY 4.0',
+                content = {
+                    'title': { 'value': 'Paper title ' + str(i) },
+                    'abstract': { 'value': 'This is an abstract ' + str(i) },
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Eddie_' + domains[i % 10].split('.')[0].capitalize() + '1'] },
+                    'authors': { 'value': ['SomeFirstName User', 'Eddie ' + domains[i % 10].split('.')[0].capitalize()] },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
+                }
+            )
+            if i == 1 or i == 10:
+                note.content['authors']['value'].append('SAE ICLROne')
+                note.content['authorids']['value'].append('~SAE_ICLROne1')
+
+            test_client.post_note_edit(invitation='ICLR.cc/2026/Conference/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=note)
+
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2026/Conference/-/Submission', count=10)
+
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 10
+        assert submissions[-1].readers == ['ICLR.cc/2026/Conference', '~SomeFirstName_User1', '~Eddie_Umass1', '~SAE_ICLROne1']
+
+    def test_post_submission_invitations(self, client, openreview_client, helpers, test_client):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+        # close submission abstract
+        now = datetime.datetime.now()
+
+        edit = pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Submission/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
+                'due_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=2)) }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Full_Submission-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/Reviewers/-/Submission_Message-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/Action_Editors/-/Submission_Message-0-1', count=2)
+
+        full_submission_inv = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Full_Submission')
+        assert len(full_submission_inv) == 10
+
+        # release submissions to the public
+        edit = pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Submission_Change_Before_Bidding/Readers',
+            content={
+                'readers': { 'value': ['everyone'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
+
+        edit = pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Submission_Change_Before_Bidding/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Submission_Change_Before_Bidding-0-1', count=3)
+
+        submission_invitation = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Submission')
+        assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
+
+        submissions = pc_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+        assert len(submissions) == 10
+        assert submission.license == 'CC BY 4.0'
+        assert submission.readers == ['everyone']
+        assert '_bibtex' in submission.content
+        assert 'author={Anonymous}' in submission.content['_bibtex']['value']
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@inproceedings{
+anonymous'''+str(year)+'''paper,
+title={Paper title 1},
+author={Anonymous},
+booktitle={Submitted to International Conference on Learning Representations},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + submission.forum + '''},
+note={under review}
+}'''
+        assert submission.content['_bibtex']['value'] == valid_bibtex
