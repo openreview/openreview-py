@@ -3798,7 +3798,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'writers': [self.venue.id],
                     'signatures': [self.venue.id],
                     'signatories': [self.venue.id],
-                    'anonids': True
+                    'anonids': True,
                 }
 
             }
@@ -3856,7 +3856,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'nonreaders': [self.venue.get_authors_id('${3/content/noteNumber/value}')],
                     'writers': [self.venue.id],
                     'signatures': [self.venue.id],
-                    'signatories': [self.venue.id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')]
+                    'signatories': [self.venue.id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')],
                 }
 
             }
