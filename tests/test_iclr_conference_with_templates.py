@@ -127,3 +127,11 @@ class TestSimpleDualAnonymous():
 
         assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Message')
         assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Members')
+
+        submission_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Submission')
+        assert submission_invitation
+        assert submission_invitation.duedate
+
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Expertise_Selection')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Action_Editors/-/Expertise_Selection')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Expertise_Selection')

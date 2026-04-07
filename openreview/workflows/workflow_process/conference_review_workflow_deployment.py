@@ -101,6 +101,10 @@ def process(client, edit, invitation):
         await_process=True
     )
 
+    venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(
+        due_date = venue.submission_stage.due_date
+    )
+
     venue.create_submission_stage()
 
     submission_deadline = full_submission_deadline if full_submission_deadline else note.content['submission_deadline']['value']
