@@ -194,9 +194,8 @@ class ARR(object):
             print(f'Author response extension process not yet active, cdate: {cdate}')
             return
 
-        # Fetch all submissions with replies
-        submissions = self.client.get_all_notes(
-            invitation=self.get_submission_id(),
+        # Fetch all active submissions with replies
+        submissions = self.get_submissions(
             details='directReplies',
             sort='number:asc'
         )
