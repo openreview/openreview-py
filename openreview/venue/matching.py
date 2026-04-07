@@ -1214,6 +1214,8 @@ class Matching(object):
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id), domain=venue.id,
             label=assignment_title, groupby='head', select=None)}
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
+        submission_group_invitation_id = venue.get_invitation_id(f'{venue.submission_stage.name}_Group', prefix=self.match_group.id)
+        existing_paper_committee_ids = { g.id for g in client.get_all_groups(invitation=submission_group_invitation_id) }
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None, domain=venue.id)}
 
         print('Check if there are reviews posted')
@@ -1271,9 +1273,7 @@ class Matching(object):
                         weight=proposed_edge.get('weight')
                     ))
                     assigned_users.append(assigned_user)
-                existing_group = openreview.tools.get_group(client, paper_committee_id)
-                if not existing_group:
-                    submission_group_invitation_id = venue.get_invitation_id(f'{venue.submission_stage.name}_Group', prefix=self.match_group.id)
+                if paper_committee_id not in existing_paper_committee_ids:
                     client.post_group_edit(
                         invitation=submission_group_invitation_id,
                         content={
