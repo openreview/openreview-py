@@ -1292,15 +1292,18 @@ class Matching(object):
                         weight=proposed_edge.get('weight')
                     ))
                     assigned_users.append(assigned_user)
+                paper_committee_id = venue.get_committee_id(name=role_name, number=paper.number)
+                existing_group = openreview.tools.get_group(client, paper_committee_id)
+                if not existing_group:
                     client.post_group_edit(
                         invitation=deployed_assignment_groups_invitation_id,
                         content={
                             'noteId': { 'value': paper.id },
-                            'noteNumber': { 'value': paper.number },
-                            'members': { 'value': assigned_users }
+                            'noteNumber': { 'value': paper.number }
                         },
                         group=openreview.api.Group()
                     )
+                client.add_members_to_group(paper_committee_id, assigned_users)
                 return paper_assignment_edges
             else:
                 print('assignment not found', paper.id)

@@ -3703,10 +3703,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            # date_processes=[{
-            #     'dates': ["#{4/cdate}", self.update_date_string],
-            #     'script': self.group_edit_process
-            # }],
+            date_processes=[{
+                'dates': ["#{4/cdate}", self.update_date_string],
+                'script': self.group_edit_process
+            }],
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -3725,14 +3725,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                                 'type': 'string'
                             }
                         }
-                    },
-                    'members': {
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'optional': True
-                            }
-                        }
                     }
                 },
                 'group': {
@@ -3743,8 +3735,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'writers': self.venue.group_builder.get_reviewer_paper_group_writers('${3/content/noteNumber/value}'),
                     'signatures': [self.venue.id],
                     'signatories': [self.venue.id],
-                    'anonids': True,
-                    'members': ['${3/content/members/value}']
+                    'anonids': True
                 }
 
             }
@@ -3775,10 +3766,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            # date_processes=[{
-            #     'dates': ["#{4/cdate}", self.update_date_string],
-            #     'script': self.group_edit_process
-            # }],
+            date_processes=[{
+                'dates': ["#{4/cdate}", self.update_date_string],
+                'script': self.group_edit_process
+            }],
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -3797,14 +3788,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                                 'type': 'string'
                             }
                         }
-                    },
-                    'members': {
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'optional': True
-                            }
-                        }
                     }
                 },
                 'group': {
@@ -3815,8 +3798,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'writers': [self.venue.id],
                     'signatures': [self.venue.id],
                     'signatories': [self.venue.id],
-                    'anonids': True,
-                    'members': ['${3/content/members/value}']
+                    'anonids': True
                 }
 
             }
@@ -3844,10 +3826,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            # date_processes=[{
-            #     'dates': ["#{4/cdate}", self.update_date_string],
-            #     'script': self.group_edit_process
-            # }],
+            date_processes=[{
+                'dates': ["#{4/cdate}", self.update_date_string],
+                'script': self.group_edit_process
+            }],
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -3866,14 +3848,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                                 'type': 'string'
                             }
                         }
-                    },
-                    'members': {
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'optional': True
-                            }
-                        }
                     }
                 },
                 'group': {
@@ -3882,8 +3856,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'nonreaders': [self.venue.get_authors_id('${3/content/noteNumber/value}')],
                     'writers': [self.venue.id],
                     'signatures': [self.venue.id],
-                    'signatories': [self.venue.id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')],
-                    'members': ['${3/content/members/value}']
+                    'signatories': [self.venue.id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')]
                 }
 
             }
