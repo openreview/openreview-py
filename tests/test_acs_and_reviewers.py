@@ -88,6 +88,8 @@ class TestSimpleDualAnonymous():
 
         helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Submission_Group-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
 
         #after deployment, check domain hasn't changed
@@ -468,6 +470,24 @@ For more details, please check the following links:
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)
 
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Reviewers/-/Submission_Group/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Submission_Group/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/Action_Editors/-/Submission_Group-0-1', count=2)
+
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[0].readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors', 'EFGH.cc/2025/Conference/Reviewers', 'EFGH.cc/2025/Conference/Submission1/Authors']
@@ -481,9 +501,9 @@ For more details, please check the following links:
 
         submission_groups = openreview_client.get_all_groups(prefix='EFGH.cc/2025/Conference/Submission')
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
-        assert len(reviewer_groups) == 0
+        assert len(reviewer_groups) == 10
         action_editor_groups = [group for group in submission_groups if group.id.endswith('/Action_Editors')]
-        assert len(action_editor_groups) == 0
+        assert len(action_editor_groups) == 10
 
         withdrawal_invitations = openreview_client.get_all_invitations(invitation='EFGH.cc/2025/Conference/-/Withdrawal')
         assert len(withdrawal_invitations) == 10

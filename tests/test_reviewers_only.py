@@ -208,6 +208,7 @@ class TestReviewersOnly():
 
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
 
         # delete status after it's not needed anymore
@@ -1090,6 +1091,7 @@ For more details, please check the following links:
             }
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
@@ -1102,7 +1104,7 @@ For more details, please check the following links:
 
         submission_groups = openreview_client.get_all_groups(prefix='ABCD.cc/2025/Conference/Submission')
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Program_Committee')]
-        assert len(reviewer_groups) == 0
+        assert len(reviewer_groups) == 10
 
         # hide data_release from reviewers
         pc_client.post_invitation_edit(
