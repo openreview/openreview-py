@@ -54,7 +54,6 @@ class TestJournalActiveProfiles():
         helpers.create_user('lena@mailthree.com', 'Lena', 'Reviewer')
         helpers.create_user('sofia@mailfour.com', 'Sofia', 'Reviewer')
         helpers.create_user('wei@mailsix.com', 'Wei', 'Reviewer')
-        helpers.create_user('omar@mailone.com', 'Omar', 'Reviewer')
 
         ## External Reviewers
         helpers.create_user('anika@mailten.com', 'Anika', 'ExtReviewer')
