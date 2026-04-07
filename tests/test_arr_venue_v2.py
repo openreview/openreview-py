@@ -2889,8 +2889,35 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             }
 
         assert submissions[3].readers == ['everyone']
+        assert 'readers' in submissions[3].content['authors']
+        assert 'readers' in submissions[3].content['authorids']
+        assert submissions[3].content['authors']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['authorids']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['justification_for_author_changes']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['preprint_status']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['preferred_venue']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+
+        assert 'everyone' not in submissions[4].readers
+
         assert submissions[5].readers is not None
         assert submissions[5].readers == ['everyone']
+        assert 'readers' in submissions[5].content['authors']
+        assert 'readers' in submissions[5].content['authorids']
         assert submissions[5].content['authors']['readers'] == [
             'aclweb.org/ACL/ARR/2023/August', 
             'aclweb.org/ACL/ARR/2023/August/Submission6/Authors'
@@ -2898,6 +2925,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[5].content['authorids']['readers'] == [
             'aclweb.org/ACL/ARR/2023/August', 
             'aclweb.org/ACL/ARR/2023/August/Submission6/Authors'
+        ]
+        assert submissions[5].content['justification_for_author_changes']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['preprint_status']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['preferred_venue']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
         ]
 
         # Post comment as PCs for the first submission
