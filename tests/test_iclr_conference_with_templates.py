@@ -211,7 +211,7 @@ For more details, please check the following links:
         assert len(submissions) == 10
         assert submissions[-1].readers == ['ICLR.cc/2026/Conference', '~SomeFirstName_User1', '~Eddie_Umass1', '~SAE_ICLROne1']
 
-    def test_post_submission_invitations(self, client, openreview_client, helpers, test_client):
+    def test_post_submission(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
 
@@ -269,6 +269,67 @@ author={Anonymous},
 booktitle={Submitted to International Conference on Learning Representations},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + submission.forum + '''},
+note={under review}
+}'''
+        assert submission.content['_bibtex']['value'] == valid_bibtex
+
+        full_submission_inv = openreview_client.get_invitation(id='ICLR.cc/2026/Conference/-/Full_Submission')
+
+        # allow authors to edit license field
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Full_Submission/Form_Fields',
+            content={
+                'content': {
+                    'value': full_submission_inv.edit['invitation']['edit']['note']['content']
+                },
+                'license': {
+                    'value':  [
+                        {'value': 'CC BY 4.0', 'description': 'CC BY 4.0'},
+                        {'value': 'CC BY-SA 4.0', 'description': 'CC BY-SA 4.0'},
+                        {'value': 'CC0 1.0', 'description': 'CC0 1.0'}
+                    ]
+                }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Full_Submission-0-1', count=3)
+
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        revision_note = test_client.post_note_edit(
+            invitation = f'ICLR.cc/2026/Conference/Submission{submission.number}/-/Full_Submission',
+            signatures = [f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors'],
+            note = openreview.api.Note(
+                license = 'CC0 1.0',
+                content = {
+                    'title': { 'value': submission.content['title']['value'] + ' license revision' },
+                    'abstract': { 'value': submission.content['abstract']['value'] },
+                    'authorids': { 'value': submission.content['authorids']['value'] },
+                    'authors': { 'value': submission.content['authors']['value'] },
+                    'keywords': {'value': submission.content['keywords']['value']},
+                    'pdf': { 'value': submission.content['pdf']['value'] },
+                    'email_sharing': { 'value': submission.content['email_sharing']['value'] },
+                    'data_release': { 'value': submission.content['data_release']['value'] }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        assert revision_note['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
+
+        submission = pc_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')[0]
+        assert submission.license == 'CC0 1.0'
+        assert submission.readers == ['everyone']
+        assert '_bibtex' in submission.content
+        assert 'author={Anonymous}' in submission.content['_bibtex']['value']
+        valid_bibtex = '''@inproceedings{
+anonymous'''+str(year)+'''paper,
+title={Paper title 1 license revision},
+author={Anonymous},
+booktitle={Submitted to International Conference on Learning Representations},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''     
 
         valid_bibtex = valid_bibtex + submission.forum + '''},
 note={under review}
