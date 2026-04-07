@@ -41,7 +41,7 @@ async function process(client, edit, invitation) {
       if (p['contributor-orcid']?.uri) {
         username = p['contributor-orcid'].uri;
       } else if (fullname) {
-        username = `https://orcid.org/orcid-search/search?searchQuery=${fullname}`;
+        username = `https://orcid.org/orcid-search/search?searchQuery=${encodeURIComponent(fullname)}`;
       }
       return { fullname, username };
     })

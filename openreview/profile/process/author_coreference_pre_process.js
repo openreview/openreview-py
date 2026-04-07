@@ -23,7 +23,7 @@ async function process(client, edit, invitation) {
   const { profiles } = await client.getProfiles({ id: edit.signatures[0] });
   const userProfile = profiles[0];
 
-  const usernames = userProfile.content.names.map(name => name.username);
+  const usernames = userProfile.content.names.map(name => name.username).filter(username => !!username);
   const names = userProfile.content.names.map(name => name.fullname);
 
   const usernameIndex = usernames.indexOf(authorId);
