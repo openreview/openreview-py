@@ -2,7 +2,7 @@ import datetime
 import openreview
 
 
-class TestAssignReviewersOpenDeadline():
+class TestAssignCommitteeOpenDeadline():
 
     def test_setup_venue(self, openreview_client, helpers):
         """Setup a new venue with the submission deadline kept open (30 days out)
@@ -15,6 +15,8 @@ class TestAssignReviewersOpenDeadline():
         helpers.create_user('reviewer_one@xyz.cc', 'ReviewerOne', 'XYZ')
         helpers.create_user('reviewer_two@xyz.cc', 'ReviewerTwo', 'XYZ')
         helpers.create_user('reviewer_three@xyz.cc', 'ReviewerThree', 'XYZ')
+        helpers.create_user('ac_one@xyz.cc', 'AreaChairOne', 'XYZ')
+        helpers.create_user('ac_two@xyz.cc', 'AreaChairTwo', 'XYZ')
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@xyz.cc', password=helpers.strong_password)
 
@@ -37,6 +39,7 @@ class TestAssignReviewersOpenDeadline():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewers_name': { 'value': 'Reviewers' },
+                    'area_chairs_support': { 'value': True },
                     'area_chairs_name': { 'value': 'Area_Chairs' },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'XYZ.cc/2024/Conference' },
@@ -96,6 +99,24 @@ class TestAssignReviewersOpenDeadline():
         assert '~ReviewerTwo_XYZ1' in reviewers_group.members
         assert '~ReviewerThree_XYZ1' in reviewers_group.members
 
+        # Area Chairs group should exist and Submission_Group invitation should be scheduled in the future
+        ac_submission_group_inv = openreview_client.get_invitation('XYZ.cc/2025/Conference/Area_Chairs/-/Submission_Group')
+        assert ac_submission_group_inv.cdate == submission_inv.expdate
+        assert ac_submission_group_inv.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
+
+        # add area chairs directly to the Area_Chairs group
+        openreview_client.post_group_edit(
+            invitation='XYZ.cc/2025/Conference/Area_Chairs/-/Members',
+            signatures=['XYZ.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={ 'append': ['~AreaChairOne_XYZ1', '~AreaChairTwo_XYZ1'] }
+            )
+        )
+
+        ac_group = openreview_client.get_group('XYZ.cc/2025/Conference/Area_Chairs')
+        assert '~AreaChairOne_XYZ1' in ac_group.members
+        assert '~AreaChairTwo_XYZ1' in ac_group.members
+
     def test_post_submissions(self, openreview_client, test_client, helpers):
         """Post a few submissions while the deadline is still open."""
 
@@ -126,11 +147,11 @@ class TestAssignReviewersOpenDeadline():
         submissions = openreview_client.get_notes(invitation='XYZ.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 5
 
-        # since the submission deadline is still open, the per-submission Reviewers groups
-        # should NOT exist yet
+        # since the submission deadline is still open, the per-submission Reviewers
+        # and Area_Chairs groups should NOT exist yet
         for submission in submissions:
-            group = openreview.tools.get_group(openreview_client, f'XYZ.cc/2025/Conference/Submission{submission.number}/Reviewers')
-            assert group is None
+            assert openreview.tools.get_group(openreview_client, f'XYZ.cc/2025/Conference/Submission{submission.number}/Reviewers') is None
+            assert openreview.tools.get_group(openreview_client, f'XYZ.cc/2025/Conference/Submission{submission.number}/Area_Chairs') is None
 
     def test_assign_reviewers_individually(self, openreview_client, helpers):
         """Posting individual Assignment edges while the deadline is still open should
@@ -220,3 +241,69 @@ class TestAssignReviewersOpenDeadline():
         reviewers_group = openreview_client.get_group('XYZ.cc/2025/Conference/Submission3/Reviewers')
         assert '~ReviewerOne_XYZ1' in reviewers_group.members
         assert '~ReviewerTwo_XYZ1' in reviewers_group.members
+
+    def test_assign_area_chairs_individually(self, openreview_client, helpers):
+        """Same scenario as test_assign_reviewers_individually but for Area_Chairs."""
+
+        submissions = openreview_client.get_notes(invitation='XYZ.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 5
+
+        # confirm the AC group does not exist yet for paper 1
+        assert openreview.tools.get_group(openreview_client, 'XYZ.cc/2025/Conference/Submission1/Area_Chairs') is None
+
+        # post an AC assignment edge for paper 1, AreaChairOne - the group should be created on the fly
+        edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='XYZ.cc/2025/Conference/Area_Chairs/-/Assignment',
+            head=submissions[0].id,
+            tail='~AreaChairOne_XYZ1',
+            signatures=['XYZ.cc/2025/Conference/Program_Chairs'],
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        ac_group = openreview_client.get_group('XYZ.cc/2025/Conference/Submission1/Area_Chairs')
+        assert ac_group is not None
+        assert '~AreaChairOne_XYZ1' in ac_group.members
+
+        # post a second AC assignment edge for paper 1, AreaChairTwo - the existing group should be updated
+        edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='XYZ.cc/2025/Conference/Area_Chairs/-/Assignment',
+            head=submissions[0].id,
+            tail='~AreaChairTwo_XYZ1',
+            signatures=['XYZ.cc/2025/Conference/Program_Chairs'],
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        ac_group = openreview_client.get_group('XYZ.cc/2025/Conference/Submission1/Area_Chairs')
+        assert '~AreaChairOne_XYZ1' in ac_group.members
+        assert '~AreaChairTwo_XYZ1' in ac_group.members
+
+        # Case: AC group already exists - manually create it for paper 2, then add via edge
+        assert openreview.tools.get_group(openreview_client, 'XYZ.cc/2025/Conference/Submission2/Area_Chairs') is None
+
+        openreview_client.post_group_edit(
+            invitation='XYZ.cc/2025/Conference/Area_Chairs/-/Submission_Group',
+            content={
+                'noteId': { 'value': submissions[1].id },
+                'noteNumber': { 'value': submissions[1].number }
+            },
+            group=openreview.api.Group()
+        )
+        openreview_client.add_members_to_group('XYZ.cc/2025/Conference/Submission2/Area_Chairs', ['~AreaChairOne_XYZ1'])
+
+        ac_group = openreview_client.get_group('XYZ.cc/2025/Conference/Submission2/Area_Chairs')
+        assert ac_group.members == ['~AreaChairOne_XYZ1']
+
+        edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='XYZ.cc/2025/Conference/Area_Chairs/-/Assignment',
+            head=submissions[1].id,
+            tail='~AreaChairTwo_XYZ1',
+            signatures=['XYZ.cc/2025/Conference/Program_Chairs'],
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        ac_group = openreview_client.get_group('XYZ.cc/2025/Conference/Submission2/Area_Chairs')
+        assert '~AreaChairOne_XYZ1' in ac_group.members
+        assert '~AreaChairTwo_XYZ1' in ac_group.members
