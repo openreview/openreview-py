@@ -22,6 +22,7 @@ def process(client, invitation):
     email_subject = invitation.get_content_value('subject')
     email_content = invitation.get_content_value('message')
     fields_to_include = invitation.get_content_value('fields_to_include')
+    contact_email = domain.get_content_value('contact')
 
     status_invitation_id = domain.get_content_value('status_invitation_id')
     request_form_id = domain.get_content_value('request_form_id')
@@ -71,7 +72,8 @@ def process(client, invitation):
                 subject=subject,
                 recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
                 message=message,
-                invitation=invitation.id
+                invitation=invitation.id,
+                replyTo=contact_email
             )
 
     openreview.tools.concurrent_requests(send_decision_email, active_submissions)

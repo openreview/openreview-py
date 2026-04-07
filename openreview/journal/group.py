@@ -440,6 +440,22 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                                 signatories=[venue_id],
                                 members=[]))
 
+        # preferred emails readers group
+        preferred_emails_readers_group_id = f'{self.journal.venue_id}/Preferred_Emails_Readers'
+        preferred_emails_readers_group = openreview.tools.get_group(self.client, preferred_emails_readers_group_id)
+        if not preferred_emails_readers_group:
+            preferred_emails_readers_group=Group(id=preferred_emails_readers_group_id,
+                readers=[venue_id, preferred_emails_readers_group_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[venue_id],
+                members=[
+                    self.journal.venue_id,
+                    self.journal.get_action_editors_id()
+                ]
+            )
+            self.post_group(preferred_emails_readers_group)
+
     def setup_submission_groups(self, note):
         venue_id = self.journal.venue_id
         paper_group_id=f'{venue_id}/{self.journal.submission_group_name}{note.number}'

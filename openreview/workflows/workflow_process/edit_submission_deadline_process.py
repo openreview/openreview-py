@@ -82,6 +82,25 @@ def process(client, edit, invitation):
             )
         )
 
+    # update Submission_Message cdate
+    submission_message_invitation_id = f'{reviewers_id}/-/{submission_name}_Message'
+    submission_message_invitation = openreview.tools.get_invitation(client, submission_message_invitation_id)
+    if submission_message_invitation:
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=submission_message_invitation_id,
+                cdate=expdate,
+                signatures=[venue_id],
+                edit={
+                    'invitation': {
+                        'cdate': expdate
+                    }
+                }
+            )
+        )
+
     area_chairs_id = domain.get_content_value('area_chairs_id')
     if area_chairs_id:
         ac_submission_group_invitation_id = f'{area_chairs_id}/-/{submission_name}_Group'
@@ -98,6 +117,25 @@ def process(client, edit, invitation):
                 )
             )
 
+        # update AC Submission_Message cdate
+        ac_submission_message_invitation_id = f'{area_chairs_id}/-/{submission_name}_Message'
+        ac_submission_message_invitation = openreview.tools.get_invitation(client, ac_submission_message_invitation_id)
+        if ac_submission_message_invitation:
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=ac_submission_message_invitation_id,
+                    cdate=expdate,
+                    signatures=[venue_id],
+                    edit={
+                        'invitation': {
+                            'cdate': expdate
+                        }
+                    }
+                )
+            )
+
     senior_area_chairs_id = domain.get_content_value('senior_area_chairs_id')
     if senior_area_chairs_id:
         sac_submission_group_invitation_id = f'{senior_area_chairs_id}/-/{submission_name}_Group'
@@ -111,6 +149,25 @@ def process(client, edit, invitation):
                     id=sac_submission_group_invitation_id,
                     cdate=expdate,
                     signatures=[venue_id]
+                )
+            )
+
+        # update SAC Submission_Message cdate
+        sac_submission_message_invitation_id = f'{senior_area_chairs_id}/-/{submission_name}_Message'
+        sac_submission_message_invitation = openreview.tools.get_invitation(client, sac_submission_message_invitation_id)
+        if sac_submission_message_invitation:
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=sac_submission_message_invitation_id,
+                    cdate=expdate,
+                    signatures=[venue_id],
+                    edit={
+                        'invitation': {
+                            'cdate': expdate
+                        }
+                    }
                 )
             )
 

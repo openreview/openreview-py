@@ -21,3 +21,5 @@ TCA_key.json
 .claude/settings.local.json
 .claude/agent-memory/
 .claude/test-runner-env.json
+.claude/settings.local.json
+.mcp.json
