@@ -223,6 +223,19 @@ class Client(object):
 
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
+        """Impersonate a group, updating the client's authentication token.
+
+        Obtains a new auth token that represents the given group. After this call,
+        subsequent API requests made by this client will be authorized as the
+        impersonated group. The client's token, profile, and user fields are
+        replaced with the values from the impersonation response.
+
+        :param group_id: ID of the group to impersonate (e.g. a venue or user group).
+        :type group_id: str
+
+        :return: Dictionary containing the new token and user information.
+        :rtype: dict
+        """
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
@@ -617,17 +630,18 @@ class Client(object):
         return response.content
 
     def get_venues(self, id=None, ids=None, invitations=None):
-        """
-        Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
+        """Get a list of venues based on the filters provided.
 
-        :param id: a Venue ID. If provided, returns Notes whose ID matches the given ID.
+        Returns venues matching all the criteria passed in the parameters.
+
+        :param id: A Venue ID. If provided, returns the venue whose ID matches.
         :type id: str, optional
-        :param ids: A list of Venue IDs. If provided, returns Notes containing these IDs.
+        :param ids: A list of Venue IDs. If provided, returns venues with these IDs.
         :type ids: list, optional
-        :param invitations: A list of Invitation IDs. If provided, returns Venues whose "invitation" field is this Invitation ID.
+        :param invitations: A list of Invitation IDs. If provided, returns venues whose "invitation" field matches.
         :type invitations: list, optional
 
-        :return: List of Venues
+        :return: List of venues.
         :rtype: list[dict]
         """
         params = {}
@@ -644,17 +658,16 @@ class Client(object):
         return response.json()['venues']
 
     def put_attachment(self, file_path, invitation, name):
-        """
-        Uploads a file to the openreview server
+        """Upload a file attachment to the OpenReview server.
 
-        :param file: Path to the file
-        :type file: str
-        :param invitation: Invitation of the note that required the attachment
-        :type file: str
-        :param file: name of the note field to save the attachment url
-        :type file: str
+        :param file_path: Path to the local file to upload.
+        :type file_path: str
+        :param invitation: Invitation ID of the note that requires the attachment.
+        :type invitation: str
+        :param name: Name of the note content field where the attachment URL will be stored.
+        :type name: str
 
-        :return: A relative URL for the uploaded file
+        :return: A relative URL for the uploaded file.
         :rtype: str
         """
 
@@ -712,13 +725,18 @@ class Client(object):
         return Profile.from_json(response.json())
     
     def rename_profile(self, current_id, new_id):
-        """
-        Updates a Profile
+        """Rename a profile's tilde ID.
 
-        :param profile: Profile object
-        :type profile: Profile
+        Replaces the profile's current tilde ID with a new one. This is
+        typically used to correct or update a user's tilde identifier
+        (e.g. ``~First_Last1`` to ``~First_Last2``).
 
-        :return: The new updated Profile
+        :param current_id: The existing tilde ID to be renamed.
+        :type current_id: str
+        :param new_id: The new tilde ID to assign.
+        :type new_id: str
+
+        :return: The updated Profile with the new tilde ID.
         :rtype: Profile
         """
         response = self.session.post(
@@ -756,13 +774,17 @@ class Client(object):
         return Profile.from_json(response.json())
 
     def moderate_profile(self, profile_id, decision):
-        """
-        Updates a Profile
+        """Apply a moderation decision to a profile.
 
-        :param profile: Profile object
-        :type profile: Profile
+        Accepts or rejects a profile that is pending moderation. This is used
+        by administrators to review newly created or updated profiles.
 
-        :return: The new updated Profile
+        :param profile_id: The tilde ID of the profile to moderate.
+        :type profile_id: str
+        :param decision: The moderation decision, e.g. ``'accept'`` or ``'reject'``.
+        :type decision: str
+
+        :return: The moderated Profile.
         :rtype: Profile
         """
         response = self.session.post(
@@ -1415,18 +1437,31 @@ class Client(object):
         return tools.concurrent_get(self, self.get_references, **params)
 
     def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
-        """
-        Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
+        """Get a list of Tag objects based on the filters provided.
+
+        Returns tags matching all the criteria passed in the parameters.
+        When ``with_count=True`` and ``offset`` is not set, returns a tuple
+        of ``(tags, count)`` instead of just the list.
 
         :param id: A Tag ID. If provided, returns Tags whose ID matches the given ID.
         :type id: str, optional
+        :param invitation: An Invitation ID. If provided, returns Tags whose invitation field matches.
+        :type invitation: str, optional
         :param forum: A Note ID. If provided, returns Tags whose forum matches the given ID.
         :type forum: str, optional
-        :param invitation: An Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
-        :type invitation: str, optional
+        :param signature: A group ID. If provided, returns Tags signed by this group.
+        :type signature: str, optional
+        :param tag: A tag value string. If provided, returns Tags whose tag field matches.
+        :type tag: str, optional
+        :param limit: Maximum number of Tags to return (0--1000).
+        :type limit: int, optional
+        :param offset: Starting position for pagination.
+        :type offset: int, optional
+        :param with_count: If True and offset is None, return a tuple ``(tags, count)``.
+        :type with_count: bool, optional
 
-        :return: List of tags
-        :rtype: list[Tag]
+        :return: List of Tag objects, or ``(list[Tag], int)`` when ``with_count=True``.
+        :rtype: list[Tag] | tuple[list[Tag], int]
         """
         params = {}
 
@@ -1483,14 +1518,35 @@ class Client(object):
         return tools.concurrent_get(self, self.get_tags, **params)
 
     def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
-        """
-        Returns a list of Edge objects based on the filters provided.
+        """Get a list of Edge objects based on the filters provided.
 
-        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
-        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
-        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
-        :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label: Label ID of the match
+        Returns edges matching all the criteria passed in the parameters.
+        When ``with_count=True`` and ``offset`` is not set, returns a tuple
+        of ``(edges, count)`` instead of just the list.
+
+        :param id: An Edge ID. If provided, returns the Edge whose ID matches.
+        :type id: str, optional
+        :param invitation: An Invitation ID. If provided, returns Edges whose invitation field matches.
+        :type invitation: str, optional
+        :param head: ID (profile or note) used in the head position of the Edge.
+        :type head: str, optional
+        :param tail: ID (profile or note) used in the tail position of the Edge.
+        :type tail: str, optional
+        :param label: A label value. If provided, returns Edges whose label matches.
+        :type label: str, optional
+        :param limit: Maximum number of Edges to return (0--1000).
+        :type limit: int, optional
+        :param offset: Starting position for pagination.
+        :type offset: int, optional
+        :param sort: Field to sort by.
+        :type sort: str, optional
+        :param with_count: If True and offset is None, return a tuple ``(edges, count)``.
+        :type with_count: bool, optional
+        :param trash: If True, include soft-deleted Edges.
+        :type trash: bool, optional
+
+        :return: List of Edge objects, or ``(list[Edge], int)`` when ``with_count=True``.
+        :rtype: list[Edge] | tuple[list[Edge], int]
         """
         params = {}
 
@@ -1515,14 +1571,34 @@ class Client(object):
         return edges
 
     def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
-        """
-        Returns a list of Edge objects based on the filters provided.
+        """Get all Edge objects based on the filters provided, with automatic pagination.
 
-        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
-        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
-        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
-        :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label: Label ID of the match
+        Repeatedly calls :meth:`get_edges` to retrieve every matching Edge,
+        handling pagination internally via ``tools.concurrent_get``.
+
+        :param id: An Edge ID. If provided, returns the Edge whose ID matches.
+        :type id: str, optional
+        :param invitation: An Invitation ID. If provided, returns Edges whose invitation field matches.
+        :type invitation: str, optional
+        :param head: ID (profile or note) used in the head position of the Edge.
+        :type head: str, optional
+        :param tail: ID (profile or note) used in the tail position of the Edge.
+        :type tail: str, optional
+        :param label: A label value. If provided, returns Edges whose label matches.
+        :type label: str, optional
+        :param limit: Maximum number of Edges to return per page.
+        :type limit: int, optional
+        :param offset: Starting position for pagination.
+        :type offset: int, optional
+        :param sort: Field to sort by.
+        :type sort: str, optional
+        :param with_count: If True, return a tuple ``(edges, count)``.
+        :type with_count: bool, optional
+        :param trash: If True, include soft-deleted Edges.
+        :type trash: bool, optional
+
+        :return: List of all matching Edge objects.
+        :rtype: list[Edge]
         """
         params = {
             'id': id,
@@ -1540,14 +1616,21 @@ class Client(object):
         return tools.concurrent_get(self, self.get_edges, **params)
 
     def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
-        """
-        Returns a list of Edge objects based on the filters provided.
+        """Return the count of Edge objects matching the given filters.
 
-        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
-        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
-        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
-        :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label: Label ID of the match
+        :param id: An Edge ID. If provided, counts only the Edge whose ID matches.
+        :type id: str, optional
+        :param invitation: An Invitation ID. If provided, counts Edges whose invitation field matches.
+        :type invitation: str, optional
+        :param head: ID (profile or note) used in the head position of the Edge.
+        :type head: str, optional
+        :param tail: ID (profile or note) used in the tail position of the Edge.
+        :type tail: str, optional
+        :param label: A label value. If provided, counts Edges whose label matches.
+        :type label: str, optional
+
+        :return: Number of matching edges.
+        :rtype: int
         """
         params = {}
 
@@ -1564,19 +1647,37 @@ class Client(object):
         return count
 
     def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select='tail', limit=None, offset=None):
-        '''
-        Returns a list of JSON objects where each one represents a group of edges.  For example calling this
-        method with default arguments will give back a list of groups where each group is of the form:
-        {id: {head: paper-1} values: [ {tail: user-1}, {tail: user-2} ]}
-        Note: The limit applies to the number of groups returned.  It does not apply to the number of edges within the groups.
+        """Get edges grouped by a specified field.
 
-        :param invitation:
-        :param groupby:
-        :param select:
-        :param limit:
-        :param offset:
-        :return:
-        '''
+        Returns a list of JSON objects where each one represents a group of
+        edges. For example, with the defaults ``groupby='head'`` and
+        ``select='tail'``, each group has the form::
+
+            {"id": {"head": "paper-1"}, "values": [{"tail": "user-1"}, {"tail": "user-2"}]}
+
+        Note: ``limit`` applies to the number of *groups* returned, not the
+        number of edges within each group.
+
+        :param invitation: Invitation ID to filter edges by.
+        :type invitation: str, optional
+        :param head: ID to filter by the head position.
+        :type head: str, optional
+        :param tail: ID to filter by the tail position.
+        :type tail: str, optional
+        :param label: Label value to filter edges by.
+        :type label: str, optional
+        :param groupby: Edge field to group by.
+        :type groupby: str, optional
+        :param select: Edge field to include in each group's values list.
+        :type select: str, optional
+        :param limit: Maximum number of groups to return.
+        :type limit: int, optional
+        :param offset: Starting position for group pagination.
+        :type offset: int, optional
+
+        :return: List of grouped-edge JSON objects.
+        :rtype: list[dict]
+        """
         params = {}
         params['id'] = None
         params['invitation'] = invitation
@@ -1593,14 +1694,19 @@ class Client(object):
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
 
     def rename_edges(self, current_id, new_id):
-        """
-        Updates an Edge
+        """Rename a profile ID across all edges that reference it.
 
-        :param profile: Edge object
-        :type edge: Edge
+        Updates every Edge that references ``current_id`` (in head or tail)
+        to use ``new_id`` instead. This is typically called after a profile
+        tilde ID is renamed.
 
-        :return: The new updated Edge
-        :rtype: Edge
+        :param current_id: The existing profile ID to replace in edges.
+        :type current_id: str
+        :param new_id: The new profile ID to substitute.
+        :type new_id: str
+
+        :return: List of Edge objects that were updated.
+        :rtype: list[Edge]
         """
         response = self.session.post(
             self.edges_rename,
@@ -1684,13 +1790,15 @@ class Client(object):
         return Note.from_json(response.json())
 
     def infer_note(self, note_id):
-        """
-        Posts the note. If the note is unsigned, signs it using the client's default signature.
+        """Trigger server-side inference on an existing Note.
 
-        :param note: Note to be posted
-        :type note: Note
+        Sends the Note to the server's inference endpoint, which populates
+        computed fields (e.g. extracting metadata from a PDF attachment).
 
-        :return: The posted Note
+        :param note_id: ID of the Note to run inference on.
+        :type note_id: str
+
+        :return: The Note updated with inferred fields.
         :rtype: Note
         """
         response = self.session.post(self.infer_notes_url, json={ 'id': note_id }, headers=self.headers)
@@ -1713,8 +1821,16 @@ class Client(object):
         return Tag.from_json(response.json())
 
     def post_edge(self, edge):
-        """
-        Posts the edge. Upon success, returns the posted Edge object.
+        """Post an Edge to the server.
+
+        Creates or updates an Edge. Upon success, returns the posted Edge
+        object with server-assigned fields (e.g. ``id``, ``cdate``).
+
+        :param edge: Edge to be posted.
+        :type edge: Edge
+
+        :return: The posted Edge.
+        :rtype: Edge
         """
         response = self.session.post(self.edges_url, json = edge.to_json(), headers = self.headers)
         response = self.__handle_response(response)
@@ -2039,16 +2155,17 @@ class Client(object):
         return messages
 
     def get_process_logs(self, id = None, invitation = None, status = None):
-        """
-        **Only for Super User**. Retrieves the logs of the process function executed by an Invitation
+        """Retrieve process function execution logs. Requires Super User permissions.
 
-        :param id: Note id
+        :param id: Note ID that triggered the process function.
         :type id: str, optional
-        :param invitation: Invitation id that executed the process function that produced the logs
+        :param invitation: Invitation ID whose process function produced the logs.
         :type invitation: str, optional
+        :param status: Filter by execution status (e.g. ``'ok'``, ``'error'``).
+        :type status: str, optional
 
-        :return: Logs of the process
-        :rtype: dict
+        :return: List of log entry dictionaries.
+        :rtype: list[dict]
         """
 
         response = self.session.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status }, headers = self.headers)
