@@ -1842,6 +1842,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/June/Reviewers/-/Assignment_Configuration')
+
         june_venue.set_assignments(assignment_title='rev-matching', committee_id='aclweb.org/ACL/ARR/2023/June/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
         
         #Check that the right max papers is set
@@ -4120,6 +4122,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Assignment_Configuration')
+
         august_venue.set_assignments(assignment_title='sac-matching', committee_id='aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs')
 
         sac2_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs')
@@ -4169,6 +4173,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment_Configuration')
+
         august_venue.set_assignments(assignment_title='ac-matching', committee_id='aclweb.org/ACL/ARR/2023/August/Area_Chairs')
 
         openreview_client.post_edge(openreview.api.Edge(
@@ -4250,6 +4256,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Configuration')
+
         august_venue.set_assignments(assignment_title='reviewer-assignments', committee_id='aclweb.org/ACL/ARR/2023/August/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
 
         pc_client.post_note(
