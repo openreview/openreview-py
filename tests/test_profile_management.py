@@ -1529,7 +1529,7 @@ computation and memory.
         note = josiah_client.get_note(edit['note']['id'])
         assert note.external_ids == ['doi:10.1103/physreva.109.022426']
         assert note.content['authors']['value'][0] == {'fullname': 'Josiah Couch', 'username': '~Josiah_Couch1'}
-        assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': 'https://orcid.org/orcid-search/search?searchQuery=Sarah Racz'}
+        assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': 'https://orcid.org/orcid-search/search?searchQuery=Sarah%20Racz'}
 
         sarah_client = helpers.create_user('sarah@profile.org', 'Sarah', 'Racz', alternates=[], institution='google.com')
 
