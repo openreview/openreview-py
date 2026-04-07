@@ -1359,7 +1359,7 @@ note={Withdrawn}
         helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=2)
 
         ## Check preferred emails
-        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 13
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 16
 
         ## David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -6238,7 +6238,7 @@ note={Expert Certification}
         helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=3)
 
         ## Check preferred emails
-        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 17        
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 151
         
         note = openreview_client.get_note(note_id_14)
         journal.invitation_builder.expire_paper_invitations(note)
@@ -6264,7 +6264,7 @@ note={Expert Certification}
                 }
             ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'], process_index=1)
 
         submission_id = submission_note['note']['id']
 
@@ -6278,6 +6278,9 @@ The following authors are blocked from submitting to TMLR:
 
 Please review their submission and take appropriate action.
 Link: https://openreview.net/forum?id={submission_id}
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         messages = openreview_client.get_messages(to='raia@mail.com', subject = '[TMLR] Submission by a blocked author received, titled Paper title')
@@ -6290,4 +6293,7 @@ The following authors are blocked from submitting to TMLR:
 
 Please review their submission and take appropriate action.
 Link: https://openreview.net/forum?id={submission_id}
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''

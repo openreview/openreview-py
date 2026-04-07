@@ -444,7 +444,7 @@ class Matching(object):
         reduced_load_notes = self.client.get_all_notes(invitation=self.venue.get_recruitment_id(self.match_group.id), sort='tcdate:asc', domain=self.venue.venue_id)
         for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
             if 'reduced_load' in note.content:
-                reduced_loads[note.content['user']['value']] = note.content['reduced_load']['value']
+                reduced_loads[note.content.get('user', {}).get('value', note.signatures[0])] = note.content['reduced_load']['value']
 
         print ('Reduced loads received: ', len(reduced_loads))
 
@@ -623,10 +623,10 @@ class Matching(object):
                 matching_status['no_publications'] = result['metadata']['no_publications']
 
                 if self.alternate_matching_group:
-                    scores = [[entry['submission_member'], entry['match_member'], entry['score']] for entry in result['results']]
+                    scores = [[entry.get('entityB', entry.get('submission_member')), entry.get('entityA', entry.get('match_member')), entry['score']] for entry in result['results']]
                     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
 
-                scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
+                scores = [[entry.get('entityB', entry.get('submission')), entry.get('entityA', entry.get('user')), entry['score']] for entry in result['results']]
                 return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
             if 'Error' in status:
                 raise openreview.OpenReviewException('There was an error computing scores, description: ' + desc)
