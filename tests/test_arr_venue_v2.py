@@ -6361,6 +6361,388 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert test_client.get_note(meta_review_rating_edit['note']['id'])
 
+    def test_author_response_extension(self, client, openreview_client, helpers, test_client):
+
+        pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        venue_id = 'aclweb.org/ACL/ARR/2023/August'
+        submissions = pc_client_v2.get_all_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc', details='replies')
+        now = datetime.datetime.now()
+        config_invitation = pc_client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration')
+        assert 'author_response_extension_start_date' in config_invitation.reply['content']
+        assert 'author_response_extension_end_date' in config_invitation.reply['content']
+        assert 'author_response_extension_cron' in config_invitation.reply['content']
+        assert config_invitation.reply['content']['author_response_extension_cron']['default'] == '0 */12 * * *'
+
+        ## Step 1: Enable author response extension and verify invitation structure/default cron
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'author_response_extension_start_date': (now - datetime.timedelta(minutes=1)).strftime('%Y/%m/%d %H:%M'),
+                    'author_response_extension_end_date': (now + datetime.timedelta(days=14)).strftime('%Y/%m/%d %H:%M')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=[f'{venue_id}/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue()
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=1
+        )
+
+        process_inv = openreview_client.get_invitation(f'{venue_id}/-/Author_Response_Extension_Manager')
+        assert process_inv.date_processes
+        assert process_inv.expdate
+        assert process_inv.date_processes[1]['cron'] == '0 */12 * * *'
+        assert process_inv.content['author_response_delay_ms']['value'] == 259200000
+        assert process_inv.content['reviewer_response_delay_ms']['value'] == 345600000
+        assert process_inv.content['review_issue_report_delay_ms']['value'] == 432000000
+
+        ## Step 2: Test < 3 reviews case — process should re-open Official_Comment for papers with < 3 reviews
+        ## Pick a submission with < 3 reviews
+        few_reviews_submission = submissions[1]
+        assert len([
+            reply for reply in few_reviews_submission.details['replies']
+            if any('Official_Review' in i for i in reply.get('invitations', []))
+        ]) < 3
+
+        authors_group = 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors'
+        comment_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Official_Comment')
+        assert authors_group in comment_inv.invitees
+        assert authors_group in comment_inv.readers
+        assert authors_group in comment_inv.edit['note']['readers']['param']['enum']
+        sig_values = [
+            item.get('prefix') if 'prefix' in item else item.get('value', '')
+            for item in comment_inv.edit['signatures']['param']['items']
+        ]
+        assert any(authors_group == sig for sig in sig_values)
+
+        ## Step 3: Close Official_Comment again and verify the extension manager re-opens it
+        latest_comment_stage = pc_client.get_references(
+            referent=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage'
+        )[0]
+
+        closed_comment_stage_content = dict(latest_comment_stage.content)
+        closed_comment_stage_content['participants'] = [
+            participant for participant in latest_comment_stage.content['participants']
+            if participant != 'Authors'
+        ]
+        closed_comment_stage_content['commentary_end_date'] = (
+            datetime.datetime.strptime(
+                latest_comment_stage.content['commentary_end_date'],
+                '%Y/%m/%d %H:%M'
+            ) + datetime.timedelta(minutes=1)
+        ).strftime('%Y/%m/%d %H:%M')
+
+        official_comment_log_count = len(openreview_client.get_process_logs(invitation=f'{venue_id}/-/Official_Comment'))
+        pc_client.post_note(
+            openreview.Note(
+                content=closed_comment_stage_content,
+                forum=latest_comment_stage.forum,
+                invitation=latest_comment_stage.invitation,
+                readers=latest_comment_stage.readers,
+                referent=latest_comment_stage.referent,
+                replyto=latest_comment_stage.replyto,
+                signatures=['~Program_ARRChair1'],
+                writers=[]
+            )
+        )
+
+        helpers.await_queue()
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Official_Comment',
+            count=official_comment_log_count + 1
+        )
+
+        comment_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Official_Comment')
+        assert authors_group not in comment_inv.invitees
+        assert authors_group not in comment_inv.readers
+        assert authors_group not in comment_inv.edit['note']['readers']['param']['enum']
+        sig_values = [
+            item.get('prefix') if 'prefix' in item else item.get('value', '')
+            for item in comment_inv.edit['signatures']['param']['items']
+        ]
+        assert not any(authors_group == sig for sig in sig_values)
+
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
+                content={
+                    'review_issue_report_delay_ms': {
+                        'value': process_inv.content['review_issue_report_delay_ms']['value'] + 1
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=2,
+            process_index=0
+        )
+
+        comment_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Official_Comment')
+        assert authors_group in comment_inv.invitees
+        assert authors_group in comment_inv.readers
+        assert authors_group in comment_inv.edit['note']['readers']['param']['enum']
+        sig_values = [
+            item.get('prefix') if 'prefix' in item else item.get('value', '')
+            for item in comment_inv.edit['signatures']['param']['items']
+        ]
+        assert any(authors_group == sig for sig in sig_values)
+
+        ## Step 4: Post 3 reviews on a submission
+        target_submission = submissions[0]  # Submission1 — should have 0 reviews
+        reviewer_usernames = ['~Reviewer_ARRThree1', '~Reviewer_ARRFour1', '~Reviewer_ARRFive1']
+        added_reviewer_usernames = ['~Reviewer_ARRThree1', '~Reviewer_ARRFive1']
+        submission_reviewers_group_id = f'{venue_id}/Submission{target_submission.number}/Reviewers'
+        openreview_client.add_members_to_group(
+            openreview_client.get_group(submission_reviewers_group_id),
+            added_reviewer_usernames
+        )
+
+        review_edits = []
+        for reviewer in reviewer_usernames:
+            email = {
+                '~Reviewer_ARRThree1': 'reviewer3@aclrollingreview.com',
+                '~Reviewer_ARRFour1': 'reviewer4@aclrollingreview.com',
+                '~Reviewer_ARRFive1': 'reviewer5@aclrollingreview.com',
+            }[reviewer]
+            rev_client = openreview.api.OpenReviewClient(username=email, password=helpers.strong_password)
+            anon_groups = rev_client.get_groups(
+                prefix=f'{venue_id}/Submission{target_submission.number}/Reviewer_',
+                signatory=reviewer
+            )
+            assert len(anon_groups) >= 1
+            anon_id = anon_groups[0].id
+
+            rev_edit = rev_client.post_note_edit(
+                invitation=f'{venue_id}/Submission{target_submission.number}/-/Official_Review',
+                signatures=[anon_id],
+                note=openreview.api.Note(
+                    content={
+                        "confidence": {"value": 5},
+                        "paper_summary": {"value": 'some summary'},
+                        "summary_of_strengths": {"value": 'some strengths'},
+                        "summary_of_weaknesses": {"value": 'some weaknesses'},
+                        "comments_suggestions_and_typos": {"value": 'some comments'},
+                        "soundness": {"value": 1},
+                        "excitement": {"value": 1.5},
+                        "overall_assessment": {"value": 1},
+                        "ethical_concerns": {"value": "There are no concerns with this submission"},
+                        "reproducibility": {"value": 1},
+                        "datasets": {"value": 1},
+                        "software": {"value": 1},
+                        "needs_ethics_review": {'value': 'No'},
+                        "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
+                        "Knowledge_of_paper": {"value": "After the review process started"},
+                        "Knowledge_of_paper_source": {"value": ["A research talk"]},
+                        "impact_of_knowledge_of_paper": {"value": "A lot"},
+                        "reviewer_certification": {"value": "Yes"},
+                        "secondary_reviewer": {"value": [reviewer]},
+                        "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=rev_edit['id'])
+            review_edits.append(rev_edit)
+
+        ## Step 5: Test reviewer_response_delay while author response is still open
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
+                content={
+                    'reviewer_response_delay_ms': {'value': 0}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=3,
+            process_index=0
+        )
+
+        target_authors = 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors'
+        comment_inv_target = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Official_Comment')
+        assert target_authors in comment_inv_target.invitees
+        assert target_authors in comment_inv_target.readers
+        target_sig_values = [
+            item.get('prefix') if 'prefix' in item else item.get('value', '')
+            for item in comment_inv_target.edit['signatures']['param']['items']
+        ]
+        assert any(target_authors == sig for sig in target_sig_values)
+        target_inner_readers = comment_inv_target.edit['note']['readers']['param']['enum']
+        assert target_authors in target_inner_readers
+
+        ## Step 6: Restore reviewer_response_delay, then close the author response window only
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
+                content={
+                    'reviewer_response_delay_ms': {
+                        'value': process_inv.content['reviewer_response_delay_ms']['value']
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=4,
+            process_index=0
+        )
+
+        ## Step 7: Test author_response_delay — set to 0 and verify Official_Comment closes for >= 3 reviews paper
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
+                content={
+                    'author_response_delay_ms': {'value': 0}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=5,
+            process_index=0
+        )
+
+        submissions = pc_client_v2.get_all_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc', details='replies')
+        target_submission = submissions[0]  # Refresh target submission
+        assert len([r for r in target_submission.details.get('replies', []) if any('Official_Review' in i for i in r.get('invitations', []))]) >= 3
+
+        ## target_submission (>= 3 reviews): Authors should be removed from invitees, outer readers, signatures
+        comment_inv_target = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Official_Comment')
+        assert target_authors not in comment_inv_target.invitees
+        assert target_authors not in comment_inv_target.readers
+        target_sig_values = [
+            item.get('prefix') if 'prefix' in item else item.get('value', '')
+            for item in comment_inv_target.edit['signatures']['param']['items']
+        ]
+        assert not any(target_authors == sig for sig in target_sig_values)
+        assert target_authors in comment_inv_target.edit['note']['readers']['param']['enum']
+
+        ## few_reviews_submission (< 3 reviews): Authors should still be present
+        few_authors = f'{venue_id}/Submission{few_reviews_submission.number}/Authors'
+        comment_inv_few = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Official_Comment')
+        assert few_authors in comment_inv_few.invitees
+
+        ## Step 8: Test reviewer_response_delay — set to 0 and verify inner readers removal for >= 3 reviews paper
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
+                content={
+                    'reviewer_response_delay_ms': {'value': 0}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=6,
+            process_index=0
+        )
+
+        comment_inv_target = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Official_Comment')
+        inner_readers = comment_inv_target.edit['note']['readers']['param']['enum']
+        assert target_authors not in inner_readers
+
+        ## Step 9: Test review_issue_report_delay — set to 0 and verify Review_Issue_Report expdate
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Author_Response_Extension_Manager',
+                content={
+                    'review_issue_report_delay_ms': {'value': 0}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation=f'{venue_id}/-/Author_Response_Extension_Manager',
+            count=7,
+            process_index=0
+        )
+
+        ## With delay=0, Review_Issue_Report expdate should equal the 3rd review's tcdate
+        third_review_note = openreview_client.get_note(review_edits[2]['note']['id'])
+        third_review_tcdate = third_review_note.tcdate
+        rir_inv = openreview_client.get_invitation(
+            'aclweb.org/ACL/ARR/2023/August/Submission1/Official_Review1/-/Review_Issue_Report'
+        )
+        assert rir_inv.expdate == third_review_tcdate
+        rir_inv = openreview_client.get_invitation(
+            'aclweb.org/ACL/ARR/2023/August/Submission1/Official_Review2/-/Review_Issue_Report'
+        )
+        assert rir_inv.expdate == third_review_tcdate
+        rir_inv = openreview_client.get_invitation(
+            'aclweb.org/ACL/ARR/2023/August/Submission1/Official_Review3/-/Review_Issue_Report'
+        )
+        assert rir_inv.expdate == third_review_tcdate
+
+        ## Cleanup: remove test-only reviews and temporary reviewer memberships
+        cleanup_ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        for review_edit in review_edits:
+            delete_edit = openreview_client.post_note_edit(
+                invitation=f'{venue_id}/-/Edit',
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    id=review_edit['note']['id'],
+                    ddate=cleanup_ddate
+                )
+            )
+
+        openreview_client.remove_members_from_group(
+            submission_reviewers_group_id,
+            added_reviewer_usernames
+        )
+
+
     def test_reviewer_management_forms(self, client, openreview_client, helpers, test_client):
         """Test all new reviewer management forms: delay notifications, emergency declarations, and performance ratings"""
         

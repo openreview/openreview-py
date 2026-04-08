@@ -424,6 +424,23 @@ class Journal(object):
         return venue_id in [self.submitted_venue_id, self.under_review_venue_id, self.assigning_AE_venue_id, self.assigned_AE_venue_id]
 
     def setup(self, support_role, editors=[], assignment_delay=5):
+        """Bootstrap the full journal venue on OpenReview.
+
+        Creates all venue groups (EICs, action editors, reviewers, authors), posts
+        the meta-invitation and all workflow invitations (submission, review, decision,
+        etc.), and sets group-level variables for reviewer report and responsibility
+        acknowledgement forms.
+
+        Side effects: posts groups, invitations, and group web-field variables to the
+        OpenReview API.
+
+        :param support_role: The support group role (e.g., 'OpenReview.net/Support') granted permissions on venue groups.
+        :type support_role: str
+        :param editors: Profile IDs of editors-in-chief to add to the EIC group.
+        :type editors: list, optional
+        :param assignment_delay: Number of minutes to delay before assignment process functions run.
+        :type assignment_delay: int, optional
+        """
         self.invitation_builder.set_meta_invitation()
         self.group_builder.set_groups(support_role, editors)
         self.invitation_builder.set_invitations(assignment_delay)
@@ -433,38 +450,170 @@ class Journal(object):
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
     def setup_ae_matching(self, label, inclusion_day_limit=None):
-        # inclusion_day_limit = 60 if you want only assignments made in the last 60 days to count as active
+        """Configure and run the action editor matching system for submissions awaiting AE assignment.
+
+        Identifies submissions in 'Submitted' or 'Assigning AE' status that have at least
+        3 AE recommendations, computes resubmission scores for papers that cite a previous
+        submission, calculates per-AE availability quotas (based on current load and custom
+        max papers), and posts an assignment configuration note for the OpenReview matcher.
+
+        Side effects: transitions eligible submissions to 'Assigning AE' venue status,
+        posts resubmission score edges, local custom max papers edges, and a matcher
+        configuration note.
+
+        :param label: Label for the matching configuration (used in the title as ``matching-{label}``).
+        :type label: str
+        :param inclusion_day_limit: If set, only AE assignments created within this many days are counted as active load.
+        :type inclusion_day_limit: int, optional
+        """
         self.assignment.setup_ae_matching(label, inclusion_day_limit)
 
     # Same interface like Conference and Venue class
     def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
+        """Deploy proposed action editor assignments by posting assignment edges.
+
+        Reads proposed assignment edges matching the given title and posts actual
+        AE assignment edges for submissions currently in the 'Assigning AE' status.
+        Interface mirrors ``Conference.set_assignments`` for compatibility.
+
+        Side effects: posts AE assignment edges, which triggers server-side process
+        functions (e.g., sending notification emails, updating submission venue status).
+
+        :param assignment_title: The label of the proposed assignment edges to deploy.
+        :type assignment_title: str
+        :param committee_id: Unused; kept for interface compatibility with Conference.
+        :type committee_id: str, optional
+        :param overwrite: Unused; kept for interface compatibility with Conference.
+        :type overwrite: bool, optional
+        :param enable_reviewer_reassignment: Unused; kept for interface compatibility with Conference.
+        :type enable_reviewer_reassignment: bool, optional
+        """
         self.assignment.set_ae_assignments(assignment_title)
 
     def unset_assignments(self, assignment_title, committee_id=None):
+        """Revert deployed action editor assignments by soft-deleting assignment edges.
+
+        Finds all AE assignment edges whose heads match proposed assignments with the
+        given title, and soft-deletes them.
+
+        :param assignment_title: The label of the proposed assignment edges whose deployments should be reverted.
+        :type assignment_title: str
+        :param committee_id: Unused; kept for interface compatibility with Conference.
+        :type committee_id: str, optional
+        """
         self.assignment.unset_ae_assignments(assignment_title)
 
     def get_action_editors(self):
+        """Return the list of profile IDs of all current action editors.
+
+        :rtype: list[str]
+        """
         return self.client.get_group(self.get_action_editors_id()).members
 
     def get_reviewers(self):
+        """Return the list of profile IDs of all current reviewers.
+
+        :rtype: list[str]
+        """
         return self.client.get_group(self.get_reviewers_id()).members
 
     def get_authors(self, number):
+        """Return the list of profile IDs of authors for a specific submission.
+
+        :param number: The submission number.
+        :type number: int
+        :rtype: list[str]
+        """
         return self.client.get_group(self.get_authors_id(number=number)).members
 
     def setup_ae_assignment(self, note):
+        """Compute affinity scores and conflict-of-interest edges for action editor assignment on a submission.
+
+        Runs the expertise model to produce AE affinity score edges and computes
+        conflict edges between the submission authors and all action editors using
+        the NeurIPS conflict policy (3-year window).
+
+        Side effects: posts affinity score and conflict edges to the OpenReview API.
+
+        :param note: The submission note to set up AE assignment for.
+        :type note: openreview.api.Note
+        """
         return self.assignment.setup_ae_assignment(note)
 
     def setup_reviewer_assignment(self, note):
+        """Compute affinity scores and conflict-of-interest edges for reviewer assignment on a submission.
+
+        Runs the expertise model to produce reviewer affinity score edges and computes
+        conflict edges between the submission authors and all reviewers using the
+        NeurIPS conflict policy (3-year window).
+
+        Side effects: posts affinity score and conflict edges to the OpenReview API.
+
+        :param note: The submission note to set up reviewer assignment for.
+        :type note: openreview.api.Note
+        """
         return self.assignment.setup_reviewer_assignment(note)
 
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
+        """Send recruitment emails to invite people to serve as action editors.
+
+        Sends personalized recruitment emails with accept/decline links. Skips
+        invitees who are already members of the action editors group.
+
+        Side effects: sends recruitment emails and adds invitees to the
+        Action_Editors/Invited group.
+
+        :param message: The email body template (supports ``{{accept_url}}``, ``{{decline_url}}``, ``{{fullname}}``, and ``{{invitation_url}}`` placeholders).
+        :type message: str
+        :param subject: The email subject line.
+        :type subject: str
+        :param invitees: Profile IDs or email addresses of people to invite.
+        :type invitees: list[str]
+        :param invitee_names: Display names corresponding to each invitee; auto-resolved from profiles if not provided.
+        :type invitee_names: list[str], optional
+        :return: Dict with keys ``invited``, ``already_invited``, ``already_member``, and ``errors``.
+        :rtype: dict
+        """
         return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
     def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
+        """Send recruitment emails to invite people to serve as reviewers.
+
+        Sends personalized recruitment emails with accept/decline links. Skips
+        invitees who are already members of the reviewers group.
+
+        Side effects: sends recruitment emails and adds invitees to the
+        Reviewers/Invited group.
+
+        :param message: The email body template (supports ``{{accept_url}}``, ``{{decline_url}}``, ``{{fullname}}``, and ``{{invitation_url}}`` placeholders).
+        :type message: str
+        :param subject: The email subject line.
+        :type subject: str
+        :param invitees: Profile IDs or email addresses of people to invite.
+        :type invitees: list[str]
+        :param invitee_names: Display names corresponding to each invitee; auto-resolved from profiles if not provided.
+        :type invitee_names: list[str], optional
+        :param replyTo: Reply-to email address for the recruitment message.
+        :type replyTo: str, optional
+        :return: Dict with keys ``invited``, ``already_invited``, ``already_member``, and ``errors``.
+        :rtype: dict
+        """
         return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo)
 
     def setup_author_submission(self, note):
+        """Process a new submission by creating per-paper groups, invitations, and expertise requests.
+
+        Creates submission-specific groups (authors, AEs, reviewers), and posts
+        invitations for revision, withdrawal, desk rejection, official comments,
+        and reviewer messaging. Triggers asynchronous expertise computation for
+        both action editors and reviewers.
+
+        Side effects: creates per-paper groups and invitations, requests expertise
+        jobs from the OpenReview expertise API.
+
+        :param note: The newly submitted note.
+        :type note: openreview.api.Note
+        """
         print('Setup author submission data...')
         self.group_builder.setup_submission_groups(note)
         self.invitation_builder.set_note_revision_invitation(note)
@@ -477,6 +626,20 @@ class Journal(object):
         print('Finished setup author submission data.')
 
     def setup_under_review_submission(self, note):
+        """Transition a submission to 'Under Review' status by enabling review-phase invitations.
+
+        Posts the review invitation with a due date based on submission length
+        (regular vs. long), enables volunteer-to-review (solicit review), switches
+        to public comments, releases the submission edit history, expires the review
+        approval invitation, and (unless skipped) sets up the official recommendation
+        enabling invitation.
+
+        Side effects: posts/updates several per-paper invitations and releases
+        the submission history to readers.
+
+        :param note: The submission note transitioning to under review.
+        :type note: openreview.api.Note
+        """
         self.invitation_builder.set_note_review_invitation(note, self.get_due_date(weeks=self.get_review_period_length(note)))
         self.invitation_builder.set_note_solicit_review_invitation(note)
         self.invitation_builder.set_note_comment_invitation(note)
@@ -501,6 +664,10 @@ class Journal(object):
         return self.settings.get('AE_anonymity', False)    
 
     def release_submission_after_acceptance(self):
+        """Return whether submission content is made public after acceptance.
+
+        :rtype: bool
+        """
         return self.settings.get('release_submission_after_acceptance', True)
 
     def should_eic_submission_notification(self):
@@ -637,6 +804,24 @@ class Journal(object):
         return due_date
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
+        """Generate a BibTeX citation string for a submission based on its current venue status.
+
+        Produces an ``@article`` entry appropriate for the submission's lifecycle
+        stage: under review (anonymous), withdrawn, rejected, accepted (with ISSN
+        and certifications), or retracted. Unicode in titles and author names is
+        converted to LaTeX, and consecutive uppercase letters are brace-protected.
+
+        :param note: The submission note containing title, authors, and forum ID.
+        :type note: openreview.api.Note
+        :param new_venue_id: The venue ID indicating the submission's current status (e.g., under_review, accepted, rejected).
+        :type new_venue_id: str
+        :param anonymous: If True, use 'Anonymous' for author names in withdrawn/rejected/retracted entries.
+        :type anonymous: bool, optional
+        :param certifications: List of certification labels to include in the BibTeX note field for accepted papers.
+        :type certifications: list[str], optional
+        :return: A complete BibTeX entry string, or None if the venue ID is not recognized.
+        :rtype: str or None
+        """
 
         u = UnicodeToLatexEncoder(
             conversion_rules=[
@@ -771,6 +956,17 @@ class Journal(object):
             return '\n'.join(bibtex)
 
     def get_late_invitees(self, invitation_id):
+        """Find invitees of an invitation who have not yet submitted a response.
+
+        Resolves all invitees (profile IDs, emails, and group members) and compares
+        them against the signatures on existing replies. Returns the set difference:
+        people who were invited but have not responded.
+
+        :param invitation_id: The full invitation ID to check for non-responders.
+        :type invitation_id: str
+        :return: List of profile IDs or emails of invitees who have not replied.
+        :rtype: list[str]
+        """
 
         invitation = self.client.get_invitation(invitation_id)
 
@@ -807,6 +1003,21 @@ class Journal(object):
         return list(set(invitee_members) - set(signature_members))
 
     def notify_readers(self, edit, content_fields=[]):
+        """Send email notifications to all relevant parties when a note is posted or edited.
+
+        Determines whether the note was posted or edited, then sends tailored email
+        notifications to: the note author (confirmation), submission authors, assigned
+        reviewers, the action editor, and (for private EIC-only comments) the
+        editors-in-chief. The edit author is excluded from reader notifications to
+        avoid duplicate emails.
+
+        Side effects: sends multiple emails via the OpenReview messaging API.
+
+        :param edit: The edit object that created or modified the note.
+        :type edit: openreview.api.Edit
+        :param content_fields: Note content field names to include in the email body (e.g., ``['recommendation']``).
+        :type content_fields: list[str], optional
+        """
 
         vowels = ['a', 'e', 'i', 'o', 'u']
         note = self.client.get_note(edit.note.id)
@@ -894,6 +1105,14 @@ Your {lower_formatted_invitation} on a submission has been {action}
             self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
     def setup_responsibility_acknowledgement_invitations(self):
+        """Re-post all existing per-reviewer responsibility acknowledgement invitations with their current due dates.
+
+        Iterates over all existing reviewer responsibility invitations and re-creates
+        them via the invitation builder, preserving each invitation's original due date.
+        Useful for refreshing invitation templates after schema or process function changes.
+
+        Side effects: updates responsibility acknowledgement invitations on the server.
+        """
 
         reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id(), domain=self.venue_id, type='note')
 
@@ -902,6 +1121,20 @@ Your {lower_formatted_invitation} on a submission has been {action}
             self.invitation_builder.set_single_reviewer_responsibility_invitation(tokens[-3], duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
     def update_solicit_review(self, note_number, invitation):
+        """Patch a volunteer-to-review invitation to use an updated edit schema.
+
+        Replaces the invitation's edit template with an expanded version that includes
+        proper signature parameters, reader/writer/nonreader lists scoped to the
+        submission, and the solicit + comment content fields. Only applies if the
+        invitation's forum field already has a ``const`` value set.
+
+        Side effects: posts the updated invitation to the server.
+
+        :param note_number: The submission number this solicit review invitation belongs to.
+        :type note_number: int
+        :param invitation: The existing volunteer-to-review invitation to update.
+        :type invitation: openreview.api.Invitation
+        """
 
         if 'const' not in invitation.edit['note']['forum']:
             return
@@ -995,6 +1228,24 @@ Your {lower_formatted_invitation} on a submission has been {action}
         self.invitation_builder.post_invitation_edit(invitation, replacement=True)
 
     def release_reviews_process(self, submission):
+        """Release reviews to authors and open the discussion or decision phase for a submission.
+
+        Makes all reviews and comments visible to their intended readers. If official
+        recommendations are enabled, schedules the recommendation invitation after
+        a discussion period and sends notification emails to authors, reviewers, and
+        the action editor about the start of the discussion phase. If official
+        recommendations are skipped, instead enables review rating and prompts the
+        AE to submit a decision directly.
+
+        Also warns the action editor if more reviewers are assigned than expected.
+
+        Side effects: posts review release, comment release, and recommendation/rating
+        invitations; sends email notifications to authors, reviewers, and the action
+        editor; expires the official recommendation enabling invitation.
+
+        :param submission: The submission note whose reviews are being released.
+        :type submission: openreview.api.Note
+        """
 
         number_of_reviewers = self.get_number_of_reviewers()
 
@@ -1143,6 +1394,18 @@ Your {lower_formatted_invitation} on a submission has been {action}
         self.invitation_builder.expire_invitation(self.get_official_recommendation_enabling_id(submission.number))
 
     def archive_assignments(self):
+        """Archive assignment edges for all completed submissions (accepted, rejected, desk-rejected, withdrawn, retracted).
+
+        For each finished submission, copies AE and reviewer assignment edges to their
+        respective archived-assignment invitations, then soft-deletes the original
+        assignment edges (bypassing process functions). Also cleans up affinity score,
+        recommendation, conflict, aggregate score, resubmission score, and invite
+        assignment edges for those submissions.
+
+        Side effects: posts archived assignment edges, soft-deletes original assignment
+        and scoring edges for all finished submissions. This is a bulk operation across
+        all submissions in the journal.
+        """
 
         submissions = self.client.get_all_notes(invitation=self.get_author_submission_id())
 
@@ -1261,6 +1524,23 @@ Your {lower_formatted_invitation} on a submission has been {action}
                         journal.assignment.setup_reviewer_assignment(submission, job_status['jobId'])
 
     def run_reviewer_stats(self, end_cdate, output_file, start_cdate=None):
+        """Generate a CSV report of reviewer performance statistics across all submissions.
+
+        For each reviewer, computes: availability status, responsibility acknowledgement
+        timing, assignment acknowledgement timing (days from assignment and relative to
+        deadline), review completion rate and timing, review length, official recommendation
+        timing, comment count and length, review ratings from action editors, and any
+        reviewer reports filed. Covers both current and archived assignments.
+
+        Side effects: writes a CSV file to ``output_file``.
+
+        :param end_cdate: Upper bound on submission creation date (epoch milliseconds). Submissions created after this are excluded.
+        :type end_cdate: int
+        :param output_file: File path for the output CSV.
+        :type output_file: str
+        :param start_cdate: Lower bound on submission creation date (epoch milliseconds). If set, earlier submissions are excluded.
+        :type start_cdate: int, optional
+        """
 
         invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True, domain=self.venue_id)}
         submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
@@ -1526,6 +1806,23 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     writer.writerow(row)
 
     def run_action_editors_stats(self, end_cdate, output_file, start_cdate=None):
+        """Generate a CSV report of action editor performance statistics across all submissions.
+
+        For each action editor, computes: availability status, review approval timing
+        (days from assignment and relative to deadline), decision timing and length,
+        accept/reject/accept-with-revision counts, comment count and length, number
+        of recruited reviewers, date of last assignment, and current custom max papers
+        quota. Covers both current and archived assignments.
+
+        Side effects: writes a CSV file to ``output_file``.
+
+        :param end_cdate: Upper bound on submission creation date (epoch milliseconds). Submissions created after this are excluded.
+        :type end_cdate: int
+        :param output_file: File path for the output CSV.
+        :type output_file: str
+        :param start_cdate: Lower bound on submission creation date (epoch milliseconds). If set, earlier submissions are excluded.
+        :type start_cdate: int, optional
+        """
 
         invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True, domain=self.venue_id)}
         submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
@@ -1730,6 +2027,15 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     writer.writerow(row)
 
     def run_reviewer_unavailability_stats(self):
+        """Print a report of reviewers who have been continuously unavailable, with duration estimates.
+
+        For each reviewer marked 'Unavailable' who is still a member of the reviewers
+        group, examines the history of reminder emails sent to estimate how long they
+        have been unavailable (by checking for consecutive monthly reminder messages).
+        Prints each reviewer's ID and the month/year they became unavailable.
+
+        Side effects: prints results to stdout. No files are written.
+        """
 
         unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id(), domain=self.venue_id)
         preferred_emails_edges = { e['id']['head']: e['values'][0]['tail'] for e in self.client.get_grouped_edges(invitation=self.get_preferred_emails_invitation_id(), groupby='head', select='tail', domain=self.venue_id) }
@@ -1776,6 +2082,14 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 print(f'{[edge.tail, unavailable_since_month, unavailable_since_year]},')
 
     def set_impersonators(self, impersonators):
+        """Configure which users can impersonate the journal venue group.
+
+        Updates the venue group's ``impersonators`` field, allowing the specified
+        users to act on behalf of the journal (e.g., for testing or support purposes).
+
+        :param impersonators: List of profile IDs or group IDs allowed to impersonate the venue.
+        :type impersonators: list[str]
+        """
         self.group_builder.set_impersonators(impersonators)
 
     @classmethod
