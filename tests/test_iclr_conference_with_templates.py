@@ -335,3 +335,41 @@ url={https://openreview.net/forum?id='''
 note={under review}
 }'''
         assert submission.content['_bibtex']['value'] == valid_bibtex
+
+    def test_SAC_bidding(self, client, openreview_client, helpers, test_client, request_page, selenium):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+        bid_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Bid')
+        assert bid_invitation
+        assert bid_invitation.edit['label']['param']['enum'] == ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
+        assert bid_invitation.minReplies == 50
+        assert bid_invitation.edit['head']['param']['options']['group'] == 'ICLR.cc/2026/Conference/Action_Editors'
+        assert bid_invitation.edit['tail']['param']['options']['group'] == 'ICLR.cc/2026/Conference/Senior_Action_Editors'
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Bid/Dates')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Bid/Settings')
+
+        # before enabling bidding, run affinity score computation
+
+        # enable bidding for SACs
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=5))
+        edit = pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/Senior_Action_Editors/-/Bid/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+
+        openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Senior_Action_Editors', ['~SAE_ICLROne1', '~SAE_ICLRTwo1'])
+        openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Action_Editors', ['~AC_ICLROne1', '~AC_ICLRTwo1'])
+
+        sae_client = openreview.api.OpenReviewClient(username='senioractioneditor_one@iclr.cc', password=helpers.strong_password)
+
+        # Check that reviewers bid console loads
+        request_page(selenium, f'http://localhost:3030/invitation?id={bid_invitation.id}', sae_client, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Senior Action Editor Bidding Console' in header.text

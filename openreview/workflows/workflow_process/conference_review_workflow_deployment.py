@@ -47,6 +47,15 @@ def process(client, edit, invitation):
             )
     )
 
+        if venue.use_senior_area_chairs:
+            venue.bid_stages.append(
+                openreview.stages.BidStage(
+                    venue.get_senior_area_chairs_id(),
+                    start_date=submission_duedate + datetime.timedelta(days=3.5),
+                    due_date=submission_duedate + datetime.timedelta(days=7)
+                )
+            )
+
     venue.review_stage = openreview.stages.ReviewStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
         due_date=submission_deadline_datetime + datetime.timedelta(weeks=5)
