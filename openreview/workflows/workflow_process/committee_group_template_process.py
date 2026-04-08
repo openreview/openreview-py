@@ -36,7 +36,6 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'group_id': { 'value': edit.group.id },
-            'message_reply_to': { 'value': domain.content['contact']['value'] },
             'venue_short_name': { 'value': domain.content['subtitle']['value'] },
             'venue_from_email': { 'value': f"{domain.content['subtitle']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()}-notifications@openreview.net" }
         },
@@ -86,9 +85,8 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'committee_id': { 'value': edit.group.id },
-            'committee_pretty_name': { 'value': committee_pretty_name },            
+            'committee_pretty_name': { 'value': committee_pretty_name },
             'venue_short_name': { 'value': domain.content['subtitle']['value'] },
-            'venue_contact': { 'value': domain.content['contact']['value'] },
             'reminder_delay': { 'value': 3000 if (invitation.domain.startswith('openreview.net')) else (1000 * 60 * 60 * 24 * 7)  }
         },
         invitation=openreview.api.Invitation(),
@@ -105,9 +103,8 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'committee_id': { 'value': edit.group.id },
-            'committee_pretty_name': { 'value': committee_pretty_name },            
-            'venue_short_name': { 'value': domain.content['subtitle']['value'] },
-            'venue_contact': { 'value': domain.content['contact']['value'] },            
+            'committee_pretty_name': { 'value': committee_pretty_name },
+            'venue_short_name': { 'value': domain.content['subtitle']['value'] }          
         },
         invitation=openreview.api.Invitation(),
         await_process=True

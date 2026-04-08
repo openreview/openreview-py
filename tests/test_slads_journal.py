@@ -435,3 +435,31 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'slads@scichina.com'
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,\n\nThe discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.\n\nThe SLADS Editors-in-Chief\n\n\nPlease note that responding to this email will direct your reply to slads@scichina.com.\n'''
+
+    def test_preferred_emails_invitation(self, openreview_client, helpers):
+
+        invitation = openreview.tools.get_invitation(openreview_client, 'SLADS/-/Preferred_Emails')
+        assert invitation
+
+        group = openreview_client.get_group('SLADS/Preferred_Emails_Readers')
+        assert group
+        assert group.members == ['SLADS', 'SLADS/Action_Editors']
+
+         ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='SLADS/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='SLADS/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='SLADS/-/Preferred_Emails-0-0', count=2)
+
+        # 1 AE, 3 Reviewers and 2 authors
+        assert openreview_client.get_edges_count(invitation='SLADS/-/Preferred_Emails') == 6
+        edge = openreview_client.get_edges(invitation='SLADS/-/Preferred_Emails', head='~Melisa_Amex1')[0]
+        assert edge.readers == ['SLADS/Preferred_Emails_Readers', '~Melisa_Amex1']
+        edge = openreview_client.get_edges(invitation='SLADS/-/Preferred_Emails', head='~SomeFirstName_User1')[0]
+        assert edge.readers == ['SLADS/Preferred_Emails_Readers', '~SomeFirstName_User1']
