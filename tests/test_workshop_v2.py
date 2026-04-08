@@ -1368,8 +1368,8 @@ Best,
         assert len(profiles) == 9
 
         test_profile = [p for p in profiles if p.id == '~SomeFirstName_User1']
-        test_profile[0].content['preferredEmail'] == 'test@mail.com'
-        test_profile[0].get_preferred_email() == 'test@mail.com'
+        assert test_profile[0].content['preferredEmail'] == 'test@mail.com'
+        assert test_profile[0].get_preferred_email() == 'test@mail.com'
 
         ## Create new author
         helpers.create_user('noemail@icaps.cc', 'No', 'Email', alternates=[], institution='icaps.cc')
@@ -1408,6 +1408,8 @@ Best,
             }
         ))
 
+        current_log_count = len(openreview_client.get_process_logs(id='PRL/2023/ICAPS/-/Preferred_Emails-0-0'))
+
         ## Trigger preferred emails process
         openreview_client.post_invitation_edit(
             invitations='PRL/2023/ICAPS/-/Edit',
@@ -1419,7 +1421,7 @@ Best,
         )
 
         ## No process error
-        helpers.await_queue_edit(openreview_client, edit_id='PRL/2023/ICAPS/-/Preferred_Emails-0-0', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='PRL/2023/ICAPS/-/Preferred_Emails-0-0', count=current_log_count + 1)
 
         edges = pc_client_v2.get_edges(
             invitation='PRL/2023/ICAPS/-/Preferred_Emails', head=no_email_username
