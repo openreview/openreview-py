@@ -125,8 +125,8 @@ class TestVenueRestriction():
         pc_client.restrict('RESTRICT.cc/2025/Conference')
 
         # Author should no longer be able to access the submission data
-        #notes_after_author = author_client.get_notes(invitation='RESTRICT.cc/2025/Conference/-/Submission')
-        #assert len(notes_after_author) == 0, 'Author should not have access to notes after restriction'
+        notes_after_author = author_client.get_notes(invitation='RESTRICT.cc/2025/Conference/-/Submission')
+        assert len(notes_after_author) == 0, 'Author should not have access to notes after restriction'
 
         # PC should still be able to access the submission data
         notes_after_pc = pc_client.get_notes(invitation='RESTRICT.cc/2025/Conference/-/Submission')
