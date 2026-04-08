@@ -1,4 +1,5 @@
 import datetime
+import pytest
 import openreview
 from openreview.api import OpenReviewClient
 from selenium.webdriver.common.by import By
@@ -136,6 +137,13 @@ class TestVenueRestriction():
         # Super client (admin) should also still have access
         notes_after_super = openreview_client.get_notes(invitation='RESTRICT.cc/2025/Conference/-/Submission')
         assert len(notes_after_super) == 1
+
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            author_client.get_note(submission_id)
+        assert openReviewError.value.args[0].get('name') == 'NotFoundError'
+
+        note = pc_client.get_note(submission_id)  # PC should still be able to access the note directly by ID
+        assert note.id == submission_id
 
     def test_profile_edit_selenium(self, openreview_client, helpers, selenium, request_page):
         """
