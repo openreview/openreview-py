@@ -5881,6 +5881,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Release_Meta_Reviews-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Meta_Review-0-1', count=3)
 
+        # After the meta review invitation is regenerated, ethics reviewers
+        # should still not be added back to the meta review readers.
+        meta_review = openreview_client.get_all_notes(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission4/-/Meta_Review',
+        )[0]
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in meta_review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' not in meta_review.readers
+
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert len(review.readers) - len(reviewer_edit['note']['readers']) == 3
         assert 'aclweb.org/ACL/ARR/2023/August/Program_Chairs' in review.readers
