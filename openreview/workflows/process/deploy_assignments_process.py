@@ -85,7 +85,7 @@ def process(client, invitation):
         )
     except Exception as e:
         print(e)
-        # edit assignment configuration and set status as complete
+        # edit assignment configuration and set status as "Deployment Error"
         client.post_note_edit(
             invitation=meta_invitation_id,
             signatures=[venue_id],
@@ -103,7 +103,7 @@ def process(client, invitation):
         )
         return
 
-    # edit assignment configuration and set status as complete
+    # edit assignment configuration and set status as "Deployed"
     client.post_note_edit(
         invitation=meta_invitation_id,
         signatures=[venue_id],
