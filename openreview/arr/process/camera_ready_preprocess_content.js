@@ -5,8 +5,8 @@ async function process(client, edit, invitation) {
     { name: 'TeX environment', regex: /\\begin\{[^}\n]+\}[\s\S]*?\\end\{[^}\n]+\}/ },
     { name: 'TeX command', regex: /\\[A-Za-z]+(?:\*)?\b/ },
     { name: 'TeX escaped symbol', regex: /\\[%&#_$^{}]/ },
-    { name: 'TeX display math', regex: /(^|[^\\])\$\$[\s\S]+?\$\$/ },
-    { name: 'TeX inline math', regex: /(^|[^\\])\$(?:[^$\n]|\\\$)+\$/ },
+    { name: 'TeX display math', regex: /(^|[^\\])\$\$[\s\S]+?\$\$/, trimPrefixCapture: true },
+    { name: 'TeX inline math', regex: /(^|[^\\])\$(?:[^$\n]|\\\$)+\$/, trimPrefixCapture: true },
     { name: 'TeX math \\(...\\)', regex: /\\\([\s\S]+?\\\)/ },
     { name: 'TeX math \\[...\\]', regex: /\\\[[\s\S]+?\\\]/ }
   ];
@@ -16,8 +16,8 @@ async function process(client, edit, invitation) {
     { name: 'Markdown autolink', regex: /<https?:\/\/[^>\s]+>/i },
     { name: 'Markdown fenced code', regex: /```[\s\S]+?```/ },
     { name: 'Markdown code span', regex: /`[^`\n]+`/ },
-    { name: 'Markdown emphasis (*)', regex: /(^|[^\w])\*{1,3}[^*\n]+\*{1,3}(?=$|[^\w])/ },
-    { name: 'Markdown emphasis (_)', regex: /(^|[^\w])_{1,2}[^_\n]+_{1,2}(?=$|[^\w])/ }
+    { name: 'Markdown emphasis (*)', regex: /(^|[^\w])\*{1,3}[^*\n]+\*{1,3}(?=$|[^\w])/, trimPrefixCapture: true },
+    { name: 'Markdown emphasis (_)', regex: /(^|[^\w])_{1,2}[^_\n]+_{1,2}(?=$|[^\w])/, trimPrefixCapture: true }
   ];
 
   const normalize = (value) => typeof value === 'string'
@@ -28,9 +28,12 @@ async function process(client, edit, invitation) {
     for (const rule of rules) {
       const match = text.match(rule.regex);
       if (match) {
+        const snippet = rule.trimPrefixCapture
+          ? match[0].slice((match[1] || '').length)
+          : match[0];
         return {
           rule: rule.name,
-          snippet: match[0].replace(/\s+/g, ' ').trim().slice(0, 80)
+          snippet: snippet.replace(/\s+/g, ' ').trim().slice(0, 80)
         };
       }
     }

@@ -7480,7 +7480,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, f'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Camera_Ready_Revision-0-1', count=1)
 
         camera_ready_submission = commitment_submissions[0]
-        camera_ready_invitation = openreview_client.get_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Submission1/-/Camera_Ready_Revision')
 
         openreview_client.post_invitation_edit(
             invitations=venue.get_meta_invitation_id(),
@@ -7557,6 +7556,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         for field, value, error_match in invalid_cases:
             with pytest.raises(openreview.OpenReviewException, match=error_match):
                 post_camera_ready_revision(**{field: value})
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Detected: \$x\$'):
+            post_camera_ready_revision(title='Camera ready titleo$x$')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Detected: \$\$x\+y\$\$'):
+            post_camera_ready_revision(abstract='Camera ready abstracto$$x+y$$')
 
         valid_cases = [
             {
