@@ -187,6 +187,46 @@ class TestTwoReviewerRoles():
         submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 3
 
+    def test_close_submissions_and_create_groups(self, openreview_client, helpers):
+        """Close the submission deadline and verify that both Submission_Group
+        invitations run and create per-submission reviewer groups for each
+        reviewer role."""
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@xyzw.cc', password=helpers.strong_password)
+        now = datetime.datetime.now()
+
+        # Close the submission deadline. The Submission/Dates process function
+        # cascades the new date into the primary reviewer role's Submission_Group
+        # invitation (venue.reviewers_name = Expert_Reviewers), so it will run
+        # automatically for that role.
+        pc_client.post_invitation_edit(
+            invitations='XYZW.cc/2025/Conference/-/Submission/Dates',
+            content={
+                'submission_deadline': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='XYZW.cc/2025/Conference/Expert_Reviewers/-/Submission_Group-0-1', count=2)
+
+        # The Technical_Reviewers Submission_Group invitation is not cascaded by
+        # the Submission/Dates process function, so trigger it manually.
+        pc_client.post_invitation_edit(
+            invitations='XYZW.cc/2025/Conference/Technical_Reviewers/-/Submission_Group/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='XYZW.cc/2025/Conference/Technical_Reviewers/-/Submission_Group-0-1', count=2)
+
+        submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 3
+
+        for submission in submissions:
+            expert_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Expert_Reviewers')
+            assert expert_group
+            technical_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Reviewers')
+            assert technical_group
+
     def test_setup_matching_for_both_roles(self, openreview_client, helpers):
         """Post Assignment_Configuration notes and Proposed_Assignment edges for
         both reviewer roles."""
