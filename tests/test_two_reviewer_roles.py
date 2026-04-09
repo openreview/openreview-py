@@ -268,15 +268,10 @@ class TestTwoReviewerRoles():
         """Deploy assignments for both reviewer roles and verify each role's
         per-submission group has only the reviewers from its own matching."""
 
-        venue = openreview.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
+        venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
 
-        # deploy Expert_Reviewers
-        venue.reviewers_name = 'Expert_Reviewers'
-        venue.set_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers')
-
-        # deploy Technical_Reviewers
-        venue.reviewers_name = 'Technical_Reviewers'
-        venue.set_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers')
+        venue.set_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers', submission_committee_name='Expert_Reviewers')
+        venue.set_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers', submission_committee_name='Technical_Reviewers')
 
         submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -299,3 +294,20 @@ class TestTwoReviewerRoles():
         # Sanity: at least one of each role's reviewers was assigned somewhere
         assert expert_members
         assert technical_members
+
+    def test_undeploy_assignments_for_both_roles(self, openreview_client, helpers):
+        """Undeploy assignments for both reviewer roles and verify each role's
+        per-submission group is emptied of its assigned members."""
+
+        venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
+
+        venue.unset_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers', submission_committee_name='Expert_Reviewers')
+        venue.unset_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers', submission_committee_name='Technical_Reviewers')
+
+        submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        for submission in submissions:
+            expert_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Expert_Reviewers')
+            technical_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Reviewers')
+            assert expert_group.members == []
+            assert technical_group.members == []

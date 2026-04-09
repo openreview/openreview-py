@@ -1193,7 +1193,7 @@ class Matching(object):
 
         return invite_assignment_invitation
 
-    def deploy_assignments(self, assignment_title, overwrite):
+    def deploy_assignments(self, assignment_title, overwrite, submission_committee_name=None):
 
         venue = self.venue
         client = self.client
@@ -1201,7 +1201,7 @@ class Matching(object):
         committee_id=self.match_group.id
         role_name = committee_id.split('/')[-1]
         review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
-        reviewer_name = venue.reviewers_name
+        reviewer_name = submission_committee_name if submission_committee_name else venue.reviewers_name
         if role_name in venue.area_chair_roles:
             reviewer_name = venue.area_chairs_name
             review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
@@ -1343,7 +1343,7 @@ class Matching(object):
         print('Posting assignments edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
 
-    def undeploy_assignments(self, assignment_title):
+    def undeploy_assignments(self, assignment_title, submission_committee_name=None):
 
         venue = self.venue
         client = self.client
@@ -1351,7 +1351,7 @@ class Matching(object):
         committee_id=self.match_group.id
         role_name = committee_id.split('/')[-1]
         review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
-        reviewer_name = venue.reviewers_name
+        reviewer_name = submission_committee_name if submission_committee_name else venue.reviewers_name
         if role_name in venue.area_chair_roles:
             reviewer_name = venue.area_chairs_name
             review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
@@ -1397,7 +1397,7 @@ class Matching(object):
 
         tools.concurrent_requests(process_paper_assignments, papers, desc='undeploy_assignments')
     
-    def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
+    def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False, submission_committee_name=None):
 
         self.venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
         recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id)
@@ -1409,7 +1409,7 @@ class Matching(object):
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
             self.deploy_sac_assignments(assignment_title, overwrite)
         else:
-            self.deploy_assignments(assignment_title, overwrite)
+            self.deploy_assignments(assignment_title, overwrite, submission_committee_name=submission_committee_name)
 
         if self.is_reviewer and enable_reviewer_reassignment:
             hash_seed=openreview.tools.create_hash_seed()
@@ -1435,13 +1435,13 @@ class Matching(object):
             print("There are no existing deployed assigment configurations. Default max papers has not been set.")
 
 
-    def undeploy(self, assignment_title):
+    def undeploy(self, assignment_title, submission_committee_name=None):
 
         ## Undeploy assignments
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
             self.undeploy_sac_assignments(assignment_title)
         else:
-            self.undeploy_assignments(assignment_title)  
+            self.undeploy_assignments(assignment_title, submission_committee_name=submission_committee_name)
             self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id, deployed=True))      
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_assignment_id(self.match_group.id))     
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id))

@@ -1324,7 +1324,7 @@ Total Errors: {len(errors)}
 
         return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
 
-    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
+    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False, submission_committee_name=None):
         """Deploy proposed assignments as official assignments for a committee.
 
         Copies edges from the proposed assignment configuration (identified by
@@ -1346,9 +1346,9 @@ Total Errors: {len(errors)}
         match_group = self.client.get_group(committee_id)
         assignment_invitation = self.client.get_invitation(self.get_assignment_id(match_group.id))
         conference_matching = matching.Matching(self, match_group, submission_content=assignment_invitation.edit.get('head', {}).get('param', {}).get('withContent'))
-        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
+        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment, submission_committee_name=submission_committee_name)
     
-    def unset_assignments(self, assignment_title, committee_id):
+    def unset_assignments(self, assignment_title, committee_id, submission_committee_name=None):
         """Revert deployed assignments back to proposed state for a committee.
 
         Removes the deployed assignment edges and per-paper committee member
@@ -1364,7 +1364,7 @@ Total Errors: {len(errors)}
         """
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
-        return conference_matching.undeploy(assignment_title)    
+        return conference_matching.undeploy(assignment_title, submission_committee_name=submission_committee_name)
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
         """Set up invite-based assignment recruitment for external or emergency reviewers.
