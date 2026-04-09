@@ -395,7 +395,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         self.save_invitation(expire_invitation, replacement=True)
         return invitation
 
-    def set_post_submission_invitation(self, invitation_id=None, source=None, process_path='process/post_submission_process.py'):
+    def set_post_submission_invitation(self, source=None):
 
         if self.venue.is_template_related_workflow():
             return
@@ -404,7 +404,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         submission_stage = self.venue.submission_stage
 
         submission_id = submission_stage.get_submission_id(self.venue)
-        post_submission_id = invitation_id if invitation_id else self.venue.get_post_submission_id()
+        post_submission_id = self.venue.get_post_submission_id()
         post_submission_cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
 
         hidden_field_names = submission_stage.get_hidden_field_names()
@@ -427,7 +427,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             cdate=post_submission_cdate,
             date_processes=[{
                 'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.get_process_content(process_path)
+                'script': self.get_process_content('process/post_submission_process.py')
             }],
             content = {
                 'source': {
