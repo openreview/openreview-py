@@ -1154,7 +1154,8 @@ class Matching(object):
                     accepted_label,
                     declined_label + '.*',
                     'Pending Sign Up',
-                    'Conflict Detected'
+                    'Conflict Detected',
+                    'Already Assigned'
                 ],
                 'optional': True,
                 'deletable': True,
