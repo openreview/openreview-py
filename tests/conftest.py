@@ -94,14 +94,16 @@ class Helpers:
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
-    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0):
+    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0, timeout=300):
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
         finished_status = ['error', 'ok']
+        process_logs = []
         counter = 0
         wait_time = 0.5
+        max_iterations = int(timeout / wait_time) or 1
         cycles = 60 * 1 / wait_time # print every 1 minutes
-        while True:
+        while counter < max_iterations:
             process_logs = [l for l in super_client.get_process_logs(id=edit_id, invitation=invitation) if l.get('processIndex', 0) == process_index][:count]
             if len(process_logs) == count and all(process_log['status'] in finished_status for process_log in process_logs):
                 for process_log in process_logs:
@@ -110,12 +112,12 @@ class Helpers:
 
             time.sleep(wait_time)
             if counter % cycles == 0:
-                print(f'Logs in API 2 queue: {len(process_logs)}', edit_id)
+                print(f'Logs in API 2 queue: {len(process_logs)}', edit_id or invitation)
                 sys.stdout.flush()
 
             counter += 1
 
-        assert process_logs[0]['status'] == (expected_status), process_logs[0]['log']
+        raise TimeoutError(f'await_queue_edit timed out after {timeout}s waiting for {edit_id or invitation} (expected count={count}, got {len(process_logs)})')
 
     # This method is used to check if the count value passed as param is correct. It can directly be used to
     # replace the await_queue_edit method in the tests.
