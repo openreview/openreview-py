@@ -137,6 +137,49 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Action_Editors/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Expertise_Selection')
 
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Reviewers')
+        assert group.domain == 'ICLR.cc/2026/Conference'
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Reviewers',
+            'ICLR.cc/2026/Conference/Senior_Action_Editors',
+            'ICLR.cc/2026/Conference/Action_Editors'
+        ]
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Action_Editors')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Action_Editors',
+            'ICLR.cc/2026/Conference/Senior_Action_Editors'
+        ]
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Senior_Action_Editors'
+        ]
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors/Invited')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Senior_Action_Editors/Invited'
+        ]
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors/Declined')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Senior_Action_Editors/Declined'
+        ]
+
+        domain_content = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference').content
+        assert domain_content['senior_area_chair_roles']['value'] == ['Senior_Action_Editors']
+        assert domain_content['senior_area_chairs_id']['value'] == 'ICLR.cc/2026/Conference/Senior_Action_Editors'
+        assert domain_content['senior_area_chairs_assignment_id']['value'] == 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment'
+        assert domain_content['senior_area_chairs_affinity_score_id']['value'] == 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Affinity_Score'
+        assert domain_content['senior_area_chairs_name']['value'] == 'Senior_Action_Editors'
+        assert domain_content['sac_paper_assignments']['value'] == False
+        assert domain_content['senior_area_chairs_conflict_id']['value'] == 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Conflict'
+
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
         # use invitation to recruit reviewers
@@ -500,3 +543,29 @@ def test_sac_deployment(client, openreview_client, helpers):
         invitation='ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment',
         groupby='id'
     )) == 0
+
+    #change status of configuration to complete
+    openreview_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/-/Edit',
+        signatures=['ICLR.cc/2026/Conference'],
+        note=openreview.api.Note(
+            id=config_note['note']['id'],
+            content = {
+                'status': {
+                    'value': 'Complete'
+                }
+            }
+        )
+    )
+
+    # deploy assignments
+    openreview_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Senior_Action_Editors_Assignment_Deployment/Match',
+        content = {
+            'match_name': { 'value': 'sac-matching-1' }
+        }
+    )
+    helpers.await_queue_edit(openreview_client,  edit_id=f'ICLR.cc/2026/Conference/-/Senior_Action_Editors_Assignment_Deployment-0-1', count=3)
+
+    grouped_edges = openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment', groupby='id')
+    assert len(grouped_edges) == 2
