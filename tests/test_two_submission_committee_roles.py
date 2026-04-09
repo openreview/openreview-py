@@ -3,7 +3,7 @@ import openreview
 import openreview.venue
 
 
-class TestTwoReviewerRoles():
+class TestTwoSubmissionCommitteeRoles():
 
     def test_setup_venue(self, openreview_client, helpers):
         """Setup a venue using the new workflow configuration with the primary
@@ -16,6 +16,8 @@ class TestTwoReviewerRoles():
         helpers.create_user('expert_two@xyzw.cc', 'ExpertTwo', 'XYZW')
         helpers.create_user('technical_one@xyzw.cc', 'TechnicalOne', 'XYZW')
         helpers.create_user('technical_two@xyzw.cc', 'TechnicalTwo', 'XYZW')
+        helpers.create_user('expert_ac@xyzw.cc', 'ExpertAC', 'XYZW')
+        helpers.create_user('technical_ac@xyzw.cc', 'TechnicalAC', 'XYZW')
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@xyzw.cc', password=helpers.strong_password)
 
@@ -37,6 +39,7 @@ class TestTwoReviewerRoles():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewers_name': { 'value': 'Expert_Reviewers' },
+                    'area_chairs_support': { 'value': True },
                     'area_chairs_name': { 'value': 'Area_Chairs' },
                     'expected_submissions': { 'value': 100 },
                     'venue_organizer_agreement': {
@@ -85,6 +88,15 @@ class TestTwoReviewerRoles():
             signatures=['XYZW.cc/2025/Conference'],
             group=openreview.api.Group(
                 members={ 'append': ['~ExpertOne_XYZW1', '~ExpertTwo_XYZW1'] }
+            )
+        )
+
+        # add expert area chair to the default Area_Chairs group
+        openreview_client.post_group_edit(
+            invitation='XYZW.cc/2025/Conference/Area_Chairs/-/Members',
+            signatures=['XYZW.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={ 'append': ['~ExpertAC_XYZW1'] }
             )
         )
 
@@ -311,3 +323,155 @@ class TestTwoReviewerRoles():
             technical_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Reviewers')
             assert expert_group.members == []
             assert technical_group.members == []
+
+    def test_setup_second_area_chair_role(self, openreview_client, helpers):
+        """Add a second area chair role 'Technical_Area_Chairs' to the domain
+        group, and create the Submission_Group and matching invitations needed
+        for it."""
+
+        now = datetime.datetime.now()
+        openreview_client.post_invitation_edit(
+            invitations='XYZW.cc/2025/Conference/Area_Chairs/-/Submission_Group/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='XYZW.cc/2025/Conference/Area_Chairs/-/Submission_Group-0-1', count=2)        
+
+        openreview_client.post_group_edit(
+            invitation='openreview.net/Template/-/Committee_Group',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': { 'value': 'XYZW.cc/2025/Conference' },
+                'committee_name': { 'value': 'Technical_Area_Chairs' },
+                'committee_role': { 'value': 'area_chairs' },
+                'committee_pretty_name': { 'value': 'Technical Area Chairs' },
+                'committee_anon_name': { 'value': 'Technical_Area_Chair_' },
+                'committee_submitted_name': { 'value': 'Submitted' },
+                'additional_readers': { 'value': [] }
+            },
+            await_process=True
+        )
+
+        assert openreview_client.get_group('XYZW.cc/2025/Conference/Technical_Area_Chairs')
+
+        openreview_client.post_group_edit(
+            invitation='XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Members',
+            signatures=['XYZW.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={ 'append': ['~TechnicalAC_XYZW1'] }
+            )
+        )
+
+        # Update the domain to include both area chair roles
+        openreview_client.post_group_edit(
+            invitation='XYZW.cc/2025/Conference/-/Edit',
+            signatures=['XYZW.cc/2025/Conference'],
+            group=openreview.api.Group(
+                id='XYZW.cc/2025/Conference',
+                content={
+                    'area_chair_roles': { 'value': ['Area_Chairs', 'Technical_Area_Chairs'] }
+                }
+            )
+        )
+
+        venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
+        assert venue.area_chair_roles == ['Area_Chairs', 'Technical_Area_Chairs']
+
+        venue.invitation_builder.set_submission_area_chair_group_invitation(area_chairs_name='Technical_Area_Chairs')
+        assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Submission_Group')
+
+        helpers.await_queue_edit(openreview_client, edit_id='XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Submission_Group-0-1', count=1)
+        
+        submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
+        for submission in submissions:
+            assert openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Area_Chairs')
+            assert openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Area_Chairs')
+
+        # Build matching invitations for both AC roles
+        venue.setup_committee_matching(committee_id='XYZW.cc/2025/Conference/Area_Chairs')
+        venue.setup_committee_matching(committee_id='XYZW.cc/2025/Conference/Technical_Area_Chairs')
+        venue.invitation_builder.set_assignment_invitation('XYZW.cc/2025/Conference/Area_Chairs')
+        venue.invitation_builder.set_assignment_invitation('XYZW.cc/2025/Conference/Technical_Area_Chairs')
+
+        assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Area_Chairs/-/Assignment')
+        assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Assignment')
+        assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Area_Chairs/-/Proposed_Assignment')
+        assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Proposed_Assignment')
+
+    def test_setup_ac_matching_for_both_roles(self, openreview_client, helpers):
+        """Post Assignment_Configuration notes and Proposed_Assignment edges for
+        both area chair roles."""
+
+        submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        for role, acs in [
+            ('Area_Chairs', ['~ExpertAC_XYZW1']),
+            ('Technical_Area_Chairs', ['~TechnicalAC_XYZW1'])
+        ]:
+            label = f'{role.lower()}-matching-1'
+            openreview_client.post_note_edit(
+                invitation=f'XYZW.cc/2025/Conference/{role}/-/Assignment_Configuration',
+                signatures=['XYZW.cc/2025/Conference'],
+                note=openreview.api.Note(
+                    content={
+                        'title': { 'value': label },
+                        'user_demand': { 'value': '1' },
+                        'max_papers': { 'value': '5' },
+                        'min_papers': { 'value': '0' },
+                        'alternates': { 'value': '0' },
+                        'paper_invitation': { 'value': 'XYZW.cc/2025/Conference/-/Submission&content.venueid=XYZW.cc/2025/Conference/Submission' },
+                        'match_group': { 'value': f'XYZW.cc/2025/Conference/{role}' },
+                        'aggregate_score_invitation': { 'value': f'XYZW.cc/2025/Conference/{role}/-/Aggregate_Score' },
+                        'conflicts_invitation': { 'value': f'XYZW.cc/2025/Conference/{role}/-/Conflict' },
+                        'solver': { 'value': 'FairFlow' },
+                        'status': { 'value': 'Complete' }
+                    }
+                )
+            )
+
+            for index, submission in enumerate(submissions):
+                openreview_client.post_edge(openreview.api.Edge(
+                    invitation=f'XYZW.cc/2025/Conference/{role}/-/Proposed_Assignment',
+                    head=submission.id,
+                    tail=acs[index % len(acs)],
+                    signatures=['XYZW.cc/2025/Conference/Program_Chairs'],
+                    weight=1,
+                    label=label
+                ))
+
+    def test_deploy_ac_assignments_for_both_roles(self, openreview_client, helpers):
+        """Deploy AC assignments for both area chair roles and verify each role's
+        per-submission group has only its own AC."""
+
+        venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
+
+        venue.set_assignments(assignment_title='area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Area_Chairs', submission_committee_name='Area_Chairs')
+        venue.set_assignments(assignment_title='technical_area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Area_Chairs', submission_committee_name='Technical_Area_Chairs')
+
+        submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        for submission in submissions:
+            ac_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Area_Chairs')
+            technical_ac_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Area_Chairs')
+            for member in ac_group.members:
+                assert member == '~ExpertAC_XYZW1'
+            for member in technical_ac_group.members:
+                assert member == '~TechnicalAC_XYZW1'
+
+    def test_undeploy_ac_assignments_for_both_roles(self, openreview_client, helpers):
+        """Undeploy AC assignments for both area chair roles and verify each
+        role's per-submission group is emptied."""
+
+        venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
+
+        venue.unset_assignments(assignment_title='area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Area_Chairs', submission_committee_name='Area_Chairs')
+        venue.unset_assignments(assignment_title='technical_area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Area_Chairs', submission_committee_name='Technical_Area_Chairs')
+
+        submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        for submission in submissions:
+            ac_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Area_Chairs')
+            technical_ac_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Area_Chairs')
+            assert ac_group.members == []
+            assert technical_ac_group.members == []

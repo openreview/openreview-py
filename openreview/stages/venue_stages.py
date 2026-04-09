@@ -16,7 +16,7 @@ class IdentityReaders(Enum):
     REVIEWERS_ASSIGNED = 6
 
     @classmethod
-    def get_readers(self, conference, number, identity_readers, name=None):
+    def get_readers(self, conference, number, identity_readers, reviewers_name=None, area_chairs_name=None):
         readers = [conference.id]
         if self.PROGRAM_CHAIRS in identity_readers:
             readers.append(conference.get_program_chairs_id())
@@ -25,13 +25,13 @@ class IdentityReaders(Enum):
         if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
             readers.append(conference.get_senior_area_chairs_id(number))
         if self.AREA_CHAIRS in identity_readers:
-            readers.append(conference.get_area_chairs_id())
+            readers.append(conference.get_area_chairs_id(name=area_chairs_name))
         if self.AREA_CHAIRS_ASSIGNED in identity_readers:
-            readers.append(conference.get_area_chairs_id(number))
+            readers.append(conference.get_area_chairs_id(number, name=area_chairs_name))
         if self.REVIEWERS in identity_readers:
-            readers.append(conference.get_reviewers_id(name=name))
+            readers.append(conference.get_reviewers_id(name=reviewers_name))
         if self.REVIEWERS_ASSIGNED in identity_readers:
-            readers.append(conference.get_reviewers_id(number, name=name))
+            readers.append(conference.get_reviewers_id(number, name=reviewers_name))
         return readers
 
 class AuthorReorder(Enum):

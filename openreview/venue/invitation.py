@@ -3216,7 +3216,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         if is_area_chair:
             area_chairs_id = committee_id
-            senior_area_chairs_id = committee_id.replace(self.venue.area_chairs_name, self.venue.senior_area_chairs_name)
+            senior_area_chairs_id = committee_id.replace(committee_name, self.venue.senior_area_chairs_name)
 
         content = {
             'review_name': {
@@ -3753,10 +3753,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         return invitation
 
-    def set_submission_area_chair_group_invitation(self):
+    def set_submission_area_chair_group_invitation(self, area_chairs_name=None):
 
         venue_id = self.venue_id
-        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_area_chairs_id())
+        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_area_chairs_id(name=area_chairs_name))
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
 
 
@@ -3791,10 +3791,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 },
                 'group': {
-                    'id': self.venue.get_area_chairs_id(number='${2/content/noteNumber/value}'),
-                    'readers': self.venue.group_builder.get_area_chair_paper_group_readers('${3/content/noteNumber/value}'),
+                    'id': self.venue.get_area_chairs_id(number='${2/content/noteNumber/value}', name=area_chairs_name),
+                    'readers': self.venue.group_builder.get_area_chair_paper_group_readers('${3/content/noteNumber/value}', name=area_chairs_name),
                     'nonreaders': [self.venue.get_authors_id('${3/content/noteNumber/value}')],
-                    'deanonymizers': self.venue.group_builder.get_area_chair_identity_readers('${3/content/noteNumber/value}'),
+                    'deanonymizers': self.venue.group_builder.get_area_chair_identity_readers('${3/content/noteNumber/value}', name=area_chairs_name),
                     'writers': [self.venue.id],
                     'signatures': [self.venue.id],
                     'signatories': [self.venue.id],

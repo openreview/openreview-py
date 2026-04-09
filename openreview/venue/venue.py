@@ -404,9 +404,10 @@ class Venue(object):
     def get_program_chairs_id(self):
         return self.get_committee_id(self.program_chairs_name)
 
-    def get_area_chairs_id(self, number = None, anon=False):
-        ac_name = self.get_anon_area_chairs_name()
-        return self.get_committee_id(f'{ac_name}.*' if anon else self.area_chairs_name, number)
+    def get_area_chairs_id(self, number = None, anon=False, name=None):
+        area_chairs_name = name if name else self.area_chairs_name
+        ac_name = self.get_anon_committee_name(area_chairs_name)
+        return self.get_committee_id(f'{ac_name}.*' if anon else area_chairs_name, number)
     
     def get_secondary_area_chairs_id(self, number = None, anon=False):
         ac_name = self.get_anon_committee_name(self.secondary_area_chairs_name)
