@@ -3211,8 +3211,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         area_chairs_id = self.venue.get_area_chairs_id()
         senior_area_chairs_id = self.venue.get_senior_area_chairs_id()
         if is_reviewer:
-            area_chairs_id = committee_id.replace(self.venue.reviewers_name, self.venue.area_chairs_name)
-            senior_area_chairs_id = committee_id.replace(self.venue.reviewers_name, self.venue.senior_area_chairs_name)
+            area_chairs_id = committee_id.replace(committee_name, self.venue.area_chairs_name)
+            senior_area_chairs_id = committee_id.replace(committee_name, self.venue.senior_area_chairs_name)
 
         if is_area_chair:
             area_chairs_id = committee_id
@@ -3691,10 +3691,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             )
         self.save_invitation(paper_recruitment_invitation, replacement=True)
 
-    def set_submission_reviewer_group_invitation(self):
+    def set_submission_reviewer_group_invitation(self, reviewers_name=None):
 
         venue_id = self.venue_id
-        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_reviewers_id())
+        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_reviewers_id(name=reviewers_name))
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
 
         invitation = Invitation(id=invitation_id,
@@ -3728,10 +3728,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 },
                 'group': {
-                    'id': self.venue.get_reviewers_id(number='${2/content/noteNumber/value}'),
-                    'readers': self.venue.group_builder.get_reviewer_paper_group_readers('${3/content/noteNumber/value}'),
+                    'id': self.venue.get_reviewers_id(number='${2/content/noteNumber/value}', name=reviewers_name),
+                    'readers': self.venue.group_builder.get_reviewer_paper_group_readers('${3/content/noteNumber/value}', name=reviewers_name),
                     'nonreaders': [self.venue.get_authors_id('${3/content/noteNumber/value}')],
-                    'deanonymizers': self.venue.group_builder.get_reviewer_identity_readers('${3/content/noteNumber/value}'),
+                    'deanonymizers': self.venue.group_builder.get_reviewer_identity_readers('${3/content/noteNumber/value}', name=reviewers_name),
                     'writers': self.venue.group_builder.get_reviewer_paper_group_writers('${3/content/noteNumber/value}'),
                     'signatures': [self.venue.id],
                     'signatories': [self.venue.id],

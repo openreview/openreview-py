@@ -76,8 +76,8 @@ class GroupBuilder(object):
 
         return groups
 
-    def get_reviewer_identity_readers(self, number):
-        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers)
+    def get_reviewer_identity_readers(self, number, name=None):
+        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers, name=name)
 
     def get_area_chair_identity_readers(self, number):
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.area_chair_identity_readers)
@@ -85,13 +85,13 @@ class GroupBuilder(object):
     def get_senior_area_chair_identity_readers(self, number):
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.senior_area_chair_identity_readers)
 
-    def get_reviewer_paper_group_readers(self, number):
+    def get_reviewer_paper_group_readers(self, number, name=None):
         readers=[self.venue.id]
         if self.venue.use_senior_area_chairs:
             readers.append(self.venue.get_senior_area_chairs_id(number))
         if self.venue.use_area_chairs:
             readers.append(self.venue.get_area_chairs_id(number))
-        readers.append(self.venue.get_reviewers_id(number))
+        readers.append(self.venue.get_reviewers_id(number, name=name))
         return readers
 
     def get_reviewer_paper_group_writers(self, number):
