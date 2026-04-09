@@ -10,7 +10,7 @@ from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
-import numpy as np
+import editdistance
 import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
@@ -103,8 +103,24 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
         self.profile_minimum_requirements = {}
+        venue_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
+        self.homepage_webfield_path = os.path.join(venue_webfield_dir, 'homepageWebfield.js')
+        self.program_chairs_webfield_path = os.path.join(venue_webfield_dir, 'programChairsWebfield.js')
+        self.senior_area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'seniorAreaChairsWebfield.js')
+        self.area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'areachairsWebfield.js')
+        self.ethics_chairs_webfield_path = os.path.join(venue_webfield_dir, 'ethicsChairsWebfield.js')
 
     def set_main_settings(self, request_note):
+        """Configure venue properties from a venue request form note.
+
+        Populates name, short name, website, contact, location, start date,
+        reviewer/AC/SAC role names, and preferred email groups from the request
+        note content. Enables area chairs and senior area chairs if specified
+        in the request.
+
+        :param request_note: The venue request form note containing venue configuration.
+        :type request_note: openreview.api.Note
+        """
         self.name = request_note.content['official_venue_name']['value']
         self.short_name = request_note.content['abbreviated_venue_name']['value']
         self.website = request_note.content['venue_website_url']['value']
@@ -242,6 +258,8 @@ class Venue(object):
         return self.get_invitation_id('PC_Revision')
 
     def get_recruitment_id(self, committee_id):
+        if self.is_template_related_workflow():
+            return self.get_invitation_id('Recruitment_Response', prefix=committee_id)        
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
     def get_expertise_selection_id(self, committee_id):
@@ -426,9 +444,6 @@ class Venue(object):
     def get_desk_rejected_id(self):
         return self.get_invitation_id(f'Desk_Rejected_{self.submission_stage.name}')
     
-    def get_group_recruitment_id(self, committee_name):
-        return self.get_invitation_id(name='Recruitment', prefix=self.get_committee_id_invited(committee_name))
-    
     def get_iThenticate_plagiarism_check_invitation_id(self):
         return self.get_invitation_id('iThenticate_Plagiarism_Check')
 
@@ -480,6 +495,24 @@ class Venue(object):
         return f'{self.venue_id}/-/Preferred_Emails' 
 
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
+        """Retrieve venue submissions, optionally filtered by acceptance status or venue ID.
+
+        When ``accepted=True``, returns only accepted submissions by checking
+        the venue ID or falling back to parsing decision replies. When a
+        ``venueid`` is provided, filters submissions to that specific venue ID.
+        Otherwise returns all active, accepted, and rejected submissions.
+
+        :param venueid: Filter submissions to this specific venue ID.
+        :type venueid: str, optional
+        :param accepted: If True, return only accepted submissions.
+        :type accepted: bool, optional
+        :param sort: Sort order string (e.g. ``'number:asc'``).
+        :type sort: str, optional
+        :param details: Comma-separated detail fields to include (e.g. ``'directReplies'``).
+        :type details: str, optional
+        :return: List of submission notes matching the query.
+        :rtype: list[openreview.api.Note]
+        """
         if accepted:
             accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details, domain=self.venue_id)
             if len(accepted_notes) == 0:
@@ -515,7 +548,23 @@ class Venue(object):
             self.invitation_builder.expire_invitation(invitation)
 
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
-    
+        """Bootstrap the full venue infrastructure on OpenReview.
+
+        Creates the meta invitation, venue group, program chairs group,
+        authors group, and reviewer group. Conditionally creates area chair,
+        senior area chair, ethics reviewer, ethics chair, and publication
+        chair groups based on venue configuration. Also sets up edit
+        invitations for the venue group and preferred-email invitations
+        if applicable.
+
+        Side effects: posts groups and invitations to the OpenReview API;
+        adds the venue to the ``active_venues`` list.
+
+        :param program_chair_ids: Profile IDs or emails to add as program chairs.
+        :type program_chair_ids: list[str], optional
+        :param publication_chairs_ids: Profile IDs or emails to add as publication chairs.
+        :type publication_chairs_ids: list[str], optional
+        """
         self.invitation_builder.set_meta_invitation()
 
         self.group_builder.create_venue_group()
@@ -547,9 +596,14 @@ class Venue(object):
 
         if self.preferred_emails_groups:
             self.invitation_builder.set_preferred_emails_invitation()
-            self.group_builder.create_preferred_emails_readers_group()            
+            self.group_builder.create_preferred_emails_readers_group()        
 
     def set_impersonators(self, impersonators):
+        """Set the list of users allowed to impersonate venue roles.
+
+        :param impersonators: Profile IDs or group IDs that may impersonate venue members.
+        :type impersonators: list[str]
+        """
         self.group_builder.set_impersonators(impersonators)
 
     def recruit_reviewers(self,
@@ -566,7 +620,44 @@ class Venue(object):
         default_load= 0,
         allow_overlap_official_committee = False,
         accept_recruitment_template=None):
+        """Send recruitment invitation emails to a committee (reviewers, area chairs, etc.).
 
+        Delegates to :meth:`Recruitment.invite_committee` to email invitees
+        with accept/decline links. Can also send reminders to pending invitees
+        or retry previously declined candidates.
+
+        Side effects: sends recruitment emails and creates/updates the
+        recruitment invitation and response tracking groups (Invited, Declined).
+
+        :param title: Email subject line for the recruitment message.
+        :type title: str
+        :param message: Email body template. May contain placeholders like ``{{accept_url}}``, ``{{decline_url}}``, ``{{invitation_url}}``, ``{{fullname}}``, and ``{{contact_info}}``.
+        :type message: str
+        :param invitees: Email addresses or profile IDs to recruit.
+        :type invitees: list[str], optional
+        :param reviewers_name: Committee role name (e.g. ``'Reviewers'``, ``'Area_Chairs'``).
+        :type reviewers_name: str, optional
+        :param remind: If True, send reminders to invitees who have not yet responded.
+        :type remind: bool, optional
+        :param invitee_names: Display names corresponding to each invitee.
+        :type invitee_names: list[str], optional
+        :param retry_declined: If True, re-invite previously declined candidates.
+        :type retry_declined: bool, optional
+        :param contact_info: Contact email shown in the recruitment message.
+        :type contact_info: str, optional
+        :param reduced_load_on_decline: List of reduced-load options offered when declining (e.g. ``['1', '2', '3']``).
+        :type reduced_load_on_decline: list[str], optional
+        :param allow_accept_with_reduced_load: If True, allow accepting with a reduced review load.
+        :type allow_accept_with_reduced_load: bool, optional
+        :param default_load: Default review load (currently unused).
+        :type default_load: int, optional
+        :param allow_overlap_official_committee: If True, allow recruiting members already on the official committee.
+        :type allow_overlap_official_committee: bool, optional
+        :param accept_recruitment_template: Custom template for the acceptance page.
+        :type accept_recruitment_template: str, optional
+        :return: Dictionary with keys ``invited``, ``reminded``, ``already_invited``, ``already_member``, ``errors``.
+        :rtype: dict
+        """
         return self.recruitment.invite_committee(title,
             message,
             invitees,
@@ -581,6 +672,18 @@ class Venue(object):
             allow_overlap_official_committee)
 
     def create_submission_stage(self):
+        """Set up the complete submission pipeline for the venue.
+
+        Creates the submission invitation plus supporting invitations for
+        withdrawal, desk rejection, post-submission processing, PC revision,
+        per-submission reviewer/AC/SAC group management, and messaging. If
+        iThenticate plagiarism checking is enabled, also creates the plagiarism
+        check invitation. If a second deadline is configured, creates
+        submission revision and deletion invitations for the second phase. If
+        an expertise selection stage is set, creates those invitations too.
+
+        Side effects: posts multiple invitations to the OpenReview API.
+        """
         self.invitation_builder.set_submission_invitation()
         if self.iThenticate_plagiarism_check:
             self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
@@ -614,25 +717,39 @@ class Venue(object):
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
 
     def create_post_submission_stage(self):
-
+        """Create or update the post-submission invitation that processes submissions after the deadline."""
         self.invitation_builder.set_post_submission_invitation()
 
     def create_submission_change_invitation(self, name, activation_date):
+        """Create an invitation that triggers a process when submissions change.
+
+        :param name: Name suffix for the invitation (e.g. a stage or field name).
+        :type name: str
+        :param activation_date: Timestamp (ms) when the invitation becomes active.
+        :type activation_date: int
+        :return: The created invitation.
+        :rtype: openreview.api.Invitation
+        """
         return self.invitation_builder.set_submission_change_invitation(name, activation_date)
 
     def create_submission_revision_stage(self):
+        """Create the submission revision invitation allowing authors to revise their submissions."""
         return self.invitation_builder.set_submission_revision_invitation()
 
     def create_review_stage(self):
+        """Create the review invitation enabling reviewers to submit reviews for assigned submissions."""
         return self.invitation_builder.set_review_invitation()
         
     def create_review_rebuttal_stage(self):
+        """Create the rebuttal invitation allowing authors to respond to reviews."""
         return self.invitation_builder.set_review_rebuttal_invitation()
 
     def create_meta_review_stage(self):
+        """Create the meta-review invitation enabling area chairs to submit meta-reviews."""
         return self.invitation_builder.set_meta_review_invitation()
 
     def create_registration_stages(self):
+        """Create registration invitations for committee members to confirm participation."""
         return self.invitation_builder.set_registration_invitations()
     
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
@@ -640,17 +757,43 @@ class Venue(object):
         return True
     
     def create_withdraw_invitations(self, reveal_authors=None, reveal_submission=None, email_pcs=None, hide_fields=[]):
-        ## deprecated
+        """Create withdrawal invitations allowing authors to withdraw submissions.
+
+        .. deprecated::
+            Use :meth:`create_submission_stage` instead, which sets up withdrawal invitations automatically.
+
+        :param reveal_authors: Ignored (deprecated parameter).
+        :param reveal_submission: Ignored (deprecated parameter).
+        :param email_pcs: Ignored (deprecated parameter).
+        :param hide_fields: Ignored (deprecated parameter).
+        """
         return self.invitation_builder.set_withdrawal_invitation()
-    
+
     def create_desk_reject_invitations(self, reveal_authors=None, reveal_submission=None, hide_fields=[]):
-        ## deprecated
+        """Create desk-rejection invitations allowing program chairs to desk-reject submissions.
+
+        .. deprecated::
+            Use :meth:`create_submission_stage` instead, which sets up desk-rejection invitations automatically.
+
+        :param reveal_authors: Ignored (deprecated parameter).
+        :param reveal_submission: Ignored (deprecated parameter).
+        :param hide_fields: Ignored (deprecated parameter).
+        """
         return self.invitation_builder.set_desk_rejection_invitation()
 
     def create_bid_stages(self):
+        """Create bidding invitations for all configured bid stages, allowing committee members to bid on submissions."""
         self.invitation_builder.set_bid_invitations()
 
     def create_comment_stage(self):
+        """Create comment invitations for official comments, optional public comments, and chat.
+
+        Always creates the official comment invitation and the chat invitation.
+        If the comment stage allows public comments, also creates a public
+        comment invitation.
+
+        Side effects: posts invitations to the OpenReview API.
+        """
         self.invitation_builder.set_official_comment_invitation()
         if self.comment_stage.allow_public_comments:
             self.invitation_builder.set_public_comment_invitation()
@@ -658,17 +801,22 @@ class Venue(object):
         self.invitation_builder.set_chat_invitation()
 
     def create_decision_stage(self):
+        """Create the decision invitation for program chairs to post accept/reject decisions.
+
+        If a decisions CSV file is attached to the venue request form (or
+        provided as a local path via ``decision_stage.decisions_file``), bulk-posts
+        all decisions from that file by calling :meth:`post_decisions`.
+
+        Side effects: posts the decision invitation; may post decision notes
+        for all submissions and a status note to the request forum.
+        """
         invitation = self.invitation_builder.set_decision_invitation()
 
         decision_file = self.decision_stage.decisions_file
         if decision_file:
 
-            baseurl = 'http://localhost:3000'
-            if 'https://devapi' in self.client.baseurl:
-                baseurl = 'https://devapi.openreview.net'
-            if 'https://api' in self.client.baseurl:
-                baseurl = 'https://api.openreview.net'
-            api1_client = openreview.Client(baseurl=baseurl, token=self.client.token)
+            baseurl_v1 = openreview.tools.get_base_urls(self.client)[0]
+            api1_client = openreview.Client(baseurl=baseurl_v1, token=self.client.token)
 
             if '/attachment' in decision_file:
                 decisions = api1_client.get_attachment(id=self.request_form_id, field_name='decisions_file')
@@ -680,10 +828,23 @@ class Venue(object):
             self.post_decisions(decisions, api1_client)
 
     def create_custom_stage(self):
+        """Create invitations for a custom stage defined in ``self.custom_stage``."""
         return self.invitation_builder.set_custom_stage_invitation()
     
     def create_ethics_review_stage(self):
+        """Create the ethics review pipeline including flagging, reviewer groups, and matching.
 
+        Sets up the ethics flag invitation, per-paper ethics reviewer group
+        invitations, updates existing review invitations, and creates the
+        ethics review invitation. If ethics review comments are enabled, also
+        creates comment invitations. Sets up paper matching for ethics
+        reviewers (affinity scores, conflicts, assignment invitation) if
+        ethics reviewers exist. Finally, flags submissions specified in
+        ``ethics_review_stage.submission_numbers`` for ethics review.
+
+        Side effects: posts multiple invitations and note edits; may compute
+        affinity scores and conflicts for ethics reviewers.
+        """
         print('Creating ethics review stage')
         flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
         self.invitation_builder.set_ethics_paper_groups_invitation()
@@ -724,6 +885,19 @@ class Venue(object):
                 )
 
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
+        """Update the conflict detection policy for a reviewer or area chair committee.
+
+        Stores the conflict policy name and N-year window in the venue group
+        content. Only applies to the reviewers or area chairs committee; other
+        committee IDs are silently ignored.
+
+        :param committee_id: Full group ID of the committee (e.g. ``venue_id/Reviewers``).
+        :type committee_id: str
+        :param compute_conflicts: Conflict policy name (e.g. ``'NeurIPS'``, ``'Default'``), or None to delete.
+        :type compute_conflicts: str or None
+        :param compute_conflicts_n_years: Number of years to consider for conflict detection, or None to delete.
+        :type compute_conflicts_n_years: int or None
+        """
         content = {}
         if committee_id == self.get_reviewers_id():
             content['reviewers_conflict_policy'] = { 'value': compute_conflicts } if compute_conflicts else { 'delete': True}
@@ -746,7 +920,23 @@ class Venue(object):
             )
 
     def post_decisions(self, decisions_file, api1_client=None):
+        """Bulk-post accept/reject decisions from a CSV file.
 
+        Parses a CSV with rows of ``paper_number,decision[,comment]`` and posts
+        a decision note for each submission. Existing decisions are updated
+        in place. Runs concurrently with up to 6 worker threads.
+
+        If a request form exists and an API v1 client is provided, posts a
+        Decision_Upload_Status note to the request forum summarizing how many
+        decisions were posted and any errors (up to 10 shown).
+
+        :param decisions_file: Raw bytes of the CSV file content.
+        :type decisions_file: bytes
+        :param api1_client: API v1 client used to post the status note (optional).
+        :type api1_client: openreview.Client, optional
+        :return: Tuple of (list of successful results, dict of errors keyed by CSV row).
+        :rtype: tuple[list, dict]
+        """
         decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
 
         paper_notes = {n.number: n for n in self.get_submissions(details='directReplies')}
@@ -866,7 +1056,28 @@ Total Errors: {len(errors)}
 
 
     def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
+        """Update all submissions with decision-derived metadata after decisions are finalized.
 
+        For each submission that has a decision note, updates the ``venueid``,
+        ``venue``, and ``_bibtex`` fields. Sets reader permissions according to
+        the decision (accepted papers may become public). Optionally reveals
+        author identities for all or only accepted papers. Hides specified
+        fields from public view. For accepted papers, sets ``pdate`` and posts
+        an article endorsement tag if applicable.
+
+        Runs concurrently across all submissions.
+
+        :param reveal_all_authors: If True, reveal authors on all submissions regardless of decision.
+        :type reveal_all_authors: bool, optional
+        :param reveal_authors_accepted: If True, reveal authors only on accepted submissions.
+        :type reveal_authors_accepted: bool, optional
+        :param decision_heading_map: Unused (reserved for heading customization).
+        :type decision_heading_map: dict, optional
+        :param submission_readers: Override submission readers list; if provided, replaces ``submission_stage.readers``.
+        :type submission_readers: list[str], optional
+        :param hide_fields: Field names to restrict to venue and authors only (e.g. ``['authors', 'authorids']``).
+        :type hide_fields: list[str], optional
+        """
         venue_id = self.venue_id
         submissions = self.get_submissions(sort='number:asc', details='directReplies')
         post_endorsment_tag = self.get_article_endorsement_id() and openreview.tools.get_invitation(self.client, self.get_article_endorsement_id())
@@ -963,6 +1174,21 @@ Total Errors: {len(errors)}
         tools.concurrent_requests(update_note, submissions)
 
     def send_decision_notifications(self, decision_options, messages):
+        """Send per-submission email notifications to authors with their paper's decision.
+
+        For each submission with a decision, sends an email to the paper's
+        author group. Skips submissions that have already been notified
+        (checks for existing messages with the same subject). Template
+        placeholders ``{{submission_title}}`` and ``{{forum_url}}`` in the
+        message body are replaced with actual values.
+
+        Runs concurrently across all submissions.
+
+        :param decision_options: List of possible decision values (currently unused for filtering, all decisions are notified).
+        :type decision_options: list[str]
+        :param messages: Mapping from decision string to email body template (e.g. ``{'Accept': '...', 'Reject': '...'}``).
+        :type messages: dict[str, str]
+        """
         print('send_decision_notifications')
         paper_notes = self.get_submissions(details='directReplies')
 
@@ -993,8 +1219,59 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    def setup_matching_invitations(self):
+    def set_assignment_invitations(self, submission_deadline):
+        """Create assignment and deployment invitations for reviewers (and area chairs if enabled).
 
+        Schedules assignment invitations to activate ~2 weeks after the submission
+        deadline, and deployment invitations shortly after. If area chairs are
+        enabled, their assignment and deployment invitations are created first,
+        followed by reviewers.
+
+        Side effects: posts assignment invitations and deployment invitation
+        edits to the OpenReview API using the template invitation workflow.
+
+        :param submission_deadline: Submission deadline as a Unix timestamp in milliseconds.
+        :type submission_deadline: int
+        """
+        invitation_prefix = self.support_user.replace('Support', 'Template')
+
+        if self.use_area_chairs:
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+
+            self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.area_chairs_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
+                    'committee_name': { 'value': self.area_chairs_name },
+                    'committee_pretty_name': { 'value': self.get_area_chairs_name(pretty=True) }
+                },
+                await_process=True
+            )
+
+        self.invitation_builder.set_assignment_invitation(committee_id=self.get_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*2.2))
+        self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.reviewers_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.3) },
+                    'committee_name': { 'value': self.reviewers_name },
+                    'committee_pretty_name': { 'value': self.get_reviewers_name(pretty=True) }
+                },
+                await_process=True
+            )
+
+    def setup_matching_invitations(self):
+        """Create matching configuration invitations for reviewers and area chairs (if enabled).
+
+        Sets up the matching invitations (affinity scores, conflicts, custom
+        max papers, etc.) without computing scores. Use
+        :meth:`setup_committee_matching` to also compute scores and conflicts.
+        """
         if self.use_area_chairs:
             venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
             venue_matching.setup_matching_invitations()
@@ -1002,7 +1279,43 @@ Total Errors: {len(errors)}
         venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
         venue_matching.setup_matching_invitations()
 
+    def setup_all_committees_matching(self):
+        """Run full matching setup (invitations, affinity scores, conflicts) for all committees.
+
+        Sets up matching for area chairs (if enabled) and reviewers, including
+        computing affinity scores and conflicts with default settings.
+        """
+        if self.use_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
+            venue_matching.setup()
+
+        venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
+        venue_matching.setup()
+
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
+        """Set up paper matching for a specific committee, optionally computing affinity scores and conflicts.
+
+        Creates matching invitations (proposed assignments, affinity scores,
+        conflicts, custom max papers, etc.) for the specified committee. If
+        the committee is senior area chairs and no alternate matching group is
+        given, automatically uses area chairs as the alternate matching group
+        (SAC-to-AC matching) unless ``sac_paper_assignments`` is enabled.
+
+        :param committee_id: Group ID of the committee. Defaults to reviewers.
+        :type committee_id: str, optional
+        :param compute_affinity_scores: Model name or True to compute affinity scores.
+        :type compute_affinity_scores: str or bool, optional
+        :param compute_conflicts: Conflict policy name or True to compute conflicts.
+        :type compute_conflicts: str or bool, optional
+        :param compute_conflicts_n_years: Number of years for conflict detection window.
+        :type compute_conflicts_n_years: int, optional
+        :param alternate_matching_group: Group ID to match against instead of submissions (e.g. for SAC-to-AC matching).
+        :type alternate_matching_group: str, optional
+        :param submission_track: Filter submissions to a specific track for matching.
+        :type submission_track: str, optional
+        :return: The configured Matching object after setup.
+        :rtype: openreview.venue.matching.Matching
+        """
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group and not self.sac_paper_assignments:
@@ -1012,26 +1325,94 @@ Total Errors: {len(errors)}
         return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
+        """Deploy proposed assignments as official assignments for a committee.
 
+        Copies edges from the proposed assignment configuration (identified by
+        ``assignment_title``) to the deployed assignment invitation, creating
+        per-paper committee member groups. Optionally enables reviewer
+        reassignment for area chairs after deployment.
+
+        :param assignment_title: Label of the proposed assignment configuration to deploy.
+        :type assignment_title: str
+        :param committee_id: Group ID of the committee being assigned (e.g. reviewers or area chairs).
+        :type committee_id: str
+        :param enable_reviewer_reassignment: If True, allow ACs to modify reviewer assignments after deployment.
+        :type enable_reviewer_reassignment: bool, optional
+        :param overwrite: If True, overwrite existing deployed assignments.
+        :type overwrite: bool, optional
+        :return: Result from the deployment operation.
+        :rtype: varies
+        """
         match_group = self.client.get_group(committee_id)
         assignment_invitation = self.client.get_invitation(self.get_assignment_id(match_group.id))
         conference_matching = matching.Matching(self, match_group, submission_content=assignment_invitation.edit.get('head', {}).get('param', {}).get('withContent'))
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
     
     def unset_assignments(self, assignment_title, committee_id):
+        """Revert deployed assignments back to proposed state for a committee.
 
+        Removes the deployed assignment edges and per-paper committee member
+        groups, restoring the assignment configuration to its pre-deployment
+        state.
+
+        :param assignment_title: Label of the assignment configuration to undeploy.
+        :type assignment_title: str
+        :param committee_id: Group ID of the committee whose assignments are being reverted.
+        :type committee_id: str
+        :return: Result from the undeployment operation.
+        :rtype: varies
+        """
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.undeploy(assignment_title)    
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
+        """Set up invite-based assignment recruitment for external or emergency reviewers.
 
+        Creates an Invite_Assignment edge invitation that allows committee
+        chairs to send assignment invitations with accept/decline links to
+        prospective reviewers for specific papers.
+
+        :param committee_id: Group ID of the committee to recruit for.
+        :type committee_id: str
+        :param hash_seed: Secret seed used to generate secure accept/decline tokens.
+        :type hash_seed: str
+        :param due_date: Deadline for responding to the assignment invitation (datetime or ms timestamp).
+        :type due_date: datetime.datetime or int
+        :param assignment_title: Label for the proposed assignment configuration.
+        :type assignment_title: str, optional
+        :param invitation_labels: Custom labels for invitation states.
+        :type invitation_labels: dict, optional
+        :param email_template: Custom email template for the recruitment message.
+        :type email_template: str, optional
+        :return: Result from the invite assignment setup.
+        :rtype: varies
+        """
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
     
     def set_track_sac_assignments(self, track_sac_file, conflict_policy=None, conflict_n_years=None, track_ac_file=None):
+        """Assign senior area chairs to submissions by track, with optional conflict detection.
 
+        Reads a CSV mapping tracks to SAC groups, resolves SAC profiles, and
+        assigns SACs to each submission's per-paper SAC group based on its
+        track. Checks for conflicts between SACs and submission authors using
+        the specified policy. If a ``track_ac_file`` is provided, also reads
+        AC-to-track mappings and creates SAC-to-AC assignment edges, then adds
+        all ACs to the area chairs group.
+
+        Requires senior area chairs and submission tracks to be enabled.
+
+        :param track_sac_file: Path to a CSV file with rows of ``track,SAC_group_name``.
+        :type track_sac_file: str
+        :param conflict_policy: Conflict detection policy (e.g. ``'NeurIPS'``, ``'Default'``), or None to skip conflict checks.
+        :type conflict_policy: str, optional
+        :param conflict_n_years: Number of years to consider for conflict detection.
+        :type conflict_n_years: int, optional
+        :param track_ac_file: Path to a CSV file with rows of ``track,AC_role_name`` for AC-to-SAC assignment.
+        :type track_ac_file: str, optional
+        """
         if not self.use_senior_area_chairs:
             raise openreview.OpenReviewException('The venue does not have senior area chairs enabled. Please enable senior area chairs in the venue.')
 
@@ -1159,9 +1540,26 @@ Total Errors: {len(errors)}
         self.client.add_members_to_group(self.get_area_chairs_id(), all_acs)
 
     def set_SAC_ethics_review_process(self, sac_ethics_flag_duedate=None):
+        """Create the invitation for senior area chairs to flag submissions for ethics review.
+
+        :param sac_ethics_flag_duedate: Deadline for SACs to flag papers (datetime or ms timestamp).
+        :type sac_ethics_flag_duedate: datetime.datetime or int, optional
+        """
         self.invitation_builder.set_SAC_ethics_flag_invitation(sac_ethics_flag_duedate)
 
     def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
+        """Open the reviewer recommendation stage for area chairs to recommend reviewers.
+
+        Creates the reviewer recommendation invitation and stores its ID in
+        the venue group content as ``reviewers_recommendation_id``.
+
+        :param start_date: When the recommendation period opens (datetime or ms timestamp).
+        :type start_date: datetime.datetime or int, optional
+        :param due_date: Deadline for submitting recommendations (datetime or ms timestamp).
+        :type due_date: datetime.datetime or int, optional
+        :param total_recommendations: Maximum number of reviewers each AC can recommend per paper.
+        :type total_recommendations: int, optional
+        """
         recommendation_invitation = self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
         self.client.post_group_edit(invitation=self.get_meta_invitation_id(),
             signatures = [self.venue_id],
@@ -1174,6 +1572,20 @@ Total Errors: {len(errors)}
         )        
 
     def ithenticate_create_and_upload_submission(self):
+        """Upload all venue submissions to iThenticate for plagiarism checking.
+
+        For each submission that does not already have an iThenticate tracking
+        edge, creates an iThenticate submission record (accepting the EULA on
+        behalf of the submitting author), then uploads the PDF. Tracks
+        progress via edges with labels: ``'Created'`` -> ``'File Sent'``.
+
+        Requires ``iThenticate_plagiarism_check`` to be enabled on the venue.
+
+        Side effects: creates iThenticate submissions via the iThenticate API;
+        posts tracking edges to OpenReview; downloads submission PDFs.
+
+        :raises openreview.OpenReviewException: If plagiarism checking is not enabled.
+        """
         if not self.iThenticate_plagiarism_check:
             raise openreview.OpenReviewException(
                 "iThenticatePlagiarismCheck is not enabled for this venue."
@@ -1296,7 +1708,16 @@ Total Errors: {len(errors)}
                 )
 
     def handle_ithenticate_error(self):
+        """Retry failed iThenticate uploads and similarity report requests.
 
+        Finds edges in error states (``'Error_Upload_PROCESSING_ERROR'``,
+        ``'Error_Similarity_PROCESSING_ERROR'``, ``'Created'``) and retries
+        the failed operation: re-uploads the PDF for upload errors, or
+        re-requests the similarity report for similarity errors. Reverts the
+        edge label on retry failure.
+
+        :raises openreview.OpenReviewException: If plagiarism checking is not enabled.
+        """
         if not self.iThenticate_plagiarism_check:
             raise openreview.OpenReviewException(
                 "iThenticatePlagiarismCheck is not enabled for this venue."
@@ -1399,6 +1820,16 @@ Total Errors: {len(errors)}
                     updated_edge = self.client.post_edge(updated_edge)
 
     def ithenticate_request_similarity_report(self):
+        """Request iThenticate similarity reports for all uploaded submissions.
+
+        Finds all tracking edges with label ``'File Uploaded'`` and requests
+        a similarity report from iThenticate for each. Updates edge labels to
+        ``'Similarity Requested'`` on success, or reverts to ``'File Uploaded'``
+        on failure. Uses venue-configured exclusion settings (quotes,
+        bibliography, abstracts, etc.).
+
+        :raises openreview.OpenReviewException: If plagiarism checking is not enabled.
+        """
         if not self.iThenticate_plagiarism_check:
             raise openreview.OpenReviewException(
                 "iThenticatePlagiarismCheck is not enabled for this venue."
@@ -1453,6 +1884,17 @@ Total Errors: {len(errors)}
                 updated_edge = self.client.post_edge(updated_edge)
 
     def check_ithenticate_status(self, label_value):
+        """Check whether all iThenticate tracking edges have reached a given status.
+
+        Prints each edge that does not match the expected label and reports
+        the total count of non-matching edges.
+
+        :param label_value: Expected edge label to check against (e.g. ``'Similarity Complete'``).
+        :type label_value: str
+        :return: True if all edges have the expected label, False otherwise.
+        :rtype: bool
+        :raises openreview.OpenReviewException: If plagiarism checking is not enabled.
+        """
         if not self.iThenticate_plagiarism_check:
             raise openreview.OpenReviewException(
                 "iThenticatePlagiarismCheck is not enabled for this venue."
@@ -1475,6 +1917,14 @@ Total Errors: {len(errors)}
         return all([edge["values"][0]["label"] == label_value for edge in edges])
 
     def poll_ithenticate_for_status(self):
+        """Poll iThenticate for upload completion and similarity report results.
+
+        Iterates over all tracking edges and checks their current status with
+        iThenticate. Updates edge labels as processing completes:
+        ``'File Sent'`` -> ``'File Uploaded'`` when the upload finishes, and
+        ``'Similarity Requested'`` -> ``'Similarity Complete'`` (with the
+        similarity score stored in ``edge.weight``) when the report finishes.
+        """
         iThenticate_client = openreview.api.iThenticateClient(
             self.iThenticate_plagiarism_check_api_key,
             self.iThenticate_plagiarism_check_api_base_url,
@@ -1510,7 +1960,19 @@ Total Errors: {len(errors)}
                     )
 
     def compute_reviewers_stats(self):
+        """Compute and post reviewer performance statistics as tags.
 
+        Calculates four metrics for each reviewer based on their deployed
+        assignments: assignment count, completed review count, days late
+        (relative to the review due date), and discussion reply count
+        (official comments and rebuttals). Excludes withdrawn and desk-rejected
+        submissions. Deletes any existing metric tags before posting new ones.
+
+        Side effects: creates metric invitations and posts bulk tags for
+        ``Review_Assignment_Count``, ``Review_Count``,
+        ``Review_Days_Late_Count``, and ``Discussion_Reply_Count`` under the
+        reviewers group.
+        """
         review_assignment_count_name = 'Review_Assignment_Count'
         review_count_name = 'Review_Count'
         review_days_late_count_name = 'Review_Days_Late_Count'
@@ -1595,7 +2057,7 @@ Total Errors: {len(errors)}
 
                     review_period_days = (review_duedate - assignment_cdate).days
                     if review_period_days > 0:
-                        review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+                        review_days_late.append(max((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
                 invitation = f'{reviewers_id}/-/{review_assignment_count_name}',
@@ -1624,7 +2086,7 @@ Total Errors: {len(errors)}
             review_days_late_tags.append(openreview.api.Tag(
                 invitation = f'{reviewers_id}/-/{review_days_late_count_name}',
                 profile = reviewer_id,
-                weight = int(np.sum(review_days_late)),
+                weight = int(sum(review_days_late)),
                 readers = [venue_id, f'{reviewers_id}/{review_days_late_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
                 nonreaders = [f'{reviewers_id}/{review_days_late_count_name}/NonReaders'],
@@ -1633,7 +2095,7 @@ Total Errors: {len(errors)}
             num_assigned,
             num_reviews,
             num_comments,
-            np.sum(review_days_late))
+            sum(review_days_late))
 
         self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
@@ -1648,7 +2110,20 @@ Total Errors: {len(errors)}
         openreview.tools.post_bulk_tags(self.client, review_days_late_tags)
 
     def compute_acs_stats(self):
+        """Compute and post area chair performance statistics as tags.
 
+        Calculates four metrics for each area chair based on their deployed
+        assignments: meta-review assignment count, completed meta-review count,
+        days late (relative to the meta-review due date), and discussion reply
+        count (official comments and rebuttals). Excludes withdrawn and
+        desk-rejected submissions. Deletes any existing metric tags before
+        posting new ones.
+
+        Side effects: creates metric invitations and posts bulk tags for
+        ``Meta_Review_Assignment_Count``, ``Meta_Review_Count``,
+        ``Meta_Review_Days_Late_Count``, and ``Discussion_Reply_Count`` under
+        the area chairs group.
+        """
         review_assignment_count_name = 'Meta_Review_Assignment_Count'
         review_count_name = 'Meta_Review_Count'
         review_days_late_count_name = 'Meta_Review_Days_Late_Count'
@@ -1737,7 +2212,7 @@ Total Errors: {len(errors)}
 
                     review_period_days = (review_duedate - assignment_cdate).days
                     if review_period_days > 0:
-                        review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+                        review_days_late.append(max((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
                 invitation = f'{committee_id}/-/{review_assignment_count_name}',
@@ -1766,7 +2241,7 @@ Total Errors: {len(errors)}
             review_days_late_tags.append(openreview.api.Tag(
                 invitation = f'{committee_id}/-/{review_days_late_count_name}',
                 profile = reviewer_id,
-                weight = int(np.sum(review_days_late)),
+                weight = int(sum(review_days_late)),
                 readers = [venue_id, f'{committee_id}/{review_days_late_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
                 nonreaders = [f'{committee_id}/{review_days_late_count_name}/NonReaders'],
@@ -1775,7 +2250,7 @@ Total Errors: {len(errors)}
             num_assigned,
             num_reviews,
             num_comments,
-            np.sum(review_days_late))
+            sum(review_days_late))
 
         self.client.delete_tags(invitation=f'{committee_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
@@ -1891,26 +2366,6 @@ OpenReview Team'''
                     external_paper_committee_id=paper_reviewer_invited_id.replace('/Invited', '').replace('{number}', str(submission.number))
                     client.add_members_to_group(external_paper_committee_id, edge.tail)
 
-                if assigment_label:
-                    instructions=f'The {short_phrase} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.'
-                else:
-                    instructions=f'Please go to the {short_phrase} Reviewers Console and check your pending tasks: https://openreview.net/group?id={reviewers_id}'
-
-                print('send confirmation email')
-                ## Send email to reviewer
-                subject=f'[{short_phrase}] {reviewer_name} Assignment confirmed for paper {submission.number}'
-                message =f'''Hi {{{{fullname}}}},
-Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
-
-{instructions}
-
-If you would like to change your decision, please click the Decline link in the previous invitation email.
-
-OpenReview Team'''
-
-                ## - Send email
-                response = client.post_message(subject, [edge.tail], message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id, replyTo=venue_group.content['contact']['value'], sender=venue_group.content['message_sender']['value'])
-
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}'
                 message =f'''Hi {{{{fullname}}}},
@@ -2011,6 +2466,29 @@ OpenReview Team'''
         return True
 
     def compute_dual_submission_metadata(self, alternate_venue, output_file_path, top_percent_cutoff=1, job_id=None, author_overlap_only=False):
+        """Detect potential dual submissions between this venue and another venue.
+
+        Computes paper similarity scores (using specter2+scincl) between all
+        submissions of both venues, filters to the top percentile, and outputs
+        a CSV with similarity scores, title/abstract edit distances, and
+        overlapping authors. Can also reuse a previously started similarity
+        computation job via ``job_id``.
+
+        The output CSV includes: paper IDs, similarity score, word-level edit
+        distances for titles and abstracts, matching authors, author lists,
+        titles, and abstracts.
+
+        :param alternate_venue: The other Venue object to compare submissions against. Can be the same venue for intra-venue checks.
+        :type alternate_venue: Venue
+        :param output_file_path: Directory path where the output CSV file will be saved.
+        :type output_file_path: str
+        :param top_percent_cutoff: Percentage of top similarity scores to include (e.g. 1 means top 1%).
+        :type top_percent_cutoff: float, optional
+        :param job_id: Existing similarity computation job ID to reuse instead of starting a new one.
+        :type job_id: str, optional
+        :param author_overlap_only: If True, only include paper pairs that share at least one author.
+        :type author_overlap_only: bool, optional
+        """
         short_name_a = self.short_name # Column A
         short_name_b = alternate_venue.short_name # Column B
         same_venue = self.venue_id == alternate_venue.venue_id
@@ -2038,8 +2516,8 @@ OpenReview Team'''
         unique_scores = []
         seen_pairs = set()
         for r in results['results']:
-            paper_id_a = r['match_submission']
-            paper_id_b = r['submission']
+            paper_id_a = r.get('entityA', r.get('match_submission'))
+            paper_id_b = r.get('entityB', r.get('submission'))
             score = float(r['score'])
 
             # Remove self-matches
@@ -2058,7 +2536,7 @@ OpenReview Team'''
         print(f'Applying {top_percent_cutoff}% score cutoff')
 
         scores_only = [s for (_, _, s) in unique_scores]
-        cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
+        cutoff = tools.percentile(scores_only, 100 - top_percent_cutoff)
         filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
         print(f'{len(unique_scores)} scores before cutoff')
@@ -2109,8 +2587,10 @@ OpenReview Team'''
 
             # Write header
             writer.writerow([
-                f'{short_name_a} id', f'{short_name_b} id', 
+                f'{short_name_a} id', f'{short_name_b} id',
                 'Score',
+                'Title Word Edit Distance', 'Title Word Edit Distance Similarity',
+                'Abstract Word Edit Distance', 'Abstract Word Edit Distance Similarity',
                 'Matching Authors (if any)',
                 f'{short_name_a} authors', f'{short_name_b} authors',
                 f'{short_name_a} title', f'{short_name_b} title',
@@ -2124,7 +2604,8 @@ OpenReview Team'''
 
                 # Fetch metadata
                 title_a = papers_by_id_a[paper_id_a].content['title']['value']
-                abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value'].replace("\n", "\\n")
+                raw_abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value']
+                abstract_a = raw_abstract_a.replace("\n", "\\n")
                 # Use profile ID if available, otherwise use author ID in paper
                 authors_list_a = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
@@ -2134,7 +2615,8 @@ OpenReview Team'''
                 authors_str_a = '|'.join(authors_list_a)
 
                 title_b = papers_by_id_b[paper_id_b].content['title']['value']
-                abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value'].replace("\n", "\\n")
+                raw_abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value']
+                abstract_b = raw_abstract_b.replace("\n", "\\n")
                 authors_list_b = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
@@ -2150,9 +2632,24 @@ OpenReview Team'''
                 if author_overlap_only and not overlap:
                     continue
 
+                # Compute word-level edit distances
+                title_words_a = title_a.lower().split()
+                title_words_b = title_b.lower().split()
+                title_dist = editdistance.eval(title_words_a, title_words_b)
+                title_max_words = max(len(title_words_a), len(title_words_b))
+                title_norm = round(1 - title_dist / title_max_words, 4) if title_max_words > 0 else 1.0
+
+                abstract_words_a = raw_abstract_a.lower().split()
+                abstract_words_b = raw_abstract_b.lower().split()
+                abstract_dist = editdistance.eval(abstract_words_a, abstract_words_b)
+                abstract_max_words = max(len(abstract_words_a), len(abstract_words_b))
+                abstract_norm = round(1 - abstract_dist / abstract_max_words, 4) if abstract_max_words > 0 else 1.0
+
                 writer.writerow([
-                    paper_id_a, paper_id_b, 
-                    score, 
+                    paper_id_a, paper_id_b,
+                    round(score, 4),
+                    title_dist, title_norm,
+                    abstract_dist, abstract_norm,
                     overlap_str,
                     authors_str_a, authors_str_b,
                     title_a, title_b,

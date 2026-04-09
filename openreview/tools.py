@@ -24,6 +24,31 @@ import string
 from deprecated.sphinx import deprecated
 import jwt
 
+# --- URL Constants ---
+PROD_API_V1 = 'https://api.openreview.net'
+PROD_API_V2 = 'https://api2.openreview.net'
+PROD_SITE   = 'https://openreview.net'
+
+DEV_API_V1 = 'https://api.dev.openreview.net'
+DEV_API_V2 = 'https://api2.dev.openreview.net'
+DEV_SITE   = 'https://dev.openreview.net'
+
+LOCAL_API_V1 = 'http://localhost:3000'
+LOCAL_API_V2 = 'http://localhost:3001'
+LOCAL_SITE   = 'http://localhost:3030'
+
+# Remote-only lists (exclude localhost) used by client guards
+V1_REMOTE_URLS = [PROD_API_V1, DEV_API_V1]
+V2_REMOTE_URLS = [PROD_API_V2, DEV_API_V2]
+
+def _identify_environment(baseurl):
+    """Return 'dev', 'prod', or 'local' based on baseurl."""
+    if any(url in baseurl for url in [DEV_API_V1, DEV_API_V2]):
+        return 'dev'
+    if any(url in baseurl for url in [PROD_API_V1, PROD_API_V2]):
+        return 'prod'
+    return 'local'
+
 def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
     Returns the venue for a submission based on its decision
@@ -140,15 +165,7 @@ def get_profile(client, value, with_publications=False):
     try:
         profile = client.get_profile(value)
         if with_publications:
-            baseurl_v1 = 'http://localhost:3000'
-            baseurl_v2 = 'http://localhost:3001'
-
-            if 'https://devapi' in client.baseurl:
-                baseurl_v1 = 'https://devapi.openreview.net'
-                baseurl_v2 = 'https://devapi2.openreview.net'
-            if 'https://api' in client.baseurl:
-                baseurl_v1 = 'https://api.openreview.net'
-                baseurl_v2 = 'https://api2.openreview.net'
+            baseurl_v1, baseurl_v2 = get_base_urls(client)
 
             client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
             #client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
@@ -221,15 +238,7 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
     ## Get publications for all the profiles
     profiles = list(profile_by_id.values())
     if with_publications:
-        baseurl_v1 = 'http://localhost:3000'
-        baseurl_v2 = 'http://localhost:3001'
-
-        if 'https://devapi' in client.baseurl:
-            baseurl_v1 = 'https://devapi.openreview.net'
-            baseurl_v2 = 'https://devapi2.openreview.net'
-        if 'https://api' in client.baseurl:
-            baseurl_v1 = 'https://api.openreview.net'
-            baseurl_v2 = 'https://api2.openreview.net'
+        baseurl_v1, baseurl_v2 = get_base_urls(client)
 
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
@@ -974,8 +983,31 @@ def iterget_edges (client,
                    head = None,
                    tail = None,
                    label = None,
-                   limit = None, 
+                   limit = None,
                    trash = None):
+    """Return an iterator over Edges, bypassing API pagination limits.
+
+    Fetches all matching edges across multiple API pages transparently. Use this
+    instead of ``client.get_edges()`` when the result set may exceed the single-request limit.
+
+    :param client: Client used to get the Edges.
+    :type client: Client
+    :param invitation: An Invitation ID. If provided, returns Edges whose invitation field matches.
+    :type invitation: str, optional
+    :param head: A head entity ID. If provided, returns Edges whose head field matches.
+    :type head: str, optional
+    :param tail: A tail entity ID. If provided, returns Edges whose tail field matches.
+    :type tail: str, optional
+    :param label: If provided, returns Edges whose label field matches.
+    :type label: str, optional
+    :param limit: Maximum number of Edges to return. If None, returns all matching Edges.
+    :type limit: int, optional
+    :param trash: If True, includes Edges that have been deleted.
+    :type trash: bool, optional
+
+    :return: Iterator over Edge objects matching the provided filters.
+    :rtype: iterget
+    """
     params = {}
     if invitation is not None:
         params['invitation'] = invitation
@@ -1378,6 +1410,36 @@ def recruit_user(client, user,
     message_invitation,
     message_signature,
     name=None):
+    """Send a recruitment email to a user with a personalized acceptance link.
+
+    Generates an HMAC-based hash key for the user, builds a unique recruitment
+    URL, personalizes the message template by replacing ``{{fullname}}``,
+    ``{{invitation_url}}``, and ``{{contact_info}}`` placeholders, and sends
+    the email via ``client.post_message()``.
+
+    :param client: Client used to send the recruitment email.
+    :type client: Client
+    :param user: Email address or profile ID of the user to recruit.
+    :type user: str
+    :param hash_seed: Secret seed used to generate the HMAC hash key for the recruitment link.
+    :type hash_seed: str
+    :param recruitment_message_subject: Subject line for the recruitment email.
+    :type recruitment_message_subject: str
+    :param recruitment_message_content: Message body template. Supports ``{{fullname}}``, ``{{invitation_url}}``, and ``{{contact_info}}`` placeholders.
+    :type recruitment_message_content: str
+    :param recruitment_invitation_id: Invitation ID used in the recruitment URL.
+    :type recruitment_invitation_id: str
+    :param comittee_invited_id: Group ID for the invited committee group, used as parentGroup for the message. (Note: parameter name is a legacy misspelling of "committee".)
+    :type comittee_invited_id: str
+    :param contact_email: Contact email address substituted into ``{{contact_info}}`` and used as the replyTo address.
+    :type contact_email: str
+    :param message_invitation: Invitation ID for the message invitation.
+    :type message_invitation: str
+    :param message_signature: Signature used when posting the message.
+    :type message_signature: str
+    :param name: Full name of the user, used to replace ``{{fullname}}`` in the message.
+    :type name: str, optional
+    """
 
     hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
 
@@ -1392,6 +1454,21 @@ def recruit_user(client, user,
     client.post_message(recruitment_message_subject, [user], personalized_message, parentGroup=comittee_invited_id, replyTo=contact_email, invitation=message_invitation, signature=message_signature)
 
 def get_user_hash_key(user, hash_seed, invitation=None):
+    """Generate a hash key for a user's recruitment or authentication link.
+
+    When ``invitation`` is provided, returns a JWT token encoding the user and
+    invitation. Otherwise, returns an HMAC-SHA256 hex digest keyed by ``hash_seed``.
+
+    :param user: Email address or group ID of the user.
+    :type user: str
+    :param hash_seed: Secret seed used for HMAC hashing or JWT signing.
+    :type hash_seed: str
+    :param invitation: Invitation ID. If provided, a JWT is returned instead of an HMAC hash.
+    :type invitation: str, optional
+
+    :return: JWT token string (if invitation is given) or HMAC-SHA256 hex digest.
+    :rtype: str
+    """
     if invitation is not None:
         jwt_payload = {
             "group": user,
@@ -1786,6 +1863,21 @@ def filter_relations_by_year(relations, cut_off_year, only_relations=None):
     return filtered_relations
 
 def post_bulk_edges(client, edges, batch_size = 50000):
+    """Post a large list of Edges in batches with a progress bar.
+
+    Splits the edge list into chunks of ``batch_size`` and posts each chunk
+    via ``client.post_edges()``. Returns all posted Edge objects.
+
+    :param client: Client used to post the Edges.
+    :type client: Client
+    :param edges: List of Edge objects to post.
+    :type edges: list[Edge]
+    :param batch_size: Number of edges per batch. Default: 50000.
+    :type batch_size: int, optional
+
+    :return: List of all posted Edge objects across all batches.
+    :rtype: list[Edge]
+    """
     num_edges = len(edges)
     result = []
     for i in tqdm(range(0, num_edges, batch_size), total=(num_edges // batch_size + 1)):
@@ -1795,6 +1887,21 @@ def post_bulk_edges(client, edges, batch_size = 50000):
     return result
 
 def post_bulk_tags(client, tags, batch_size = 50000):
+    """Post a large list of Tags in batches with a progress bar.
+
+    Splits the tag list into chunks of ``batch_size`` and posts each chunk
+    via ``client.post_tags()``. Returns all posted Tag objects.
+
+    :param client: Client used to post the Tags.
+    :type client: Client
+    :param tags: List of Tag objects to post.
+    :type tags: list[Tag]
+    :param batch_size: Number of tags per batch. Default: 50000.
+    :type batch_size: int, optional
+
+    :return: List of all posted Tag objects across all batches.
+    :rtype: list[Tag]
+    """
     num_tags = len(tags)
     result = []
     for i in tqdm(range(0, num_tags, batch_size), total=(num_tags // batch_size + 1)):
@@ -1947,18 +2054,20 @@ def get_own_reviews(client):
     return links
 
 def get_base_urls(client):
+    env = _identify_environment(client.baseurl)
+    if env == 'dev':
+        return [DEV_API_V1, DEV_API_V2]
+    if env == 'prod':
+        return [PROD_API_V1, PROD_API_V2]
+    return [LOCAL_API_V1, LOCAL_API_V2]
 
-    baseurl_v1 = 'http://localhost:3000'
-    baseurl_v2 = 'http://localhost:3001'
-
-    if 'https://devapi' in client.baseurl:
-        baseurl_v1 = 'https://devapi.openreview.net'
-        baseurl_v2 = 'https://devapi2.openreview.net'
-    if 'https://api' in client.baseurl:
-        baseurl_v1 = 'https://api.openreview.net'
-        baseurl_v2 = 'https://api2.openreview.net'
-
-    return [baseurl_v1, baseurl_v2]
+def get_site_url(client):
+    env = _identify_environment(client.baseurl)
+    if env == 'dev':
+        return DEV_SITE
+    if env == 'prod':
+        return PROD_SITE
+    return LOCAL_SITE
 
 def resend_emails(client, request_id, groups):
     message_requests = client.get_message_requests(id=request_id)
@@ -1993,7 +2102,7 @@ def get_invitation_source(invitation, domain):
     meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
     rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
 
-    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else { 'venueid': submission_venue_id }
+    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else {}
 
     ## Deprecated, user source as dictionary
     if isinstance(source, str):
@@ -2030,17 +2139,20 @@ def get_invitation_source(invitation, domain):
         source['content'][key] = value
     ##
 
-    print('transformed source', source)
     return source
 
-def should_match_invitation_source(client, invitation, submission, note=None):
+def should_match_invitation_source(client, invitation, submission, note=None, domain=None):
     """
     Checks if the invitation source matches the submission and note.
     """
 
-    domain = client.get_group(submission.domain)
+    if domain is None:
+        domain = client.get_group(submission.domain)
 
     source = get_invitation_source(invitation, domain)
+
+    if not source:
+        return False
 
     if submission.content['venueid']['value'] not in source.get('venueid', []):
         return False
@@ -2080,11 +2192,7 @@ def should_match_invitation_source(client, invitation, submission, note=None):
         if is_accept_decision(decision_value, accept_options) != with_decision_accept:
             return False
 
-    
     content_keys = invitation.edit.get('content', {}).keys()
-    
-    if not content_keys:
-        return False
     
     if 'withdrawalId' in content_keys:
         return False
@@ -2095,10 +2203,10 @@ def should_match_invitation_source(client, invitation, submission, note=None):
     if 'noteReaders' in content_keys:
         return False
     
-    if 'noteId' not in content_keys:
+    if content_keys and 'noteId' not in content_keys:
         return False
     
-    if 'noteNumber' not in content_keys:
+    if content_keys and 'noteNumber' not in content_keys:
         return False
 
     if note and 'replyto' not in content_keys:
@@ -2189,4 +2297,26 @@ def singularize(word):
         return word[:-2]
     elif word.endswith('s'):
         return word[:-1]
-    return word                    
+    return word
+
+def percentile(data, percent):
+    """Return the percentile value from *data* using linear interpolation,
+    matching the behaviour of numpy.percentile with the default 'linear' method.
+
+    *percent* may be an int or float in [0, 100].
+    *data* must be a non-empty sequence of numbers.
+    """
+    if not data:
+        raise ValueError("data must be non-empty")
+    sorted_data = sorted(data)
+    n = len(sorted_data)
+    if n == 1:
+        return sorted_data[0]
+    # NumPy linear interpolation: index = percent/100 * (n - 1)
+    idx = percent / 100.0 * (n - 1)
+    lo = int(idx)
+    hi = lo + 1
+    if hi >= n:
+        return sorted_data[-1]
+    frac = idx - lo
+    return sorted_data[lo] + frac * (sorted_data[hi] - sorted_data[lo])

@@ -42,7 +42,7 @@ commands:
       - run:
           name: Install openreview-py
           command: |
-            pip install ~/openreview-py-repo
+            pip install -c ~/openreview-py-repo/requirements.txt ~/openreview-py-repo
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
@@ -73,6 +73,17 @@ commands:
             mkdir -p ~/openreview-v2/files/pdfs
             mkdir -p ~/openreview-v2/files/temp
             mkdir -p ~/openreview-py-repo/coverage
+
+  install-nodejs:
+    description: "Install Node.js 22 via NodeSource"
+    steps:
+      - run:
+          name: Install Node.js 22
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            node --version
+            npm --version
 
   install-firefox:
     description: "Install Firefox browser"
@@ -165,11 +176,7 @@ commands:
           command: |
             cd ~/openreview-py-repo
             mkdir -p test-reports
-            pip install -U pytest
-            pip install py
-            pip install selenium
-            pip install pytest-selenium
-            pip install -e .
+            pip install -c requirements-dev.txt -e '.[test]'
 
   copy-logs-on-failure:
     description: "Copy API logs to artifacts on failure"
@@ -197,7 +204,7 @@ jobs:
       python-version:
         type: string
     docker:
-      - image: cimg/python:<<parameters.python-version>>-node
+      - image: cimg/python:<<parameters.python-version>>
     steps:
       - checkout
       - run:
@@ -215,7 +222,7 @@ jobs:
       python-version:
         type: string
     docker:
-      - image: cimg/python:<<parameters.python-version>>-node
+      - image: cimg/python:<<parameters.python-version>>
       - image: cimg/redis:7.2
       - image: mongo:8.0
         command: [ --replSet, rs0 ]
@@ -247,8 +254,14 @@ jobs:
             # Write the modified tests to a file for subsequent steps
             echo "$MODIFIED_TESTS" > /tmp/modified_tests.txt
             
+            FILE_COUNT=$(echo "$MODIFIED_TESTS" | grep -c . || true)
+
             if [ -z "$MODIFIED_TESTS" ]; then
               echo "No test files were modified in this PR. Skipping PR-specific tests."
+              echo "skip" > /tmp/skip_pr_tests.txt
+            elif [ "$FILE_COUNT" -gt 3 ]; then
+              echo "Too many modified test files ($FILE_COUNT). Deferring to full build job."
+              echo "$MODIFIED_TESTS"
               echo "skip" > /tmp/skip_pr_tests.txt
             else
               echo "Modified test files found:"
@@ -262,6 +275,7 @@ jobs:
               echo "No modified test files - skipping test environment setup"
               circleci-agent step halt
             fi
+      - install-nodejs
       - setup-mongodb
       - clone-repos
       - create-directories
@@ -299,7 +313,7 @@ jobs:
       python-version:
         type: string
     docker:
-      - image: cimg/python:<<parameters.python-version>>-node
+      - image: cimg/python:<<parameters.python-version>>
       - image: cimg/redis:7.2
       - image: mongo:8.0
         command: [ --replSet, rs0 ]
@@ -309,6 +323,7 @@ jobs:
           transport.host: localhost
     steps:
       - checkout
+      - install-nodejs
       - setup-mongodb
       - clone-repos
       - create-directories
@@ -347,18 +362,12 @@ jobs:
             fi
       - copy-logs-on-failure
       - store-test-artifacts
-  deploy:
+  deploy-dev:
     working_directory: ~/openreview-py-repo
     docker:
       - image: cimg/python:3.11.0
     steps:
       - checkout
-      - run:
-          name: Deploy to pip
-          command: |
-            pip install build twine
-            python -m build --wheel
-            twine upload dist/* --skip-existing
       - run:
           name: Deploy to dev instance
           command: |
@@ -379,7 +388,7 @@ workflows:
           requires:
             - build-pr-tests
           python-version: "3.10"
-      - deploy:
+      - deploy-dev:
           requires:
             - build
           filters:
