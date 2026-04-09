@@ -195,21 +195,17 @@ class TestTwoReviewerRoles():
         pc_client = openreview.api.OpenReviewClient(username='programchair@xyzw.cc', password=helpers.strong_password)
         now = datetime.datetime.now()
 
-        # Close the submission deadline. The Submission/Dates process function
-        # cascades the new date into the primary reviewer role's Submission_Group
-        # invitation (venue.reviewers_name = Expert_Reviewers), so it will run
-        # automatically for that role.
+        # Trigger the Expert_Reviewers Submission_Group invitation by moving
+        # its activation date to the past.
         pc_client.post_invitation_edit(
-            invitations='XYZW.cc/2025/Conference/-/Submission/Dates',
+            invitations='XYZW.cc/2025/Conference/Expert_Reviewers/-/Submission_Group/Dates',
             content={
-                'submission_deadline': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
-                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) }
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='XYZW.cc/2025/Conference/Expert_Reviewers/-/Submission_Group-0-1', count=2)
 
-        # The Technical_Reviewers Submission_Group invitation is not cascaded by
-        # the Submission/Dates process function, so trigger it manually.
+        # Trigger the Technical_Reviewers Submission_Group invitation the same way.
         pc_client.post_invitation_edit(
             invitations='XYZW.cc/2025/Conference/Technical_Reviewers/-/Submission_Group/Dates',
             content={
