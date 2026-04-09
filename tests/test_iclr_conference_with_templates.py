@@ -348,8 +348,14 @@ note={under review}
         assert bid_invitation.edit['tail']['param']['options']['group'] == 'ICLR.cc/2026/Conference/Senior_Action_Editors'
         assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Bid/Dates')
         assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Bid/Settings')
-
-        # before enabling bidding, run affinity score computation
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Affinity_Score')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Affinity_Score/Model')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Affinity_Score/Dates')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Conflict')
+        inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment_Configuration')
+        assert inv and inv.content['committee_name']['value'] == 'Senior_Action_Editors'
+        assert inv.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'ICLR.cc/2026/Conference/Action_Editors'
+        assert inv.edit['note']['content']['match_group']['value']['param']['default'] == 'ICLR.cc/2026/Conference/Senior_Action_Editors'
 
         # enable bidding for SACs
         now = datetime.datetime.now()
@@ -373,3 +379,124 @@ note={under review}
         request_page(selenium, f'http://localhost:3030/invitation?id={bid_invitation.id}', sae_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'Senior Action Editor Bidding Console' in header.text
+
+def test_sac_deployment(client, openreview_client, helpers):
+
+    pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment')
+    assert inv and inv.content['committee_role']['value'] == 'senior_area_chairs'
+    assert inv.edit['head']['param']['inGroup'] == 'ICLR.cc/2026/Conference/Action_Editors'
+    assert inv.edit['tail']['param']['options']['group'] == 'ICLR.cc/2026/Conference/Senior_Action_Editors'
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment/Dates')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Proposed_Assignment')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Aggregate_Score')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Custom_Max_Papers')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Custom_User_Demands')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment_Configuration')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Action_Editors_Assignment_Deployment')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Action_Editors_Assignment_Deployment/Dates')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Action_Editors_Assignment_Deployment/Match')
+
+    #submit Assignment_Configuration
+    config_note = openreview_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment_Configuration',
+        readers=['ICLR.cc/2026/Conference'],
+        writers=['ICLR.cc/2026/Conference'],
+        signatures=['ICLR.cc/2026/Conference'],
+        note=openreview.api.Note(
+            content={
+                'title': { 'value': 'sac-matching-1'},
+                'user_demand': { 'value': '1'},
+                'max_papers': { 'value': '5'},
+                'min_papers': { 'value': '1'},
+                'alternates': { 'value': '1'},
+                'paper_invitation': { 'value': 'ICLR.cc/2026/Conference/Action_Editors' },
+                'match_group': { 'value': 'ICLR.cc/2026/Conference/Senior_Action_Editors' },
+                'scores_specification': {
+                    'value': {
+                        'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Affinity_Score': {
+                            'weight': 1,
+                            'default': 0
+                        },
+                        'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Bid': {
+                            'weight': 1,
+                            'default': 0,
+                            'translate_map': {
+                                'Very High': 1.0,
+                                'High': 0.5,
+                                'Neutral': 0.0,
+                                'Low': -0.5,
+                                'Very Low': -1.0
+                            }
+                        }
+                    }
+                },
+                'aggregate_score_invitation': { 'value': 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Aggregate_Score'},
+                'conflicts_invitation': { 'value': 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Conflict'},
+                'solver': { 'value': 'FairFlow'},
+                'status': { 'value': 'Initialized'},
+            }
+        )
+    )
+    helpers.await_queue_edit(openreview_client, invitation=f'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment_Configuration')
+
+    match_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Action_Editors_Assignment_Deployment/Match')
+    assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['sac-matching-1']
+
+    now = datetime.datetime.now()
+    now = openreview.tools.datetime_millis(now)
+
+    # trigger deployment date process without selecting match name
+    openreview_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Senior_Action_Editors_Assignment_Deployment/Dates',
+        content={
+            'activation_date': { 'value': now }
+        }
+    )
+
+    helpers.await_queue_edit(openreview_client,  edit_id=f'ICLR.cc/2026/Conference/-/Senior_Action_Editors_Assignment_Deployment-0-1', count=2)
+
+    # assert status comment posted to request form
+    venue = openreview_client.get_group('ICLR.cc/2026/Conference')
+    notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
+    assert len(notes) == 1
+    assert notes[-1].content['title']['value'] == 'Senior Action Editors Assignment Deployment Failed'
+
+    # try to deploy initialized configuration and get an error
+    with pytest.raises(openreview.OpenReviewException, match=r'The matching configuration with title "sac-matching-1" does not have status "Complete".'):
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Senior_Action_Editors_Assignment_Deployment/Match',
+            content = {
+                'match_name': { 'value': 'sac-matching-1' }
+            }
+        )
+
+    # post proposed assignments to test deployment process
+    openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Proposed_Assignment',
+            head = '~AC_ICLROne1',
+            tail = '~SAE_ICLROne1',
+            signatures = ['ICLR.cc/2026/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'sac-matching-1'
+        ))
+
+    openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'ICLR.cc/2026/Conference/Senior_Action_Editors/-/Proposed_Assignment',
+                head = '~AC_ICLRTwo1',
+                tail = '~SAE_ICLRTwo1',
+                signatures = ['ICLR.cc/2026/Conference/Program_Chairs'],
+                weight = 1,
+                label = 'sac-matching-1'
+            ))
+
+    assert len(openreview_client.get_grouped_edges(
+        invitation='ICLR.cc/2026/Conference/Senior_Action_Editors/-/Proposed_Assignment',
+        groupby='id'
+    )) == 2
+
+    assert len(openreview_client.get_grouped_edges(
+        invitation='ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment',
+        groupby='id'
+    )) == 0

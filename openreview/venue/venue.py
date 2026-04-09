@@ -369,6 +369,11 @@ class Venue(object):
     def anon_ethics_reviewers_name(self, pretty=True):
         return self.get_anon_committee_name(self.ethics_reviewers_name)
 
+    def get_senior_area_chairs_name(self, pretty=True):
+        if pretty:
+            return self.get_committee_name(self.senior_area_chairs_name, pretty)
+        return self.senior_area_chairs_name
+
     def get_area_chairs_name(self, pretty=True):
         if pretty:
             return self.get_committee_name(self.area_chairs_name, pretty)
@@ -997,8 +1002,24 @@ Total Errors: {len(errors)}
 
         invitation_prefix = self.support_user.replace('Support', 'Template')
 
+        if self.use_senior_area_chairs:
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_senior_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+
+            self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.senior_area_chairs_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
+                    'committee_name': { 'value': self.senior_area_chairs_name },
+                    'committee_pretty_name': { 'value': self.get_senior_area_chairs_name(pretty=True) }
+                },
+                await_process=True
+            )
+
         if self.use_area_chairs:
-            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2.1))
 
             self.client.post_invitation_edit(
                 invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
@@ -1029,6 +1050,10 @@ Total Errors: {len(errors)}
 
     def setup_matching_invitations(self):
 
+        if self.use_senior_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_senior_area_chairs_id()), self.get_area_chairs_id())
+            venue_matching.setup_matching_invitations()
+
         if self.use_area_chairs:
             venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
             venue_matching.setup_matching_invitations()
@@ -1037,6 +1062,11 @@ Total Errors: {len(errors)}
         venue_matching.setup_matching_invitations()
 
     def setup_all_committees_matching(self):
+
+        if self.use_senior_area_chairs:
+            print('Setting up senior area chair matching')
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_senior_area_chairs_id()), self.get_area_chairs_id())
+            venue_matching.setup()
 
         if self.use_area_chairs:
             venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
