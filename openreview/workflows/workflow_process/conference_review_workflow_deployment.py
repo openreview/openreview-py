@@ -49,7 +49,8 @@ def process(client, edit, invitation):
 
     venue.review_stage = openreview.stages.ReviewStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
-        due_date=submission_deadline_datetime + datetime.timedelta(weeks=5)
+        due_date=submission_deadline_datetime + datetime.timedelta(weeks=5),
+        submission_reviewer_roles=[venue.reviewers_name]
     )
 
     venue.comment_stage = openreview.stages.CommentStage(

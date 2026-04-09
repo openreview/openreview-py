@@ -546,6 +546,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
+        # The set of reviewer roles invited to this review invitation. Configured on the
+        # ReviewStage to match how assignments were deployed (one Official_Review for
+        # multiple roles, or one per role). Falls back to [venue.reviewers_name] for
+        # backward compatibility with older callers that don't set this explicitly.
+        reviewer_roles = review_stage.submission_reviewer_roles or [self.venue.reviewers_name]
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.now())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
@@ -601,9 +606,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'invitation': {
                     'id': self.venue.get_invitation_id(review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
-                    'readers': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
+                    'readers': [venue_id] + [self.venue.get_reviewers_id(number='${3/content/noteNumber/value}', name=name) for name in reviewer_roles],
                     'writers': [venue_id],
-                    'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
+                    'invitees': [venue_id] + [self.venue.get_reviewers_id(number='${3/content/noteNumber/value}', name=name) for name in reviewer_roles],
                     'maxReplies': 1,
                     'cdate': review_cdate,
                     'edit': {

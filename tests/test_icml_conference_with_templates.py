@@ -70,6 +70,7 @@ class TestICMLConference():
         venue.review_stage = openreview.stages.ReviewStage(
             start_date = due_date + datetime.timedelta(weeks=1),
             allow_de_anonymization = False,
+            submission_reviewer_roles = [venue.reviewers_name],
         )
 
         venue.meta_review_stage = openreview.stages.MetaReviewStage(

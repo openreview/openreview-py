@@ -459,6 +459,131 @@ class TestTwoSubmissionCommitteeRoles():
             for member in technical_ac_group.members:
                 assert member == '~TechnicalAC_XYZW1'
 
+    def test_setup_review_stage_for_both_roles(self, openreview_client, helpers):
+        """Verify the default Official_Review only targets the primary reviewer
+        role, then add a second review form for the second reviewer role and
+        verify the per-paper child invitations for each form invite the right
+        reviewer group."""
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@xyzw.cc', password=helpers.strong_password)
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
+
+        # Trigger the default Official_Review invitation (wired to Expert_Reviewers)
+        # to create per-paper child invitations.
+        pc_client.post_invitation_edit(
+            invitations='XYZW.cc/2025/Conference/-/Official_Review/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='XYZW.cc/2025/Conference/-/Official_Review-0-1', count=2)
+
+        submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
+        for submission in submissions:
+            child = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/Submission{submission.number}/-/Official_Review')
+            assert f'XYZW.cc/2025/Conference/Submission{submission.number}/Expert_Reviewers' in child.invitees
+            assert f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Reviewers' not in child.invitees
+            # Only Expert_Reviewer anon signatures are allowed
+            signatures_items = child.edit['signatures']['param']['items']
+            assert any('Expert_Reviewer_' in item.get('prefix', '') for item in signatures_items)
+            assert not any('Technical_Reviewer_' in item.get('prefix', '') for item in signatures_items)
+
+        # Create a second, distinct review form for the Technical_Reviewers role.
+        venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
+        venue.review_stage = openreview.stages.ReviewStage(
+            name='Technical_Review',
+            child_invitations_name='Technical_Review',
+            start_date=now,
+            due_date=now + datetime.timedelta(days=7),
+            submission_reviewer_roles=['Technical_Reviewers'],
+            additional_fields={
+                'technical_soundness': {
+                    'order': 1,
+                    'description': 'How technically sound is the paper?',
+                    'value': {
+                        'param': {
+                            'type': 'integer',
+                            'enum': [1, 2, 3, 4, 5],
+                            'input': 'radio'
+                        }
+                    }
+                }
+            }
+        )
+        venue.invitation_builder.set_review_invitation()
+
+        helpers.await_queue_edit(openreview_client, edit_id='XYZW.cc/2025/Conference/-/Technical_Review-0-1', count=1)
+
+        for submission in submissions:
+            child = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/Submission{submission.number}/-/Technical_Review')
+            assert f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Reviewers' in child.invitees
+            assert f'XYZW.cc/2025/Conference/Submission{submission.number}/Expert_Reviewers' not in child.invitees
+            assert 'technical_soundness' in child.edit['note']['content']
+            signatures_items = child.edit['signatures']['param']['items']
+            assert any('Technical_Reviewer_' in item.get('prefix', '') for item in signatures_items)
+            assert not any('Expert_Reviewer_' in item.get('prefix', '') for item in signatures_items)
+
+        # Reviewer assignments were undeployed earlier; redeploy them so reviewers
+        # can actually post reviews for submission 1.
+        venue.set_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers', submission_committee_name='Expert_Reviewers')
+        venue.set_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers', submission_committee_name='Technical_Reviewers')
+
+        submission1 = submissions[0]
+
+        # Post one Official_Review as an assigned Expert reviewer for submission 1
+        expert_client = openreview.api.OpenReviewClient(username='expert_one@xyzw.cc', password=helpers.strong_password)
+        expert_anon_groups = expert_client.get_groups(prefix=f'XYZW.cc/2025/Conference/Submission{submission1.number}/Expert_Reviewer_.*', signatory='~ExpertOne_XYZW1')
+        if not expert_anon_groups:
+            expert_client = openreview.api.OpenReviewClient(username='expert_two@xyzw.cc', password=helpers.strong_password)
+            expert_anon_groups = expert_client.get_groups(prefix=f'XYZW.cc/2025/Conference/Submission{submission1.number}/Expert_Reviewer_.*', signatory='~ExpertTwo_XYZW1')
+        assert len(expert_anon_groups) == 1
+
+        expert_review = expert_client.post_note_edit(
+            invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Official_Review',
+            signatures=[expert_anon_groups[0].id],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Expert review' },
+                    'review': { 'value': 'Solid contribution from an expert perspective.' },
+                    'rating': { 'value': 8 },
+                    'confidence': { 'value': 4 }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=expert_review['id'])
+
+        # Post one Technical_Review as an assigned Technical reviewer for submission 1
+        technical_client = openreview.api.OpenReviewClient(username='technical_one@xyzw.cc', password=helpers.strong_password)
+        technical_anon_groups = technical_client.get_groups(prefix=f'XYZW.cc/2025/Conference/Submission{submission1.number}/Technical_Reviewer_.*', signatory='~TechnicalOne_XYZW1')
+        if not technical_anon_groups:
+            technical_client = openreview.api.OpenReviewClient(username='technical_two@xyzw.cc', password=helpers.strong_password)
+            technical_anon_groups = technical_client.get_groups(prefix=f'XYZW.cc/2025/Conference/Submission{submission1.number}/Technical_Reviewer_.*', signatory='~TechnicalTwo_XYZW1')
+        assert len(technical_anon_groups) == 1
+
+        technical_review_note = technical_client.post_note_edit(
+            invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Technical_Review',
+            signatures=[technical_anon_groups[0].id],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Technical review' },
+                    'review': { 'value': 'Technically sound implementation.' },
+                    'rating': { 'value': 7 },
+                    'confidence': { 'value': 4 },
+                    'technical_soundness': { 'value': 4 }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=technical_review_note['id'])
+
+        official_reviews = openreview_client.get_notes(invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Official_Review')
+        assert len(official_reviews) == 1
+        technical_reviews = openreview_client.get_notes(invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Technical_Review')
+        assert len(technical_reviews) == 1
+
     def test_undeploy_ac_assignments_for_both_roles(self, openreview_client, helpers):
         """Undeploy AC assignments for both area chair roles and verify each
         role's per-submission group is emptied."""

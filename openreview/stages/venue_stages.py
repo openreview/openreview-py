@@ -668,6 +668,7 @@ class ReviewStage(object):
         child_invitations_name = 'Official_Review',
         description = None,
         submission_source=None,
+        submission_reviewer_roles=None,
     ):
 
         self.start_date = start_date
@@ -691,18 +692,23 @@ class ReviewStage(object):
         self.preprocess_path = None
         self.description = description
         self.submission_source = submission_source
+        self.submission_reviewer_roles = submission_reviewer_roles
+
+    def _get_reviewer_roles(self, conference):
+        return self.submission_reviewer_roles or [conference.reviewers_name]
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
+        reviewer_roles = self._get_reviewer_roles(conference)
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
-            return conference.get_reviewers_id()
+            return [conference.get_reviewers_id(name=name) for name in reviewer_roles]
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
-            return conference.get_reviewers_id(number = number)
+            return [conference.get_reviewers_id(number=number, name=name) for name in reviewer_roles]
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
-            return conference.get_reviewers_id(number = number) + '/Submitted'
+            return [conference.get_reviewers_id(number=number, name=name) + '/Submitted' for name in reviewer_roles]
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWER_SIGNATURE:
             if review_signature:
-                return review_signature
-            return '{signatures}'
+                return [review_signature]
+            return ['{signatures}']
         raise openreview.OpenReviewException('Unrecognized readers option')
 
     def get_readers(self, conference, number, review_signature=None):
@@ -718,7 +724,7 @@ class ReviewStage(object):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
-        readers.append(self._get_reviewer_readers(conference, number, review_signature))
+        readers.extend(self._get_reviewer_readers(conference, number, review_signature))
 
         ## Workaround to make the reviews visible to the author of the review when reviewers submitted is selected
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED and review_signature:
@@ -749,8 +755,8 @@ class ReviewStage(object):
         if self.allow_de_anonymization:
             return ['~.*']
 
-        return [conference.get_anon_reviewer_id(number=number, anon_id='.*')]
-    
+        return [conference.get_anon_reviewer_id(number=number, anon_id='.*', name=name) for name in self._get_reviewer_roles(conference)]
+
     def get_content(self, api_version='2', conference=None):
 
         content = deepcopy(default_content.review_v2)

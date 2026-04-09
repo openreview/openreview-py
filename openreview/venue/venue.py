@@ -357,7 +357,7 @@ class Venue(object):
     def get_anon_reviewer_id(self, number, anon_id, name=None):
         if name == self.ethics_reviewers_name:
             return self.get_ethics_reviewers_id(number, True)
-        return self.get_reviewers_id(number, True)
+        return self.get_reviewers_id(number, True, name=name)
 
     def get_reviewers_name(self, pretty=True):
         if pretty:
