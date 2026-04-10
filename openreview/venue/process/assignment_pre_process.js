@@ -77,10 +77,6 @@ async function process(client, edge, invitation) {
       }
     }
 
-    const { count } = await client.getGroups({ id: `${submissionGroupId}/${committeeName}` })
-    if ( count === 0) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, submission ${committeeName} group not found.` }))
-    }
     return
   }
 
