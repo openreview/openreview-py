@@ -1205,11 +1205,11 @@ class Matching(object):
         if submission_committee_name:
             paper_committee_name = submission_committee_name
         elif self.is_area_chair:
-            paper_committee_name = venue.area_chairs_name
+            paper_committee_name = venue.submission_area_chair_roles[0]
         elif self.is_senior_area_chair:
             paper_committee_name = venue.senior_area_chairs_name
         else:
-            paper_committee_name = venue.reviewers_name
+            paper_committee_name = venue.submission_reviewer_roles[0]
 
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), domain=venue.id,
@@ -1358,11 +1358,11 @@ class Matching(object):
         if submission_committee_name:
             paper_committee_name = submission_committee_name
         elif self.is_area_chair:
-            paper_committee_name = venue.area_chairs_name
+            paper_committee_name = venue.submission_area_chair_roles[0]
         elif self.is_senior_area_chair:
             paper_committee_name = venue.senior_area_chairs_name
         else:
-            paper_committee_name = venue.reviewers_name
+            paper_committee_name = venue.submission_reviewer_roles[0]
 
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
