@@ -549,6 +549,62 @@ class TestWorkshopV2():
         )
         assert len(assignment_edges) == 1
 
+        # Test 5: Quota of 0 - Rejected
+        cmp_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers',
+            head='PRL/2023/ICAPS/Reviewers',
+            tail='~Reviewer_ICAPSThree1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=0
+        ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, quota of 0 has been reached for ~Reviewer_ICAPSThree1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submissions[0].id,
+                tail='~Reviewer_ICAPSThree1',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                weight=1
+            ))
+
+        openreview_client.delete_edges(invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers', head='PRL/2023/ICAPS/Reviewers', tail='~Reviewer_ICAPSThree1')
+
+        # Test 5: Read quota from invitation
+        cmp_edges = openreview_client.get_all_edges(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head='PRL/2023/ICAPS/Reviewers',
+            tail='Reviewer_ICAPSThree1'
+        )
+        assert len(cmp_edges) == 0
+
+        cmp_invitation = openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers')
+        cmp_invitation.edit['weight']['param']['default'] = 1
+        openreview_client.post_invitation_edit(
+            invitations='PRL/2023/ICAPS/-/Edit',
+            readers=['PRL/2023/ICAPS'],
+            writers=['PRL/2023/ICAPS'],
+            signatures=['PRL/2023/ICAPS'],
+            invitation=cmp_invitation
+        )
+
+        assignment_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head=submissions[0].id,
+            tail='~Reviewer_ICAPSThree1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, quota of 1 has been reached for ~Reviewer_ICAPSThree1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submissions[1].id,
+                tail='~Reviewer_ICAPSThree1',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                weight=1
+            ))
+
     def test_review_stage(self, client, openreview_client, helpers, request_page, selenium):
 
 

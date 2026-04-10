@@ -65,14 +65,14 @@ async function process(client, edge, invitation) {
       ])
       const userAssignmentCount = userAssignmentsResponse.count ?? userAssignmentsResponse.edges.length
 
-      let userPaperQuota = customMaxPapersEdges.length > 0 ? customMaxPapersEdges[0].weight : 0
+      let userPaperQuota = customMaxPapersEdges.length > 0 ? customMaxPapersEdges[0].weight : null
 
-      if (!userPaperQuota) {
+      if (userPaperQuota == null) {
         const { invitations: cmpInvitations } = await client.getInvitations({ id: customMaxPapersId })
-        userPaperQuota = cmpInvitations[0]?.edge?.weight?.param?.default
+        userPaperQuota = cmpInvitations[0]?.edge?.weight?.param?.default ?? null
       }
 
-      if (userPaperQuota && userAssignmentCount >= userPaperQuota) {
+      if (userPaperQuota != null && userAssignmentCount >= userPaperQuota) {
         return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, quota of ${userPaperQuota} has been reached for ${edge.tail}` }))
       }
     }
