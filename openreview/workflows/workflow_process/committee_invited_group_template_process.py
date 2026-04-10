@@ -21,14 +21,6 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    content = {}
-    content[f'{committee_role}_invited_message_id'] = { 'value': invitation_edit['invitation']['id'] }
-
-    client.post_group_edit(
-        invitation=domain.content['meta_invitation_id']['value'],
-        signatures=[invitation.domain],
-        group=openreview.api.Group(
-            id=venue_id,
-            content=content
-        )
-    )          
+    # The invited message invitation id ({committee_id}/Invited/-/Message) is now
+    # derived from committee_id directly in the recruitment process functions,
+    # so we no longer need to store it on the domain.
