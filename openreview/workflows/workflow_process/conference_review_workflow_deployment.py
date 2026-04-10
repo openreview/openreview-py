@@ -61,13 +61,19 @@ def process(client, edit, invitation):
         due_date=submission_deadline_datetime + datetime.timedelta(weeks=5)
     )
 
+    venue_committee = [
+        openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,
+        openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+        openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED,
+        openreview.stages.CommentStage.Readers.AUTHORS
+    ]
     venue.comment_stage = openreview.stages.CommentStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=4),
         end_date=submission_deadline_datetime + datetime.timedelta(weeks=6),
         reader_selection=True,
         check_mandatory_readers=True,
-        readers=[openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS],
-        invitees=[openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        readers=venue_committee,
+        invitees=venue_committee
     )
 
     venue.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
