@@ -5203,8 +5203,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if venue.use_senior_area_chairs:
             readers.append(venue.get_senior_area_chairs_id(number))
         if venue.use_area_chairs:
-            readers.append(venue.get_area_chairs_id(number))
-        readers.extend([venue.get_reviewers_id(number), venue.get_authors_id('${{2/id}/number}')])
+            for ac_name in venue.submission_area_chair_roles:
+                readers.append(venue.get_area_chairs_id(number, name=ac_name))
+        for reviewers_name in venue.submission_reviewer_roles:
+            readers.append(venue.get_reviewers_id(number, name=reviewers_name))
+        readers.append(venue.get_authors_id('${{2/id}/number}'))
 
         invitation = Invitation(
             id = f'{venue_id}/-/{name}',
