@@ -16,8 +16,7 @@ async function process(client, edit, invitation) {
   const authorsName = domain.content?.authors_name?.value || "Authors"
   const authorGroupId = `${domain.id}/Submission${forum.number}/${authorsName}`
   const commentText = note.content?.comment?.value || ""
-  const linkPattern =
-    /\[[^\]]+\]\([^)]+\)|<?(?:https?:\/\/|www\.)\S+>?|\b[a-z0-9.-]+\.[a-z]{2,}\/\S*/i
+  const linkPattern = /https?:\/\//i
 
   if ((readers.includes(authorGroupId) || readers.includes("everyone")) && linkPattern.test(commentText)) {
     return Promise.reject(
