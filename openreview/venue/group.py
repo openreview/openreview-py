@@ -513,7 +513,7 @@ class GroupBuilder(object):
                 if self.venue.use_area_chairs:
                     area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
                     additional_readers.append(area_chairs_id)
-                
+
                 self.client.post_group_edit(
                     invitation=f'{self.openreview_template}/-/Committee_Group',
                     signatures=[self.openreview_template],
@@ -523,11 +523,26 @@ class GroupBuilder(object):
                         'committee_role': { 'value': 'reviewers' },
                         'committee_pretty_name': { 'value': pretty_name },
                         'committee_anon_name': { 'value': self.venue.get_anon_committee_name(role) },
-                        'committee_submitted_name': { 'value': 'Submitted' },                    
+                        'committee_submitted_name': { 'value': 'Submitted' },
                         'additional_readers': { 'value': additional_readers }
                     },
                     await_process=True
                 )
+
+            # If there are multiple reviewer roles and the category name is not
+            # itself one of the roles, create an umbrella group containing all
+            # role groups as members.
+            if len(self.venue.reviewer_roles) > 1 and self.venue.reviewers_name not in self.venue.reviewer_roles:
+                umbrella_id = self.venue.get_reviewers_id()
+                role_group_ids = [self.venue.get_committee_id(role) for role in self.venue.reviewer_roles]
+                self.post_group(Group(
+                    id=umbrella_id,
+                    readers=[venue_id, umbrella_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    signatories=[venue_id],
+                    members=role_group_ids
+                ))
             return            
 
         for index, role in enumerate(self.venue.reviewer_roles):
@@ -577,6 +592,22 @@ class GroupBuilder(object):
                     },
                     await_process=True
                 )
+
+            # If there are multiple area chair roles and the category name is not
+            # itself one of the roles, create an umbrella group containing all
+            # role groups as members.
+            if len(self.venue.area_chair_roles) > 1 and self.venue.area_chairs_name not in self.venue.area_chair_roles:
+                venue_id = self.venue.id
+                umbrella_id = self.venue.get_area_chairs_id()
+                role_group_ids = [self.venue.get_committee_id(role) for role in self.venue.area_chair_roles]
+                self.post_group(Group(
+                    id=umbrella_id,
+                    readers=[venue_id, umbrella_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    signatories=[venue_id],
+                    members=role_group_ids
+                ))
             return
 
         venue_id = self.venue.id

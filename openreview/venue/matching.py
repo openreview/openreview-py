@@ -1193,7 +1193,7 @@ class Matching(object):
 
         return invite_assignment_invitation
 
-    def deploy_assignments(self, assignment_title, overwrite, submission_committee_name=None):
+    def deploy_assignments(self, assignment_title, overwrite):
 
         venue = self.venue
         client = self.client
@@ -1202,14 +1202,15 @@ class Matching(object):
         if self.is_area_chair:
             review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
 
-        if submission_committee_name:
-            paper_committee_name = submission_committee_name
-        elif self.is_area_chair:
-            paper_committee_name = venue.submission_area_chair_roles[0]
-        elif self.is_senior_area_chair:
-            paper_committee_name = venue.senior_area_chairs_name
-        else:
-            paper_committee_name = venue.submission_reviewer_roles[0]
+        deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
+        paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')
+        if not paper_committee_name:
+            if self.is_area_chair:
+                paper_committee_name = venue.submission_area_chair_roles[0]
+            elif self.is_senior_area_chair:
+                paper_committee_name = venue.senior_area_chairs_name
+            else:
+                paper_committee_name = venue.submission_reviewer_roles[0]
 
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), domain=venue.id,
@@ -1346,7 +1347,7 @@ class Matching(object):
         print('Posting assignments edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
 
-    def undeploy_assignments(self, assignment_title, submission_committee_name=None):
+    def undeploy_assignments(self, assignment_title):
 
         venue = self.venue
         client = self.client
@@ -1355,14 +1356,15 @@ class Matching(object):
         if self.is_area_chair:
             review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
 
-        if submission_committee_name:
-            paper_committee_name = submission_committee_name
-        elif self.is_area_chair:
-            paper_committee_name = venue.submission_area_chair_roles[0]
-        elif self.is_senior_area_chair:
-            paper_committee_name = venue.senior_area_chairs_name
-        else:
-            paper_committee_name = venue.submission_reviewer_roles[0]
+        deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
+        paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')
+        if not paper_committee_name:
+            if self.is_area_chair:
+                paper_committee_name = venue.submission_area_chair_roles[0]
+            elif self.is_senior_area_chair:
+                paper_committee_name = venue.senior_area_chairs_name
+            else:
+                paper_committee_name = venue.submission_reviewer_roles[0]
 
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
@@ -1403,19 +1405,18 @@ class Matching(object):
 
         tools.concurrent_requests(process_paper_assignments, papers, desc='undeploy_assignments')
     
-    def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False, submission_committee_name=None):
+    def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
 
         self.venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
         recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id)
         self.venue.invitation_builder.expire_invitation(recruitment_invitation_id)
         self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
-       
 
         ## Deploy assignments creating groups and assignment edges
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
             self.deploy_sac_assignments(assignment_title, overwrite)
         else:
-            self.deploy_assignments(assignment_title, overwrite, submission_committee_name=submission_committee_name)
+            self.deploy_assignments(assignment_title, overwrite)
 
         if self.is_reviewer and enable_reviewer_reassignment:
             hash_seed=openreview.tools.create_hash_seed()
@@ -1441,13 +1442,13 @@ class Matching(object):
             print("There are no existing deployed assigment configurations. Default max papers has not been set.")
 
 
-    def undeploy(self, assignment_title, submission_committee_name=None):
+    def undeploy(self, assignment_title):
 
         ## Undeploy assignments
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
             self.undeploy_sac_assignments(assignment_title)
         else:
-            self.undeploy_assignments(assignment_title, submission_committee_name=submission_committee_name)
+            self.undeploy_assignments(assignment_title)
             self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id, deployed=True))      
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_assignment_id(self.match_group.id))     
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id))

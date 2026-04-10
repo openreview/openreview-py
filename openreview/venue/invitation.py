@@ -3215,13 +3215,22 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         area_chairs_id = self.venue.get_area_chairs_id()
         senior_area_chairs_id = self.venue.get_senior_area_chairs_id()
+        default_submission_name = committee_name
         if is_reviewer:
             area_chairs_id = committee_id.replace(committee_name, self.venue.area_chairs_name)
             senior_area_chairs_id = committee_id.replace(committee_name, self.venue.senior_area_chairs_name)
+            if len(venue.reviewer_roles) == len(venue.submission_reviewer_roles):
+                default_submission_name = venue.submission_reviewer_roles[venue.reviewer_roles.index(committee_name)]
+            else:
+                default_submission_name = venue.submission_reviewer_roles[0]
 
         if is_area_chair:
             area_chairs_id = committee_id
             senior_area_chairs_id = committee_id.replace(committee_name, self.venue.senior_area_chairs_name)
+            if len(venue.area_chair_roles) == len(venue.submission_area_chair_roles):
+                default_submission_name = venue.submission_area_chair_roles[venue.area_chair_roles.index(committee_name)]
+            else:
+                default_submission_name = venue.submission_area_chair_roles[0]
 
         content = {
             'review_name': {
@@ -3231,13 +3240,16 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'value': committee_id
             },
             'reviewers_name': {
-                'value': venue.reviewers_name if is_reviewer else venue.area_chairs_name
+                'value': default_submission_name
             },
             'reviewers_anon_name': {
-                'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
+                'value': venue.get_anon_committee_name(default_submission_name)
             },
-            'committee_role': { 
+            'committee_role': {
                 'value':  venue.get_standard_committee_role(committee_id=venue.get_reviewers_id())
+            },
+            'submission_committee_name': {
+                'value': default_submission_name
             }
         }
         if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments:

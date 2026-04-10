@@ -49,7 +49,7 @@ def process(client, invitation):
         assignment_title=match_name,
         committee_id=committee_id,
         overwrite=True,
-        enable_reviewer_reassignment=True,
+        enable_reviewer_reassignment=True
     )
 
     #update change before reviewing cdate

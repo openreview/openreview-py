@@ -38,7 +38,7 @@ class TestTwoSubmissionCommitteeRoles():
                     'contact_email': { 'value': 'xyzw2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewers_name': { 'value': 'Expert_Reviewers' },
+                    'reviewers_name': { 'value': 'Reviewers' },
                     'reviewer_roles': { 'value': ['Expert_Reviewers', 'Technical_Reviewers'] },
                     'reviewer_group_layout': { 'value': 'per_role' },
                     'area_chairs_support': { 'value': True },
@@ -82,16 +82,34 @@ class TestTwoSubmissionCommitteeRoles():
         assert venue_group.content['reviewers_name']['value'] == 'Expert_Reviewers'
         assert openreview_client.get_group('XYZW.cc/2025/Conference/Expert_Reviewers')
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Expert_Reviewers/-/Submission_Group')
-        assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Expert_Reviewers/-/Assignment')
+        expert_assignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Expert_Reviewers/-/Assignment')
+        assert expert_assignment.content['review_name']['value'] == 'Official_Review'
+        assert expert_assignment.content['reviewers_id']['value'] == 'XYZW.cc/2025/Conference/Expert_Reviewers'
+        assert expert_assignment.content['reviewers_name']['value'] == 'Expert_Reviewers'
+        assert expert_assignment.content['reviewers_anon_name']['value'] == 'Expert_Reviewer_'
+        assert expert_assignment.content['committee_role']['value'] == 'reviewers'
+        assert expert_assignment.content['submission_committee_name']['value'] == 'Expert_Reviewers'
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Expert_Reviewers/-/Proposed_Assignment')
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Expert_Reviewers/-/Assignment_Configuration')
 
         # Second reviewer role auto-created by deployment via reviewer_roles
         assert openreview_client.get_group('XYZW.cc/2025/Conference/Technical_Reviewers')
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Reviewers/-/Submission_Group')
-        assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Reviewers/-/Assignment')
+        technical_assignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Reviewers/-/Assignment')
+        assert technical_assignment.content['review_name']['value'] == 'Official_Review'
+        assert technical_assignment.content['reviewers_id']['value'] == 'XYZW.cc/2025/Conference/Technical_Reviewers'
+        assert technical_assignment.content['reviewers_name']['value'] == 'Technical_Reviewers'
+        assert technical_assignment.content['reviewers_anon_name']['value'] == 'Technical_Reviewer_'
+        assert technical_assignment.content['committee_role']['value'] == 'reviewers'
+        assert technical_assignment.content['submission_committee_name']['value'] == 'Technical_Reviewers'
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Reviewers/-/Proposed_Assignment')
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Reviewers/-/Assignment_Configuration')
+
+        # AC Assignment invitations
+        ac_assignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Area_Chairs/-/Assignment')
+        assert ac_assignment.content['submission_committee_name']['value'] == 'Area_Chairs'
+        technical_ac_assignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Assignment')
+        assert technical_ac_assignment.content['submission_committee_name']['value'] == 'Technical_Area_Chairs'
 
         # Domain has both reviewer roles + submission_reviewer_roles configured per_role
         assert venue_group.content['reviewer_roles']['value'] == ['Expert_Reviewers', 'Technical_Reviewers']
@@ -231,8 +249,8 @@ class TestTwoSubmissionCommitteeRoles():
 
         venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
 
-        venue.set_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers', submission_committee_name='Expert_Reviewers')
-        venue.set_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers', submission_committee_name='Technical_Reviewers')
+        venue.set_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers')
+        venue.set_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers')
 
         submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -262,8 +280,8 @@ class TestTwoSubmissionCommitteeRoles():
 
         venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
 
-        venue.unset_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers', submission_committee_name='Expert_Reviewers')
-        venue.unset_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers', submission_committee_name='Technical_Reviewers')
+        venue.unset_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers')
+        venue.unset_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers')
 
         submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -346,8 +364,8 @@ class TestTwoSubmissionCommitteeRoles():
 
         venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
 
-        venue.set_assignments(assignment_title='area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Area_Chairs', submission_committee_name='Area_Chairs')
-        venue.set_assignments(assignment_title='technical_area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Area_Chairs', submission_committee_name='Technical_Area_Chairs')
+        venue.set_assignments(assignment_title='area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Area_Chairs')
+        venue.set_assignments(assignment_title='technical_area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Area_Chairs')
 
         submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -429,8 +447,8 @@ class TestTwoSubmissionCommitteeRoles():
 
         # Reviewer assignments were undeployed earlier; redeploy them so reviewers
         # can actually post reviews for submission 1.
-        venue.set_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers', submission_committee_name='Expert_Reviewers')
-        venue.set_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers', submission_committee_name='Technical_Reviewers')
+        venue.set_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers')
+        venue.set_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers')
 
         # Run Submission_Change_Before_Reviewing so that submissions become
         # readable by both per-paper reviewer groups.
@@ -502,8 +520,8 @@ class TestTwoSubmissionCommitteeRoles():
 
         venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
 
-        venue.unset_assignments(assignment_title='area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Area_Chairs', submission_committee_name='Area_Chairs')
-        venue.unset_assignments(assignment_title='technical_area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Area_Chairs', submission_committee_name='Technical_Area_Chairs')
+        venue.unset_assignments(assignment_title='area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Area_Chairs')
+        venue.unset_assignments(assignment_title='technical_area_chairs-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Area_Chairs')
 
         submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
 

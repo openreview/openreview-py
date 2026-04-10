@@ -136,10 +136,7 @@ class Venue(object):
             "description": "CC BY 4.0"
         }
         self.reviewers_name = request_note.content['reviewers_name']['value']
-        reviewer_roles = request_note.content.get('reviewer_roles', {}).get('value') or [self.reviewers_name]
-        # First configured reviewer role is the primary one.
-        self.reviewers_name = reviewer_roles[0]
-        self.reviewer_roles = reviewer_roles
+        self.reviewer_roles = request_note.content.get('reviewer_roles', {}).get('value') or [self.reviewers_name]
         reviewer_group_layout = request_note.content.get('reviewer_group_layout', {}).get('value', 'shared')
         if reviewer_group_layout == 'per_role':
             self.submission_reviewer_roles = list(self.reviewer_roles)
@@ -149,9 +146,7 @@ class Venue(object):
 
         if request_note.content.get('area_chairs_support',{}).get('value'):
             self.area_chairs_name = request_note.content['area_chairs_name']['value']
-            area_chair_roles = request_note.content.get('area_chair_roles', {}).get('value') or [self.area_chairs_name]
-            self.area_chairs_name = area_chair_roles[0]
-            self.area_chair_roles = area_chair_roles
+            self.area_chair_roles = request_note.content.get('area_chair_roles', {}).get('value') or [self.area_chairs_name]
             area_chair_group_layout = request_note.content.get('area_chair_group_layout', {}).get('value', 'shared')
             if area_chair_group_layout == 'per_role':
                 self.submission_area_chair_roles = list(self.area_chair_roles)
@@ -1350,13 +1345,15 @@ Total Errors: {len(errors)}
 
         return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
 
-    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False, submission_committee_name=None):
+    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
         """Deploy proposed assignments as official assignments for a committee.
 
         Copies edges from the proposed assignment configuration (identified by
         ``assignment_title``) to the deployed assignment invitation, creating
-        per-paper committee member groups. Optionally enables reviewer
-        reassignment for area chairs after deployment.
+        per-paper committee member groups. The target per-submission group name
+        is read from the ``submission_committee_name`` content field on the
+        Assignment invitation. Optionally enables reviewer reassignment for
+        area chairs after deployment.
 
         :param assignment_title: Label of the proposed assignment configuration to deploy.
         :type assignment_title: str
@@ -1372,14 +1369,15 @@ Total Errors: {len(errors)}
         match_group = self.client.get_group(committee_id)
         assignment_invitation = self.client.get_invitation(self.get_assignment_id(match_group.id))
         conference_matching = matching.Matching(self, match_group, submission_content=assignment_invitation.edit.get('head', {}).get('param', {}).get('withContent'))
-        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment, submission_committee_name=submission_committee_name)
+        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
-    def unset_assignments(self, assignment_title, committee_id, submission_committee_name=None):
+    def unset_assignments(self, assignment_title, committee_id):
         """Revert deployed assignments back to proposed state for a committee.
 
         Removes the deployed assignment edges and per-paper committee member
         groups, restoring the assignment configuration to its pre-deployment
-        state.
+        state. The target per-submission group name is read from the
+        ``submission_committee_name`` content field on the Assignment invitation.
 
         :param assignment_title: Label of the assignment configuration to undeploy.
         :type assignment_title: str
@@ -1390,7 +1388,7 @@ Total Errors: {len(errors)}
         """
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
-        return conference_matching.undeploy(assignment_title, submission_committee_name=submission_committee_name)
+        return conference_matching.undeploy(assignment_title)
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
         """Set up invite-based assignment recruitment for external or emergency reviewers.
