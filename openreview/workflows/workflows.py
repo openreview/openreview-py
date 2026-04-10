@@ -260,7 +260,8 @@ class Workflows():
                                     'type': 'string',
                                     'enum': ['shared', 'per_role'],
                                     'default': 'shared',
-                                    'input': 'radio'
+                                    'input': 'radio',
+                                    'optional': True
                                 }
                             }
                         },

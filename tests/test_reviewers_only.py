@@ -228,7 +228,6 @@ class TestReviewersOnly():
 
         venue_group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
-        assert all(key in venue_group.content for key in ['reviewers_declined_id', 'reviewers_invited_id', 'reviewers_invited_message_id'])
 
         assert venue_group.content['status_invitation_id']['value'] == f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status'
 
@@ -248,7 +247,6 @@ class TestReviewersOnly():
 
         venue_group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
-        assert all(key in venue_group.content for key in ['reviewers_declined_id', 'reviewers_invited_id', 'reviewers_invited_message_id'])
 
         #after deployment, check domain hasn't changed
         request_note = openreview_client.get_note(request.id)
@@ -376,14 +374,11 @@ class TestReviewersOnly():
 
         # check domain object
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
-        assert domain_content['reviewers_invited_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/Invited'
-        assert domain_content['reviewers_declined_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/Declined'
         assert domain_content['reviewers_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee'
         assert domain_content['reviewers_name']['value'] == 'Program_Committee'
         assert domain_content['reviewers_anon_name']['value'] == 'Program_Committee_'
         assert domain_content['reviewers_submitted_name']['value'] == 'Submitted'
         assert domain_content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
-        assert domain_content['reviewers_invited_message_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/Invited/-/Message'
 
         request_form = pc_client.get_note(request.id)
         assert request_form

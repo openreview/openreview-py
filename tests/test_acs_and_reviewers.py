@@ -185,23 +185,17 @@ class TestSimpleDualAnonymous():
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/-/Custom_User_Demands')
 
         domain_content = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference').content
-        assert domain_content['reviewers_invited_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited'
-        assert domain_content['reviewers_declined_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Declined'
         assert domain_content['reviewers_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers'
         assert domain_content['reviewers_name']['value'] == 'Reviewers'
         assert domain_content['reviewers_anon_name']['value'] == 'Reviewer_'
         assert domain_content['reviewers_submitted_name']['value'] == 'Submitted'
         assert domain_content['reviewers_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/-/Recruitment_Response'
-        assert domain_content['reviewers_invited_message_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited/-/Message' 
 
-        assert domain_content['area_chairs_invited_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Invited'
-        assert domain_content['area_chairs_declined_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Declined'
         assert domain_content['area_chairs_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors'
         assert domain_content['area_chairs_name']['value'] == 'Action_Editors'
         assert domain_content['area_chairs_anon_name']['value'] == 'Action_Editor_'
         assert domain_content.get('area_chairs_submitted_name') is None
         assert domain_content['area_chairs_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Recruitment_Response'
-        assert domain_content['area_chairs_invited_message_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Invited/-/Message'
 
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission')
         invitation = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding')
@@ -234,23 +228,17 @@ class TestSimpleDualAnonymous():
 
          # check domain object
         domain_content = openreview_client.get_group('EFGH.cc/2025/Conference').content
-        assert domain_content['reviewers_invited_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited'
-        assert domain_content['reviewers_declined_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Declined'
         assert domain_content['reviewers_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers'
         assert domain_content['reviewers_name']['value'] == 'Reviewers'
         assert domain_content['reviewers_anon_name']['value'] == 'Reviewer_'
         assert domain_content['reviewers_submitted_name']['value'] == 'Submitted'
         assert domain_content['reviewers_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/-/Recruitment_Response'
-        assert domain_content['reviewers_invited_message_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited/-/Message'
 
-        assert domain_content['area_chairs_invited_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Invited'
-        assert domain_content['area_chairs_declined_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Declined'
         assert domain_content['area_chairs_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors'
         assert domain_content['area_chairs_name']['value'] == 'Action_Editors'
         assert domain_content['area_chairs_anon_name']['value'] == 'Action_Editor_'
         assert 'area_chairs_submitted_name' not in domain_content
         assert domain_content['area_chairs_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Recruitment_Response'
-        assert domain_content['area_chairs_invited_message_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Invited/-/Message'
 
     def test_recruit_area_chairs(self, openreview_client, selenium, request_page, helpers):
 

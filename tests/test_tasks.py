@@ -101,7 +101,8 @@ class TestTasks():
 
         venue_group = openreview.tools.get_group(openreview_client, 'Tasks.cc/2025/Conference')
         assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'Tasks.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
-        assert all(key in venue_group.content for key in ['reviewers_declined_id', 'reviewers_invited_id', 'reviewers_invited_message_id'])
+        assert openreview_client.get_group('Tasks.cc/2025/Conference/Program_Committee/Invited')
+        assert openreview_client.get_group('Tasks.cc/2025/Conference/Program_Committee/Declined')
 
         request_note = openreview_client.get_note(request.id)
         assert request_note.domain == 'openreview.net/Support'
