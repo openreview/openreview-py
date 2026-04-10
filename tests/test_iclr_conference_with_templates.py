@@ -724,6 +724,19 @@ def test_review_stage(client, openreview_client, helpers):
         '${3/signatures}'
     ]
 
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review_Release')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review_Release/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review_Release/Readers')
+
+    review_release_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Official_Review_Release')
+    assert review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+        'ICLR.cc/2026/Conference/Program_Chairs',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Senior_Action_Editors',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Action_Editors',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Reviewers',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Authors'
+    ]
+
 def test_comment_stage(client, openreview_client, helpers):
 
     pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -808,3 +821,181 @@ def test_comment_stage(client, openreview_client, helpers):
             "optional": True
         }
     ]
+
+def test_rebuttal_stage(client, openreview_client, helpers):
+
+    pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Rebuttal')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Rebuttal/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Rebuttal/Form_Fields')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Rebuttal/Readers')
+
+    # create child invitations
+    now = datetime.datetime.now()
+    new_cdate = openreview.tools.datetime_millis(now)
+    new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=4))
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Author_Rebuttal/Dates',
+        content={
+            'activation_date': { 'value': new_cdate },
+            'due_date': { 'value': new_duedate },
+            'expiration_date': { 'value': new_duedate }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Rebuttal-0-1', count=2)
+
+    invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Author_Rebuttal')
+    assert len(invitations) == 10
+
+    invitation  = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission1/-/Author_Rebuttal')
+    assert invitation.invitees == [
+        'ICLR.cc/2026/Conference',
+        'ICLR.cc/2026/Conference/Submission1/Authors'
+    ]
+
+    assert invitation and invitation.edit['readers'] == [
+        'ICLR.cc/2026/Conference/Program_Chairs',
+        'ICLR.cc/2026/Conference/Submission1/Senior_Action_Editors',
+        'ICLR.cc/2026/Conference/Submission1/Action_Editors',
+        'ICLR.cc/2026/Conference/Submission1/Reviewers',
+        'ICLR.cc/2026/Conference/Submission1/Authors'
+    ]
+
+def test_metareview_stage(client, openreview_client, helpers):
+
+    pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+    metareview_inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review')
+    assert metareview_inv
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review/Form_Fields')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review/Readers')
+    content = metareview_inv.edit['invitation']['edit']['note']['content']
+    assert all(field in content for field in ['metareview', 'recommendation', 'confidence'])
+
+    metareview_sac_revision_inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision')
+    assert metareview_sac_revision_inv
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision/Dates')
+    content = metareview_sac_revision_inv.edit['invitation']['edit']['note']['content']
+    assert all(field in content for field in ['metareview', 'recommendation', 'confidence'])
+
+    metareview_content = {
+        "final_metareview": {
+            "order": 1,
+            "description": "Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
+            "value": {
+              "param": {
+                "type": "string",
+                "maxLength": 5000,
+                "markdown": True,
+                "input": "textarea"
+              }
+            }
+        },
+        "final_recommendation": {
+            "order": 2,
+            "value": {
+                "param": {
+                "type": "string",
+                "enum": [
+                    "Accept (Oral)",
+                    "Accept (Poster)",
+                    "Reject"
+                ],
+                "input": "radio"
+                }
+            }
+        },
+        "final_confidence": {
+            "order": 3,
+            "value": {
+                "param": {
+                "type": "integer",
+                "enum": [
+                    {
+                    "value": 5,
+                    "description": "5: The area chair is absolutely certain"
+                    },
+                    {
+                    "value": 4,
+                    "description": "4: The area chair is confident but not absolutely certain"
+                    },
+                    {
+                    "value": 3,
+                    "description": "3: The area chair is somewhat confident"
+                    },
+                    {
+                    "value": 2,
+                    "description": "2: The area chair is not sure"
+                    },
+                    {
+                    "value": 1,
+                    "description": "1: The area chair's evaluation is an educated guess"
+                    }
+                ],
+                "input": "radio"
+                }
+            }
+        },
+        'metareview': {
+            'delete': True
+        },
+        'recommendation': {
+            'delete': True
+        },
+        'confidence': {
+            'delete': True
+        }
+    }
+
+    # edit the metareview form
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Meta_Review/Form_Fields',
+        content = {
+            'content': {
+                'value': metareview_content
+            },
+            'recommendation_field_name': {
+                'value': 'final_recommendation'
+            }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Meta_Review-0-1', count=2)
+
+    # create child invitations
+    now = datetime.datetime.now()
+    new_cdate = openreview.tools.datetime_millis(now)
+    new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=4))
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Meta_Review/Dates',
+        content={
+            'activation_date': { 'value': new_cdate },
+            'due_date': { 'value': new_duedate },
+            'expiration_date': { 'value': new_duedate }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Meta_Review-0-1', count=3)
+
+    invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Meta_Review')
+    assert len(invitations) == 10
+
+    invitation  = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission1/-/Meta_Review')
+    assert invitation.invitees == [
+        'ICLR.cc/2026/Conference',
+        'ICLR.cc/2026/Conference/Submission1/Action_Editors'
+    ]
+
+    assert invitation and invitation.edit['readers'] == [
+        'ICLR.cc/2026/Conference/Submission1/Senior_Action_Editors',
+        'ICLR.cc/2026/Conference/Submission1/Action_Editors',
+        'ICLR.cc/2026/Conference/Program_Chairs'
+    ]
+    assert all(field in invitation.edit['note']['content'] for field in ['final_metareview', 'final_recommendation', 'final_confidence'])
+    assert not all (field in invitation.edit['note']['content'] for field in ['metareview', 'recommendation', 'confidence'])
+
+    # assert meta review revision invitation is edited with metareview fields
+    meta_review_revision_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision')
+    content = meta_review_revision_inv.edit['invitation']['edit']['note']['content']
+    assert all(field in content for field in ['final_metareview', 'final_recommendation', 'final_confidence'])
+    assert not all (field in content for field in ['metareview', 'recommendation', 'confidence'])
