@@ -999,3 +999,74 @@ def test_metareview_stage(client, openreview_client, helpers):
     content = meta_review_revision_inv.edit['invitation']['edit']['note']['content']
     assert all(field in content for field in ['final_metareview', 'final_recommendation', 'final_confidence'])
     assert not all (field in content for field in ['metareview', 'recommendation', 'confidence'])
+
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_Release')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_Release/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_Release/Readers')
+
+    meta_review_release_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Meta_Review_Release')
+    assert meta_review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+        'ICLR.cc/2026/Conference/Program_Chairs',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Senior_Action_Editors',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Action_Editors',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Reviewers',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Authors'
+    ]
+
+def test_decision_stage(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    invitation = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision')
+    assert invitation
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision/Readers')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision/Decision_Options')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision_Upload')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision_Upload/Decision_CSV')
+
+    # create child invitations
+    now = datetime.datetime.now()
+    new_cdate = openreview.tools.datetime_millis(now)
+    new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=4))
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Decision/Dates',
+        content={
+            'activation_date': { 'value': new_cdate },
+            'due_date': { 'value': new_duedate },
+            'expiration_date': { 'value': new_duedate }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Decision-0-1', count=2)
+
+    invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Decision')
+    assert len(invitations) == 10
+
+    invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission1/-/Decision')
+
+    assert invitation and invitation.edit['readers'] == [
+        'ICLR.cc/2026/Conference/Program_Chairs'
+    ]
+
+    invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Decision/Readers')
+    reader_values = [item['value'] for item in invitation.edit['content']['readers']['value']['param']['items']]
+    assert 'ICLR.cc/2026/Conference/Senior_Action_Editors' in reader_values
+    assert 'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Senior_Action_Editors' in reader_values
+
+def test_decision_release_stage(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision_Release')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision_Release/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision_Release/Readers')
+
+    decision_release_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Decision_Release')
+    assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+        'ICLR.cc/2026/Conference/Program_Chairs',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Senior_Action_Editors',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Action_Editors',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Reviewers',
+        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Authors'
+    ]
+    assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['nonreaders'] == []
