@@ -5890,14 +5890,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' not in meta_review.readers
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
-        assert len(review.readers) - len(reviewer_edit['note']['readers']) == 3
+        assert len(review.readers) - len(reviewer_edit['note']['readers']) == 2
         assert 'aclweb.org/ACL/ARR/2023/August/Program_Chairs' in review.readers
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in review.readers
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs' in review.readers
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Area_Chairs' in review.readers
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Reviewers/Submitted' in review.readers
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Authors' in review.readers
-        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' in review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' not in review.readers
 
         # Check to make sure no emails were sent
         messages = openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')
