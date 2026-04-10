@@ -478,6 +478,87 @@ class TestWorkshopV2():
         assert messages[0]['content']['text'].startswith('Hi External Reviewer Adobe,\n\nYou were invited to review the paper number: 12, title: "Paper title No Abstract Version 2".\n\nPlease respond the invitation clicking the following link:')
         assert messages[0]['content']['replyTo'] == 'pc@icaps.cc'
 
+    def test_custom_max_papers_assignment_preprocess(self, client, openreview_client, helpers):
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+        submissions = pc_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
+
+        # Set user's quota to 1
+        cmp_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers',
+            head='PRL/2023/ICAPS/Reviewers',
+            tail='~Reviewer_ICAPSTwo1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=1
+        ))
+
+        # Test 1: User below quota - Allow
+        # 0 current assignments < 1 quota
+        assignment1 = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head=submissions[0].id,
+            tail='~Reviewer_ICAPSTwo1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=assignment1.id)
+
+        # Test 2: Exceeding quota - Reject
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, quota of 1 has been reached for ~Reviewer_ICAPSTwo1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submissions[2].id,
+                tail='~Reviewer_ICAPSTwo1',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                weight=1
+            ))
+
+        # Test 3: "Invitation Sent" - Reject
+        # User hasn't accepted, still enforce quota
+        invite_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Invite_Assignment',
+            head=submissions[2].id,
+            tail='~Reviewer_ICAPSTwo1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=0,
+            label='Invitation Sent'
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=invite_edge.id)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, quota of 1 has been reached for ~Reviewer_ICAPSTwo1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submissions[2].id,
+                tail='~Reviewer_ICAPSTwo1',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                weight=1
+            ))
+
+        # Test 4: Accepted Invite Assignment - Allow
+        messages = openreview_client.get_messages(
+            to='reviewer2@icaps.cc',
+            subject='[PRL ICAPS 2023] Invitation to review paper titled "Paper title 3"'
+        )
+        assert messages and len(messages) == 1
+
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation_fast(invitation_url, accept=True)
+
+        invite_edges = openreview_client.get_all_edges(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Invite_Assignment',
+            head=submissions[2].id,
+            tail='~Reviewer_ICAPSTwo1'
+        )
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        assignment_edges = openreview_client.get_all_edges(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head=submissions[2].id,
+            tail='~Reviewer_ICAPSTwo1'
+        )
+        assert len(assignment_edges) == 1
+
     def test_review_stage(self, client, openreview_client, helpers, request_page, selenium):
 
 

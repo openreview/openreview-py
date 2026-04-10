@@ -11,6 +11,7 @@ async function process(client, edge, invitation) {
   const committeeRole = invitation.content.committee_role?.value
   const quota = domain.content?.[`submission_assignment_max_${committeeRole}`]?.value
   const inviteAssignmentId = domain.content?.[`${committeeRole}_invite_assignment_id`]?.value
+  const customMaxPapersId = domain.content?.[`${committeeRole}_custom_max_papers_id`]?.value
 
   const { notes } = await client.getNotes({ id: edge.head })
   const submission = notes[0]
@@ -51,6 +52,31 @@ async function process(client, edge, invitation) {
     if (!bypassQuota && quota && filteredInviteAssignmentEdges.length + filteredAssignmentEdges.length >= quota) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, total assignments and invitations must not exceed ${quota}; invite edges=${filteredInviteAssignmentEdges.length} assignment edges=${filteredAssignmentEdges.length}` }))
     }
+
+    // Check if assignment respects user's custom max papers for direct assignments
+    const hasAcceptedInvite = inviteAssignmentEdges.some(e => {
+      return e.tail === edge.tail && acceptLabel && e?.label === acceptLabel
+    })
+
+    if (!hasAcceptedInvite && customMaxPapersId) {
+      const [{ edges: customMaxPapersEdges }, userAssignmentsResponse] = await Promise.all([
+        client.getEdges({ invitation: customMaxPapersId, tail: edge.tail }),
+        client.getEdges({ invitation: edge.invitation, tail: edge.tail })
+      ])
+      const userAssignmentCount = userAssignmentsResponse.count ?? userAssignmentsResponse.edges.length
+
+      let userPaperQuota = customMaxPapersEdges.length > 0 ? customMaxPapersEdges[0].weight : 0
+
+      if (!userPaperQuota) {
+        const { invitations: cmpInvitations } = await client.getInvitations({ id: customMaxPapersId })
+        userPaperQuota = cmpInvitations[0]?.edge?.weight?.param?.default
+      }
+
+      if (userPaperQuota && userAssignmentCount >= userPaperQuota) {
+        return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, quota of ${userPaperQuota} has been reached for ${edge.tail}` }))
+      }
+    }
+
     const { count } = await client.getGroups({ id: `${submissionGroupId}/${committeeName}` })
     if ( count === 0) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, submission ${committeeName} group not found.` }))
