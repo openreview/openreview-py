@@ -2403,7 +2403,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Please let us know if you have any other serious concerns about this submission that should be considered by the chairs. Markdown formatting and latex formulas can be used.",
+        "description": "Please let us know if you have any other serious concerns about this submission that should be considered by the chairs, e.g. possible salami slicing concerns (https://aclrollingreview.org/cfp#originality). Markdown formatting and latex formulas can be used.",
         "order": 22
     }
 }
@@ -2635,7 +2635,7 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Please let us know if you have any other serious concerns about this submission that should be considered by the chairs. Markdown formatting and latex formulas can be used.",
+        "description": "Please let us know if you have any other serious concerns about this submission that should be considered by the chairs, e.g. possible salami slicing concerns (https://aclrollingreview.org/cfp#originality). Markdown formatting and latex formulas can be used.",
         "order": 17
     }
 }
