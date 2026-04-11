@@ -715,7 +715,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "I confirm that this submission adheres to ARR requirements.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
+        "description": "I confirm that this submission adheres to ARR requirements.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist \n\n NEW: Following ICML policy, any related concurrent work should be discussed in related work and enclosed in supplementary material. See the update on submission originality and thinly sliced contributions, with desk rejection penalties: https://aclrollingreview.org/cfp#originality",
         "order": 69
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
