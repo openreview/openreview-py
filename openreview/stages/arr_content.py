@@ -836,7 +836,7 @@ arr_official_review_content = {
             }
         },
         "order": 1,
-        "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n Note that the reviewer names are anonymous to the authors, but are VISIBLE to the senior researchers serving as area chairs, senior chairs and program chairs. Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs (https://aclrollingreview.org/authors#step2.2). Highly problematic reviews may result in penalties, and great reviews may result in awards (https://aclrollingreview.org/incentives2025) \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
+        "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n Note that the reviewer names are anonymous to the authors, but are VISIBLE to the senior researchers serving as area chairs, senior chairs and program chairs. Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs (https://aclrollingreview.org/authors#step2.2). Highly problematic reviews may result in penalties, and great reviews may result in awards (https://aclrollingreview.org/incentives2025). ARR is currently experimenting with a review assistant tool, which you may optionally use to check for some common review issues (https://revas.mbzuai.ac.ae/). \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
     },
     "summary_of_strengths": {
         "value": {
@@ -1338,7 +1338,8 @@ arr_official_review_content = {
                 "input": "radio",
                 "enum": [
                     "I did not use any generative AI tools for this review",
-                    "I used a privacy-preserving tool exclusively for the use case(s) approved by PEC policy, such as language edits"
+                    "I used a privacy-preserving tool exclusively for the use case(s) approved by PEC policy, such as language edits",
+                    "I used the Revas tool to check for review issues (https://revas.mbzuai.ac.ae)"
                 ],
                 "optional": False,
                 "type": "string"
