@@ -735,8 +735,29 @@ class ARR(object):
     def expire_invitation(self, invitation_id):
         return self.venue.expire_invitation(invitation_id)
 
+    def prune_active_arr_venues(self, keep_count=2):
+        active_venues = self.client.get_group('active_venues')
+        arr_venues = []
+
+        for venue_id in active_venues.members or []:
+            if not venue_id.startswith('aclweb.org/ACL/ARR'):
+                continue
+
+            venue_group = tools.get_group(self.client, venue_id)
+            venue_cdate = venue_group.cdate
+            arr_venues.append((venue_cdate, venue_id == self.venue_id, venue_id))
+
+        if len(arr_venues) <= keep_count:
+            return
+
+        arr_venues.sort(reverse=True)
+        stale_venue_ids = [venue_id for _, _, venue_id in arr_venues[keep_count:]]
+        if stale_venue_ids:
+            self.client.remove_members_from_group(active_venues.id, stale_venue_ids)
+
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
+        self.prune_active_arr_venues()
 
         setup_arr_invitations(self.invitation_builder)
 
