@@ -38,6 +38,7 @@ class TestVenueRestriction():
                     'submission_deadline': {'value': openreview.tools.datetime_millis(due_date)},
                     'reviewers_name': {'value': 'Reviewers'},
                     'area_chairs_name': {'value': 'Area_Chairs'},
+                    'senior_area_chairs_name': { 'value': 'Senior_Area_Chairs' },
                     'colocated': {'value': 'Independent'},
                     'previous_venue': {'value': 'RESTRICT.cc/2024/Conference'},
                     'expected_submissions': {'value': 10},
