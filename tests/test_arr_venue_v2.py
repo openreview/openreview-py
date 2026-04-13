@@ -250,6 +250,8 @@ class TestARRVenueV2():
 
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'sacStatuspropertiesAllowed' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'numPapersWithMissingMetaReviews' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
         ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
         assert 'Emergency_Score' in ac_group.web
@@ -374,6 +376,8 @@ class TestARRVenueV2():
 
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'reviewers_invite_assignment_id' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'sacStatuspropertiesAllowed' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
+        assert 'numPapersWithMissingMetaReviews' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
         ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
         assert 'Emergency_Score' in ac_group.web

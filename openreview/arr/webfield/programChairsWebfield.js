@@ -224,6 +224,20 @@ return {
         return (row.notes?.length ?? 0) - (row.numCompletedMetaReviews ?? 0)
       `,
     },
+    sacStatuspropertiesAllowed: {
+      number: ['number'],
+      name: ['sacProfile.preferredName'],
+      email: ['sacProfile.preferredEmail'],
+
+      numPapersWithMissingMetaReviews: `
+        const assignedNotes = row.notes ?? []
+        return assignedNotes.filter((note) => {
+          const assignedAreaChairs = note.metaReviewData?.areaChairs?.length ?? 0
+          const submittedMetaReviews = note.metaReviewData?.metaReviews?.length ?? 0
+          return submittedMetaReviews < assignedAreaChairs
+        }).length
+      `,
+    },
     reviewerEmailFuncs: [
       {
         label: 'Reviewers with assignments', filterFunc: `
