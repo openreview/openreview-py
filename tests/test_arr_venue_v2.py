@@ -5354,6 +5354,124 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 )
             )
 
+        with pytest.raises(openreview.OpenReviewException, match=r'Links are not allowed in official comments that are visible to authors.'):
+            test_client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'],
+                note=openreview.api.Note(
+                    replyto=submissions[1].id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                    ],
+                    content={
+                        "comment": { "value": "Please see www.example.com for more information." }
+                    }
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Links are not allowed in official comments that are visible to authors.'):
+            test_client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'],
+                note=openreview.api.Note(
+                    replyto=submissions[1].id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                    ],
+                    content={
+                        "comment": { "value": "Please see example.com for more information." }
+                    }
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Links are not allowed in official comments that are visible to authors.'):
+            test_client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'],
+                note=openreview.api.Note(
+                    replyto=submissions[1].id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                    ],
+                    content={
+                        "comment": { "value": "Please see example.co.uk for more information." }
+                    }
+                )
+            )
+
+        comment_edit = pc_client_v2.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Official_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'
+                ],
+                content={
+                    "comment": { "value": "Please email pc@example.com for more information." }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        comment_edit = pc_client_v2.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Official_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'
+                ],
+                content={
+                    "comment": { "value": "Please see example.museum for more information." }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Links are not allowed in official comments that are visible to authors.'):
+            test_client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'],
+                note=openreview.api.Note(
+                    replyto=submissions[1].id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                    ],
+                    content={
+                        "comment": { "value": "Please see example.io for more information." }
+                    }
+                )
+            )
+
         comment_edit = pc_client_v2.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Official_Comment",
             writers=['aclweb.org/ACL/ARR/2023/August'],

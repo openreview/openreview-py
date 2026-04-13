@@ -16,9 +16,91 @@ async function process(client, edit, invitation) {
   const authorsName = domain.content?.authors_name?.value || "Authors"
   const authorGroupId = `${domain.id}/Submission${forum.number}/${authorsName}`
   const commentText = note.content?.comment?.value || ""
-  const linkPattern = /https?:\/\//i
 
-  if ((readers.includes(authorGroupId) || readers.includes("everyone")) && linkPattern.test(commentText)) {
+  function containsLink(text) {
+    const tokenChecks = [
+      ["includes", ["http://", "https://", "www."]]
+    ]
+    const popularDomainSuffixes = [
+      ".com",
+      ".net",
+      ".org",
+      ".io",
+      ".co",
+      ".tv",
+      ".cn",
+      ".de",
+      ".uk",
+      ".ru",
+      ".nl",
+      ".br"
+    ]
+    const boundaryChars = "<>()[]{}.,;:!?\"'"
+    let lowerText = String(text || "").toLowerCase()
+
+    for (const whitespace of ["\n", "\r", "\t"]) {
+      lowerText = lowerText.split(whitespace).join(" ")
+    }
+
+    function trimToken(token) {
+      let start = 0
+      let end = token.length
+      while (start < end && boundaryChars.includes(token[start])) {
+        start += 1
+      }
+      while (end > start && boundaryChars.includes(token[end - 1])) {
+        end -= 1
+      }
+      return token.slice(start, end)
+    }
+
+    function matches(value, checks) {
+      for (const [operation, parts] of checks) {
+        for (const part of parts) {
+          if (value[operation](part)) {
+            return true
+          }
+        }
+      }
+      return false
+    }
+
+    for (const rawToken of lowerText.split(" ")) {
+      const token = trimToken(rawToken)
+      // Skip empty tokens, emails, and tokens that cannot be hostnames.
+      if (!token || token.includes("@") || !token.includes(".")) {
+        continue
+      }
+      // Return early for explicit URL schemes and common www-style hosts.
+      if (matches(token, tokenChecks)) {
+        return true
+      }
+
+      // Trim the token to a host-like prefix before matching common web suffixes.
+      let host = token
+      for (const separator of ["/", "?", "#", ":"]) {
+        const index = host.indexOf(separator)
+        if (index !== -1) {
+          host = host.slice(0, index)
+        }
+      }
+      host = trimToken(host)
+
+      // Match hosts that end in one of the common web suffixes.
+      const firstDot = host.indexOf(".")
+      if (firstDot > 0 && firstDot < host.length - 1) {
+        for (const suffix of popularDomainSuffixes) {
+          if (host.endsWith(suffix)) {
+            return true
+          }
+        }
+      }
+    }
+
+    return false
+  }
+
+  if ((readers.includes(authorGroupId) || readers.includes("everyone")) && containsLink(commentText)) {
     return Promise.reject(
       new OpenReviewError({
         name: "Error",
