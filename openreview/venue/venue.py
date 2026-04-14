@@ -84,6 +84,7 @@ class Venue(object):
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
         self.submission_assignment_max_reviewers = None
+        self.submission_assignment_max_area_chairs = None
         self.preferred_emails_groups = []
         self.iThenticate_plagiarism_check = False
         self.iThenticate_plagiarism_check_api_key = ''
