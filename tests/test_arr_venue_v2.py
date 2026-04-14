@@ -241,6 +241,7 @@ class TestARRVenueV2():
         group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
         assert group
         assert 'submission_assignment_max_reviewers' not in group.content
+        assert group.content['submission_assignment_max_area_chairs']['value'] == 1
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers')
@@ -252,6 +253,7 @@ class TestARRVenueV2():
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').web
         ac_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
         assert 'Emergency_Score' in ac_group.web
+        assert group.content['area_chairs_invite_assignment_id']['value'] == 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment'
 
         openreview_client.post_group_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
@@ -393,6 +395,9 @@ class TestARRVenueV2():
         assert 'paper_type' in submission_invitation.edit['note']['content']
         assert 'keywords' not in submission_invitation.edit['note']['content']
 
+        revision_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
+        assert 'submission_assignment_max_area_chairs' in revision_invitation.reply['content']
+
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
         assert 'overall_assessment' == domain.content['meta_review_recommendation']['value']
 
@@ -407,6 +412,7 @@ class TestARRVenueV2():
         assert domain.content['ethics_reviewers_id']['value'] == venue.get_ethics_reviewers_id()
         assert domain.content['anon_ethics_reviewer_name']['value'] == venue.anon_ethics_reviewers_name()
         assert domain.content['submission_assignment_max_reviewers']['value'] == 3
+        assert domain.content['submission_assignment_max_area_chairs']['value'] == 1
         
         # Verify that ethics reviewers and ethics chairs are in the preferred_emails_groups
         preferred_emails_groups = domain.content['preferred_emails_groups']['value']
@@ -4185,6 +4191,25 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment')
         assignment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment')
         assert 'sync_sac_id' not in assignment_invitation.content
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
+                head = submissions[1].id,
+                tail = '~AC_ARROne1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs'],
+                weight = 1
+            ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite assignment, total assignments and invitations must not exceed 1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment',
+                head = submissions[1].id,
+                tail = '~AC_ARROne1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 0,
+                label = 'Invitation Sent'
+            ))
 
         # Remove an AC and replace
         sac_client = openreview.api.OpenReviewClient(username = 'sac2@aclrollingreview.com', password=helpers.strong_password)
