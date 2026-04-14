@@ -30,11 +30,12 @@ def process(client, invitation):
     new_edges = []
     for profile in all_profiles:
         if '~' in profile.id:
-            if not existing_edges.get(profile.id):
+            preferred_email = profile.get_preferred_email()
+            if preferred_email and not existing_edges.get(profile.id):
                 new_edges.append(openreview.api.Edge(
                     invitation=invitation.id,
                     head=profile.id,
-                    tail=profile.get_preferred_email(),
+                    tail=preferred_email,
                     signatures=[journal.venue_id],
                     readers=[f'{journal.venue_id}/Preferred_Emails_Readers', profile.id],
                     writers=[journal.venue_id, profile.id]
