@@ -89,6 +89,7 @@ class ARR(object):
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
         self.submission_assignment_max_reviewers = None
+        self.submission_assignment_max_area_chairs = 1
         self.comment_notification_threshold = None
 
     def copy_to_venue(self):
@@ -138,6 +139,7 @@ class ARR(object):
         self.venue.source_submissions_query_mapping = self.source_submissions_query_mapping
         self.venue.sac_paper_assignments = self.sac_paper_assignments
         self.venue.submission_assignment_max_reviewers = self.submission_assignment_max_reviewers
+        self.venue.submission_assignment_max_area_chairs = self.submission_assignment_max_area_chairs
         self.venue.comment_notification_threshold = self.comment_notification_threshold
 
         self.submission_stage.hide_fields = self.submission_stage.hide_fields + hide_fields
