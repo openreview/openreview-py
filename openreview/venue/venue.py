@@ -853,6 +853,7 @@ class Venue(object):
         flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
         self.invitation_builder.set_ethics_paper_groups_invitation()
         self.invitation_builder.update_review_invitations()
+        self.invitation_builder.update_meta_review_invitations()
         self.invitation_builder.set_ethics_review_invitation()
         if self.ethics_review_stage.enable_comments:
             print('Setting up ethics review comments invitation')
