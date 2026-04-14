@@ -1236,7 +1236,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
             if self.venue.is_template_related_workflow():
-                invitation.description = f'Set the date/time when the meta review {sac_acronym} revision period is open to senior area chairs, when meta reviews revisions are due, and when the meta review revision form is no longer available to area chairs.'
+                invitation.description = f'Set the date/time when the meta review {sac_acronym} revision period is open to senior area chairs, when meta reviews revisions are due, and when the meta review revision form is no longer available to senior area chairs.'
 
             self.save_invitation(invitation, replacement=False)
 

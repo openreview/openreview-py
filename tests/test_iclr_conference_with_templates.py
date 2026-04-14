@@ -1,14 +1,7 @@
-import os
-import re
-import csv
 import pytest
-import random
 import datetime
-import re
 import openreview
-from openreview.api import Note
 from selenium.webdriver.common.by import By
-from openreview.api import OpenReviewClient
 
 class TestSimpleDualAnonymous():
 
