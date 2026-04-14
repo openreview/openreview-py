@@ -1,4 +1,5 @@
 import datetime
+import os
 import pytest
 import openreview
 from openreview.api import Note, OpenReviewClient
@@ -125,3 +126,19 @@ class TestSubmissionHumanVerification():
                     }
                 )
             )
+
+    def test_human_verification_on_attachment(self, helpers):
+        # API is configured to allow 10 attachment uploads per hour per user
+        helpers.create_user('hvattachment@hvtest.cc', 'HVAttachment', 'One')
+        author_client = OpenReviewClient(username='hvattachment@hvtest.cc', password=helpers.strong_password)
+
+        pdf_path = os.path.join(os.path.dirname(__file__), 'data/paper.pdf')
+
+        # first 10 attachment uploads succeed (within the limit)
+        for _ in range(10):
+            url = author_client.put_attachment(pdf_path, 'HVTest.cc/2025/Conference/-/Submission', 'pdf')
+            assert url
+
+        # 11th upload within the window must trigger human verification
+        with pytest.raises(openreview.OpenReviewException, match=r'Human verification required'):
+            author_client.put_attachment(pdf_path, 'HVTest.cc/2025/Conference/-/Submission', 'pdf')
