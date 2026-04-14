@@ -1,0 +1,127 @@
+import datetime
+import pytest
+import openreview
+from openreview.api import Note, OpenReviewClient
+
+
+class TestSubmissionHumanVerification():
+
+    def test_setup_venue(self, openreview_client, helpers):
+        support_group_id = 'openreview.net/Support'
+
+        helpers.create_user('programchair@hvtest.cc', 'ProgramChair', 'HVTest')
+        pc_client = OpenReviewClient(username='programchair@hvtest.cc', password=helpers.strong_password)
+
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=2)
+
+        request = pc_client.post_note_edit(
+            invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow',
+            signatures=['~ProgramChair_HVTest1'],
+            note=openreview.api.Note(
+                content={
+                    'official_venue_name': { 'value': 'The HVTest Conference' },
+                    'abbreviated_venue_name': { 'value': 'HVTest 2025' },
+                    'venue_website_url': { 'value': 'https://hvtest.cc/Conferences/2025' },
+                    'location': { 'value': 'Amherst, Massachusetts' },
+                    'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
+                    'program_chair_emails': { 'value': ['programchair@hvtest.cc'] },
+                    'contact_email': { 'value': 'hvtest2025.programchairs@gmail.com' },
+                    'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
+                    'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
+                    'reviewers_name': { 'value': 'Reviewers' },
+                    'area_chairs_name': { 'value': 'Area_Chairs' },
+                    'colocated': { 'value': 'Independent' },
+                    'previous_venue': { 'value': 'HVTest.cc/2024/Conference' },
+                    'expected_submissions': { 'value': 50 },
+                    'how_did_you_hear_about_us': { 'value': 'We have used OpenReview for our previous conferences.' },
+                    'venue_organizer_agreement': {
+                        'value': [
+                            'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                            'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                            'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                            'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                            'We will treat the OpenReview staff with kindness and consideration.',
+                            'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
+                        ]
+                    }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=request['id'])
+
+        # deploy the venue
+        edit = openreview_client.post_note_edit(
+            invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
+            signatures=[support_group_id],
+            note=openreview.api.Note(
+                id=request['note']['id'],
+                content={
+                    'venue_id': { 'value': 'HVTest.cc/2025/Conference' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        assert openreview_client.get_invitation('HVTest.cc/2025/Conference/-/Submission')
+        assert openreview_client.get_invitation('HVTest.cc/2025/Conference/-/Edit')
+
+    def test_human_verification_on_submission(self, openreview_client, helpers):
+        # add humanVerificationRequired to the submission invitation via the meta invitation
+        openreview_client.post_invitation_edit(
+            invitations='HVTest.cc/2025/Conference/-/Edit',
+            signatures=['HVTest.cc/2025/Conference'],
+            invitation=openreview.api.Invitation(
+                id='HVTest.cc/2025/Conference/-/Submission',
+                humanVerificationRequired={ 'limit': 1, 'windowMs': 300000 }
+            )
+        )
+
+        submission_inv = openreview_client.get_invitation('HVTest.cc/2025/Conference/-/Submission')
+        assert submission_inv.humanVerificationRequired == { 'limit': 1, 'windowMs': 300000 }
+
+        helpers.create_user('hvauthor@hvtest.cc', 'HVAuthor', 'One')
+        author_client = OpenReviewClient(username='hvauthor@hvtest.cc', password=helpers.strong_password)
+
+        # first submission succeeds (within the limit)
+        first_edit = author_client.post_note_edit(
+            invitation='HVTest.cc/2025/Conference/-/Submission',
+            signatures=['~HVAuthor_One1'],
+            note=Note(
+                license='CC BY 4.0',
+                content={
+                    'title': { 'value': 'First HV Paper' },
+                    'abstract': { 'value': 'First abstract' },
+                    'authors': { 'value': ['HVAuthor One'] },
+                    'authorids': { 'value': ['~HVAuthor_One1'] },
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+                    'keywords': { 'value': ['kw'] },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                }
+            )
+        )
+        assert first_edit['id']
+
+        # second submission within the window must trigger human verification
+        with pytest.raises(openreview.OpenReviewException, match=r'Human verification required'):
+            author_client.post_note_edit(
+                invitation='HVTest.cc/2025/Conference/-/Submission',
+                signatures=['~HVAuthor_One1'],
+                note=Note(
+                    license='CC BY 4.0',
+                    content={
+                        'title': { 'value': 'Second HV Paper' },
+                        'abstract': { 'value': 'Second abstract' },
+                        'authors': { 'value': ['HVAuthor One'] },
+                        'authorids': { 'value': ['~HVAuthor_One1'] },
+                        'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+                        'keywords': { 'value': ['kw'] },
+                        'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                        'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                    }
+                )
+            )
