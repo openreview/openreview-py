@@ -103,10 +103,11 @@ class Workflows():
 
         invitation = Invitation(
             id = conference_venue_invitation_id,
-            invitees = ['everyone'],
+            invitees = ['~'],
             readers = ['everyone'],
             writers = [],
             signatures = [super_id],
+            humanVerificationRequired = { 'windowMs': 3600000, 'limit': 15 },
             preprocess = self.get_process_content('workflow_process/request_form_preprocess.py'),
             edit = {
                 'signatures': { 'param': { 'regex': '~.*' } },

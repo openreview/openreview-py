@@ -145,10 +145,11 @@ class JournalRequest():
             content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
             invitation = openreview.api.Invitation(
                 id = f'{self.support_group_id}/-/Journal_Request',
-                invitees = ['everyone'],
+                invitees = ['~'],
                 readers = ['everyone'],
                 writers = [],
                 signatures = ['~Super_User1'],
+                humanVerificationRequired = { 'windowMs': 3600000, 'limit': 15 },
                 edit = {
                     'signatures': { 
                         'param': { 

@@ -904,6 +904,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures=[venue_id],
             cdate=self.journal.get_submission_start_date(),
             expdate=self.journal.get_submission_deadline(),
+            humanVerificationRequired={ 'windowMs': 3600000, 'limit': 15 },
             edit={
                 'signatures': { 
                     'param': { 

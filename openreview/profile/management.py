@@ -1464,10 +1464,11 @@ return {
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(                    
                         id=f'{self.support_group_id}/-/Profile_Name_Removal',
-                        readers=['everyone'],
+                        readers=['~'],
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
                         invitees=['~'],
+                        humanVerificationRequired={ 'windowMs': 3600000, 'limit': 15 },
                         process=file_content,
                         preprocess=pre_file_content,
                         edit={
@@ -1630,10 +1631,10 @@ return {
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(
                         id=f'{self.support_group_id}/-/Profile_Email_Removal',
-                        readers=['everyone'],
+                        readers=[self.support_group_id],
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
-                        invitees=['~'],
+                        invitees=[self.support_group_id],
                         process=file_content,
                         preprocess=pre_file_content,
                         edit={
@@ -1692,6 +1693,7 @@ return {
                 writers=[self.support_group_id],
                 signatures=[archive_group_id],
                 invitees=['~'],
+                humanVerificationRequired={ 'windowMs': 3600000, 'limit': 15 },
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
@@ -1985,6 +1987,7 @@ return {
                 writers=[anonymous_group_id],
                 signatures=[anonymous_group_id],
                 invitees=['~'],
+                humanVerificationRequired={ 'windowMs': 3600000, 'limit': 15 },
                 edit={
                     'readers': [ anonymous_group_id, author_anonymous_group_id],
                     'signatures': { 
