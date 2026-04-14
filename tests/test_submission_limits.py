@@ -5,7 +5,7 @@ import openreview
 from openreview.api import Note, OpenReviewClient
 
 
-class TestSubmissionHumanVerification():
+class TestSubmissionLimits():
 
     def test_setup_venue(self, openreview_client, helpers):
         support_group_id = 'openreview.net/Support'
@@ -119,6 +119,64 @@ class TestSubmissionHumanVerification():
                         'abstract': { 'value': 'Second abstract' },
                         'authors': { 'value': ['HVAuthor One'] },
                         'authorids': { 'value': ['~HVAuthor_One1'] },
+                        'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+                        'keywords': { 'value': ['kw'] },
+                        'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                        'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                    }
+                )
+            )
+
+    def test_max_replies_on_submission(self, openreview_client, helpers):
+        # remove humanVerificationRequired and set maxReplies to 1 on the submission invitation
+        openreview_client.post_invitation_edit(
+            invitations='HVTest.cc/2025/Conference/-/Edit',
+            signatures=['HVTest.cc/2025/Conference'],
+            invitation=openreview.api.Invitation(
+                id='HVTest.cc/2025/Conference/-/Submission',
+                maxReplies=1,
+                humanVerificationRequired={ 'delete': True }
+            )
+        )
+
+        submission_inv = openreview_client.get_invitation('HVTest.cc/2025/Conference/-/Submission')
+        assert submission_inv.maxReplies == 1
+
+        helpers.create_user('maxreplies@hvtest.cc', 'MaxReplies', 'One')
+        author_client = OpenReviewClient(username='maxreplies@hvtest.cc', password=helpers.strong_password)
+
+        # first submission succeeds
+        first_edit = author_client.post_note_edit(
+            invitation='HVTest.cc/2025/Conference/-/Submission',
+            signatures=['~MaxReplies_One1'],
+            note=Note(
+                license='CC BY 4.0',
+                content={
+                    'title': { 'value': 'First MaxReplies Paper' },
+                    'abstract': { 'value': 'First abstract' },
+                    'authors': { 'value': ['MaxReplies One'] },
+                    'authorids': { 'value': ['~MaxReplies_One1'] },
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+                    'keywords': { 'value': ['kw'] },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                }
+            )
+        )
+        assert first_edit['id']
+
+        # second submission must fail due to maxReplies=1
+        with pytest.raises(openreview.OpenReviewException, match=r'reached the maximum number \(1\) of replies'):
+            author_client.post_note_edit(
+                invitation='HVTest.cc/2025/Conference/-/Submission',
+                signatures=['~MaxReplies_One1'],
+                note=Note(
+                    license='CC BY 4.0',
+                    content={
+                        'title': { 'value': 'Second MaxReplies Paper' },
+                        'abstract': { 'value': 'Second abstract' },
+                        'authors': { 'value': ['MaxReplies One'] },
+                        'authorids': { 'value': ['~MaxReplies_One1'] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
