@@ -45,7 +45,7 @@ def process(client, edit, invitation):
                 start_date=submission_duedate + datetime.timedelta(days=3.5),
                 due_date=submission_duedate + datetime.timedelta(days=7)
             )
-    )
+        )
 
         if venue.use_senior_area_chairs:
             venue.bid_stages.append(
