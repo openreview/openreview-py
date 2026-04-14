@@ -247,6 +247,7 @@ class GroupBuilder(object):
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_area_chairs_id(), deployed=True) }
+            content['area_chairs_invite_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_area_chairs_id(), invite=True) }
             content['area_chairs_message_id'] =  { 'value': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id()) }
             content['area_chairs_message_submission_id'] = { 'value': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id('{number}')) }
 
@@ -345,6 +346,9 @@ class GroupBuilder(object):
 
         if self.venue.submission_assignment_max_reviewers:
             content['submission_assignment_max_reviewers'] = { 'value': self.venue.submission_assignment_max_reviewers }
+
+        if self.venue.submission_assignment_max_area_chairs:
+            content['submission_assignment_max_area_chairs'] = { 'value': self.venue.submission_assignment_max_area_chairs }
 
         if self.venue.comment_notification_threshold:
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
