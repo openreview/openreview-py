@@ -149,7 +149,6 @@ class JournalRequest():
                 readers = ['everyone'],
                 writers = [],
                 signatures = ['~Super_User1'],
-                humanVerificationRequired = { 'windowMs': 3600000, 'limit': 15 },
                 edit = {
                     'signatures': { 
                         'param': { 

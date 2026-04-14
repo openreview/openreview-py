@@ -1468,7 +1468,6 @@ return {
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
                         invitees=['~'],
-                        humanVerificationRequired={ 'windowMs': 3600000, 'limit': 15 },
                         process=file_content,
                         preprocess=pre_file_content,
                         edit={
@@ -1693,7 +1692,6 @@ return {
                 writers=[self.support_group_id],
                 signatures=[archive_group_id],
                 invitees=['~'],
-                humanVerificationRequired={ 'windowMs': 3600000, 'limit': 15 },
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
@@ -1987,7 +1985,6 @@ return {
                 writers=[anonymous_group_id],
                 signatures=[anonymous_group_id],
                 invitees=['~'],
-                humanVerificationRequired={ 'windowMs': 3600000, 'limit': 15 },
                 edit={
                     'readers': [ anonymous_group_id, author_anonymous_group_id],
                     'signatures': { 
