@@ -63,7 +63,15 @@ async function process(client, edge, invitation) {
         client.getEdges({ invitation: customMaxPapersId, tail: edge.tail }),
         client.getEdges({ invitation: edge.invitation, tail: edge.tail })
       ])
-      const userAssignmentCount = userAssignmentsResponse.count ?? userAssignmentsResponse.edges.length
+
+      // Exclude current assignment in case of edge update
+      const filteredUserAssignments = userAssignmentsResponse.edges.filter(e => e.id !== edge.id)
+      const isExistingEdge = filteredUserAssignments.length < userAssignmentsResponse.edges.length
+
+      // If updating an existing edge, subtract 1 so it is not counted against the quota
+      const userAssignmentCount = userAssignmentsResponse.count != null
+        ? userAssignmentsResponse.count - (isExistingEdge ? 1 : 0)
+        : filteredUserAssignments.length
 
       let userPaperQuota = customMaxPapersEdges.length > 0 ? customMaxPapersEdges[0].weight : null
 

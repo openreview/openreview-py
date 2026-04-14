@@ -503,7 +503,25 @@ class TestWorkshopV2():
                 weight=1
             ))
 
-        # Test 3: "Invitation Sent" - Reject
+        # Test 3: Update existing assignment edge - Allow
+        updated_edge = openreview_client.post_edge(openreview.api.Edge(
+            id=assignment1.id,
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head=submissions[0].id,
+            tail='~Reviewer_ICAPSTwo1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=2
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=updated_edge.id)
+
+        updated_edges = openreview_client.get_all_edges(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            tail='~Reviewer_ICAPSTwo1'
+        )
+        assert len(updated_edges) == 1
+        assert updated_edges[0].weight == 2
+
+        # Test 4: "Invitation Sent" - Reject
         # User hasn't accepted, still enforce quota
         invite_edge = openreview_client.post_edge(openreview.api.Edge(
             invitation='PRL/2023/ICAPS/Reviewers/-/Invite_Assignment',
@@ -524,7 +542,7 @@ class TestWorkshopV2():
                 weight=1
             ))
 
-        # Test 4: Accepted Invite Assignment - Allow
+        # Test 5: Accepted Invite Assignment - Allow
         messages = openreview_client.get_messages(
             to='reviewer2@icaps.cc',
             subject='[PRL ICAPS 2023] Invitation to review paper titled "Paper title 3"'
@@ -549,7 +567,7 @@ class TestWorkshopV2():
         )
         assert len(assignment_edges) == 1
 
-        # Test 5: Quota of 0 - Rejected
+        # Test 6: Quota of 0 - Rejected
         cmp_edge = openreview_client.post_edge(openreview.api.Edge(
             invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers',
             head='PRL/2023/ICAPS/Reviewers',
@@ -569,11 +587,11 @@ class TestWorkshopV2():
 
         openreview_client.delete_edges(invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers', head='PRL/2023/ICAPS/Reviewers', tail='~Reviewer_ICAPSThree1')
 
-        # Test 5: Read quota from invitation
+        # Test 7: Read quota from invitation
         cmp_edges = openreview_client.get_all_edges(
-            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers',
             head='PRL/2023/ICAPS/Reviewers',
-            tail='Reviewer_ICAPSThree1'
+            tail='~Reviewer_ICAPSThree1'
         )
         assert len(cmp_edges) == 0
 
