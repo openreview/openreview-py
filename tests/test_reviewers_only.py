@@ -445,6 +445,7 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Message-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
 
         # assert submission deadline and expdate get updated, as well as post submission cdate
@@ -454,6 +455,21 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
         assert submission_inv.expdate == new_duedate + 1800000
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
+
+        withdrawal_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal')
+        assert withdrawal_inv and withdrawal_inv.cdate == submission_inv.expdate
+        assert withdrawal_inv.edit['invitation']['cdate'] == submission_inv.expdate
+
+        desk_rejection_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection')
+        assert desk_rejection_inv and desk_rejection_inv.cdate == submission_inv.expdate
+        assert desk_rejection_inv.edit['invitation']['cdate'] == submission_inv.expdate
+
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.cdate == submission_inv.expdate
+
+        submission_message_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Message')
+        assert submission_message_inv and submission_message_inv.cdate == submission_inv.expdate
+        assert submission_message_inv.edit['invitation']['cdate'] == submission_inv.expdate
 
         content_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Form_Fields')
         assert content_inv
@@ -1012,6 +1028,30 @@ For more details, please check the following links:
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Message-0-1', count=3)     
+
+        # assert submission deadline and expdate get updated
+        submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
+        assert submission_inv and submission_inv.cdate == new_cdate
+        assert submission_inv.duedate == new_duedate
+        assert submission_inv.expdate == new_duedate + 1800000
+
+        # process does not update other invitations because their current cdate > new expdate
+        post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
+        assert post_submission_inv and post_submission_inv.cdate > submission_inv.expdate
+
+        withdrawal_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal')
+        assert withdrawal_inv and withdrawal_inv.cdate > submission_inv.expdate
+
+        desk_rejection_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection')
+        assert desk_rejection_inv and desk_rejection_inv.cdate > submission_inv.expdate
+
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.cdate > submission_inv.expdate
+
+        submission_message_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Message')
+        assert submission_message_inv and submission_message_inv.cdate == submission_inv.expdate
+        assert submission_message_inv.edit['invitation']['cdate'] == submission_inv.expdate
 
         # manually update cdate of post submission invitations
         pc_client.post_invitation_edit(
@@ -1106,6 +1146,9 @@ For more details, please check the following links:
         desk_rejection_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Desk_Rejection')
         assert len(desk_rejection_invitations) == 10
 
+        submission_message_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Submission_Message')
+        assert len(submission_message_invitations) == 10
+
         ## test message all authors
         pc_client.post_message(
             invitation='ABCD.cc/2025/Conference/-/Message',
@@ -1122,8 +1165,8 @@ For more details, please check the following links:
             subject='Test message to submission 1 authors', 
             message='Test message to submission 1 authors')
         
-        messages = openreview_client.get_messages(subject='Test message to all authors')
-        assert len(messages) == 12        
+        messages = openreview_client.get_messages(subject='Test message to submission 1 authors')
+        assert len(messages) == 2        
 
     def test_edit_submission_updates_author_group(self, openreview_client, test_client, helpers):
         '''Test that editing an existing edit to add a new author updates the author group'''
@@ -2087,6 +2130,7 @@ To view this paper, please go to https://openreview.net/forum?id={submissions[0]
 
 Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
 '''
+        assert messages[0]['content']['replyTo'] == 'abcd2025.programchairs@gmail.com'
 
     def test_rebuttal_stage(self, openreview_client, test_client, helpers):
 

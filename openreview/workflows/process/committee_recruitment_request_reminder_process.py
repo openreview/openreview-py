@@ -10,6 +10,7 @@ def process(client, edit, invitation):
     committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
     committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
+    contact_email = domain.get_content_value('contact')
     
     recruitment_status = {
         'reminded': []
@@ -45,8 +46,9 @@ def process(client, edit, invitation):
 
         personalized_message = recruitment_message_content
         personalized_message = personalized_message.replace("{{invitation_url}}", url)
+        personalized_message = personalized_message.replace("{{venue_email}}", contact_email)
 
-        client.post_message(f'{recruitment_message_subject}', [invitee], personalized_message, invitation=committee_invited_message_id)
+        client.post_message(f'{recruitment_message_subject}', [invitee], personalized_message, invitation=committee_invited_message_id, replyTo=contact_email)
 
         return invitee
         
