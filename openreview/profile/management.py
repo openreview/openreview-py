@@ -1464,7 +1464,7 @@ return {
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(                    
                         id=f'{self.support_group_id}/-/Profile_Name_Removal',
-                        readers=['everyone'],
+                        readers=['~'],
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
                         invitees=['~'],
@@ -1630,10 +1630,10 @@ return {
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(
                         id=f'{self.support_group_id}/-/Profile_Email_Removal',
-                        readers=['everyone'],
+                        readers=[self.support_group_id],
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
-                        invitees=['~'],
+                        invitees=[self.support_group_id],
                         process=file_content,
                         preprocess=pre_file_content,
                         edit={
