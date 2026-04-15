@@ -2277,18 +2277,6 @@ arr_ae_checklist = {
         "description": "Have the authors completed the responsible NLP research checklist appropriately?",
         "order": 13
     },
-    "potential_violation_justification": {
-        "value": {
-            "param": {
-                "regex": ".{1,250}",
-                "optional": False,
-                "default": "N/A - the authors filled in the responsible NLP checklist appropriately.",
-                "type": "string"
-            }
-        },
-        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue",
-        "order": 14
-    },
     "need_ethics_review": {
         "value": {
             "param": {
@@ -2586,18 +2574,6 @@ arr_reviewer_checklist = {
         },
         "description": "Have the authors completed the responsible NLP research checklist appropriately?",
         "order": 13
-    },
-    "potential_violation_justification": {
-        "value": {
-            "param": {
-                "regex": ".{1,250}",
-                "optional": False,
-                "default": "N/A - the authors filled in the responsible NLP checklist appropriately.",
-                "type": "string"
-            }
-        },
-        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue",
-        "order": 14
     },
     "need_ethics_review": {
         "value": {
