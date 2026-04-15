@@ -23,20 +23,22 @@ commands:
           command: |
             pip install PyJWT cryptography --quiet
 
-            TOKEN=$(python3 - <<EOF
-            import jwt, time, json, urllib.request
+            cat > /tmp/get_token.py \<< 'PYEOF'
+            import jwt, time, json, os, urllib.request
 
-            private_key = """$GITHUB_APP_PRIVATE_KEY"""
+            private_key = os.environ["GITHUB_APP_PRIVATE_KEY"]
+            app_id = os.environ["GITHUB_APP_ID"]
+            install_id = os.environ["GITHUB_APP_INSTALLATION_ID"]
             now = int(time.time())
 
             app_jwt = jwt.encode(
-                {"iat": now - 60, "exp": now + (9 * 60), "iss": "$GITHUB_APP_ID"},
+                {"iat": now - 60, "exp": now + (9 * 60), "iss": app_id},
                 private_key,
                 algorithm="RS256"
             )
 
             req = urllib.request.Request(
-                "https://api.github.com/app/installations/$GITHUB_APP_INSTALLATION_ID/access_tokens",
+                f"https://api.github.com/app/installations/{install_id}/access_tokens",
                 method="POST",
                 headers={
                     "Authorization": f"Bearer {app_jwt}",
@@ -46,8 +48,9 @@ commands:
             )
             with urllib.request.urlopen(req) as resp:
                 print(json.load(resp)["token"])
-            EOF
-            )
+            PYEOF
+
+            TOKEN=$(python3 /tmp/get_token.py)
 
             # Make token available to subsequent steps
             echo "export GITHUB_TOKEN=$TOKEN" >> $BASH_ENV
