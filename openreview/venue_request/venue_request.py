@@ -448,7 +448,7 @@ class VenueStages():
                 'description': 'Comma separated list of fields (recommendation, ethics_review) that you want removed from the review form.'
             },
             "release_submissions_to_ethics_chairs": {
-                "description": "Do you want to release flagged submissions to the ethics chairs? All flagged submissions will be released to ethics chairs, despite any conflicts between ethics chairs and flagged submissions.",
+                "description": "Do you want to release flagged submissions, reviews, and meta reviews to the ethics chairs? All flagged submissions, reviews, and meta reviews will be released to ethics chairs, despite any conflicts between ethics chairs and flagged submissions.",
                 "order": 9,
                 'value-radio': [
                     'Yes, release flagged submissions to the ethics chairs.',
