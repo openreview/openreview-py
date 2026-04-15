@@ -23,7 +23,7 @@ commands:
           command: |
             pip install PyJWT==2.12.1 cryptography==46.0.7 --quiet
 
-            TOKEN=$(python3 -c '
+            cat > /tmp/get_token.py \<< 'PYEOF'
             import jwt, time, json, os, urllib.request
 
             private_key = os.environ["GITHUB_APP_PRIVATE_KEY"]
@@ -48,14 +48,12 @@ commands:
             )
             with urllib.request.urlopen(req) as resp:
                 print(json.load(resp)["token"])
-            ')
+            PYEOF
+
+            TOKEN=$(python3 /tmp/get_token.py)
 
             # Make token available to subsequent steps
             echo "export GITHUB_TOKEN=$TOKEN" >> $BASH_ENV
-
-            # Configure git credentials so the token doesn't appear in clone URLs
-            echo "machine github.com login x-access-token password $TOKEN" > ~/.netrc
-            chmod 600 ~/.netrc
   setup-mongodb:
     description: "Initialize MongoDB replica set"
     steps:
@@ -87,12 +85,12 @@ commands:
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
-            git clone https://github.com/openreview/openreview-api-v1.git ~/openreview
+            git clone https://x-access-token:$GITHUB_TOKEN@github.com/openreview/openreview-api-v1.git ~/openreview
             cd ~/openreview && git checkout << pipeline.parameters.openreview-api-v1-branch >>
       - run:
           name: Clone OpenReview API V2 branch << pipeline.parameters.openreview-api-v2-branch >>
           command: |
-            git clone https://github.com/openreview/openreview-api.git ~/openreview-v2
+            git clone https://x-access-token:$GITHUB_TOKEN@github.com/openreview/openreview-api.git ~/openreview-v2
             cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
       - run:
           name: Clone openreview-web
@@ -415,7 +413,7 @@ jobs:
       - run:
           name: Deploy to dev instance
           command: |
-            curl -X POST -H "Accept: application/vnd.github+json" -H "Content-Type: application/json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
+            curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
 workflows:
   version: 2
   build-deploy:
