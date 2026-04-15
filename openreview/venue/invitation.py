@@ -3268,6 +3268,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if custom_stage.preprocess_path:
             invitation.edit['invitation']['preprocess'] = self.get_process_content(custom_stage.preprocess_path)
 
+        if custom_stage.description:
+            invitation.edit['invitation']['description'] = custom_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
+
         self.save_invitation(invitation, replacement=False)
         return invitation
 
