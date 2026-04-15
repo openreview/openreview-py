@@ -1318,6 +1318,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             if self.venue.is_template_related_workflow():
                 edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
                 edit_invitations_builder.set_edit_dates_invitation(meta_review_sac_edit_invitation_id)
+                edit_invitations_builder.set_edit_content_invitation(meta_review_sac_edit_invitation_id)
 
         return invitation
 

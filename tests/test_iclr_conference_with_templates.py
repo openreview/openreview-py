@@ -866,6 +866,9 @@ def test_metareview_stage(client, openreview_client, helpers):
     content = metareview_inv.edit['invitation']['edit']['note']['content']
     assert all(field in content for field in ['metareview', 'recommendation', 'confidence'])
 
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision/Form_Fields')
+
     metareview_sac_revision_inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision')
     assert metareview_sac_revision_inv
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision/Dates')
@@ -996,6 +999,39 @@ def test_metareview_stage(client, openreview_client, helpers):
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_Release')
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_Release/Dates')
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_Release/Readers')
+
+    # allow PC to directly edit metareview revision invitation content
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision/Form_Fields',
+        content = {
+            'content': {
+                'value': {
+                    "private_comment_to_PCs": {
+                        "order": 10,
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "maxLength": 5000,
+                                "markdown": True,
+                                "input": "textarea"
+                            }
+                        },
+                        "readers": [
+                            "ICLR.cc/2026/Conference/Program_Chairs",
+                            "ICLR.cc/2026/Conference/Submission${7/content/noteNumber/value}/Senior_Action_Editors"
+                        ]
+                    }
+                }
+            }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision-0-1', count=3)
+
+    # assert metareview revision invitation has metareview fields plus the new private comment field
+    meta_review_revision_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAE_Revision')
+    content = meta_review_revision_inv.edit['invitation']['edit']['note']['content']
+    assert all(field in content for field in ['final_metareview', 'final_recommendation', 'final_confidence', 'private_comment_to_PCs'])
+    assert not all (field in content for field in ['metareview', 'recommendation', 'confidence'])
 
     meta_review_release_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Meta_Review_Release')
     assert meta_review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
