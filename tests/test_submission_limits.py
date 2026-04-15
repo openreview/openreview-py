@@ -1,6 +1,7 @@
 import datetime
 import os
 import pytest
+from concurrent.futures import ThreadPoolExecutor
 import openreview
 from openreview.api import Note, OpenReviewClient
 
@@ -184,6 +185,112 @@ class TestSubmissionLimits():
                     }
                 )
             )
+
+    def test_max_replies_limit_three(self, openreview_client, helpers):
+        # update maxReplies to 3 on the submission invitation
+        openreview_client.post_invitation_edit(
+            invitations='HVTest.cc/2025/Conference/-/Edit',
+            signatures=['HVTest.cc/2025/Conference'],
+            invitation=openreview.api.Invitation(
+                id='HVTest.cc/2025/Conference/-/Submission',
+                maxReplies=3
+            )
+        )
+
+        submission_inv = openreview_client.get_invitation('HVTest.cc/2025/Conference/-/Submission')
+        assert submission_inv.maxReplies == 3
+
+        helpers.create_user('maxreplies3@hvtest.cc', 'MaxReplies', 'Three')
+        author_client = OpenReviewClient(username='maxreplies3@hvtest.cc', password=helpers.strong_password)
+
+        # first three submissions succeed (within the limit)
+        for i in range(3):
+            edit = author_client.post_note_edit(
+                invitation='HVTest.cc/2025/Conference/-/Submission',
+                signatures=['~MaxReplies_Three1'],
+                note=Note(
+                    license='CC BY 4.0',
+                    content={
+                        'title': { 'value': f'MaxReplies Three Paper {i + 1}' },
+                        'abstract': { 'value': f'Abstract {i + 1}' },
+                        'authors': { 'value': ['MaxReplies Three'] },
+                        'authorids': { 'value': ['~MaxReplies_Three1'] },
+                        'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+                        'keywords': { 'value': ['kw'] },
+                        'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                        'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                    }
+                )
+            )
+            assert edit['id']
+
+        # fourth submission must fail due to maxReplies=3
+        with pytest.raises(openreview.OpenReviewException, match=r'reached the maximum number \(3\) of replies'):
+            author_client.post_note_edit(
+                invitation='HVTest.cc/2025/Conference/-/Submission',
+                signatures=['~MaxReplies_Three1'],
+                note=Note(
+                    license='CC BY 4.0',
+                    content={
+                        'title': { 'value': 'MaxReplies Three Paper 4' },
+                        'abstract': { 'value': 'Abstract 4' },
+                        'authors': { 'value': ['MaxReplies Three'] },
+                        'authorids': { 'value': ['~MaxReplies_Three1'] },
+                        'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+                        'keywords': { 'value': ['kw'] },
+                        'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                        'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                    }
+                )
+            )
+
+    def test_max_replies_race_condition(self, openreview_client, helpers):
+        # set maxReplies back to 1 on the submission invitation
+        openreview_client.post_invitation_edit(
+            invitations='HVTest.cc/2025/Conference/-/Edit',
+            signatures=['HVTest.cc/2025/Conference'],
+            invitation=openreview.api.Invitation(
+                id='HVTest.cc/2025/Conference/-/Submission',
+                maxReplies=1
+            )
+        )
+
+        helpers.create_user('racecondition@hvtest.cc', 'RaceCondition', 'One')
+        author_client = OpenReviewClient(username='racecondition@hvtest.cc', password=helpers.strong_password)
+
+        def submit(title):
+            return author_client.post_note_edit(
+                invitation='HVTest.cc/2025/Conference/-/Submission',
+                signatures=['~RaceCondition_One1'],
+                note=Note(
+                    license='CC BY 4.0',
+                    content={
+                        'title': { 'value': title },
+                        'abstract': { 'value': 'Concurrent abstract' },
+                        'authors': { 'value': ['RaceCondition One'] },
+                        'authorids': { 'value': ['~RaceCondition_One1'] },
+                        'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+                        'keywords': { 'value': ['kw'] },
+                        'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                        'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                    }
+                )
+            )
+
+        # fire two submissions concurrently; the atomic counter must let exactly one through
+        successes = []
+        errors = []
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(submit, f'Race Paper {i + 1}') for i in range(2)]
+            for f in futures:
+                try:
+                    successes.append(f.result())
+                except openreview.OpenReviewException as e:
+                    errors.append(str(e))
+
+        assert len(successes) == 1, f'expected exactly one success, got {len(successes)}'
+        assert len(errors) == 1, f'expected exactly one failure, got {len(errors)}'
+        assert 'reached the maximum number (1) of replies' in errors[0]
 
     def test_human_verification_on_attachment(self, helpers):
         # API is configured to allow 10 attachment uploads per hour per user
