@@ -427,6 +427,45 @@ note={under review}
         header = selenium.find_element(By.ID, 'header')
         assert 'Senior Action Editor Bidding Console' in header.text
 
+def test_AC_conflicts(client, openreview_client, helpers):
+
+    pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    now = datetime.datetime.now()
+    now = openreview.tools.datetime_millis(now)
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/Action_Editors/-/Conflict/Policy',
+        content={
+            'conflict_policy': { 'value': 'NeurIPS' },
+            'conflict_n_years': { 'value': 3 }
+        }
+    )
+
+    helpers.await_queue_edit(openreview_client,  edit_id=f'ICLR.cc/2026/Conference/Action_Editors/-/Conflict-0-1', count=2)
+
+    # trigger conflicts date process 
+    pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/Action_Editors/-/Conflict/Dates',
+            content={
+                'activation_date': { 'value': now }
+            }
+        )
+
+    helpers.await_queue_edit(openreview_client,  edit_id=f'ICLR.cc/2026/Conference/Action_Editors/-/Conflict-0-1', count=3)
+
+    venue = openreview_client.get_group('ICLR.cc/2026/Conference')
+    # assert status comment posted to request form
+    notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
+    assert len(notes) == 1
+    assert notes[0].content['title']['value'] == 'Action Editors Conflicts Reminder'
+    assert notes[0].content['comment']['value'] == 'Action Editors conflicts have been successfully computed. Please note that you will need to recompute Action Editors conflicts once you deploy SAC-AC assignments to account for SAC conflicts.'
+
+    assert len(openreview_client.get_grouped_edges(
+        invitation='ICLR.cc/2026/Conference/Action_Editors/-/Conflict',
+        groupby='id'
+    )) == 4
+
 def test_sac_deployment(client, openreview_client, helpers):
 
     pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -507,7 +546,7 @@ def test_sac_deployment(client, openreview_client, helpers):
     # assert status comment posted to request form
     venue = openreview_client.get_group('ICLR.cc/2026/Conference')
     notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-    assert len(notes) == 1
+    assert len(notes) == 2
     assert notes[-1].content['title']['value'] == 'Senior Action Editors Assignment Deployment Failed'
 
     # try to deploy initialized configuration and get an error
@@ -573,6 +612,31 @@ def test_sac_deployment(client, openreview_client, helpers):
 
     grouped_edges = openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Senior_Action_Editors/-/Assignment', groupby='id')
     assert len(grouped_edges) == 2
+
+    # retrigger AC conflicts after SAC-AC deployment
+    now = datetime.datetime.now()
+    now = openreview.tools.datetime_millis(now)
+
+    # trigger conflicts date process 
+    pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/Action_Editors/-/Conflict/Dates',
+            content={
+                'activation_date': { 'value': now }
+            }
+        )
+
+    helpers.await_queue_edit(openreview_client,  edit_id=f'ICLR.cc/2026/Conference/Action_Editors/-/Conflict-0-1', count=4)
+
+    venue = openreview_client.get_group('ICLR.cc/2026/Conference')
+    # assert status comment was not posted to the request form since SAC-AC assignemnts were already deployed
+    notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
+    assert len(notes) == 2
+    assert notes[-1].content['title']['value'] == 'Senior Action Editors Assignment Deployment Failed'
+
+    assert len(openreview_client.get_grouped_edges(
+        invitation='ICLR.cc/2026/Conference/Action_Editors/-/Conflict',
+        groupby='id'
+    )) == 12
 
 def test_review_stage(client, openreview_client, helpers):
 
