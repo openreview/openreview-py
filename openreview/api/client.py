@@ -3697,7 +3697,8 @@ class Invitation(object):
         description = None,
         instructions = None,
         guestPosting = None,
-        secret = None):
+        secret = None,
+        humanVerificationRequired = None):
 
         self.id = id
         self.invitations = invitations
@@ -3736,6 +3737,7 @@ class Invitation(object):
         self.instructions = instructions
         self.guestPosting = guestPosting
         self.secret = secret
+        self.humanVerificationRequired = humanVerificationRequired
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -3862,6 +3864,8 @@ class Invitation(object):
             body['guestPosting']=self.guestPosting
         if self.secret is not None:
             body['secret']=self.secret
+        if self.humanVerificationRequired is not None:
+            body['humanVerificationRequired']=self.humanVerificationRequired
         return body
 
     @classmethod
@@ -3928,6 +3932,8 @@ class Invitation(object):
             invitation.guestPosting = i['guestPosting']
         if 'secret' in i:
             invitation.secret = i['secret']
+        if 'humanVerificationRequired' in i:
+            invitation.humanVerificationRequired = i['humanVerificationRequired']
         return invitation
 class Edge(object):
     def __init__(self, head, tail, invitation, domain=None, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):

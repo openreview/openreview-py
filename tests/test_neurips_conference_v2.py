@@ -139,6 +139,20 @@ class TestNeurIPSConference():
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
+        # set submission_human_verification on the domain group so Revision picks it up
+        openreview_client.post_group_edit(
+            invitation='NeurIPS.cc/2023/Conference/-/Edit',
+            signatures=['NeurIPS.cc/2023/Conference'],
+            group=openreview.api.Group(
+                id='NeurIPS.cc/2023/Conference',
+                content={
+                    'submission_human_verification': {
+                        'value': { 'limit': 15, 'windowMs': 3600000 }
+                    }
+                }
+            )
+        )
+
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
@@ -174,6 +188,9 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
             }
         ))
         helpers.await_queue()
+
+        submission_inv = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Submission')
+        assert submission_inv.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
         request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
