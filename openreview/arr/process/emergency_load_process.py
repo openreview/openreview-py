@@ -123,15 +123,44 @@ def process(client, edit, invitation):
                 )
             )            
       
-    emergency_score_edges = client.get_all_edges(invitation=f"{role}/-/Emergency_Score", tail=user)
+    emergency_score_edges = client.get_all_edges(invitation=f"{role}/-/Emergency_Score", tail=user, domain=venue_id)
 
     ## Post emergency score edges if they don't exist
     if len(emergency_score_edges) == 0:
         print('Create emergency score edges...')
         deployed_label = [
-            note for note in client.get_all_notes(invitation=f"{role}/-/Assignment_Configuration") if 'Deployed' in note.content['status']['value']
+            note for note in client.get_all_notes(invitation=f"{role}/-/Assignment_Configuration", domain=venue_id) if 'Deployed' in note.content['status']['value']
         ][0].content['title']['value']
-        aggregate_score_edges = client.get_all_edges(invitation=f"{role}/-/Aggregate_Score", label=deployed_label, tail=user)
+        submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
+        review_name = domain.content.get('review_name', {}).get('value', 'Official_Review')
+        submissions = client.get_all_notes(
+            invitation=f"{venue_id}/-/{submission_name}",
+            domain=venue_id
+        )
+        official_reviews = client.get_all_notes(
+            parent_invitations=f"{venue_id}/-/{review_name}",
+            domain=venue_id
+        )
+        review_counts = {}
+        for review in official_reviews:
+            if review.forum not in review_counts:
+                review_counts[review.forum] = 0
+            review_counts[review.forum] += 1
+
+        eligible_submission_ids = []
+        for submission in submissions:
+            if review_counts.get(submission.id, 0) < 3:
+                eligible_submission_ids.append(submission.id)
+
+        aggregate_score_edges = []
+        for submission_id in eligible_submission_ids:
+            aggregate_score_edges.extend(client.get_all_edges(
+                invitation=f"{role}/-/Aggregate_Score",
+                label=deployed_label,
+                head=submission_id,
+                tail=user,
+                domain=venue_id
+            ))
 
         edges_to_post = []
         for edge in aggregate_score_edges:

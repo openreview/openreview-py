@@ -12,6 +12,7 @@ from openreview import tools
 from .invitation import InvitationBuilder
 from .helpers import ARRWorkflow
 from openreview.venue.group import GroupBuilder
+from openreview.venue import matching
 from openreview.api import Group
 from openreview.api import Note
 from openreview.api import Invitation
@@ -19,7 +20,7 @@ from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
-from openreview.stages.arr_content import hide_fields, arr_withdrawal_content
+from openreview.stages.arr_content import hide_fields, arr_withdrawal_content, arr_metareview_recommendation_field
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -145,6 +146,7 @@ class ARR(object):
         self.venue.review_stage = self.review_stage
         self.venue.bid_stages = self.bid_stages
         self.venue.meta_review_stage = self.meta_review_stage
+        self.meta_review_stage.recommendation_field_name = arr_metareview_recommendation_field
         self.venue.comment_stage = self.comment_stage
         self.venue.decision_stage = self.decision_stage
         self.venue.submission_revision_stage = self.submission_revision_stage
@@ -156,6 +158,13 @@ class ARR(object):
         self.venue.expertise_selection_stage = self.expertise_selection_stage
         self.venue.preferred_emails_groups = self.preferred_emails_groups
 
+        arr_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
+        self.venue.homepage_webfield_path = os.path.join(arr_webfield_dir, 'homepageWebfield.js')
+        self.venue.program_chairs_webfield_path = os.path.join(arr_webfield_dir, 'programChairsWebfield.js')
+        self.venue.senior_area_chairs_webfield_path = os.path.join(arr_webfield_dir, 'seniorAreaChairsWebfield.js')
+        self.venue.area_chairs_webfield_path = os.path.join(arr_webfield_dir, 'areachairsWebfield.js')
+        self.venue.ethics_chairs_webfield_path = os.path.join(arr_webfield_dir, 'ethicsChairsWebfield.js')
+
     def set_arr_stages(self, configuration_note):
         workflow = ARRWorkflow(
             self.client,
@@ -165,6 +174,375 @@ class ARR(object):
             self.support_user
         )
         workflow.set_workflow()
+
+    def process_author_response_extension(self, invitation):
+        """
+        Author Response Extension Management Process
+
+        This process runs on a cron schedule to:
+        1. Keep Official_Comment open for papers with <3 reviews
+        2. Keep Review_Issue_Report open for papers with <3 reviews
+        3. Close Official_Comment/Review_Issue_Report based on 3rd review date for papers with 3+ reviews
+
+        The process re-opens invitations if they were closed by other processes (e.g., setup_rebuttal_end.py)
+        """
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
+        cdate = invitation.cdate
+
+        # Check if invitation is active
+        if cdate > now:
+            print(f'Author response extension process not yet active, cdate: {cdate}')
+            return
+
+        # Fetch all active submissions with replies
+        submissions = self.get_submissions(
+            details='directReplies',
+            sort='number:asc'
+        )
+
+        print(f'Processing {len(submissions)} total submissions')
+
+        # Read delays from invitation content
+        author_response_delay = invitation.content['author_response_delay_ms']['value']
+        reviewer_response_delay = invitation.content['reviewer_response_delay_ms']['value']
+        review_issue_report_delay = invitation.content['review_issue_report_delay_ms']['value']
+
+        # Constants for timing
+        two_weeks_millis = openreview.tools.datetime_millis(
+            datetime.datetime.now() + datetime.timedelta(days=14)
+        )
+
+        review_name = self.review_stage.child_invitations_name
+        comment_name = self.comment_stage.official_comment_name
+
+        # Process each submission
+        for submission in submissions:
+            paper_number = submission.number
+
+            try:
+                review_invitation_id = self.get_invitation_id(name=review_name, number=paper_number)
+                reviews = [
+                    openreview.api.Note.from_json(reply)
+                    for reply in submission.details.get('directReplies', [])
+                    if not reply.get('ddate') and review_invitation_id in reply.get('invitations', [])
+                ]
+
+                # Sort reviews by tcdate
+                reviews.sort(key=lambda r: r.tcdate or 0)
+
+                review_count = len(reviews)
+                print(f'Paper {paper_number}: {review_count} reviews found')
+
+                if review_count < 3:
+                    # CASE 1: Papers with < 3 reviews - keep everything open
+                    self.handle_insufficient_reviews(
+                        paper_number, reviews, comment_name, two_weeks_millis, now
+                    )
+                else:
+                    # CASE 2: Papers with 3+ reviews - use 3rd review timing
+                    third_review = reviews[2]
+                    third_review_tcdate = third_review.tcdate or 0
+
+                    print(f'Paper {paper_number}: Using 3rd review date {third_review_tcdate}')
+
+                    self.handle_sufficient_reviews(
+                        paper_number, reviews, comment_name,
+                        third_review_tcdate, now,
+                        author_response_delay, reviewer_response_delay, review_issue_report_delay
+                    )
+
+            except Exception as e:
+                print(f'Error processing paper {paper_number}: {str(e)}')
+                continue
+
+        print(f'Completed author response extension management for {self.id}')
+
+    def _get_review_issue_report_invitations(self, reviews):
+        for review in reviews:
+            review_number = review.number
+            review_prefix = review.invitations[0].replace('/-/', '/') + str(review_number)
+            invitation = openreview.tools.get_invitation(
+                self.client,
+                self.get_invitation_id(name='Review_Issue_Report', prefix=review_prefix)
+            )
+
+            if invitation:
+                yield review_number, invitation
+
+    def handle_insufficient_reviews(self, paper_number, reviews, comment_name,
+                                    two_weeks_millis, now_millis):
+        """
+        Handle papers with < 3 reviews by keeping Official_Comment and Review_Issue_Report open
+        """
+        print(f'Paper {paper_number}: Keeping invitations open (< 3 reviews)')
+
+        # Open Official_Comment for authors
+        try:
+            invitation = self.client.get_invitation(
+                self.get_invitation_id(name=comment_name, number=paper_number)
+            )
+
+            needs_update = False
+            edit_params = {}
+
+            # Check invitees
+            authors_group = self.get_authors_id(paper_number)
+            if authors_group not in invitation.invitees:
+                edit_params['invitees'] = {'add': [authors_group]}
+                needs_update = True
+                print(f'  - Adding Authors to Official_Comment invitees')
+
+            # Check outer readers
+            if authors_group not in invitation.readers:
+                if 'readers' not in edit_params:
+                    edit_params['readers'] = {}
+                edit_params['readers']['add'] = [authors_group]
+                needs_update = True
+                print(f'  - Adding Authors to Official_Comment outer readers')
+
+            # Check inner readers (note readers)
+            current_readers = invitation.edit['note']['readers']['param']['enum']
+            if authors_group not in current_readers:
+                if 'edit' not in edit_params:
+                    edit_params['edit'] = {}
+                edit_params['edit']['note'] = {
+                    'readers': {
+                        'param': {
+                            'enum': current_readers + [authors_group]
+                        }
+                    }
+                }
+                needs_update = True
+                print(f'  - Adding Authors to Official_Comment inner readers')
+
+            # Check signatures
+            current_signatures = invitation.edit['signatures']['param']['items']
+            signature_values = [
+                item.get('prefix') if 'prefix' in item else item.get('value', '')
+                for item in current_signatures
+            ]
+            if not any('Authors' in sig for sig in signature_values):
+                if 'edit' not in edit_params:
+                    edit_params['edit'] = {}
+                if 'signatures' not in edit_params.get('edit', {}):
+                    if 'edit' not in edit_params:
+                        edit_params['edit'] = {}
+                    edit_params['edit']['signatures'] = {
+                        'param': {
+                            'items': current_signatures + [
+                                {'value': authors_group, 'optional': True}
+                            ]
+                        }
+                    }
+                needs_update = True
+                print(f'  - Adding Authors to Official_Comment signatures')
+
+            if needs_update:
+                self.client.post_invitation_edit(
+                    invitations=self.get_meta_invitation_id(),
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    invitation=openreview.api.Invitation(
+                        id=invitation.id,
+                        signatures=[self.id],
+                        **edit_params
+                    )
+                )
+                print(f'  - Updated Official_Comment invitation for paper {paper_number}')
+            else:
+                print(f'  - Official_Comment already open for paper {paper_number}')
+
+        except Exception as e:
+            print(f'  - Error updating Official_Comment for paper {paper_number}: {str(e)}')
+
+        for review_number, invitation in self._get_review_issue_report_invitations(reviews):
+            needs_update = False
+            edit_params = {}
+
+            # Check if not yet activated
+            if invitation.cdate > now_millis:
+                edit_params['cdate'] = now_millis
+                needs_update = True
+                print(f'  - Activating Review_Issue_Report for Review{review_number}')
+
+            # Check if expired
+            if invitation.expdate is None or invitation.expdate <= now_millis:
+                edit_params['expdate'] = two_weeks_millis
+                needs_update = True
+                print(f'  - Setting Review_Issue_Report expdate to ~2 weeks for Review{review_number}')
+
+            if needs_update:
+                self.client.post_invitation_edit(
+                    invitations=self.get_meta_invitation_id(),
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    invitation=openreview.api.Invitation(
+                        id=invitation.id,
+                        signatures=[self.id],
+                        **edit_params
+                    )
+                )
+                print(f'  - Updated Review_Issue_Report for Review{review_number}')
+
+    def handle_sufficient_reviews(self, paper_number, reviews, comment_name,
+                                  third_review_tcdate, now_millis,
+                                  three_days_millis, four_days_millis, five_days_millis):
+        """
+        Handle papers with 3+ reviews by closing based on 3rd review date
+        """
+        print(f'Paper {paper_number}: Checking based on 3rd review (total reviews: {len(reviews)})')
+
+        # Calculate closure dates
+        author_response_close = third_review_tcdate + three_days_millis
+        reviewer_response_close = third_review_tcdate + four_days_millis
+        review_issue_close = third_review_tcdate + five_days_millis
+
+        print(f'  - Author response closes at: {author_response_close}')
+        print(f'  - Reviewer response closes at: {reviewer_response_close}')
+        print(f'  - Review issues close at: {review_issue_close}')
+
+        # Handle Official_Comment invitation
+        try:
+            invitation = self.client.get_invitation(
+                self.get_invitation_id(name=comment_name, number=paper_number)
+            )
+
+            needs_update = False
+            edit_params = {}
+            authors_group = self.get_authors_id(paper_number)
+
+            if now_millis <= author_response_close:
+                if authors_group not in invitation.invitees:
+                    edit_params['invitees'] = {'add': [authors_group]}
+                    needs_update = True
+                    print(f'  - Adding Authors to Official_Comment invitees')
+
+                if authors_group not in invitation.readers:
+                    if 'readers' not in edit_params:
+                        edit_params['readers'] = {}
+                    edit_params['readers']['add'] = [authors_group]
+                    needs_update = True
+                    print(f'  - Adding Authors to Official_Comment outer readers')
+
+                current_signatures = invitation.edit['signatures']['param']['items']
+                signature_values = [
+                    item.get('prefix') if 'prefix' in item else item.get('value', '')
+                    for item in current_signatures
+                ]
+                if not any('Authors' in sig for sig in signature_values):
+                    if 'edit' not in edit_params:
+                        edit_params['edit'] = {}
+                    edit_params['edit']['signatures'] = {
+                        'param': {
+                            'items': current_signatures + [
+                                {'value': authors_group, 'optional': True}
+                            ]
+                        }
+                    }
+                    needs_update = True
+                    print(f'  - Adding Authors to Official_Comment signatures')
+
+            # Remove authors from invitees/signatures/outer readers after 3 days
+            if now_millis > author_response_close:
+                if authors_group in invitation.invitees:
+                    edit_params['invitees'] = {'remove': [authors_group]}
+                    needs_update = True
+                    print(f'  - Removing Authors from Official_Comment invitees')
+
+                if authors_group in invitation.readers:
+                    if 'readers' not in edit_params:
+                        edit_params['readers'] = {}
+                    edit_params['readers']['remove'] = [authors_group]
+                    needs_update = True
+                    print(f'  - Removing Authors from Official_Comment outer readers')
+
+                # Remove from signatures
+                current_signatures = invitation.edit['signatures']['param']['items']
+                signature_values = [
+                    item.get('prefix') if 'prefix' in item else item.get('value', '')
+                    for item in current_signatures
+                ]
+                if any('Authors' in sig for sig in signature_values):
+                    filtered_signatures = [
+                        sig_obj for sig_obj in current_signatures
+                        if 'Authors' not in (
+                            sig_obj.get('prefix', '') if 'prefix' in sig_obj
+                            else sig_obj.get('value', '')
+                        )
+                    ]
+                    if 'edit' not in edit_params:
+                        edit_params['edit'] = {}
+                    edit_params['edit']['signatures'] = {
+                        'param': {'items': filtered_signatures}
+                    }
+                    needs_update = True
+                    print(f'  - Removing Authors from Official_Comment signatures')
+
+            if now_millis <= reviewer_response_close or now_millis <= author_response_close:
+                current_readers = invitation.edit['note']['readers']['param']['enum']
+                if authors_group not in current_readers:
+                    if 'edit' not in edit_params:
+                        edit_params['edit'] = {}
+                    if 'note' not in edit_params['edit']:
+                        edit_params['edit']['note'] = {}
+                    edit_params['edit']['note']['readers'] = {
+                        'param': {'enum': current_readers + [authors_group]}
+                    }
+                    needs_update = True
+                    print(f'  - Adding Authors to Official_Comment inner readers')
+
+            # Remove authors from inner readers after 4 days
+            if now_millis > reviewer_response_close and now_millis > author_response_close:
+                current_readers = invitation.edit['note']['readers']['param']['enum']
+                if any('Authors' in reader for reader in current_readers):
+                    filtered_readers = [
+                        reader for reader in current_readers if 'Authors' not in reader
+                    ]
+                    if 'edit' not in edit_params:
+                        edit_params['edit'] = {}
+                    if 'note' not in edit_params['edit']:
+                        edit_params['edit']['note'] = {}
+                    edit_params['edit']['note']['readers'] = {
+                        'param': {'enum': filtered_readers}
+                    }
+                    needs_update = True
+                    print(f'  - Removing Authors from Official_Comment inner readers')
+
+            if needs_update:
+                self.client.post_invitation_edit(
+                    invitations=self.get_meta_invitation_id(),
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    invitation=openreview.api.Invitation(
+                        id=invitation.id,
+                        signatures=[self.id],
+                        **edit_params
+                    )
+                )
+                print(f'  - Updated Official_Comment closures for paper {paper_number}')
+            else:
+                print(f'  - Official_Comment closures already set for paper {paper_number}')
+
+        except Exception as e:
+            print(f'  - Error updating Official_Comment for paper {paper_number}: {str(e)}')
+
+        for review_number, invitation in self._get_review_issue_report_invitations(reviews):
+            if invitation.expdate != review_issue_close:
+                self.client.post_invitation_edit(
+                    invitations=self.get_meta_invitation_id(),
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    invitation=openreview.api.Invitation(
+                        id=invitation.id,
+                        signatures=[self.id],
+                        expdate=review_issue_close
+                    )
+                )
+                print(f'  - Set Review_Issue_Report expdate for Review{review_number}')
 
     def get_id(self):
         return self.venue.get_id()
@@ -336,9 +714,6 @@ class ARR(object):
     def get_desk_rejected_id(self):
         return self.venue.get_desk_rejected_id()
 
-    def get_group_recruitment_id(self, committee_name):
-        return self.venue.get_group_recruitment_id(committee_name)
-
     def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
         return self.venue.get_participants(number, with_program_chairs, with_authors)
 
@@ -363,61 +738,6 @@ class ARR(object):
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
 
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.venue_id,
-                    web=content
-                )
-            )
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_program_chairs_id(),
-                    web=content
-                )
-            )
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_senior_area_chairs_id(),
-                    web=content
-                )
-            )
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_area_chairs_id(),
-                    web=content
-                )
-            )            
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
-            content = f.read()
-            self.client.post_group_edit(
-                invitation=self.get_meta_invitation_id(),
-                signatures=[self.venue_id],
-                group=openreview.api.Group(
-                    id=self.get_ethics_chairs_id(),
-                    web=content
-                )
-            )
-
         setup_arr_invitations(self.invitation_builder)
 
         # Set PCs as impersonators
@@ -425,6 +745,18 @@ class ARR(object):
             profile.id for profile in openreview.tools.get_profiles(self.client, program_chair_ids) if profile.id.startswith('~')
         ]
         self.set_impersonators(profile_ids)
+
+        # Set domain field for Gurobi
+        self.client.post_group_edit(
+            invitation=self.get_meta_invitation_id(),
+            signatures=[self.venue_id],
+            group=openreview.api.Group(
+                id=self.venue_id,
+                content={
+                    'allow_gurobi_solver': { 'value': True }
+                }
+            )
+        )
 
         return setup_value
 
@@ -537,6 +869,26 @@ class ARR(object):
     def create_ethics_review_stage(self):
         self.venue.ethics_review_stage = self.ethics_review_stage
         stage_value = self.venue.create_ethics_review_stage()
+        ethics_reviewers_group = self.client.get_group(self.get_ethics_reviewers_id())
+
+        hash_seed = None
+        invite_assignment_invitation = tools.get_invitation(self.client, self.get_assignment_id(self.get_ethics_reviewers_id(), invite=True))
+        if invite_assignment_invitation:
+            hash_seed = invite_assignment_invitation.content.get('hash_seed', {}).get('value')
+        if not hash_seed:
+            hash_seed = openreview.tools.create_hash_seed()
+
+        emergency_ethics_reviewers_name = f'Emergency_{self.get_ethics_reviewers_name(pretty=False)}'
+        conference_matching = matching.Matching(self, ethics_reviewers_group, None)
+        conference_matching.setup_invite_assignment(
+            hash_seed=hash_seed,
+            invited_committee_name=emergency_ethics_reviewers_name
+        )
+        self.group_builder.set_external_reviewer_recruitment_groups(
+            name=emergency_ethics_reviewers_name,
+            is_ethics_reviewer=True
+        )
+
         self.client.post_invitation_edit(
             invitations=self.venue.get_meta_invitation_id(),
             signatures=[self.venue_id],
@@ -717,7 +1069,7 @@ class ARR(object):
         
         submission_id = venue_group.content.get('submission_id', {}).get('value')
 
-        commitment_submissions = client.get_all_notes(invitation=submission_id)
+        commitment_submissions = client.get_all_notes(invitation=submission_id, domain=venue_id)
 
         def process_commitment_submission(note):
             arr_submission_link = note.content.get('paper_link', {}).get('value')

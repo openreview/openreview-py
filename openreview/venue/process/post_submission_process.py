@@ -2,7 +2,8 @@ def process(client, invitation):
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    submission_venue_id = domain.content['submission_venue_id']['value']
+    submission_id = domain.content['submission_id']['value']
+    submission_name = domain.content['submission_name']['value']
     venue_name = domain.content['title']['value']
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
@@ -41,6 +42,15 @@ def process(client, invitation):
         )
     
     ## Release the submissions to specified readers if venueid is still submission
-    submissions = client.get_all_notes(content= { 'venueid': submission_venue_id })
-    print(f'update {len(submissions)} submissions')
-    openreview.tools.concurrent_requests(post_submission_edit, submissions, desc='post_submission_edit')
+    all_submissions = client.get_all_notes(invitation=submission_id, sort='number:asc', domain=venue_id)
+
+    filtered_submissions = [paper for paper in all_submissions if openreview.tools.should_match_invitation_source(client, invitation, paper, domain=domain)]
+
+    if not filtered_submissions:
+        print('No submissions were updated since there are no active submissions')
+        return
+
+    print(f'update {len(filtered_submissions)} submissions')
+    openreview.tools.concurrent_requests(post_submission_edit, filtered_submissions, desc='post_submission_edit')
+
+    print(f'{len(filtered_submissions)} submissions updated successfully')

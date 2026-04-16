@@ -2,39 +2,19 @@ from collections import defaultdict
 import openreview
 import datetime
 import json
+import warnings
 
 def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
-    
-    domain = client.get_group(venue_id)
-    venue = openreview.venue.Venue(client, venue_id, support_user)
-    
-    venue.name = domain.content['title']['value']
-    venue.short_name = domain.content['subtitle']['value']
-    venue.website = domain.content['website']['value']
-    venue.contact = domain.content['contact']['value']
-    venue.location = domain.content['location']['value']
-    venue.request_form_id = domain.content.get('request_form_id', {}).get('value')
-    venue.request_form_invitation = domain.content.get('request_form_invitation', {}).get('value')
-    venue.use_area_chairs = 'area_chairs_id' in domain.content
-    venue.use_senior_area_chairs = 'senior_area_chairs_id' in domain.content
-    venue.use_secondary_area_chairs = 'secondary_area_chairs_name' in domain.content
-    venue.use_ethics_chairs = 'ethics_chairs_id' in domain.content
-    venue.use_ethics_reviewers = 'ethics_reviewers_name' in domain.content
-    venue.use_publication_chairs = 'publication_chairs_id' in domain.content
-    venue.automatic_reviewer_assignment = domain.content.get('automatic_reviewer_assignment', {}).get('value')
-    venue.senior_area_chair_roles = domain.content.get('senior_area_chair_roles', {}).get('value', ['Senior_Area_Chairs'])
-    venue.senior_area_chairs_name = domain.content.get('senior_area_chairs_name', {}).get('value', venue.senior_area_chair_roles[0])
-    venue.area_chair_roles = domain.content.get('area_chair_roles', {}).get('value', ['Area_Chairs'])
-    venue.area_chairs_name = domain.content.get('area_chairs_name', {}).get('value', venue.area_chair_roles[0])
-    venue.reviewer_roles = domain.content.get('reviewer_roles', {}).get('value', ['Reviewers'])
-    venue.reviewers_name = domain.content.get('reviewers_name', {}).get('value', venue.reviewer_roles[0])
-    venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)
-    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', [venue.get_authors_id()])
-    
-    venue.submission_stage = openreview.stages.SubmissionStage(
-        name=domain.content.get('submission_name', {}).get('value', 'Submission'),
+    """
+    Deprecated: Use openreview.venue.helpers.get_venue() instead.
+    """
+    warnings.warn(
+        'openreview.conference.helpers.get_venue() is deprecated. '
+        'Use openreview.venue.helpers.get_venue() instead.',
+        DeprecationWarning,
+        stacklevel=2
     )
-    return venue
+    return openreview.venue.helpers.get_venue(client, venue_id, support_user)
 
 def set_start_date(request_forum, venue):
 
@@ -151,6 +131,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
         venue.reviewers_name = venue.reviewer_roles[0]
         venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
+        venue.submission_human_verification = venue_content.get('submission_human_verification', {}).get('value')
         venue.submission_license = note.content.get('submission_license', ['CC BY 4.0'])
         set_homepage_options(note, venue, venue_content)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
@@ -163,7 +144,19 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.comment_notification_threshold = int(note.content.get('comment_notification_threshold')) if note.content.get('comment_notification_threshold') is not None else None
         venue.preferred_emails_groups = note.content.get('preferred_emails_groups')
         if not venue.preferred_emails_groups:
-            venue.preferred_emails_groups = [venue.get_authors_id()]
+            # Include all venue participants by default
+            preferred_emails_groups = [venue.get_authors_id(), venue.get_reviewers_id()]
+            if venue.use_area_chairs:
+                preferred_emails_groups.append(venue.get_area_chairs_id())
+            if venue.use_senior_area_chairs:
+                preferred_emails_groups.append(venue.get_senior_area_chairs_id())
+            if venue.use_ethics_reviewers:
+                preferred_emails_groups.append(venue.get_ethics_reviewers_id())
+            if venue.use_ethics_chairs:
+                preferred_emails_groups.append(venue.get_ethics_chairs_id())
+            if venue.use_publication_chairs:
+                preferred_emails_groups.append(venue.get_publication_chairs_id())
+            venue.preferred_emails_groups = preferred_emails_groups
         venue.iThenticate_plagiarism_check = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
         venue.iThenticate_plagiarism_check_api_key = note.content.get('iThenticate_plagiarism_check_api_key', '')
         venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
@@ -204,240 +197,6 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         if setup:
             venue.setup(note.content.get('program_chair_emails'), note.content.get('publication_chairs_emails'))
         return venue
-
-    builder = get_conference_builder(client, request_form_id, support_user)
-    return builder.get_result()
-
-def get_conference_builder(client, request_form_id, support_user='OpenReview.net/Support'):
-
-    note = client.get_note(request_form_id)
-
-    if not note.invitation.lower() == 'OpenReview.net/Support/-/Request_Form'.lower():
-        raise openreview.OpenReviewException('Invalid request form invitation')
-
-    if not note.content.get('venue_id') and not note.content.get('conference_id'):
-        raise openreview.OpenReviewException('venue_id is not set')
-
-    support_user = note.invitation.split('/-/')[0]
-    builder = openreview.conference.ConferenceBuilder(client, support_user)
-    builder.set_request_form_id(request_form_id)
-
-    conference_start_date_str = 'TBD'
-    conference_start_date = None
-    start_date = note.content.get('Venue Start Date', note.content.get('Conference Start Date', '')).strip()
-    if start_date:
-        try:
-            conference_start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d %H:%M')
-        except ValueError:
-            conference_start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d')
-        conference_start_date_str = conference_start_date.strftime('%b %d %Y')
-
-    submission_start_date_str = ''
-    submission_start_date = note.content.get('Submission Start Date', '').strip()
-    if submission_start_date:
-        try:
-            submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d %H:%M')
-        except ValueError:
-            submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d')
-        submission_start_date_str = submission_start_date.strftime('%b %d %Y %I:%M%p')
-    else:
-        submission_start_date = None
-
-    submission_due_date_str = 'TBD'
-    abstract_due_date_str = ''
-    submission_second_due_date = note.content.get('Submission Deadline', '').strip()
-    if submission_second_due_date:
-        try:
-            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d %H:%M')
-        except ValueError:
-            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d')
-        submission_due_date = note.content.get('abstract_registration_deadline', '').strip()
-        if submission_due_date:
-            try:
-                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
-            except ValueError:
-                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
-            abstract_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
-            submission_due_date_str = submission_second_due_date.strftime('%b %d %Y %I:%M%p')
-        else:
-            submission_due_date = submission_second_due_date
-            submission_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
-            submission_second_due_date = None
-    else:
-        submission_second_due_date = submission_due_date = None
-
-    builder.set_conference_id(note.content.get('venue_id') if note.content.get('venue_id', None) else note.content.get('conference_id'))
-    builder.set_conference_name(note.content.get('Official Venue Name', note.content.get('Official Conference Name')))
-    builder.set_conference_short_name(note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')))
-    if conference_start_date:
-        builder.set_conference_year(conference_start_date.year)
-
-    homepage_header = {
-        'title': note.content['title'],
-        'subtitle': note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')),
-        'deadline': 'Submission Start: ' + submission_start_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0',
-        'date': conference_start_date_str,
-        'website': note.content['Official Website URL'],
-        'location': note.content.get('Location'),
-        'contact': note.content.get('contact_email')
-    }
-
-    if abstract_due_date_str:
-        homepage_header['deadline'] = 'Submission Start: ' + submission_start_date_str + ' UTC-0, Abstract Registration: ' + abstract_due_date_str +' UTC-0, End: ' + submission_due_date_str + ' UTC-0'
-
-    override_header = note.content.get('homepage_override', '')
-    if override_header:
-        for key in override_header.keys():
-            homepage_header[key] = override_header[key]
-
-    builder.set_homepage_header(homepage_header)
-
-    if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
-        builder.has_area_chairs(True)
-
-    if note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs':
-        builder.has_senior_area_chairs(True)
-
-    if note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers':
-        builder.has_ethics_chairs(True)
-        builder.has_ethics_reviewers(True)
-
-    if note.content.get('secondary_area_chairs') == 'Yes, our venue has Secondary Area Chairs':
-        builder.has_secondary_area_chairs(True)
-
-    double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
-
-    readers_map = {
-        'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS],
-        'All area chairs only': [openreview.stages.SubmissionStage.Readers.AREA_CHAIRS],
-        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
-        'Program chairs and paper authors only': [],
-        'Everyone (submissions are public)': [openreview.stages.SubmissionStage.Readers.EVERYONE],
-        'Make accepted submissions public and hide rejected submissions': [openreview.stages.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
-    }
-
-    # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
-    if 'submission_readers' in note.content:
-        readers = readers_map[note.content.get('submission_readers')]
-        public = 'Everyone (submissions are public)' in readers
-    else:
-        public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
-        bidding_enabled = 'Reviewer Bid Scores' in note.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching', '')
-        if bidding_enabled and not public:
-            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS]
-        elif public:
-            readers = [openreview.stages.SubmissionStage.Readers.EVERYONE]
-        else:
-            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
-
-    submission_additional_options = note.content.get('Additional Submission Options', {})
-    if isinstance(submission_additional_options, str):
-        submission_additional_options = json.loads(submission_additional_options.strip())
-
-    submission_remove_options = note.content.get('remove_submission_options', [])
-    withdrawn_submission_public = 'Yes' in note.content.get('withdrawn_submissions_visibility', '')
-    email_pcs_on_withdraw = 'Yes' in note.content.get('email_pcs_for_withdrawn_submissions', '')
-    email_pcs_on_desk_reject = 'Yes' in note.content.get('email_pcs_for_desk_rejected_submissions', '')
-    desk_rejected_submission_public = 'Yes' in note.content.get('desk_rejected_submissions_visibility', '')
-    withdraw_submission_exp_date = note.content.get('withdraw_submission_expiration')
-    if withdraw_submission_exp_date:
-        try:
-            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d %H:%M')
-        except ValueError:
-            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d')
-
-    # Authors can not be anonymized only if venue is double-blind
-    withdrawn_submission_reveal_authors = 'Yes' in note.content.get('withdrawn_submissions_author_anonymity', '')
-    desk_rejected_submission_reveal_authors = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
-
-    # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
-    submission_release=(note.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
-    create_groups=(not double_blind) and public and submission_release
-    create_review_invitation = create_groups and note.content.get('make_reviews_public', None)
-
-    author_names_revealed = 'Reveal author identities of all submissions to the public' in note.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in note.content.get('reveal_authors', '')
-    papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '') or 'Make accepted submissions public and hide rejected submissions' in note.content.get('submission_readers', '')
-
-    email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
-
-    name = note.content.get('submission_name', 'Submission').strip()
-
-    author_reorder_after_first_deadline = note.content.get('submission_deadline_author_reorder', 'No') == 'Yes'
-
-    submission_email = note.content.get('submission_email', None)
-
-    force_profiles = 'Yes' in note.content.get('force_profiles_only', '')
-
-    builder.set_submission_stage(
-        name=name,
-        double_blind=double_blind,
-        public=public,
-        start_date=submission_start_date,
-        due_date=submission_due_date,
-        second_due_date=submission_second_due_date,
-        additional_fields=submission_additional_options,
-        remove_fields=submission_remove_options,
-        email_pcs=email_pcs,
-        create_groups=create_groups,
-        create_review_invitation=create_review_invitation,
-        withdraw_submission_exp_date=withdraw_submission_exp_date,
-        withdrawn_submission_public=withdrawn_submission_public,
-        withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
-        email_pcs_on_withdraw=email_pcs_on_withdraw,
-        desk_rejected_submission_public=desk_rejected_submission_public,
-        desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
-        email_pcs_on_desk_reject=email_pcs_on_desk_reject,
-        author_names_revealed=author_names_revealed,
-        papers_released=papers_released,
-        readers=readers,
-        author_reorder_after_first_deadline=author_reorder_after_first_deadline,
-        submission_email=submission_email,
-        force_profiles=force_profiles)
-
-    include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
-    builder.set_expertise_selection_stage(due_date=submission_due_date, include_option=include_expertise_selection)
-
-    paper_matching_options = note.content.get('Paper Matching', [])
-    
-    if not paper_matching_options or 'Organizers will assign papers manually' in paper_matching_options or 'Manual' in note.content.get('submission_reviewer_assignment', ''):
-        builder.enable_reviewer_reassignment(enable=True)
-
-    ## Contact Emails is deprecated
-    program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
-    builder.set_conference_program_chairs_ids(program_chair_ids)
-    builder.use_recruitment_template(note.content.get('use_recruitment_template', 'No') == 'Yes')
-
-    readers_map = {
-        'Program Chairs': openreview.stages.IdentityReaders.PROGRAM_CHAIRS,
-        'All Senior Area Chairs': openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS,
-        'Assigned Senior Area Chair': openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
-        'All Area Chairs': openreview.stages.IdentityReaders.AREA_CHAIRS,
-        'Assigned Area Chair': openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED,
-        'All Reviewers': openreview.stages.IdentityReaders.REVIEWERS,
-        'Assigned Reviewers': openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED
-    }
-
-    builder.set_reviewer_identity_readers(get_identity_readers(note, 'reviewer_identity'))
-    builder.set_area_chair_identity_readers(get_identity_readers(note, 'area_chair_identity'))
-    builder.set_senior_area_chair_identity_readers(get_identity_readers(note, 'senior_area_chair_identity'))
-    builder.set_reviewer_roles(note.content.get('reviewer_roles', ['Reviewers']))
-    builder.set_area_chair_roles(note.content.get('area_chair_roles', ['Area_Chairs']))
-    builder.set_senior_area_chair_roles(note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs']))
-    builder.set_review_stage(get_review_stage(note))
-    builder.set_review_rebuttal_stage(get_rebuttal_stage(note))
-    builder.set_ethics_review_stage(get_ethics_review_stage(note))
-    builder.set_bid_stages(get_bid_stages(note, reviewers_id=builder.conference.get_reviewers_id(), area_chairs_id=builder.conference.get_area_chairs_id(), senior_area_chairs_id=builder.conference.get_senior_area_chairs_id()))
-    builder.set_meta_review_stage(get_meta_review_stage(note))
-    builder.set_comment_stage(get_comment_stage(note))
-    builder.set_decision_stage(get_decision_stage(note))
-    builder.set_submission_revision_stage(get_submission_revision_stage(note))
-
-    decision_heading_map = note.content.get('home_page_tab_names')
-    if decision_heading_map:
-        builder.set_homepage_layout('decisions')
-        builder.set_venue_heading_map(decision_heading_map)
-
-    return builder
 
 def set_homepage_options(request_forum, venue, venue_content):
     homepage_override = request_forum.content.get('homepage_override', {})

@@ -442,7 +442,7 @@ class VenueStages():
                 'description': 'Comma separated list of fields (recommendation, ethics_review) that you want removed from the review form.'
             },
             "release_submissions_to_ethics_chairs": {
-                "description": "Do you want to release flagged submissions to the ethics chairs? All flagged submissions will be released to ethics chairs, despite any conflicts between ethics chairs and flagged submissions.",
+                "description": "Do you want to release flagged submissions, reviews, and meta reviews to the ethics chairs? All flagged submissions, reviews, and meta reviews will be released to ethics chairs, despite any conflicts between ethics chairs and flagged submissions.",
                 "order": 9,
                 'value-radio': [
                     'Yes, release flagged submissions to the ethics chairs.',
@@ -1296,6 +1296,7 @@ class VenueRequest():
         self.recruitment_status_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_status_process.py')
         self.decision_upload_status_process = os.path.join(os.path.dirname(__file__), 'process/decision_upload_status_process.py')
         self.decision_stage_pre_process = os.path.join(os.path.dirname(__file__), 'process/decision_stage_pre_process.py')
+        self.deploy_pre_process = os.path.join(os.path.dirname(__file__), 'process/deploy_pre_process.py')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
@@ -1951,31 +1952,34 @@ class VenueRequest():
             }
         }
 
-        with open(self.deploy_process, 'r') as f:
-            file_content = f.read()
-            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+        with open(self.deploy_pre_process, 'r') as pre:
+            with open(self.deploy_process, 'r') as f:
+                pre_process_file_content = pre.read()
+                file_content = f.read()
+                file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
-            self.deploy_super_invitation = self.client.post_invitation(openreview.Invitation(
-                id=self.support_group.id + '/-/Deploy',
-                readers=['everyone'],
-                writers=[],
-                signatures=[self.support_group.id],
-                invitees=[self.support_group.id],
-                process_string=file_content,
-                multiReply=False,
-                reply={
-                    'readers': {
-                        'values': [self.support_group.id]
-                    },
-                    'writers': {
-                        'values': [self.support_group.id]
-                    },
-                    'signatures': {
-                        'values': [self.support_group.id]
-                    },
-                    'content': deploy_content
-                }
-            ))
+                self.deploy_super_invitation = self.client.post_invitation(openreview.Invitation(
+                    id=self.support_group.id + '/-/Deploy',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.support_group.id],
+                    invitees=[self.support_group.id],
+                    preprocess=pre_process_file_content,
+                    process_string=file_content,
+                    multiReply=False,
+                    reply={
+                        'readers': {
+                            'values': [self.support_group.id]
+                        },
+                        'writers': {
+                            'values': [self.support_group.id]
+                        },
+                        'signatures': {
+                            'values': [self.support_group.id]
+                        },
+                        'content': deploy_content
+                    }
+                ))
 
     def setup_venue_post_submission(self):
 

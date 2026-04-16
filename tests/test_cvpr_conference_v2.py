@@ -438,7 +438,7 @@ class TestCVPRConference():
 
         url = f'http://localhost:3030/edges/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&maxColumns=2&version=2&referrer={referrer}'
 
-        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client.token, by=By.CLASS_NAME, wait_for_element='description')
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client, by=By.CLASS_NAME, wait_for_element='description')
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert instructions
         assert 'CVPR 2024 Reviewer Recommendation' in instructions.text
@@ -536,6 +536,11 @@ class TestCVPRConference():
         assert messages and len(messages) == 1
         assert '~AC_CVPROne1' not in messages[0]['content']['text']
         assert 'AC CVPROne' not in messages[0]['content']['text']
+        # Check that the signature uses pretty_id version of the anon group
+        assert 'CVPR 2024 Conference Submission1 Area Chair' in messages[0]['content']['text']
+        # Check that the raw anon_group_id is not in the signature (bottom of message after "Thanks,")
+        message_signature = messages[0]['content']['text'].split('Thanks,')[-1]
+        assert anon_group_id not in message_signature
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation_fast(invitation_url, accept=True)
@@ -546,9 +551,7 @@ class TestCVPRConference():
         assert '~Reviewer_CVPRSeven1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Reviewers').members
 
         messages = openreview_client.get_messages(to='reviewer7@gmail.com', subject='[CVPR 2024] Reviewer Invitation accepted for paper 1')
-        assert messages and len(messages) == 1
-        assert '~AC_CVPROne1' not in messages[0]['content']['text']
-        assert 'AC CVPROne' not in messages[0]['content']['text'] 
+        assert not messages
 
         messages = openreview_client.get_messages(to='reviewer7@gmail.com', subject='[CVPR 2024] You have been assigned as a Reviewer for paper number 1')
         assert messages and len(messages) == 1

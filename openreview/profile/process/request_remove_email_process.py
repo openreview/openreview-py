@@ -15,12 +15,7 @@ def process(client, edit, invitation):
         print('Cannot remove preferred email')
         raise openreview.OpenReviewException('Cannot remove preferred email')
 
-    baseurl_v1 = 'http://localhost:3000'
-
-    if 'https://devapi' in client.baseurl:
-        baseurl_v1 = 'https://devapi.openreview.net'
-    if 'https://api' in client.baseurl:
-        baseurl_v1 = 'https://api.openreview.net' 
+    baseurl_v1 = openreview.tools.get_base_urls(client)[0]
     client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
     
     def replace_group_members(group, current_member, new_member):
@@ -103,6 +98,12 @@ def process(client, edit, invitation):
                 invitation = publication.domain + '/-/Edit',
                 readers = [publication.domain],
                 signatures = [SUPPORT_USER_ID],
+                content = {
+                    "origin": {
+                        "value": "remove email process function",
+                        "readers": [SUPPORT_USER_ID]
+                    },
+                },
                 note = openreview.api.Note(
                     id=publication.id, 
                     content=content,

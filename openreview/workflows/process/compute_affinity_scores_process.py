@@ -2,7 +2,6 @@ def process(client, invitation):
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.cdate
-    support_user = invitation.invitations[0].split('Template')[0] + 'Support'
 
     if cdate > now:
         ## invitation is in the future, do not process
@@ -13,12 +12,42 @@ def process(client, invitation):
     venue_id = domain.id
     committee_name = invitation.get_content_value('committee_name')
     committee_id = f'{venue_id}/{committee_name}'
+    status_invitation_id = domain.get_content_value('status_invitation_id')
+    request_form_id = domain.get_content_value('request_form_id')
+
+    support_user = domain.content['request_form_invitation']['value'].split('/Venue_Request')[0]
 
     affinity_scores_model = invitation.get_content_value('affinity_score_model')
     if not affinity_scores_model:
+        prefix = venue_id + '/'
+        # post status to request form
+        client.post_note_edit(
+            invitation=status_invitation_id,
+            signatures=[venue_id],
+            readers=[venue_id, support_user],
+            note=openreview.api.Note(
+                forum=request_form_id,
+                signatures=[venue_id],
+                content={
+                    'title': { 'value': f'{committee_name.replace("_", " ").title()} Affinity Scores Computation Failed' },
+                    'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid affinity score model to use. Please re-schedule this process to run at a later time and then select a valid model.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split(prefix)[-1].replace("_", " ").replace("/-/", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Model" invitation, select a valid affinity score model to use and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid model. Once you have selected the model, click "Submit" and the process will automatically be scheduled to run shortly.'}
+                }
+            )
+        )
         return
 
     venue = openreview.helpers.get_venue(client, venue_id, support_user)
+
+    match_group = client.get_group(committee_id)
+
+    if not match_group.members:
+        print(f'No members found in the {committee_name} group. No affinnity scores were computed')
+        return
+
+    submissions, num_submissions = client.get_notes(content={ 'venueid': venue.get_submission_venue_id() }, limit=1, with_count=True, domain=venue_id)
+    if not num_submissions:
+        print(f'No submissions found for the venue {venue_id}. No affinity scores were computed')
+        return
 
     matching_status = {}
 

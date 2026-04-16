@@ -1,27 +1,26 @@
 [build-system]
-requires = ["setuptools>=65.5.1", "wheel"]
+requires = ["setuptools>=65.5.1,<81", "wheel>=0.40,<1"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "openreview-py"
-version = "1.54.6"
+version = "2.1.0"
 description = "OpenReview API Python client library"
 authors = [{name = "OpenReview Team", email = "info@openreview.net"}]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 dependencies = [
-    "pycryptodome",
-    "requests>=2.18.4",
-    "future",
-    "tqdm",
-    "Deprecated",
-    "pylatexenc",
-    "tld>=0.12",
-    "pyjwt",
-    "numpy",
-    "litellm==1.76.1"
+    "pycryptodome>=3.20,<4",
+    "requests>=2.18.4,<3",
+    "future>=1.0.0,<2",
+    "tqdm>=4.60,<5",
+    "Deprecated>=1.2.0,<2",
+    "pylatexenc>=2.10,<3",
+    "tld>=0.12,<1",
+    "pyjwt>=2.0,<3",
+    "editdistance>=0.8.1,<1"
 ]
 
 [project.urls]
@@ -29,10 +28,18 @@ Homepage = "https://github.com/openreview/openreview-py"
 
 [project.optional-dependencies]
 docs = [
-    "nbsphinx",
-    "sphinx",
-    "sphinx_rtd_theme",
-    "nbformat"
+    "nbsphinx>=0.9,<1",
+    "sphinx>=7.0,<10",
+    "sphinx_rtd_theme>=3.0,<4",
+    "nbformat>=5.7,<6"
+]
+test = [
+    "pytest>=9.0,<10",
+    "py>=1.11,<2",
+    "pyotp>=2.9,<3",
+    "selenium>=4.0,<5",
+    "pytest-selenium>=4.0,<5",
+    "pytest-cov>=7.0,<8"
 ]
 
 [tool.setuptools.package-data]
@@ -51,6 +58,5 @@ include = [
     "openreview.stages",
     "openreview.arr",
     "openreview.api",
-    "openreview.workflows",
-    "openreview.llm"
+    "openreview.workflows"
 ]

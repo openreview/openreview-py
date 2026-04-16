@@ -3,6 +3,8 @@ import pytest
 import inspect
 import sys
 import time
+import json
+from urllib.parse import quote, unquote
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
@@ -92,14 +94,16 @@ class Helpers:
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
-    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0):
+    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0, timeout=300):
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
         finished_status = ['error', 'ok']
+        process_logs = []
         counter = 0
         wait_time = 0.5
+        max_iterations = int(timeout / wait_time) or 1
         cycles = 60 * 1 / wait_time # print every 1 minutes
-        while True:
+        while counter < max_iterations:
             process_logs = [l for l in super_client.get_process_logs(id=edit_id, invitation=invitation) if l.get('processIndex', 0) == process_index][:count]
             if len(process_logs) == count and all(process_log['status'] in finished_status for process_log in process_logs):
                 for process_log in process_logs:
@@ -108,12 +112,12 @@ class Helpers:
 
             time.sleep(wait_time)
             if counter % cycles == 0:
-                print(f'Logs in API 2 queue: {len(process_logs)}', edit_id)
+                print(f'Logs in API 2 queue: {len(process_logs)}', edit_id or invitation)
                 sys.stdout.flush()
 
             counter += 1
 
-        assert process_logs[0]['status'] == (expected_status), process_logs[0]['log']
+        raise TimeoutError(f'await_queue_edit timed out after {timeout}s waiting for {edit_id or invitation} (expected count={count}, got {len(process_logs)})')
 
     # This method is used to check if the count value passed as param is correct. It can directly be used to
     # replace the await_queue_edit method in the tests.
@@ -174,11 +178,11 @@ class Helpers:
         ))
 
     @staticmethod
-    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None):
+    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None, client=None, expected_error_message=None):
         retries = 5
         for retry in range(retries):
             try:
-                request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
+                request_page(selenium, url, client=client, by=By.CLASS_NAME, wait_for_element='note_editor')
 
                 container = selenium.find_element(By.CLASS_NAME, 'note_editor')
 
@@ -244,8 +248,12 @@ class Helpers:
 
         time.sleep(2)
 
-        Helpers.await_queue()
-
+        errors = selenium.find_elements(By.CLASS_NAME, 'ant-notification-notice-content')
+        if expected_error_message:
+            assert expected_error_message == errors[0].text
+        else:
+            assert len(errors) == 0, "Expected no error notification, but one was found: " + errors[0].text
+        
     @staticmethod
     def respond_invitation_fast(url, accept, quota=None, comment=None):
         parsed_url = urlparse(url)
@@ -292,7 +300,7 @@ class Helpers:
         client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
         edit = client.post_note_edit(
             invitation,
-            None,
+            ['(guest)'],
             note=openreview.api.Note(content=content),
         )
 
@@ -336,10 +344,12 @@ def firefox_options(firefox_options):
 
 @pytest.fixture
 def request_page():
-    def request(selenium, url, token = None, alert=False, by=By.ID, wait_for_element='content'):
-        if token:
+    def request(selenium, url, client = None, alert=False, by=By.ID, wait_for_element='content'):
+        if client:
             selenium.get('http://localhost:3030')
-            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax'})
+            token = client.token.replace('Bearer ', '')
+            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token, 'path': '/', 'sameSite': 'Lax', 'httpOnly': True})
+            selenium.add_cookie({'name': 'openreview.user', 'value': quote(json.dumps(client.user)), 'path': '/', 'sameSite': 'Lax'})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)

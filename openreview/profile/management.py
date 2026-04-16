@@ -83,7 +83,18 @@ class ProfileManagement():
                             'regex': '.*'
                         }
                     },
-                }
+                },
+                web='''// Webfield component
+return {
+  component: 'ProfileTagsViewer',
+  version: 1,
+  properties: {
+    tagInvitation: entity.id,
+    instructions:'Profiles that were tagged by support staff for moderation reasons.',
+    title: 'Moderation Labels'
+  }
+}
+'''
             )
         )
 
@@ -140,7 +151,18 @@ class ProfileManagement():
                             'regex': '.*'
                         }
                     },
-                }
+                },
+                web='''// Webfield component
+return {
+  component: 'ProfileTagsViewer',
+  version: 1,
+  properties: {
+    tagInvitation: entity.id,
+    instructions:'Profiles blocked from participating in venues. This tag is added by support staff after reviewing the user\\'s profile and activity history. If you think this is a mistake, please contact support.',
+    title: 'Blocked Profiles'
+  }
+}
+'''
             )
         )                
     
@@ -179,7 +201,18 @@ class ProfileManagement():
                             'regex': '^~.*'
                         }
                     }
-                }
+                },
+                web='''// Webfield component
+return {
+  component: 'ProfileTagsViewer',
+  version: 1,
+  properties: {
+    tagInvitation: entity.id,
+    instructions:'Profiles that have been activated because another OpenReview user vouched for them.',
+    title: 'Vouched Profiles'
+  }
+}
+'''
             )
         )
 
@@ -1431,7 +1464,7 @@ class ProfileManagement():
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(                    
                         id=f'{self.support_group_id}/-/Profile_Name_Removal',
-                        readers=['everyone'],
+                        readers=['~'],
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
                         invitees=['~'],
@@ -1597,10 +1630,10 @@ class ProfileManagement():
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(
                         id=f'{self.support_group_id}/-/Profile_Email_Removal',
-                        readers=['everyone'],
+                        readers=[self.support_group_id],
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
-                        invitees=['~'],
+                        invitees=[self.support_group_id],
                         process=file_content,
                         preprocess=pre_file_content,
                         edit={
@@ -1709,7 +1742,8 @@ class ProfileManagement():
                                     { 'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0' },
                                     { 'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0' },
                                     { 'value': 'CC0 1.0', 'description': 'CC0 1.0' },
-                                    { 'value': 'WM2024 Conference', 'description': 'WM2024 Conference' } 
+                                    { 'value': 'WM2024 Conference', 'description': 'WM2024 Conference' },
+                                    { 'value': 'arXiv.org perpetual, non-exclusive license', 'description': 'arXiv.org perpetual, non-exclusive license' },
                                 ]
                             }
                         },
@@ -1736,7 +1770,7 @@ class ProfileManagement():
                             },
                             'authorids': {
                                 'order': 3,
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'description': 'Search author profile by name or profile ID. If the profile is not found, you can add the author by completing name as well as author email address.',
                                 'value': {
                                     'param': {
                                         'type': 'profile{}',
@@ -2024,7 +2058,7 @@ class ProfileManagement():
                             },
                             'authorids': {
                                 'order': 3,
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'description': 'Search author profile by name or profile ID. If the profile is not found, you can add the author by completing name as well as author email address.',
                                 'value': {
                                     'param': {
                                         'type': 'profile{}',

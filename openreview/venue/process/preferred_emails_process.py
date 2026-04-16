@@ -10,11 +10,16 @@ def process(client, invitation):
     reviewers_id = domain.get_content_value('reviewers_id')
     reviewers_anon_name = domain.get_content_value('reviewers_anon_name')
     authors_id = domain.get_content_value('authors_id')
+    ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
+    ethics_reviewers_id = domain.get_content_value('ethics_reviewers_id')
+    anon_ethics_reviewer_name = domain.get_content_value('anon_ethics_reviewer_name')
+    publication_chairs_id = domain.get_content_value('publication_chairs_id')
 
 
     users = []
     store_ac_emails = area_chairs_id in preferred_emails_groups
     store_reviewer_emails = reviewers_id in preferred_emails_groups
+    store_ethics_reviewer_emails = ethics_reviewers_id and ethics_reviewers_id in preferred_emails_groups
 
     if senior_area_chairs_id in preferred_emails_groups:
         print('Get profiles for all the senior area chairs')
@@ -28,13 +33,28 @@ def process(client, invitation):
         print('Get profiles for all the reviewers')
         users += client.get_group(reviewers_id).members
 
+    if ethics_chairs_id and ethics_chairs_id in preferred_emails_groups:
+        print('Get profiles for all the ethics chairs')
+        users += client.get_group(ethics_chairs_id).members
+
+    if store_ethics_reviewer_emails:
+        print('Get profiles for all the ethics reviewers')
+        ethics_reviewers_group = client.get_group(ethics_reviewers_id)
+        users += ethics_reviewers_group.members
+
+    if publication_chairs_id and publication_chairs_id in preferred_emails_groups:
+        print('Get profiles for all the publication chairs')
+        users += client.get_group(publication_chairs_id).members
+
     print('Get profiles for all the assigned reviewers and area chairs')
-    groups = client.get_all_groups(prefix=venue_id + '/' + submission_name)
+    groups = client.get_all_groups(prefix=venue_id + '/' + submission_name, domain=venue_id)
 
     for group in groups:
         if store_ac_emails and f'/{area_chairs_anon_name}' in group.id:
             users += group.members
         elif store_reviewer_emails and f'/{reviewers_anon_name}' in group.id:
+            users += group.members
+        elif store_ethics_reviewer_emails and anon_ethics_reviewer_name and f'/{anon_ethics_reviewer_name}' in group.id:
             users += group.members
 
     if authors_id in preferred_emails_groups:
@@ -50,16 +70,17 @@ def process(client, invitation):
 
     print('Create preferred email edges for all the profiles')
 
-    existing_edges = { g['id']['head']: openreview.api.Edge.from_json(g['values'][0]) for g in client.get_grouped_edges(invitation=invitation.id, groupby='head') }
+    existing_edges = { g['id']['head']: openreview.api.Edge.from_json(g['values'][0]) for g in client.get_grouped_edges(invitation=invitation.id, groupby='head', domain=venue_id) }
     
     new_edges = []
     for profile in all_profiles:
         if '~' in profile.id:
-            if not existing_edges.get(profile.id):
+            preferred_email = profile.get_preferred_email()
+            if preferred_email and not existing_edges.get(profile.id):
                 new_edges.append(openreview.api.Edge(
                     invitation=invitation.id,
                     head=profile.id,
-                    tail=profile.get_preferred_email(),
+                    tail=preferred_email,
                     signatures=[venue_id],
                     readers=[f'{venue_id}/Preferred_Emails_Readers', profile.id],
                     writers=[venue_id, profile.id]

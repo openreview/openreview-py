@@ -386,7 +386,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         reviewer_client = openreview.api.OpenReviewClient(username='program_committee1@aaai.org', password=helpers.strong_password)
 
-        request_page(selenium, "http://localhost:3030/group?id=AAAI.org/2025/Conference/Program_Committee", reviewer_client.token, wait_for_element='header')
+        request_page(selenium, "http://localhost:3030/group?id=AAAI.org/2025/Conference/Program_Committee", reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 submission' in header.text
 
@@ -707,7 +707,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Senior_Program_Committee'
 
         # Check that SPC Bid Console loads
-        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client.token, wait_for_element='header')
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'Senior Program Committee Bidding Console' in header.text
 
@@ -716,7 +716,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         # Check that PC Bid Console loads
         reviewer_client = openreview.api.OpenReviewClient(username = 'program_committee1@aaai.org', password=helpers.strong_password)
-        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client.token, wait_for_element='header')
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'Program Committee Bidding Console' in header.text
 
@@ -1192,7 +1192,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         
         # Author comment
         author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
-        profile = author_client.get_profile()
+        profile = author_client.get_profile(author_client.profile.id)
         profile.content['names'].append(
             {
                 'fullname': 'Peter NewLastName',
@@ -1447,7 +1447,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         # Invite SPC3 to paper1
         spc_client = openreview.api.OpenReviewClient(username='senior_program_committee3@aaai.com', password=helpers.strong_password)
-        profile = spc_client.get_profile()
+        profile = spc_client.get_profile(spc_client.profile.id)
         profile.content['history'].append(
             {
                 'position': 'Engineer', 
@@ -1472,7 +1472,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
             ))
 
         # Update year to outside range of conflict_N_years
-        profile = spc_client.get_profile()
+        profile = spc_client.get_profile(spc_client.profile.id)
         profile.content['history'][1]['end'] = now.year-5
         spc_client.post_profile(profile)
 

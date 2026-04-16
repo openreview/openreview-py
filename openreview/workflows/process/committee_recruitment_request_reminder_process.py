@@ -10,8 +10,8 @@ def process(client, edit, invitation):
     committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
     committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
-    hash_seed = committee_invited_response_invitation.content['hash_seed']['value']
-
+    contact_email = domain.get_content_value('contact')
+    
     recruitment_status = {
         'reminded': []
     }
@@ -34,15 +34,21 @@ def process(client, edit, invitation):
         if invitee_profile_id in committee_profiles or invitee_profile_id in committee_declined_profiles:
             return None
         
-        hash_key = openreview.tools.get_user_hash_key(invitee, hash_seed)
+        if committee_invited_response_invitation.secret:
+            hash_key = openreview.tools.get_user_hash_key(invitee, committee_invited_response_invitation.secret, invitation=committee_invited_response_id)
+        else:
+            ## Deprecated method to generate hash key for invitations without a secret. This should be removed once all recruitment invitations have a secret.
+            hash_key = openreview.tools.get_user_hash_key(invitee, committee_invited_response_invitation.content['hash_seed']['value'])
+        
         user_parse = openreview.tools.get_user_parse(invitee)
 
         url = f'https://openreview.net/invitation?id={committee_invited_response_id}&user={user_parse}&key={hash_key}'
 
         personalized_message = recruitment_message_content
         personalized_message = personalized_message.replace("{{invitation_url}}", url)
+        personalized_message = personalized_message.replace("{{venue_email}}", contact_email)
 
-        client.post_message(f'{recruitment_message_subject}', [invitee], personalized_message, invitation=committee_invited_message_id)
+        client.post_message(f'{recruitment_message_subject}', [invitee], personalized_message, invitation=committee_invited_message_id, replyTo=contact_email)
 
         return invitee
         

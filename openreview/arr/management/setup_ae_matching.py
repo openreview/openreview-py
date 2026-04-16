@@ -14,6 +14,7 @@ def process(client, invitation):
     from collections import defaultdict
 
     def replace_edge(existing_edge=None, edge_inv=None, new_weight=None, submission_id=None, profile_id=None, edge_readers=None):
+        print(f'Replacing edge {edge_inv} {submission_id} {profile_id} {new_weight} {edge_readers}')
         if existing_edge:
             client.delete_edges(
                 invitation=edge_inv,
@@ -73,7 +74,7 @@ def process(client, invitation):
         token=client.token
     )
 
-    if client.get_edges_count(invitation=f"{area_chairs_id}/-/Affinity_Score") <= 0:
+    if client.get_edges_count(invitation=f"{area_chairs_id}/-/Affinity_Score", domain=venue_id) <= 0:
         print(f"no affinity scores for {area_chairs_id}")
         return
 
@@ -108,7 +109,7 @@ def process(client, invitation):
     print(f"num profiles {len(all_profiles)}")
     id_to_load_note = {}
     for role_id in [area_chairs_id]:
-        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
+        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}", domain=venue_id) ## Assume only 1 note per user
         for note in load_notes:
             if note.signatures[0] not in name_to_id:
                 continue
@@ -119,7 +120,7 @@ def process(client, invitation):
     track_to_ids = {}
     for role_id in [area_chairs_id]:
         track_to_ids[role_id] = defaultdict(list)
-        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}")
+        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}", domain=venue_id)
         for note in registration_notes:
             if note.signatures[0] not in name_to_id:
                 continue
@@ -133,6 +134,10 @@ def process(client, invitation):
         )
     track_edge_readers = {
         area_chairs_id: [venue_id, senior_area_chairs_id]
+    }
+
+    track_submission_edge_readers = {
+        area_chairs_id: [venue_id, venue.get_senior_area_chairs_id(number='{number}')]
     }
 
     # Reset custom max papers to ground truth notes
@@ -177,20 +182,28 @@ def process(client, invitation):
         try:
             previous_submission = client_v1.get_note(previous_id)
             previous_venue_id = previous_submission.invitation.split('/-/')[0]
-            previous_ae = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
+            previous_ae = openreview.tools.get_group(client_v1, f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client_v1
         except:
             previous_submission = client.get_note(previous_id)
             previous_venue_id = previous_submission.domain
-            previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
+            previous_ae = openreview.tools.get_group(client, f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
 
         print(f"previous submission {submission.id}\nreviewers {wants_new_reviewers}\nae {wants_new_ae}")
 
         ae_scores = {
             g['id']['tail'] : g['values'][0]
-            for g in current_client.get_grouped_edges(invitation=ae_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail')
+            for g in current_client.get_grouped_edges(invitation=ae_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail', domain=venue_id)
         }
+
+        if previous_ae is None:
+            print(f"no previous AE for {submission.id}")
+            continue
+
+        # 2) Grant readership to previous submissions
+        if venue.get_area_chairs_id(number=submission.number) not in previous_ae.members:
+            current_client.add_members_to_group(previous_ae, venue.get_area_chairs_id(number=submission.number))
 
         # Handle AE reassignments
         for ae in previous_ae.members:
@@ -205,7 +218,7 @@ def process(client, invitation):
 
             ae_cmp = {
                 g['id']['tail'] : g['values'][0]
-                for g in current_client.get_grouped_edges(invitation=ae_cmp_inv, select='id,weight', groupby='tail')
+                for g in current_client.get_grouped_edges(invitation=ae_cmp_inv, select='id,weight', groupby='tail', domain=venue_id)
             }
 
             ae_id = name_to_id[ae]
@@ -214,7 +227,7 @@ def process(client, invitation):
             if wants_new_ae:
                 updated_weight = 0
                 skip_scores[submission.id].append(ae_id)
-                reassignment_status[submission.id].append(
+                reassignment_status[submission].append(
                     {
                         'role': area_chairs_id,
                         'head': submission.id,
@@ -224,7 +237,7 @@ def process(client, invitation):
                 )
             else:
                 updated_weight = 3
-                reassignment_status[submission.id].append(
+                reassignment_status[submission].append(
                     {
                         'role': area_chairs_id,
                         'head': submission.id,
@@ -259,12 +272,8 @@ def process(client, invitation):
                 new_weight=updated_weight,
                 submission_id=submission.id,
                 profile_id=ae_id,
-                edge_readers=[venue_id, senior_area_chairs_id, ae_id]
+                edge_readers=[venue_id, venue.get_senior_area_chairs_id(number=submission.number), ae_id]
             )
-
-        # 2) Grant readership to previous submissions
-        if venue.get_area_chairs_id(number=submission.number) not in previous_ae.members:
-            current_client.add_members_to_group(previous_ae, venue.get_area_chairs_id(number=submission.number))
 
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():
@@ -298,24 +307,24 @@ def process(client, invitation):
         openreview.tools.post_bulk_edges(client=client, edges=track_edges_to_post)
 
     # 5) Post status edges
-    for head, edges in reassignment_status.items():
+    for submission, edges in reassignment_status.items():
         for edge_info in edges:
             role = edge_info['role']
             status_inv = f"{role}/-/{status_name}"
             client.delete_edges(
                 invitation=status_inv,
                 tail=edge_info['tail'],
-                head=head,
+                head=submission.id,
                 wait_to_finish=True,
                 soft_delete=True
             )
             client.post_edge(
                 openreview.api.Edge(
                     invitation=status_inv,
-                    head=head,
+                    head=submission.id,
                     tail=edge_info['tail'],
                     label=edge_info['label'],
-                    readers=track_edge_readers[role] + [edge_info['tail']],
+                    readers=[reader.replace('{number}', str(submission.number)) for reader in track_submission_edge_readers[role]] + [edge_info['tail']],
                     writers=[venue_id],
                     signatures=[venue_id]
                 )

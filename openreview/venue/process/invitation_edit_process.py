@@ -15,6 +15,7 @@ def process(client, invitation):
     ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
     ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
+    is_meta_review_invitation = meta_review_name and invitation.id == f'{venue_id}/-/{meta_review_name}'
     invitation_name = invitation.edit['invitation']['id'].split('/')[-1].replace('_', ' ')
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
@@ -44,11 +45,11 @@ def process(client, invitation):
         def filter_by_source(source):
 
             venueids = source.get('venueid', [submission_venue_id]) ## we should always have a venueid
-            source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies')
+            source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies', domain=venue_id)
 
             ## Keep backward compatibility with 'all_submissions' before and after running the post_decision_stage
             if not source_submissions:
-                source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='replies')
+                source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='replies', domain=venue_id)
             
             if 'with_decision_accept' in source:
                 source_submissions = [s for s in source_submissions 
@@ -170,7 +171,8 @@ def process(client, invitation):
                 final_readers.remove('{signatures}')
             if note.content.get('flagged_for_ethics_review', {}).get('value', False):
                 if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
-                    final_readers.append(f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}')
+                    if not is_meta_review_invitation:
+                        final_readers.append(f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}')
                     if release_to_ethics_chairs:
                         final_readers.append(ethics_chairs_id)
             content['noteReaders'] = { 'value': final_readers }
@@ -190,7 +192,7 @@ def process(client, invitation):
 
     notes = get_children_notes()
 
-    current_child_invitations = client.get_all_invitations(invitation=invitation.id)
+    current_child_invitations = client.get_all_invitations(invitation=invitation.id, domain=venue_id)
 
     print(f'create or update {len(notes)} child invitations')
     posted_invitations = openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')

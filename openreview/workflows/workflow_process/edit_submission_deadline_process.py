@@ -6,18 +6,16 @@ def process(client, edit, invitation):
     reviewers_id = domain.get_content_value('reviewers_id')
     expdate = edit.invitation.expdate
     submission_name = domain.get_content_value('submission_name', 'Submission')
-    withdrawn_submission_id = domain.get_content_value('withdrawn_submission_id', f'{venue_id}/Withdrawn_{submission_name}')
     withdrawal_name = domain.get_content_value('withdrawal_name', 'Withdrawal')
-    withdraw_reversion_id = domain.get_content_value('withdraw_reversion_id', f'{venue_id}/-/Withdrawal_Reversion')
     desk_rejection_name = domain.get_content_value('desk_rejection_name', 'Desk_Rejection')
-    desk_rejected_submission_id = domain.get_content_value('desk_rejected_submission_id', f'{venue_id}/-/Desk_Rejected_{submission_name}')
-    desk_rejection_reversion_id = domain.get_content_value('desk_rejection_reversion_id', f'{venue_id}/-/Desk_Rejection_Reversion')
     print('Submission deadline:', edit.invitation.duedate)
 
-    # update post submission cdate if new cdate is later than current cdate
+    full_submission_invitation_id = domain.get_content_value('full_submission_invitation_id', '')
+
+    # update post submission cdate if new cdate is later than current cdate and there is no Full_Submission invitation
     before_bidding_invitation_id = f'{venue_id}/-/{submission_name}_Change_Before_Bidding'
-    invitation = openreview.tools.get_invitation(client, before_bidding_invitation_id)
-    if invitation and invitation.cdate < expdate:
+    before_bidding_invitation = openreview.tools.get_invitation(client, before_bidding_invitation_id)
+    if before_bidding_invitation and before_bidding_invitation.cdate < expdate and not full_submission_invitation_id:
         print('Setting post submission cdate to:', expdate)
         client.post_invitation_edit(
             invitations=meta_invitation_id,
@@ -31,8 +29,8 @@ def process(client, edit, invitation):
 
     # update withdrawal cdate
     withdrawal_invitation_id = f'{venue_id}/-/{withdrawal_name}'
-    invitation = openreview.tools.get_invitation(client, withdrawal_invitation_id)
-    if invitation and invitation.cdate < expdate:
+    withdrawal_invitation = openreview.tools.get_invitation(client, withdrawal_invitation_id)
+    if withdrawal_invitation and withdrawal_invitation.cdate < expdate and not full_submission_invitation_id:
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             signatures=[venue_id],
@@ -53,8 +51,8 @@ def process(client, edit, invitation):
 
     # update desk rejection cdate
     desk_rejection_invitation_id = f'{venue_id}/-/{desk_rejection_name}'
-    invitation = openreview.tools.get_invitation(client, desk_rejection_invitation_id)
-    if invitation and invitation.cdate < expdate:
+    desk_rejection_invitation = openreview.tools.get_invitation(client, desk_rejection_invitation_id)
+    if desk_rejection_invitation and desk_rejection_invitation.cdate < expdate and not full_submission_invitation_id:
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             signatures=[venue_id],
@@ -64,8 +62,7 @@ def process(client, edit, invitation):
                 cdate=expdate,
                 edit={
                     'invitation': {
-                        'cdate': expdate,
-                        'expdate': edit.invitation.duedate + (90 * 24 * 60 * 60 * 1000) ## 90 days
+                        'cdate': expdate
                     }
                 }
             )
@@ -73,8 +70,8 @@ def process(client, edit, invitation):
 
     # update Submission_Group cdate
     submission_group_invitation_id = f'{reviewers_id}/-/{submission_name}_Group'
-    invitation = openreview.tools.get_invitation(client, submission_group_invitation_id)
-    if invitation and invitation.cdate < expdate:
+    submission_group_invitation = openreview.tools.get_invitation(client, submission_group_invitation_id)
+    if submission_group_invitation and submission_group_invitation.cdate < expdate and not full_submission_invitation_id:
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             signatures=[venue_id],
@@ -85,11 +82,30 @@ def process(client, edit, invitation):
             )
         )
 
+    # update Submission_Message cdate
+    submission_message_invitation_id = f'{reviewers_id}/-/{submission_name}_Message'
+    submission_message_invitation = openreview.tools.get_invitation(client, submission_message_invitation_id)
+    if submission_message_invitation:
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=submission_message_invitation_id,
+                cdate=expdate,
+                signatures=[venue_id],
+                edit={
+                    'invitation': {
+                        'cdate': expdate
+                    }
+                }
+            )
+        )
+
     area_chairs_id = domain.get_content_value('area_chairs_id')
     if area_chairs_id:
-        ac_submission_group_invitation_id = f'{area_chairs_id}/-/{submission_name}_Group',
-        invitation = openreview.tools.get_invitation(client, ac_submission_group_invitation_id)
-        if invitation and invitation.cdate < expdate:
+        ac_submission_group_invitation_id = f'{area_chairs_id}/-/{submission_name}_Group'
+        ac_submission_group_invitation = openreview.tools.get_invitation(client, ac_submission_group_invitation_id)
+        if ac_submission_group_invitation and ac_submission_group_invitation.cdate < expdate and not full_submission_invitation_id:
         # update Area_Chair_Group cdate
             client.post_invitation_edit(
                 invitations=meta_invitation_id,
@@ -101,11 +117,30 @@ def process(client, edit, invitation):
                 )
             )
 
+        # update AC Submission_Message cdate
+        ac_submission_message_invitation_id = f'{area_chairs_id}/-/{submission_name}_Message'
+        ac_submission_message_invitation = openreview.tools.get_invitation(client, ac_submission_message_invitation_id)
+        if ac_submission_message_invitation:
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=ac_submission_message_invitation_id,
+                    cdate=expdate,
+                    signatures=[venue_id],
+                    edit={
+                        'invitation': {
+                            'cdate': expdate
+                        }
+                    }
+                )
+            )
+
     senior_area_chairs_id = domain.get_content_value('senior_area_chairs_id')
     if senior_area_chairs_id:
         sac_submission_group_invitation_id = f'{senior_area_chairs_id}/-/{submission_name}_Group'
-        invitation = openreview.tools.get_invitation(client, sac_submission_group_invitation_id)
-        if invitation and invitation.cdate < expdate:
+        sac_submission_group_invitation = openreview.tools.get_invitation(client, sac_submission_group_invitation_id)
+        if sac_submission_group_invitation and sac_submission_group_invitation.cdate < expdate and not full_submission_invitation_id:
         # update Senior_Area_Chair_Group cdate
             client.post_invitation_edit(
                 invitations=meta_invitation_id,
@@ -116,3 +151,55 @@ def process(client, edit, invitation):
                     signatures=[venue_id]
                 )
             )
+
+        # update SAC Submission_Message cdate
+        sac_submission_message_invitation_id = f'{senior_area_chairs_id}/-/{submission_name}_Message'
+        sac_submission_message_invitation = openreview.tools.get_invitation(client, sac_submission_message_invitation_id)
+        if sac_submission_message_invitation:
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=sac_submission_message_invitation_id,
+                    cdate=expdate,
+                    signatures=[venue_id],
+                    edit={
+                        'invitation': {
+                            'cdate': expdate
+                        }
+                    }
+                )
+            )
+
+    # always update Full_Submission cdate if it exists
+    if full_submission_invitation_id:
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=full_submission_invitation_id,
+                signatures=[venue_id],
+                cdate=expdate,
+                edit={
+                    'invitation': {
+                        'cdate': expdate
+                    }
+                }
+            )
+        )
+
+        deletion_invitation_id = f'{venue_id}/-/Deletion'
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=deletion_invitation_id,
+                signatures=[venue_id],
+                cdate=expdate,
+                edit={
+                    'invitation': {
+                        'cdate': expdate
+                    }
+                }
+            )
+        )

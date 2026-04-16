@@ -227,8 +227,8 @@ class TestICMLConference():
                 },
                 'license': {
                     'value':  [
-                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}
+                        {'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0'},
+                        {'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0'}
                     ]
                 }
             }
@@ -301,7 +301,8 @@ class TestICMLConference():
                 },
                 group=openreview.api.Group()
             )
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])        
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)       
 
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Senior_Area_Chairs').members) == 0
         group = openreview_client.get_group('ICML.cc/2025/Conference/Senior_Area_Chairs/Invited')
@@ -311,11 +312,22 @@ class TestICMLConference():
         messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Senior Area Chair')
         assert len(messages) == 2
 
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+
         for message in messages:
             text = message['content']['text']
 
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-            helpers.respond_invitation_fast(invitation_url, accept=True)
+            guest_key = invitation_url.split('&key=')[1]
+            guest_client.post_note_edit_as_guest(token=guest_key, edit={
+                'signatures': [message['content']['to']],
+                'invitation': 'ICML.cc/2025/Conference/Senior_Area_Chairs/-/Recruitment_Response',
+                'note': {
+                    'content': {
+                        'response': { 'value': 'Yes'}
+                    }
+                }
+            })
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Recruitment_Response', count=2)
 
@@ -344,6 +356,7 @@ class TestICMLConference():
                 group=openreview.api.Group()
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs').members) == 0
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs/Invited').members) == 2
@@ -351,11 +364,22 @@ class TestICMLConference():
         messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Area Chair')
         assert len(messages) == 2
 
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+        
         for message in messages:
             text = message['content']['text']
 
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-            helpers.respond_invitation_fast(invitation_url, accept=True)
+            guest_key = invitation_url.split('&key=')[1]
+            guest_client.post_note_edit_as_guest(token=guest_key, edit={
+                'signatures': [message['content']['to']],
+                'invitation': 'ICML.cc/2025/Conference/Area_Chairs/-/Recruitment_Response',
+                'note': {
+                    'content': {
+                        'response': { 'value': 'Yes'}
+                    }
+                }
+            })
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Area_Chairs/-/Recruitment_Response', count=2)
 
@@ -398,6 +422,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 group=openreview.api.Group()
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers').members) == 0
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Invited').members) == 6
@@ -406,11 +431,23 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Reviewer')
         assert len(messages) == 6
 
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+
         for message in messages:
             text = message['content']['text']
 
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-            helpers.respond_invitation_fast(invitation_url, accept=True, quota=1)
+            guest_key = invitation_url.split('&key=')[1]
+            guest_client.post_note_edit_as_guest(token=guest_key, edit={
+                'signatures': [message['content']['to']],
+                'invitation': 'ICML.cc/2025/Conference/Reviewers/-/Recruitment_Response',
+                'note': {
+                    'content': {
+                        'response': { 'value': 'Yes'},
+                        'reduced_load': { 'value': '1'}
+                    }
+                }
+            })
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Reviewers/-/Recruitment_Response', count=6)
 
@@ -423,7 +460,16 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         messages = openreview_client.get_messages(to = 'reviewer6@yahoo.com', subject = '[ICML 2025] Invitation to serve as Reviewer')
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-        helpers.respond_invitation_fast(invitation_url, accept=False)
+        guest_key = invitation_url.split('&key=')[1]
+        guest_client.post_note_edit_as_guest(token=guest_key, edit={
+            'signatures': [messages[0]['content']['to']],
+            'invitation': 'ICML.cc/2025/Conference/Reviewers/-/Recruitment_Response',
+            'note': {
+                'content': {
+                    'response': { 'value': 'No'}
+                }
+            }
+        })
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Reviewers/-/Recruitment_Response', count=7)
 
@@ -433,7 +479,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
-        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
+        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Reviewers", reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 submission' in header.text
 
@@ -458,7 +504,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         openreview_client.add_members_to_group('~Reviewer_ICMLOne1', 'reviewer1@gmail.com')
         openreview_client.add_members_to_group('reviewer1@gmail.com', '~Reviewer_ICMLOne1')
 
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
         profile.content['preferredEmail'] = 'reviewer1@gmail.com'
         reviewer_client.post_profile(profile)
@@ -466,7 +512,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
         assert edge.tail == 'reviewer1@gmail.com'
 
-        profile = reviewer_client.get_profile()
+        profile = reviewer_client.get_profile(reviewer_client.profile.id)
         profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
         profile.content['preferredEmail'] = 'reviewer1@icml.cc'
         reviewer_client.post_profile(profile)
@@ -534,7 +580,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
 
-        request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs', sac_client, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.LINK_TEXT, "Submission Status")
@@ -713,7 +759,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
             assert f'ICML.cc/2025/Conference/Submission{i}/Authors' in authors_group.members
 
         # assert authors see Submission button to edit their submissions
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client, by=By.CLASS_NAME, wait_for_element='forum-note')
         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
         assert note_div
         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
@@ -729,7 +775,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         # assert PCs can also see Submission button to edit submissions
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2, by=By.CLASS_NAME, wait_for_element='forum-note')
         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
         assert note_div
         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
@@ -836,7 +882,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         submission = submissions[0]
 
         # assert authors don't see Submission button anymore
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client, by=By.CLASS_NAME, wait_for_element='forum-note')
         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
         assert note_div
         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
@@ -1041,8 +1087,9 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                     'subject_areas': { 'value': submission.content['subject_areas']['value'] },
                     'position_paper_track': { 'value': submission.content['position_paper_track']['value'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
-                }
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                },
+                license = 'CC BY-NC-ND 4.0'
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
@@ -1592,7 +1639,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         pc_client_v2.post_edge(quota_edge)
 
 #         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
-#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
+#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Area_Chairs", ac_client, wait_for_element='header')
 #         header = selenium.find_element(By.ID, 'header')
 #         assert 'Reviewer Assignment Browser:' in header.text
 
@@ -1928,7 +1975,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #             )
 #         )
 
-#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
+#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Area_Chairs", ac_client, wait_for_element='header')
 #         header = selenium.find_element(By.ID, 'header')
 #         assert 'Reviewer Assignment Browser:' in header.text
 
@@ -2281,7 +2328,7 @@ Please note that responding to this email will direct your reply to contact@icml
 
 #         # Test referrer in SAC edge browser URL
 #         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
-#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs#area-chair-status", sac_client.token, wait_for_element='tabs-container')
+#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs#area-chair-status", sac_client, wait_for_element='tabs-container')
 #         link =  selenium.find_element(By.CLASS_NAME, 'ac-sac-summary').find_element(By.LINK_TEXT, 'Modify Reviewers Assignments')
 #         assert link
 #         assert link.get_attribute("href") == 'http://localhost:3030/edges/browse?start=ICML.cc/2025/Conference/Area_Chairs/-/Assignment,tail:~AC_ICMLOne1&traverse=ICML.cc/2025/Conference/Reviewers/-/Assignment&edit=ICML.cc/2025/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2025/Conference/Reviewers/-/Affinity_Score;ICML.cc/2025/Conference/Reviewers/-/Bid;ICML.cc/2025/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2025/Conference/Reviewers/-/Conflict&maxColumns=2&preferredEmailInvitationId=ICML.cc/2025/Conference/-/Preferred_Emails&version=2&referrer=[Senior%20Area%20Chairs%20Console](/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs)'
@@ -2810,7 +2857,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         ## check how the description is rendered
 #         note = review_edit['note']
 #         review_id = note['id']
-#         request_page(selenium, "http://localhost:3030/forum?id=" + review_edit['note']['forum'], openreview_client.token, by=By.ID, wait_for_element='forum-replies')
+#         request_page(selenium, "http://localhost:3030/forum?id=" + review_edit['note']['forum'], openreview_client, by=By.ID, wait_for_element='forum-replies')
 #         note_panel = selenium.find_element(By.XPATH, f'//div[@data-id="{review_id}"]')
 #         fields = note_panel.find_elements(By.CLASS_NAME, 'note-content-field')
 #         assert len(fields) == 11
@@ -5101,7 +5148,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         note = submissions[1]
 
 #         # check SACs can't see Metareview Revision button
-#         request_page(selenium, 'http://localhost:3030/forum?id=' + note.id, sac_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+#         request_page(selenium, 'http://localhost:3030/forum?id=' + note.id, sac_client, by=By.CLASS_NAME, wait_for_element='invitations-container')
 #         invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
 #         invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
 #         buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
@@ -5474,7 +5521,7 @@ Please note that responding to this email will direct your reply to contact@icml
 
 #         # assert PCs can't use Submission invitation after post decision is run
 #         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-#         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+#         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2, by=By.CLASS_NAME, wait_for_element='forum-note')
 #         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
 #         assert note_div
 #         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')

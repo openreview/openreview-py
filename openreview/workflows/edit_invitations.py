@@ -87,8 +87,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     },
@@ -96,8 +95,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     }
@@ -118,7 +116,8 @@ class EditInvitationsBuilder(object):
         if process_file:
             invitation.process = self.get_process_content(process_file)
 
-        if due_date:
+        # add due_date only if it is in the future
+        if due_date and due_date > tools.datetime_millis(datetime.datetime.now()):
             invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=True)
@@ -154,13 +153,13 @@ class EditInvitationsBuilder(object):
                                 'type': 'object[]',
                                 'input': 'select',
                                 'items':  [
-                                    {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
-                                    {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
-                                    {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
-                                    {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
-                                    {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
-                                    {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                                    {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
+                                    {'value': {'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
+                                    {'value': {'value': 'CC BY-SA 4.0', 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                    {'value': {'value': 'CC BY-NC 4.0', 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                    {'value': {'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                    {'value': {'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                    {'value': {'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                    {'value': {'value': 'CC0 1.0', 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
                                 ]
                             }
                         },
@@ -186,8 +185,12 @@ class EditInvitationsBuilder(object):
 
         if process_file:
             invitation.process = self.get_process_content(process_file)
+        
+        # Add preprocess to validate venue/venueid cannot be deleted
+        invitation.preprocess = self.get_process_content('process/submission_form_fields_preprocess.js')
 
-        if due_date:
+        # add due_date only if it is in the future
+        if due_date and due_date > tools.datetime_millis(datetime.datetime.now()):
             invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=False)
@@ -248,43 +251,58 @@ class EditInvitationsBuilder(object):
             }
         )
 
-        if due_date:
+        # add due_date only if it is in the future
+        if due_date and due_date > tools.datetime_millis(datetime.datetime.now()):
             invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_readers_invitation(self, invitation_id):
+    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False):
 
         venue_id = self.venue_id
         submission_name = self.get_content_value('submission_name', 'Submission')
-        sub_invitation_id = f'{invitation_id}/Submission_Readers'
+        sub_invitation_id = f'{invitation_id}/Readers'
         authors_name = self.get_content_value('authors_name', 'Authors')
         reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
 
         readers_items = [
-            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
+            {'value': venue_id, 'optional': True, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
-            readers_items.extend([
+            readers_items.append(
                 {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
-            ])
+                
+            )
+            if include_assigned_committee:
+                readers_items.append(
+                    {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+                )
 
         area_chairs_name = self.get_content_value('area_chairs_name')
         if area_chairs_name:
-            readers_items.extend([
-                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
-            ])
+            readers_items.append(
+                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'}
+            )
+            if include_assigned_committee:
+                readers_items.append(
+                    {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
+                )
+
+        readers_items.append(
+            {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'}
+        )
+        if include_assigned_committee:
+            readers_items.append(
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'}
+            )
 
         readers_items.extend([
-                {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'}
-            ])
+            {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
+            {'value': 'everyone', 'optional': True, 'description': 'Public'}
+        ])
 
         invitation = Invitation(
             id = sub_invitation_id,
@@ -292,6 +310,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('process/edit_note_readers_preprocess.py'),
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -438,7 +457,7 @@ class EditInvitationsBuilder(object):
             self.save_invitation(invitation, replacement=True)
             return invitation
     
-    def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, preprocess_file=None, due_date=None):
+    def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, preprocess_file=None, due_date=None, allow_license_edition=False):
 
         venue_id = self.venue_id
 
@@ -517,10 +536,37 @@ class EditInvitationsBuilder(object):
         if due_date:
             invitation.duedate = due_date
 
+        if allow_license_edition:
+            invitation.edit['content'].update({
+                'license': {
+                    'value': {
+                        'param': {
+                            'type': 'object[]',
+                            'input': 'select',
+                            'items':  [
+                                {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
+                                {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
+                            ]
+                        }
+                    },
+                    'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission.'
+                }
+            })
+            invitation.edit['invitation']['edit']['invitation']['edit']['note']['license'] = {
+                'param': {
+                    'enum': ['${7/content/license/value}']
+                }
+            }
+
         self.save_invitation(invitation, replacement=False)
         return invitation
     
-    def set_edit_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None):
+    def set_edit_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None, include_authors=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Readers'
@@ -530,7 +576,7 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
         reply_readers = [
-            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
+            {'value': program_chairs_id, 'optional': True, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
@@ -556,7 +602,11 @@ class EditInvitationsBuilder(object):
         if include_signatures:
             reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
 
-        reply_readers.append({'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'})
+        if include_authors:
+            reply_readers.extend([
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
+                {'value': 'everyone', 'optional': True, 'description': 'Public'}
+            ])
 
         invitation = Invitation(
             id = invitation_id,
@@ -564,6 +614,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('process/edit_note_readers_preprocess.py'),
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -994,10 +1045,10 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'reviewers_conflict_policy': {
+                        'conflict_policy': {
                             'value': '${4/content/conflict_policy/value}'
                         },
-                        'reviewers_conflict_n_years': {
+                        'conflict_n_years': {
                             'value': '${4/content/conflict_n_years/value}'
                         }
                     }
@@ -1172,17 +1223,8 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('process/edit_upload_date_process.py'),
             edit = {
                 'content': {
-                    'upload_date': {
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ]
-                            }
-                        }
-                    },
                     'decision_CSV': {
                         'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). Please do not add the column names as the first row',
                         'value': {
@@ -1201,9 +1243,6 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'upload_date': {
-                            'value': '${4/content/upload_date/value}'
-                        },
                         'decision_CSV': {
                             'value': '${4/content/decision_CSV/value}'
                         }
@@ -1227,17 +1266,8 @@ class EditInvitationsBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             preprocess = self.get_process_content('process/deploy_assignments_preprocess.py'),
-            process = self.get_process_content('process/edit_deploy_date_process.py'),
             edit = {
                 'content': {
-                    'deploy_date': {
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ]
-                            }
-                        }
-                    },
                     'match_name': {
                         'value': {
                             'param': {
@@ -1254,9 +1284,6 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'deploy_date': {
-                            'value': '${4/content/deploy_date/value}'
-                        },
                         'match_name': {
                             'value': '${4/content/match_name/value}'
                         }
@@ -1433,10 +1460,12 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_fields_email_template_invitation(self, super_invitation_id, due_date=None):
+    def set_edit_fields_email_template_invitation(self, super_invitation_id, due_date=None, is_review_invitation=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Fields_to_Include'
+
+        default_fields = ['review', 'rating', 'confidence'] if is_review_invitation else ['decision', 'comment']
 
         invitation = Invitation(
             id = invitation_id,
@@ -1450,7 +1479,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                     'type': 'string[]',
-                                    'enum': ['review', 'rating', 'confidence'] #default review fields
+                                    'enum': default_fields #default review fields
                                 }
                         }
                     }
@@ -1462,7 +1491,7 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'review_fields_to_include': {
+                        'fields_to_include': {
                             'value': ['${5/content/fields/value}']
                         }
                     }
@@ -1486,7 +1515,7 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
         reply_readers = [
-            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
+            {'value': program_chairs_id, 'optional': True, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
@@ -1512,7 +1541,10 @@ class EditInvitationsBuilder(object):
         if include_signatures:
             reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
 
-        reply_readers.append({'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'})
+        reply_readers.extend([
+            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
+            {'value': 'everyone', 'optional': True, 'description': 'Public'}                  
+        ])
 
         invitation = Invitation(
             id = invitation_id,
@@ -1520,6 +1552,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('process/edit_note_readers_preprocess.py'),
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -1783,6 +1816,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('process/committee_recruitment_request_pre_process.js'),
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],

@@ -139,6 +139,20 @@ class TestNeurIPSConference():
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
+        # set submission_human_verification on the domain group so Revision picks it up
+        openreview_client.post_group_edit(
+            invitation='NeurIPS.cc/2023/Conference/-/Edit',
+            signatures=['NeurIPS.cc/2023/Conference'],
+            group=openreview.api.Group(
+                id='NeurIPS.cc/2023/Conference',
+                content={
+                    'submission_human_verification': {
+                        'value': { 'limit': 15, 'windowMs': 3600000 }
+                    }
+                }
+            )
+        )
+
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
@@ -175,7 +189,10 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
         ))
         helpers.await_queue()
 
-        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference', pc_client.token, wait_for_element='header')
+        submission_inv = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Submission')
+        assert submission_inv.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
+
+        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
         assert header_div
         location_tag = header_div.find_element(By.CLASS_NAME, 'venue-location')
@@ -189,7 +206,7 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
@@ -258,7 +275,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert 'sac2@gmail.com' in sac_group.members
 
         sac_client = openreview.api.OpenReviewClient(username='sac1@google.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2023/Conference", sac_client.token, wait_for_element='notes')
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2023/Conference", sac_client, wait_for_element='notes')
         notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
         tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
@@ -421,7 +438,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert edges == 3
 
         tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs#senior-area-chair-tasks'
-        request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chairs Bid')
+        request_page(selenium, tasks_url, sac_client, by=By.LINK_TEXT, wait_for_element='Senior Area Chairs Bid')
 
         task_panel = selenium.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
         task_panel.click()
@@ -429,7 +446,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert selenium.find_element(By.LINK_TEXT, "Senior Area Chairs Bid")
 
         bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Bid'
-        request_page(selenium, bid_url, sac_client.token, wait_for_element='notes')
+        request_page(selenium, bid_url, sac_client, wait_for_element='notes')
 
         notes = selenium.find_element(By.ID, 'all-area-chairs')
         assert notes
@@ -526,7 +543,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.ID, wait_for_element='note_{}'.format(request_form.id))
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client, by=By.ID, wait_for_element='note_{}'.format(request_form.id))
         recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
@@ -631,7 +648,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         ## Check reviewers console load
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@umass.edu', password=helpers.strong_password)
-        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Reviewers', reviewer_client.token, by=By.ID, wait_for_element='header')
+        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Reviewers', reviewer_client, by=By.ID, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         strong_elements = header.find_elements(By.TAG_NAME, 'strong')
         assert len(strong_elements) == 1
@@ -1349,6 +1366,21 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         sac_group = pc_client_v2.get_group('NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs')
         assert ['~SeniorArea_NeurIPSChair1'] == sac_group.members
 
+    def test_compute_stats_before_review_stage(self, helpers, openreview_client, client):
+
+        pc_client=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
+
+        pc_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            signatures=['NeurIPS.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum',
+                cdate = openreview.tools.datetime_millis(datetime.datetime.now())
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum-0-1', count=2)
+
+    
     def test_review_stage(self, helpers, openreview_client, test_client, client):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -2445,7 +2477,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         ]
 
         forum_url = 'http://localhost:3030/forum?id=' + submissions[0].id
-        request_page(selenium, forum_url, test_client.token, wait_for_element='5-metareview-status')
+        request_page(selenium, forum_url, test_client, wait_for_element='5-metareview-status')
 
         note_panel = selenium.find_element(By.XPATH, f'//div[@data-id="{rebuttal.id}"]')
         fields = note_panel.find_elements(By.CLASS_NAME, 'note-content-field')
