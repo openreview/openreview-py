@@ -243,9 +243,9 @@ return {
             signatures = [self.super_user],
             invitation = openreview.api.Invitation(
                 id=self.public_article_meta_invitation_id,
-                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
-                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
-                signatures=[self.public_article_group_id],                
+                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
+                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
+                signatures=[self.public_article_group_id],
                 edit=True
             )
         )

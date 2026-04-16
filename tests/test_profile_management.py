@@ -1963,6 +1963,132 @@ The OpenReview Team.
         assert note.content['status']['value'] == 'Accepted'
 
 
+    def test_remove_name_with_dblp_publication(self, openreview_client, support_client, test_client, helpers):
+
+        edith_client = helpers.create_user('edith@profile.org', 'Edith', 'Last', alternates=[], institution='google.com')
+
+        profile = edith_client.get_profile(edith_client.profile.id)
+        profile.content['names'].append({
+            'first': 'Edith',
+            'middle': 'Alternate',
+            'last': 'Last'
+        })
+        edith_client.post_profile(profile)
+
+        profile = edith_client.get_profile(email_or_id='~Edith_Last1')
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][1]['username'] == '~Edith_Alternate_Last1'
+
+        ## Import a DBLP publication where Edith's alternate name appears in the authors array
+        test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        xml = '''<inproceedings key="conf/test/EdithRemoveName2025" mdate="2025-04-15">
+<author>Edith Alternate Last</author>
+<author>Test Coauthor</author>
+<title>A Paper About Removing Names From DBLP.</title>
+<pages>1-10</pages>
+<year>2025</year>
+<booktitle>TestConf</booktitle>
+<url>db/conf/test/test2025.html#EdithRemoveName2025</url>
+</inproceedings>
+'''
+
+        edit = test_client_v2.post_note_edit(
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            signatures = ['~SomeFirstName_User1'],
+            content = {
+                'xml': { 'value': xml }
+            },
+            note = openreview.api.Note(
+                external_id = 'dblp:conf/test/EdithRemoveName2025',
+                content={
+                    'title': {
+                        'value': 'A Paper About Removing Names From DBLP',
+                    },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'Edith Alternate Last', 'username': ''},
+                            {'fullname': 'Test Coauthor', 'username': ''},
+                        ],
+                    },
+                    'venue': {
+                        'value': 'TestConf',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        dblp_note_id = edit['note']['id']
+
+        ## Edith claims authorship of the DBLP record using her alternate name
+        edit = edith_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Edith_Alternate_Last1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Edith_Alternate_Last1' },
+                'author_name': { 'value': 'Edith Alternate Last' },
+            },
+            note = openreview.api.Note(
+                id = dblp_note_id
+            )
+        )
+
+        note = edith_client.get_note(dblp_note_id)
+        assert note.content['authors']['value'][0] == {'fullname': 'Edith Alternate Last', 'username': '~Edith_Alternate_Last1'}
+        assert 'authorids' not in note.content
+
+        ## Request to remove the alternate name
+        request_note = edith_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~Edith_Last1'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'Edith Alternate Last' },
+                    'usernames': { 'value': ['~Edith_Alternate_Last1'] },
+                    'comment': { 'value': 'no longer use this name' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
+
+        ## Accept the request
+        decision_note = support_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            signatures=['openreview.net/Support'],
+            note = openreview.api.Note(
+                id = request_note['note']['id'],
+                content={
+                    'status': { 'value': 'Accepted' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        edith_client = openreview.api.OpenReviewClient(username='edith@profile.org', password=helpers.strong_password)
+        note = edith_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+        profile = edith_client.get_profile(email_or_id='~Edith_Last1')
+        assert len(profile.content['names']) == 1
+        assert profile.content['names'][0]['username'] == '~Edith_Last1'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Edith_Alternate_Last1'):
+            openreview_client.get_group('~Edith_Alternate_Last1')
+
+        ## The alternate username embedded in the DBLP authors array should be replaced
+        ## with the preferred name and id of the profile.
+        note = edith_client.get_note(dblp_note_id)
+        assert note.content['authors']['value'][0] == {'fullname': 'Edith Last', 'username': '~Edith_Last1'}
+        assert note.content['authors']['value'][1] == {'fullname': 'Test Coauthor', 'username': ''}
+        assert 'authorids' not in note.content
+
+
     def test_remove_name_and_rename_profile_id(self, support_client, openreview_client, helpers):
 
         ana_client = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
