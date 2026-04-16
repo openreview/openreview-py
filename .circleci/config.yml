@@ -15,6 +15,45 @@ parameters:
 
 # Reusable commands to reduce duplication between jobs
 commands:
+  get-github-token:
+    description: "Generate a short-lived GitHub App installation token"
+    steps:
+      - run:
+          name: Generate GitHub App token
+          command: |
+            pip install PyJWT==2.12.1 cryptography==46.0.7 --quiet
+
+            cat > /tmp/get_token.py \<< 'PYEOF'
+            import jwt, time, json, os, urllib.request
+
+            private_key = os.environ["GITHUB_APP_PRIVATE_KEY"]
+            app_id = os.environ["GITHUB_APP_ID"]
+            install_id = os.environ["GITHUB_APP_INSTALLATION_ID"]
+            now = int(time.time())
+
+            app_jwt = jwt.encode(
+                {"iat": now - 60, "exp": now + (9 * 60), "iss": app_id},
+                private_key,
+                algorithm="RS256"
+            )
+
+            req = urllib.request.Request(
+                f"https://api.github.com/app/installations/{install_id}/access_tokens",
+                method="POST",
+                headers={
+                    "Authorization": f"Bearer {app_jwt}",
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28"
+                }
+            )
+            with urllib.request.urlopen(req) as resp:
+                print(json.load(resp)["token"])
+            PYEOF
+
+            TOKEN=$(python3 /tmp/get_token.py)
+
+            # Make token available to subsequent steps
+            echo "export GITHUB_TOKEN=$TOKEN" >> $BASH_ENV
   setup-mongodb:
     description: "Initialize MongoDB replica set"
     steps:
@@ -46,17 +85,17 @@ commands:
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
+            git clone https://x-access-token:$GITHUB_TOKEN@github.com/openreview/openreview-api-v1.git ~/openreview
             cd ~/openreview && git checkout << pipeline.parameters.openreview-api-v1-branch >>
       - run:
           name: Clone OpenReview API V2 branch << pipeline.parameters.openreview-api-v2-branch >>
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
+            git clone https://x-access-token:$GITHUB_TOKEN@github.com/openreview/openreview-api.git ~/openreview-v2
             cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
       - run:
           name: Clone openreview-web
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+            git clone https://github.com/openreview/openreview-web.git ~/openreview-web
 
   create-directories:
     description: "Create API directories"
@@ -275,6 +314,7 @@ jobs:
               echo "No modified test files - skipping test environment setup"
               circleci-agent step halt
             fi
+      - get-github-token
       - install-nodejs
       - setup-mongodb
       - clone-repos
@@ -323,6 +363,7 @@ jobs:
           transport.host: localhost
     steps:
       - checkout
+      - get-github-token
       - install-nodejs
       - setup-mongodb
       - clone-repos
@@ -368,10 +409,11 @@ jobs:
       - image: cimg/python:3.11.0
     steps:
       - checkout
+      - get-github-token
       - run:
           name: Deploy to dev instance
           command: |
-            curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $OPENREVIEW_GITHUB" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
+            curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
 workflows:
   version: 2
   build-deploy:
