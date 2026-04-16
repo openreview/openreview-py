@@ -184,6 +184,19 @@ class InvitationBuilder(object):
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.get_process_content(arr_stage.process)
             }]
+            
+        # Build base date_processes with initial trigger
+        date_processes = [{
+            'dates': ["#{4/cdate}", self.update_date_string],
+            'script': self.get_process_content(arr_stage.process)
+        }]
+
+        # Add cron process if cron expression is provided in arr_stage
+        if arr_stage.cron:
+            date_processes.append({
+                'cron': arr_stage.cron,
+                'script': self.get_process_content(arr_stage.process)
+            })
 
         process_invitation = Invitation(
             **process_invitation_arguments,
