@@ -4195,6 +4195,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment')
 
+        # ~AC_ARROne1 has CMP=0 from June migration, update quota to allow assignment in August
+        ac_cmp_edge = openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers',
+            tail='~AC_ARROne1'
+        )[0]
+        ac_cmp_edge.weight = 2
+        openreview_client.post_edge(ac_cmp_edge)
+
         edge = openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
             head = submissions[1].id,
@@ -4348,6 +4356,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         reviewer_two_edge = client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment', tail='~Reviewer_ARRTwo1', head=submissions[1].id)
         assert reviewer_two_edge[0].label == 'Declined: I am too busy.'
 
+        # Update quota to allow assignment
+        rev_cmp_edge = openreview_client.get_all_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers',
+            tail='~Reviewer_ARRFour1'
+        )[0]
+        rev_cmp_edge.weight = 2
+        openreview_client.post_edge(rev_cmp_edge)
+        
         # Assignment for reviewer 4 should post
         existing_edges.append(
             openreview_client.post_edge(openreview.api.Edge(

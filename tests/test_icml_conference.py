@@ -4878,7 +4878,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 }
             },
             notify_readers=True,
-            email_sacs=False)
+            email_sacs=False,
+            description='Please acknowledge that you have read the rebuttal.')
 
         venue.create_custom_stage()
 
@@ -4886,6 +4887,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         ack_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Acknowledgement')
         assert len(ack_invitations) == 2
+        assert ack_invitations[0].description == 'Please acknowledge that you have read the rebuttal.'
+        assert ack_invitations[1].description == 'Please acknowledge that you have read the rebuttal.'
 
 
         ## Ask reviewers to comment the rebuttals
@@ -4920,7 +4923,10 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Rebuttal_Comment-0-1', count=1)        
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Comment')) == 2
+        comment_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Comment')
+        assert len(comment_invitations) == 2
+        assert comment_invitations[0].description is None
+        assert comment_invitations[1].description is None
 
         rebuttals = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal')
         assert len(rebuttals) == 2

@@ -67,12 +67,15 @@ class InvitationBuilder(object):
         invitation = self.client.get_invitation(invitation.id)
 
         if invitation.date_processes and len(invitation.date_processes[0]['dates']) > 1 and self.update_date_string == invitation.date_processes[0]['dates'][1]:
-            process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
+            expected_statuses = ['error', 'ok']
+            log_id = invitation.id + '-0-1'
+            min_sdate = invitation.tmdate + self.update_wait_time - 1000
+            process_logs = [log for log in self.client.get_process_logs(id=log_id, min_sdate=min_sdate) if log['status'] in expected_statuses]
             count = 0
             max_count = 1800 / self.spleep_time_for_logs
             while len(process_logs) == 0 and count < max_count: ## wait up to 30 minutes
                 time.sleep(self.spleep_time_for_logs)
-                process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
+                process_logs = [log for log in self.client.get_process_logs(id=log_id, min_sdate=min_sdate) if log['status'] in expected_statuses]
                 count += 1
 
             if len(process_logs) == 0:
@@ -165,6 +168,7 @@ class InvitationBuilder(object):
             cdate = submission_cdate,
             duedate = submission_duedate,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
+            humanVerificationRequired = self.venue.submission_human_verification,
             content = {
                 'submission_email_template': {
                     'value': f'''Your submission to {self.venue.short_name} has been {{{{action}}}}.
@@ -3266,6 +3270,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.edit['invitation']['maxReplies'] = 1
         if custom_stage.preprocess_path:
             invitation.edit['invitation']['preprocess'] = self.get_process_content(custom_stage.preprocess_path)
+
+        if custom_stage.description:
+            invitation.edit['invitation']['description'] = custom_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
         self.save_invitation(invitation, replacement=False)
         return invitation
