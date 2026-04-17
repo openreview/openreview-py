@@ -136,6 +136,7 @@ class TestVenueDeployment():
                         'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                         'reviewer_role_name': { 'value': 'Reviewers' },
+                        'area_chairs_support': { 'value': True },
                         'area_chair_role_name': { 'value': 'Reviewers' },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
