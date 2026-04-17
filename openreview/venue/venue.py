@@ -134,12 +134,12 @@ class Venue(object):
             "value": "CC BY 4.0",
             "description": "CC BY 4.0"
         }
-        self.reviewers_name = request_note.content['reviewers_name']['value']
+        self.reviewers_name = request_note.content.get('reviewer_role_name', request_note.content.get('reviewers_name', {})).get('value', 'Reviewers')
         self.reviewer_roles = request_note.content.get('reviewer_roles', [self.reviewers_name])
         preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
     
         if request_note.content.get('area_chairs_support',{}).get('value'):
-            self.area_chairs_name = request_note.content['area_chairs_name']['value']
+            self.area_chairs_name = request_note.content.get('area_chair_role_name', request_note.content.get('area_chairs_name', {})).get('value', 'Area_Chairs')
             self.use_area_chairs = True
             self.area_chair_roles = request_note.content.get('area_chair_roles', [self.area_chairs_name])
             preferred_email_groups.append(self.get_area_chairs_id())

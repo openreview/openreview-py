@@ -229,7 +229,7 @@ class Workflows():
                                 }
                             }
                         },
-                        'reviewers_name': {
+                        'reviewer_role_name': {
                             'order': 11,
                             'description': 'Please provide the designated name to be used for reviewers. Default is "Reviewers".',
                             'value': {
@@ -253,7 +253,7 @@ class Workflows():
                                 }
                             }
                         },
-                        'area_chairs_name': {
+                        'area_chair_role_name': {
                             'order': 13,
                             'description': 'Please provide the designated name to be used for area chairs. Use underscores for spaces and capitalize as needed. Default is "Area_Chairs". Ignore if your venue does not have area chairs.',
                             'value': {
