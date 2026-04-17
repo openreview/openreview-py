@@ -28,6 +28,7 @@ class TestVenueDeployment():
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=5)) },
                         'reviewers_name': { 'value': 'Reviewers' },
                         'area_chairs_name': { 'value': 'Area_Chairs' },
+                        'senior_area_chairs_name': { 'value': 'Senior_Area_Chairs' },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -62,6 +63,7 @@ class TestVenueDeployment():
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=2)) },
                         'reviewers_name': { 'value': 'Reviewers' },
                         'area_chairs_name': { 'value': 'Area_Chairs' },
+                        'senior_area_chairs_name': { 'value': 'Senior_Area_Chairs' },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -97,6 +99,7 @@ class TestVenueDeployment():
                         'full_submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=1)) },
                         'reviewers_name': { 'value': 'Reviewers' },
                         'area_chairs_name': { 'value': 'Area_Chairs' },
+                        'senior_area_chairs_name': { 'value': 'Senior_Area_Chairs' },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
