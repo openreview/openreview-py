@@ -57,13 +57,13 @@ class VenueStages():
         }
         revision_content['submission_assignment_max_reviewers'] = {
             'description': 'If set, this limits the number of reviewers that can be invited and directly assigned to a submission after the assignments have been deployed. Default is no limit.',
-            'value-regex': '[0-9]*',
+            'value-regex': '(^$)|(^[1-9][0-9]*$)',
             'order': 35,
             'required': False
         }
         revision_content['submission_assignment_max_area_chairs'] = {
             'description': 'If set, this limits the number of area chairs that can be invited and directly assigned to a submission after the assignments have been deployed. Default is no limit.',
-            'value-regex': '[0-9]*',
+            'value-regex': '(^$)|(^[1-9][0-9]*$)',
             'order': 36,
             'required': False
         }
@@ -1852,13 +1852,13 @@ class VenueRequest():
                 'hidden': True
             },
             'submission_assignment_max_reviewers': {
-                'value-regex': '[0-9]*',
+                'value-regex': '(^$)|(^[1-9][0-9]*$)',
                 'order': 67,
                 'required': False,
                 'hidden': True
             },
             'submission_assignment_max_area_chairs': {
-                'value-regex': '[0-9]*',
+                'value-regex': '(^$)|(^[1-9][0-9]*$)',
                 'order': 68,
                 'required': False,
                 'hidden': True
