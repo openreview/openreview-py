@@ -41,20 +41,25 @@ SERVE_PORTS = [3000, 3001, 3030]
 
 
 def load_config():
-    """Load config.json, falling back to defaults for missing fields."""
+    """Load config.json, erroring if it doesn't exist."""
+    if not CONFIG_FILE.exists():
+        print("Error: config.json not found.", file=sys.stderr)
+        print(f"Copy the example config and edit it for your setup:", file=sys.stderr)
+        print(f"  cp {CONFIG_EXAMPLE.name} {CONFIG_FILE.name}", file=sys.stderr)
+        sys.exit(1)
+
     config = dict(DEFAULTS)
-    if CONFIG_FILE.exists():
-        with open(CONFIG_FILE) as f:
-            user_config = json.load(f)
-        for key in ("api_v1", "api_v2", "web"):
-            if key in user_config:
-                config[key] = {**DEFAULTS[key], **user_config[key]}
-        if "mode" in user_config:
-            config["mode"] = user_config["mode"]
-        if "auto_checkout" in user_config:
-            config["auto_checkout"] = user_config["auto_checkout"]
-        if "keep_infra" in user_config:
-            config["keep_infra"] = user_config["keep_infra"]
+    with open(CONFIG_FILE) as f:
+        user_config = json.load(f)
+    for key in ("api_v1", "api_v2", "web"):
+        if key in user_config:
+            config[key] = {**DEFAULTS[key], **user_config[key]}
+    if "mode" in user_config:
+        config["mode"] = user_config["mode"]
+    if "auto_checkout" in user_config:
+        config["auto_checkout"] = user_config["auto_checkout"]
+    if "keep_infra" in user_config:
+        config["keep_infra"] = user_config["keep_infra"]
     return config
 
 
