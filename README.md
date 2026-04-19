@@ -89,28 +89,104 @@ The easiest way to run the integration tests is with Docker Compose. This requir
 └── openreview-py         # this repo
 ```
 
-Then run tests using the `run-tests.sh` script:
+Then run tests using the `run.py` script:
 
 ```bash
 cd docker
 
-# Run all tests
-./run-tests.sh
+# Run a specific test file (services start, tests run, then everything tears down)
+./run.py tests/test_client.py
 
-# Run a specific test file
-./run-tests.sh tests/test_client.py
+# Run a specific test with verbose output
+./run.py tests/test_client.py::TestClient::test_get_groups -v
 
-# Run a specific test
-./run-tests.sh tests/test_client.py::TestClient::test_get_groups -v
+# Run all tests (takes a long time)
+./run.py
+```
 
-# Tear down services (keep volumes for faster next run)
+Each test run starts infrastructure (MongoDB, Redis, Elasticsearch, web), restarts API servers with a clean database via `npm run cleanStart`, runs the tests, and **tears down all services** when done. All services share a network namespace so `localhost` works everywhere, reusing the same `circleci.json` configs used in CI.
+
+### Serve Mode (Manual Browser Testing)
+
+Start all services with ports exposed to your host machine for manual browser testing:
+
+```bash
+# Start services only (browse http://localhost:3030)
+./run.py --serve
+
+# Populate the database by running a test, then keep services running
+./run.py --serve tests/test_icml_conference.py
+
+# Preserve existing data across restarts (skip cleanStart)
+./run.py --serve --no-clean
+```
+
+Press `Ctrl+C` to stop, or run `docker compose down` from another terminal.
+
+### Interactive Shell
+
+Drop into a container shell for debugging or manual pytest runs:
+
+```bash
+# Shell in the test container (Python + pytest)
+./run.py --shell
+
+# Shell into a specific service
+./run.py --shell api-v2
+```
+
+### Branch Selection
+
+Use specific branches for sibling repos:
+
+```bash
+# Override branches via CLI
+./run.py --branch-api-v2 feature/new-endpoint tests/test_client.py
+
+# Or configure defaults in docker/config.json (copy from config.example.json)
+cp config.example.json config.json
+# Edit config.json with your paths and branches
+```
+
+### Other Options
+
+```bash
+# Start infrastructure without running tests or exposing ports
+./run.py --setup-only
+
+# Skip cleanStart to preserve existing database (works with any mode)
+./run.py --no-clean tests/test_client.py
+./run.py --serve --no-clean
+```
+
+### Configuration
+
+Copy `docker/config.example.json` to `docker/config.json` to customize repo paths, branches, or the default mode. The config file is gitignored.
+
+```json
+{
+  "api_v1": { "path": "../../openreview-api-v1", "branch": "main" },
+  "api_v2": { "path": "../../openreview-api",    "branch": "feature/x" },
+  "web":    { "path": "../../openreview-web",     "branch": "" },
+  "mode": "test",
+  "auto_checkout": true
+}
+```
+
+- **path**: Relative to `docker/` or absolute. Defaults to sibling directories.
+- **branch**: Branch to auto-checkout before starting. Empty means use whatever is checked out.
+- **mode**: Default mode (`test`, `serve`). CLI flags override this.
+- **auto_checkout**: Set to `false` to disable auto-checkout. `--no-checkout` also disables it.
+
+### Cleanup
+
+```bash
+# Remove containers (keep volumes for faster next run)
 docker compose down
 
 # Full clean (remove volumes too)
 docker compose down -v
 ```
-
-The script starts infrastructure services (MongoDB, Redis, Elasticsearch, web frontend) once and keeps them running. Each test run restarts only the API servers — which cleans the database and recreates the necessary objects via `npm run cleanStart`. All services share a network namespace so `localhost` works everywhere, reusing the same `circleci.json` configs used in CI.
 
 > Note: The first run takes several minutes to pull images and install dependencies. Subsequent runs are much faster thanks to cached named volumes for `node_modules` and Python virtual environments.
 

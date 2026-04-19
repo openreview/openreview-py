@@ -47,4 +47,10 @@ else
 fi
 
 echo "=== Starting API v2 ==="
-NODE_ENV=circleci node scripts/setup_app.js
+rm -f /tmp/setup-complete
+NODE_ENV=circleci node scripts/setup_app.js 2>&1 | while IFS= read -r line; do
+  echo "$line"
+  if echo "$line" | grep -q "Setup Complete!"; then
+    touch /tmp/setup-complete
+  fi
+done

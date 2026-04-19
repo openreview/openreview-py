@@ -72,7 +72,7 @@ services:
     environment:
       - NODE_ENV=circleci
     volumes:
-      - ../../openreview-api-v1:/mnt/src:ro
+      - ${API_V1_PATH:-../../openreview-api-v1}:/mnt/src:ro
       - ../:/mnt/openreview-py:ro
       - ./scripts:/docker/scripts:ro
       - api-v1-node-modules:/app/node_modules
@@ -81,7 +81,7 @@ services:
       - /mnt/src/.git
       - /mnt/openreview-py/.git
     healthcheck:
-      test: wget -qS --spider http://localhost:3000 2>&1 | grep -q "HTTP/" || exit 1
+      test: test -f /tmp/setup-complete
       interval: 10s
       timeout: 5s
       retries: 30
@@ -99,7 +99,7 @@ services:
     environment:
       - NODE_ENV=circleci
     volumes:
-      - ../../openreview-api:/mnt/src:ro
+      - ${API_V2_PATH:-../../openreview-api}:/mnt/src:ro
       - ../:/mnt/openreview-py:ro
       - ./scripts:/docker/scripts:ro
       - api-v2-node-modules:/app/node_modules
@@ -108,7 +108,7 @@ services:
       - /mnt/src/.git
       - /mnt/openreview-py/.git
     healthcheck:
-      test: wget -qS --spider http://localhost:3001 2>&1 | grep -q "HTTP/" || exit 1
+      test: test -f /tmp/setup-complete
       interval: 10s
       timeout: 5s
       retries: 30
@@ -126,7 +126,7 @@ services:
       api-v2:
         condition: service_healthy
     volumes:
-      - ../../openreview-web:/mnt/src:ro
+      - ${WEB_PATH:-../../openreview-web}:/mnt/src:ro
       - ./scripts:/docker/scripts:ro
       - web-node-modules:/app/node_modules
     tmpfs:
