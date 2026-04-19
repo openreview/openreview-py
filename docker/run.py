@@ -150,7 +150,7 @@ def start_infrastructure(serve_mode=False):
 
 
 def restart_apis(serve_mode=False):
-    """Force recreate API servers for clean database."""
+    """Force recreate API servers for clean database, then start web."""
     print("=== Restarting API servers (clean database) ===")
     base = compose_cmd(serve_mode)
     run(base + ["rm", "-sf", "api-v1", "api-v2"])

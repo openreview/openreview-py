@@ -121,9 +121,7 @@ services:
       dockerfile: Dockerfile.web
     network_mode: "service:pod"
     depends_on:
-      api-v1:
-        condition: service_healthy
-      api-v2:
+      pod:
         condition: service_healthy
     volumes:
       - ${WEB_PATH:-../../openreview-web}:/mnt/src:ro
@@ -146,6 +144,10 @@ services:
     network_mode: "service:pod"
     depends_on:
       web:
+        condition: service_healthy
+      api-v1:
+        condition: service_healthy
+      api-v2:
         condition: service_healthy
     environment:
       - PYTHONUNBUFFERED=1
