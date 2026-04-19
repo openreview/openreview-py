@@ -89,10 +89,12 @@ The easiest way to run the integration tests is with Docker Compose. This requir
 └── openreview-py         # this repo
 ```
 
-Then run tests using the `run.py` script:
+Set up your config file, then run tests:
 
 ```bash
 cd docker
+cp config.example.json config.json
+# Edit config.json with your repo paths (required before first run)
 
 # Run a specific test file (services start, tests run, then everything tears down)
 ./run.py tests/test_client.py
@@ -157,11 +159,14 @@ cp config.example.json config.json
 # Skip cleanStart to preserve existing database (works with any mode)
 ./run.py --no-clean tests/test_client.py
 ./run.py --serve --no-clean
+
+# Keep infrastructure (mongo, redis, ES, web) running after tests finish
+./run.py --keep-infra tests/test_client.py
 ```
 
 ### Configuration
 
-Copy `docker/config.example.json` to `docker/config.json` to customize repo paths, branches, or the default mode. The config file is gitignored.
+Copy `docker/config.example.json` to `docker/config.json` before your first run. The config file is required and gitignored.
 
 ```json
 {
@@ -169,7 +174,8 @@ Copy `docker/config.example.json` to `docker/config.json` to customize repo path
   "api_v2": { "path": "../../openreview-api",    "branch": "feature/x" },
   "web":    { "path": "../../openreview-web",     "branch": "" },
   "mode": "test",
-  "auto_checkout": true
+  "auto_checkout": true,
+  "keep_infra": false
 }
 ```
 
@@ -177,6 +183,7 @@ Copy `docker/config.example.json` to `docker/config.json` to customize repo path
 - **branch**: Branch to auto-checkout before starting. Empty means use whatever is checked out.
 - **mode**: Default mode (`test`, `serve`). CLI flags override this.
 - **auto_checkout**: Set to `false` to disable auto-checkout. `--no-checkout` also disables it.
+- **keep_infra**: Set to `true` to keep infrastructure (mongo, redis, ES, web) running after tests. API servers are always torn down in test mode. `--keep-infra` also enables it.
 
 ### Cleanup
 
