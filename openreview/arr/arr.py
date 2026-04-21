@@ -744,6 +744,8 @@ class ARR(object):
                 continue
 
             venue_group = tools.get_group(self.client, venue_id)
+            if venue_group is None:
+                continue
             venue_cdate = venue_group.cdate
             arr_venues.append((venue_cdate, venue_id == self.venue_id, venue_id))
 
