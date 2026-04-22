@@ -150,6 +150,7 @@ return {
             'formatting': ['No'],
             'length': ['No'],
             'anonymity': ['No'],
+            'overall_level': ['No'],
             'responsible_checklist': ['No'],
             'limitations': ['No'],
             'Knowledge_of_or_educated_guess_at_author_identity': ['Yes'],

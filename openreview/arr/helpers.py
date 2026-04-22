@@ -1944,6 +1944,7 @@ def flag_submission(
             'formatting': 'Yes',
             'length': 'Yes',
             'anonymity': 'Yes',
+            'overall_level': 'Yes',
             'responsible_checklist': 'Yes',
             'limitations': 'Yes'
         },

@@ -7,6 +7,7 @@ def process(client, edit, invitation):
             'formatting': 'Yes',
             'length': 'Yes',
             'anonymity': 'Yes',
+            'overall_level': 'Yes',
             'responsible_checklist': 'Yes',
             'limitations': 'Yes'
         },
