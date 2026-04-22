@@ -276,6 +276,8 @@ def process(client, edit, invitation):
                 'reviewers_name': { 'readers': [support_user] },
                 'area_chairs_support': { 'readers': [support_user] },
                 'area_chairs_name': { 'readers': [support_user] },
+                'senior_area_chairs_support': { 'readers': [support_user] },
+                'senior_area_chair_role_name': { 'readers': [support_user] },
                 'venue_organizer_agreement': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
                 'workflow_timeline': { 'value': f'https://openreview.net/group/edit?id={venue_id}' }

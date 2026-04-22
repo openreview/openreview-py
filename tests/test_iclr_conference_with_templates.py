@@ -46,7 +46,7 @@ class TestSimpleDualAnonymous():
                     'area_chairs_support': { 'value': True },
                     'area_chairs_name': { 'value': 'Action_Editors' },
                     'senior_area_chairs_support': { 'value': True },
-                    'senior_area_chairs_name': { 'value': 'Senior_Action_Editors' },
+                    'senior_area_chair_role_name': { 'value': 'Senior_Action_Editors' },
                     'expected_submissions': { 'value': 12000 },
                     'venue_organizer_agreement': { 
                         'value': [

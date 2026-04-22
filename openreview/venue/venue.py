@@ -145,7 +145,7 @@ class Venue(object):
             preferred_email_groups.append(self.get_area_chairs_id())
 
         if request_note.content.get('senior_area_chairs_support',{}).get('value'):
-            self.senior_area_chairs_name = request_note.content['senior_area_chairs_name']['value']
+            self.senior_area_chairs_name = request_note.content['senior_area_chair_role_name']['value']
             self.use_senior_area_chairs = True
             self.senior_area_chair_roles = request_note.content.get('senior_area_chair_roles', [self.senior_area_chairs_name])
             preferred_email_groups.append(self.get_senior_area_chairs_id())
