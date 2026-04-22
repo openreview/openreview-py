@@ -268,8 +268,10 @@ def mode_shell(target, no_clean=False):
         restart_apis()
 
     if target == "test":
-        # Create a new ephemeral test container
-        cmd = compose_cmd() + ["run", "--rm", "test", "bash"]
+        # Create a new ephemeral test container with the shell entrypoint
+        # (sets up venv and deps, then drops into bash)
+        cmd = compose_cmd() + ["run", "--rm", "--entrypoint",
+                                "bash /docker/scripts/test-shell-entrypoint.sh", "test"]
     else:
         # Exec into an already-running service container
         cmd = compose_cmd() + ["exec", target, "bash"]
