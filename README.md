@@ -123,7 +123,7 @@ Start all services with ports exposed to your host machine for manual browser te
 ./run.py --serve --no-clean
 ```
 
-Press `Ctrl+C` to stop, or run `docker compose down` from another terminal.
+Press `Ctrl+C` to stop. If `keep_infra` is enabled, only API servers are stopped and infrastructure stays running. Otherwise, all services are torn down. You can also run `docker compose down` from another terminal to stop everything.
 
 ### Interactive Shell
 

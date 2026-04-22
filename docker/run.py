@@ -240,14 +240,17 @@ def mode_serve(pytest_args, no_clean=False, keep_infra=False):
     print("  docker compose logs -f web")
     print("  docker compose logs -f mongo")
     print()
-    print("Stop with: docker compose down")
-    print("  (or Ctrl+C here)")
+    if keep_infra:
+        print("Ctrl+C will stop API servers but keep infrastructure running.")
+    else:
+        print("Ctrl+C will stop all services.")
+    print("Or run 'docker compose down' from another terminal.")
     print()
 
     # Wait until interrupted
     try:
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
-        signal.pause()
+        import threading
+        threading.Event().wait()
     except KeyboardInterrupt:
         pass
     finally:
