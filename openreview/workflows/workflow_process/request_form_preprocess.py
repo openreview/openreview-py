@@ -18,7 +18,7 @@ def process(client, edit, invitation):
     if full_submission_deadline and full_submission_deadline < submission_deadline:
         raise openreview.OpenReviewException('The full submission deadline must be after the submission deadline.')
 
-    reviewer_role_names = set(request_note.content.get('reviewer_role_name', {}).get('value', []))
-    area_chair_role_names = set(request_note.content.get('area_chair_role_name', {}).get('value', []))
-    if reviewer_role_names & area_chair_role_names:
+    reviewer_groups_namess = set(request_note.content.get('reviewer_groups_names', {}).get('value', []))
+    area_chair_groups_namess = set(request_note.content.get('area_chair_groups_names', {}).get('value', []))
+    if reviewer_groups_namess & area_chair_groups_namess:
         raise openreview.OpenReviewException('The reviewer role name and area chair role name must be different.')
