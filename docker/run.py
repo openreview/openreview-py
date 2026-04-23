@@ -168,6 +168,7 @@ def start_apis_no_clean(serve_mode=False):
     os.environ["CLEAN_START"] = "false"
     base = compose_cmd(serve_mode)
     run(base + ["rm", "-sf", "api-v1", "api-v2"])
+    # Both APIs can start in parallel since npm run start has no setup dependency
     run(base + ["up", "-d", "--wait", "api-v1", "api-v2"])
 
 

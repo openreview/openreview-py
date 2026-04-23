@@ -49,12 +49,8 @@ fi
 rm -f /tmp/setup-complete
 if [ "${CLEAN_START}" = "false" ]; then
   echo "=== Starting API v2 (preserving database) ==="
-  NODE_ENV=circleci npm run start 2>&1 | while IFS= read -r line; do
-    echo "$line"
-    if echo "$line" | grep -q "Server is listening on port"; then
-      touch /tmp/setup-complete
-    fi
-  done
+  touch /tmp/setup-complete
+  exec env NODE_ENV=circleci npm run start
 else
   echo "=== Starting API v2 (clean database) ==="
   NODE_ENV=circleci node scripts/setup_app.js 2>&1 | while IFS= read -r line; do

@@ -71,6 +71,7 @@ services:
         condition: service_healthy
     environment:
       - NODE_ENV=circleci
+      - CLEAN_START=${CLEAN_START:-true}
     volumes:
       - ${API_V1_PATH:-../../openreview-api-v1}:/mnt/src:ro
       - ../:/mnt/openreview-py:ro
@@ -98,6 +99,7 @@ services:
         condition: service_healthy
     environment:
       - NODE_ENV=circleci
+      - CLEAN_START=${CLEAN_START:-true}
     volumes:
       - ${API_V2_PATH:-../../openreview-api}:/mnt/src:ro
       - ../:/mnt/openreview-py:ro
