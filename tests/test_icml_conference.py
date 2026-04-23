@@ -3457,7 +3457,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
         sub1_anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         sub1_anon_group_id = sub1_anon_groups[0].id
-        
+
         official_review = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review', sort='number:asc')[0] # reviewer1's review
 
         official_revision_edit = reviewer_client.post_note_edit(
@@ -3476,7 +3476,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         # Post a Position_Paper_Review revision
         sub2_anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission2/Reviewer_', signatory='~Reviewer_ICMLOne1')
         sub2_anon_group_id = sub2_anon_groups[0].id
-        
+
         position_review = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission2/-/Official_Review', sort='number:asc')[0] # reviewer1's review
 
         position_revision_edit = reviewer_client.post_note_edit(
