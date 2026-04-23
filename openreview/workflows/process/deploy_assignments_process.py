@@ -50,15 +50,6 @@ def process(client, invitation):
     
     matching_configuration = matching_configurations[0]
 
-    venue = openreview.helpers.get_venue(client, venue_id, support_user)
-
-    venue.set_assignments(
-        assignment_title=match_name,
-        committee_id=committee_id,
-        overwrite=True,
-        enable_reviewer_reassignment=True
-    )
-    
     client.post_note_edit(
         invitation=meta_invitation_id,
         signatures=[venue_id],
