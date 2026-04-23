@@ -519,6 +519,37 @@ class TestTwoSubmissionCommitteeRoles():
         technical_reviews = openreview_client.get_notes(invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Technical_Review')
         assert len(technical_reviews) == 1
 
+        # Each reviewer's anon signature should land only in their own role's Submitted group.
+        expert_submitted_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission1.number}/Expert_Reviewers/Submitted')
+        assert expert_anon_groups[0].id in expert_submitted_group.members
+        assert technical_anon_groups[0].id not in expert_submitted_group.members
+
+        technical_submitted_group = openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission1.number}/Technical_Reviewers/Submitted')
+        assert technical_anon_groups[0].id in technical_submitted_group.members
+        assert expert_anon_groups[0].id not in technical_submitted_group.members
+
+        # Program chairs are notified for each posted review. The subject uses
+        # the domain-level review_name ('Official_Review'), so both posts share the subject.
+        pc_messages = openreview_client.get_messages(
+            to='programchair@xyzw.cc',
+            subject=f'[XYZW 2025] A official review has been received on Paper number: {submission1.number}, Paper title: "XYZW Paper title 1"'
+        )
+        assert len(pc_messages) == 2
+
+        # The reviewer who posted each review gets the "Your review has been received" confirmation.
+        expert_reviewer_id = openreview_client.get_group(expert_anon_groups[0].id).members[0]
+        technical_reviewer_id = openreview_client.get_group(technical_anon_groups[0].id).members[0]
+        expert_tauthor_email = openreview_client.get_messages(
+            to=openreview_client.get_profile(expert_reviewer_id).content['preferredEmail'],
+            subject=f'[XYZW 2025] Your official review has been received on your assigned Paper number: {submission1.number}, Paper title: "XYZW Paper title 1"'
+        )
+        assert len(expert_tauthor_email) == 1
+        technical_tauthor_email = openreview_client.get_messages(
+            to=openreview_client.get_profile(technical_reviewer_id).content['preferredEmail'],
+            subject=f'[XYZW 2025] Your official review has been received on your assigned Paper number: {submission1.number}, Paper title: "XYZW Paper title 1"'
+        )
+        assert len(technical_tauthor_email) == 1
+
     def test_undeploy_ac_assignments_for_both_roles(self, openreview_client, helpers):
         """Undeploy AC assignments for both area chair roles and verify each
         role's per-submission group is emptied."""

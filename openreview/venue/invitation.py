@@ -584,6 +584,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 },
                 'confidence_field_name': {
                     'value': 'confidence'
+                },
+                'reviewer_roles': {
+                    'value': reviewer_roles
                 }
             },
             edit={
