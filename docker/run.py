@@ -162,13 +162,28 @@ def restart_apis(serve_mode=False):
     run(base + ["up", "-d", "--wait", "api-v2"])
 
 
+def apis_are_healthy(serve_mode=False):
+    """Check if both API servers are running and healthy."""
+    result = subprocess.run(
+        compose_cmd(serve_mode) + ["ps", "--format", "json", "api-v1", "api-v2"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        return False
+    # Each healthy container appears as a JSON object on its own line
+    healthy_count = result.stdout.count('"healthy"')
+    return healthy_count >= 2
+
+
 def start_apis_no_clean(serve_mode=False):
     """Start API servers without cleanStart (preserves existing DB)."""
+    if apis_are_healthy(serve_mode):
+        print("=== API servers already running, skipping restart ===")
+        return
     print("=== Starting API servers (preserving database) ===")
     os.environ["CLEAN_START"] = "false"
     base = compose_cmd(serve_mode)
     run(base + ["rm", "-sf", "api-v1", "api-v2"])
-    # Both APIs can start in parallel since npm run start has no setup dependency
     run(base + ["up", "-d", "--wait", "api-v1", "api-v2"])
 
 
@@ -212,7 +227,8 @@ def mode_test(pytest_args, no_clean=False, keep_infra=False):
 
 def mode_serve(pytest_args, no_clean=False, keep_infra=False, shell_target=None):
     """Start services for browser testing, optionally populate with tests."""
-    check_port_conflicts(SERVE_PORTS)
+    if not no_clean:
+        check_port_conflicts(SERVE_PORTS)
 
     if no_clean:
         start_infrastructure(serve_mode=True)

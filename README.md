@@ -106,7 +106,7 @@ cp config.example.json config.json
 ./run.py
 ```
 
-Each test run starts infrastructure (MongoDB, Redis, Elasticsearch, web), restarts API servers with a clean database via `npm run cleanStart`, runs the tests, and **tears down all services** when done. All services share a network namespace so `localhost` works everywhere, reusing the same `circleci.json` configs used in CI.
+Each test run starts infrastructure (MongoDB, Redis, Elasticsearch, web), restarts API servers with a clean database via `npm run cleanStart`, runs the tests, and **tears down all services** when done (unless `keep_infra` is enabled). All services share a network namespace so `localhost` works everywhere, reusing the same `circleci.json` configs used in CI.
 
 ### Serve Mode (Manual Browser Testing)
 
@@ -160,16 +160,23 @@ cp config.example.json config.json
 # Edit config.json with your paths and branches
 ```
 
-### Other Options
+### Keeping Infrastructure Between Runs
+
+Use `--keep-infra` (or set `keep_infra: true` in config) to keep MongoDB, Redis, Elasticsearch, and web running after tests. Then use `--no-clean` on the next run to preserve the database:
 
 ```bash
-# Skip cleanStart to preserve existing database (works with any mode)
-./run.py --no-clean tests/test_client.py
+# First run: populate data, keep infrastructure running after tests
+./run.py --keep-infra tests/test_registration_step.py
+
+# Second run: reuse infrastructure and database (skips cleanStart)
 ./run.py --serve --no-clean
 
-# Keep infrastructure (mongo, redis, ES, web) running after tests finish
-./run.py --keep-infra tests/test_client.py
+# Or combine: populate, then browse with shell access
+./run.py --keep-infra tests/test_registration_step.py
+./run.py --serve --shell --no-clean
 ```
+
+> Note: `--no-clean` requires `keep_infra` to be useful. Without it, the database is lost when services are torn down.
 
 ### Configuration
 
