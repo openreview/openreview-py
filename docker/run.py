@@ -206,7 +206,7 @@ def mode_test(pytest_args, no_clean=False, keep_infra=False):
             teardown()
 
 
-def mode_serve(pytest_args, no_clean=False, keep_infra=False):
+def mode_serve(pytest_args, no_clean=False, keep_infra=False, shell_target=None):
     """Start services for browser testing, optionally populate with tests."""
     check_port_conflicts(SERVE_PORTS)
 
@@ -240,26 +240,38 @@ def mode_serve(pytest_args, no_clean=False, keep_infra=False):
     print("  docker compose logs -f web")
     print("  docker compose logs -f mongo")
     print()
-    if keep_infra:
-        print("Ctrl+C will stop API servers but keep infrastructure running.")
-    else:
-        print("Ctrl+C will stop all services.")
-    print("Or run 'docker compose down' from another terminal.")
-    print()
 
-    # Wait until interrupted
-    try:
-        import threading
-        threading.Event().wait()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        if keep_infra:
-            teardown_apis(serve_mode=True)
-            print("Infrastructure still running. Tear down with: docker compose down")
+    if shell_target:
+        # Drop into a shell; teardown when the shell exits
+        print(f"Dropping into {shell_target} shell. Services stay up until you exit.")
+        print()
+        if shell_target == "test":
+            cmd = compose_cmd(serve_mode=True) + ["run", "--rm", "--entrypoint",
+                                                   "bash /docker/scripts/test-shell-entrypoint.sh", "test"]
         else:
-            print("\nShutting down...")
-            teardown(serve_mode=True)
+            cmd = compose_cmd(serve_mode=True) + ["exec", shell_target, "bash"]
+        subprocess.run(cmd)
+    else:
+        # No shell — wait for Ctrl+C
+        if keep_infra:
+            print("Ctrl+C will stop API servers but keep infrastructure running.")
+        else:
+            print("Ctrl+C will stop all services.")
+        print("Or run 'docker compose down' from another terminal.")
+        print()
+        try:
+            import threading
+            threading.Event().wait()
+        except KeyboardInterrupt:
+            pass
+
+    # Teardown
+    if keep_infra:
+        teardown_apis(serve_mode=True)
+        print("Infrastructure still running. Tear down with: docker compose down")
+    else:
+        print("\nShutting down...")
+        teardown(serve_mode=True)
 
 
 def mode_shell(target, no_clean=False):
@@ -312,6 +324,7 @@ examples:
   %(prog)s tests/test_client.py -v           Run with verbose pytest output
   %(prog)s --serve                           Start services for browser testing
   %(prog)s --serve tests/test_icml_conf.py   Populate DB, then keep serving
+  %(prog)s --serve --shell                   Serve with interactive shell access
   %(prog)s --shell                           Interactive shell in test container
   %(prog)s --shell api-v2                    Shell into the API v2 container
   %(prog)s --branch-api-v2 feat/x -- tests/test_client.py
@@ -329,13 +342,14 @@ examples:
         help="Start services for browser testing, keep running",
     )
     mode_group.add_argument(
-        "--shell", nargs="?", const="test", metavar="SERVICE",
-        choices=sorted(VALID_SHELL_TARGETS),
-        help="Interactive shell (default: test, options: api-v1, api-v2, web)",
-    )
-    mode_group.add_argument(
         "--setup-only", action="store_const", const="setup-only", dest="mode",
         help="Start infrastructure only, no tests",
+    )
+
+    parser.add_argument(
+        "--shell", nargs="?", const="test", metavar="SERVICE",
+        choices=sorted(VALID_SHELL_TARGETS),
+        help="Interactive shell (default: test, options: api-v1, api-v2, web). Can combine with --serve.",
     )
 
     parser.add_argument(
@@ -369,16 +383,15 @@ examples:
 
     args = parser.parse_args()
 
-    # Determine mode: --shell sets it via its own arg, others via dest="mode"
-    if args.shell is not None:
+    # Determine mode
+    args.shell_target = args.shell  # None if not specified
+    if args.shell is not None and not args.mode:
+        # --shell alone (no --serve, --test, etc.)
         args.resolved_mode = "shell"
-        args.shell_target = args.shell
     elif args.mode:
         args.resolved_mode = args.mode
-        args.shell_target = None
     else:
         args.resolved_mode = None  # will be resolved from config
-        args.shell_target = None
 
     return args
 
@@ -419,7 +432,8 @@ def main():
         rc = mode_test(args.pytest_args, no_clean=args.no_clean, keep_infra=keep_infra)
         sys.exit(rc)
     elif mode == "serve":
-        mode_serve(args.pytest_args, no_clean=args.no_clean, keep_infra=keep_infra)
+        mode_serve(args.pytest_args, no_clean=args.no_clean, keep_infra=keep_infra,
+                   shell_target=args.shell_target)
     elif mode == "shell":
         mode_shell(args.shell_target, no_clean=args.no_clean)
     elif mode == "setup-only":

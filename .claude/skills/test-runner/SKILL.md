@@ -29,8 +29,10 @@ cd <project_root>/docker && python3 run.py <pytest_args>
 ```bash
 cd <project_root>/docker && python3 run.py --serve
 cd <project_root>/docker && python3 run.py --serve tests/test_icml_conference.py
+cd <project_root>/docker && python3 run.py --serve --shell
+cd <project_root>/docker && python3 run.py --serve --shell tests/test_icml_conference.py
 ```
-The second form runs a test to populate the database, then keeps services running at `localhost:3030`.
+The `--shell` flag can be combined with `--serve` to get an interactive shell while services are running with ports exposed. Useful for running scripts/tests interactively while browsing `localhost:3030`.
 
 **Shell mode** — Interactive shell in a container:
 ```bash

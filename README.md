@@ -125,6 +125,16 @@ Start all services with ports exposed to your host machine for manual browser te
 
 Press `Ctrl+C` to stop. If `keep_infra` is enabled, only API servers are stopped and infrastructure stays running. Otherwise, all services are torn down. You can also run `docker compose down` from another terminal to stop everything.
 
+Combine with `--shell` to get an interactive shell while services are running:
+
+```bash
+# Serve with shell access (browse + run scripts/tests)
+./run.py --serve --shell
+
+# Populate DB, then drop into shell for manual testing
+./run.py --serve --shell tests/test_icml_conference.py
+```
+
 ### Interactive Shell
 
 Drop into a container shell for debugging or manual pytest runs:
