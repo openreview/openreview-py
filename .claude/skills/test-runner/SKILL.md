@@ -42,11 +42,6 @@ cd <project_root>/docker && python3 run.py --shell api-v2   # API v2 container
 cd <project_root>/docker && python3 run.py --shell web      # web container
 ```
 
-**Setup-only mode** — Start infrastructure without running tests:
-```bash
-cd <project_root>/docker && python3 run.py --setup-only
-```
-
 ### Options (can be combined with any mode)
 
 - `--no-clean` — Preserve existing database (skip API server restart/cleanStart)

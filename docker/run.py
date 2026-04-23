@@ -296,23 +296,6 @@ def mode_shell(target, no_clean=False):
     sys.exit(result.returncode)
 
 
-def mode_setup_only(no_clean=False):
-    """Start infrastructure only, no tests."""
-    if no_clean:
-        ensure_services_running()
-    else:
-        start_infrastructure()
-        restart_apis()
-
-    print()
-    print("Infrastructure is ready:")
-    print("  API v1: http://localhost:3000 (inside Docker network)")
-    print("  API v2: http://localhost:3001 (inside Docker network)")
-    print("  Web:    http://localhost:3030 (inside Docker network)")
-    print()
-    print("Note: Ports are not exposed to the host. Use --serve for browser access.")
-    print("Tear down with: docker compose down")
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -340,10 +323,6 @@ examples:
     mode_group.add_argument(
         "--serve", action="store_const", const="serve", dest="mode",
         help="Start services for browser testing, keep running",
-    )
-    mode_group.add_argument(
-        "--setup-only", action="store_const", const="setup-only", dest="mode",
-        help="Start infrastructure only, no tests",
     )
 
     parser.add_argument(
@@ -436,8 +415,6 @@ def main():
                    shell_target=args.shell_target)
     elif mode == "shell":
         mode_shell(args.shell_target, no_clean=args.no_clean)
-    elif mode == "setup-only":
-        mode_setup_only(no_clean=args.no_clean)
     else:
         print(f"Unknown mode: {mode}", file=sys.stderr)
         sys.exit(1)

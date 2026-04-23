@@ -163,9 +163,6 @@ cp config.example.json config.json
 ### Other Options
 
 ```bash
-# Start infrastructure without running tests or exposing ports
-./run.py --setup-only
-
 # Skip cleanStart to preserve existing database (works with any mode)
 ./run.py --no-clean tests/test_client.py
 ./run.py --serve --no-clean
