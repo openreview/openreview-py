@@ -231,12 +231,12 @@ class Workflows():
                         },
                         'reviewer_role_name': {
                             'order': 12,
-                            'description': 'Please provide the designated name to be used for reviewers. Default is "Reviewers".',
+                            'description': 'Please provide the designated name to be used for reviewers. Use underscores for spaces and capitalize as needed. Default is "Reviewers".',
                             'value': {
                                 'param': {
-                                    'type': 'string',
+                                    'type': 'string[]',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Reviewers'
+                                    'default': ['Reviewers']
                                 }
                             }
                         },
@@ -258,9 +258,9 @@ class Workflows():
                             'description': 'Please provide the designated name to be used for area chairs. Use underscores for spaces and capitalize as needed. Default is "Area_Chairs". Ignore if your venue does not have area chairs.',
                             'value': {
                                 'param': {
-                                    'type': 'string',
+                                    'type': 'string[]',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Area_Chairs'
+                                    'default': ['Area_Chairs']
                                 }
                             }
                         },

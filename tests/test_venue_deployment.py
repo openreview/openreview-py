@@ -26,8 +26,8 @@ class TestVenueDeployment():
                         'contact_email': { 'value': 'programchair@venuedeployment.cc' },
                         'submission_start_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=10)) },
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=5)) },
-                        'reviewer_role_name': { 'value': 'Reviewers' },
-                        'area_chair_role_name': { 'value': 'Area_Chairs' },
+                        'reviewer_role_name': { 'value': ['Reviewers'] },
+                        'area_chair_role_name': { 'value': ['Area_Chairs'] },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -60,8 +60,8 @@ class TestVenueDeployment():
                         'contact_email': { 'value': 'programchair@venuedeployment.cc' },
                         'submission_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=2)) },
-                        'reviewer_role_name': { 'value': 'Reviewers' },
-                        'area_chair_role_name': { 'value': 'Area_Chairs' },
+                        'reviewer_role_name': { 'value': ['Reviewers'] },
+                        'area_chair_role_name': { 'value': ['Area_Chairs'] },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -95,8 +95,8 @@ class TestVenueDeployment():
                         'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=2)) },
                         'full_submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=1)) },
-                        'reviewer_role_name': { 'value': 'Reviewers' },
-                        'area_chair_role_name': { 'value': 'Area_Chairs' },
+                        'reviewer_role_name': { 'value': ['Reviewers'] },
+                        'area_chair_role_name': { 'value': ['Area_Chairs'] },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -135,9 +135,9 @@ class TestVenueDeployment():
                         'contact_email': { 'value': 'programchair@venuedeployment.cc' },
                         'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                        'reviewer_role_name': { 'value': 'Reviewers' },
+                        'reviewer_role_name': { 'value': ['Reviewers'] },
                         'area_chairs_support': { 'value': True },
-                        'area_chair_role_name': { 'value': 'Reviewers' },
+                        'area_chair_role_name': { 'value': ['Reviewers'] },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -175,9 +175,9 @@ class TestVenueDeployment():
                     'contact_email': { 'value': 'programchair@venuedeployment.cc' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewer_role_name': { 'value': 'Program_Committee' },
+                    'reviewer_role_name': { 'value': ['Program_Committee'] },
                     'area_chairs_support': { 'value': True },
-                    'area_chair_role_name': { 'value': 'Senior_Program_Committee' },
+                    'area_chair_role_name': { 'value': ['Senior_Program_Committee'] },
                     'expected_submissions': { 'value': 50 },
                     'venue_organizer_agreement': {
                         'value': [
@@ -198,8 +198,8 @@ class TestVenueDeployment():
         helpers.await_queue_edit(openreview_client, edit_id=request['id'])
 
         request_note = openreview_client.get_note(request['note']['id'])
-        assert request_note.content['reviewer_role_name']['value'] == 'Program_Committee'
-        assert request_note.content['area_chair_role_name']['value'] == 'Senior_Program_Committee'
+        assert request_note.content['reviewer_role_name']['value'] == ['Program_Committee']
+        assert request_note.content['area_chair_role_name']['value'] == ['Senior_Program_Committee']
 
         # Deploy and verify role names propagate correctly
         support_group_id = 'openreview.net/Support'
