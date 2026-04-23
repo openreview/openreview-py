@@ -46,11 +46,21 @@ else
     echo "=== npm dependencies up to date, skipping install ==="
 fi
 
-echo "=== Starting API v1 ==="
 rm -f /tmp/setup-complete
-NODE_ENV=circleci node scripts/clean_start_app.js 2>&1 | while IFS= read -r line; do
-  echo "$line"
-  if echo "$line" | grep -q "Setup Complete!"; then
-    touch /tmp/setup-complete
-  fi
-done
+if [ "${CLEAN_START}" = "false" ]; then
+  echo "=== Starting API v1 (preserving database) ==="
+  NODE_ENV=circleci npm run start 2>&1 | while IFS= read -r line; do
+    echo "$line"
+    if echo "$line" | grep -q "Server is listening on port"; then
+      touch /tmp/setup-complete
+    fi
+  done
+else
+  echo "=== Starting API v1 (clean database) ==="
+  NODE_ENV=circleci node scripts/clean_start_app.js 2>&1 | while IFS= read -r line; do
+    echo "$line"
+    if echo "$line" | grep -q "Setup Complete!"; then
+      touch /tmp/setup-complete
+    fi
+  done
+fi

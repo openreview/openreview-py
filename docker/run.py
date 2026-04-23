@@ -162,11 +162,13 @@ def restart_apis(serve_mode=False):
     run(base + ["up", "-d", "--wait", "api-v2"])
 
 
-def ensure_services_running(serve_mode=False):
-    """Start all services without restarting APIs (for --no-clean)."""
-    print("=== Starting all services ===")
-    cmd = compose_cmd(serve_mode) + ["up", "-d", "--wait"]
-    run(cmd)
+def start_apis_no_clean(serve_mode=False):
+    """Start API servers without cleanStart (preserves existing DB)."""
+    print("=== Starting API servers (preserving database) ===")
+    os.environ["CLEAN_START"] = "false"
+    base = compose_cmd(serve_mode)
+    run(base + ["rm", "-sf", "api-v1", "api-v2"])
+    run(base + ["up", "-d", "--wait", "api-v1", "api-v2"])
 
 
 def teardown_apis(serve_mode=False):
@@ -187,7 +189,8 @@ def mode_test(pytest_args, no_clean=False, keep_infra=False):
     """Run tests then tear down."""
     try:
         if no_clean:
-            ensure_services_running()
+            start_infrastructure()
+            start_apis_no_clean()
         else:
             start_infrastructure()
             restart_apis()
@@ -211,7 +214,8 @@ def mode_serve(pytest_args, no_clean=False, keep_infra=False, shell_target=None)
     check_port_conflicts(SERVE_PORTS)
 
     if no_clean:
-        ensure_services_running(serve_mode=True)
+        start_infrastructure(serve_mode=True)
+        start_apis_no_clean(serve_mode=True)
     else:
         start_infrastructure(serve_mode=True)
         restart_apis(serve_mode=True)
@@ -277,7 +281,8 @@ def mode_serve(pytest_args, no_clean=False, keep_infra=False, shell_target=None)
 def mode_shell(target, no_clean=False):
     """Drop into an interactive shell in a container."""
     if no_clean:
-        ensure_services_running()
+        start_infrastructure()
+        start_apis_no_clean()
     else:
         start_infrastructure()
         restart_apis()
