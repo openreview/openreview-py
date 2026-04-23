@@ -531,7 +531,6 @@ class Templates():
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/committee_invited_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
