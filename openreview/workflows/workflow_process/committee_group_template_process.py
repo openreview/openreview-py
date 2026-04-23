@@ -5,21 +5,7 @@ def process(client, edit, invitation):
     domain = client.get_group(venue_id)
 
     committee_role = edit.content['committee_role']['value']
-    committee_name = edit.content['committee_name']['value']
     committee_pretty_name = edit.content['committee_pretty_name']['value']
-    committee_anon_name = edit.content.get('committee_anon_name', {}).get('value', False)
-    committee_submitted_name = edit.content.get('committee_submitted_name', {}).get('value', False)
-
-    # content = {
-    #     f'{committee_role}_id': { 'value': edit.group.id },
-    #     f'{committee_role}_name': { 'value': committee_name },
-    # }
-
-    # if committee_anon_name:
-    #     content[f'{committee_role}_anon_name'] = { 'value': committee_anon_name }
-
-    # if committee_submitted_name:
-    #     content[f'{committee_role}_submitted_name'] = { 'value': committee_submitted_name }
 
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
@@ -76,9 +62,6 @@ def process(client, edit, invitation):
         await_process=True
     )     
 
-    # content[f'{committee_role}_declined_id'] = { 'value': declined_group_edit['group']['id'] }
-    # content[f'{committee_role}_invited_id'] = { 'value': invited_group_id['group']['id'] }
-
     invitation_edit = client.post_invitation_edit(
         invitations=f'{invitation.domain}/-/Committee_Recruitment_Request',
         signatures=[invitation.domain],
@@ -125,15 +108,4 @@ def process(client, edit, invitation):
     )
 
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_edit['invitation']['id'], include_due_date=True, include_exp_date=True)
-    edit_invitations_builder.set_edit_committee_recruitment_invitation(invitation_edit['invitation']['id'])
-
-    # content[f'{committee_role}_recruitment_id'] = { 'value': invitation_edit['invitation']['id'] }
-
-    # client.post_group_edit(
-    #     invitation=domain.content['meta_invitation_id']['value'],
-    #     signatures=[invitation.domain],
-    #     group=openreview.api.Group(
-    #         id=venue_id,
-    #         content=content
-    #     )
-    # )        
+    edit_invitations_builder.set_edit_committee_recruitment_invitation(invitation_edit['invitation']['id'])      
