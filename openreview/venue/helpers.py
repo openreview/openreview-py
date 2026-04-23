@@ -41,6 +41,7 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     venue.submission_reviewer_roles = domain.content.get('submission_reviewer_roles', {}).get('value', [venue.reviewers_name])
     venue.submission_area_chair_roles = domain.content.get('submission_area_chair_roles', {}).get('value', [venue.area_chairs_name])
     venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)
+    venue.submission_human_verification = domain.content.get('submission_human_verification', {}).get('value')
 
     # Get preferred_emails_groups from domain, or build default with all enabled participants
     venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', {}).get('value')

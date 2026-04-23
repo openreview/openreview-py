@@ -393,16 +393,6 @@ class TestWorkshopV2():
         assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers')                    
         assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_User_Demands')
 
-        ## try to make an assignment and get an error because the submission deadline has not passed
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, submission Reviewers group not found.'):
-            edge = pc_client_v2.post_edge(openreview.api.Edge(
-                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
-                head=submissions[0].id,
-                tail='~Reviewer_ICAPSOne1',
-                weight=1,
-                signatures=['PRL/2023/ICAPS/Program_Chairs']
-            ))
-
         ## close the submission
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
@@ -477,6 +467,161 @@ class TestWorkshopV2():
         # Test that abstract doesn't appear in Invite Assignment email
         assert messages[0]['content']['text'].startswith('Hi External Reviewer Adobe,\n\nYou were invited to review the paper number: 12, title: "Paper title No Abstract Version 2".\n\nPlease respond the invitation clicking the following link:')
         assert messages[0]['content']['replyTo'] == 'pc@icaps.cc'
+
+    def test_custom_max_papers_assignment_preprocess(self, client, openreview_client, helpers):
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+        submissions = pc_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
+
+        # Set user's quota to 1
+        cmp_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers',
+            head='PRL/2023/ICAPS/Reviewers',
+            tail='~Reviewer_ICAPSTwo1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=1
+        ))
+
+        # Test 1: User below quota - Allow
+        # 0 current assignments < 1 quota
+        assignment1 = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head=submissions[0].id,
+            tail='~Reviewer_ICAPSTwo1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=assignment1.id)
+
+        # Test 2: Exceeding quota - Reject
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, quota of 1 has been reached for ~Reviewer_ICAPSTwo1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submissions[2].id,
+                tail='~Reviewer_ICAPSTwo1',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                weight=1
+            ))
+
+        # Test 3: Update existing assignment edge - Allow
+        updated_edge = openreview_client.post_edge(openreview.api.Edge(
+            id=assignment1.id,
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head=submissions[0].id,
+            tail='~Reviewer_ICAPSTwo1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=2
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=updated_edge.id)
+
+        updated_edges = openreview_client.get_all_edges(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            tail='~Reviewer_ICAPSTwo1'
+        )
+        assert len(updated_edges) == 1
+        assert updated_edges[0].weight == 2
+
+        # Test 4: "Invitation Sent" - Reject
+        # User hasn't accepted, still enforce quota
+        invite_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Invite_Assignment',
+            head=submissions[2].id,
+            tail='~Reviewer_ICAPSTwo1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=0,
+            label='Invitation Sent'
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=invite_edge.id)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, quota of 1 has been reached for ~Reviewer_ICAPSTwo1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submissions[2].id,
+                tail='~Reviewer_ICAPSTwo1',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                weight=1
+            ))
+
+        # Test 5: Accepted Invite Assignment - Allow
+        messages = openreview_client.get_messages(
+            to='reviewer2@icaps.cc',
+            subject='[PRL ICAPS 2023] Invitation to review paper titled "Paper title 3"'
+        )
+        assert messages and len(messages) == 1
+
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation_fast(invitation_url, accept=True)
+
+        invite_edges = openreview_client.get_all_edges(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Invite_Assignment',
+            head=submissions[2].id,
+            tail='~Reviewer_ICAPSTwo1'
+        )
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        assignment_edges = openreview_client.get_all_edges(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head=submissions[2].id,
+            tail='~Reviewer_ICAPSTwo1'
+        )
+        assert len(assignment_edges) == 1
+
+        # Test 6: Quota of 0 - Rejected
+        cmp_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers',
+            head='PRL/2023/ICAPS/Reviewers',
+            tail='~Reviewer_ICAPSThree1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=0
+        ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, quota of 0 has been reached for ~Reviewer_ICAPSThree1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submissions[0].id,
+                tail='~Reviewer_ICAPSThree1',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                weight=1
+            ))
+
+        openreview_client.delete_edges(invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers', head='PRL/2023/ICAPS/Reviewers', tail='~Reviewer_ICAPSThree1')
+
+        # Test 7: Read quota from invitation
+        cmp_edges = openreview_client.get_all_edges(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers',
+            head='PRL/2023/ICAPS/Reviewers',
+            tail='~Reviewer_ICAPSThree1'
+        )
+        assert len(cmp_edges) == 0
+
+        cmp_invitation = openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers')
+        cmp_invitation.edit['weight']['param']['default'] = 1
+        openreview_client.post_invitation_edit(
+            invitations='PRL/2023/ICAPS/-/Edit',
+            readers=['PRL/2023/ICAPS'],
+            writers=['PRL/2023/ICAPS'],
+            signatures=['PRL/2023/ICAPS'],
+            invitation=cmp_invitation
+        )
+
+        assignment_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head=submissions[0].id,
+            tail='~Reviewer_ICAPSThree1',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, quota of 1 has been reached for ~Reviewer_ICAPSThree1'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submissions[1].id,
+                tail='~Reviewer_ICAPSThree1',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                weight=1
+            ))
 
     def test_review_stage(self, client, openreview_client, helpers, request_page, selenium):
 
@@ -1368,5 +1513,62 @@ Best,
         assert len(profiles) == 9
 
         test_profile = [p for p in profiles if p.id == '~SomeFirstName_User1']
-        test_profile[0].content['preferredEmail'] == 'test@mail.com'
-        test_profile[0].get_preferred_email() == 'test@mail.com'
+        assert test_profile[0].content['preferredEmail'] == 'test@mail.com'
+        assert test_profile[0].get_preferred_email() == 'test@mail.com'
+
+        ## Create new author
+        helpers.create_user('noemail@icaps.cc', 'No', 'Email', alternates=[], institution='icaps.cc')
+        no_email_username = client.get_profile('noemail@icaps.cc').id
+
+        ## Add to paper
+        notes = pc_client_v2.get_all_notes(content={ 'venueid': 'PRL/2023/ICAPS' }, sort='number:asc')
+
+        edit_note = pc_client_v2.post_note_edit(invitation='PRL/2023/ICAPS/-/PC_Revision',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            note=openreview.api.Note(
+                id=notes[0].id,
+                content = {
+                    'title': { 'value': notes[0].content['title']['value'] },
+                    'keywords': { 'value': notes[0].content['keywords']['value'] },
+                    'pdf': { 'value': notes[0].content['pdf']['value'] },
+                    'authorids': { 'value': notes[0].content['authorids']['value'] + [no_email_username] },
+                    'authors': { 'value': notes[0].content['authors']['value'] + ['No Email'] }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
+
+        ## Remove emails from profile
+        openreview_client.remove_members_from_group(no_email_username, ['noemail@icaps.cc']) # removes confirmedEmail
+
+        client.post_profile(openreview.Profile(
+            referent=no_email_username,
+            invitation='~/-/invitation',
+            signatures=[no_email_username],
+            content={},
+            metaContent={
+                'emails': {'values': ['noemail@icaps.cc'], 'weights': [-1]},
+                'preferredEmail': {'values': ['noemail@icaps.cc'], 'weights': [-1]}
+            }
+        ))
+
+        current_log_count = len(openreview_client.get_process_logs(id='PRL/2023/ICAPS/-/Preferred_Emails-0-0'))
+
+        ## Trigger preferred emails process
+        openreview_client.post_invitation_edit(
+            invitations='PRL/2023/ICAPS/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='PRL/2023/ICAPS/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        ## No process error
+        helpers.await_queue_edit(openreview_client, edit_id='PRL/2023/ICAPS/-/Preferred_Emails-0-0', count=current_log_count + 1)
+
+        edges = pc_client_v2.get_edges(
+            invitation='PRL/2023/ICAPS/-/Preferred_Emails', head=no_email_username
+        )
+        assert len(edges) == 0

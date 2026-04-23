@@ -764,7 +764,7 @@ class TestARRVenueV2():
 
         flag_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag')
         assert flag_invitation.process
-        assert 'for invitation_name in [review_name, ae_checklist_name, reviewer_checklist_name]:' in flag_invitation.process
+        assert 'for invitation_name in [review_name, meta_review_name, ae_checklist_name, reviewer_checklist_name]:' in flag_invitation.process
         assert 'ae_checklist_name' in flag_invitation.content
         assert 'reviewer_checklist_name' in flag_invitation.content
 
@@ -2520,6 +2520,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form')
 
+        notes = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form_Form')
+        assert len(notes) == 1
+        replyto_note = notes[0]
+        assert replyto_note.content['title']['value'] == 'Submitted Author Profile Form'
+
         test_client.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
             signatures=['~SomeFirstName_User1'],
@@ -4195,6 +4200,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment')
 
+        # ~AC_ARROne1 has CMP=0 from June migration, update quota to allow assignment in August
+        ac_cmp_edge = openreview_client.get_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers',
+            tail='~AC_ARROne1'
+        )[0]
+        ac_cmp_edge.weight = 2
+        openreview_client.post_edge(ac_cmp_edge)
+
         edge = openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
             head = submissions[1].id,
@@ -4348,6 +4361,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         reviewer_two_edge = client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment', tail='~Reviewer_ARRTwo1', head=submissions[1].id)
         assert reviewer_two_edge[0].label == 'Declined: I am too busy.'
 
+        # Update quota to allow assignment
+        rev_cmp_edge = openreview_client.get_all_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers',
+            tail='~Reviewer_ARRFour1'
+        )[0]
+        rev_cmp_edge.weight = 2
+        openreview_client.post_edge(rev_cmp_edge)
+        
         # Assignment for reviewer 4 should post
         existing_edges.append(
             openreview_client.post_edge(openreview.api.Edge(
@@ -4602,14 +4623,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         violation_fields = ['appropriateness', 'formatting', 'length', 'anonymity', 'responsible_checklist', 'limitations'] # TODO: move to domain or somewhere?
-        format_field = {
-            'appropriateness': 'Appropriateness',
-            'formatting': 'Formatting',
-            'length': 'Length',
-            'anonymity': 'Anonymity',
-            'responsible_checklist': 'Responsible Checklist',
-            'limitations': 'Limitations'
-        }
         only_required_fields = ['number_of_assignments', 'diversity']
 
         default_fields = {field: True for field in violation_fields + only_required_fields}
@@ -4622,7 +4635,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'anonymity_justification': {'value': 'N/A - this paper is properly anonymized.'},
             'limitations_justification': {'value': "N/A - this paper has the 'Limitations' section."},
             'overall_level_justification': {'value': 'N/A - this seems like a good-faith submission worthy of full review.'},
-            'potential_violation_justification': {'value': 'N/A - the authors filled in the responsible NLP checklist appropriately.'},
             'ethics_review_justification': {'value': 'N/A - this paper does not need an ethics review.'}
         }
         test_submission = submissions[1]
@@ -4655,7 +4667,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 if tested_field:
                     ret_content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
                     ret_content['ethics_review_justification'] = {'value': 'There is an issue'}
-                    ret_content['potential_violation_justification'] = {'value': 'There are violations with this submission'}
 
                 if 'Reviewer' in chk_inv:
                     for field in only_required_fields:
@@ -4670,7 +4681,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 if tested_field:
                     content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
                     content['ethics_review_justification'] = {'value': 'There is an issue'}
-                    content['potential_violation_justification'] = {'value': 'There are violations with this submission'}
 
             if override_fields:
                 for field in override_fields.keys():
@@ -4701,15 +4711,20 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Test checklist pre-process
         force_justifications = {
-                'potential_violation_justification': {'value': 'N/A - the authors filled in the responsible NLP checklist appropriately.'},
                 'ethics_review_justification': {'value': 'N/A - this paper does not need an ethics review.'}
         }
         with pytest.raises(openreview.OpenReviewException, match=r'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging.'):
             post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', override_fields=force_justifications)
-        for field in violation_fields:
-            with pytest.raises(openreview.OpenReviewException, match=rf'You have indicated a potential violation with the following fields: {format_field[field]}. Please enter a brief explanation under \"Potential Violation Justification\"'):
-                post_checklist(user_client, checklist_inv, user, tested_field=field, override_fields=force_justifications)
-                
+        with pytest.raises(openreview.OpenReviewException, match=r'The property potential_violation_justification must NOT be present'):
+            post_checklist(
+                user_client,
+                checklist_inv,
+                user,
+                override_fields={
+                    'potential_violation_justification': {'value': 'This deprecated field should be rejected'}
+                }
+            )
+
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert 'flagged_for_ethics_review' not in test_submission.content
@@ -5177,7 +5192,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "number_of_assignments" : { "value" : "Yes" },
             "diversity" : { "value" : "Yes" },
             "need_ethics_review" : { "value" : "Yes" },
-            "potential_violation_justification" : { "value" : "N/A - the authors filled in the responsible NLP checklist appropriately." },
             "ethics_review_justification" : { "value" : "There is an issue" }
         }
         chk_edit = ac_client.post_note_edit(
@@ -5768,6 +5782,82 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
+        # Re-run ethics stage
+        ethics_start_date = datetime.datetime.now()
+        ethics_due_date = ethics_start_date + datetime.timedelta(days=3)
+        ethics_stage_log_count = len(openreview_client.get_process_logs(invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review'))
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'ethics_review_start_date': ethics_start_date.strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_deadline': ethics_due_date.strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_expiration_date': ethics_due_date.strftime('%Y/%m/%d %H:%M'),
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review',
+            count=ethics_stage_log_count + 1
+        )
+
+        # Explicitly flag this submission for ethics review via an official review,
+        # then verify the meta review readership adds ethics chairs
+        openreview_client.add_members_to_group(venue.get_reviewers_id(number=4), ['~Reviewer_ARROne1'])
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_signature = reviewer_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission4/Reviewer_', signatory='~Reviewer_ARROne1')[0].id
+        ethics_flag_review_edit = reviewer_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission4/-/Official_Review',
+            signatures=[reviewer_signature],
+            note=openreview.api.Note(
+                content={
+                    "confidence": { "value": 5 },
+                    "paper_summary": { "value": 'some summary' },
+                    "summary_of_strengths": { "value": 'some strengths' },
+                    "summary_of_weaknesses": { "value": 'some weaknesses' },
+                    "comments_suggestions_and_typos": { "value": 'some comments' },
+                    "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
+                    "overall_assessment": { "value": 1 },
+                    "ethical_concerns": { "value": "There are concerns with this submission" },
+                    "reproducibility": { "value": 1 },
+                    "datasets": { "value": 1 },
+                    "software": { "value": 1 },
+                    "needs_ethics_review": {'value': 'Yes'},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
+                    "Knowledge_of_paper": {"value": "After the review process started"},
+                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
+                    "impact_of_knowledge_of_paper": {"value": "A lot"},
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
+                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=ethics_flag_review_edit['id'])
+        helpers.await_queue_edit(
+            openreview_client,
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag',
+            count=12
+        )
+
+        test_submission = pc_client_v2.get_note(test_submission.id, details='directReplies')
+        meta_review = openreview_client.get_all_notes(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission4/-/Meta_Review',
+        )[0]
+        assert 'flagged_for_ethics_review' in test_submission.content
+        assert test_submission.content['flagged_for_ethics_review']['value']
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in meta_review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' not in meta_review.readers
         request_page(
             selenium,
             'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Area_Chairs#assigned-submissions',
@@ -5805,13 +5895,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Release_Meta_Reviews-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Meta_Review-0-1', count=3)
 
+        # After the meta review invitation is regenerated, ethics reviewers
+        # should still not be added back to the meta review readers.
+        meta_review = openreview_client.get_all_notes(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission4/-/Meta_Review',
+        )[0]
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in meta_review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' not in meta_review.readers
+
         review = openreview_client.get_note(reviewer_edit['note']['id'])
-        assert len(review.readers) - len(reviewer_edit['note']['readers']) == 1
+        assert len(review.readers) - len(reviewer_edit['note']['readers']) == 2
+        assert 'aclweb.org/ACL/ARR/2023/August/Program_Chairs' in review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs' in review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Area_Chairs' in review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Reviewers/Submitted' in review.readers
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Authors' in review.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' not in review.readers
 
         # Check to make sure no emails were sent
         messages = openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')
-        assert len(messages) == flagged_messages
+        assert len(messages) == flagged_messages + 1
         messages = openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')
         assert len(messages) == unflagged_messages
 
@@ -6977,7 +7081,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "number_of_assignments" : { "value" : "Yes" },
                     "diversity" : { "value" : "Yes" },
                     "need_ethics_review" : { "value" : "No" },
-                    "potential_violation_justification" : { "value" : "N/A - the authors filled in the responsible NLP checklist appropriately." },
                     "ethics_review_justification" : { "value" : "There is an issue" }
                 }
             )

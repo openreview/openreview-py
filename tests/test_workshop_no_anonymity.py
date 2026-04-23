@@ -204,15 +204,17 @@ class TestWorkshopV2():
         assert openreview_client.get_invitation('PRL/2024/ICAPS/Reviewers/-/Custom_Max_Papers')                    
         assert openreview_client.get_invitation('PRL/2024/ICAPS/Reviewers/-/Custom_User_Demands')
 
-        ## try to make an assignment and get an error because the submission deadline has not passed
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, submission Reviewers group not found.'):
-            edge = pc_client_v2.post_edge(openreview.api.Edge(
-                invitation='PRL/2024/ICAPS/Reviewers/-/Assignment',
-                head=submissions[0].id,
-                tail='~Reviewer_ICAPSOne1',
-                weight=1,
-                signatures=['PRL/2024/ICAPS/Program_Chairs']
-            ))
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation='PRL/2024/ICAPS/Reviewers/-/Assignment',
+            head=submissions[0].id,
+            tail='~Reviewer_ICAPSOne1',
+            weight=1,
+            signatures=['PRL/2024/ICAPS/Program_Chairs']
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        assert openreview_client.get_group('PRL/2024/ICAPS/Submission1/Reviewers').members == ['~Reviewer_ICAPSOne1']
 
         ## close the submission
         now = datetime.datetime.now()
@@ -249,19 +251,6 @@ class TestWorkshopV2():
         helpers.await_queue()
 
         helpers.await_queue_edit(openreview_client, 'PRL/2024/ICAPS/-/Post_Submission-0-1', count=2)
-
-        edge = pc_client_v2.post_edge(openreview.api.Edge(
-            invitation='PRL/2024/ICAPS/Reviewers/-/Assignment',
-            head=submissions[0].id,
-            tail='~Reviewer_ICAPSOne1',
-            weight=1,
-            signatures=['PRL/2024/ICAPS/Program_Chairs']
-        ))
-
-        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
-
-        assert openreview_client.get_group('PRL/2024/ICAPS/Submission1/Reviewers').members == ['~Reviewer_ICAPSOne1']
-
 
     def test_review_stage(self, client, openreview_client, helpers):
 

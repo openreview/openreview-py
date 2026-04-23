@@ -104,6 +104,7 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_custom_sections = False
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
+        self.submission_human_verification = None
         venue_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
         self.homepage_webfield_path = os.path.join(venue_webfield_dir, 'homepageWebfield.js')
         self.program_chairs_webfield_path = os.path.join(venue_webfield_dir, 'programChairsWebfield.js')
@@ -864,6 +865,7 @@ class Venue(object):
         flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
         self.invitation_builder.set_ethics_paper_groups_invitation()
         self.invitation_builder.update_review_invitations()
+        self.invitation_builder.update_meta_review_invitations()
         self.invitation_builder.set_ethics_review_invitation()
         if self.ethics_review_stage.enable_comments:
             print('Setting up ethics review comments invitation')

@@ -108,7 +108,7 @@ py==1.11.0
     # via openreview-py (pyproject.toml)
 pycryptodome==3.23.0
     # via openreview-py (pyproject.toml)
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   nbconvert
     #   pytest

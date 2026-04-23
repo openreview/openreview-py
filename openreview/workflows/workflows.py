@@ -103,7 +103,7 @@ class Workflows():
 
         invitation = Invitation(
             id = conference_venue_invitation_id,
-            invitees = ['everyone'],
+            invitees = ['~'],
             readers = ['everyone'],
             writers = [],
             signatures = [super_id],
