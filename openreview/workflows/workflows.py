@@ -277,14 +277,14 @@ class Workflows():
                                 }
                             }
                         },
-                        'senior_area_chair_role_name': {
+                        'senior_area_chair_groups_names': {
                             'order': 15,
                             'description': 'Please provide the designated name to be used for senior area chairs. Use underscores for spaces and capitalize as needed. Default is "Senior_Area_Chairs". Ignore if your venue does not have senior area chairs.',
                             'value': {
                                 'param': {
-                                    'type': 'string',
+                                    'type': 'string[]',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Senior_Area_Chairs'
+                                    'default': ['Senior_Area_Chairs']
                                 }
                             }
                         },
