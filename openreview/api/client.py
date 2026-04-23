@@ -101,6 +101,7 @@ class OpenReviewClient(object):
         self.group_edits_url = self.baseurl + '/groups/edits'
         self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
+        self.domains_restriction = self.baseurl + '/domains/restriction'
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
         self.mfa_challenge_url = self.baseurl + '/mfa/challenge'
         self.mfa_verify_url = self.baseurl + '/mfa/verify'
@@ -2237,6 +2238,34 @@ class OpenReviewClient(object):
 
         return response.json()
 
+    def restrict(self, venue_id):
+        """
+        Restricts a domain/venue, preventing non-authorized users from accessing its data.
+
+        :param venue_id: the domain/venue ID to restrict
+        :type venue_id: str
+
+        :return: the API response
+        :rtype: dict
+        """
+        response = self.session.post(self.domains_restriction, json={'domain': venue_id, 'action': 'restrict'}, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def unrestrict(self, venue_id):
+        """
+        Removes the restriction from a domain/venue, restoring normal data access.
+
+        :param venue_id: the domain/venue ID to unrestrict
+        :type venue_id: str
+
+        :return: the API response
+        :rtype: dict
+        """
+        response = self.session.post(self.domains_restriction, json={'domain': venue_id, 'action': 'unrestrict'}, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
@@ -3668,7 +3697,8 @@ class Invitation(object):
         description = None,
         instructions = None,
         guestPosting = None,
-        secret = None):
+        secret = None,
+        humanVerificationRequired = None):
 
         self.id = id
         self.invitations = invitations
@@ -3707,6 +3737,7 @@ class Invitation(object):
         self.instructions = instructions
         self.guestPosting = guestPosting
         self.secret = secret
+        self.humanVerificationRequired = humanVerificationRequired
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -3833,6 +3864,8 @@ class Invitation(object):
             body['guestPosting']=self.guestPosting
         if self.secret is not None:
             body['secret']=self.secret
+        if self.humanVerificationRequired is not None:
+            body['humanVerificationRequired']=self.humanVerificationRequired
         return body
 
     @classmethod
@@ -3899,6 +3932,8 @@ class Invitation(object):
             invitation.guestPosting = i['guestPosting']
         if 'secret' in i:
             invitation.secret = i['secret']
+        if 'humanVerificationRequired' in i:
+            invitation.humanVerificationRequired = i['humanVerificationRequired']
         return invitation
 class Edge(object):
     def __init__(self, head, tail, invitation, domain=None, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):

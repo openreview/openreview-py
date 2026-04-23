@@ -17,7 +17,22 @@ def process_update(client, edge, invitation, existing_edge):
 
 
     note=client.get_note(edge.head)
-    group=client.get_group(f'{venue_id}/{submission_name}{note.number}/{reviewers_name}')
+    group_id = f'{venue_id}/{submission_name}{note.number}/{reviewers_name}'
+    group = openreview.tools.get_group(client, group_id)
+
+    if group is None:
+        print(f'Group {group_id} does not exist, create it via Submission_Group invitation with member {edge.tail}')
+        submission_group_invitation_id = f'{reviewers_id}/-/{submission_name}_Group'
+        client.post_group_edit(
+            invitation=submission_group_invitation_id,
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number }
+            },
+            group=openreview.api.Group()
+        )
+        group = client.get_group(group_id)
+
     if edge.ddate and edge.tail in group.members:
         assignment_edges = client.get_edges(invitation=edge.invitation, head=edge.head, tail=edge.tail)
         if assignment_edges:
