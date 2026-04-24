@@ -273,6 +273,7 @@ class GroupBuilder(object):
 
         if self.venue.review_stage:
             content['review_name'] = { 'value': self.venue.review_stage.name }
+            content['review_names'] = { 'value': [self.venue.review_stage.name] + [f'{role}_Review' for role in self.venue.submission_reviewer_roles[1:]] }
             content['review_rating'] = { 'value': self.venue.review_stage.rating_field_name }
             content['review_confidence'] = { 'value': self.venue.review_stage.confidence_field_name }
             content['review_email_pcs'] = { 'value': self.venue.review_stage.email_pcs }

@@ -409,43 +409,30 @@ class TestTwoSubmissionCommitteeRoles():
             assert any('Expert_Reviewer_' in item.get('prefix', '') for item in signatures_items)
             assert not any('Technical_Reviewer_' in item.get('prefix', '') for item in signatures_items)
 
-        # Create a second, distinct review form for the Technical_Reviewers role.
-        venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
-        venue.review_stage = openreview.stages.ReviewStage(
-            name='Technical_Review',
-            child_invitations_name='Technical_Review',
-            start_date=now,
-            due_date=now + datetime.timedelta(days=7),
-            submission_reviewer_roles=['Technical_Reviewers'],
-            additional_fields={
-                'technical_soundness': {
-                    'order': 1,
-                    'description': 'How technically sound is the paper?',
-                    'value': {
-                        'param': {
-                            'type': 'integer',
-                            'enum': [1, 2, 3, 4, 5],
-                            'input': 'radio'
-                        }
-                    }
-                }
+        # The second review form for Technical_Reviewers is auto-created by the
+        # venue deployment when the reviewer group layout is per-role. Trigger
+        # its /Dates to activate it now and verify the per-paper children.
+        pc_client.post_invitation_edit(
+            invitations='XYZW.cc/2025/Conference/-/Technical_Reviewers_Review/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
             }
         )
-        venue.invitation_builder.set_review_invitation()
-
-        helpers.await_queue_edit(openreview_client, edit_id='XYZW.cc/2025/Conference/-/Technical_Review-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, edit_id='XYZW.cc/2025/Conference/-/Technical_Reviewers_Review-0-1', count=2)
 
         for submission in submissions:
-            child = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/Submission{submission.number}/-/Technical_Review')
+            child = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/Submission{submission.number}/-/Technical_Reviewers_Review')
             assert f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Reviewers' in child.invitees
             assert f'XYZW.cc/2025/Conference/Submission{submission.number}/Expert_Reviewers' not in child.invitees
-            assert 'technical_soundness' in child.edit['note']['content']
             signatures_items = child.edit['signatures']['param']['items']
             assert any('Technical_Reviewer_' in item.get('prefix', '') for item in signatures_items)
             assert not any('Expert_Reviewer_' in item.get('prefix', '') for item in signatures_items)
 
         # Reviewer assignments were undeployed earlier; redeploy them so reviewers
         # can actually post reviews for submission 1.
+        venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
         venue.set_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers')
         venue.set_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers')
 
@@ -485,7 +472,7 @@ class TestTwoSubmissionCommitteeRoles():
         )
         helpers.await_queue_edit(openreview_client, edit_id=expert_review['id'])
 
-        # Post one Technical_Review as an assigned Technical reviewer for submission 1
+        # Post one Technical_Reviewers_Review as an assigned Technical reviewer for submission 1
         technical_client = openreview.api.OpenReviewClient(username='technical_one@xyzw.cc', password=helpers.strong_password)
         technical_anon_groups = technical_client.get_groups(prefix=f'XYZW.cc/2025/Conference/Submission{submission1.number}/Technical_Reviewer_.*', signatory='~TechnicalOne_XYZW1')
         if not technical_anon_groups:
@@ -494,15 +481,14 @@ class TestTwoSubmissionCommitteeRoles():
         assert len(technical_anon_groups) == 1
 
         technical_review_note = technical_client.post_note_edit(
-            invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Technical_Review',
+            invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Technical_Reviewers_Review',
             signatures=[technical_anon_groups[0].id],
             note=openreview.api.Note(
                 content={
                     'title': { 'value': 'Technical review' },
                     'review': { 'value': 'Technically sound implementation.' },
                     'rating': { 'value': 7 },
-                    'confidence': { 'value': 4 },
-                    'technical_soundness': { 'value': 4 }
+                    'confidence': { 'value': 4 }
                 }
             )
         )
@@ -510,7 +496,7 @@ class TestTwoSubmissionCommitteeRoles():
 
         official_reviews = openreview_client.get_notes(invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Official_Review')
         assert len(official_reviews) == 1
-        technical_reviews = openreview_client.get_notes(invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Technical_Review')
+        technical_reviews = openreview_client.get_notes(invitation=f'XYZW.cc/2025/Conference/Submission{submission1.number}/-/Technical_Reviewers_Review')
         assert len(technical_reviews) == 1
 
         # Each reviewer's anon signature should land only in their own role's Submitted group.
