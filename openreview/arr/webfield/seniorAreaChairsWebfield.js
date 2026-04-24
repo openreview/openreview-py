@@ -241,7 +241,7 @@ return {
 
       return areaChairsWithDelayNotification.size;
       `,
-      assignedReviewersAfterEmergencyDeclarationsCount: `
+      assignedReviewersMinusEmergencyDeclarationsCount: `
       const replies = row.note?.details?.replies ?? [];
       const reviewers = row.reviewers ?? [];
       const signatureToReviewerIndex = new Map();
@@ -269,17 +269,12 @@ return {
 
       return Math.max(0, reviewers.length - reviewersWithEmergencyDeclaration.size);
       `,
-      completedReviewsOrDelayNotificationsCount: `
+      completedReviewsPlusDelayNotificationsCount: `
       const replies = row.note?.details?.replies ?? [];
       const reviewers = row.reviewers ?? [];
       const officialReviews = row.officialReviews ?? [];
       const signatureToReviewerIndex = new Map();
       const reviewersWithDelayNotification = new Set();
-      const reviewersWithOfficialReview = new Set(
-        officialReviews
-          .map(review => review?.anonymousId)
-          .filter(Boolean)
-      );
 
       reviewers.forEach((reviewer, reviewerIndex) => {
         if (reviewer?.anonymizedGroup) {
@@ -301,9 +296,7 @@ return {
         reviewersWithDelayNotification.add(signatureToReviewerIndex.get(replySignature));
       });
 
-      return reviewers.filter((reviewer, reviewerIndex) => {
-        return reviewersWithOfficialReview.has(reviewer?.anonymousId) || reviewersWithDelayNotification.has(reviewerIndex);
-      }).length;
+      return officialReviews.length + reviewersWithDelayNotification.size;
       `
     }
   }
