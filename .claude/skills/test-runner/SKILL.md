@@ -34,12 +34,9 @@ cd <project_root>/docker && python3 run.py --serve --shell tests/test_icml_confe
 ```
 The `--shell` flag can be combined with `--serve` to get an interactive shell while services are running with ports exposed. Useful for running scripts/tests interactively while browsing `localhost:3030`.
 
-**Shell mode** — Interactive shell in a container:
+**Shell mode** — Interactive shell in the test container:
 ```bash
-cd <project_root>/docker && python3 run.py --shell          # test container (Python + pytest)
-cd <project_root>/docker && python3 run.py --shell api-v1   # API v1 container
-cd <project_root>/docker && python3 run.py --shell api-v2   # API v2 container
-cd <project_root>/docker && python3 run.py --shell web      # web container
+cd <project_root>/docker && python3 run.py --shell
 ```
 
 ### Options (can be combined with any mode)

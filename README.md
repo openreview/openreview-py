@@ -137,14 +137,10 @@ Combine with `--shell` to get an interactive shell while services are running:
 
 ### Interactive Shell
 
-Drop into a container shell for debugging or manual pytest runs:
+Drop into the test container shell for debugging or manual pytest runs:
 
 ```bash
-# Shell in the test container (Python + pytest)
 ./run.py --shell
-
-# Shell into a specific service
-./run.py --shell api-v2
 ```
 
 ### Branch Selection
@@ -176,7 +172,7 @@ Use `--keep-infra` (or set `keep_infra: true` in config) to keep MongoDB, Redis,
 ./run.py --serve --shell --no-clean
 ```
 
-> Note: `--no-clean` requires `keep_infra` to be useful. Without it, the database is lost when services are torn down.
+> Note: `--no-clean` requires `keep_infra` to be used. Without it, the database is lost when services are torn down.
 
 ### Configuration
 

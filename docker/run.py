@@ -25,7 +25,6 @@ COMPOSE_SERVE_FILE = SCRIPT_DIR / "docker-compose.serve.yml"
 CONFIG_FILE = SCRIPT_DIR / "config.json"
 CONFIG_EXAMPLE = SCRIPT_DIR / "config.example.json"
 
-VALID_SHELL_TARGETS = {"test", "api-v1", "api-v2", "web"}
 
 DEFAULTS = {
     "api_v1": {"path": "../../openreview-api-v1", "branch": ""},
@@ -225,7 +224,7 @@ def mode_test(pytest_args, no_clean=False, keep_infra=False):
             teardown()
 
 
-def mode_serve(pytest_args, no_clean=False, keep_infra=False, shell_target=None):
+def mode_serve(pytest_args, no_clean=False, keep_infra=False, shell=False):
     """Start services for browser testing, optionally populate with tests."""
     if not no_clean:
         check_port_conflicts(SERVE_PORTS)
@@ -262,15 +261,12 @@ def mode_serve(pytest_args, no_clean=False, keep_infra=False, shell_target=None)
     print("  docker compose logs -f mongo")
     print()
 
-    if shell_target:
+    if shell:
         # Drop into a shell; teardown when the shell exits
-        print(f"Dropping into {shell_target} shell. Services stay up until you exit.")
+        print("Dropping into test shell. Services stay up until you exit.")
         print()
-        if shell_target == "test":
-            cmd = compose_cmd(serve_mode=True) + ["run", "--rm", "--entrypoint",
-                                                   "bash /docker/scripts/test-shell-entrypoint.sh", "test"]
-        else:
-            cmd = compose_cmd(serve_mode=True) + ["exec", shell_target, "bash"]
+        cmd = compose_cmd(serve_mode=True) + ["run", "--rm", "--entrypoint",
+                                               "bash /docker/scripts/test-shell-entrypoint.sh", "test"]
         subprocess.run(cmd)
     else:
         # No shell — wait for Ctrl+C
@@ -295,8 +291,8 @@ def mode_serve(pytest_args, no_clean=False, keep_infra=False, shell_target=None)
         teardown(serve_mode=True)
 
 
-def mode_shell(target, no_clean=False):
-    """Drop into an interactive shell in a container."""
+def mode_shell(no_clean=False):
+    """Drop into an interactive shell in the test container."""
     if no_clean:
         start_infrastructure()
         start_apis_no_clean()
@@ -304,16 +300,9 @@ def mode_shell(target, no_clean=False):
         start_infrastructure()
         restart_apis()
 
-    if target == "test":
-        # Create a new ephemeral test container with the shell entrypoint
-        # (sets up venv and deps, then drops into bash)
-        cmd = compose_cmd() + ["run", "--rm", "--entrypoint",
-                                "bash /docker/scripts/test-shell-entrypoint.sh", "test"]
-    else:
-        # Exec into an already-running service container
-        cmd = compose_cmd() + ["exec", target, "bash"]
-
-    print(f"=== Opening shell in {target} ===")
+    print("=== Opening shell in test container ===")
+    cmd = compose_cmd() + ["run", "--rm", "--entrypoint",
+                            "bash /docker/scripts/test-shell-entrypoint.sh", "test"]
     result = subprocess.run(cmd)
     sys.exit(result.returncode)
 
@@ -331,7 +320,6 @@ examples:
   %(prog)s --serve tests/test_icml_conf.py   Populate DB, then keep serving
   %(prog)s --serve --shell                   Serve with interactive shell access
   %(prog)s --shell                           Interactive shell in test container
-  %(prog)s --shell api-v2                    Shell into the API v2 container
   %(prog)s --branch-api-v2 feat/x -- tests/test_client.py
                                              Checkout branch, run tests
 """,
@@ -348,9 +336,8 @@ examples:
     )
 
     parser.add_argument(
-        "--shell", nargs="?", const="test", metavar="SERVICE",
-        choices=sorted(VALID_SHELL_TARGETS),
-        help="Interactive shell (default: test, options: api-v1, api-v2, web). Can combine with --serve.",
+        "--shell", action="store_true",
+        help="Interactive shell in test container. Can combine with --serve.",
     )
 
     parser.add_argument(
@@ -385,8 +372,7 @@ examples:
     args = parser.parse_args()
 
     # Determine mode
-    args.shell_target = args.shell  # None if not specified
-    if args.shell is not None and not args.mode:
+    if args.shell and not args.mode:
         # --shell alone (no --serve, --test, etc.)
         args.resolved_mode = "shell"
     elif args.mode:
@@ -434,9 +420,9 @@ def main():
         sys.exit(rc)
     elif mode == "serve":
         mode_serve(args.pytest_args, no_clean=args.no_clean, keep_infra=keep_infra,
-                   shell_target=args.shell_target)
+                   shell=args.shell)
     elif mode == "shell":
-        mode_shell(args.shell_target, no_clean=args.no_clean)
+        mode_shell(no_clean=args.no_clean)
     else:
         print(f"Unknown mode: {mode}", file=sys.stderr)
         sys.exit(1)
