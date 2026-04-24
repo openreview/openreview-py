@@ -240,8 +240,21 @@ class Workflows():
                                 }
                             }
                         },
-                        'area_chairs_support': {
+                        'reviewer_group_layout': {
                             'order': 13,
+                            'description': 'How are reviewers grouped per submission? "shared" means all reviewer roles are assigned into a single per-submission group (using the primary reviewer name). "per_role" means each reviewer role gets its own per-submission group.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['shared', 'per_role'],
+                                    'default': 'shared',
+                                    'input': 'radio',
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'area_chairs_support': {
+                            'order': 14,
                             'description': "Does your venue have area chairs? Leave unchecked if your venue does not have area chairs.",
                             'value': {
                                 'param': {
@@ -254,7 +267,7 @@ class Workflows():
                             }
                         },
                         'area_chair_groups_names': {
-                            'order': 14,
+                            'order': 15,
                             'description': 'Please provide the designated name to be used for area chairs. Use underscores for spaces and capitalize as needed. Default is "Area_Chairs". Ignore if your venue does not have area chairs.',
                             'value': {
                                 'param': {
@@ -264,8 +277,21 @@ class Workflows():
                                 }
                             }
                         },
+                        'area_chair_group_layout': {
+                            'order': 16,
+                            'description': 'How are area chairs grouped per submission? "shared" means all area chair roles are assigned into a single per-submission group (using the primary area chair name). "per_role" means each area chair role gets its own per-submission group.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['shared', 'per_role'],
+                                    'default': 'shared',
+                                    'input': 'radio',
+                                    'optional': True
+                                }
+                            }
+                        },
                         'colocated': {
-                            'order': 15,
+                            'order': 17,
                             'description': 'Please provide the name of the conference, organization, or academic institution with which your event is colocated. If your event is independent of a conference or organization, you can leave this blank or write "independent"',
                             'value': {
                                 'param': {
@@ -277,7 +303,7 @@ class Workflows():
                             }
                         },
                         'previous_venue': {
-                            'order': 16,
+                            'order': 18,
                             'description': 'If possible, please provide a link to the previous iteration of this venue on OpenReview.',
                             'value': {
                                 'param': {
@@ -289,7 +315,7 @@ class Workflows():
                             }
                         },
                         'expected_submissions': {
-                            'order': 17,
+                            'order': 19,
                             'description': 'How many submissions do you expect to receive for this venue? Please provide a number. This will help us plan for the expected load on our servers.',
                             'value': {
                                 'param': {
@@ -299,7 +325,7 @@ class Workflows():
                             }
                         },
                         'how_did_you_hear_about_us': {
-                            'order': 18,
+                            'order': 20,
                             'description': 'How did you hear about OpenReview?',
                             'value': {
                                 'param': {
@@ -312,7 +338,7 @@ class Workflows():
                             }
                         },
                         'other_important_information': {
-                            'order': 19,
+                            'order': 21,
                             'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
                             'value': {
                                 'param': {
@@ -325,7 +351,7 @@ class Workflows():
                             }
                         },
                         'venue_organizer_agreement': {
-                            'order': 20,
+                            'order': 22,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {

@@ -98,7 +98,8 @@ class TestChangeVenueEmail():
 
         venue_group = openreview.tools.get_group(openreview_client, 'VenueEmail.cc/2025/Conference')
         assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'VenueEmail.cc/2025/Conference/Reviewers/-/Recruitment_Response'
-        assert all(key in venue_group.content for key in ['reviewers_declined_id', 'reviewers_invited_id', 'reviewers_invited_message_id'])
+        assert openreview_client.get_group('VenueEmail.cc/2025/Conference/Reviewers/Invited')
+        assert openreview_client.get_group('VenueEmail.cc/2025/Conference/Reviewers/Declined')
 
         request_note = openreview_client.get_note(request.id)
         assert request_note.domain == 'openreview.net/Support'

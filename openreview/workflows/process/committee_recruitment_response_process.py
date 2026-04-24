@@ -1,12 +1,10 @@
 def process(client, edit, invitation):
 
     domain = client.get_group(invitation.domain)
-    
-    committee_group = client.get_group(invitation.content['committee_id']['value'])
-    committee_role = committee_group.content['committee_role']['value']
-    committee_id = domain.content[f'{committee_role}_id']['value']
-    committee_declined_id = domain.content[f'{committee_role}_declined_id']['value']
-    committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
+
+    committee_id = invitation.content['committee_id']['value']
+    committee_declined_id = f'{committee_id}/Declined'
+    committee_invited_message_id = f'{committee_id}/Invited/-/Message'
 
     note = edit.note
     user=note.content.get('user', {}).get('value', note.signatures[0])

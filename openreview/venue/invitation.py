@@ -550,6 +550,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
+        # The set of reviewer roles invited to this review invitation. Configured on the
+        # ReviewStage to match how assignments were deployed (one Official_Review for
+        # multiple roles, or one per role). Falls back to [venue.reviewers_name] for
+        # backward compatibility with older callers that don't set this explicitly.
+        reviewer_roles = review_stage.submission_reviewer_roles or [self.venue.reviewers_name]
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.now())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
@@ -579,6 +584,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 },
                 'confidence_field_name': {
                     'value': 'confidence'
+                },
+                'reviewer_roles': {
+                    'value': reviewer_roles
                 }
             },
             edit={
@@ -605,9 +613,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'invitation': {
                     'id': self.venue.get_invitation_id(review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
-                    'readers': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
+                    'readers': [venue_id] + [self.venue.get_reviewers_id(number='${3/content/noteNumber/value}', name=name) for name in reviewer_roles],
                     'writers': [venue_id],
-                    'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
+                    'invitees': [venue_id] + [self.venue.get_reviewers_id(number='${3/content/noteNumber/value}', name=name) for name in reviewer_roles],
                     'maxReplies': 1,
                     'cdate': review_cdate,
                     'edit': {
@@ -3293,13 +3301,22 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         area_chairs_id = self.venue.get_area_chairs_id()
         senior_area_chairs_id = self.venue.get_senior_area_chairs_id()
+        default_submission_name = committee_name
         if is_reviewer:
-            area_chairs_id = committee_id.replace(self.venue.reviewers_name, self.venue.area_chairs_name)
-            senior_area_chairs_id = committee_id.replace(self.venue.reviewers_name, self.venue.senior_area_chairs_name)
+            area_chairs_id = committee_id.replace(committee_name, self.venue.area_chairs_name)
+            senior_area_chairs_id = committee_id.replace(committee_name, self.venue.senior_area_chairs_name)
+            if len(venue.reviewer_roles) == len(venue.submission_reviewer_roles):
+                default_submission_name = venue.submission_reviewer_roles[venue.reviewer_roles.index(committee_name)]
+            else:
+                default_submission_name = venue.submission_reviewer_roles[0]
 
         if is_area_chair:
             area_chairs_id = committee_id
-            senior_area_chairs_id = committee_id.replace(self.venue.area_chairs_name, self.venue.senior_area_chairs_name)
+            senior_area_chairs_id = committee_id.replace(committee_name, self.venue.senior_area_chairs_name)
+            if len(venue.area_chair_roles) == len(venue.submission_area_chair_roles):
+                default_submission_name = venue.submission_area_chair_roles[venue.area_chair_roles.index(committee_name)]
+            else:
+                default_submission_name = venue.submission_area_chair_roles[0]
 
         content = {
             'review_name': {
@@ -3309,13 +3326,16 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'value': committee_id
             },
             'reviewers_name': {
-                'value': venue.reviewers_name if is_reviewer else venue.area_chairs_name
+                'value': default_submission_name
             },
             'reviewers_anon_name': {
-                'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
+                'value': venue.get_anon_committee_name(default_submission_name)
             },
-            'committee_role': { 
+            'committee_role': {
                 'value':  venue.get_standard_committee_role(committee_id=venue.get_reviewers_id())
+            },
+            'submission_committee_name': {
+                'value': default_submission_name
             }
         }
         if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments:
@@ -3774,10 +3794,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             )
         self.save_invitation(paper_recruitment_invitation, replacement=True)
 
-    def set_submission_reviewer_group_invitation(self):
+    def set_submission_reviewer_group_invitation(self, reviewers_name=None):
 
         venue_id = self.venue_id
-        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_reviewers_id())
+        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_reviewers_id(name=reviewers_name))
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
 
         invitation = Invitation(id=invitation_id,
@@ -3811,10 +3831,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 },
                 'group': {
-                    'id': self.venue.get_reviewers_id(number='${2/content/noteNumber/value}'),
-                    'readers': self.venue.group_builder.get_reviewer_paper_group_readers('${3/content/noteNumber/value}'),
+                    'id': self.venue.get_reviewers_id(number='${2/content/noteNumber/value}', name=reviewers_name),
+                    'readers': self.venue.group_builder.get_reviewer_paper_group_readers('${3/content/noteNumber/value}', name=reviewers_name),
                     'nonreaders': [self.venue.get_authors_id('${3/content/noteNumber/value}')],
-                    'deanonymizers': self.venue.group_builder.get_reviewer_identity_readers('${3/content/noteNumber/value}'),
+                    'deanonymizers': self.venue.group_builder.get_reviewer_identity_readers('${3/content/noteNumber/value}', name=reviewers_name),
                     'writers': self.venue.group_builder.get_reviewer_paper_group_writers('${3/content/noteNumber/value}'),
                     'signatures': [self.venue.id],
                     'signatories': [self.venue.id],
@@ -3836,10 +3856,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         return invitation
 
-    def set_submission_area_chair_group_invitation(self):
+    def set_submission_area_chair_group_invitation(self, area_chairs_name=None):
 
         venue_id = self.venue_id
-        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_area_chairs_id())
+        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_area_chairs_id(name=area_chairs_name))
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
 
 
@@ -3874,10 +3894,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 },
                 'group': {
-                    'id': self.venue.get_area_chairs_id(number='${2/content/noteNumber/value}'),
-                    'readers': self.venue.group_builder.get_area_chair_paper_group_readers('${3/content/noteNumber/value}'),
+                    'id': self.venue.get_area_chairs_id(number='${2/content/noteNumber/value}', name=area_chairs_name),
+                    'readers': self.venue.group_builder.get_area_chair_paper_group_readers('${3/content/noteNumber/value}', name=area_chairs_name),
                     'nonreaders': [self.venue.get_authors_id('${3/content/noteNumber/value}')],
-                    'deanonymizers': self.venue.group_builder.get_area_chair_identity_readers('${3/content/noteNumber/value}'),
+                    'deanonymizers': self.venue.group_builder.get_area_chair_identity_readers('${3/content/noteNumber/value}', name=area_chairs_name),
                     'writers': [self.venue.id],
                     'signatures': [self.venue.id],
                     'signatories': [self.venue.id],
@@ -5281,8 +5301,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if venue.use_senior_area_chairs:
             readers.append(venue.get_senior_area_chairs_id(number))
         if venue.use_area_chairs:
-            readers.append(venue.get_area_chairs_id(number))
-        readers.extend([venue.get_reviewers_id(number), venue.get_authors_id('${{2/id}/number}')])
+            for ac_name in venue.submission_area_chair_roles:
+                readers.append(venue.get_area_chairs_id(number, name=ac_name))
+        for reviewers_name in venue.submission_reviewer_roles:
+            readers.append(venue.get_reviewers_id(number, name=reviewers_name))
+        readers.append(venue.get_authors_id('${{2/id}/number}'))
 
         invitation = Invitation(
             id = f'{venue_id}/-/{name}',

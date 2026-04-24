@@ -76,22 +76,22 @@ class GroupBuilder(object):
 
         return groups
 
-    def get_reviewer_identity_readers(self, number):
-        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers)
+    def get_reviewer_identity_readers(self, number, name=None):
+        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers, reviewers_name=name)
 
-    def get_area_chair_identity_readers(self, number):
-        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.area_chair_identity_readers)
+    def get_area_chair_identity_readers(self, number, name=None):
+        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.area_chair_identity_readers, area_chairs_name=name)
 
     def get_senior_area_chair_identity_readers(self, number):
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.senior_area_chair_identity_readers)
 
-    def get_reviewer_paper_group_readers(self, number):
+    def get_reviewer_paper_group_readers(self, number, name=None):
         readers=[self.venue.id]
         if self.venue.use_senior_area_chairs:
             readers.append(self.venue.get_senior_area_chairs_id(number))
         if self.venue.use_area_chairs:
             readers.append(self.venue.get_area_chairs_id(number))
-        readers.append(self.venue.get_reviewers_id(number))
+        readers.append(self.venue.get_reviewers_id(number, name=name))
         return readers
 
     def get_reviewer_paper_group_writers(self, number):
@@ -103,11 +103,11 @@ class GroupBuilder(object):
         return readers
 
 
-    def get_area_chair_paper_group_readers(self, number):
+    def get_area_chair_paper_group_readers(self, number, name=None):
         readers=[self.venue.id, self.venue.get_program_chairs_id()]
         if self.venue.use_senior_area_chairs:
             readers.append(self.venue.get_senior_area_chairs_id(number))
-        readers.append(self.venue.get_area_chairs_id(number))
+        readers.append(self.venue.get_area_chairs_id(number, name=name))
         if openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED in self.venue.area_chair_identity_readers:
             readers.append(self.venue.get_reviewers_id(number))
         return readers
@@ -168,6 +168,7 @@ class GroupBuilder(object):
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
             'reviewer_roles': { 'value': self.venue.reviewer_roles },
+            'submission_reviewer_roles': { 'value': self.venue.submission_reviewer_roles },
             'reviewers_anon_name': { 'value': self.venue.get_anon_reviewers_name() },
             'reviewers_submitted_name': { 'value': 'Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
@@ -239,6 +240,7 @@ class GroupBuilder(object):
 
         if self.venue.use_area_chairs:
             content['area_chair_roles'] = { 'value': self.venue.area_chair_roles }
+            content['submission_area_chair_roles'] = { 'value': self.venue.submission_area_chair_roles }
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
             content['area_chairs_anon_name'] = { 'value': self.venue.get_anon_area_chairs_name() }
@@ -271,6 +273,7 @@ class GroupBuilder(object):
 
         if self.venue.review_stage:
             content['review_name'] = { 'value': self.venue.review_stage.name }
+            content['review_names'] = { 'value': [self.venue.review_stage.name] + [f'{role}_Review' for role in self.venue.submission_reviewer_roles[1:]] }
             content['review_rating'] = { 'value': self.venue.review_stage.rating_field_name }
             content['review_confidence'] = { 'value': self.venue.review_stage.confidence_field_name }
             content['review_email_pcs'] = { 'value': self.venue.review_stage.email_pcs }
@@ -511,7 +514,7 @@ class GroupBuilder(object):
                 if self.venue.use_area_chairs:
                     area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
                     additional_readers.append(area_chairs_id)
-                
+
                 self.client.post_group_edit(
                     invitation=f'{self.openreview_template}/-/Committee_Group',
                     signatures=[self.openreview_template],
@@ -521,11 +524,26 @@ class GroupBuilder(object):
                         'committee_role': { 'value': 'reviewers' },
                         'committee_pretty_name': { 'value': pretty_name },
                         'committee_anon_name': { 'value': self.venue.get_anon_committee_name(role) },
-                        'committee_submitted_name': { 'value': 'Submitted' },                    
+                        'committee_submitted_name': { 'value': 'Submitted' },
                         'additional_readers': { 'value': additional_readers }
                     },
                     await_process=True
                 )
+
+            # If there are multiple reviewer roles and the category name is not
+            # itself one of the roles, create an umbrella group containing all
+            # role groups as members.
+            if len(self.venue.reviewer_roles) > 1 and self.venue.reviewers_name not in self.venue.reviewer_roles:
+                umbrella_id = self.venue.get_reviewers_id()
+                role_group_ids = [self.venue.get_committee_id(role) for role in self.venue.reviewer_roles]
+                self.post_group(Group(
+                    id=umbrella_id,
+                    readers=[venue_id, umbrella_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    signatories=[venue_id],
+                    members=role_group_ids
+                ))
             return            
 
         for index, role in enumerate(self.venue.reviewer_roles):
@@ -575,6 +593,22 @@ class GroupBuilder(object):
                     },
                     await_process=True
                 )
+
+            # If there are multiple area chair roles and the category name is not
+            # itself one of the roles, create an umbrella group containing all
+            # role groups as members.
+            if len(self.venue.area_chair_roles) > 1 and self.venue.area_chairs_name not in self.venue.area_chair_roles:
+                venue_id = self.venue.id
+                umbrella_id = self.venue.get_area_chairs_id()
+                role_group_ids = [self.venue.get_committee_id(role) for role in self.venue.area_chair_roles]
+                self.post_group(Group(
+                    id=umbrella_id,
+                    readers=[venue_id, umbrella_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    signatories=[venue_id],
+                    members=role_group_ids
+                ))
             return
 
         venue_id = self.venue.id

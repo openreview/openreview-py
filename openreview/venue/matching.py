@@ -1198,16 +1198,20 @@ class Matching(object):
         venue = self.venue
         client = self.client
 
-        committee_id=self.match_group.id
-        role_name = committee_id.split('/')[-1]
         review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
-        reviewer_name = venue.reviewers_name
-        if role_name in venue.area_chair_roles:
-            reviewer_name = venue.area_chairs_name
+        if self.is_area_chair:
             review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
-        elif self.is_senior_area_chair:
-            reviewer_name = venue.senior_area_chairs_name
-            
+
+        deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
+        paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')
+        if not paper_committee_name:
+            if self.is_area_chair:
+                paper_committee_name = venue.submission_area_chair_roles[0]
+            elif self.is_senior_area_chair:
+                paper_committee_name = venue.senior_area_chairs_name
+            else:
+                paper_committee_name = venue.submission_reviewer_roles[0]
+
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), domain=venue.id,
             groupby='head', select=None)} if not venue.sac_paper_assignments else {}
@@ -1216,7 +1220,7 @@ class Matching(object):
             label=assignment_title, groupby='head', select=None)}
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         submission_group_invitation_id = venue.get_invitation_id(f'{venue.submission_stage.name}_Group', prefix=self.match_group.id)
-        existing_paper_committee_ids = { g.id for g in client.get_all_groups(prefix=venue.get_paper_group_prefix(), domain=venue.id) if g.id.endswith(f'/{reviewer_name}') }
+        existing_paper_committee_ids = { g.id for g in client.get_all_groups(prefix=venue.get_paper_group_prefix(), domain=venue.id) if g.id.endswith(f'/{paper_committee_name}') }
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None, domain=venue.id)}
 
         print('Check if there are reviews posted')
@@ -1231,7 +1235,7 @@ class Matching(object):
             ## Remove the members from the groups based on the current assignments
             for paper in tqdm(papers, total=len(papers)):
                 if paper.id in current_assignment_edges:
-                    paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
+                    paper_committee_id = venue.get_committee_id(name=paper_committee_name, number=paper.number)
                     current_edges=current_assignment_edges[paper.id]
                     for current_edge in current_edges:
                         client.remove_members_from_group(paper_committee_id, current_edge['tail'])
@@ -1243,7 +1247,7 @@ class Matching(object):
         def process_paper_assignments(paper):
             paper_assignment_edges = []
             if paper.id in proposed_assignment_edges:
-                paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
+                paper_committee_id = venue.get_committee_id(name=paper_committee_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
                 assigned_users = []
                 for proposed_edge in proposed_edges:
@@ -1359,16 +1363,20 @@ class Matching(object):
         venue = self.venue
         client = self.client
 
-        committee_id=self.match_group.id
-        role_name = committee_id.split('/')[-1]
         review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
-        reviewer_name = venue.reviewers_name
-        if role_name in venue.area_chair_roles:
-            reviewer_name = venue.area_chairs_name
+        if self.is_area_chair:
             review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
-        elif self.is_senior_area_chair:
-            reviewer_name = venue.senior_area_chairs_name
-            
+
+        deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
+        paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')
+        if not paper_committee_name:
+            if self.is_area_chair:
+                paper_committee_name = venue.submission_area_chair_roles[0]
+            elif self.is_senior_area_chair:
+                paper_committee_name = venue.senior_area_chairs_name
+            else:
+                paper_committee_name = venue.submission_reviewer_roles[0]
+
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
             groupby='head', select=None, domain=venue.id)} if not venue.sac_paper_assignments else {}
@@ -1387,7 +1395,7 @@ class Matching(object):
 
         def process_paper_assignments(paper):
             if paper.id in proposed_assignment_edges:
-                paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
+                paper_committee_id = venue.get_committee_id(name=paper_committee_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
                 assigned_users = []
                 for proposed_edge in proposed_edges:
@@ -1414,7 +1422,6 @@ class Matching(object):
         recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id)
         self.venue.invitation_builder.expire_invitation(recruitment_invitation_id)
         self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
-       
 
         ## Deploy assignments creating groups and assignment edges
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
@@ -1452,7 +1459,7 @@ class Matching(object):
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
             self.undeploy_sac_assignments(assignment_title)
         else:
-            self.undeploy_assignments(assignment_title)  
+            self.undeploy_assignments(assignment_title)
             self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id, deployed=True))      
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_assignment_id(self.match_group.id))     
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id))
