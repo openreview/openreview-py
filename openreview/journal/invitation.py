@@ -2347,7 +2347,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'Accepted',
                             'Declined.*',
                             'Pending Sign Up',
-                            'Conflict Detected'
+                            'Conflict Detected',
+                            'Already Assigned'
                         ],
                         'default': 'Invitation Sent'
                     }
@@ -6807,7 +6808,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },                
-                'readers': [venue_id, self.journal.get_action_editors_id(), '${2/head}'],
+                'readers': [f'{venue_id}/Preferred_Emails_Readers', '${2/head}'],
                 'nonreaders': [],
                 'writers': [venue_id, '${2/head}'],
                 'signatures': [venue_id],

@@ -29,12 +29,15 @@ class EditInvitationsBuilder(object):
         invitation = self.client.get_invitation(invitation.id)
 
         if invitation.date_processes and len(invitation.date_processes[0]['dates']) > 1 and self.update_date_string == invitation.date_processes[0]['dates'][1]:
-            process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
+            expected_statuses = {'error', 'ok'}
+            log_id = invitation.id + '-0-1'
+            min_sdate = invitation.tmdate + self.update_wait_time - 1000
+            process_logs = [log for log in self.client.get_process_logs(id=log_id, min_sdate=min_sdate) if log['status'] in expected_statuses]
             count = 0
             max_count = 1800 / self.spleep_time_for_logs
             while len(process_logs) == 0 and count < max_count: ## wait up to 30 minutes
                 time.sleep(self.spleep_time_for_logs)
-                process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
+                process_logs = [log for log in self.client.get_process_logs(id=log_id, min_sdate=min_sdate) if log['status'] in expected_statuses]
                 count += 1
 
             if len(process_logs) == 0:
@@ -87,8 +90,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     },
@@ -96,8 +98,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     }
