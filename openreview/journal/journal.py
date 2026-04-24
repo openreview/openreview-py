@@ -1101,7 +1101,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 '''
             self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
-        if self.get_editors_in_chief_id() in readers and len(readers) == 2 and 'comment' in lower_formatted_invitation or notify_eics:
+        if self.get_editors_in_chief_id() in readers and ((len(readers) == 2 and 'comment' in lower_formatted_invitation) or notify_eics):
             message = f'''Hi {{{{fullname}}}},
 
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are serving as Editor-In-Chief.
