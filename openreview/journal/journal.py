@@ -419,6 +419,9 @@ class Journal(object):
     def should_archive_previous_year_assignments(self):
         return self.settings.get('archive_previous_year_assignments', False)
 
+    def should_notify_eics_for_decisions(self):
+        return self.settings.get('notify_eics_for_decisions', False)
+
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')
         return venue_id in [self.submitted_venue_id, self.under_review_venue_id, self.assigning_AE_venue_id, self.assigned_AE_venue_id]
@@ -1002,7 +1005,7 @@ class Journal(object):
         print('signature_members', signature_members)
         return list(set(invitee_members) - set(signature_members))
 
-    def notify_readers(self, edit, content_fields=[]):
+    def notify_readers(self, edit, content_fields=[], notify_eics=False):
         """Send email notifications to all relevant parties when a note is posted or edited.
 
         Determines whether the note was posted or edited, then sends tailored email
@@ -1017,6 +1020,8 @@ class Journal(object):
         :type edit: openreview.api.Edit
         :param content_fields: Note content field names to include in the email body (e.g., ``['recommendation']``).
         :type content_fields: list[str], optional
+        :param notify_eics: If True, send notifications to editors-in-chief for all notes, not just private comments.
+        :type notify_eics: bool, optional
         """
 
         vowels = ['a', 'e', 'i', 'o', 'u']
@@ -1096,7 +1101,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 '''
             self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
-        if self.get_editors_in_chief_id() in readers and len(readers) == 2 and 'comment' in lower_formatted_invitation:
+        if self.get_editors_in_chief_id() in readers and len(readers) == 2 and 'comment' in lower_formatted_invitation or notify_eics:
             message = f'''Hi {{{{fullname}}}},
 
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are serving as Editor-In-Chief.
