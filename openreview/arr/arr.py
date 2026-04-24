@@ -735,7 +735,7 @@ class ARR(object):
     def expire_invitation(self, invitation_id):
         return self.venue.expire_invitation(invitation_id)
 
-    def prune_active_arr_venues(self, keep_count=2):
+    def prune_active_arr_venues(self, previous_count=1):
         active_venues = self.client.get_group('active_venues')
         arr_venues = []
 
@@ -746,14 +746,13 @@ class ARR(object):
             venue_group = tools.get_group(self.client, venue_id)
             if venue_group is None:
                 continue
-            venue_cdate = venue_group.cdate
-            arr_venues.append((venue_cdate, venue_id == self.venue_id, venue_id))
-
-        if len(arr_venues) <= keep_count:
-            return
+            arr_venues.append((venue_group.cdate, venue_id))
 
         arr_venues.sort(reverse=True)
-        stale_venue_ids = [venue_id for _, _, venue_id in arr_venues[keep_count:]]
+
+        stale_venue_ids = [
+            venue_id for _, venue_id in arr_venues if venue_id != self.venue_id
+        ][previous_count:]
         if stale_venue_ids:
             self.client.remove_members_from_group(active_venues.id, stale_venue_ids)
 
