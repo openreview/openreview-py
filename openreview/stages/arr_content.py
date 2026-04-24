@@ -2360,7 +2360,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "If the paper is a resubmission, does the link to the previous submission work?",
+        "description": "If the paper is a resubmission, does the link to the previous submission work, and does the resubmission contain the mandatory explanation of revisions? (see https://aclrollingreview.org/authors#step4)",
         "order": 19
     },
     "resubmission_reassignments": {
