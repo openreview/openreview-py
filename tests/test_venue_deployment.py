@@ -141,6 +141,81 @@ class TestVenueDeployment():
                         'reviewer_groups_names': { 'value': ['Reviewers'] },
                         'area_chairs_support': { 'value': True },
                         'area_chair_groups_names': { 'value': ['Reviewers'] },
+                        'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
+                        'expected_submissions': { 'value': 50 },
+                        'venue_organizer_agreement': {
+                            'value': [
+                                'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                                'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                                'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                                'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                                'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                                'We will treat the OpenReview staff with kindness and consideration.',
+                                'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                                'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                                'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
+                            ]
+                        }
+                    }
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The senior area chair role name and reviewer role name must be different'):
+            pc_client.post_note_edit(
+                invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow',
+                signatures=['~ProgramChair_VenueDeployment1'],
+                note=openreview.api.Note(
+                    content={
+                        'official_venue_name': { 'value': 'Test Venue Deployment Conference 2026' },
+                        'abbreviated_venue_name': { 'value': 'TVD 2026' },
+                        'venue_website_url': { 'value': 'https://venue-deployment-test.cc' },
+                        'location': { 'value': 'Virtual' },
+                        'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=26)) },
+                        'program_chair_emails': { 'value': ['programchair@venuedeployment.cc'] },
+                        'contact_email': { 'value': 'programchair@venuedeployment.cc' },
+                        'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
+                        'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
+                        'reviewer_groups_names': { 'value': ['Reviewers'] },
+                        'area_chairs_support': { 'value': True },
+                        'area_chair_groups_names': { 'value': ['Area_Chairs'] },
+                        'senior_area_chairs_support': { 'value': True },
+                        'senior_area_chair_groups_names': { 'value': ['Reviewers'] },
+                        'expected_submissions': { 'value': 50 },
+                        'venue_organizer_agreement': {
+                            'value': [
+                                'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                                'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                                'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                                'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                                'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                                'We will treat the OpenReview staff with kindness and consideration.',
+                                'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                                'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                                'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
+                            ]
+                        }
+                    }
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The senior area chair role name and area chair role name must be different'):
+            pc_client.post_note_edit(
+                invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow',
+                signatures=['~ProgramChair_VenueDeployment1'],
+                note=openreview.api.Note(
+                    content={
+                        'official_venue_name': { 'value': 'Test Venue Deployment Conference 2026' },
+                        'abbreviated_venue_name': { 'value': 'TVD 2026' },
+                        'venue_website_url': { 'value': 'https://venue-deployment-test.cc' },
+                        'location': { 'value': 'Virtual' },
+                        'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=26)) },
+                        'program_chair_emails': { 'value': ['programchair@venuedeployment.cc'] },
+                        'contact_email': { 'value': 'programchair@venuedeployment.cc' },
+                        'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
+                        'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
+                        'reviewer_groups_names': { 'value': ['Reviewers'] },
+                        'area_chairs_support': { 'value': True },
+                        'area_chair_groups_names': { 'value': ['Area_Chairs'] },
+                        'senior_area_chairs_support': { 'value': True },
+                        'senior_area_chair_groups_names': { 'value': ['Area_Chairs'] },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -181,6 +256,7 @@ class TestVenueDeployment():
                     'reviewer_groups_names': { 'value': ['Program_Committee'] },
                     'area_chairs_support': { 'value': True },
                     'area_chair_groups_names': { 'value': ['Senior_Program_Committee'] },
+                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'expected_submissions': { 'value': 50 },
                     'venue_organizer_agreement': {
                         'value': [
