@@ -38,12 +38,10 @@ class TestTwoSubmissionCommitteeRoles():
                     'contact_email': { 'value': 'xyzw2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewers_name': { 'value': 'Reviewers' },
-                    'reviewer_roles': { 'value': ['Expert_Reviewers', 'Technical_Reviewers'] },
+                    'reviewer_groups_names': { 'value': ['Expert_Reviewers', 'Technical_Reviewers'] },
                     'reviewer_group_layout': { 'value': 'per_role' },
                     'area_chairs_support': { 'value': True },
-                    'area_chairs_name': { 'value': 'Area_Chairs' },
-                    'area_chair_roles': { 'value': ['Area_Chairs', 'Technical_Area_Chairs'] },
+                    'area_chair_groups_names': { 'value': ['Area_Chairs', 'Technical_Area_Chairs'] },
                     'area_chair_group_layout': { 'value': 'per_role' },
                     'expected_submissions': { 'value': 100 },
                     'venue_organizer_agreement': {
@@ -79,14 +77,10 @@ class TestTwoSubmissionCommitteeRoles():
 
         venue_group = openreview_client.get_group('XYZW.cc/2025/Conference')
         assert venue_group
-        assert venue_group.content['reviewers_name']['value'] == 'Reviewers'
+        assert venue_group.content['reviewers_name']['value'] == 'Expert_Reviewers'
         assert openreview_client.get_group('XYZW.cc/2025/Conference/Expert_Reviewers')
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Expert_Reviewers/-/Submission_Group')
 
-        # Umbrella group created with both reviewer roles as members
-        reviewers_umbrella = openreview_client.get_group('XYZW.cc/2025/Conference/Reviewers')
-        assert 'XYZW.cc/2025/Conference/Expert_Reviewers' in reviewers_umbrella.members
-        assert 'XYZW.cc/2025/Conference/Technical_Reviewers' in reviewers_umbrella.members
         expert_assignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Expert_Reviewers/-/Assignment')
         assert expert_assignment.content['review_name']['value'] == 'Official_Review'
         assert expert_assignment.content['reviewers_id']['value'] == 'XYZW.cc/2025/Conference/Expert_Reviewers'
@@ -97,7 +91,7 @@ class TestTwoSubmissionCommitteeRoles():
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Expert_Reviewers/-/Proposed_Assignment')
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Expert_Reviewers/-/Assignment_Configuration')
 
-        # Second reviewer role auto-created by deployment via reviewer_roles
+        # Second reviewer role auto-created by deployment via reviewer_groups_names
         assert openreview_client.get_group('XYZW.cc/2025/Conference/Technical_Reviewers')
         assert openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Reviewers/-/Submission_Group')
         technical_assignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Reviewers/-/Assignment')

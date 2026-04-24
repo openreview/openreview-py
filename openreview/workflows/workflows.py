@@ -229,26 +229,14 @@ class Workflows():
                                 }
                             }
                         },
-                        'reviewers_name': {
-                            'order': 11,
-                            'description': 'Please provide the designated name to be used for reviewers. Default is "Reviewers".',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Reviewers'
-                                }
-                            }
-                        },
-                        'reviewer_roles': {
+                        'reviewer_groups_names': {
                             'order': 12,
-                            'description': 'Optional: list of reviewer role names if your venue has multiple reviewer committees (e.g. "Expert_Reviewers", "Technical_Reviewers"). The first entry is used as the primary reviewer role. Leave empty for a single reviewer role.',
+                            'description': 'Please provide the designated name to be used for reviewers. Use underscores for spaces and capitalize as needed. Default is "Reviewers".',
                             'value': {
                                 'param': {
                                     'type': 'string[]',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'optional': True,
-                                    'deletable': True
+                                    'default': ['Reviewers']
                                 }
                             }
                         },
@@ -278,31 +266,19 @@ class Workflows():
                                 }
                             }
                         },
-                        'area_chairs_name': {
+                        'area_chair_groups_names': {
                             'order': 15,
                             'description': 'Please provide the designated name to be used for area chairs. Use underscores for spaces and capitalize as needed. Default is "Area_Chairs". Ignore if your venue does not have area chairs.',
                             'value': {
                                 'param': {
-                                    'type': 'string',
-                                    'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Area_Chairs'
-                                }
-                            }
-                        },
-                        'area_chair_roles': {
-                            'order': 16,
-                            'description': 'Optional: list of area chair role names if your venue has multiple area chair committees. The first entry is used as the primary area chair role. Leave empty for a single area chair role.',
-                            'value': {
-                                'param': {
                                     'type': 'string[]',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'optional': True,
-                                    'deletable': True
+                                    'default': ['Area_Chairs']
                                 }
                             }
                         },
                         'area_chair_group_layout': {
-                            'order': 17,
+                            'order': 16,
                             'description': 'How are area chairs grouped per submission? "shared" means all area chair roles are assigned into a single per-submission group (using the primary area chair name). "per_role" means each area chair role gets its own per-submission group.',
                             'value': {
                                 'param': {
@@ -315,7 +291,7 @@ class Workflows():
                             }
                         },
                         'colocated': {
-                            'order': 18,
+                            'order': 17,
                             'description': 'Please provide the name of the conference, organization, or academic institution with which your event is colocated. If your event is independent of a conference or organization, you can leave this blank or write "independent"',
                             'value': {
                                 'param': {
@@ -327,7 +303,7 @@ class Workflows():
                             }
                         },
                         'previous_venue': {
-                            'order': 19,
+                            'order': 18,
                             'description': 'If possible, please provide a link to the previous iteration of this venue on OpenReview.',
                             'value': {
                                 'param': {
@@ -339,7 +315,7 @@ class Workflows():
                             }
                         },
                         'expected_submissions': {
-                            'order': 20,
+                            'order': 19,
                             'description': 'How many submissions do you expect to receive for this venue? Please provide a number. This will help us plan for the expected load on our servers.',
                             'value': {
                                 'param': {
@@ -349,7 +325,7 @@ class Workflows():
                             }
                         },
                         'how_did_you_hear_about_us': {
-                            'order': 21,
+                            'order': 20,
                             'description': 'How did you hear about OpenReview?',
                             'value': {
                                 'param': {
@@ -362,7 +338,7 @@ class Workflows():
                             }
                         },
                         'other_important_information': {
-                            'order': 22,
+                            'order': 21,
                             'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
                             'value': {
                                 'param': {
@@ -375,7 +351,7 @@ class Workflows():
                             }
                         },
                         'venue_organizer_agreement': {
-                            'order': 23,
+                            'order': 22,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {

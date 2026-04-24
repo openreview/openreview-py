@@ -136,8 +136,12 @@ class Venue(object):
             "value": "CC BY 4.0",
             "description": "CC BY 4.0"
         }
-        self.reviewers_name = request_note.content['reviewers_name']['value']
-        self.reviewer_roles = request_note.content.get('reviewer_roles', {}).get('value') or [self.reviewers_name]
+        if 'reviewer_groups_names' in request_note.content:
+            self.reviewer_roles = request_note.content['reviewer_groups_names']['value']
+            self.reviewers_name = self.reviewer_roles[0]
+        elif 'reviewers_name' in request_note.content:
+            self.reviewers_name = request_note.content['reviewers_name']['value']
+            self.reviewer_roles = [self.reviewers_name]
         reviewer_group_layout = request_note.content.get('reviewer_group_layout', {}).get('value', 'shared')
         if reviewer_group_layout == 'per_role':
             self.submission_reviewer_roles = list(self.reviewer_roles)
@@ -146,8 +150,12 @@ class Venue(object):
         preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
 
         if request_note.content.get('area_chairs_support',{}).get('value'):
-            self.area_chairs_name = request_note.content['area_chairs_name']['value']
-            self.area_chair_roles = request_note.content.get('area_chair_roles', {}).get('value') or [self.area_chairs_name]
+            if 'area_chair_groups_names' in request_note.content:
+                self.area_chair_roles = request_note.content['area_chair_groups_names']['value']
+                self.area_chairs_name = self.area_chair_roles[0]
+            elif 'area_chairs_name' in request_note.content:
+                self.area_chairs_name = request_note.content['area_chairs_name']['value']
+                self.area_chair_roles = [self.area_chairs_name]
             area_chair_group_layout = request_note.content.get('area_chair_group_layout', {}).get('value', 'shared')
             if area_chair_group_layout == 'per_role':
                 self.submission_area_chair_roles = list(self.area_chair_roles)
