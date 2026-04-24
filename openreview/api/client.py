@@ -3575,6 +3575,27 @@ class Note(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
+    @property
+    def authors(self):
+        """
+        Returns the authors as a canonical list of ``{'fullname', 'username'}`` dicts,
+        regardless of whether the underlying content stores them as a list of objects
+        (current schema) or as parallel ``authors``/``authorids`` arrays (legacy schema).
+        """
+        if not self.content:
+            return []
+        authors_value = self.content.get('authors', {}).get('value') or []
+        if authors_value and isinstance(authors_value[0], dict):
+            return [{'fullname': a.get('fullname', ''), 'username': a.get('username', '')} for a in authors_value]
+        authorids_value = self.content.get('authorids', {}).get('value') or []
+        return [
+            {
+                'fullname': authors_value[i] if i < len(authors_value) else '',
+                'username': authorids_value[i] if i < len(authorids_value) else ''
+            }
+            for i in range(max(len(authors_value), len(authorids_value)))
+        ]
+
     def to_json(self):
         """
         Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
