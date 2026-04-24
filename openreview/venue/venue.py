@@ -152,9 +152,10 @@ class Venue(object):
             self.use_area_chairs = True
             preferred_email_groups.append(self.get_area_chairs_id())
 
-        if 'senior_area_chair_groups_names' in request_note.content:
-            self.senior_area_chair_roles = request_note.content['senior_area_chair_groups_names']['value']
-            self.senior_area_chairs_name = self.senior_area_chair_roles[0]
+        if request_note.content.get('senior_area_chairs_support',{}).get('value'):
+            if 'senior_area_chair_groups_names' in request_note.content:
+                self.senior_area_chair_roles = request_note.content['senior_area_chair_groups_names']['value']
+                self.senior_area_chairs_name = self.senior_area_chair_roles[0]
             self.use_senior_area_chairs = True
             preferred_email_groups.append(self.get_senior_area_chairs_id())
 
