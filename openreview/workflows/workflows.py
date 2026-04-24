@@ -229,19 +229,19 @@ class Workflows():
                                 }
                             }
                         },
-                        'reviewers_name': {
-                            'order': 11,
-                            'description': 'Please provide the designated name to be used for reviewers. Default is "Reviewers".',
+                        'reviewer_groups_names': {
+                            'order': 12,
+                            'description': 'Please provide the designated name to be used for reviewers. Use underscores for spaces and capitalize as needed. Default is "Reviewers".',
                             'value': {
                                 'param': {
-                                    'type': 'string',
+                                    'type': 'string[]',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Reviewers'
+                                    'default': ['Reviewers']
                                 }
                             }
                         },
                         'area_chairs_support': {
-                            'order': 12,
+                            'order': 13,
                             'description': "Does your venue have area chairs? Leave unchecked if your venue does not have area chairs.",
                             'value': {
                                 'param': {
@@ -253,19 +253,19 @@ class Workflows():
                                 }
                             }
                         },
-                        'area_chairs_name': {
-                            'order': 13,
+                        'area_chair_groups_names': {
+                            'order': 14,
                             'description': 'Please provide the designated name to be used for area chairs. Use underscores for spaces and capitalize as needed. Default is "Area_Chairs". Ignore if your venue does not have area chairs.',
                             'value': {
                                 'param': {
-                                    'type': 'string',
+                                    'type': 'string[]',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Area_Chairs'
+                                    'default': ['Area_Chairs']
                                 }
                             }
                         },
                         'senior_area_chairs_support': {
-                            'order': 14,
+                            'order': 15,
                             'description': "Does your venue have senior area chairs? Leave unchecked if your venue does not have senior area chairs. In order to have senior area chairs, your venue must also have area chairs.",
                             'value': {
                                 'param': {
@@ -278,7 +278,7 @@ class Workflows():
                             }
                         },
                         'senior_area_chair_groups_names': {
-                            'order': 15,
+                            'order': 16,
                             'description': 'Please provide the designated name to be used for senior area chairs. Use underscores for spaces and capitalize as needed. Default is "Senior_Area_Chairs". Ignore if your venue does not have senior area chairs.',
                             'value': {
                                 'param': {
@@ -289,7 +289,7 @@ class Workflows():
                             }
                         },
                         'colocated': {
-                            'order': 16,
+                            'order': 17,
                             'description': 'Please provide the name of the conference, organization, or academic institution with which your event is colocated. If your event is independent of a conference or organization, you can leave this blank or write "independent"',
                             'value': {
                                 'param': {
@@ -301,7 +301,7 @@ class Workflows():
                             }
                         },
                         'previous_venue': {
-                            'order': 17,
+                            'order': 18,
                             'description': 'If possible, please provide a link to the previous iteration of this venue on OpenReview.',
                             'value': {
                                 'param': {
@@ -313,7 +313,7 @@ class Workflows():
                             }
                         },
                         'expected_submissions': {
-                            'order': 18,
+                            'order': 19,
                             'description': 'How many submissions do you expect to receive for this venue? Please provide a number. This will help us plan for the expected load on our servers.',
                             'value': {
                                 'param': {
@@ -323,7 +323,7 @@ class Workflows():
                             }
                         },
                         'how_did_you_hear_about_us': {
-                            'order': 19,
+                            'order': 20,
                             'description': 'How did you hear about OpenReview?',
                             'value': {
                                 'param': {
@@ -336,7 +336,7 @@ class Workflows():
                             }
                         },
                         'other_important_information': {
-                            'order': 20,
+                            'order': 21,
                             'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
                             'value': {
                                 'param': {
@@ -349,7 +349,7 @@ class Workflows():
                             }
                         },
                         'venue_organizer_agreement': {
-                            'order': 21,
+                            'order': 22,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {
