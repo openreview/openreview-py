@@ -42,11 +42,11 @@ class TestSimpleDualAnonymous():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'full_submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
-                    'reviewers_name': { 'value': 'Reviewers' },
+                    'reviewer_groups_names': { 'value': ['Reviewers'] },
                     'area_chairs_support': { 'value': True },
-                    'area_chairs_name': { 'value': 'Action_Editors' },
+                    'area_chair_groups_names': { 'value': ['Action_Editors'] },
                     'senior_area_chairs_support': { 'value': True },
-                    'senior_area_chair_groups_names': { 'value': 'Senior_Action_Editors' },
+                    'senior_area_chair_groups_names': { 'value': ['Senior_Action_Editors'] },
                     'expected_submissions': { 'value': 12000 },
                     'venue_organizer_agreement': { 
                         'value': [
