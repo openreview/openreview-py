@@ -420,7 +420,7 @@ class Journal(object):
         return self.settings.get('archive_previous_year_assignments', False)
 
     def should_notify_eics_for_decisions(self):
-        return self.settings.get('notify_eics_for_decisions', False)
+        return self.settings.get('eic_decision_notification', False)
 
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')

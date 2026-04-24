@@ -95,7 +95,7 @@ class TestSLADSJournal():
                                 }
                                 }
                             },
-                            "notify_eics_for_decisions": True
+                            "eic_decision_notification": True
                             }
                     }
                 }
