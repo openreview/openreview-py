@@ -27,6 +27,7 @@ def process(client, edit, invitation):
         submission_edit.invitation = meta_invitation_id
         client.post_edit(submission_edit)
 
+    submission = client.get_note(edit.note.forum)
     invitations = client.get_invitations(replyForum=submission.id, prefix=paper_group_id)
 
     desk_rejection_active_invitations = []
@@ -54,6 +55,7 @@ def process(client, edit, invitation):
                 invitation_edit.invitation.cdate = None
                 client.post_edit(invitation_edit)
 
+    openreview.tools.create_forum_invitations(client, submission)
     formatted_committee = [committee.format(number=submission.number) for committee in desk_reject_committee]
     final_committee = []
     for group in formatted_committee:
