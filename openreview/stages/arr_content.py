@@ -344,6 +344,33 @@ arr_submission_content = {
         "description": "If you have a venue that you are hoping to submit this paper to, please enter it here. You must enter the designated acronym from this list: https://aclrollingreview.org/dates. Note that entering a preferred venue is not a firm commitment to submit your paper to this venue, but it will help ARR and the venue chairs in planning, so we highly recommend filling in your current intentions. Please enter only your first choice.",
         "order": 27
     },
+    "visa_needs": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no"
+                ],
+                "type": "string",
+                "optional": False
+            }
+        },
+        "description": "If this submission is successfully reviewed, committed and accepted to your target venue specified above, will the presenting author need a visa to attend the conference? This question is only to assist the program chairs with estimating the visa needs of the prospective participants.",
+        "order": 28
+    },
+    "country_of_origin": {
+        "value": {
+            "param": {
+                "type": "string",
+                "maxLength": 2,
+                "markdown": False,
+                "input": "textarea",
+                "optional": True
+            },
+        "description": "If this submission is successfully reviewed, committed and accepted to your target venue specified above, and the presenting author would need a visa to attend, what is the country of their origin? This question is only to assist the program chairs with estimating the visa needs of the prospective participants. Please specify the country with the two-letter country code, e.g. 'CN' for China (https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes)",
+        "order": 29
+    },
     "consent_to_share_data": {
         "value": {
             "param": {
@@ -357,7 +384,7 @@ arr_submission_content = {
             }
         },
         "description": "I agree for the anonymized metadata associated with my submission to be included in a publicly available dataset. This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as acceptance decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc. Your decision to opt-in the data does not affect the reviewing of your submission in any way.",
-        "order": 28
+        "order": 30
     },
     "consent_to_share_submission_details": {
         "value": {
@@ -371,7 +398,7 @@ arr_submission_content = {
             }
         },
         "description": "Upon submitting this paper, authors agree to allow us to share their submission details (such as title, author names, and potentially abstract) with program committees from other conference venues for the purpose of verifying compliance with submission requirements.",
-        "order": 29
+        "order": 31
     },
     "A1_limitations_section": {
         "value": {
@@ -2360,7 +2387,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "If the paper is a resubmission, does the link to the previous submission work, and does the resubmission contain the mandatory explanation of revisions? (see https://aclrollingreview.org/authors#step4)",
+        "description": "If the paper is a resubmission, does the link to the previous submission work?",
         "order": 19
     },
     "resubmission_reassignments": {
