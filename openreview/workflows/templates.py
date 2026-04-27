@@ -551,6 +551,16 @@ class Templates():
                                 'type': 'string'
                             }
                         }
+                    },
+                    'committee_pretty_name': {
+                        'order': 3,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -559,7 +569,7 @@ class Templates():
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Invited',
-                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue.',
+                    'description': 'Group consisting of the users who have been invited to serve as ${2/content/committee_pretty_name/value} for the venue.',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Invited'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -596,6 +606,16 @@ class Templates():
                                 'type': 'string'
                             }
                         }
+                    },
+                    'committee_pretty_name': {
+                        'order': 3,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -604,7 +624,7 @@ class Templates():
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Declined',
-                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue and have declined the invitation.',
+                    'description': 'Group consisting of the users who have been invited to serve as ${2/content/committee_pretty_name/value} for the venue and have declined the invitation.',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Declined'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],

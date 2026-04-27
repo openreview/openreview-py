@@ -1218,7 +1218,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         if self.venue.is_template_related_workflow():
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
-            content = {
+            metareview_content = {
                 'recommendation_field_name': {
                     'value': {
                         'param': {
@@ -1231,7 +1231,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
             edit_invitations_builder.set_edit_content_invitation(
                 meta_review_invitation_id,
-                content,
+                metareview_content,
                 process_file='../workflows/workflow_process/edit_recommendation_field_name_process.py',
                 preprocess_file='../workflows/workflow_process/edit_recommendation_field_name_pre_process.py'
                 )
@@ -1320,7 +1320,15 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             if meta_review_stage.source_submissions_query:
                 invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
+            if self.venue.is_template_related_workflow():
+                invitation.description = f'Set the date/time when the meta review {sac_acronym} revision period is open to senior area chairs, when meta reviews revisions are due, and when the meta review revision form is no longer available to senior area chairs.'
+
             self.save_invitation(invitation, replacement=False)
+
+            if self.venue.is_template_related_workflow():
+                edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+                edit_invitations_builder.set_edit_dates_invitation(meta_review_sac_edit_invitation_id)
+                edit_invitations_builder.set_edit_content_invitation(meta_review_sac_edit_invitation_id)
 
         return invitation
 

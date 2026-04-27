@@ -14,9 +14,17 @@ pip install -e .
 ```
 
 ### Running tests
-Use the test-runner agent to execute tests.
+Use the test-runner agent to execute tests. It uses Docker Compose under the hood via `docker/run.py`.
 
-Tests use pytest with pytest-selenium (Firefox/geckodriver). The geckodriver binary must be at `tests/drivers/geckodriver`.
+To run tests manually:
+```bash
+cd docker
+./run.py tests/test_client.py       # run a test file
+./run.py --serve                     # start services for browser testing
+./run.py --shell                     # interactive shell in test container
+```
+
+Tests use pytest with pytest-selenium (Firefox/geckodriver). Docker handles all dependencies including geckodriver.
 
 ### Documentation
 ```bash

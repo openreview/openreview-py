@@ -89,8 +89,9 @@ class TestReviewersOnly():
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewers_name': { 'value': 'Program_Committee' },
-                    'area_chairs_name': { 'value': 'Area_Chairs' },
+                    'reviewer_groups_names': { 'value': ['Program_Committee'] },
+                    'area_chair_groups_names': { 'value': ['Area_Chairs'] },
+                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'ABCD.cc/2024/Conference' },
                     'expected_submissions': { 'value': 1000 },
@@ -610,8 +611,9 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewers_name': { 'value': 'Reviewers' },
-                    'area_chairs_name': { 'value': 'Area_Chairs' },
+                    'reviewer_groups_names': { 'value': ['Reviewers'] },
+                    'area_chair_groups_names': { 'value': ['Area_Chairs'] },
+                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'ABCD.cc/2024/Conference' },
                     'expected_submissions': { 'value': 50 },
@@ -1705,19 +1707,19 @@ For more details, please check the following links:
             )
 
         pc_client.post_invitation_edit(
-                invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
-                content = {
-                    'content': {
-                        'value': review_content
-                    },
-                    'rating_field_name': {
-                        'value': 'review_rating'
-                    },
-                    'confidence_field_name': {
-                        'value': 'review_confidence'
-                    }
+            invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+            content = {
+                'content': {
+                    'value': review_content
+                },
+                'rating_field_name': {
+                    'value': 'review_rating'
+                },
+                'confidence_field_name': {
+                    'value': 'review_confidence'
                 }
-            )
+            }
+        )
 
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
