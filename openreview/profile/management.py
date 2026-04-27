@@ -934,6 +934,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.dblp_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=record_invitation_id,
                 readers=['everyone'],
@@ -1109,6 +1110,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.arxiv_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=record_invitation_id,
                 readers=['everyone'],
@@ -1291,6 +1293,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.orcid_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=record_invitation_id,
                 readers=['everyone'],
