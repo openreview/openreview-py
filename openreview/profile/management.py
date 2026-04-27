@@ -243,9 +243,9 @@ return {
             signatures = [self.super_user],
             invitation = openreview.api.Invitation(
                 id=self.public_article_meta_invitation_id,
-                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
-                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
-                signatures=[self.public_article_group_id],                
+                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
+                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
+                signatures=[self.public_article_group_id],
                 edit=True
             )
         )
@@ -255,6 +255,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.public_article_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=authorship_claim_invitation_id,
                 readers=['everyone'],
@@ -296,6 +297,15 @@ return {
                                 }
                             }
                         },
+                        'author_name': {
+                            'order': 3,
+                            'description': 'Enter the author name at the given index.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                }
+                            }
+                        },
                     },
                     'note': {
                         'id': {
@@ -304,21 +314,25 @@ return {
                             }
                         },
                         'content': {
-                            'authorids': {
+                            'authors': {
                                 'order': 2,
                                 'value': {
                                     'param': {
                                         'const': {
                                             'replace': {
                                                 'index': '${6/content/author_index/value}',
-                                                'value': '${6/content/author_id/value}'
+                                                'value': {
+                                                    'fullname': '${7/content/author_name/value}',
+                                                    'username': '${7/content/author_id/value}'
+                                                }
                                             }
-                                        }
+                                        },
+                                        'hidden': True
                                     }
                                 }
                             }
                         }
-                    }                                        
+                    }
                 }
             )
         )
@@ -328,17 +342,18 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.public_article_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=author_removal_invitation_id,
                 readers=['everyone'],
                 writers=[self.public_article_group_id],
                 signatures=[self.public_article_group_id],
                 invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.support_group_id],
-                preprocess=self.get_process_content('process/author_coreference_pre_process.js'),
+                preprocess=self.get_process_content('process/author_removal_pre_process.js'),
                 edit={
                     'readers': ['everyone'],
-                    'signatures': { 
-                        'param': { 
+                    'signatures': {
+                        'param': {
                             'items': [
                                 { 'prefix': '~.*', 'optional': True },
                                 { 'value': self.support_group_id, 'optional': True },
@@ -346,7 +361,7 @@ return {
                                 { 'value': self.arxiv_group_id, 'optional': True },
                                 { 'value': self.orcid_group_id, 'optional': True }
                             ]
-                        } 
+                        }
                     },
                     'writers':  [self.public_article_group_id],
                     'content': {
@@ -369,6 +384,15 @@ return {
                                 }
                             }
                         },
+                        'author_name': {
+                            'order': 3,
+                            'description': 'Enter the author name at the given index.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                }
+                            }
+                        },
                     },
                     'note': {
                         'id': {
@@ -377,21 +401,25 @@ return {
                             }
                         },
                         'content': {
-                            'authorids': {
+                            'authors': {
                                 'order': 2,
                                 'value': {
                                     'param': {
                                         'const': {
                                             'replace': {
                                                 'index': '${6/content/author_index/value}',
-                                                'value': '${6/content/author_id/value}'
+                                                'value': {
+                                                    'fullname': '${7/content/author_name/value}',
+                                                    'username': '${7/content/author_id/value}'
+                                                }
                                             }
-                                        }
+                                        },
+                                        'hidden': True
                                     }
                                 }
                             }
                         }
-                    }                                        
+                    }
                 }
             )
         )        
@@ -966,24 +994,19 @@ return {
                             },
                             'authors': {
                                 'order': 2,
+                                'description': 'Authors of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
                                     }
                                 }
                             },
-                            'authorids': {
-                                'order': 3,
-                                'value': {
-                                    'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                            
                             'venue': {
-                                'order': 4,
+                                'order': 3,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -993,7 +1016,7 @@ return {
                                 }
                             },
                             'venueid': {
-                                'order': 5,
+                                'order': 4,
                                 'value': {
                                     'param': {
                                         'type': "string",
@@ -1154,27 +1177,22 @@ return {
                             },
                             'authors': {
                                 'order': 2,
+                                'description': 'Authors of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
                                     }
                                 }
                             },
-                            'authorids': {
+                            'abstract': {
                                 'order': 3,
+                                'description': 'Abstract of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                             
-                            'abstract': {
-                                'order': 4,
-                                'description': 'Abstract of paper.',
-                                'value': { 
-                                    'param': { 
                                         'type': 'string',
                                         'markdown': True,
                                         'input': 'textarea',
@@ -1183,7 +1201,7 @@ return {
                                 }
                             },
                             'subject_areas': {
-                                'order': 5,
+                                'order': 4,
                                 'description': 'Subject areas of paper.',
                                 'value': {
                                     'param': {
@@ -1195,7 +1213,7 @@ return {
                                 }
                             },
                             'pdf': {
-                                'order': 6,
+                                'order': 5,
                                 'description': 'Link to the PDF paper.',
                                 'value': {
                                     'param': {
@@ -1204,9 +1222,9 @@ return {
                                         'optional': True
                                     }
                                 }
-                            },                                                    
+                            },
                             'venue': {
-                                'order': 7,
+                                'order': 6,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -1217,7 +1235,7 @@ return {
                                 }
                             },
                             'venueid': {
-                                'order': 8,
+                                'order': 7,
                                 'value': {
                                     'param': {
                                         'type': "string",
@@ -1333,24 +1351,19 @@ return {
                             },
                             'authors': {
                                 'order': 2,
+                                'description': 'Authors of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
                                     }
                                 }
                             },
-                            'authorids': {
-                                'order': 3,
-                                'value': {
-                                    'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                            
                             'venue': {
-                                'order': 4,
+                                'order': 3,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -1360,7 +1373,7 @@ return {
                                 }
                             },
                             'venueid': {
-                                'order': 5,
+                                'order': 4,
                                 'value': {
                                     'param': {
                                         'type': "string",

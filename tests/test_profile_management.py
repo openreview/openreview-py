@@ -81,7 +81,7 @@ class TestProfileManagement():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         note = test_client_v2.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
@@ -92,6 +92,7 @@ class TestProfileManagement():
         assert 'venue' in note.content
         assert 'venueid' in note.content
         assert 'html' in note.content
+        assert note.external_ids is None
 
         andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com')
 
@@ -137,7 +138,7 @@ class TestProfileManagement():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         note = andrew_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
@@ -161,6 +162,7 @@ class TestProfileManagement():
             "",
             "~Andrew_McCallum1"
         ]
+        assert note.external_ids is None
 
         haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu')
 
@@ -434,7 +436,15 @@ class TestProfileManagement():
                         'value': 'Bi-level Contrastive Learning for Knowledge-Enhanced Molecule Representations',
                     },
                     'authors': {
-                        'value': ['Pengcheng Jiang', 'Cao Xiao', 'Tianfan Fu', 'Parminder Bhatia', 'Taha A. Kass-Hout', 'Jimeng Sun 0001', 'Jiawei Han 0001'],
+                        'value': [
+                            {'fullname': 'Pengcheng Jiang', 'username': ''},
+                            {'fullname': 'Cao Xiao', 'username': ''},
+                            {'fullname': 'Tianfan Fu', 'username': ''},
+                            {'fullname': 'Parminder Bhatia', 'username': ''},
+                            {'fullname': 'Taha A. Kass-Hout', 'username': ''},
+                            {'fullname': 'Jimeng Sun 0001', 'username': ''},
+                            {'fullname': 'Jiawei Han 0001', 'username': ''},
+                        ],
                     },
                     'venue': {
                         'value': 'JiangXFBK0025',
@@ -451,13 +461,13 @@ class TestProfileManagement():
         assert note.pdate
         assert note.external_ids == ['dblp:conf/aaai/JiangXFBK0025']
         assert '_bibtex' in note.content
-        assert 'authorids' in note.content
+        assert 'authors' in note.content
         assert 'venue' in note.content
         assert 'venueid' in note.content
         assert 'html' in note.content
         assert 'abstract' not in note.content
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com', dblp_url='https://dblp.org/pid/m/AndrewMcCallum')
 
@@ -492,7 +502,12 @@ class TestProfileManagement():
                         'value': 'Identity Theft in AI Conference Peer Review',
                     },
                     'authors': {
-                        'value': ['Nihar B. Shah', 'Melisa Bok', 'Xukun Liu', 'Andrew McCallum'],
+                        'value': [
+                            {'fullname': 'Nihar B. Shah', 'username': ''},
+                            {'fullname': 'Melisa Bok', 'username': ''},
+                            {'fullname': 'Xukun Liu', 'username': ''},
+                            {'fullname': 'Andrew McCallum', 'username': ''},
+                        ],
                     },
                     'venue': {
                         'value': 'CoRR',
@@ -502,7 +517,7 @@ class TestProfileManagement():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         note = andrew_client.get_note(edit['note']['id'])
 
@@ -512,6 +527,7 @@ class TestProfileManagement():
             content = {
                 'author_index': { 'value': 3 },
                 'author_id': { 'value': '~Andrew_McCallum1' },
+                'author_name': { 'value': 'Andrew McCallum' },
             },
             note = openreview.api.Note(
                 id = note.id
@@ -519,30 +535,24 @@ class TestProfileManagement():
         )
 
         note = andrew_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
-                                    'openreview.net/Public_Article/-/Edit', 
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record',
+                                    'openreview.net/Public_Article/-/Edit',
                                     'openreview.net/Public_Article/-/Authorship_Claim']
         assert note.cdate
         assert note.pdate
         assert note.external_ids == ['dblp:journals/corr/abs-2508-04024']
         assert '_bibtex' in note.content
-        assert 'authorids' in note.content
+        assert 'authors' in note.content
         assert 'venue' in note.content
         assert 'venueid' in note.content
         assert 'html' in note.content
         assert 'abstract' not in note.content
         assert note.content['title']['value'] == 'Identity Theft in AI Conference Peer Review'
         assert note.content['authors']['value'] == [
-            "Nihar B. Shah",
-            "Melisa Bok",
-            "Xukun Liu",
-            "Andrew McCallum"
-        ]
-        assert note.content['authorids']['value'] == [
-            "",
-            "",
-            "",
-            "~Andrew_McCallum1"
+            {"fullname": "Nihar B. Shah", "username": ""},
+            {"fullname": "Melisa Bok", "username": ""},
+            {"fullname": "Xukun Liu", "username": ""},
+            {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
         ]
 
         nihar_client = helpers.create_user('nihar@profile.org', 'Nihar B.', 'Shah', alternates=[], institution='google.com')
@@ -553,27 +563,7 @@ class TestProfileManagement():
             content = {
                 'author_index': { 'value': 0 },
                 'author_id': { 'value': '~Nihar_B._Shah1' },
-            },
-            note = openreview.api.Note(
-                id = note.id
-            )
-        )        
-
-        note = andrew_client.get_note(edit['note']['id'])
-
-        assert note.content['authorids']['value'] == [
-            "~Nihar_B._Shah1",
-            "",
-            "",
-            "~Andrew_McCallum1"
-        ]
-
-        edit = nihar_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/Author_Removal',
-            signatures = ['~Nihar_B._Shah1'],
-            content = {
-                'author_index': { 'value': 0 },
-                'author_id': { 'value': '' },
+                'author_name': { 'value': 'Nihar B. Shah' },
             },
             note = openreview.api.Note(
                 id = note.id
@@ -582,12 +572,155 @@ class TestProfileManagement():
 
         note = andrew_client.get_note(edit['note']['id'])
 
-        assert note.content['authorids']['value'] == [
-            "",
-            "",
-            "",
-            "~Andrew_McCallum1"
-        ]                
+        assert note.content['authors']['value'] == [
+            {"fullname": "Nihar B. Shah", "username": "~Nihar_B._Shah1"},
+            {"fullname": "Melisa Bok", "username": ""},
+            {"fullname": "Xukun Liu", "username": ""},
+            {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
+        ]
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author username ~Nihar_B._Shah1 from index 0 doesn\'t match with the author name Nihar Shah'): 
+            edit = nihar_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Author_Removal',
+                signatures = ['~Nihar_B._Shah1'],
+                content = {
+                    'author_index': { 'value': 0 },
+                    'author_id': { 'value': '' },
+                    'author_name': { 'value': 'Nihar Shah' },
+                },
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        edit = nihar_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
+            signatures = ['~Nihar_B._Shah1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+                'author_name': { 'value': 'Nihar B. Shah' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = andrew_client.get_note(edit['note']['id'])
+
+        assert note.content['authors']['value'] == [
+            {"fullname": "Nihar B. Shah", "username": ""},
+            {"fullname": "Melisa Bok", "username": ""},
+            {"fullname": "Xukun Liu", "username": ""},
+            {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
+        ]
+
+        notes = andrew_client.search_notes('Identity Theft')
+        assert len(notes) >= 1
+        assert notes[0].id == note.id
+        assert notes[0].content['authors']['value'] == [
+            {"fullname": "Nihar B. Shah", "username": ""},
+            {"fullname": "Melisa Bok", "username": ""},
+            {"fullname": "Xukun Liu", "username": ""},
+            {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
+        ]
+        assert 'authorids' not in notes[0].content
+
+
+    def test_dblp_record_publication_conflict(self, openreview_client, helpers):
+
+        carlos_client = helpers.create_user('carlos@conflictrecord.org', 'Carlos', 'Conflict', alternates=[], institution='institution-one.edu')
+        diana_client = helpers.create_user('diana@conflictrecord.net', 'Diana', 'Conflict', alternates=[], institution='institution-two.edu')
+
+        xml = '''<inproceedings key="conf/conflict/CarlosDiana25" mdate="2025-04-17">
+<author>Carlos Conflict</author>
+<author>Diana Conflict</author>
+<title>A Paper Co-Authored By Two Profiles.</title>
+<pages>1-10</pages>
+<year>2025</year>
+<booktitle>CONFLICT</booktitle>
+<url>db/conf/conflict/conflict2025.html#CarlosDiana25</url>
+</inproceedings>
+'''
+
+        edit = carlos_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            signatures = ['~Carlos_Conflict1'],
+            content = {
+                'xml': { 'value': xml }
+            },
+            note = openreview.api.Note(
+                external_id = 'dblp:conf/conflict/CarlosDiana25',
+                content = {
+                    'title': {
+                        'value': 'A Paper Co-Authored By Two Profiles',
+                    },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'Carlos Conflict', 'username': ''},
+                            {'fullname': 'Diana Conflict', 'username': ''},
+                        ],
+                    },
+                    'venue': {
+                        'value': 'CONFLICT',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        note = carlos_client.get_note(edit['note']['id'])
+
+        carlos_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Carlos_Conflict1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Carlos_Conflict1' },
+                'author_name': { 'value': 'Carlos Conflict' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        diana_edit = diana_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Diana_Conflict1'],
+            content = {
+                'author_index': { 'value': 1 },
+                'author_id': { 'value': '~Diana_Conflict1' },
+                'author_name': { 'value': 'Diana Conflict' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = carlos_client.get_note(diana_edit['note']['id'])
+        assert note.content['authors']['value'] == [
+            {'fullname': 'Carlos Conflict', 'username': '~Carlos_Conflict1'},
+            {'fullname': 'Diana Conflict', 'username': '~Diana_Conflict1'},
+        ]
+
+        carlos_profile, diana_profile = openreview.tools.get_profiles(
+            openreview_client,
+            ['~Carlos_Conflict1', '~Diana_Conflict1'],
+            with_publications=True
+        )
+        if carlos_profile.id != '~Carlos_Conflict1':
+            carlos_profile, diana_profile = diana_profile, carlos_profile
+
+        carlos_publication_ids = {p.id for p in carlos_profile.content.get('publications', [])}
+        diana_publication_ids = {p.id for p in diana_profile.content.get('publications', [])}
+        assert note.id in carlos_publication_ids
+        assert note.id in diana_publication_ids
+
+        conflicts = openreview.tools.get_conflicts([carlos_profile], diana_profile)
+        assert note.id in conflicts
+
 
     @pytest.mark.skip(reason="Skipping this test until we decide to enable comments")
     def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
@@ -840,7 +973,11 @@ item recommendation queries by up to 30 \% overall.
                         'value': 'Personalized item recommendation typically suffers from data sparsity, which is most often addressed by learning vector representations of users and items via low-rank matrix factorization. While this effectively densifies the matrix by assuming users and movies can be represented by linearly dependent latent features, it does not capture more complicated interactions. For example, vector representations struggle with set-theoretic relationships, such as negation and intersection, e.g. recommending a movie that is "comedy and action, but not romance". In this work, we formulate the problem of personalized item recommendation as matrix completion where rows are set-theoretically dependent. To capture this set-theoretic dependence we represent each user and attribute by a hyper-rectangle or box (i.e. a Cartesian product of intervals). Box embeddings can intuitively be understood as trainable Venn diagrams, and thus not only inherently represent similarity (via the Jaccard index), but also naturally and faithfully support arbitrary set-theoretic relationships. Queries involving set-theoretic constraints can be efficiently computed directly on the embedding space by performing geometric operations on the representations. We empirically demonstrate the superiority of box embeddings over vector-based neural methods on both simple and complex item recommendation queries by up to 30 \% overall.'
                     },
                     'authors': {
-                        'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+                        'value': [
+                            {'fullname': 'Shib Dasgupta', 'username': ''},
+                            {'fullname': 'Michael Boratko', 'username': ''},
+                            {'fullname': 'Andrew McCallum', 'username': ''},
+                        ]
                     },
                     'subject_areas': {
                         'value': ['cs.IR', 'cs.AI', 'cs.LG']
@@ -855,10 +992,10 @@ item recommendation queries by up to 30 \% overall.
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         geometric_note = andrew_client.get_note(edit['note']['id'])
-        assert geometric_note.content['authorids']['value'] == [
-            "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all",
-            "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all",
-            "https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all"
+        assert geometric_note.content['authors']['value'] == [
+            {"fullname": "Shib Dasgupta", "username": "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all"},
+            {"fullname": "Michael Boratko", "username": "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all"},
+            {"fullname": "Andrew McCallum", "username": "https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all"}
         ]
 
         edit = andrew_client.post_note_edit(
@@ -867,17 +1004,18 @@ item recommendation queries by up to 30 \% overall.
             content = {
                 'author_index': { 'value': 2 },
                 'author_id': { 'value': '~Andrew_McCallum1' },
-            },                 
+                'author_name': { 'value': 'Andrew McCallum' },
+            },
             note = openreview.api.Note(
                 id = geometric_note.id
             )
-        )        
+        )
 
         geometric_note = andrew_client.get_note(edit['note']['id'])
-        assert geometric_note.content['authorids']['value'] == [
-            "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all",
-            "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all",
-            "~Andrew_McCallum1"
+        assert geometric_note.content['authors']['value'] == [
+            {"fullname": "Shib Dasgupta", "username": "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all"},
+            {"fullname": "Michael Boratko", "username": "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all"},
+            {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
         ]
 
         # Do not merge publications for now
@@ -946,7 +1084,12 @@ computation and memory.
                         'value': 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
                     },
                     'authors': {
-                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum']
+                        'value': [
+                            {'fullname': 'Haw-Shiuan Chang', 'username': ''},
+                            {'fullname': 'Ruei-Yao Sun', 'username': ''},
+                            {'fullname': 'Kathryn Ricci', 'username': ''},
+                            {'fullname': 'Andrew McCallum', 'username': ''},
+                        ]
                     },
                     'subject_areas': {
                         'value': ['cs.CL', 'cs.LG']
@@ -962,10 +1105,12 @@ computation and memory.
 
         updated_note = andrew_client.get_note(edit['note']['id'])
         assert updated_note.external_ids == ['arxiv:2210.05043v2']
-        assert 'https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all' in updated_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Haw-Shiuan%20Chang&searchtype=all' in updated_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Ruei-Yao%20Sun&searchtype=all' in updated_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Kathryn%20Ricci&searchtype=all' in updated_note.content['authorids']['value']
+        assert updated_note.content['authors']['value'] == [
+            {"fullname": "Haw-Shiuan Chang", "username": "https://arxiv.org/search/?query=Haw-Shiuan%20Chang&searchtype=all"},
+            {"fullname": "Ruei-Yao Sun", "username": "https://arxiv.org/search/?query=Ruei-Yao%20Sun&searchtype=all"},
+            {"fullname": "Kathryn Ricci", "username": "https://arxiv.org/search/?query=Kathryn%20Ricci&searchtype=all"},
+            {"fullname": "Andrew McCallum", "username": "https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all"}
+        ]
 
         edit = andrew_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
@@ -973,14 +1118,20 @@ computation and memory.
             content = {
                 'author_index': { 'value': 3 },
                 'author_id': { 'value': '~Andrew_McCallum1' },
-            },                 
+                'author_name': { 'value': 'Andrew McCallum' },
+            },
             note = openreview.api.Note(
                 id = updated_note.id
             )
-        )        
+        )
 
         updated_note = andrew_client.get_note(edit['note']['id'])
-        assert '~Andrew_McCallum1' in updated_note.content['authorids']['value']
+        assert updated_note.content['authors']['value'] == [
+            {"fullname": "Haw-Shiuan Chang", "username": "https://arxiv.org/search/?query=Haw-Shiuan%20Chang&searchtype=all"},
+            {"fullname": "Ruei-Yao Sun", "username": "https://arxiv.org/search/?query=Ruei-Yao%20Sun&searchtype=all"},
+            {"fullname": "Kathryn Ricci", "username": "https://arxiv.org/search/?query=Kathryn%20Ricci&searchtype=all"},
+            {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
+        ]
         
 
         # Update an existing arxiv note 
@@ -1452,10 +1603,13 @@ computation and memory.
                         'value': 'Possibility of entanglement of purification to be less than half of the reflected entropy',
                     },
                     'authors': {
-                        'value': ['Josiah Couch', 'Nguyen, Phuc', 'Racz, Sarah', 'Stratis, Georgios', 'Zhang, Yuxuan'],
-                    },
-                    'authorids': {
-                        'value': ['~Josiah_Couch1', '', '', '', ''],
+                        'value': [
+                            {'fullname': 'Josiah Couch', 'username': '~Josiah_Couch1'},
+                            {'fullname': 'Nguyen, Phuc', 'username': ''},
+                            {'fullname': 'Racz, Sarah', 'username': ''},
+                            {'fullname': 'Stratis, Georgios', 'username': ''},
+                            {'fullname': 'Zhang, Yuxuan', 'username': ''},
+                        ],
                     },
                     'venue': {
                         'value': 'Phys.Rev.A',
@@ -1469,30 +1623,38 @@ computation and memory.
 
         note = josiah_client.get_note(edit['note']['id'])
         assert note.external_ids == ['doi:10.1103/physreva.109.022426']
-        assert '~Josiah_Couch1' == note.content['authorids']['value'][0]
+        assert note.content['authors']['value'][0] == {'fullname': 'Josiah Couch', 'username': '~Josiah_Couch1'}
+        assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': 'https://orcid.org/orcid-search/search?searchQuery=Sarah%20Racz'}
 
         sarah_client = helpers.create_user('sarah@profile.org', 'Sarah', 'Racz', alternates=[], institution='google.com')
 
-        with pytest.raises(openreview.OpenReviewException, match=r'The author name Racz Sarah from index 2 doesn\'t match with the names listed in your profile'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The author id ~Sarah_Middle_Racz1 doesn\'t match with the names listed in your profile'):
+            edit = sarah_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+                signatures = ['~Sarah_Racz1'],
+                content = {
+                    'author_index': { 'value': 2 },
+                    'author_id': { 'value': '~Sarah_Middle_Racz1' },
+                    'author_name': { 'value': 'Sarah Middle Racz' },
+                },
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author id ~Sarah_Racz1 doesn\'t match with the author name Sarah Middle Racz'):
             edit = sarah_client.post_note_edit(
                 invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~Sarah_Racz1'],
                 content = {
                     'author_index': { 'value': 2 },
                     'author_id': { 'value': '~Sarah_Racz1' },
-                },                
+                    'author_name': { 'value': 'Sarah Middle Racz' },
+                },
                 note = openreview.api.Note(
                     id = note.id
                 )
-            )
-
-        profile = sarah_client.get_profile(sarah_client.profile.id)
-
-        profile.content['homepage'] = 'https://sarah.google.com'
-        profile.content['names'].append({
-            'fullname': 'Racz Sarah',
-            })
-        sarah_client.post_profile(profile)     
+            )            
 
         edit = sarah_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
@@ -1500,16 +1662,17 @@ computation and memory.
             content = {
                 'author_index': { 'value': 2 },
                 'author_id': { 'value': '~Sarah_Racz1' },
-            },                
+                'author_name': { 'value': 'Sarah Racz' },
+            },
             note = openreview.api.Note(
                 id = note.id
             )
-        )           
+        )
 
         note = josiah_client.get_note(edit['note']['id'])
         assert note.external_ids == ['doi:10.1103/physreva.109.022426']
-        assert '~Josiah_Couch1' == note.content['authorids']['value'][0]
-        assert '~Sarah_Racz1' == note.content['authorids']['value'][2]
+        assert note.content['authors']['value'][0] == {'fullname': 'Josiah Couch', 'username': '~Josiah_Couch1'}
+        assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': '~Sarah_Racz1'}
 
 
     def test_remove_alternate_name(self, openreview_client, support_client, helpers):
@@ -1636,7 +1799,7 @@ computation and memory.
 
         ## Add a subscribe tag
         dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/DBLP.org/-/Record', sort='number:asc')
-        assert len(dblp_notes) == 2
+        assert len(dblp_notes) == 3
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -1893,6 +2056,132 @@ The OpenReview Team.
 
         note = john_two_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
+
+
+    def test_remove_name_with_dblp_publication(self, openreview_client, support_client, test_client, helpers):
+
+        edith_client = helpers.create_user('edith@profile.org', 'Edith', 'Last', alternates=[], institution='google.com')
+
+        profile = edith_client.get_profile(edith_client.profile.id)
+        profile.content['names'].append({
+            'first': 'Edith',
+            'middle': 'Alternate',
+            'last': 'Last'
+        })
+        edith_client.post_profile(profile)
+
+        profile = edith_client.get_profile(email_or_id='~Edith_Last1')
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][1]['username'] == '~Edith_Alternate_Last1'
+
+        ## Import a DBLP publication where Edith's alternate name appears in the authors array
+        test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        xml = '''<inproceedings key="conf/test/EdithRemoveName2025" mdate="2025-04-15">
+<author>Edith Alternate Last</author>
+<author>Test Coauthor</author>
+<title>A Paper About Removing Names From DBLP.</title>
+<pages>1-10</pages>
+<year>2025</year>
+<booktitle>TestConf</booktitle>
+<url>db/conf/test/test2025.html#EdithRemoveName2025</url>
+</inproceedings>
+'''
+
+        edit = test_client_v2.post_note_edit(
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            signatures = ['~SomeFirstName_User1'],
+            content = {
+                'xml': { 'value': xml }
+            },
+            note = openreview.api.Note(
+                external_id = 'dblp:conf/test/EdithRemoveName2025',
+                content={
+                    'title': {
+                        'value': 'A Paper About Removing Names From DBLP',
+                    },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'Edith Alternate Last', 'username': ''},
+                            {'fullname': 'Test Coauthor', 'username': ''},
+                        ],
+                    },
+                    'venue': {
+                        'value': 'TestConf',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        dblp_note_id = edit['note']['id']
+
+        ## Edith claims authorship of the DBLP record using her alternate name
+        edit = edith_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Edith_Alternate_Last1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Edith_Alternate_Last1' },
+                'author_name': { 'value': 'Edith Alternate Last' },
+            },
+            note = openreview.api.Note(
+                id = dblp_note_id
+            )
+        )
+
+        note = edith_client.get_note(dblp_note_id)
+        assert note.content['authors']['value'][0] == {'fullname': 'Edith Alternate Last', 'username': '~Edith_Alternate_Last1'}
+        assert 'authorids' not in note.content
+
+        ## Request to remove the alternate name
+        request_note = edith_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~Edith_Last1'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'Edith Alternate Last' },
+                    'usernames': { 'value': ['~Edith_Alternate_Last1'] },
+                    'comment': { 'value': 'no longer use this name' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
+
+        ## Accept the request
+        decision_note = support_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            signatures=['openreview.net/Support'],
+            note = openreview.api.Note(
+                id = request_note['note']['id'],
+                content={
+                    'status': { 'value': 'Accepted' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        edith_client = openreview.api.OpenReviewClient(username='edith@profile.org', password=helpers.strong_password)
+        note = edith_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+        profile = edith_client.get_profile(email_or_id='~Edith_Last1')
+        assert len(profile.content['names']) == 1
+        assert profile.content['names'][0]['username'] == '~Edith_Last1'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Edith_Alternate_Last1'):
+            openreview_client.get_group('~Edith_Alternate_Last1')
+
+        ## The alternate username embedded in the DBLP authors array should be replaced
+        ## with the preferred name and id of the profile.
+        note = edith_client.get_note(dblp_note_id)
+        assert note.content['authors']['value'][0] == {'fullname': 'Edith Last', 'username': '~Edith_Last1'}
+        assert note.content['authors']['value'][1] == {'fullname': 'Test Coauthor', 'username': ''}
+        assert 'authorids' not in note.content
 
 
     def test_remove_name_and_rename_profile_id(self, support_client, openreview_client, helpers):

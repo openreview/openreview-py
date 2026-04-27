@@ -224,6 +224,21 @@ class TestARRVenueV2():
 
         helpers.await_queue()
 
+        stale_arr_venues = [
+            'aclweb.org/ACL/ARR/2022/December',
+            'aclweb.org/ACL/ARR/2023/April'
+        ]
+        for venue_id in stale_arr_venues:
+            client.post_group(openreview.Group(
+                id=venue_id,
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=['~Super_User1'],
+                signatories=[venue_id],
+                members=[]
+            ))
+            openreview_client.add_members_to_group('active_venues', venue_id)
+
         # Post a deploy note
         august_deploy_edit = client.post_note(openreview.Note(
             content={'venue_id': 'aclweb.org/ACL/ARR/2023/August'},
@@ -237,6 +252,19 @@ class TestARRVenueV2():
         ))
 
         helpers.await_queue_edit(client, invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number))
+
+        active_venues = openreview_client.get_group('active_venues')
+        arr_active_venues = {
+            venue_id for venue_id in active_venues.members
+            if venue_id.startswith('aclweb.org/ACL/ARR')
+        }
+        assert arr_active_venues == {
+            'aclweb.org/ACL/ARR/2023/August',
+            'aclweb.org/ACL/ARR/2023/April'
+        }
+        assert 'aclweb.org/ACL/ARR/2023/August' in active_venues.members
+        assert 'aclweb.org/ACL/ARR/2023/April' in active_venues.members
+        assert 'aclweb.org/ACL/ARR/2022/December' not in active_venues.members
 
         group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
         assert group
@@ -2519,6 +2547,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form')
+
+        notes = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form_Form')
+        assert len(notes) == 1
+        replyto_note = notes[0]
+        assert replyto_note.content['title']['value'] == 'Submitted Author Profile Form'
 
         test_client.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",

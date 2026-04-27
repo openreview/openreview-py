@@ -229,14 +229,13 @@ class OpenReviewClient(object):
         })
 
     def __await_process(self, edit_id):
-    
+
         process_logs = self.get_process_logs(id=edit_id)
         if not process_logs:
             return ## no process function found
-        
-        for i in range(100):
 
-            print('Check logs for process function', process_logs[0])
+        for i in range(1200):  # 1200 × 0.5s = 10 minutes
+
             if process_logs[0]['status'] == 'ok':
                 return
             elif process_logs[0]['status'] == 'error':
@@ -245,7 +244,7 @@ class OpenReviewClient(object):
             time.sleep(0.5)
             process_logs = self.get_process_logs(id=edit_id)
 
-        raise OpenReviewException("Process timed out")    
+        raise OpenReviewException("Process timed out")
 
     def get_invitation_date_process_job(self, job_id):
         response = self.session.get(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/' + job_id.replace('/', '%2F'), params = {}, headers = self.headers)
@@ -3574,6 +3573,27 @@ class Note(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+
+    @property
+    def authors(self):
+        """
+        Returns the authors as a canonical list of ``{'fullname', 'username'}`` dicts,
+        regardless of whether the underlying content stores them as a list of objects
+        (current schema) or as parallel ``authors``/``authorids`` arrays (legacy schema).
+        """
+        if not self.content:
+            return []
+        authors_value = self.content.get('authors', {}).get('value') or []
+        if authors_value and isinstance(authors_value[0], dict):
+            return [{'fullname': a.get('fullname', ''), 'username': a.get('username', '')} for a in authors_value]
+        authorids_value = self.content.get('authorids', {}).get('value') or []
+        return [
+            {
+                'fullname': authors_value[i] if i < len(authors_value) else '',
+                'username': authorids_value[i] if i < len(authorids_value) else ''
+            }
+            for i in range(max(len(authors_value), len(authorids_value)))
+        ]
 
     def to_json(self):
         """
