@@ -244,8 +244,12 @@ class TestAbstractDeadline():
                 content = {
                     'title': { 'value': 'Test Submission 1' },
                     'abstract': { 'value': 'This is an abstract for submission 1' },
-                    'authors': { 'value': ['SomeFirstName User', 'AuthorOne EMAS'] },
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~AuthorOne_EMAS1'] },
+                    'authors': {
+                        'value': [
+                            { 'fullname': 'SomeFirstName User', 'username': '~SomeFirstName_User1' },
+                            { 'fullname': 'AuthorOne EMAS', 'username': '~AuthorOne_EMAS1' }
+                        ]
+                    },
                     'keywords': { 'value': ['machine learning', 'artificial intelligence'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
                     'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },

@@ -540,7 +540,38 @@ submission_v2 = {
                 'extensions': ['pdf']
             }
         }
-    }    
+    }
+}
+
+submission_v2_unified_authors = {
+    'order': 2,
+    'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
+    'value': {
+        'param': {
+            'type': 'author{}',
+            'properties': {
+                'fullname': { 'param': { 'type': 'string' } },
+                'username': {
+                    'param': {
+                        'type': 'string',
+                        'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                        'mismatchError': 'must be a valid email or profile ID'
+                    }
+                },
+                'institutions': {
+                    'param': {
+                        'type': 'object{}',
+                        'properties': {
+                            'name': { 'param': { 'type': 'string' } },
+                            'domain': { 'param': { 'type': 'string' } },
+                            'country': { 'param': { 'type': 'string' } },
+                        },
+                        'optional': True
+                    }
+                }
+            }
+        }
+    }
 }
 
 recruitment = {

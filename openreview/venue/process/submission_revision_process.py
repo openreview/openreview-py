@@ -23,19 +23,21 @@ Title: {submission.content['title']['value']}
 {abstract_string}
 To view your submission, click here: https://openreview.net/forum?id={submission.forum}'''
 
+    submission_authors = submission.authorids
+    authors_group_id = f'{venue_id}/{submission_name}{submission.number}/{authors_name}'
+
     client.post_message(
         invitation=meta_invitation_id,
         subject=subject,
-        recipients=submission.content['authorids']['value'],
+        recipients=[authors_group_id],
         message=message,
         replyTo=contact,
         signature=venue_id,
         sender=sender
     )
 
-    if 'authorids' in submission.content:
-        author_group = openreview.tools.get_group(client, f'{venue_id}/{submission_name}{submission.number}/{authors_name}')
-        submission_authors = submission.content['authorids']['value']
+    if submission_authors:
+        author_group = openreview.tools.get_group(client, authors_group_id)
         if author_group and set(author_group.members) != set(submission_authors):
             client.post_group_edit(
                 invitation=meta_invitation_id,

@@ -104,12 +104,15 @@ class TestVenueRestriction():
                 content={
                     'title': {'value': 'A Submission for Restriction Testing'},
                     'abstract': {'value': 'This paper tests venue restriction.'},
-                    'authorids': {'value': ['~Author_Restrict1']},
-                    'authors': {'value': ['Author Restrict']},
+                    'authors': {
+                        'value': [
+                            { 'fullname': 'Author Restrict', 'username': '~Author_Restrict1' }
+                        ]
+                    },
                     'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
                     'keywords': {'value': ['testing', 'venue restriction']},
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },                    
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
                 }
             )
         )
@@ -196,12 +199,15 @@ class TestVenueRestriction():
                 content={
                     'title': {'value': 'A PC Submission While Restricted'},
                     'abstract': {'value': 'Testing that the process function works when domain is restricted.'},
-                    'authorids': {'value': ['~Program_ChairRestrict1']},
-                    'authors': {'value': ['Program ChairRestrict']},
+                    'authors': {
+                        'value': [
+                            { 'fullname': 'Program ChairRestrict', 'username': '~Program_ChairRestrict1' }
+                        ]
+                    },
                     'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
                     'keywords': {'value': ['testing', 'venue restriction']},
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },                    
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
                 }
             )
         )

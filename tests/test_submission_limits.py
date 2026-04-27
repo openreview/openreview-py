@@ -98,8 +98,7 @@ class TestSubmissionLimits():
                 content={
                     'title': { 'value': 'First HV Paper' },
                     'abstract': { 'value': 'First abstract' },
-                    'authors': { 'value': ['HVAuthor One'] },
-                    'authorids': { 'value': ['~HVAuthor_One1'] },
+                    'authors': { 'value': [{ 'fullname': 'HVAuthor One', 'username': '~HVAuthor_One1' }] },
                     'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                     'keywords': { 'value': ['kw'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -119,8 +118,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': 'Second HV Paper' },
                         'abstract': { 'value': 'Second abstract' },
-                        'authors': { 'value': ['HVAuthor One'] },
-                        'authorids': { 'value': ['~HVAuthor_One1'] },
+                        'authors': { 'value': [{ 'fullname': 'HVAuthor One', 'username': '~HVAuthor_One1' }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -156,8 +154,7 @@ class TestSubmissionLimits():
                 content={
                     'title': { 'value': 'First MaxReplies Paper' },
                     'abstract': { 'value': 'First abstract' },
-                    'authors': { 'value': ['MaxReplies One'] },
-                    'authorids': { 'value': ['~MaxReplies_One1'] },
+                    'authors': { 'value': [{ 'fullname': 'MaxReplies One', 'username': '~MaxReplies_One1' }] },
                     'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                     'keywords': { 'value': ['kw'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -177,8 +174,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': 'Second MaxReplies Paper' },
                         'abstract': { 'value': 'Second abstract' },
-                        'authors': { 'value': ['MaxReplies One'] },
-                        'authorids': { 'value': ['~MaxReplies_One1'] },
+                        'authors': { 'value': [{ 'fullname': 'MaxReplies One', 'username': '~MaxReplies_One1' }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -214,8 +210,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': f'MaxReplies Three Paper {i + 1}' },
                         'abstract': { 'value': f'Abstract {i + 1}' },
-                        'authors': { 'value': ['MaxReplies Three'] },
-                        'authorids': { 'value': ['~MaxReplies_Three1'] },
+                        'authors': { 'value': [{ 'fullname': 'MaxReplies Three', 'username': '~MaxReplies_Three1' }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -235,8 +230,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': 'MaxReplies Three Paper 4' },
                         'abstract': { 'value': 'Abstract 4' },
-                        'authors': { 'value': ['MaxReplies Three'] },
-                        'authorids': { 'value': ['~MaxReplies_Three1'] },
+                        'authors': { 'value': [{ 'fullname': 'MaxReplies Three', 'username': '~MaxReplies_Three1' }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -268,8 +262,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': title },
                         'abstract': { 'value': 'Concurrent abstract' },
-                        'authors': { 'value': ['RaceCondition One'] },
-                        'authorids': { 'value': ['~RaceCondition_One1'] },
+                        'authors': { 'value': [{ 'fullname': 'RaceCondition One', 'username': '~RaceCondition_One1' }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },

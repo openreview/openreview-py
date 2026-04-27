@@ -3578,23 +3578,28 @@ class Note(object):
     @property
     def authors(self):
         """
-        Returns the authors as a canonical list of ``{'fullname', 'username'}`` dicts,
-        regardless of whether the underlying content stores them as a list of objects
-        (current schema) or as parallel ``authors``/``authorids`` arrays (legacy schema).
+        Returns the list of author display names, working for both the unified
+        ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
         """
         if not self.content:
             return []
         authors_value = self.content.get('authors', {}).get('value') or []
         if authors_value and isinstance(authors_value[0], dict):
-            return [{'fullname': a.get('fullname', ''), 'username': a.get('username', '')} for a in authors_value]
-        authorids_value = self.content.get('authorids', {}).get('value') or []
-        return [
-            {
-                'fullname': authors_value[i] if i < len(authors_value) else '',
-                'username': authorids_value[i] if i < len(authorids_value) else ''
-            }
-            for i in range(max(len(authors_value), len(authorids_value)))
-        ]
+            return [author.get('fullname', '') for author in authors_value]
+        return list(authors_value)
+
+    @property
+    def authorids(self):
+        """
+        Returns the list of author profile IDs / emails, working for both the
+        unified ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
+        """
+        if not self.content:
+            return []
+        authors_value = self.content.get('authors', {}).get('value') or []
+        if authors_value and isinstance(authors_value[0], dict):
+            return [author['username'] for author in authors_value if author.get('username')]
+        return list(self.content.get('authorids', {}).get('value') or [])
 
     def to_json(self):
         """

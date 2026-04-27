@@ -148,8 +148,15 @@ class InvitationBuilder(object):
 
         content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
-        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/note/content/authorids/value}']
-        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']
+        if submission_stage.unified_authors:
+            edit_authors_ref = self.venue.get_authors_id(number='${2/note/number}')
+            note_authors_ref = self.venue.get_authors_id(number='${2/number}')
+        else:
+            edit_authors_ref = '${2/note/content/authorids/value}'
+            note_authors_ref = '${2/content/authorids/value}'
+
+        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, edit_authors_ref]
+        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, note_authors_ref]
 
         submission_id = submission_stage.get_submission_id(self.venue)
         submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.now())
@@ -190,7 +197,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 },
                 'readers': edit_readers,
-                'writers': [venue_id, '${2/note/content/authorids/value}'],
+                'writers': [venue_id, edit_authors_ref],
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -214,7 +221,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     },
                     'signatures': [ '${3/signatures}' ],
                     'readers': note_readers,
-                    'writers': [venue_id, '${2/content/authorids/value}'],
+                    'writers': [venue_id, note_authors_ref],
                     'content': content
                 }
             },
@@ -2401,9 +2408,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             'authors': {
                 'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
             },
-            'authorids': {
-                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
-            },
             'venue': {
                 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
             },
@@ -2422,13 +2426,18 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             }
         }
+        if not submission_stage.unified_authors:
+            content['authorids'] = {
+                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            }
         if submission_stage.withdrawn_submission_reveal_authors:
             content['authors'] = {
                 'readers': { 'param': { 'const': { 'delete': True } } }
             }
-            content['authorids'] = {
-                'readers': { 'param': { 'const': { 'delete': True } } }
-            }
+            if not submission_stage.unified_authors:
+                content['authorids'] = {
+                    'readers': { 'param': { 'const': { 'delete': True } } }
+                }
 
         withdrawn_invitation = Invitation (
             id=self.venue.get_withdrawn_id(),
@@ -2707,9 +2716,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             'authors': {
                 'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
             },
-            'authorids': {
-                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
-            },
             'venue': {
                 'value': tools.pretty_id(self.venue.get_desk_rejected_submission_venue_id())
             },
@@ -2728,13 +2734,18 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             }
         }
+        if not submission_stage.unified_authors:
+            content['authorids'] = {
+                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            }
         if submission_stage.desk_rejected_submission_reveal_authors:
             content['authors'] = {
                 'readers': { 'param': { 'const': { 'delete': True } } }
             }
-            content['authorids'] = {
-                'readers': { 'param': { 'const': { 'delete': True } } }
-            }
+            if not submission_stage.unified_authors:
+                content['authorids'] = {
+                    'readers': { 'param': { 'const': { 'delete': True } } }
+                }
 
         desk_rejected_invitation = Invitation (
             id=self.venue.get_desk_rejected_id(),
@@ -5252,11 +5263,12 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         content = {
             'authors': {
                 'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
-            },
-            'authorids': {
-                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
             }
         }
+        if not submission_stage.unified_authors:
+            content['authorids'] = {
+                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+            }
 
         include_assigned_committee = False
         if 'Change_Before_Bidding' in name:

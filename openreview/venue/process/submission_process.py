@@ -70,9 +70,9 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
             writers=[venue_id],
             signatures=[venue_id],
             signatories=[venue_id, authors_group_id],
-            members=list(set(note.content['authorids']['value'])) ## always update authors
+            members=list(set(note.authorids)) ## always update authors
         )
-    )    
+    )
     if action == 'posted' or action == 'updated':
         client.add_members_to_group(authors_id, authors_group_id)
     if action == 'deleted':
@@ -122,13 +122,13 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
             )
 
         # send co-author emails
-        if ('authorids' in note.content and len(note.content['authorids']['value'])):
+        if note.authorids:
             author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
             client.post_message(
                 invitation=meta_invitation_id,
                 subject=author_subject,
                 message=author_message,
-                recipients=note.content['authorids']['value'],
+                recipients=[authors_group_id],
                 ignoreRecipients=[edit.tauthor],
                 replyTo=contact,
                 signature=venue_id,

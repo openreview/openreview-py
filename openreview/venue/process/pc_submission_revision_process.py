@@ -23,19 +23,21 @@ Title: {submission.content['title']['value']}
 {abstract_string}
 To view your submission, click here: https://openreview.net/forum?id={submission.forum}'''
 
+    submission_authors = submission.authorids
+    authors_group_id = f'{venue_id}/{submission_name}{submission.number}/{authors_name}'
+
     client.post_message(
         invitation=meta_invitation_id,
         subject=subject,
-        recipients=submission.content['authorids']['value'],
+        recipients=[authors_group_id],
         message=message,
         replyTo=contact,
         signature=venue_id,
         sender=sender
     )
 
-    if 'authorids' in submission.content:
-        author_group = openreview.tools.get_group(client, f'{venue_id}/{submission_name}{submission.number}/{authors_name}')
-        submission_authors = submission.content['authorids']['value']
+    if submission_authors:
+        author_group = openreview.tools.get_group(client, authors_group_id)
         if author_group and set(author_group.members) != set(submission_authors):
             client.post_group_edit(
                 invitation=meta_invitation_id,
@@ -53,14 +55,26 @@ To view your submission, click here: https://openreview.net/forum?id={submission
     for venue_invitation in invitation_invitations:
         print('processing invitation: ', venue_invitation.id)
         invitation_content = venue_invitation.edit['invitation'].get('edit', {}).get('note', {}).get('content', {})
-        if invitation_content and isinstance(invitation_content, dict) and 'authorids' in invitation_content:
-            authorids = invitation_content.get('authorids', {}).get('value', [])
-            if '${{4/id}/content/authorids/value}' in authorids:
-                print('post invitation edit: ', venue_invitation.id)
-                client.post_invitation_edit(invitations=venue_invitation.id,
-                    content={
-                        'noteId': { 'value': submission.id },
-                        'noteNumber': { 'value': submission.number }
-                    },
-                    invitation=openreview.api.Invitation()
-                )
+        if invitation_content and isinstance(invitation_content, dict):
+            if 'authorids' in invitation_content:
+                authorids = invitation_content.get('authorids', {}).get('value', [])
+                if '${{4/id}/content/authorids/value}' in authorids:
+                    print('post invitation edit: ', venue_invitation.id)
+                    client.post_invitation_edit(invitations=venue_invitation.id,
+                        content={
+                            'noteId': { 'value': submission.id },
+                            'noteNumber': { 'value': submission.number }
+                        },
+                        invitation=openreview.api.Invitation()
+                    )
+            elif 'authors' in invitation_content:
+                authors_value = invitation_content.get('authors', {}).get('value', [])
+                if '${{4/id}/content/authors/value}' in authors_value:
+                    print('post invitation edit: ', venue_invitation.id)
+                    client.post_invitation_edit(invitations=venue_invitation.id,
+                        content={
+                            'noteId': { 'value': submission.id },
+                            'noteNumber': { 'value': submission.number }
+                        },
+                        invitation=openreview.api.Invitation()
+                    )
