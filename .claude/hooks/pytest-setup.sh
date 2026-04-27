@@ -1,25 +1,18 @@
 #!/bin/bash
-# PreToolUse hook: runs setup-testing.sh before pytest commands
+# PreToolUse hook: verifies Docker is available before run.py commands
 
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
-# Only act on commands that invoke pytest as a command (not filenames containing "pytest")
-if ! echo "$COMMAND" | grep -qE '(^|&& |; |\| )pytest '; then
+# Only act on commands that invoke run.py (the Docker Compose dev tool)
+if ! echo "$COMMAND" | grep -qE '(^|&& |; |\| |/| )run\.py( |$)'; then
   exit 0
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SETUP_SCRIPT="$SCRIPT_DIR/../scripts/setup-testing.sh"
-
-if [ ! -x "$SETUP_SCRIPT" ]; then
-  echo "Setup script not found or not executable: $SETUP_SCRIPT" >&2
-  exit 2
-fi
-
-echo "Running test environment setup before pytest..." >&2
-if ! bash "$SETUP_SCRIPT"; then
-  echo "Test environment setup failed. Blocking pytest." >&2
+# Verify Docker daemon is running
+if ! docker info >/dev/null 2>&1; then
+  echo "Error: Docker is not running. Start Docker Desktop or the Docker daemon first." >&2
+  echo "Install Docker: https://docs.docker.com/get-docker/" >&2
   exit 2
 fi
 
