@@ -3492,6 +3492,72 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         updated_position_review = openreview_client.get_note(position_review.id)
         assert updated_position_review.content['final_rating']['value'] == 7
 
+        # post official reviews and check the revision invitation is created
+        reviews = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission5/-/Official_Review')
+        assert len(reviews) == 0
+        reviews = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission4/-/Official_Review')
+        assert len(reviews) == 0
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission5/Reviewer_', signatory='~Reviewer_ICMLTwo1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission5/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'summary': { 'value': 'good paper' },
+                    'strengths_and_weaknesses': { 'value': '7: Good paper, accept'},
+                    'questions': { 'value': '7: Good paper, accept'},
+                    'limitations': { 'value': '7: Good paper, accept'},
+                    'ethics_flag': { 'value': 'No'},
+                    'soundness': { 'value': '3 good'},
+                    'presentation': { 'value': '3 good'},
+                    'contribution': { 'value': '3 good'},
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
+                    'code_of_conduct': { 'value': 'Yes'},
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission4/Reviewer_', signatory='~Reviewer_ICMLTwo1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission4/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'review': { 'value': 'This is a good review for a good paper' },
+                    'rating': { 'value': 7 },
+                    'confidence': { 'value': 5 }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        reviews = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission5/-/Official_Review')
+        assert len(reviews) == 1
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/Official_Review1/-/Review_Revision')
+
+        reviews = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission4/-/Official_Review')
+        assert len(reviews) == 1
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/Official_Review1/-/Review_Revision')
+
+        position_review_revision_invs = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Position_Paper_Review_Revision')
+        assert len(position_review_revision_invs) == 3
+
+        official_review_revision_invs = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Official_Review_Revision')
+        assert len(official_review_revision_invs) == 4
+
     def test_delete_assignments(self, openreview_client, helpers):
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
