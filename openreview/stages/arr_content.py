@@ -312,7 +312,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Is there are a publicly available non-anonymous preprints of this paper, or do you plan to release one? Note, all options for this question are permitted under the updated ACL preprint policy. We are collecting this information to help inform the review process. The last option is binding, i.e. you cannot change your mind later in the cycle.",
+        "description": "Is there are a publicly available non-anonymous preprints of this paper, or do you plan to release one? Note, all options for this question are permitted under the updated ACL preprint policy. We are collecting this information to help inform the review process. The last option is binding, i.e. you cannot change your mind later in the cycle. \n\n NB: this category is about the possibility of deanonymization, rather than any specific publication channel such as arXiv. So e.g. withdrawn publications from other conferences also count as preprints, as long as they reveal the authors' names.",
         "order": 25
     },
     "existing_preprints": {
@@ -727,7 +727,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 56
+        "order": 5
     },
     "D_human_subjects_including_annotators": {
         "value": {
@@ -741,7 +741,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you use human annotators (e.g., crowdworkers) or research with human subjects?",
-        "order": 57
+        "order": 55
     },
     "D1_instructions_given_to_participants": {
         "value": {
@@ -756,7 +756,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the full text of instructions given to participants, including e.g., screenshots, disclaimers of any risks to participants or annotators, etc.?",
-        "order": 58
+        "order": 56
     },
     "D1_elaboration": {
         "value": {
@@ -767,7 +767,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 59
+        "order": 57
     },
     "D2_recruitment_and_payment": {
         "value": {
@@ -782,7 +782,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report information about how you recruited (e.g., crowdsourcing platform, students) and paid participants, and discuss if such payment is adequate given the participants' demographic (e.g., country of residence)?",
-        "order": 60
+        "order": 58
     },
     "D2_elaboration": {
         "value": {
@@ -793,7 +793,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 61
+        "order": 59
     },
     "D3_data_consent": {
         "value": {
@@ -808,7 +808,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss whether and how consent was obtained from people whose data you're using/curating (e.g., did your instructions explain how the data would be used)?",
-        "order": 62
+        "order": 60
     },
     "D3_elaboration": {
         "value": {
@@ -819,7 +819,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 63
+        "order": 61
     },
     "D4_ethics_review_board_approval": {
         "value": {
@@ -834,7 +834,7 @@ arr_submission_content = {
             }
         },
         "description": "Was the data collection protocol approved (or determined exempt) by an ethics review board?",
-        "order": 64
+        "order": 62
     },
     "D4_elaboration": {
         "value": {
@@ -845,7 +845,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 65
+        "order": 63
     },
     "E_ai_assistants_in_research_or_writing": {
         "value": {
