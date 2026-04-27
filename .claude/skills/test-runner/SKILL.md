@@ -1,65 +1,61 @@
 ---
 name: test-runner
-description: "Run pytest tests in the openreview-py repository, including starting the required API servers. Use this skill whenever the user wants to run tests, validate code changes, check if tests pass, start/restart test servers, or mentions a specific test file. Also use when you've just written a significant chunk of code that should be tested. Even if the user just says 'run tests' or 'does this pass?', this skill applies."
+description: "Run pytest tests in the openreview-py repository, including starting the required API servers. Use this skill whenever the user wants to run tests, validate code changes, check if tests pass, start/restart test servers, start services for browser testing, open an interactive shell, or mentions a specific test file. Also use when you've just written a significant chunk of code that should be tested. Even if the user just says 'run tests' or 'does this pass?', this skill applies."
 ---
 
 # Test Runner
 
-Run pytest tests for the openreview-py project. This skill ensures the environment is configured, then delegates to the test-runner agent which handles server startup and test execution in the background.
+Run pytest tests and manage the development stack for the openreview-py project using Docker Compose. The `docker/run.py` script manages the full stack (MongoDB, Redis, Elasticsearch, API servers, web frontend) automatically.
 
-## Step 1: Load Environment Config
+## Step 1: Check Prerequisites
 
-Check if the environment config file exists at `.claude/test-runner-env.json` (relative to the repo root). This file stores the Python environment activation command and API repository paths.
+Verify Docker is available by running `docker info`. If Docker is not running, tell the user to start Docker Desktop or the Docker daemon.
 
-If the file exists, read it and check it has all four fields below. If `web_path` is missing (legacy config), proceed to Step 2 to collect just that field. If the file does not exist, proceed to Step 2 for full setup.
+## Step 2: Determine what the user needs
 
-```json
-{
-  "env_activation": "<shell command to activate the Python environment>",
-  "api_v1_path": "/path/to/openreview-api-v1",
-  "api_v2_path": "/path/to/openreview-api",
-  "web_path": "/path/to/openreview-web"
-}
-```
+Based on the user's request, determine the appropriate `run.py` command. The script supports these modes and options:
 
-## Step 2: Set Up Environment (first time only)
+### Modes
 
-Ask the user for the missing pieces of information (all four if new setup, or just the missing fields if migrating):
-
-1. **Python environment activation command** — the shell command to activate a Python environment where openreview-py is installed. Common examples:
-   - **virtualenv / venv**: `source /path/to/.venv/bin/activate`
-   - **conda**: `conda activate openreview-py`
-   - **System Python**: `true` (no-op, if openreview-py is installed globally)
-
-2. **Path to `openreview-api-v1` repository** — this serves API v1 on port 3000.
-
-3. **Path to `openreview-api` repository** — this serves API v2 on port 3001.
-
-4. **Path to `openreview-web` repository** — this serves the web frontend on port 3030.
-
-**Note for conda users:** If the user provides a bare `conda activate <env>` command, convert it to the inline form before saving:
-```
-eval "$(conda shell.bash hook 2>/dev/null)" && conda activate <env>
-```
-Fresh shell sessions (including subagents) don't have conda initialized. The `eval` hook sets up conda so that `conda activate` works. Without this, commands will fail with "conda: command not found" or the environment won't actually activate. This conversion is not needed for virtualenv/venv — `source` works in any shell.
-
-After collecting the info, verify the environment works:
+**Test mode** (default) — Run tests then tear down:
 ```bash
-<env_activation> && python -c "import openreview; print('openreview imported successfully')"
+cd <project_root>/docker && python3 run.py <pytest_args>
 ```
-If the import fails, tell the user and do not proceed — the correct Python environment is essential because the API servers use PythonShell internally, which relies on the PATH python.
+- `python3 run.py tests/test_client.py` — run a specific test file
+- `python3 run.py tests/test_client.py::TestClient::test_get_groups` — run a specific test
+- `python3 run.py` — run all tests (warn: takes a long time)
 
-Save the config to `.claude/test-runner-env.json` so this setup only happens once.
+**Serve mode** — Start services for manual browser testing:
+```bash
+cd <project_root>/docker && python3 run.py --serve
+cd <project_root>/docker && python3 run.py --serve tests/test_icml_conference.py
+cd <project_root>/docker && python3 run.py --serve --shell
+cd <project_root>/docker && python3 run.py --serve --shell tests/test_icml_conference.py
+```
+The `--shell` flag can be combined with `--serve` to get an interactive shell while services are running with ports exposed. Useful for running scripts/tests interactively while browsing `localhost:3030`.
+
+**Shell mode** — Interactive shell in the test container:
+```bash
+cd <project_root>/docker && python3 run.py --shell
+```
+
+### Options (can be combined with any mode)
+
+- `--no-clean` — Preserve existing database (skip API server restart/cleanStart)
+- `--keep-infra` — Keep infrastructure (mongo, redis, ES, web) running after tests finish
+- `--branch-api-v1 <branch>` — Checkout a specific branch in the api-v1 repo before starting
+- `--branch-api-v2 <branch>` — Checkout a specific branch in the api-v2 repo before starting
+- `--branch-web <branch>` — Checkout a specific branch in the web repo before starting
+- `--no-checkout` — Skip auto-checkout even if config enables it
+
+### Configuration
+
+Users can create `docker/config.json` (from `docker/config.example.json`) to set default repo paths, branches, mode, and `keep_infra`. CLI flags override config settings.
 
 ## Step 3: Delegate to the test-runner agent
 
-Once the config file exists with all four fields, launch the **test-runner agent** using the Agent tool. The agent runs pytest in the background. Server setup is handled automatically by a `PreToolUse` hook — the hook runs `.claude/scripts/setup-testing.sh` before any pytest command, which kills and restarts all services (ports 3000, 3001, 3030) and waits for them to be ready.
-
-Pass the user's test target in the agent prompt. Examples:
-- "Run tests in tests/test_client.py"
-- "Run test_login_user in tests/test_client.py"
-- "Run the full test suite"
+Launch the **test-runner agent** using the Agent tool. In the prompt, include the **exact command** to run based on Step 2.
 
 If the user just says "run tests" without specifying which, ask them which test file or test to run **before** launching the agent.
 
-Do NOT start servers or run tests in the main conversation — this produces excessive log output and blocks the user. The agent handles it quietly in the background.
+Do NOT start servers or run tests in the main conversation — this produces excessive log output and blocks the user. The agent handles it in the background.
