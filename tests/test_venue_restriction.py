@@ -106,7 +106,11 @@ class TestVenueRestriction():
                     'abstract': {'value': 'This paper tests venue restriction.'},
                     'authors': {
                         'value': [
-                            { 'fullname': 'Author Restrict', 'username': '~Author_Restrict1' }
+                            {
+                                'fullname': 'Author Restrict',
+                                'username': '~Author_Restrict1',
+                                'institutions': [{ 'domain': 'restrict.cc', 'country': 'US' }]
+                            }
                         ]
                     },
                     'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
@@ -201,7 +205,11 @@ class TestVenueRestriction():
                     'abstract': {'value': 'Testing that the process function works when domain is restricted.'},
                     'authors': {
                         'value': [
-                            { 'fullname': 'Program ChairRestrict', 'username': '~Program_ChairRestrict1' }
+                            {
+                                'fullname': 'Program ChairRestrict',
+                                'username': '~Program_ChairRestrict1',
+                                'institutions': [{ 'domain': 'restrict.cc', 'country': 'US' }]
+                            }
                         ]
                     },
                     'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},

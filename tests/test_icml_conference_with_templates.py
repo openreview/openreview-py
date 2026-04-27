@@ -64,7 +64,8 @@ class TestICMLConference():
             double_blind=True,
             email_pcs=False,
             force_profiles=False,
-            withdraw_submission_exp_date=due_date + datetime.timedelta(weeks=4)
+            withdraw_submission_exp_date=due_date + datetime.timedelta(weeks=4),
+            unified_authors=True
         )
 
         venue.review_stage = openreview.stages.ReviewStage(
@@ -658,12 +659,30 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
         subject_areas = ['Algorithms: Approximate Inference', 'Algorithms: Belief Propagation', 'Learning: Deep Learning', 'Learning: General', 'Learning: Nonparametric Bayes', 'Methodology: Bayesian Methods', 'Methodology: Calibration', 'Principles: Causality', 'Principles: Cognitive Models', 'Representation: Constraints', 'Representation: Dempster-Shafer', 'Representation: Other']
         for i in range(1,102):
+            andrew_domain = domains[i % 10]
             note = openreview.api.Note(
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
-                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'Peter SomeLastName',
+                                'username': 'peter@mail.com',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'Andrew Mc',
+                                'username': 'andrew@' + andrew_domain,
+                                'institutions': [{ 'domain': andrew_domain, 'country': 'US' }]
+                            }
+                        ]
+                    },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -676,8 +695,11 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 license = 'CC BY-NC-ND 4.0'
             )
             if i == 1 or i == 101:
-                note.content['authors']['value'].append('SAC ICMLOne')
-                note.content['authorids']['value'].append('~SAC_ICMLOne1')
+                note.content['authors']['value'].append({
+                    'fullname': 'SAC ICMLOne',
+                    'username': '~SAC_ICMLOne1',
+                    'institutions': [{ 'domain': 'icml.cc', 'country': 'US' }]
+                })
 
             test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
@@ -687,8 +709,8 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         submissions = openreview_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
-        assert ['ICML.cc/2025/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].readers
-        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].content['authorids']['value']
+        assert ['ICML.cc/2025/Conference', 'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
+        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].authorids
 
         authors_group = openreview_client.get_group(id='ICML.cc/2025/Conference/Authors')
 
@@ -705,7 +727,6 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 content = {
                     'title': submission.content['title'],
                     'abstract': submission.content['abstract'],
-                    'authorids': submission.content['authorids'],
                     'authors': submission.content['authors'],
                     'keywords': submission.content['keywords'],
                     'pdf': submission.content['pdf'],
@@ -737,7 +758,6 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 content = {
                     'title': submission.content['title'],
                     'abstract': submission.content['abstract'],
-                    'authorids': submission.content['authorids'],
                     'authors': submission.content['authors'],
                     'keywords': submission.content['keywords'],
                     'pdf': submission.content['pdf'],
@@ -931,15 +951,9 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility',
             content={
-                'content_readers': { 
+                'content_readers': {
                     'value': {
                         "authors": {
-                            "readers": [
-                            "ICML.cc/2025/Conference",
-                            "ICML.cc/2025/Conference/Submission${{4/id}/number}/Authors"
-                            ]
-                        },
-                        "authorids": {
                             "readers": [
                             "ICML.cc/2025/Conference",
                             "ICML.cc/2025/Conference/Submission${{4/id}/number}/Authors"
@@ -957,7 +971,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                             "ICML.cc/2025/Conference/Submission${{4/id}/number}/Authors"
                             ]
                         }
-                    } 
+                    }
                 },
             }
         )
@@ -1078,8 +1092,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 content = {
                     'title': { 'value': submission.content['title']['value'] + ' Version 2' },
                     'abstract': submission.content['abstract'],
-                    'authorids': { 'value': submission.content['authorids']['value'] + ['melisa@yahoo.com'] },
-                    'authors': { 'value': submission.content['authors']['value'] + ['Melisa ICML'] },
+                    'authors': { 'value': list(submission.content['authors']['value']) + [{ 'fullname': 'Melisa ICML', 'username': 'melisa@yahoo.com', 'institutions': [{ 'domain': 'yahoo.com', 'country': 'US' }] }] },
                     'keywords': submission.content['keywords'],
                     'pdf': { 'value': submission.content['pdf']['value'] },
                     'supplementary_material': { 'value': { 'delete': True } },

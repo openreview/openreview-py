@@ -334,7 +334,8 @@ For more details, please check the following links:
             helpers.create_user(f'leonardo@{domain}', 'Leonardo', f'{domain.split(".")[0].capitalize()}')
 
         for i in range(1,11):
-            domain_name = domains[i % 7].split('.')[0].capitalize()
+            leonardo_domain = domains[i % 7]
+            domain_name = leonardo_domain.split('.')[0].capitalize()
             note = openreview.api.Note(
                 license = 'CC BY 4.0',
                 content = {
@@ -342,8 +343,16 @@ For more details, please check the following links:
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
                     'authors': {
                         'value': [
-                            { 'fullname': 'SomeFirstName User', 'username': '~SomeFirstName_User1' },
-                            { 'fullname': f'Leonardo {domain_name}', 'username': f'~Leonardo_{domain_name}1' }
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': f'Leonardo {domain_name}',
+                                'username': f'~Leonardo_{domain_name}1',
+                                'institutions': [{ 'domain': leonardo_domain, 'country': 'US' }]
+                            }
                         ]
                     },
                     'keywords': { 'value': ['computer vision'] },
@@ -354,10 +363,18 @@ For more details, please check the following links:
             )
 
             if i == 5:
-                note.content['authors']['value'].append({ 'fullname': 'ReviewerOne EFGH', 'username': '~ReviewerOne_EFGH1' })
+                note.content['authors']['value'].append({
+                    'fullname': 'ReviewerOne EFGH',
+                    'username': '~ReviewerOne_EFGH1',
+                    'institutions': [{ 'domain': 'efgh.cc', 'country': 'US' }]
+                })
 
             if i == 7:
-                note.content['authors']['value'].append({ 'fullname': 'ACOne EFGH', 'username': '~ACOne_EFGH1' })
+                note.content['authors']['value'].append({
+                    'fullname': 'ACOne EFGH',
+                    'username': '~ACOne_EFGH1',
+                    'institutions': [{ 'domain': 'efgh.cc', 'country': 'US' }]
+                })
 
             test_client.post_note_edit(invitation='EFGH.cc/2025/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],

@@ -246,8 +246,16 @@ class TestAbstractDeadline():
                     'abstract': { 'value': 'This is an abstract for submission 1' },
                     'authors': {
                         'value': [
-                            { 'fullname': 'SomeFirstName User', 'username': '~SomeFirstName_User1' },
-                            { 'fullname': 'AuthorOne EMAS', 'username': '~AuthorOne_EMAS1' }
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'AuthorOne EMAS',
+                                'username': '~AuthorOne_EMAS1',
+                                'institutions': [{ 'domain': 'emas.cc', 'country': 'US' }]
+                            }
                         ]
                     },
                     'keywords': { 'value': ['machine learning', 'artificial intelligence'] },

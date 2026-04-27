@@ -978,7 +978,8 @@ For more details, please check the following links:
 
         for i in range(1,11):
 
-            domain_name = domains[i % 10].split('.')[0].capitalize()
+            andrea_domain = domains[i % 10]
+            domain_name = andrea_domain.split('.')[0].capitalize()
             note = openreview.api.Note(
                 license = 'CC BY-NC-SA 4.0',
                 content = {
@@ -986,8 +987,16 @@ For more details, please check the following links:
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
                     'authors': {
                         'value': [
-                            { 'fullname': 'SomeFirstName User', 'username': '~SomeFirstName_User1' },
-                            { 'fullname': f'Andrea {domain_name}', 'username': f'~Andrea_{domain_name}1' }
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': f'Andrea {domain_name}',
+                                'username': f'~Andrea_{domain_name}1',
+                                'institutions': [{ 'domain': andrea_domain, 'country': 'US' }]
+                            }
                         ]
                     },
                     'subject_area': { 'value': '3D from multi-view and sensors' },
@@ -998,7 +1007,11 @@ For more details, please check the following links:
             )
 
             if i == 5:
-                note.content['authors']['value'].append({ 'fullname': 'ReviewerOne ABCD', 'username': '~ReviewerOne_ABCD1' })
+                note.content['authors']['value'].append({
+                    'fullname': 'ReviewerOne ABCD',
+                    'username': '~ReviewerOne_ABCD1',
+                    'institutions': [{ 'domain': 'abcd.cc', 'country': 'US' }]
+                })
 
             test_client.post_note_edit(invitation='ABCD.cc/2025/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
@@ -1196,7 +1209,11 @@ For more details, please check the following links:
         
         # Modify the edit to add the new author
         existing_edit.note.content['authors']['value'] = list(submission.content['authors']['value']) + [
-            { 'fullname': 'NewAuthor Example', 'username': '~NewAuthor_Example1' }
+            {
+                'fullname': 'NewAuthor Example',
+                'username': '~NewAuthor_Example1',
+                'institutions': [{ 'domain': 'example.com', 'country': 'US' }]
+            }
         ]
         
         # Set readers and writers to None so the API populates them automatically with the new author

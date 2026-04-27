@@ -169,7 +169,11 @@ class TestReducedLoadNewUI():
                 'abstract': { 'value': 'This is a test abstract for the RL Conference submission.' },
                 'authors': {
                     'value': [
-                        { 'fullname': 'Author RL', 'username': '~Author_RL1' }
+                        {
+                            'fullname': 'Author RL',
+                            'username': '~Author_RL1',
+                            'institutions': [{ 'domain': 'mail.cc', 'country': 'US' }]
+                        }
                     ]
                 },
                 'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },

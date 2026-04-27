@@ -220,7 +220,8 @@ For more details, please check the following links:
             helpers.create_user(f'eddie@{domain}', 'Eddie', f'{domain.split(".")[0].capitalize()}')
 
         for i in range(1,11):
-            domain_name = domains[i % 10].split('.')[0].capitalize()
+            eddie_domain = domains[i % 10]
+            domain_name = eddie_domain.split('.')[0].capitalize()
             note = openreview.api.Note(
                 license = 'CC BY 4.0',
                 content = {
@@ -228,8 +229,16 @@ For more details, please check the following links:
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
                     'authors': {
                         'value': [
-                            { 'fullname': 'SomeFirstName User', 'username': '~SomeFirstName_User1' },
-                            { 'fullname': f'Eddie {domain_name}', 'username': f'~Eddie_{domain_name}1' }
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': f'Eddie {domain_name}',
+                                'username': f'~Eddie_{domain_name}1',
+                                'institutions': [{ 'domain': eddie_domain, 'country': 'US' }]
+                            }
                         ]
                     },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
@@ -239,7 +248,11 @@ For more details, please check the following links:
                 }
             )
             if i == 1 or i == 10:
-                note.content['authors']['value'].append({ 'fullname': 'SAE ICLROne', 'username': '~SAE_ICLROne1' })
+                note.content['authors']['value'].append({
+                    'fullname': 'SAE ICLROne',
+                    'username': '~SAE_ICLROne1',
+                    'institutions': [{ 'domain': 'iclr.cc', 'country': 'US' }]
+                })
 
             test_client.post_note_edit(invitation='ICLR.cc/2026/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],

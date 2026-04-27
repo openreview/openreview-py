@@ -131,7 +131,11 @@ class TestAssignCommitteeOpenDeadline():
                     'abstract': { 'value': f'XYZ abstract {i}' },
                     'authors': {
                         'value': [
-                            { 'fullname': 'SomeFirstName User', 'username': '~SomeFirstName_User1' }
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            }
                         ]
                     },
                     'keywords': { 'value': ['key'] },
