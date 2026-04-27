@@ -899,7 +899,7 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
 
         readers_items = [
-            {'value': f'{venue_id}/Program_Chairs', 'optional': False, 'description': 'Program Chairs'}
+            {'value': f'{venue_id}/Program_Chairs', 'optional': True, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
@@ -919,7 +919,8 @@ class EditInvitationsBuilder(object):
         readers_items.extend([
                 {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
                 {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'}
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
+                {'value': 'everyone', 'optional': True, 'description': 'Public'}
             ])
 
         invitation = Invitation(
@@ -1953,4 +1954,44 @@ class EditInvitationsBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_reveal_authors(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = f'{super_invitation_id}/Reveal_Authors'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'reveal_author_identities': {
+                        'description': 'Select whether you want to reveal the author identities to the readers of the submissions. If you select False, author identites will remain visible only to the program chairs and the paper authors.',
+                        'value': {
+                            'param': {
+                                'type': 'boolean'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'reveal_author_names': {
+                            'value': '${4/content/reveal_author_identities/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
         return invitation

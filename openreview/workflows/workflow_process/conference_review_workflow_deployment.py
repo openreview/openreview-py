@@ -119,6 +119,12 @@ def process(client, edit, invitation):
     venue.create_review_stage()
     venue.create_comment_stage()
 
+    additional_readers = []
+    if venue.use_senior_area_chairs:
+        additional_readers.append(venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}'))
+    if venue.use_area_chairs:
+        additional_readers.append(venue.get_area_chairs_id(number='${5/content/noteNumber/value}'))
+
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Note_Release',
         signatures=[invitation_prefix],
@@ -130,7 +136,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Official_Review' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
+            'additional_readers': { 'value': additional_readers },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
         },
         await_process=True
@@ -165,7 +171,7 @@ def process(client, edit, invitation):
                 'stage_name': { 'value': 'Meta_Review' },
                 'reviewers_name': { 'value': reviewers_name },
                 'authors_name': { 'value': authors_name },
-                'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
+                'additional_readers': { 'value': additional_readers },
                 'description': { 'value': 'This step runs automatically at its "activation date", and releases meta reviews to the specified readers.' }
             },
             await_process=True
@@ -194,7 +200,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Decision' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
+            'additional_readers': { 'value': additional_readers },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases decisions to the specified readers.' }
         },
         await_process=True
@@ -225,7 +231,24 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
             'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': authors_name }
+            'reviewers_name': { 'value': reviewers_name },
+            'authors_name': { 'value': authors_name },
+            'additional_readers': { 'value': additional_readers },
+            'decision_option': { 'value': 'Accepted' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{invitation_prefix}/-/Submission_Release',
+        signatures=[invitation_prefix],
+        content={
+            'venue_id': { 'value': venue_id },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': reviewers_name },
+            'authors_name': { 'value': authors_name },
+            'additional_readers': { 'value': additional_readers },
+            'decision_option': { 'value': 'Rejected' }
         }
     )
 

@@ -2538,32 +2538,47 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
         assert '_bibtex' not in submissions[0].content
 
-        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release')
-        assert inv and not inv.content
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Which_Submissions')
+        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release')
+        assert inv and inv.content 
+        assert inv.content['reveal_author_names']['value'] == False
+        assert inv.content['decision_option']['value'] == 'Accepted'
+        assert inv.content['source']['value'] == { 'with_decision_accept': True }
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Readers')
 
-        #before triggering invitation, select which invitations to release
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission_Release/Which_Submissions',
-            content={
-                'source_submissions': {
-                    'value': 'all_submissions'
-                }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release')
+        assert inv and inv.content 
+        assert inv.content['reveal_author_names']['value'] == False
+        assert inv.content['decision_option']['value'] == 'Rejected'
+        assert inv.content['source']['value'] == { 'with_decision_accept': False }
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Readers')
+
+        assert False
+
+        # #before triggering invitation, select which invitations to release
+        # pc_client.post_invitation_edit(
+        #     invitations='ABCD.cc/2025/Conference/-/Submission_Release/Which_Submissions',
+        #     content={
+        #         'source_submissions': {
+        #             'value': 'all_submissions'
+        #         }
+        #     }
+        # )
+        # helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+
+        assert False
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission_Release/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
