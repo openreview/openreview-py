@@ -627,6 +627,101 @@ class TestProfileManagement():
         assert 'authorids' not in notes[0].content
 
 
+    def test_dblp_record_publication_conflict(self, openreview_client, helpers):
+
+        carlos_client = helpers.create_user('carlos@conflictrecord.org', 'Carlos', 'Conflict', alternates=[], institution='institution-one.edu')
+        diana_client = helpers.create_user('diana@conflictrecord.net', 'Diana', 'Conflict', alternates=[], institution='institution-two.edu')
+
+        xml = '''<inproceedings key="conf/conflict/CarlosDiana25" mdate="2025-04-17">
+<author>Carlos Conflict</author>
+<author>Diana Conflict</author>
+<title>A Paper Co-Authored By Two Profiles.</title>
+<pages>1-10</pages>
+<year>2025</year>
+<booktitle>CONFLICT</booktitle>
+<url>db/conf/conflict/conflict2025.html#CarlosDiana25</url>
+</inproceedings>
+'''
+
+        edit = carlos_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            signatures = ['~Carlos_Conflict1'],
+            content = {
+                'xml': { 'value': xml }
+            },
+            note = openreview.api.Note(
+                external_id = 'dblp:conf/conflict/CarlosDiana25',
+                content = {
+                    'title': {
+                        'value': 'A Paper Co-Authored By Two Profiles',
+                    },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'Carlos Conflict', 'username': ''},
+                            {'fullname': 'Diana Conflict', 'username': ''},
+                        ],
+                    },
+                    'venue': {
+                        'value': 'CONFLICT',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        note = carlos_client.get_note(edit['note']['id'])
+
+        carlos_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Carlos_Conflict1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Carlos_Conflict1' },
+                'author_name': { 'value': 'Carlos Conflict' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        diana_edit = diana_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Diana_Conflict1'],
+            content = {
+                'author_index': { 'value': 1 },
+                'author_id': { 'value': '~Diana_Conflict1' },
+                'author_name': { 'value': 'Diana Conflict' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = carlos_client.get_note(diana_edit['note']['id'])
+        assert note.content['authors']['value'] == [
+            {'fullname': 'Carlos Conflict', 'username': '~Carlos_Conflict1'},
+            {'fullname': 'Diana Conflict', 'username': '~Diana_Conflict1'},
+        ]
+
+        carlos_profile, diana_profile = openreview.tools.get_profiles(
+            openreview_client,
+            ['~Carlos_Conflict1', '~Diana_Conflict1'],
+            with_publications=True
+        )
+        if carlos_profile.id != '~Carlos_Conflict1':
+            carlos_profile, diana_profile = diana_profile, carlos_profile
+
+        carlos_publication_ids = {p.id for p in carlos_profile.content.get('publications', [])}
+        diana_publication_ids = {p.id for p in diana_profile.content.get('publications', [])}
+        assert note.id in carlos_publication_ids
+        assert note.id in diana_publication_ids
+
+        conflicts = openreview.tools.get_conflicts([carlos_profile], diana_profile)
+        assert note.id in conflicts
+
+
     @pytest.mark.skip(reason="Skipping this test until we decide to enable comments")
     def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
 
@@ -1704,7 +1799,7 @@ computation and memory.
 
         ## Add a subscribe tag
         dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/DBLP.org/-/Record', sort='number:asc')
-        assert len(dblp_notes) == 2
+        assert len(dblp_notes) == 3
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
