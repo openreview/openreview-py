@@ -255,6 +255,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.public_article_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=authorship_claim_invitation_id,
                 readers=['everyone'],
@@ -341,6 +342,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.public_article_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=author_removal_invitation_id,
                 readers=['everyone'],
