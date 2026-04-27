@@ -1799,7 +1799,7 @@ computation and memory.
 
         ## Add a subscribe tag
         dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/DBLP.org/-/Record', sort='number:asc')
-        assert len(dblp_notes) == 2
+        assert len(dblp_notes) == 3
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
