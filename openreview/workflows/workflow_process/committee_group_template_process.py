@@ -62,7 +62,8 @@ def process(client, edit, invitation):
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
-            'committee_id': { 'value': edit.group.id }
+            'committee_id': { 'value': edit.group.id },
+            'committee_pretty_name': { 'value': committee_pretty_name }
         }
     )
 
@@ -86,6 +87,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'committee_id': { 'value': edit.group.id },
+            'committee_pretty_name': { 'value': committee_pretty_name }
         }
     )
 

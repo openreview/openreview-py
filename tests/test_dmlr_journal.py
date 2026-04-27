@@ -735,6 +735,16 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
 
         helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
 
+        messages = openreview_client.get_messages(to = 'andrew@dmlrzero.com', subject = '[DMLR] Decision posted on submission 1: Paper title')
+        assert len(messages) == 1
+
+        # assert EICs do not get decision notification
+        messages = openreview_client.get_messages(to = 'ce@mailseven.com', subject = '[DMLR] Decision posted on submission 1: Paper title')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to = 'dmlr@jmlr.org', subject = '[DMLR] Decision posted on submission 1: Paper title')
+        assert len(messages) == 0
+
         decision_note = andrew_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == ["DMLR/Editors_In_Chief", "DMLR/Paper1/Action_Editors"]
 

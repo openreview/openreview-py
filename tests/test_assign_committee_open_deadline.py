@@ -41,6 +41,7 @@ class TestAssignCommitteeOpenDeadline():
                     'reviewer_groups_names': { 'value': ['Reviewers'] },
                     'area_chairs_support': { 'value': True },
                     'area_chair_groups_names': { 'value': ['Area_Chairs'] },
+                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'XYZ.cc/2024/Conference' },
                     'expected_submissions': { 'value': 100 },
