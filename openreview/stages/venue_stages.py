@@ -1673,6 +1673,7 @@ class CustomStage(object):
                  notify_readers=False, 
                  email_template=None, 
                  allow_de_anonymization=False,
+                 description=None,
                  child_invitations_name=None):
         self.name = name
         self.child_invitations_name = child_invitations_name if child_invitations_name else self.name
@@ -1691,6 +1692,7 @@ class CustomStage(object):
         self.notify_readers = notify_readers
         self.email_template = email_template
         self.allow_de_anonymization = allow_de_anonymization
+        self.description = description
         self.process_path = None
         self.preprocess_path = None
 

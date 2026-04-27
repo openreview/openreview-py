@@ -45,20 +45,35 @@ def process(client, edit, invitation):
                 start_date=submission_duedate + datetime.timedelta(days=3.5),
                 due_date=submission_duedate + datetime.timedelta(days=7)
             )
-    )
+        )
+
+        if venue.use_senior_area_chairs:
+            venue.bid_stages.append(
+                openreview.stages.BidStage(
+                    venue.get_senior_area_chairs_id(),
+                    start_date=submission_duedate + datetime.timedelta(days=3.5),
+                    due_date=submission_duedate + datetime.timedelta(days=7)
+                )
+            )
 
     venue.review_stage = openreview.stages.ReviewStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
         due_date=submission_deadline_datetime + datetime.timedelta(weeks=5)
     )
 
+    venue_committee = [
+        openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,
+        openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+        openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED,
+        openreview.stages.CommentStage.Readers.AUTHORS
+    ]
     venue.comment_stage = openreview.stages.CommentStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=4),
         end_date=submission_deadline_datetime + datetime.timedelta(weeks=6),
         reader_selection=True,
         check_mandatory_readers=True,
-        readers=[openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS],
-        invitees=[openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        readers=venue_committee,
+        invitees=venue_committee
     )
 
     venue.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
@@ -66,7 +81,11 @@ def process(client, edit, invitation):
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=5.5),
         due_date=submission_deadline_datetime + datetime.timedelta(weeks=6.5),
         single_rebuttal=True,
-        readers=[openreview.stages.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED]
+        readers=[
+            openreview.stages.ReviewRebuttalStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,
+            openreview.stages.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED,
+            openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED
+        ]
     )
 
     if venue.use_area_chairs:
@@ -101,6 +120,10 @@ def process(client, edit, invitation):
         await_process=True
     )
 
+    venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(
+        due_date = venue.submission_stage.due_date
+    )
+
     venue.create_submission_stage()
 
     submission_deadline = full_submission_deadline if full_submission_deadline else note.content['submission_deadline']['value']
@@ -119,6 +142,12 @@ def process(client, edit, invitation):
     venue.create_review_stage()
     venue.create_comment_stage()
 
+    additional_readers = []
+    if venue.use_senior_area_chairs:
+        additional_readers.append(venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}'))
+    if venue.use_area_chairs:
+        additional_readers.append(venue.get_area_chairs_id(number='${5/content/noteNumber/value}'))
+
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Note_Release',
         signatures=[invitation_prefix],
@@ -130,7 +159,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Official_Review' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
+            'additional_readers': { 'value': additional_readers },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
         },
         await_process=True
@@ -146,8 +175,7 @@ def process(client, edit, invitation):
             'name': { 'value': 'Author_Reviews_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5.1) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'from_email': { 'value': from_email },
-            'message_reply_to': { 'value': note.content['contact_email']['value'] },
+            'from_email': { 'value': from_email }
         }
     )
 
@@ -166,7 +194,7 @@ def process(client, edit, invitation):
                 'stage_name': { 'value': 'Meta_Review' },
                 'reviewers_name': { 'value': reviewers_name },
                 'authors_name': { 'value': authors_name },
-                'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
+                'additional_readers': { 'value': additional_readers },
                 'description': { 'value': 'This step runs automatically at its "activation date", and releases meta reviews to the specified readers.' }
             },
             await_process=True
@@ -195,7 +223,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Decision' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
+            'additional_readers': { 'value': additional_readers },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases decisions to the specified readers.' }
         },
         await_process=True
@@ -209,8 +237,7 @@ def process(client, edit, invitation):
             'name': { 'value': 'Author_Decision_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'from_email': { 'value': from_email },
-            'message_reply_to': { 'value': note.content['contact_email']['value'] }
+            'from_email': { 'value': from_email }
         }
     )
 
@@ -247,8 +274,12 @@ def process(client, edit, invitation):
                 'submission_deadline': { 'readers': [support_user] },
                 'full_submission_deadline': { 'readers': [support_user] },
                 'reviewers_name': { 'readers': [support_user] },
+                'reviewer_groups_names': { 'readers': [support_user] },
                 'area_chairs_support': { 'readers': [support_user] },
                 'area_chairs_name': { 'readers': [support_user] },
+                'area_chair_groups_names': { 'readers': [support_user] },
+                'senior_area_chairs_support': { 'readers': [support_user] },
+                'senior_area_chair_groups_names': { 'readers': [support_user] },
                 'venue_organizer_agreement': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
                 'workflow_timeline': { 'value': f'https://openreview.net/group/edit?id={venue_id}' }

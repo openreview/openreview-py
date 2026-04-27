@@ -1925,18 +1925,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(assignment_edges) == 4
 
         messages = openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
-        assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Melisa ICML,
-Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1 Version 2.
-
-The ICML 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
-
-If you would like to change your decision, please click the Decline link in the previous invitation email.
-
-OpenReview Team
-
-Please note that responding to this email will direct your reply to pc@icml.cc.
-'''
+        assert not messages
 
         messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer Melisa ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
@@ -2214,21 +2203,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(assignment_edges) == 5
 
         messages = openreview_client.get_messages(to='celeste@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
-        assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Celeste ICML,
-Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1 Version 2.
-
-Please go to the ICML 2023 Reviewers Console and check your pending tasks: https://openreview.net/group?id=ICML.cc/2023/Conference/Reviewers
-
-If you would like to change your decision, please click the Decline link in the previous invitation email.
-
-OpenReview Team
-
-Please note that responding to this email will direct your reply to pc@icml.cc.
-'''
-
+        assert not messages
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Reviewer Celeste ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
+
+
         assert messages[0]['content']['text'] == '''Hi AC ICMLTwo,
 The Reviewer Celeste ICML that you invited to review paper 1 has accepted the invitation, signed up and is now assigned to the paper 1.
 
@@ -2355,7 +2334,14 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment_Recruitment', count=6)
 
         messages = openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] Reviewer Invitation accepted for paper 1')
-        assert len(messages) == 1
+        assert not messages
+
+        assignment_edges = openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Rachel_ICML2')
+        assert len(assignment_edges) == 1
+        helpers.await_queue_edit(openreview_client, assignment_edges[0].id)
+
+        messages = openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] You have been assigned as a Reviewer for paper number 1')
+        assert messages and len(messages) == 1
 
         invite_edges=openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Rachel_ICML2')
         assert len(invite_edges) == 1
@@ -4748,7 +4734,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 }
             },
             notify_readers=True,
-            email_sacs=False)
+            email_sacs=False,
+            description='Please acknowledge that you have read the rebuttal.')
 
         venue.create_custom_stage()
 
@@ -4756,6 +4743,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         ack_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Acknowledgement')
         assert len(ack_invitations) == 2
+        assert ack_invitations[0].description == 'Please acknowledge that you have read the rebuttal.'
+        assert ack_invitations[1].description == 'Please acknowledge that you have read the rebuttal.'
 
 
         ## Ask reviewers to comment the rebuttals
@@ -4790,7 +4779,10 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Rebuttal_Comment-0-1', count=1)        
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Comment')) == 2
+        comment_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Comment')
+        assert len(comment_invitations) == 2
+        assert comment_invitations[0].description is None
+        assert comment_invitations[1].description is None
 
         rebuttals = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal')
         assert len(rebuttals) == 2

@@ -29,12 +29,15 @@ class EditInvitationsBuilder(object):
         invitation = self.client.get_invitation(invitation.id)
 
         if invitation.date_processes and len(invitation.date_processes[0]['dates']) > 1 and self.update_date_string == invitation.date_processes[0]['dates'][1]:
-            process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
+            expected_statuses = {'error', 'ok'}
+            log_id = invitation.id + '-0-1'
+            min_sdate = invitation.tmdate + self.update_wait_time - 1000
+            process_logs = [log for log in self.client.get_process_logs(id=log_id, min_sdate=min_sdate) if log['status'] in expected_statuses]
             count = 0
             max_count = 1800 / self.spleep_time_for_logs
             while len(process_logs) == 0 and count < max_count: ## wait up to 30 minutes
                 time.sleep(self.spleep_time_for_logs)
-                process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
+                process_logs = [log for log in self.client.get_process_logs(id=log_id, min_sdate=min_sdate) if log['status'] in expected_statuses]
                 count += 1
 
             if len(process_logs) == 0:
@@ -87,8 +90,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     },
@@ -96,8 +98,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     }
@@ -546,13 +547,13 @@ class EditInvitationsBuilder(object):
                             'type': 'object[]',
                             'input': 'select',
                             'items':  [
-                                {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
-                                {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
-                                {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
-                                {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
-                                {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
-                                {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                                {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
+                                {'value': {'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
+                                {'value': {'value': 'CC BY-SA 4.0', 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                {'value': {'value': 'CC BY-NC 4.0', 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                {'value': {'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                {'value': {'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                {'value': {'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                {'value': {'value': 'CC0 1.0', 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
                             ]
                         }
                     },
@@ -561,7 +562,7 @@ class EditInvitationsBuilder(object):
             })
             invitation.edit['invitation']['edit']['invitation']['edit']['note']['license'] = {
                 'param': {
-                    'enum': ['${7/content/license/value}']
+                    'enum': ['${9/content/license/value}']
                 }
             }
 

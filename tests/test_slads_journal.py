@@ -94,7 +94,8 @@ class TestSLADSJournal():
                                     }
                                 }
                                 }
-                            }
+                            },
+                            "eic_decision_notification": True
                             }
                     }
                 }
@@ -435,3 +436,107 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'slads@scichina.com'
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,\n\nThe discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.\n\nThe SLADS Editors-in-Chief\n\n\nPlease note that responding to this email will direct your reply to slads@scichina.com.\n'''
+
+    def test_preferred_emails_invitation(self, openreview_client, helpers):
+
+        invitation = openreview.tools.get_invitation(openreview_client, 'SLADS/-/Preferred_Emails')
+        assert invitation
+
+        group = openreview_client.get_group('SLADS/Preferred_Emails_Readers')
+        assert group
+        assert group.members == ['SLADS', 'SLADS/Action_Editors']
+
+         ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='SLADS/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='SLADS/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='SLADS/-/Preferred_Emails-0-0', count=2)
+
+        # 1 AE, 3 Reviewers and 2 authors
+        assert openreview_client.get_edges_count(invitation='SLADS/-/Preferred_Emails') == 6
+        edge = openreview_client.get_edges(invitation='SLADS/-/Preferred_Emails', head='~Melisa_Amex1')[0]
+        assert edge.readers == ['SLADS/Preferred_Emails_Readers', '~Melisa_Amex1']
+        edge = openreview_client.get_edges(invitation='SLADS/-/Preferred_Emails', head='~SomeFirstName_User1')[0]
+        assert edge.readers == ['SLADS/Preferred_Emails_Readers', '~SomeFirstName_User1']
+
+    def test_decision(self, journal, openreview_client, helpers):
+
+        david_client = OpenReviewClient(username='david@sladsone.com', password=helpers.strong_password)
+        david_anon_groups=david_client.get_groups(prefix=f'SLADS/Paper1/Reviewer_.*', signatory='~David_Box1')
+        carlos_client = OpenReviewClient(username='carlos@sladsthree.com', password=helpers.strong_password)
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'SLADS/Paper1/Reviewer_.*', signatory='~Carlos_Gex1')
+
+
+        # post official recommendations and review ratings to enable decision stage
+        official_recommendation_note = carlos_client.post_note_edit(invitation=f'SLADS/Paper1/-/Official_Recommendation',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'No' },
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'comment': { 'value': 'I recommend this paper to be rejected because...' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        official_recommendation_note = david_client.post_note_edit(invitation=f'SLADS/Paper1/-/Official_Recommendation',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'claims_and_evidence': { 'value': 'No' },
+                    'audience': { 'value': 'No' },
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'comment': { 'value': 'I recommend this paper to be rejected because...' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        reviews=openreview_client.get_notes(invitation='SLADS/Paper1/-/Review', sort='number:asc')
+
+        andrew_client = OpenReviewClient(username='andrew@sladszero.com', password=helpers.strong_password)
+        andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'SLADS/Paper1/Action_Editor_.*', signatory='~Jiashun_Jin1')
+
+        for review in reviews:
+            signature=review.signatures[0]
+            rating_note=andrew_client.post_note_edit(invitation=f'{signature}/-/Rating',
+                signatures=[andrew_paper1_anon_groups[0].id],
+                note=Note(
+                    content={
+                        'rating': { 'value': 'Exceeds expectations' }
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+
+        # post decision
+        decision_note = andrew_client.post_note_edit(invitation=f'SLADS/Paper1/-/Decision',
+            signatures=[andrew_paper1_anon_groups[0].id],
+            note=Note(
+                content={
+                    'claims_and_evidence': { 'value': 'No' },
+                    'audience': { 'value': 'No' },
+                    'recommendation': { 'value': 'Reject' },
+                    'comment': { 'value': 'This is not a good paper' },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        messages = openreview_client.get_messages(to = 'andrew@sladszero.com', subject = '[SLADS] Decision posted on submission 1: Paper title')
+        assert len(messages) == 1
+
+        # decision email should be sent to EICs too
+        messages = openreview_client.get_messages(to = 'ruiyan@mail.com', subject = '[SLADS] Decision posted on submission 1: Paper title')
+        assert len(messages) == 1
