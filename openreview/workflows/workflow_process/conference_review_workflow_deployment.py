@@ -244,7 +244,7 @@ def process(client, edit, invitation):
 
     venue.submission_stage =  openreview.stages.SubmissionStage(
         double_blind=True,
-        author_names_revealed=True, # we need this in order to not add readers to the authors and authorids fields
+        author_names_revealed=True, # we need this in order to not add readers to the unified authors field
         unified_authors=True
     )
     venue.create_submission_revision_stage()
