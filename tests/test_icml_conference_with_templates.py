@@ -698,7 +698,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 note.content['authors']['value'].append({
                     'fullname': 'SAC ICMLOne',
                     'username': '~SAC_ICMLOne1',
-                    'institutions': [{ 'domain': 'icml.cc', 'country': 'US' }]
+                    'institutions': [{ 'domain': 'gmail.com', 'country': 'US' }]
                 })
 
             test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',

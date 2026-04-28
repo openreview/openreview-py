@@ -26,16 +26,6 @@ To view your submission, click here: https://openreview.net/forum?id={submission
     submission_authors = submission.authorids
     authors_group_id = f'{venue_id}/{submission_name}{submission.number}/{authors_name}'
 
-    client.post_message(
-        invitation=meta_invitation_id,
-        subject=subject,
-        recipients=[authors_group_id],
-        message=message,
-        replyTo=contact,
-        signature=venue_id,
-        sender=sender
-    )
-
     if submission_authors:
         author_group = openreview.tools.get_group(client, authors_group_id)
         if author_group and set(author_group.members) != set(submission_authors):
@@ -49,6 +39,16 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     members = submission_authors
                 )
             )
+
+    client.post_message(
+        invitation=meta_invitation_id,
+        subject=subject,
+        recipients=[authors_group_id],
+        message=message,
+        replyTo=contact,
+        signature=venue_id,
+        sender=sender
+    )
 
     # Update BibTeX if submission is public and already has a bibtex field
     if submission.readers == ['everyone'] and '_bibtex' in submission.content:
