@@ -384,7 +384,7 @@ For more details, please check the following links:
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].readers == ['EFGH.cc/2025/Conference', '~SomeFirstName_User1', '~Leonardo_Google1']
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
 

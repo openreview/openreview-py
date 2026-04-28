@@ -262,7 +262,7 @@ For more details, please check the following links:
 
         submissions = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[-1].readers == ['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Submission10/Authors']
+        assert submissions[-1].readers == ['ICLR.cc/2026/Conference', '~SomeFirstName_User1', '~Eddie_Umass1', '~SAE_ICLROne1']
 
     def test_post_submission(self, client, openreview_client, helpers, test_client):
 

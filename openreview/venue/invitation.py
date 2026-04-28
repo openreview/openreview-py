@@ -149,8 +149,8 @@ class InvitationBuilder(object):
         content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
         if submission_stage.unified_authors:
-            edit_authors_ref = self.venue.get_authors_id(number='${2/note/number}')
-            note_authors_ref = self.venue.get_authors_id(number='${2/number}')
+            edit_authors_ref = '${2/note/content/authors/value/*/username}'
+            note_authors_ref = '${2/content/authors/value/*/username}'
         else:
             edit_authors_ref = '${2/note/content/authorids/value}'
             note_authors_ref = '${2/content/authorids/value}'

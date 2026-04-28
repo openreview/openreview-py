@@ -709,7 +709,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         submissions = openreview_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
-        assert ['ICML.cc/2025/Conference', 'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
+        assert ['ICML.cc/2025/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].authorids
 
         authors_group = openreview_client.get_group(id='ICML.cc/2025/Conference/Authors')
