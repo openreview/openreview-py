@@ -261,7 +261,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False):
+    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False, content={}):
 
         venue_id = self.venue_id
         submission_name = self.get_content_value('submission_name', 'Submission')
@@ -307,6 +307,20 @@ class EditInvitationsBuilder(object):
             {'value': 'everyone', 'optional': True, 'description': 'Public'}
         ])
 
+        edit_content = {
+            'readers': {
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'input': 'select',
+                        'items':  readers_items
+                    }
+                }
+            }
+        }
+        if content:
+            edit_content.update(content)
+
         invitation = Invitation(
             id = sub_invitation_id,
             invitees = [venue_id],
@@ -318,17 +332,7 @@ class EditInvitationsBuilder(object):
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
-                'content' :{
-                    'readers': {
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'input': 'select',
-                                'items':  readers_items
-                            }
-                        }
-                    }
-                },
+                'content' : edit_content,
                 'invitation': {
                     'id': f'{invitation_id}',
                     'signatures': [venue_id],
@@ -340,6 +344,14 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        invitation_content = {}
+        if content:
+            for key in content.keys():
+                invitation_content[key] = {
+                    'value': '${4/content/' + key + '/value}'
+                }
+            invitation.edit['invitation']['content'] = invitation_content
 
         self.save_invitation(invitation, replacement=False)
         return invitation

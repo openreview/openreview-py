@@ -1734,9 +1734,6 @@ If you would like to change your decision, please follow the link in the previou
                         'script': self.get_process_content('process/submission_release.py')
                     }],
                     'content': {
-                        'reveal_author_names': {
-                            'value': False
-                        },
                         'decision_option': {
                             'value': '${4/content/decision_option/value}'
                         }
@@ -1785,6 +1782,7 @@ If you would like to change your decision, please follow the link in the previou
                                     'readers': {
                                         'param': {
                                             'regex': '.*',
+                                            'deletable': True
                                         }
                                     }
                                 },
@@ -1792,6 +1790,7 @@ If you would like to change your decision, please follow the link in the previou
                                     'readers': {
                                         'param': {
                                             'regex': '.*',
+                                            "deletable": True
                                         }
                                     }
                                 },
