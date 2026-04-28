@@ -18,7 +18,7 @@ def process(client, invitation):
     article_endorsement_id = domain.content['article_endorsement_id']['value']
     submission_name = domain.content['submission_name']['value']
     authors_name = domain.content['authors_name']['value']
-    decision_name = domain.content.get('decision_name', {}).get('value')
+    decision_name = domain.content.get('decision_name', {}).get('value', 'Decision')
     rejected_venue_id = domain.content['rejected_venue_id']['value']
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')

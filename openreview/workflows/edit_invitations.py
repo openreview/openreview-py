@@ -276,8 +276,7 @@ class EditInvitationsBuilder(object):
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
             readers_items.append(
-                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
-                
+                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'}
             )
             if include_assigned_committee:
                 readers_items.append(
@@ -318,6 +317,7 @@ class EditInvitationsBuilder(object):
                 }
             }
         }
+
         if content:
             edit_content.update(content)
 
@@ -1985,7 +1985,7 @@ class EditInvitationsBuilder(object):
                 'writers': [venue_id],
                 'content': {
                     'reveal_author_identities': {
-                        'description': 'Select whether you want to reveal the author identities to the readers of the submissions. If you select False, author identites will remain visible only to the program chairs and the paper authors.',
+                        'description': 'Select whether you want to reveal the author identities to the readers of the submissions. If you select False, author identities will remain visible only to the program chairs and the paper authors.',
                         'value': {
                             'param': {
                                 'type': 'boolean'
@@ -1997,7 +1997,7 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'reveal_author_names': {
+                        'reveal_author_identities': {
                             'value': '${4/content/reveal_author_identities/value}'
                         }
                     }
