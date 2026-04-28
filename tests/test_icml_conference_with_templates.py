@@ -63,7 +63,7 @@ class TestICMLConference():
             second_due_date=None,
             double_blind=True,
             email_pcs=False,
-            force_profiles=False,
+            force_profiles=True,
             withdraw_submission_exp_date=due_date + datetime.timedelta(weeks=4),
             unified_authors=True
         )
@@ -657,9 +657,13 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
+        for domain in domains:
+            helpers.create_user(f'andrew@{domain}', 'Andrew', f'Mc{domain.split(".")[0].capitalize()}')
+
         subject_areas = ['Algorithms: Approximate Inference', 'Algorithms: Belief Propagation', 'Learning: Deep Learning', 'Learning: General', 'Learning: Nonparametric Bayes', 'Methodology: Bayesian Methods', 'Methodology: Calibration', 'Principles: Causality', 'Principles: Cognitive Models', 'Representation: Constraints', 'Representation: Dempster-Shafer', 'Representation: Other']
         for i in range(1,102):
             andrew_domain = domains[i % 10]
+            andrew_suffix = andrew_domain.split('.')[0].capitalize()
             note = openreview.api.Note(
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
@@ -673,12 +677,12 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                             },
                             {
                                 'fullname': 'Peter SomeLastName',
-                                'username': 'peter@mail.com',
+                                'username': '~Peter_SomeLastName1',
                                 'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
                             },
                             {
-                                'fullname': 'Andrew Mc',
-                                'username': 'andrew@' + andrew_domain,
+                                'fullname': f'Andrew Mc{andrew_suffix}',
+                                'username': f'~Andrew_Mc{andrew_suffix}1',
                                 'institutions': [{ 'domain': andrew_domain, 'country': 'US' }]
                             }
                         ]
@@ -709,8 +713,8 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         submissions = openreview_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
-        assert ['ICML.cc/2025/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].readers
-        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].authorids
+        assert ['ICML.cc/2025/Conference', '~SomeFirstName_User1', '~Peter_SomeLastName1', '~Andrew_McAmazon1', '~SAC_ICMLOne1'] == submissions[0].readers
+        assert ['~SomeFirstName_User1', '~Peter_SomeLastName1', '~Andrew_McAmazon1', '~SAC_ICMLOne1'] == submissions[0].authorids
 
         authors_group = openreview_client.get_group(id='ICML.cc/2025/Conference/Authors')
 
@@ -822,7 +826,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2025/Conference/-/Preferred_Emails-0-0', count=3)
 
         ## Check preferred emails
-        assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails') == 11
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails') == 21
         assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails', head='~SomeFirstName_User1') == 1      
 
     def test_post_submission(self, client, openreview_client, test_client, helpers, request_page, selenium):
@@ -1083,6 +1087,8 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert 'ICML.cc/2025/Conference' in active_venues.members
 
         ## try to edit a submission as a PC
+        helpers.create_user('melisa@yahoo.com', 'Melisa', 'ICMLAuthor')
+
         submissions = pc_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
         submission = submissions[0]
         edit_note = pc_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/PC_Revision',
@@ -1092,7 +1098,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 content = {
                     'title': { 'value': submission.content['title']['value'] + ' Version 2' },
                     'abstract': submission.content['abstract'],
-                    'authors': { 'value': list(submission.content['authors']['value']) + [{ 'fullname': 'Melisa ICML', 'username': 'melisa@yahoo.com', 'institutions': [{ 'domain': 'yahoo.com', 'country': 'US' }] }] },
+                    'authors': { 'value': list(submission.content['authors']['value']) + [{ 'fullname': 'Melisa ICMLAuthor', 'username': '~Melisa_ICMLAuthor1', 'institutions': [{ 'domain': 'yahoo.com', 'country': 'US' }] }] },
                     'keywords': submission.content['keywords'],
                     'pdf': { 'value': submission.content['pdf']['value'] },
                     'supplementary_material': { 'value': { 'delete': True } },
@@ -1122,7 +1128,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert 'supplementary_material'not in submission.content
 
         author_group = pc_client.get_group('ICML.cc/2025/Conference/Submission1/Authors')
-        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@yahoo.com'] == author_group.members
+        assert ['~SomeFirstName_User1', '~Peter_SomeLastName1', '~Andrew_McAmazon1', '~SAC_ICMLOne1', '~Melisa_ICMLAuthor1'] == author_group.members
 
         messages = openreview_client.get_messages(to = 'melisa@yahoo.com', subject = 'ICML 2025 has received a new revision of your submission titled Paper title 1 Version 2')
         assert len(messages) == 1
