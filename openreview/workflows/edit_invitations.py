@@ -559,13 +559,13 @@ class EditInvitationsBuilder(object):
                             'type': 'object[]',
                             'input': 'select',
                             'items':  [
-                                {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
-                                {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
-                                {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
-                                {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
-                                {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
-                                {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                                {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
+                                {'value': {'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
+                                {'value': {'value': 'CC BY-SA 4.0', 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                {'value': {'value': 'CC BY-NC 4.0', 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                {'value': {'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                {'value': {'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                {'value': {'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                {'value': {'value': 'CC0 1.0', 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
                             ]
                         }
                     },
@@ -574,7 +574,7 @@ class EditInvitationsBuilder(object):
             })
             invitation.edit['invitation']['edit']['invitation']['edit']['note']['license'] = {
                 'param': {
-                    'enum': ['${7/content/license/value}']
+                    'enum': ['${9/content/license/value}']
                 }
             }
 

@@ -50,6 +50,7 @@ class TestSimpleDualAnonymous():
                     'reviewer_groups_names': { 'value': ['Reviewers'] },
                     'area_chairs_support': { 'value': True },
                     'area_chair_groups_names': { 'value': ['Action_Editors'] },
+                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'expected_submissions': { 'value': 500 },
                     'venue_organizer_agreement': { 
                         'value': [
