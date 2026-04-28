@@ -1218,33 +1218,59 @@ note={under review}
         ]
         assert submissions[0].content['venueid']['value'] == 'EFGH.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'EFGH 2025 Conference Submission'
-        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release')
-        assert inv and not inv.content
-        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Dates')
-        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Which_Submissions')
+        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accepted_Submission_Release')
+        assert 'reveal_author_identities' not in inv.content
+        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Rejected_Submission_Release')
+        assert 'reveal_author_identities' not in inv.content
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accepted_Submission_Release/Dates')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Rejected_Submission_Release/Dates')
 
-        # add source submissions to submission release
+        # add reveal_author_identities to submission release invitations
         pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Submission_Release/Which_Submissions',
+            invitations='EFGH.cc/2025/Conference/-/Accepted_Submission_Release/Readers',
             content={
-                'source_submissions': {
-                    'value': 'accepted_submissions'
+                'readers': {
+                    'value': ['everyone']
+                },
+                'reveal_author_identities': {
+                    'value': True
                 }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=2)
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Rejected_Submission_Release/Readers',
+            content={
+                'readers': {
+                    'value': ['everyone']
+                },
+                'reveal_author_identities': {
+                    'value': False
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=2)
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
         # trigger submission release process
         pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Submission_Release/Dates',
+            invitations='EFGH.cc/2025/Conference/-/Accepted_Submission_Release/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=3)
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Rejected_Submission_Release/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
 
