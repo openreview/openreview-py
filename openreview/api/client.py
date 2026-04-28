@@ -229,14 +229,13 @@ class OpenReviewClient(object):
         })
 
     def __await_process(self, edit_id):
-    
+
         process_logs = self.get_process_logs(id=edit_id)
         if not process_logs:
             return ## no process function found
-        
-        for i in range(100):
 
-            print('Check logs for process function', process_logs[0])
+        for i in range(1200):  # 1200 × 0.5s = 10 minutes
+
             if process_logs[0]['status'] == 'ok':
                 return
             elif process_logs[0]['status'] == 'error':
@@ -245,7 +244,7 @@ class OpenReviewClient(object):
             time.sleep(0.5)
             process_logs = self.get_process_logs(id=edit_id)
 
-        raise OpenReviewException("Process timed out")    
+        raise OpenReviewException("Process timed out")
 
     def get_invitation_date_process_job(self, job_id):
         response = self.session.get(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/' + job_id.replace('/', '%2F'), params = {}, headers = self.headers)
