@@ -116,7 +116,7 @@ withdraw_v3 = {
         'required': True
     },
     'withdrawal confirmation': {
-        'description': 'I am aware of and accept the implications of withdrawing this submission from ARR. In particular, I will not be able to resubmit it to ARR without restoring this submission, and if I have received even one review for it -- it would count as a resubmission, it would need to be disclosed, and accompanied with an explanation of revisions (see https://aclrollingreview.org/cfp#withdrawal).',
+        'description': 'I am aware of and accept the implications of withdrawing this submission from ARR. In particular, the submission will not be fully reviewed and ready for commitment in this cycle, and any earlier reviewed versions will also be ineligible for commitment. I will also not be able to resubmit it to ARR without restoring this submission, and if I have received even one review for it -- it would count as a resubmission, it would need to be disclosed and accompanied with an explanation of revisions. See https://aclrollingreview.org/cfp#withdrawal.',
         'value-radio': [
             'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
         ],
@@ -124,6 +124,7 @@ withdraw_v3 = {
         'required': True
     }
 }
+
 
 desk_reject = {
     'title': {
