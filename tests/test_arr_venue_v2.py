@@ -9,6 +9,7 @@ import csv
 import sys
 from copy import deepcopy
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -6970,13 +6971,44 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'above and beyond' in great_ac_note.content['justification']['value']
     
     def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
+        venue_id = 'aclweb.org/ACL/ARR/2023/August'
         pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        pc_console_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        submissions = pc_client.get_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc')
         submissions_by_number = {s.number : s for s in submissions}
         submissions_by_id = {s.id : s for s in submissions}
         now = datetime.datetime.now()
         now_millis = openreview.tools.datetime_millis(now)
-    
+
+        def assert_submission_query(console_group_id, console_client, query_text, expected_numbers):
+            request_page(
+                selenium,
+                f'http://localhost:3030/group?id={console_group_id}#submission-status',
+                console_client,
+                wait_for_element='header'
+            )
+            selenium.find_element(By.LINK_TEXT, 'Submission Status').click()
+            paper_status = WebDriverWait(selenium, 10).until(
+                lambda driver: driver.find_element(By.ID, 'submission-status')
+            )
+            search_input = paper_status.find_element(By.CLASS_NAME, 'search-input')
+            search_input.clear()
+            search_input.send_keys(query_text)
+            search_input.send_keys(Keys.ENTER)
+
+            def get_displayed_paper_numbers(driver):
+                note_numbers = driver.find_element(By.ID, 'submission-status').find_elements(By.CLASS_NAME, 'note-number')
+                return [int(note_number.text) for note_number in note_numbers]
+
+            assert WebDriverWait(selenium, 20).until(
+                lambda driver: get_displayed_paper_numbers(driver) == expected_numbers
+            )
+
+        sac_console_client = openreview.Client(
+            username='sac2@aclrollingreview.com',
+            password=helpers.strong_password
+        )
+
         ## Build missing data
         # Reviewer who is available and responded to emergency form
         helpers.create_user('reviewer7@aclrollingreview.com', 'Reviewer', 'ARRSeven')
@@ -7148,6 +7180,153 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'research_area': { 'value': ['NLP and Code Models'] }
                 }
             )
+        )
+
+        # Additional submission-status query data
+        ac_one_client = openreview.api.OpenReviewClient(username='ac1@aclrollingreview.com', password=helpers.strong_password)
+        ac_one_sig = ac_one_client.get_groups(
+            prefix=f'{venue_id}/Submission2/Area_Chair_',
+            signatory='~AC_ARROne1'
+        )[0].id
+        ac_delay_edit = ac_one_client.post_note_edit(
+            invitation=f'{venue_id}/Submission2/-/Delay_Notification',
+            signatures=[ac_one_sig],
+            note=openreview.api.Note(
+                content={
+                    'notification': {'value': 'My meta-review will be submitted tomorrow due to an unexpected emergency.'}
+                }
+            )
+        )
+        assert ac_one_client.get_note(ac_delay_edit['note']['id'])
+        ac_emergency_edit = ac_one_client.post_note_edit(
+            invitation=f'{venue_id}/Submission2/-/Emergency_Declaration',
+            signatures=[ac_one_sig],
+            note=openreview.api.Note(
+                content={
+                    'declaration': {'value': 'Medical'},
+                    'explanation': {'value': 'I have a medical emergency and need to step back from this assignment.'}
+                }
+            )
+        )
+        assert ac_one_client.get_note(ac_emergency_edit['note']['id'])
+
+        reviewer_one_client = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_one_sig = reviewer_one_client.get_groups(
+            prefix=f'{venue_id}/Submission3/Reviewer_',
+            signatory='~Reviewer_ARROne1'
+        )[0].id
+        reviewer_delay_edit = reviewer_one_client.post_note_edit(
+            invitation=f'{venue_id}/Submission3/-/Delay_Notification',
+            signatures=[reviewer_one_sig],
+            note=openreview.api.Note(
+                content={
+                    'notification': {'value': 'My review is complete, but I am also notifying the chairs about a delay.'}
+                }
+            )
+        )
+        assert reviewer_one_client.get_note(reviewer_delay_edit['note']['id'])
+
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=1 AND reviewerEmergencyDeclarationCount=0 AND reviewerDelayNotificationCount=0 AND assignedReviewersMinusEmergencyDeclarationsCount=1 AND completedReviewsPlusDelayNotificationsCount=0',
+            [1]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=2 AND reviewerEmergencyDeclarationCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=2 AND areaChairEmergencyDeclarationCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=2 AND reviewerDelayNotificationCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=2 AND areaChairDelayNotificationCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=2 AND assignedReviewersMinusEmergencyDeclarationsCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=2 AND completedReviewsPlusDelayNotificationsCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=2 AND reviewerEmergencyDeclarationCount=1 AND areaChairEmergencyDeclarationCount=1 AND reviewerDelayNotificationCount=1 AND areaChairDelayNotificationCount=1 AND assignedReviewersMinusEmergencyDeclarationsCount=1 AND completedReviewsPlusDelayNotificationsCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Program_Chairs',
+            pc_console_client,
+            '+number=3 AND reviewerEmergencyDeclarationCount=0 AND areaChairEmergencyDeclarationCount=0 AND reviewerDelayNotificationCount=1 AND areaChairDelayNotificationCount=0 AND assignedReviewersMinusEmergencyDeclarationsCount=1 AND completedReviewsPlusDelayNotificationsCount=2',
+            [3]
+        )
+        assert_submission_query(
+            f'{venue_id}/Senior_Area_Chairs',
+            sac_console_client,
+            '+number=2 AND reviewerEmergencyDeclarationCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Senior_Area_Chairs',
+            sac_console_client,
+            '+number=2 AND areaChairEmergencyDeclarationCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Senior_Area_Chairs',
+            sac_console_client,
+            '+number=2 AND reviewerDelayNotificationCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Senior_Area_Chairs',
+            sac_console_client,
+            '+number=2 AND areaChairDelayNotificationCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Senior_Area_Chairs',
+            sac_console_client,
+            '+number=2 AND assignedReviewersMinusEmergencyDeclarationsCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Senior_Area_Chairs',
+            sac_console_client,
+            '+number=2 AND completedReviewsPlusDelayNotificationsCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Senior_Area_Chairs',
+            sac_console_client,
+            '+number=2 AND reviewerEmergencyDeclarationCount=1 AND areaChairEmergencyDeclarationCount=1 AND reviewerDelayNotificationCount=1 AND areaChairDelayNotificationCount=1 AND assignedReviewersMinusEmergencyDeclarationsCount=1 AND completedReviewsPlusDelayNotificationsCount=1',
+            [2]
+        )
+        assert_submission_query(
+            f'{venue_id}/Senior_Area_Chairs',
+            sac_console_client,
+            '+number=3 AND reviewerEmergencyDeclarationCount=0 AND areaChairEmergencyDeclarationCount=0 AND reviewerDelayNotificationCount=1 AND areaChairDelayNotificationCount=0 AND assignedReviewersMinusEmergencyDeclarationsCount=1 AND completedReviewsPlusDelayNotificationsCount=2',
+            [3]
         )
 
         def send_email(email_option, role):

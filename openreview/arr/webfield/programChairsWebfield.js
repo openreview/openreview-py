@@ -189,6 +189,175 @@ return {
         return hasReply;
       })
       return metaReviewReplies?.length??0;
+      `,
+      reviewerEmergencyDeclarationCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+      const signatureToReviewerIndex = new Map();
+      const reviewersWithEmergencyDeclaration = new Set();
+
+      reviewers.forEach((reviewer, reviewerIndex) => {
+        if (reviewer?.anonymizedGroup) {
+          signatureToReviewerIndex.set(reviewer.anonymizedGroup, reviewerIndex);
+        }
+        if (reviewer?.preferredId) {
+          signatureToReviewerIndex.set(reviewer.preferredId, reviewerIndex);
+        }
+      });
+
+      replies.forEach(reply => {
+        const replySignature = reply?.signatures?.[0];
+        const isEmergencyDeclaration = (reply?.invitations ?? []).some(invitation => invitation.includes('Emergency_Declaration'));
+
+        if (!isEmergencyDeclaration || !signatureToReviewerIndex.has(replySignature)) {
+          return;
+        }
+
+        reviewersWithEmergencyDeclaration.add(signatureToReviewerIndex.get(replySignature));
+      });
+
+      return reviewersWithEmergencyDeclaration.size;
+      `,
+      areaChairEmergencyDeclarationCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const areaChairs = row.metaReviewData?.areaChairs ?? [];
+      const signatureToAreaChairIndex = new Map();
+      const areaChairsWithEmergencyDeclaration = new Set();
+
+      areaChairs.forEach((areaChair, areaChairIndex) => {
+        if (areaChair?.anonymizedGroup) {
+          signatureToAreaChairIndex.set(areaChair.anonymizedGroup, areaChairIndex);
+        }
+        if (areaChair?.preferredId) {
+          signatureToAreaChairIndex.set(areaChair.preferredId, areaChairIndex);
+        }
+      });
+
+      replies.forEach(reply => {
+        const replySignature = reply?.signatures?.[0];
+        const isEmergencyDeclaration = (reply?.invitations ?? []).some(invitation => invitation.includes('Emergency_Declaration'));
+
+        if (!isEmergencyDeclaration || !signatureToAreaChairIndex.has(replySignature)) {
+          return;
+        }
+
+        areaChairsWithEmergencyDeclaration.add(signatureToAreaChairIndex.get(replySignature));
+      });
+
+      return areaChairsWithEmergencyDeclaration.size;
+      `,
+      reviewerDelayNotificationCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+      const signatureToReviewerIndex = new Map();
+      const reviewersWithDelayNotification = new Set();
+
+      reviewers.forEach((reviewer, reviewerIndex) => {
+        if (reviewer?.anonymizedGroup) {
+          signatureToReviewerIndex.set(reviewer.anonymizedGroup, reviewerIndex);
+        }
+        if (reviewer?.preferredId) {
+          signatureToReviewerIndex.set(reviewer.preferredId, reviewerIndex);
+        }
+      });
+
+      replies.forEach(reply => {
+        const replySignature = reply?.signatures?.[0];
+        const isDelayNotification = (reply?.invitations ?? []).some(invitation => invitation.includes('Delay_Notification'));
+
+        if (!isDelayNotification || !signatureToReviewerIndex.has(replySignature)) {
+          return;
+        }
+
+        reviewersWithDelayNotification.add(signatureToReviewerIndex.get(replySignature));
+      });
+
+      return reviewersWithDelayNotification.size;
+      `,
+      areaChairDelayNotificationCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const areaChairs = row.metaReviewData?.areaChairs ?? [];
+      const signatureToAreaChairIndex = new Map();
+      const areaChairsWithDelayNotification = new Set();
+
+      areaChairs.forEach((areaChair, areaChairIndex) => {
+        if (areaChair?.anonymizedGroup) {
+          signatureToAreaChairIndex.set(areaChair.anonymizedGroup, areaChairIndex);
+        }
+        if (areaChair?.preferredId) {
+          signatureToAreaChairIndex.set(areaChair.preferredId, areaChairIndex);
+        }
+      });
+
+      replies.forEach(reply => {
+        const replySignature = reply?.signatures?.[0];
+        const isDelayNotification = (reply?.invitations ?? []).some(invitation => invitation.includes('Delay_Notification'));
+
+        if (!isDelayNotification || !signatureToAreaChairIndex.has(replySignature)) {
+          return;
+        }
+
+        areaChairsWithDelayNotification.add(signatureToAreaChairIndex.get(replySignature));
+      });
+
+      return areaChairsWithDelayNotification.size;
+      `,
+      assignedReviewersMinusEmergencyDeclarationsCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+      const signatureToReviewerIndex = new Map();
+      const reviewersWithEmergencyDeclaration = new Set();
+
+      reviewers.forEach((reviewer, reviewerIndex) => {
+        if (reviewer?.anonymizedGroup) {
+          signatureToReviewerIndex.set(reviewer.anonymizedGroup, reviewerIndex);
+        }
+        if (reviewer?.preferredId) {
+          signatureToReviewerIndex.set(reviewer.preferredId, reviewerIndex);
+        }
+      });
+
+      replies.forEach(reply => {
+        const replySignature = reply?.signatures?.[0];
+        const isEmergencyDeclaration = (reply?.invitations ?? []).some(invitation => invitation.includes('Emergency_Declaration'));
+
+        if (!isEmergencyDeclaration || !signatureToReviewerIndex.has(replySignature)) {
+          return;
+        }
+
+        reviewersWithEmergencyDeclaration.add(signatureToReviewerIndex.get(replySignature));
+      });
+
+      return Math.max(0, reviewers.length - reviewersWithEmergencyDeclaration.size);
+      `,
+      completedReviewsPlusDelayNotificationsCount: `
+      const replies = row.note?.details?.replies ?? [];
+      const reviewers = row.reviewers ?? [];
+      const officialReviews = row.officialReviews ?? [];
+      const signatureToReviewerIndex = new Map();
+      const reviewersWithDelayNotification = new Set();
+
+      reviewers.forEach((reviewer, reviewerIndex) => {
+        if (reviewer?.anonymizedGroup) {
+          signatureToReviewerIndex.set(reviewer.anonymizedGroup, reviewerIndex);
+        }
+        if (reviewer?.preferredId) {
+          signatureToReviewerIndex.set(reviewer.preferredId, reviewerIndex);
+        }
+      });
+
+      replies.forEach(reply => {
+        const replySignature = reply?.signatures?.[0];
+        const isDelayNotification = (reply?.invitations ?? []).some(invitation => invitation.includes('Delay_Notification'));
+
+        if (!isDelayNotification || !signatureToReviewerIndex.has(replySignature)) {
+          return;
+        }
+
+        reviewersWithDelayNotification.add(signatureToReviewerIndex.get(replySignature));
+      });
+
+      return officialReviews.length + reviewersWithDelayNotification.size;
       `
     },
     reviewerEmailFuncs: [
