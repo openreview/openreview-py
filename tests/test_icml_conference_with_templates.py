@@ -1137,7 +1137,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
 Title: Paper title 1 Version 2
 
-Authors: SomeFirstName User, Peter SomeLastName, Andrew Mc, SAC ICMLOne, Melisa ICML
+Authors: SomeFirstName User, Peter SomeLastName, Andrew McAmazon, SAC ICMLOne, Melisa ICMLAuthor
 
 Abstract: This is an abstract 1
 
