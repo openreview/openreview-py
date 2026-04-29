@@ -854,7 +854,7 @@ class ARR(object):
     def create_meta_review_stage(self):
         self.venue.meta_review_stage = self.meta_review_stage
         self.venue.meta_review_stage.process_path = '../arr/process/metareview_process.py'
-        self.venue.meta_review_stage.preprocess_path = '../arr/process/review_preprocess.py'
+        self.venue.meta_review_stage.preprocess_path = '../arr/process/metareview_preprocess.py'
 
         return self.venue.create_meta_review_stage()
 

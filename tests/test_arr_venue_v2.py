@@ -4250,6 +4250,108 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members) == 1
         assert sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members[0] == '~AC_ARROne1'
 
+        assignment_invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment'
+        assignment_log_count = len([
+            log for log in openreview_client.get_process_logs(invitation=assignment_invitation)
+            if log.get('processIndex', 0) == 0
+        ])
+        second_ac_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = assignment_invitation,
+            head = submissions[1].id,
+            tail = '~AC_ARRTwo1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs'],
+            weight = 1
+        ))
+
+        helpers.await_queue_edit(openreview_client, invitation=assignment_invitation, count=assignment_log_count + 1)
+
+        assert len(sac_client.get_edges(invitation = assignment_invitation, head=submissions[1].id, tail='~AC_ARRTwo1')) == 1
+        assert set(sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members) == {'~AC_ARROne1', '~AC_ARRTwo1'}
+
+        ac_client_1 = openreview.api.OpenReviewClient(username='ac1@aclrollingreview.com', password=helpers.strong_password)
+        ac_client_2 = openreview.api.OpenReviewClient(username='ac2@aclrollingreview.com', password=helpers.strong_password)
+        anon_group_id_ac_1 = ac_client_1.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chair_', signatory='~AC_ARROne1')[0].id
+        anon_group_id_ac_2 = ac_client_2.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chair_', signatory='~AC_ARRTwo1')[0].id
+
+        def make_meta_review_content(metareview='a metareview'):
+            return {
+                "metareview": { "value": metareview },
+                "summary_of_reasons_to_publish": { "value": 'some summary' },
+                "summary_of_suggested_revisions": { "value": 'some strengths' },
+                "overall_assessment": { "value": 1 },
+                "ethical_concerns": { "value": "There are no concerns with this submission" },
+                "author_identity_guess": { "value": 1 },
+                "needs_ethics_review": {'value': 'No'},
+                "reported_issues": {'value': ['No']},
+                "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
+            }
+
+        meta_review_invitation = 'aclweb.org/ACL/ARR/2023/August/Submission2/-/Meta_Review'
+        meta_review_edit = ac_client_1.post_note_edit(
+            invitation=meta_review_invitation,
+            signatures=[anon_group_id_ac_1],
+            note=openreview.api.Note(
+                content=make_meta_review_content()
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=meta_review_edit['id'])
+
+        with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number \(1\) of replies for this Invitation'):
+            ac_client_1.post_note_edit(
+                invitation=meta_review_invitation,
+                signatures=[anon_group_id_ac_1],
+                note=openreview.api.Note(
+                    content=make_meta_review_content('a second metareview from the first AC')
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only one Meta_Review can be submitted for this submission.'):
+            ac_client_2.post_note_edit(
+                invitation=meta_review_invitation,
+                signatures=[anon_group_id_ac_2],
+                note=openreview.api.Note(
+                    content=make_meta_review_content('a second metareview')
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only the Area Chair who submitted this Meta_Review can edit it.|User is not writer of the Note'):
+            ac_client_2.post_note_edit(
+                invitation=meta_review_invitation,
+                signatures=[anon_group_id_ac_2],
+                note=openreview.api.Note(
+                    id=meta_review_edit['note']['id'],
+                    content=make_meta_review_content('an edit from the second AC')
+                )
+            )
+
+        updated_meta_review_edit = ac_client_1.post_note_edit(
+            invitation=meta_review_invitation,
+            signatures=[anon_group_id_ac_1],
+            note=openreview.api.Note(
+                id=meta_review_edit['note']['id'],
+                content=make_meta_review_content('an updated metareview')
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=updated_meta_review_edit['id'])
+
+        meta_reviews = openreview_client.get_notes(invitation=meta_review_invitation)
+        assert len(meta_reviews) == 1
+        assert meta_reviews[0].signatures == [anon_group_id_ac_1]
+        assert meta_reviews[0].content['metareview']['value'] == 'an updated metareview'
+        assert anon_group_id_ac_1 in meta_reviews[0].writers
+        assert anon_group_id_ac_2 not in meta_reviews[0].writers
+
+        assignment_log_count = len([
+            log for log in openreview_client.get_process_logs(invitation=assignment_invitation)
+            if log.get('processIndex', 0) == 0
+        ])
+        second_ac_edge.ddate = openreview.tools.datetime_millis(openreview.tools.datetime.datetime.now())
+        openreview_client.post_edge(second_ac_edge)
+        helpers.await_queue_edit(openreview_client, invitation=assignment_invitation, count=assignment_log_count + 1)
+        assert sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members == ['~AC_ARROne1']
+
         pc_client.post_note(
             openreview.Note(
                 content={
