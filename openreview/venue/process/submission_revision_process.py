@@ -14,7 +14,7 @@ def process(client, edit, invitation):
     subject = f'''{short_name} has received a new revision of your submission titled {submission.content['title']['value']}'''
 
     authors_string = f'''
-Authors: {', '.join(submission.content['authors']['value'])}
+Authors: {', '.join(submission.authors)}
 ''' if 'authors' in submission.content else ''
 
     abstract_string = f'''
