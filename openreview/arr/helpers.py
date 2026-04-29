@@ -473,6 +473,129 @@ class ARRWorkflow(object):
             edit['note']['content'] = note_content
 
         return {'edit': edit}
+
+    @staticmethod
+    def _build_report_evaluation_edit(client, venue, builder, request_form):
+        venue_id = venue.id
+        invitation_name = builder.REPORT_EVALUATION_NAME
+
+        invitees = [venue.get_area_chairs_id(number='${3/content/noteNumber/value}')]
+        readers = [
+            venue_id,
+            venue.get_program_chairs_id(),
+            venue.get_area_chairs_id(number='${3/content/noteNumber/value}')
+        ]
+        note_readers = [
+            venue_id,
+            venue.get_program_chairs_id(),
+            venue.get_area_chairs_id(number='${5/content/noteNumber/value}')
+        ]
+        signature_items = [
+            {
+                'prefix': venue.get_area_chairs_id(number='${7/content/noteNumber/value}', anon=True),
+                'optional': True
+            },
+            {
+                'value': venue.get_program_chairs_id(),
+                'optional': True
+            },
+            {
+                'value': venue_id,
+                'optional': True
+            }
+        ]
+
+        if venue.use_senior_area_chairs:
+            readers.append(venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}'))
+            note_readers.append(venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}'))
+
+        child_invitation_id = venue.get_invitation_id(
+            invitation_name,
+            prefix=(
+                f"{venue.get_paper_group_prefix('${2/content/noteNumber/value}')}"
+                f"/Review_Issue_Report${{{{2/content/replyId/value}}/number}}"
+            )
+        )
+        with_invitation = venue.get_invitation_id(
+            invitation_name,
+            prefix=(
+                f"{venue.get_paper_group_prefix('${6/content/noteNumber/value}')}"
+                f"/Review_Issue_Report${{{{6/content/replyId/value}}/number}}"
+            )
+        )
+
+        return {
+            'description': 'Create a per-report Area Chair evaluation invitation for a submitted review issue report.',
+            'edit': {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    },
+                    'replyId': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'expdate': {
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'range': [0, 9999999999999]
+                            }
+                        }
+                    },
+                    'content': {
+                        'value': {
+                            'param': {
+                                'type': 'content'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': child_invitation_id,
+                    'signatures': [venue_id],
+                    'readers': readers,
+                    'writers': [venue_id],
+                    'invitees': invitees,
+                    'maxReplies': 1,
+                    'expdate': '${2/content/expdate/value}',
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                'items': signature_items
+                            }
+                        },
+                        'readers': ['${2/note/readers}'],
+                        'writers': [venue_id, '${2/signatures}'],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': with_invitation,
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${{4/content/replyId/value}/forum}',
+                            'replyto': '${4/content/replyId/value}',
+                            'signatures': ['${3/signatures}'],
+                            'readers': note_readers,
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': '${4/content/content/value}'
+                        }
+                    }
+                }
+            }
+        }
     
     @staticmethod
     def _extend_desk_reject_verification(client, venue, builder, request_form):
@@ -1056,6 +1179,15 @@ class ARRWorkflow(object):
                 extend=ARRWorkflow._extend_desk_reject_verification
             ),
             ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['review_issue_start_date', 'review_issue_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/{self.invitation_builder.REPORT_EVALUATION_NAME}",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('review_issue_start_date'),
+                exp_date=self.configuration_note.content.get('review_issue_exp_date'),
+                build_edit=ARRWorkflow._build_report_evaluation_edit
+            ),
+            ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
                 required_fields=['review_issue_start_date', 'review_issue_exp_date'],
                 super_invitation_id=f"{self.venue_id}/-/Review_Rating",
@@ -1074,7 +1206,8 @@ class ARRWorkflow(object):
                     'email_sacs': False
                 },
                 start_date=self.configuration_note.content.get('review_issue_start_date'),
-                exp_date=self.configuration_note.content.get('review_issue_exp_date')
+                exp_date=self.configuration_note.content.get('review_issue_exp_date'),
+                process='../arr/process/review_issue_report_process.py'
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,

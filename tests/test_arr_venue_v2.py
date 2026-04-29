@@ -6361,6 +6361,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Review_Issue_Report')
+        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/{invitation_builder.REPORT_EVALUATION_NAME}')
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Review_Issue_Report-0-1')
 
@@ -6377,25 +6378,52 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatures=['aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
             note=openreview.api.Note(
                 content = {
-                    "I1_not_specific": {"value": 'The review is not specific enough.'},
                     "I2_reviewer_heuristics": {"value": 'The review exhibits one or more of the reviewer heuristics discussed in the ARR reviewer guidelines: https://aclrollingreview.org/reviewertutorial'},
-                    "I3_score_mismatch": {"value": 'The review score(s) do not match the text of the review.'},
-                    "I4_unprofessional_tone": {"value": 'The tone of the review does not conform to professional conduct standards.'},
                     "I5_expertise": {"value": 'The review does not evince expertise.'},
-                    "I6_type_mismatch": {"value": "The review does not match the type of paper."},
-                    "I7_contribution_mismatch": {"value": "The review does not match the type of contribution."},
-                    "I8_missing_review": {"value": "The review is missing or is uninformative."},
-                    "I9_late_review": {"value": "The review was late."},
-                    "I10_unreasonable_requests": {"value": "The reviewer requests experiments that are not needed to demonstrate the stated claim."},
-                    "I11_non_response": {"value": "The review does not acknowledge critical evidence in the author response."},
-                    "I12_revisions_unacknowledged": {"value": "The review does not acknowledge the revisions"},
-                    "I13_other": {"value": "Some other technical violation of the peer review process."},
                     "justification": {"value": "required justification"},
                 }
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
+
         assert test_client.get_note(rating_edit['note']['id'])
+        review_issue_note = test_client.get_note(rating_edit['note']['id'])
+
+        expected_issue_options = [
+            'I2. The review exhibits one or more of the reviewer heuristics discussed in the ARR reviewer guidelines: https://aclrollingreview.org/reviewertutorial',
+            'I5. The review does not evince expertise.'
+        ]
+        report_evaluation_invitation_id = f'aclweb.org/ACL/ARR/2023/August/Submission3/Review_Issue_Report{review_issue_note.number}/-/{invitation_builder.REPORT_EVALUATION_NAME}'
+        report_evaluation_invitation = openreview_client.get_invitation(report_evaluation_invitation_id)
+        assert report_evaluation_invitation
+        assert report_evaluation_invitation.expdate == review_issue_note.cdate + (30 * 24 * 60 * 60 * 1000)
+        assert report_evaluation_invitation.edit['note']['replyto'] == review_issue_note.id
+        assert report_evaluation_invitation.edit['note']['content']['justified_issues']['value']['param']['enum'] == expected_issue_options
+
+        ac_client = openreview.api.OpenReviewClient(username='ac2@aclrollingreview.com', password=helpers.strong_password)
+        anon_groups = ac_client.get_groups(
+            prefix='aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chair_',
+            signatory='~AC_ARRTwo1'
+        )
+        ac_signature = anon_groups[0].id
+
+        report_evaluation_edit = ac_client.post_note_edit(
+            invitation=report_evaluation_invitation_id,
+            signatures=[ac_signature],
+            note=openreview.api.Note(
+                content={
+                    'justified_issues': {'value': [expected_issue_options[0]]},
+                    'justification': {'value': 'The reviewer heuristic complaint is justified.'}
+                }
+            )
+        )
+
+        report_evaluation_note = openreview_client.get_note(report_evaluation_edit['note']['id'])
+        assert report_evaluation_note.replyto == review_issue_note.id
+        assert report_evaluation_note.signatures == [ac_signature]
+        assert report_evaluation_note.content['justified_issues']['value'] == [expected_issue_options[0]]
+        assert report_evaluation_note.content['justification']['value'] == 'The reviewer heuristic complaint is justified.'
 
         meta_review_rating_edit = test_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Submission4/Meta_Review4/-/Meta-Review_Issue_Report',
