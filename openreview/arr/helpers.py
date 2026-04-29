@@ -48,6 +48,31 @@ from openreview.stages.arr_content import (
 
 from openreview.stages.default_content import comment_v2
 
+
+def update_emergency_assignment_deadline(client, venue, venue_id, emergency_assignment_deadline):
+    if not emergency_assignment_deadline:
+        return
+
+    group_client = venue.client if hasattr(venue, 'client') and hasattr(venue.client, 'post_group_edit') else client
+    parsed_deadline = openreview.tools.datetime.datetime.strptime(
+        emergency_assignment_deadline,
+        '%Y/%m/%d %H:%M'
+    )
+    group_client.post_group_edit(
+        invitation=venue.get_meta_invitation_id(),
+        readers=[venue.id],
+        writers=[venue.id],
+        signatures=[venue.id],
+        group=openreview.api.Group(
+            id=venue_id,
+            content={
+                'emergency_assignment_deadline': {
+                    'value': openreview.tools.datetime_millis(parsed_deadline)
+                }
+            }
+        )
+    )
+
 class ARRWorkflow(object):
     UPDATE_WAIT_TIME = 5000
     DEFAULT_AUTHOR_RESPONSE_EXTENSION_CRON = '0 */12 * * *'
@@ -170,6 +195,12 @@ class ARRWorkflow(object):
             "description": "What is the title of the finalized reviewer assignments?",
             "value-regex": ".*",
             "order": 18,
+            "required": False
+        },
+        "emergency_assignment_deadline": {
+            "description": "Assignments made on or after this date are marked as emergency.",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 58,
             "required": False
         },
         "ae_checklist_start_date": {
@@ -1410,6 +1441,25 @@ class ARRWorkflow(object):
                     writers=[venue.id],
                     signatures=[venue.id],
                     invitation=emg_score_inv
+                )
+
+            if role in [venue.get_reviewers_id(), venue.get_area_chairs_id()] and not openreview.tools.get_invitation(self.client_v2, f"{role}/-/Type"):
+                m._create_edge_invitation(f"{role}/-/Type")
+                type_inv = self.client_v2.get_invitation(f"{role}/-/Type")
+                type_inv.edit['weight']['param']['optional'] = True
+                type_inv.edit['label'] = {
+                    "param": {
+                        "regex": ".*",
+                        "optional": True,
+                        "deletable": True
+                    }
+                }
+                self.client_v2.post_invitation_edit(
+                    invitations=venue.get_meta_invitation_id(),
+                    readers=[venue.id],
+                    writers=[venue.id],
+                    signatures=[venue.id],
+                    invitation=type_inv
                 )
 
             for name in edge_invitation_names:

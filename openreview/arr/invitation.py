@@ -394,8 +394,24 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_assignment_invitation(self, committee_id, submission_content=None):
-        return self.venue_invitation_builder.set_assignment_invitation(committee_id, submission_content)
+    def set_assignment_invitation(self, committee_id, submission_content=None, cdate=None):
+        self.venue_invitation_builder.set_assignment_invitation(
+            committee_id,
+            submission_content=submission_content,
+            cdate=cdate
+        )
+        invitation = self.client.get_invitation(self.venue.get_assignment_id(committee_id, deployed=True))
+
+        committee_name = self.venue.get_committee_name(committee_id)
+        if committee_name not in self.venue.reviewer_roles and committee_name not in self.venue.area_chair_roles:
+            return invitation
+
+        arr_process = self.get_process_content('process/assignment_post_process.py')
+        if invitation.process == arr_process:
+            return invitation
+
+        invitation.process = arr_process
+        return self.save_invitation(invitation, replacement=True)
 
     def set_group_matching_setup_invitations(self, committee_id):
         return self.venue_invitation_builder.set_group_matching_setup_invitations(committee_id)
