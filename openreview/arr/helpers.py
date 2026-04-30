@@ -1542,6 +1542,10 @@ class ARRStage(object):
                     Participants.AREA_CHAIRS_ASSIGNED,
                     Participants.AUTHORS
                 ],
+                'note_to_chairs': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
                 'best_paper_ae_justification': [
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                     Participants.AREA_CHAIRS_ASSIGNED
