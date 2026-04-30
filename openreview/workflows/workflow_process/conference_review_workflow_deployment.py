@@ -364,7 +364,7 @@ The OpenReview Team
     feedback_invitation = note.invitations[0].replace('/-/', '/') + '/-/Feedback'
 
     # create feedback form
-    inv = client.post_invitation_edit(
+    client.post_invitation_edit(
         invitations=feedback_invitation,
         signatures=[support_user],
         content = {

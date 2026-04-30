@@ -51,7 +51,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
 Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
             )
 
-        #send email to support if commment comes from PCs
+        # send email to support if comment comes from PCs
         if comment.signatures[0].startswith('~'):
             print('Sending email to support')
             if venue_id:
@@ -97,11 +97,11 @@ To view the feedback, click here: https://openreview.net/forum?id={forum_note.id
 
 **Likelihood to recommend:** {comment.content['recommendation_likelihood']['value']}
 
-**Strengths:** {comment.content['strengths']['value']}
+**Strengths:** {comment.content.get('strengths', {}).get('value', '')}
 
-**Pain points:** {comment.content['pain_points']['value']}
+**Pain points:** {comment.content.get('pain_points', {}).get('value', '')}
 
-**Other comments:** {comment.content['other_comments']['value']}
+**Other comments:** {comment.content.get('other_comments', {}).get('value', '')}
 '''
 
         # send feedback to support
@@ -113,9 +113,9 @@ To view the feedback, click here: https://openreview.net/forum?id={forum_note.id
 Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
 
         client.post_message(
-                invitation=f'{support_user}/-/Edit',
-                signature=support_user,
-                recipients=[f'{support_user}/Recipients'],
-                subject=subject,
-                message=message
-            )
+            invitation=f'{support_user}/-/Edit',
+            signature=support_user,
+            recipients=[f'{support_user}/Recipients'],
+            subject=subject,
+            message=message
+        )

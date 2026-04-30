@@ -176,8 +176,7 @@ class TestTasks():
                     'comparison_to_previous_experience': { 'value': 'Better' },
                     'recommendation_likelihood': { 'value': 4 },
                     'strengths': { 'value': 'The new dashboard makes it easy to find the actions I need.' },
-                    'pain_points': { 'value': 'Configuring reviewer assignments took longer than expected.' },
-                    'other_comments': { 'value': 'Thanks for the continued improvements!' }
+                    'pain_points': { 'value': 'Configuring reviewer assignments took longer than expected.' }
                 }
             )
         )

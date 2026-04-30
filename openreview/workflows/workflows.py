@@ -820,7 +820,7 @@ class Workflows():
                                 },
                                 'recommendation_likelihood': {
                                     'order': 3,
-                                    'description': 'How likely are you to recommend OpenReview to colleagues based on this experience? (0 = not at all likely, 5 = extremely likely)',
+                                    'description': 'How likely are you to recommend OpenReview to colleagues based on this experience? (1 = not at all likely, 5 = extremely likely)',
                                     'value': {
                                         'param': {
                                             'type': 'integer',
