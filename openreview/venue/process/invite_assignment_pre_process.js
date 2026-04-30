@@ -13,6 +13,7 @@ async function process(client, edge, invitation) {
   const conflictPolicy = domain.content?.[`${committeeRole}_conflict_policy`]?.value
   const conflictNYears = domain.content?.[`${committeeRole}_conflict_n_years`]?.value
   const quota = domain.content?.[`submission_assignment_max_${committeeRole}`]?.value
+  const profileReqs = domain.content.profile_minimum_requirements?.value
 
   if (edge.ddate && edge.label !== inviteLabel) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Cannot cancel the invitation since it has status: "${edge.label}"` }))
@@ -84,6 +85,11 @@ async function process(client, edge, invitation) {
       if (assignmentLabel) {
         return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user is an official reviewer` }))
       }
+    }
+
+    // Check for complete profile, if no profile then go to pending sign up
+    if (profileReqs && !client.tools.checkProfileMinimumRequirements(userProfile, profileReqs)) {
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user has an incomplete profile according to venue standards` }))
     }
   }
 
