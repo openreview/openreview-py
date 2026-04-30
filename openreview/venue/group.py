@@ -371,6 +371,11 @@ class GroupBuilder(object):
         if self.venue.is_template_related_workflow() and venue_group.content:
             update_content = False # avoid updating the content on every deployment for template related workflows
         if update_content:
+
+            description = f'''Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria. [Learn more in the documentation](https://docs.openreview.net/new-venue-ui-beta/overview).
+
+For questions, assistance, or feedback, use the **Comment** or **Feedback** buttons in your [**venue configuration request**](https://openreview.net/forum?id={self.venue.request_form_id}) to reach the OpenReview team.''' if self.venue.is_template_related_workflow() else ''
+
             self.client.post_group_edit(
                 invitation = self.venue.get_meta_invitation_id(),
                 readers = [self.venue.venue_id],
@@ -379,7 +384,7 @@ class GroupBuilder(object):
                 group = openreview.api.Group(
                     id = self.venue_id,
                     content = update_content,
-                    description = 'Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria. You can find more information [here](https://docs.openreview.net/new-venue-ui-beta/overview).'
+                    description = description
                 )
             )
 

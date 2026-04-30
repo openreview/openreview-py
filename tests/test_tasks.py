@@ -91,6 +91,8 @@ class TestTasks():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment', count=1)
 
+        assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Feedback')
+
         messages = openreview_client.get_messages(subject='Your venue, Tasks 2025, is available in OpenReview')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'programchair@tasks.cc'
@@ -159,6 +161,45 @@ class TestTasks():
         assert openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Decision')
         assert openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Withdrawal')
         assert openreview_client.get_invitation('Tasks.cc/2025/Conference/-/Desk_Rejection')
+
+        # PC submits feedback about the new venue management UI
+        feedback_invitation_id = f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Feedback'
+        assert openreview_client.get_invitation(feedback_invitation_id)
+
+        feedback_edit = pc_client.post_note_edit(
+            invitation=feedback_invitation_id,
+            signatures=['~ProgramChair_Tasks1'],
+            note=openreview.api.Note(
+                replyto=request.id,
+                content={
+                    'overall_rating': { 'value': 4 },
+                    'comparison_to_previous_experience': { 'value': 'Better' },
+                    'recommendation_likelihood': { 'value': 4 },
+                    'strengths': { 'value': 'The new dashboard makes it easy to find the actions I need.' },
+                    'pain_points': { 'value': 'Configuring reviewer assignments took longer than expected.' },
+                    'other_comments': { 'value': 'Thanks for the continued improvements!' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=feedback_edit['id'])
+
+        feedback_note = openreview_client.get_note(feedback_edit['note']['id'])
+        assert feedback_note.content['overall_rating']['value'] == 4
+        assert feedback_note.content['comparison_to_previous_experience']['value'] == 'Better'
+        assert feedback_note.content['recommendation_likelihood']['value'] == 4
+        assert feedback_note.forum == request.id
+        assert feedback_note.readers == ['openreview.net/Support', 'Tasks.cc/2025/Conference']
+
+        # PC receives an acknowledgement email
+        messages = openreview_client.get_messages(subject='Feedback received for your venue: Tasks 2025')
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'programchair@tasks.cc'
+
+        # Support receives a notification email
+        messages = openreview_client.get_messages(subject='Feedback received for venue: Tasks 2025')
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'support@openreview.net'
 
     def test_redeploy_with_past_dates(self, openreview_client, helpers):
 
