@@ -191,6 +191,53 @@ return {
       return metaReviewReplies?.length??0;
       `
     },
+    areaChairStatusPropertiesAllowed: {
+      number: ['number'],
+      name: ['areaChairProfile.preferredName'],
+      seniorAreaChairs: ['seniorAreaChair.seniorAreaChairId'],
+
+      assignedPaperCount: `
+        return row.notes?.length ?? 0
+      `,
+
+      completedACChecklistCount: `
+        return (row.notes ?? []).filter((paper) => {
+          return (paper?.note?.details?.replies ?? []).some((reply) => {
+            return (reply?.invitations ?? []).some((invitation) => {
+              return invitation.includes('Action_Editor_Checklist')
+            })
+          })
+        }).length
+      `,
+
+      missingACChecklistCount: `
+        return (row.notes ?? []).filter((paper) => {
+          return !(paper?.note?.details?.replies ?? []).some((reply) => {
+            return (reply?.invitations ?? []).some((invitation) => {
+              return invitation.includes('Action_Editor_Checklist')
+            })
+          })
+        }).length
+      `,
+
+      missingMetaReviewCount: `
+        return (row.notes?.length ?? 0) - (row.numCompletedMetaReviews ?? 0)
+      `,
+    },
+    sacStatuspropertiesAllowed: {
+      number: ['number'],
+      name: ['sacProfile.preferredName'],
+      email: ['sacProfile.preferredEmail'],
+
+      numPapersWithMissingMetaReviews: `
+        const assignedNotes = row.notes ?? []
+        return assignedNotes.filter((note) => {
+          const assignedAreaChairs = note.metaReviewData?.areaChairs?.length ?? 0
+          const submittedMetaReviews = note.metaReviewData?.metaReviews?.length ?? 0
+          return submittedMetaReviews < assignedAreaChairs
+        }).length
+      `,
+    },
     reviewerEmailFuncs: [
       {
         label: 'Reviewers with assignments', filterFunc: `
