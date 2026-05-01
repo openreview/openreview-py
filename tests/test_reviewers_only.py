@@ -528,7 +528,9 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
         assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']
         assert 'keywords' not in submission_inv.edit['note']['content']
         content_keys = submission_inv.edit['note']['content'].keys()
-        assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
+        assert all(field in content_keys for field in ['title', 'authors', 'TLDR', 'abstract', 'pdf'])
+        assert 'authorids' not in content_keys
+        assert submission_inv.edit['note']['content']['authors']['value']['param']['type'] == 'author{}'
         assert submission_inv.edit['note']['license']['param']['enum'] == [
             {
                 'value': 'CC BY-NC-ND 4.0',
@@ -558,7 +560,8 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
         assert revision_inv and 'subject_area' not in invitation_content
         assert 'keywords' in invitation_content
         content_keys = invitation_content.keys()
-        assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
+        assert all(field in content_keys for field in ['title', 'authors', 'TLDR', 'abstract', 'pdf'])
+        assert 'authorids' not in content_keys
         assert 'readers' not in invitation_content['authors']
 
         notifications_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Notifications')
@@ -975,13 +978,27 @@ For more details, please check the following links:
 
         for i in range(1,11):
 
+            andrea_domain = domains[i % 10]
+            domain_name = andrea_domain.split('.')[0].capitalize()
             note = openreview.api.Note(
                 license = 'CC BY-NC-SA 4.0',
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Andrea_' + domains[i % 10].split('.')[0].capitalize() + '1'] },
-                    'authors': { 'value': ['SomeFirstName User', 'Andrea ' + domains[i % 10].split('.')[0].capitalize()] },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': f'Andrea {domain_name}',
+                                'username': f'~Andrea_{domain_name}1',
+                                'institutions': [{ 'domain': andrea_domain, 'country': 'US' }]
+                            }
+                        ]
+                    },
                     'subject_area': { 'value': '3D from multi-view and sensors' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -990,8 +1007,11 @@ For more details, please check the following links:
             )
 
             if i == 5:
-                note.content['authors']['value'].append('ReviewerOne ABCD')
-                note.content['authorids']['value'].append('~ReviewerOne_ABCD1')
+                note.content['authors']['value'].append({
+                    'fullname': 'ReviewerOne ABCD',
+                    'username': '~ReviewerOne_ABCD1',
+                    'institutions': [{ 'domain': 'abcd.cc', 'country': 'US' }]
+                })
 
             test_client.post_note_edit(invitation='ABCD.cc/2025/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
@@ -1099,7 +1119,7 @@ For more details, please check the following links:
         assert len(submissions) == 10
         assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Program_Committee', 'ABCD.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['authors']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
-        assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert 'authorids' not in submissions[0].content
         assert 'readers' in submissions[0].content['pdf']
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
@@ -1115,12 +1135,6 @@ For more details, please check the following links:
                 'content_readers': {
                     'value': {
                         'authors': {
-                            'readers': [
-                                'ABCD.cc/2025/Conference',
-                                'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
-                            ]
-                        },
-                        'authorids': {
                             'readers': [
                                 'ABCD.cc/2025/Conference',
                                 'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
@@ -1194,8 +1208,13 @@ For more details, please check the following links:
         existing_edit = edits[0]
         
         # Modify the edit to add the new author
-        existing_edit.note.content['authorids']['value'] = list(submission.content['authorids']['value']) + ['~NewAuthor_Example1']
-        existing_edit.note.content['authors']['value'] = list(submission.content['authors']['value']) + ['NewAuthor Example']
+        existing_edit.note.content['authors']['value'] = list(submission.content['authors']['value']) + [
+            {
+                'fullname': 'NewAuthor Example',
+                'username': '~NewAuthor_Example1',
+                'institutions': [{ 'domain': 'example.com', 'country': 'US' }]
+            }
+        ]
         
         # Set readers and writers to None so the API populates them automatically with the new author
         existing_edit.readers = None
@@ -1599,7 +1618,7 @@ For more details, please check the following links:
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Program_Committee', 'ABCD.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['authors']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
-        assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert 'authorids' not in submissions[0].content
         assert not 'readers' in submissions[0].content['pdf']
         assert submissions[0].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
 

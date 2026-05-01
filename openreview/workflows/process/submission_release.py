@@ -64,22 +64,25 @@ def process(client, invitation):
 
         venue = openreview.tools.decision_to_venue(short_name, decision_value, accept_options)
 
+        updated_content = {
+            'authors': {
+                'readers': { 'delete': True }
+            },
+            'venueid': {
+                'value': venue_id if note_accepted else rejected_venue_id
+            },
+            'venue': {
+                'value': venue
+            }
+        }
+        if 'authorids' in submission.content:
+            updated_content['authorids'] = {
+                'readers': { 'delete': True }
+            }
+
         updated_note = openreview.api.Note(
             id=submission.id,
-            content={
-                'authors': {
-                    'readers': { 'delete': True }
-                },
-                'authorids': {
-                    'readers': { 'delete': True }
-                },
-                'venueid': {
-                    'value': venue_id if note_accepted else rejected_venue_id
-                },
-                'venue': {
-                    'value': venue
-                }
-            }
+            content=updated_content
         )
 
         if submission.odate is None:

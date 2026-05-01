@@ -129,8 +129,15 @@ class TestAssignCommitteeOpenDeadline():
                 content={
                     'title': { 'value': f'XYZ Paper title {i}' },
                     'abstract': { 'value': f'XYZ abstract {i}' },
-                    'authorids': { 'value': ['~SomeFirstName_User1'] },
-                    'authors': { 'value': ['SomeFirstName User'] },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            }
+                        ]
+                    },
                     'keywords': { 'value': ['key'] },
                     'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },

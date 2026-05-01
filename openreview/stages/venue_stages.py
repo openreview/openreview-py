@@ -89,7 +89,8 @@ class SubmissionStage(object):
             second_deadline_remove_fields=[],
             commitments_venue=False,
             description=None,
-            withdraw_additional_fields={}
+            withdraw_additional_fields={},
+            unified_authors=False
         ):
 
         self.start_date = start_date
@@ -127,6 +128,7 @@ class SubmissionStage(object):
         self.commitments_venue = commitments_venue
         self.description = description
         self.withdraw_additional_fields = withdraw_additional_fields
+        self.unified_authors = unified_authors
 
     def get_readers(self, conference, number, decision=None, accept_options=None):
 
@@ -274,6 +276,11 @@ class SubmissionStage(object):
         elif api_version == '2':
             content = deepcopy(default_content.submission_v2)
 
+            if self.unified_authors:
+                del content['authors']
+                del content['authorids']
+                content['authors'] = deepcopy(default_content.submission_v2_unified_authors)
+
             if self.subject_areas:
                 content['subject_areas'] = {
                     'order' : 5,
@@ -301,7 +308,7 @@ class SubmissionStage(object):
             for key, value in self.additional_fields.items():
                 content[key] = value
 
-            if self.force_profiles:
+            if self.force_profiles and not self.unified_authors:
                 content['authorids'] = {
                     'order': 3,
                     'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
@@ -384,7 +391,11 @@ class SubmissionStage(object):
         return content
     
     def get_hidden_field_names(self):
-        return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
+        if self.double_blind and not self.author_names_revealed:
+            default_hidden = ['authors'] if self.unified_authors else ['authors', 'authorids']
+        else:
+            default_hidden = []
+        return default_hidden + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.now() < self.due_date
@@ -588,20 +599,26 @@ class SubmissionRevisionStage():
             content[key] = value
 
         if self.allow_author_reorder == AuthorReorder.ALLOW_REORDER:
-            content['authors'] = {
-                'value': {
-                    'param': {
-                        'type': 'string[]',
-                        'const': ['${{6/id}/content/authors/value}'],
-                        'hidden': True,
-                    }
-                },
-                'order': 3
-            }
-            content['authorids'] = {
-                'value': ['${{4/id}/content/authorids/value}'],
-                'order':4
-            }
+            if conference and conference.submission_stage.unified_authors:
+                content['authors'] = {
+                    'value': ['${{4/id}/content/authors/value}'],
+                    'order': 3
+                }
+            else:
+                content['authors'] = {
+                    'value': {
+                        'param': {
+                            'type': 'string[]',
+                            'const': ['${{6/id}/content/authors/value}'],
+                            'hidden': True,
+                        }
+                    },
+                    'order': 3
+                }
+                content['authorids'] = {
+                    'value': ['${{4/id}/content/authorids/value}'],
+                    'order':4
+                }
         elif self.allow_author_reorder == AuthorReorder.DISALLOW_EDIT:
             if 'authors' in content:
                 del content['authors']

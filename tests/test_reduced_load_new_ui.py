@@ -167,12 +167,19 @@ class TestReducedLoadNewUI():
             content={
                 'title': { 'value': 'Test Paper for RL Conference' },
                 'abstract': { 'value': 'This is a test abstract for the RL Conference submission.' },
-                'authorids': { 'value': ['~Author_RL1'] },
-                'authors': { 'value': ['Author RL'] },
+                'authors': {
+                    'value': [
+                        {
+                            'fullname': 'Author RL',
+                            'username': '~Author_RL1',
+                            'institutions': [{ 'domain': 'mail.cc', 'country': 'US' }]
+                        }
+                    ]
+                },
                 'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                 'keywords': { 'value': ['Reinforcement Learning', 'Artificial Intelligence'] },
                 'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },                
+                'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
             }
         )
 
