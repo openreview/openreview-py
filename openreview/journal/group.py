@@ -76,6 +76,7 @@ class GroupBuilder(object):
             'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
             'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },
             'preferred_emails_invitation_id': { 'value': self.journal.get_preferred_emails_invitation_id() },
+            'journal_request_id': { 'value': self.journal.request_form_id }
         }
 
         if self.journal.get_certifications():

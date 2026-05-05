@@ -268,6 +268,8 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
             )
         )
 
+        journal_group = openreview_client.get_group('DMLR')
+        assert 'journal_request_id' in journal_group.content and journal_group.content['journal_request_id']['value'] == request_form['note']['id']
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
