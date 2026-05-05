@@ -46,6 +46,7 @@ class Workflows():
         self.set_conference_review_comment()
         self.set_conference_review_status_comment()
         self.set_conference_review_internal_status()
+        self.set_conference_feedback_form()
 
     def get_process_content(self, file_path):
         process = None
@@ -680,6 +681,199 @@ class Workflows():
                                 }
                             },
                             'readers': [support_group_id],
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def set_conference_feedback_form(self):
+
+        support_group_id = self.support_group_id
+        feedback_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Feedback'
+
+        invitation = Invitation(id=feedback_invitation_id,
+            invitees=[support_group_id],
+            readers=[support_group_id],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            content={
+                'comment_process_script': {
+                    'value': self.get_process_content('workflow_process/venue_comment_process.py')
+                }
+            },
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_id': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.*'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${2/content/noteNumber/value}' + '/-/Feedback',
+                    'signatures': [self.super_id],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': [support_group_id],
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'description': 'We would love to hear your feedback on the new venue management UI. Please share your thoughts on what is working well, what could be improved, and any features you would like to see added. Your input will help us continue to improve the experience for program chairs.',
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                'items': [
+                                    { 'value': support_group_id, 'optional': True },
+                                    { 'prefix': '~.*', 'optional': True}
+                                ]
+                            }
+                        },
+                        'readers': ['${2/note/readers}'],
+                        'writers': [support_group_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${6/content/noteNumber/value}' + '/-/Feedback',
+                                    'optional': True
+                                }
+                                },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': {
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}'
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': [support_group_id, '${5/content/venue_id/value}'],
+                            'writers': ['${3/signatures}'],
+                            'content': {
+                                'overall_rating': {
+                                    'order': 1,
+                                    'description': 'How would you rate your overall experience with managing your venue? (1 = very poor, 5 = excellent)',
+                                    'value': {
+                                        'param': {
+                                            'type': 'integer',
+                                            'enum': [
+                                                { 'value': 1, 'description': '1: Very poor - Could not navigate the UI; documentation did not help; needed OR support for basic tasks'},
+                                                { 'value': 2, 'description': '2: Poor - Struggled to navigate the UI, but documentation helped; some OR support needed'},
+                                                { 'value': 3, 'description': '3: Fair - Some features were confusing, but figured out navigation over time'},
+                                                { 'value': 4, 'description': '4: Good - Mostly able to run the conference with little assistance'},
+                                                { 'value': 5, 'description': '5: Excellent - Intuitive and easy to understand'}
+                                            ],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'recommendation_likelihood': {
+                                    'order': 2,
+                                    'description': 'How likely are you to recommend OpenReview to colleagues based on this experience? (1 = not at all likely, 5 = extremely likely)',
+                                    'value': {
+                                        'param': {
+                                            'type': 'integer',
+                                            'enum': [
+                                                { 'value': 1, 'description': '1: Very unlikely'},
+                                                { 'value': 2, 'description': '2: Unlikely'},
+                                                { 'value': 3, 'description': '3: Neutral'},
+                                                { 'value': 4, 'description': '4: Likely'},
+                                                { 'value': 5, 'description': '5: Very likely'}
+                                            ],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'support_resources_accessed': {
+                                    'order': 3,
+                                    'description': 'Which forms of support did you access while managing your venue? Select all that apply.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'enum': [
+                                                'OR Support',
+                                                'OR documentation site',
+                                                'OR GitHub',
+                                                'Stage descriptions',
+                                                'External sources (LLM, colleagues, etc)',
+                                                'None of the above'
+                                            ],
+                                            'input': 'checkbox'
+                                        }
+                                    }
+                                },
+                                'strengths': {
+                                    'order': 4,
+                                    'description': 'What did you like about your venue management experience? Tell us about the parts of the platform that work well for you.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                },
+                                'pain_points': {
+                                    'order': 5,
+                                    'description': 'What was the most frustrating part of the experience? Please describe any bugs, unclear labels, or unexpected behavior you encountered.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                },
+                                'other_comments': {
+                                    'order': 6,
+                                    'description': 'Any other comments? Please share any other thoughts you have about your experience, including any additional feedback or improvements that did not fit into the previous questions.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
