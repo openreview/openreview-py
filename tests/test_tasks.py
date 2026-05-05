@@ -173,10 +173,11 @@ class TestTasks():
                 replyto=request.id,
                 content={
                     'overall_rating': { 'value': 4 },
-                    'comparison_to_previous_experience': { 'value': 'Better' },
                     'recommendation_likelihood': { 'value': 4 },
+                    'support_resources_accessed': { 'value': ['OR Support', 'OR documentation site', 'Stage descriptions'] },
                     'strengths': { 'value': 'The new dashboard makes it easy to find the actions I need.' },
-                    'pain_points': { 'value': 'Configuring reviewer assignments took longer than expected.' }
+                    'pain_points': { 'value': 'Configuring reviewer assignments took longer than expected.' },
+                    'other_comments': { 'value': 'Looking forward to continued improvements.' }
                 }
             )
         )
@@ -185,8 +186,8 @@ class TestTasks():
 
         feedback_note = openreview_client.get_note(feedback_edit['note']['id'])
         assert feedback_note.content['overall_rating']['value'] == 4
-        assert feedback_note.content['comparison_to_previous_experience']['value'] == 'Better'
         assert feedback_note.content['recommendation_likelihood']['value'] == 4
+        assert feedback_note.content['support_resources_accessed']['value'] == ['OR Support', 'OR documentation site', 'Stage descriptions']
         assert feedback_note.forum == request.id
         assert feedback_note.readers == ['openreview.net/Support', 'Tasks.cc/2025/Conference']
 
@@ -194,11 +195,29 @@ class TestTasks():
         messages = openreview_client.get_messages(subject='Feedback received for your venue: Tasks 2025')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'programchair@tasks.cc'
+        assert messages[0]['content']['text'] == f'''Thank you for providing feedback on the new venue management UI. We appreciate you taking the time to share your thoughts and will use your input to continue improving the experience for program chairs.
+
+To view the feedback, click here: https://openreview.net/forum?id={request.id}&noteId={feedback_note.id}'''
 
         # Support receives a notification email
         messages = openreview_client.get_messages(subject='Feedback received for venue: Tasks 2025')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'support@openreview.net'
+        assert messages[0]['content']['text'] == f'''Feedback was posted to a service request.
+
+**Overall rating:** 4
+
+**Recommendation likelihood:** 4
+
+**Support resources accessed:** OR Support, OR documentation site, Stage descriptions
+
+**Strengths:** The new dashboard makes it easy to find the actions I need.
+
+**Pain points:** Configuring reviewer assignments took longer than expected.
+
+**Other comments:** Looking forward to continued improvements.
+
+Workflow timeline: https://openreview.net/group/edit?id=Tasks.cc/2025/Conference'''
 
     def test_redeploy_with_past_dates(self, openreview_client, helpers):
 

@@ -787,65 +787,65 @@ class Workflows():
                             'content': {
                                 'overall_rating': {
                                     'order': 1,
-                                    'description': 'How would you rate your overall experience with the new venue management UI? (1 = very poor, 5 = excellent)',
+                                    'description': 'How would you rate your overall experience with managing your venue? (1 = very poor, 5 = excellent)',
                                     'value': {
                                         'param': {
                                             'type': 'integer',
                                             'enum': [
-                                                { 'value': 1, 'description': '1 - Very poor'},
-                                                { 'value': 2, 'description': '2 - Poor'},
-                                                { 'value': 3, 'description': '3 - Neutral'},
-                                                { 'value': 4, 'description': '4 - Good'},
-                                                { 'value': 5, 'description': '5 - Excellent'}
-                                            ],
-                                            'input': 'radio'
-                                        }
-                                    }
-                                },
-                                'comparison_to_previous_experience': {
-                                    'order': 2,
-                                    'description': 'Compared to your previous experience with OpenReview, is the new UI better, worse, or about the same?',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'enum': [
-                                                'Better',
-                                                'About the same',
-                                                'Worse',
-                                                'This is my first time using OpenReview'
+                                                { 'value': 1, 'description': '1: Very poor - Could not navigate the UI; documentation did not help; needed OR support for basic tasks'},
+                                                { 'value': 2, 'description': '2: Poor - Struggled to navigate the UI, but documentation helped; some OR support needed'},
+                                                { 'value': 3, 'description': '3: Fair - Some features were confusing, but figured out navigation over time'},
+                                                { 'value': 4, 'description': '4: Good - Mostly able to run the conference with little assistance'},
+                                                { 'value': 5, 'description': '5: Excellent - Intuitive and easy to understand'}
                                             ],
                                             'input': 'radio'
                                         }
                                     }
                                 },
                                 'recommendation_likelihood': {
-                                    'order': 3,
+                                    'order': 2,
                                     'description': 'How likely are you to recommend OpenReview to colleagues based on this experience? (1 = not at all likely, 5 = extremely likely)',
                                     'value': {
                                         'param': {
                                             'type': 'integer',
                                             'enum': [
-                                                { 'value': 1, 'description': '1 - Very unlikely'},
-                                                { 'value': 2, 'description': '2 - Unlikely'},
-                                                { 'value': 3, 'description': '3 - Neutral'},
-                                                { 'value': 4, 'description': '4 - Likely'},
-                                                { 'value': 5, 'description': '5 - Very likely'}
+                                                { 'value': 1, 'description': '1: Very unlikely'},
+                                                { 'value': 2, 'description': '2: Unlikely'},
+                                                { 'value': 3, 'description': '3: Neutral'},
+                                                { 'value': 4, 'description': '4: Likely'},
+                                                { 'value': 5, 'description': '5: Very likely'}
                                             ],
                                             'input': 'radio'
                                         }
                                     }
                                 },
+                                'support_resources_accessed': {
+                                    'order': 3,
+                                    'description': 'Which forms of support did you access while managing your venue? Select all that apply.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'enum': [
+                                                'OR Support',
+                                                'OR documentation site',
+                                                'OR GitHub',
+                                                'Stage descriptions',
+                                                'External sources (LLM, colleagues, etc)',
+                                                'None of the above'
+                                            ],
+                                            'input': 'checkbox'
+                                        }
+                                    }
+                                },
                                 'strengths': {
                                     'order': 4,
-                                    'description': 'What do you like most about OpenReview? Tell us about the parts of the platform that work well for you.',
+                                    'description': 'What did you like about your venue management experience? Tell us about the parts of the platform that work well for you.',
                                     'value': {
                                         'param': {
                                             'type': 'string',
                                             'maxLength': 200000,
                                             'markdown': True,
-                                            'input': 'textarea',
-                                            'optional': True,
-                                            'deletable': True
+                                            'input': 'textarea'
                                         }
                                     }
                                 },
@@ -857,9 +857,7 @@ class Workflows():
                                             'type': 'string',
                                             'maxLength': 200000,
                                             'markdown': True,
-                                            'input': 'textarea',
-                                            'optional': True,
-                                            'deletable': True
+                                            'input': 'textarea'
                                         }
                                     }
                                 },
@@ -871,9 +869,7 @@ class Workflows():
                                             'type': 'string',
                                             'maxLength': 200000,
                                             'markdown': True,
-                                            'input': 'textarea',
-                                            'optional': True,
-                                            'deletable': True
+                                            'input': 'textarea'
                                         }
                                     }
                                 }

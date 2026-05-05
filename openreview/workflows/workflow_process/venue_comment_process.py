@@ -91,18 +91,15 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
 To view the feedback, click here: https://openreview.net/forum?id={forum_note.id}&noteId={comment.id}'''
         )
 
-        feedback_content = f'''Overall rating: {comment.content['overall_rating']['value']}
+        feedback_lines = []
+        for field, field_data in comment.content.items():
+            value = field_data.get('value', '')
+            if isinstance(value, list):
+                value = ', '.join(str(v) for v in value)
+            label = field.replace('_', ' ').capitalize()
+            feedback_lines.append(f'**{label}:** {value}')
 
-**Comparison to previous experience:** {comment.content['comparison_to_previous_experience']['value']}
-
-**Likelihood to recommend:** {comment.content['recommendation_likelihood']['value']}
-
-**Strengths:** {comment.content.get('strengths', {}).get('value', '')}
-
-**Pain points:** {comment.content.get('pain_points', {}).get('value', '')}
-
-**Other comments:** {comment.content.get('other_comments', {}).get('value', '')}
-'''
+        feedback_content = '\n\n'.join(feedback_lines)
 
         # send feedback to support
         subject = f'''Feedback received for venue: {forum_note.content['abbreviated_venue_name']['value']}'''
