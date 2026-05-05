@@ -257,7 +257,8 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': additional_readers },
-            'decision_option': { 'value': 'Accepted' }
+            'decision_option': { 'value': 'Accepted' },
+            'decision_venue_id': { 'value': venue_id }
         }
     )
 
@@ -271,7 +272,8 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': additional_readers },
-            'decision_option': { 'value': 'Rejected' }
+            'decision_option': { 'value': 'Rejected' },
+            'decision_venue_id': { 'value': venue.get_rejected_submission_venue_id() }
         }
     )
 

@@ -1737,6 +1737,15 @@ If you would like to change your decision, please follow the link in the previou
                                 'enum': ['Accepted', 'Rejected']
                             }
                         }
+                    },
+                    'decision_venue_id': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*'
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1756,9 +1765,6 @@ If you would like to change your decision, please follow the link in the previou
                         'decision_option': {
                             'value': '${4/content/decision_option/value}'
                         }
-                        # 'source': {
-                        #     'value': {'with_decision_accept': True}
-                        # }
                     },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -1824,8 +1830,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'venueid': {
                                     'value': {
                                         'param': {
-                                            'type': 'string',
-                                            'regex': '.*'
+                                            'const': '${8/content/decision_venue_id/value}'
                                         }
                                     }
                                 },

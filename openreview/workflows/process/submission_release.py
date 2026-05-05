@@ -19,7 +19,6 @@ def process(client, invitation):
     submission_name = domain.content['submission_name']['value']
     authors_name = domain.content['authors_name']['value']
     decision_name = domain.content.get('decision_name', {}).get('value', 'Decision')
-    rejected_venue_id = domain.content['rejected_venue_id']['value']
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
     accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
@@ -62,9 +61,6 @@ def process(client, invitation):
             },
             'authorids': {
                 'readers': { 'delete': True } if reveal_authors else [venue_id, f'{venue_id}/{submission_name}{submission.number}/{authors_name}']
-            },
-            'venueid': {
-                'value': venue_id if note_accepted else rejected_venue_id
             },
             'venue': {
                 'value': venue
