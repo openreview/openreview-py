@@ -75,8 +75,7 @@ class GroupBuilder(object):
             'submission_id': { 'value': self.journal.get_author_submission_id() },
             'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
             'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },
-            'preferred_emails_invitation_id': { 'value': self.journal.get_preferred_emails_invitation_id() },
-            'journal_request_id': { 'value': self.journal.request_form_id }
+            'preferred_emails_invitation_id': { 'value': self.journal.get_preferred_emails_invitation_id() }
         }
 
         if self.journal.get_certifications():
@@ -91,6 +90,8 @@ class GroupBuilder(object):
             content['journal_to_conference_certification'] = { 'value': self.journal.get_journal_to_conference_certification() }
         if self.journal.get_website_url('videos'):
             content['videos_url'] = { 'value': self.journal.get_website_url('videos') }
+        if self.journal.request_form_id:
+            content['journal_request_id'] = { 'value': self.journal.request_form_id }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
