@@ -739,7 +739,8 @@ class Workflows():
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': [support_group_id],
                     'invitees': ['${3/content/venue_id/value}'],
-                    'description': 'We would love to hear your feedback on the new venue management UI. Please share your thoughts on what is working well, what could be improved, and any features you would like to see added. Your input will help us continue to improve the experience for program chairs.',
+                    'maxReplies': 1,
+                    'description': 'We would love to hear your feedback about your experience managing your venue on OpenReview. Please share any comments, suggestions, or feedback you have about your experience, including any features you found particularly helpful, any parts of the process you found frustrating or unclear, and any other thoughts you have about how we can improve the OpenReview experience for venue organizers in the future.',
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
@@ -769,11 +770,7 @@ class Workflows():
                                 }
                                 },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': {
-                                'param': {
-                                    'withForum': '${6/content/noteId/value}'
-                                }
-                            },
+                            'replyto': '${4/content/noteId/value}',
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
@@ -792,8 +789,8 @@ class Workflows():
                                         'param': {
                                             'type': 'integer',
                                             'enum': [
-                                                { 'value': 1, 'description': '1: Very poor - Could not navigate the UI; documentation did not help; needed OR support for basic tasks'},
-                                                { 'value': 2, 'description': '2: Poor - Struggled to navigate the UI, but documentation helped; some OR support needed'},
+                                                { 'value': 1, 'description': '1: Very poor - Could not navigate the UI; documentation did not help; needed OpenReview support for basic tasks'},
+                                                { 'value': 2, 'description': '2: Poor - Struggled to navigate the UI, but documentation helped; some OpenReview support needed'},
                                                 { 'value': 3, 'description': '3: Fair - Some features were confusing, but figured out navigation over time'},
                                                 { 'value': 4, 'description': '4: Good - Mostly able to run the conference with little assistance'},
                                                 { 'value': 5, 'description': '5: Excellent - Intuitive and easy to understand'}
@@ -804,7 +801,7 @@ class Workflows():
                                 },
                                 'recommendation_likelihood': {
                                     'order': 2,
-                                    'description': 'How likely are you to recommend OpenReview to colleagues based on this experience? (1 = not at all likely, 5 = extremely likely)',
+                                    'description': 'How likely are you to recommend OpenReview to colleagues based on this experience? (1 = very unlikely, 5 = very likely)',
                                     'value': {
                                         'param': {
                                             'type': 'integer',
@@ -826,10 +823,10 @@ class Workflows():
                                         'param': {
                                             'type': 'string[]',
                                             'enum': [
-                                                'OR Support',
-                                                'OR documentation site',
-                                                'OR GitHub',
-                                                'Stage descriptions',
+                                                'OpenReview support team',
+                                                'OpenReview documentation site',
+                                                'OpenReview GitHub',
+                                                'Workflow step timeline descriptions',
                                                 'External sources (LLM, colleagues, etc)',
                                                 'None of the above'
                                             ],
@@ -837,9 +834,9 @@ class Workflows():
                                         }
                                     }
                                 },
-                                'strengths': {
+                                'positives': {
                                     'order': 4,
-                                    'description': 'What did you like about your venue management experience? Tell us about the parts of the platform that work well for you.',
+                                    'description': 'What went well with your experience with the OpenReview platform? Please describe any features you found particularly helpful, or anything that went smoothly during your experience.',
                                     'value': {
                                         'param': {
                                             'type': 'string',
@@ -851,7 +848,7 @@ class Workflows():
                                 },
                                 'pain_points': {
                                     'order': 5,
-                                    'description': 'What was the most frustrating part of the experience? Please describe any bugs, unclear labels, or unexpected behavior you encountered.',
+                                    'description': 'What parts of the experience were unclear, frustrating, or blocking? For example the venue editing, submission, recruitment, assignments, or decision process. Specific examples will help us improve the tool. Please describe any bugs, unclear labels, or unexpected behavior you encountered.',
                                     'value': {
                                         'param': {
                                             'type': 'string',
@@ -863,7 +860,7 @@ class Workflows():
                                 },
                                 'other_comments': {
                                     'order': 6,
-                                    'description': 'Any other comments? Please share any other thoughts you have about your experience, including any additional feedback or improvements that did not fit into the previous questions.',
+                                    'description': 'Use this space to share any other feedback that is not reflected in the questions above. We are especially interested in any features you wish had been available, or any support resources you wish had been available, during your experience managing your venue.',
                                     'value': {
                                         'param': {
                                             'type': 'string',
