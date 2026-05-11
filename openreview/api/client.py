@@ -19,6 +19,7 @@ import re
 import time
 import jwt
 import json
+import csv
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from ..openreview import MfaRequiredException
@@ -2953,6 +2954,25 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def request_raw_expertise(self, expertise_request, baseurl=None):
+        """
+        Calls the Expertise API with a raw expertise request.
+
+        :param expertise_request: Dictionary containing the expertise request to be sent to the Expertise API
+        :type expertise_request: dict
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the response from the Expertise API
+        :rtype: dict
+        """
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
     def request_expertise(self, 
                         name, 
                         group_id, 
@@ -3338,7 +3358,7 @@ class OpenReviewClient(object):
         print('get expertise jobs', response_json)
         return response_json
     
-    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
+    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json'):
 
         print('get expertise results', baseurl, job_id)
         base_url = baseurl if baseurl else self.baseurl
@@ -3346,7 +3366,7 @@ class OpenReviewClient(object):
 
         if base_url.startswith('http://localhost'):
             print('return expertise results localhost, return []')
-            return { 'results': [] }
+            return iter([]) if format == 'csv' else { 'results': [] }
 
         if wait_for_complete:
             call_count = 0
@@ -3361,13 +3381,19 @@ class OpenReviewClient(object):
                 call_count += 1
 
             if 'Completed' == status_text:
-                return self.get_expertise_results(job_id, baseurl=base_url)
+                return self.get_expertise_results(job_id, baseurl=base_url, format=format)
             if 'Error' in status_text:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
+            if format == 'csv':
+                response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
+                response = self.__handle_response(response)
+                print('return expertise results', baseurl, job_id)
+                return csv.DictReader(response.iter_lines(decode_unicode=True))
+
             response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
             response = self.__handle_response(response)
             print('return expertise results', baseurl, job_id)
