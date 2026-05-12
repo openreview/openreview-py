@@ -237,6 +237,9 @@ class GroupBuilder(object):
         if self.venue.submission_stage.subject_areas:
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
 
+        if self.venue.submission_stage.authors_with_institutions:
+            content['authors_with_institutions'] = { 'value': self.venue.submission_stage.authors_with_institutions }
+        
         if self.venue.use_area_chairs:
             content['area_chair_roles'] = { 'value': self.venue.area_chair_roles }
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
