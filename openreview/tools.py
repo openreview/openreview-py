@@ -296,6 +296,35 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
 
     return profiles
 
+def check_profile_minimum_requirements(profile, min_requirements):
+    """
+    Check if a profile meets the minimum requirements specified by a venue.
+
+    Supported keys in min_requirements:
+    - 'history': profile must have at least 1 history entry
+    - 'relations': profile must have at least 1 relations entry
+    - 'expertise': profile must have at least 1 expertise entry
+    - 'publications': profile must have at least 1 publication
+    - 'active': profile must be active
+
+    :param profile: Profile to check against requirements
+    :type profile: Profile
+    :param min_requirements: Dictionary  mapping requirement name to True/False
+    :type min_requirements: dict
+    :return: True if profile meets all requirements, False otherwise
+    """
+    for field, required in min_requirements.items():
+        if not required:
+            continue
+
+        if field in ('relations', 'expertise', 'history', 'publications'):
+            if not profile.content.get(field):
+                return False
+        elif field == 'active':
+            if not profile.state or 'active' not in profile.state.lower():
+                return False
+        # else: unsupported field, ignore
+    return True
 
 def get_group(client, id):
     """
