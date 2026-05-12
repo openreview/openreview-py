@@ -332,7 +332,7 @@ class Matching(object):
         # Get profile info from all the authors
         all_authorids = []
         for submission in submissions:
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
             all_authorids = all_authorids + authorids
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True)
@@ -358,7 +358,7 @@ class Matching(object):
 
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
             # Get author profiles
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
 
             # Extract domains from each authorprofile
             author_ids = set()

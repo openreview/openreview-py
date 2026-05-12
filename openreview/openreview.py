@@ -2747,6 +2747,16 @@ class Note(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
+    @property
+    def authors(self):
+        """Returns the list of author display names."""
+        return list((self.content or {}).get('authors') or [])
+
+    @property
+    def authorids(self):
+        """Returns the list of author profile IDs / emails."""
+        return list((self.content or {}).get('authorids') or [])
+
     def to_json(self):
         """
         Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.

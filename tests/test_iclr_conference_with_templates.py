@@ -220,13 +220,27 @@ For more details, please check the following links:
             helpers.create_user(f'eddie@{domain}', 'Eddie', f'{domain.split(".")[0].capitalize()}')
 
         for i in range(1,11):
+            eddie_domain = domains[i % 10]
+            domain_name = eddie_domain.split('.')[0].capitalize()
             note = openreview.api.Note(
                 license = 'CC BY 4.0',
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Eddie_' + domains[i % 10].split('.')[0].capitalize() + '1'] },
-                    'authors': { 'value': ['SomeFirstName User', 'Eddie ' + domains[i % 10].split('.')[0].capitalize()] },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': f'Eddie {domain_name}',
+                                'username': f'~Eddie_{domain_name}1',
+                                'institutions': [{ 'domain': eddie_domain, 'country': 'US' }]
+                            }
+                        ]
+                    },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -234,8 +248,11 @@ For more details, please check the following links:
                 }
             )
             if i == 1 or i == 10:
-                note.content['authors']['value'].append('SAE ICLROne')
-                note.content['authorids']['value'].append('~SAE_ICLROne1')
+                note.content['authors']['value'].append({
+                    'fullname': 'SAE ICLROne',
+                    'username': '~SAE_ICLROne1',
+                    'institutions': [{ 'domain': 'iclr.cc', 'country': 'US' }]
+                })
 
             test_client.post_note_edit(invitation='ICLR.cc/2026/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
@@ -350,7 +367,6 @@ note={under review}
                 content = {
                     'title': { 'value': submission.content['title']['value'] + ' license revision' },
                     'abstract': { 'value': submission.content['abstract']['value'] },
-                    'authorids': { 'value': submission.content['authorids']['value'] },
                     'authors': { 'value': submission.content['authors']['value'] },
                     'keywords': {'value': submission.content['keywords']['value']},
                     'pdf': { 'value': submission.content['pdf']['value'] },
@@ -367,7 +383,7 @@ note={under review}
         assert submission.readers == ['everyone']
         assert 'readers' in submission.content['pdf'] and submission.content['pdf']['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
         assert 'readers' in submission.content['authors'] and submission.content['authors']['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
-        assert 'readers' in submission.content['authorids'] and submission.content['authorids']['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
+        assert 'authorids' not in submission.content
         assert '_bibtex' in submission.content
         assert 'author={Anonymous}' in submission.content['_bibtex']['value']
         valid_bibtex = '''@inproceedings{
@@ -753,7 +769,7 @@ def test_review_stage(client, openreview_client, helpers):
     assert not submission.pdate
     assert 'readers' not in submission.content['pdf']
     assert 'readers' in submission.content['authors'] and submission.content['authors']['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
-    assert 'readers' in submission.content['authorids'] and submission.content['authorids']['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
+    assert 'authorids' not in submission.content
 
     # create child invitations
     now = datetime.datetime.now()
