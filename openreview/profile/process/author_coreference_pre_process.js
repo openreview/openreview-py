@@ -1,6 +1,9 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
-  
+
+  const normalizeName = (s) =>
+    typeof s === 'string' ? s.normalize('NFKC').replace(/[’ʼʹ]/g, "'") : s;
+
   const authorIndex = edit.content.author_index.value;
   const authorId = edit.content.author_id.value;
   const authorName = edit.content.author_name.value;
@@ -8,7 +11,7 @@ async function process(client, edit, invitation) {
   if (Tools.prettyId(authorId) !== authorName) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author id ${authorId} doesn't match with the author name ${authorName}` }));
   }
-  
+
   const { notes } = await client.getNotes({ id: edit.note.id });
   const publication = notes[0];
 
@@ -24,7 +27,7 @@ async function process(client, edit, invitation) {
   const userProfile = profiles[0];
 
   const usernames = userProfile.content.names.map(name => name.username).filter(username => !!username);
-  const names = userProfile.content.names.map(name => name.fullname);
+  const names = userProfile.content.names.map(name => normalizeName(name.fullname));
 
   const usernameIndex = usernames.indexOf(authorId);
 
@@ -33,7 +36,7 @@ async function process(client, edit, invitation) {
   }
 
   const publicationAuthorName = publication.content.authors.value[authorIndex]?.fullname;
-  const nameIndex = names.indexOf(publicationAuthorName);
+  const nameIndex = names.indexOf(normalizeName(publicationAuthorName));
   if (nameIndex === -1) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${publicationAuthorName} from index ${authorIndex} doesn't match with the names listed in your profile` }));
   }

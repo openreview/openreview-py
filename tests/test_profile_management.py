@@ -1675,6 +1675,181 @@ computation and memory.
         assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': '~Sarah_Racz1'}
 
 
+    def test_orcid_authorship_claim_unicode_apostrophe(self, client, openreview_client, test_client, helpers):
+        # Crossref deposits ORCID credit-name values with U+2019 (RIGHT SINGLE
+        # QUOTATION MARK), but OpenReview profile names use U+0027 (straight
+        # apostrophe). The Authorship_Claim preprocess must normalize both sides
+        # before comparison so legitimate authors of Crossref-sourced publications
+        # can successfully claim authorship.
+
+        poster_client = helpers.create_user('apostrophe_poster@profile.org', 'Apostrophe', 'Poster')
+
+        edit = poster_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/ORCID.org/-/Record',
+            signatures = ['~Apostrophe_Poster1'],
+            content = {
+                'json': {
+                    'value': {
+                        'created-date': {'value': 1708964039610},
+                        'last-modified-date': {'value': 1708964039610},
+                        'source': {
+                            'source-orcid': None,
+                            'source-client-id': {
+                                'uri': 'https://orcid.org/client/0000-0001-8607-8906',
+                                'path': '0000-0001-8607-8906',
+                                'host': 'orcid.org',
+                            },
+                            'source-name': {'value': 'INSPIRE-HEP'},
+                            'assertion-origin-orcid': None,
+                            'assertion-origin-client-id': None,
+                            'assertion-origin-name': None,
+                        },
+                        'put-code': 154061861,
+                        'path': '/0000-0002-7416-5859/work/154061861',
+                        'title': {
+                            'title': {'value': 'Apostrophe normalization in author name matching'},
+                            'subtitle': None,
+                            'translated-title': None,
+                        },
+                        'journal-title': {'value': 'Test Journal'},
+                        'short-description': None,
+                        'citation': {
+                            'citation-type': 'bibtex',
+                            'citation-value': '@article{Test:2024,\n  author = "Poster, Apostrophe and O’Connor, Luke and Other, Bob"\n}\n',
+                        },
+                        'type': 'journal-article',
+                        'publication-date': {
+                            'year': {'value': '2024'},
+                            'month': {'value': '03'},
+                            'day': {'value': '01'},
+                        },
+                        'external-ids': {
+                            'external-id': [{
+                                'external-id-type': 'doi',
+                                'external-id-value': '10.1038/test-unicode-apostrophe',
+                                'external-id-normalized': {
+                                    'value': '10.1038/test-unicode-apostrophe',
+                                    'transient': True,
+                                },
+                                'external-id-normalized-error': None,
+                                'external-id-url': {
+                                    'value': 'http://dx.doi.org/10.1038/test-unicode-apostrophe',
+                                },
+                                'external-id-relationship': 'self',
+                            }],
+                        },
+                        'url': {'value': 'http://example.com/test-apostrophe-paper'},
+                        'contributors': {
+                            'contributor': [
+                                {
+                                    'contributor-orcid': None,
+                                    'credit-name': {'value': 'Poster, Apostrophe'},
+                                    'contributor-email': None,
+                                    'contributor-attributes': {
+                                        'contributor-sequence': 'first',
+                                        'contributor-role': 'author',
+                                    },
+                                },
+                                {
+                                    'contributor-orcid': None,
+                                    'credit-name': {'value': 'O’Connor, Luke'},
+                                    'contributor-email': None,
+                                    'contributor-attributes': {
+                                        'contributor-sequence': 'additional',
+                                        'contributor-role': 'author',
+                                    },
+                                },
+                                {
+                                    'contributor-orcid': None,
+                                    'credit-name': {'value': 'Other, Bob'},
+                                    'contributor-email': None,
+                                    'contributor-attributes': {
+                                        'contributor-sequence': 'additional',
+                                        'contributor-role': 'author',
+                                    },
+                                },
+                            ],
+                        },
+                        'language-code': None,
+                        'country': None,
+                        'visibility': 'public',
+                    }
+                }
+            },
+            note = openreview.api.Note(
+                external_id = 'doi:10.1038/test-unicode-apostrophe',
+                content={
+                    'title': {
+                        'value': 'Apostrophe normalization in author name matching',
+                    },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'Apostrophe Poster', 'username': '~Apostrophe_Poster1'},
+                            {'fullname': 'Luke O’Connor', 'username': ''},
+                            {'fullname': 'Bob Other', 'username': ''},
+                        ],
+                    },
+                    'venue': {
+                        'value': 'Test Journal',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        note = poster_client.get_note(edit['note']['id'])
+        # Precondition: the publication note kept U+2019 in author 1's fullname.
+        # Without that, the bug wouldn't reproduce and the test would be vacuous.
+        assert note.content['authors']['value'][1]['fullname'] == 'Luke O’Connor'
+
+        # Positive case: profile fullname uses U+0027, publication uses U+2019.
+        # With the normalizeName fix, the indexOf check succeeds and the claim
+        # is accepted.
+        luke_client = helpers.create_user('luke_oconnor@profile.org', 'Luke', "O'Connor")
+        luke_profile = openreview_client.get_profile('luke_oconnor@profile.org')
+        luke_id = luke_profile.id
+        luke_pretty = openreview.tools.pretty_id(luke_id)
+
+        edit = luke_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = [luke_id],
+            content = {
+                'author_index': { 'value': 1 },
+                'author_id': { 'value': luke_id },
+                'author_name': { 'value': luke_pretty },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = poster_client.get_note(note.id)
+        assert note.content['authors']['value'][1]['username'] == luke_id
+
+        # Negative case: a genuinely different name still rejects, and the error
+        # message preserves the un-normalized publication name so the user sees
+        # what was actually compared.
+        bob_other_client = helpers.create_user('bob_different@profile.org', 'Bob', 'Different')
+        bob_id = openreview_client.get_profile('bob_different@profile.org').id
+        bob_pretty = openreview.tools.pretty_id(bob_id)
+
+        with pytest.raises(openreview.OpenReviewException, match=r"The author name Bob Other from index 2 doesn\'t match with the names listed in your profile"):
+            bob_other_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+                signatures = [bob_id],
+                content = {
+                    'author_index': { 'value': 2 },
+                    'author_id': { 'value': bob_id },
+                    'author_name': { 'value': bob_pretty },
+                },
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+
     def test_remove_alternate_name(self, openreview_client, support_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
