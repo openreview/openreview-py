@@ -702,6 +702,9 @@ class Journal(object):
 
     def get_submission_length(self):
         return self.settings.get('submission_length', [])
+    
+    def get_min_profile_valid_state(self):
+        return self.settings.get('min_profile_valid_state', None)
 
     def get_website_url(self, key):
         return self.settings.get('website_urls', {}).get(key)
