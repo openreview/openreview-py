@@ -3358,6 +3358,20 @@ class OpenReviewClient(object):
         print('get expertise jobs', response_json)
         return response_json
     
+    def get_expertise_metadata(self, job_id, baseurl=None):
+
+        print('get expertise metadata', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            print('get expertise metadata localhost, return {}')
+            return {}
+
+        response = self.session.get(base_url + '/expertise/metadata', params = {'jobId': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        response_json = response.json()
+        print('get expertise metadata', response_json)
+        return response_json
+
     def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json'):
 
         print('get expertise results', baseurl, job_id)

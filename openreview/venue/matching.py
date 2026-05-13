@@ -623,6 +623,10 @@ class Matching(object):
                 # CSV columns: entityA, entityB, score; downstream builders expect [entityB, entityA, score]
                 scores = [[row['entityB'], row['entityA'], row['score']] for row in result]
 
+                metadata = client.get_expertise_metadata(job_id['jobId'])
+                matching_status['no_profiles'] = metadata.get('no_profile', [])
+                matching_status['no_publications'] = metadata.get('no_publications', [])
+
                 if self.alternate_matching_group:
                     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
 

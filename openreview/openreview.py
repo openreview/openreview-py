@@ -2235,6 +2235,13 @@ class Client(object):
 
         return response.json()
 
+    def get_expertise_metadata(self, job_id, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.get(base_url + '/expertise/metadata', params = {'jobId': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def get_expertise_results(self, job_id, baseurl=None, format='json'):
 
         base_url = baseurl if baseurl else self.baseurl
