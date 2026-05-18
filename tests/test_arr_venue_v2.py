@@ -3764,6 +3764,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "needs_ethics_review": {'value': 'No'},
                     "reported_issues": {'value': ['No']},
                     "note_to_authors": {'value': 'No'},
+                    "note_to_chairs": {'value': 'No'},
                     "great_reviews": {'value': 'ABCD'},
                     "poor_reviews": {'value': 'EFGH'},
                     "best_paper_ae_justification": {'value': 'Great and poor reviews'},
@@ -3779,6 +3780,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert meta_review['content']['reported_issues']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
         assert meta_review['content']['note_to_authors']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
+        assert meta_review['content']['note_to_chairs']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['best_paper_ae_justification']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['ethical_concerns']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['needs_ethics_review']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
@@ -5693,6 +5695,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "author_identity_guess": { "value": 1 },
                     "needs_ethics_review": {'value': 'No'},
                     "reported_issues": {'value': ['No']},
+                    "note_to_chairs": {'value': 'No'},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
@@ -5884,6 +5887,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert test_submission.content['flagged_for_ethics_review']['value']
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
+        assert meta_review.content['note_to_chairs']['readers'] == ['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/August/Submission4/Area_Chairs']
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in meta_review.readers
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' not in meta_review.readers
         request_page(
