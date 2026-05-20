@@ -150,7 +150,7 @@ arr_submission_content = {
                     "NLP engineering experiment",
                     "Reproduction study",
                     "Approaches to low-resource settings",
-                    "Approaches low compute settings-efficiency",
+                    "Approaches to low-compute settings (efficiency)",
                     "Publicly available software and/or pre-trained models",
                     "Data resources",
                     "Data analysis",
