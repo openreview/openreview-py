@@ -281,7 +281,7 @@ arr_submission_content = {
                 "optional": True
             }
         },
-        "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB).",
+        "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB). Any anonymized concurrent submissions by the same authors, referenced within the paper, can also be provided in this field.",
         "order": 23
     },
     "preprint": {
