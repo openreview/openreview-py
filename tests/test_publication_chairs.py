@@ -239,7 +239,3 @@ class TestPublicationChairs():
             assert len(decision_notes) == 1
             expected_decision = 'Accept (Oral)' if submission.number % 2 == 1 else 'Reject'
             assert decision_notes[0].content['decision']['value'] == expected_decision
-
-    def test_accepted_submissions_release(self, openreview_client, helpers):
-
-        
