@@ -1465,6 +1465,11 @@ For more details, please check the following links:
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
         assert len(notes) == 3
         assert notes[-1].content['title']['value'] == 'Program Committee Assignment Deployment Failed'
+
+        last_note = notes[-1]
+        last_note_edit = openreview_client.get_note_edits(note_id=last_note.id)[0]
+
+        helpers.await_queue_edit(openreview_client, edit_id=last_note_edit.id)
         
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Comment posted to your request for service: The ABCD Conference')
         assert len(messages) == 6

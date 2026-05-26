@@ -2390,7 +2390,7 @@ OpenReview Team'''
 
             venue_group = client.get_group(venue_id)
             
-            if hasattr(venue_group, 'domain') and venue_group.content:
+            if hasattr(venue_group, 'domain') and venue_group.content and 'journal_request_id' not in venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
 
