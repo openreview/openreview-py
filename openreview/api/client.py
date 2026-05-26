@@ -3406,7 +3406,12 @@ class OpenReviewClient(object):
                 response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
                 response = self.__handle_response(response)
                 print('return expertise results', baseurl, job_id)
-                return csv.DictReader(response.iter_lines(decode_unicode=True))
+                def _iter_csv_results(response):
+                    try:
+                        yield from csv.DictReader(response.iter_lines(decode_unicode=True))
+                    finally:
+                        response.close()
+                return _iter_csv_results(response)
 
             response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
             response = self.__handle_response(response)
