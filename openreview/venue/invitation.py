@@ -399,7 +399,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         self.save_invitation(expire_invitation, replacement=True)
         return invitation
 
-    def set_post_submission_invitation(self):
+    def set_post_submission_invitation(self, source=None):
 
         if self.venue.is_template_related_workflow():
             return
@@ -464,6 +464,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             }
         )
+
+        if source:
+            submission_invitation.content = {
+                'source': {
+                    'value': source
+                }
+            }
 
         note_content['_bibtex'] = {
             'value': {
