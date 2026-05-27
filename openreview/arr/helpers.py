@@ -1230,7 +1230,7 @@ class ARRWorkflow(object):
                         'submission_revision_name': 'Blind_Submission_License_Agreement',
                         'accepted_submissions_only': 'Enable revision for all submissions',
                         'submission_author_edition': 'Do not allow any changes to author lists',
-                        'submission_revision_remove_options': list(set(arr_submission_content.keys()) - 
+                        'submission_revision_remove_options': list(set(venue.submission_stage.get_content(api_version='2').keys()) -
                         {
                             'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement',
                         }),
