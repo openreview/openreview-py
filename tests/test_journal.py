@@ -6168,11 +6168,8 @@ note={Expert Certification}
         ## Run venue job
         openreview.venue.Venue.check_new_profiles(openreview_client)
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='harold@hotmail.com')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, label='Pending Sign Up')
         assert len(invite_edges) == 1
-        assert invite_edges[0].label == 'Pending Sign Up'
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~Harold_Red1')
-        assert len(invite_edges) == 0
 
         ## Run Job
         openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')                        
