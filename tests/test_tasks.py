@@ -173,10 +173,10 @@ class TestTasks():
                 replyto=request.id,
                 content={
                     'overall_rating': { 'value': 4 },
-                    'recommendation_likelihood': { 'value': 4 },
                     'support_resources_accessed': { 'value': ['OpenReview support team', 'OpenReview documentation site', 'Workflow step timeline descriptions'] },
                     'positives': { 'value': 'The new dashboard makes it easy to find the actions I need.' },
                     'pain_points': { 'value': 'Configuring reviewer assignments took longer than expected.' },
+                    'new_feature_requests': { 'value': 'Bulk reviewer assignment from a CSV file.' },
                     'other_comments': { 'value': 'Looking forward to continued improvements.' }
                 }
             )
@@ -186,7 +186,6 @@ class TestTasks():
 
         feedback_note = openreview_client.get_note(feedback_edit['note']['id'])
         assert feedback_note.content['overall_rating']['value'] == 4
-        assert feedback_note.content['recommendation_likelihood']['value'] == 4
         assert feedback_note.content['support_resources_accessed']['value'] == ['OpenReview support team', 'OpenReview documentation site', 'Workflow step timeline descriptions']
         assert feedback_note.forum == request.id
         assert feedback_note.readers == ['openreview.net/Support', 'Tasks.cc/2025/Conference']
@@ -207,13 +206,13 @@ To view the feedback, click here: https://openreview.net/forum?id={request.id}&n
 
 **Overall rating:** 4
 
-**Recommendation likelihood:** 4
-
 **Support resources accessed:** OpenReview support team, OpenReview documentation site, Workflow step timeline descriptions
 
 **Positives:** The new dashboard makes it easy to find the actions I need.
 
 **Pain points:** Configuring reviewer assignments took longer than expected.
+
+**New feature requests:** Bulk reviewer assignment from a CSV file.
 
 **Other comments:** Looking forward to continued improvements.
 
