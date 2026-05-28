@@ -784,40 +784,23 @@ class Workflows():
                             'content': {
                                 'overall_rating': {
                                     'order': 1,
-                                    'description': 'How would you rate your overall experience with managing your venue? (1 = very poor, 5 = excellent)',
+                                    'description': 'How would you rate your overall experience with managing your venue? (5 = excellent, 1 = very poor)',
                                     'value': {
                                         'param': {
                                             'type': 'integer',
                                             'enum': [
-                                                { 'value': 1, 'description': '1: Very poor - Could not navigate the UI; documentation did not help; needed OpenReview support for basic tasks'},
-                                                { 'value': 2, 'description': '2: Poor - Struggled to navigate the UI, but documentation helped; some OpenReview support needed'},
-                                                { 'value': 3, 'description': '3: Fair - Some features were confusing, but figured out navigation over time'},
+                                                { 'value': 5, 'description': '5: Excellent - Intuitive and easy to understand'},
                                                 { 'value': 4, 'description': '4: Good - Mostly able to run the conference with little assistance'},
-                                                { 'value': 5, 'description': '5: Excellent - Intuitive and easy to understand'}
-                                            ],
-                                            'input': 'radio'
-                                        }
-                                    }
-                                },
-                                'recommendation_likelihood': {
-                                    'order': 2,
-                                    'description': 'How likely are you to recommend OpenReview to colleagues based on this experience? (1 = very unlikely, 5 = very likely)',
-                                    'value': {
-                                        'param': {
-                                            'type': 'integer',
-                                            'enum': [
-                                                { 'value': 1, 'description': '1: Very unlikely'},
-                                                { 'value': 2, 'description': '2: Unlikely'},
-                                                { 'value': 3, 'description': '3: Neutral'},
-                                                { 'value': 4, 'description': '4: Likely'},
-                                                { 'value': 5, 'description': '5: Very likely'}
+                                                { 'value': 3, 'description': '3: Fair - Some features were confusing, but figured out navigation over time'},
+                                                { 'value': 2, 'description': '2: Poor - Struggled to navigate the UI, but documentation helped; some OpenReview support needed'},
+                                                { 'value': 1, 'description': '1: Very poor - Could not navigate the UI; documentation did not help; needed OpenReview support for basic tasks'}
                                             ],
                                             'input': 'radio'
                                         }
                                     }
                                 },
                                 'support_resources_accessed': {
-                                    'order': 3,
+                                    'order': 2,
                                     'description': 'Which forms of support did you access while managing your venue? Select all that apply.',
                                     'value': {
                                         'param': {
@@ -827,7 +810,9 @@ class Workflows():
                                                 'OpenReview documentation site',
                                                 'OpenReview GitHub',
                                                 'Workflow step timeline descriptions',
-                                                'External sources (LLM, colleagues, etc)',
+                                                'LLM (ChatGPT, Claude, etc)',
+                                                'Colleagues',
+                                                'Other external sources',
                                                 'None of the above'
                                             ],
                                             'input': 'checkbox'
@@ -835,7 +820,7 @@ class Workflows():
                                     }
                                 },
                                 'positives': {
-                                    'order': 4,
+                                    'order': 3,
                                     'description': 'What went well with your experience with the OpenReview platform? Please describe any features you found particularly helpful, or anything that went smoothly during your experience.',
                                     'value': {
                                         'param': {
@@ -847,7 +832,7 @@ class Workflows():
                                     }
                                 },
                                 'pain_points': {
-                                    'order': 5,
+                                    'order': 4,
                                     'description': 'What parts of the experience were unclear, frustrating, or blocking? For example the venue editing, submission, recruitment, assignments, or decision process. Specific examples will help us improve the tool. Please describe any bugs, unclear labels, or unexpected behavior you encountered.',
                                     'value': {
                                         'param': {
@@ -858,15 +843,29 @@ class Workflows():
                                         }
                                     }
                                 },
-                                'other_comments': {
-                                    'order': 6,
-                                    'description': 'Use this space to share any other feedback that is not reflected in the questions above. We are especially interested in any features you wish had been available, or any support resources you wish had been available, during your experience managing your venue.',
+                                'new_feature_requests': {
+                                    'order': 5,
+                                    'description': 'Are there any new features you would like to see in OpenReview? Please describe any features you wish had been available during your experience managing your venue.',
                                     'value': {
                                         'param': {
                                             'type': 'string',
                                             'maxLength': 200000,
                                             'markdown': True,
-                                            'input': 'textarea'
+                                            'input': 'textarea',
+                                            'optional': True
+                                        }
+                                    }
+                                },
+                                'other_comments': {
+                                    'order': 6,
+                                    'description': 'Use this space to share any other feedback that is not reflected in the questions above. We are especially interested in any support resources you wish had been available during your experience managing your venue.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea',
+                                            'optional': True
                                         }
                                     }
                                 }
