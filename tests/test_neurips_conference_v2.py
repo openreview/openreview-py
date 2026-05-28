@@ -801,7 +801,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Ethics_Reviewers/-/Recruitment', count=1)
 
-        group = client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
+        group = openreview_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
         assert group
         assert len(group.members) == 1
         assert 'reviewerethics@neurips.com' in group.members

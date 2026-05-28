@@ -17,6 +17,7 @@ import pprint
 import os
 import re
 import jwt
+import csv
 import traceback
 
 
@@ -2234,12 +2235,23 @@ class Client(object):
 
         return response.json()
 
-    def get_expertise_results(self, job_id, baseurl=None):
+    def get_expertise_metadata(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
+        response = self.session.get(base_url + '/expertise/metadata', params = {'jobId': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_expertise_results(self, job_id, baseurl=None, format='json'):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if format == 'csv':
+            response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
+            response = self.__handle_response(response)
+            return csv.DictReader(response.iter_lines(decode_unicode=True))
+
         response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
-
         return response.json()
 
 class Group(object):
