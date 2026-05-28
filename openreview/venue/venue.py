@@ -2502,16 +2502,16 @@ OpenReview Team'''
             job_id = res['jobId']
             print('Computing scores for active papers... Job ID: ', job_id)
 
-        results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
+        results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True, format='csv')
         print('Sparse scores retrieved')
 
         ## Score filtering
 
         unique_scores = []
         seen_pairs = set()
-        for r in results['results']:
-            paper_id_a = r.get('entityA', r.get('match_submission'))
-            paper_id_b = r.get('entityB', r.get('submission'))
+        for r in results:
+            paper_id_a = r['entityA']
+            paper_id_b = r['entityB']
             score = float(r['score'])
 
             # Remove self-matches
