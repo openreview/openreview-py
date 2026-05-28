@@ -2685,7 +2685,7 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
             f'ABCD.cc/2025/Conference/Submission{submissions[0].number}/Authors'
         ]
 
-        # Unhide PDF: edit Submission_Release content schema to set pdf readers back to everyone
+        # Unhide PDF: edit Submission_Release content schema to delete the pdf readers field from the note
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Submission_Release/Form_Fields',
             content={
@@ -2715,7 +2715,7 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
                             }
                         },
                         'pdf': {
-                            'readers': ['everyone']
+                            'readers': { 'param': { 'const': { 'delete': True } } }
                         }
                     }
                 }
@@ -2734,7 +2734,7 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=5)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
-        assert submissions[0].content['pdf']['readers'] == ['everyone']
+        assert 'readers' not in submissions[0].content['pdf']
 
     def test_reviewer_stats_computation(self, openreview_client, helpers):
 
