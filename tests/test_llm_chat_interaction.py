@@ -229,7 +229,7 @@ class TestLLMChatInteraction():
             signatures=['NeurIPS.cc/2026/Conference'],
             group=openreview.api.Group(
                 id='NeurIPS.cc/2026/Conference/AI_Review_Assistant',
-                readers=['NeurIPS.cc/2026/Conference', 'NeurIPS.cc/2026/Conference/LLM'],
+                readers=['NeurIPS.cc/2026/Conference', 'NeurIPS.cc/2026/Conference/AI_Review_Assistant'],
                 writers=['NeurIPS.cc/2026/Conference'],
                 signatures=['NeurIPS.cc/2026/Conference'],
                 signatories=['NeurIPS.cc/2026/Conference'],
