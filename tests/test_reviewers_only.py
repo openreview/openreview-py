@@ -2732,7 +2732,7 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=5)
 
         release_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release')
-        assert 'readers' not in release_invitation.edit['note']['content']['pdf']
+        assert release_invitation.edit['note']['content']['pdf'] == { 'delete': True }
 
     def test_reviewer_stats_computation(self, openreview_client, helpers):
 
