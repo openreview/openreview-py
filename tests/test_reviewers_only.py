@@ -2666,7 +2666,6 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
                 }
             }
         )
-        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission_Release/Form_Fields')
 
         # Re-trigger Submission_Release so the updated schema is applied to the released notes
         now = datetime.datetime.now()
@@ -2721,7 +2720,6 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
                 }
             }
         )
-        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission_Release/Form_Fields')
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
@@ -2733,8 +2731,8 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=5)
 
-        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
-        assert 'readers' not in submissions[0].content['pdf']
+        release_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release')
+        assert 'readers' not in release_invitation.edit['note']['content']['pdf']
 
     def test_reviewer_stats_computation(self, openreview_client, helpers):
 
