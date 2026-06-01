@@ -171,10 +171,12 @@ return {
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Vouch',
-                readers=[self.support_group_id],
+                readers=['everyone'],
                 writers=[self.support_group_id],
                 signatures=[self.support_group_id],
-                invitees=[self.support_group_id],
+                invitees=['~'],
+                preprocess=self.get_process_content('process/vouch_pre_process.py'),
+                process=self.get_process_content('process/vouch_process.py'),
                 tag={
                     'id': {
                         'param': {
