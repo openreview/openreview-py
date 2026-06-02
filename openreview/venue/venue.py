@@ -164,10 +164,11 @@ class Venue(object):
             self.use_area_chairs = True
             preferred_email_groups.append(self.get_area_chairs_id())
 
-        if 'senior_area_chairs_name' in request_note.content:  ## change this once we add support for SACs
-            self.senior_area_chairs_name = request_note.content['senior_area_chairs_name']['value']
+        if request_note.content.get('senior_area_chairs_support',{}).get('value'):
+            if 'senior_area_chair_groups_names' in request_note.content:
+                self.senior_area_chair_roles = request_note.content['senior_area_chair_groups_names']['value']
+                self.senior_area_chairs_name = self.senior_area_chair_roles[0]
             self.use_senior_area_chairs = True
-            self.senior_area_chair_roles = request_note.content.get('senior_area_chair_roles', {}).get('value', [self.senior_area_chairs_name])
             preferred_email_groups.append(self.get_senior_area_chairs_id())
 
         self.preferred_emails_groups = preferred_email_groups
@@ -399,6 +400,11 @@ class Venue(object):
 
     def anon_ethics_reviewers_name(self, pretty=True):
         return self.get_anon_committee_name(self.ethics_reviewers_name)
+
+    def get_senior_area_chairs_name(self, pretty=True):
+        if pretty:
+            return self.get_committee_name(self.senior_area_chairs_name, pretty)
+        return self.senior_area_chairs_name
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
@@ -1260,9 +1266,25 @@ Total Errors: {len(errors)}
         """
         invitation_prefix = self.support_user.replace('Support', 'Template')
 
+        if self.use_senior_area_chairs:
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_senior_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+
+            self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.senior_area_chairs_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
+                    'committee_name': { 'value': self.senior_area_chairs_name },
+                    'committee_pretty_name': { 'value': self.get_senior_area_chairs_name(pretty=True) }
+                },
+                await_process=True
+            )
+
         if self.use_area_chairs:
             for ac_role in self.area_chair_roles:
-                self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(name=ac_role), cdate=submission_deadline + (60*60*1000*24*7*2))
+                self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(name=ac_role), cdate=submission_deadline + (60*60*1000*24*7*2.1))
 
                 self.client.post_invitation_edit(
                     invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
@@ -1294,11 +1316,15 @@ Total Errors: {len(errors)}
 
     def setup_matching_invitations(self):
         """Create matching configuration invitations for reviewers and area chairs (if enabled).
-
         Sets up the matching invitations (affinity scores, conflicts, custom
         max papers, etc.) without computing scores. Use
         :meth:`setup_committee_matching` to also compute scores and conflicts.
         """
+
+        if self.use_senior_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_senior_area_chairs_id()), self.get_area_chairs_id())
+            venue_matching.setup_matching_invitations()
+
         if self.use_area_chairs:
             for ac_role in self.area_chair_roles:
                 venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id(name=ac_role)))
@@ -1310,10 +1336,14 @@ Total Errors: {len(errors)}
 
     def setup_all_committees_matching(self):
         """Run full matching setup (invitations, affinity scores, conflicts) for all committees.
-
         Sets up matching for area chairs (if enabled) and reviewers, including
         computing affinity scores and conflicts with default settings.
         """
+
+        if self.use_senior_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_senior_area_chairs_id()), self.get_area_chairs_id())
+            venue_matching.setup()
+
         if self.use_area_chairs:
             for ac_role in self.area_chair_roles:
                 venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id(name=ac_role)))
@@ -2385,7 +2415,7 @@ OpenReview Team'''
 
             venue_group = client.get_group(venue_id)
             
-            if hasattr(venue_group, 'domain') and venue_group.content:
+            if hasattr(venue_group, 'domain') and venue_group.content and 'journal_request_id' not in venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
 
@@ -2497,16 +2527,16 @@ OpenReview Team'''
             job_id = res['jobId']
             print('Computing scores for active papers... Job ID: ', job_id)
 
-        results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
+        results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True, format='csv')
         print('Sparse scores retrieved')
 
         ## Score filtering
 
         unique_scores = []
         seen_pairs = set()
-        for r in results['results']:
-            paper_id_a = r.get('entityA', r.get('match_submission'))
-            paper_id_b = r.get('entityB', r.get('submission'))
+        for r in results:
+            paper_id_a = r['entityA']
+            paper_id_b = r['entityB']
             score = float(r['score'])
 
             # Remove self-matches

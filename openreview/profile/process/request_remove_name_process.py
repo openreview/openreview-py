@@ -33,7 +33,7 @@ def process(client, edit, invitation):
     print("Check if the username appears in any publications")
     for username in usernames:
         api1_publications = [p for p in client_v1.get_all_notes(content={ 'authorids': username}) if username in p.content['authorids']]
-        api2_publications = [p for p in client.get_all_notes(content={ 'authorids': username}) if username in p.content.get('authorids', {}).get('value', [])]
+        api2_publications = [p for p in client.get_all_notes(content={ 'authorids': username}) if any(a.get('username') == username for a in p.authors)]
 
         print(f'Publications for {username}: {len(api1_publications) + len(api2_publications)}')
         if api1_publications or api2_publications:

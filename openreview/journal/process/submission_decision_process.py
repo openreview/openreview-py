@@ -2,8 +2,10 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
+    notify_eics = journal.should_notify_eics_for_decisions()
+
     ## Notify readers
-    journal.notify_readers(edit)
+    journal.notify_readers(edit, notify_eics=notify_eics)
 
     note=client.get_note(edit.note.id)
 

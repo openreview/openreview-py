@@ -91,6 +91,7 @@ class TestReviewersOnly():
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewer_groups_names': { 'value': ['Program_Committee'] },
                     'area_chair_groups_names': { 'value': ['Area_Chairs'] },
+                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'ABCD.cc/2024/Conference' },
                     'expected_submissions': { 'value': 1000 },
@@ -607,6 +608,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewer_groups_names': { 'value': ['Reviewers'] },
                     'area_chair_groups_names': { 'value': ['Area_Chairs'] },
+                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'ABCD.cc/2024/Conference' },
                     'expected_submissions': { 'value': 50 },
@@ -1439,6 +1441,11 @@ For more details, please check the following links:
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
         assert len(notes) == 3
         assert notes[-1].content['title']['value'] == 'Program Committee Assignment Deployment Failed'
+
+        last_note = notes[-1]
+        last_note_edit = openreview_client.get_note_edits(note_id=last_note.id)[0]
+
+        helpers.await_queue_edit(openreview_client, edit_id=last_note_edit.id)
         
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Comment posted to your request for service: The ABCD Conference')
         assert len(messages) == 6
@@ -1700,19 +1707,19 @@ For more details, please check the following links:
             )
 
         pc_client.post_invitation_edit(
-                invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
-                content = {
-                    'content': {
-                        'value': review_content
-                    },
-                    'rating_field_name': {
-                        'value': 'review_rating'
-                    },
-                    'confidence_field_name': {
-                        'value': 'review_confidence'
-                    }
+            invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+            content = {
+                'content': {
+                    'value': review_content
+                },
+                'rating_field_name': {
+                    'value': 'review_rating'
+                },
+                'confidence_field_name': {
+                    'value': 'review_confidence'
                 }
-            )
+            }
+        )
 
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')

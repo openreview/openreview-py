@@ -78,21 +78,34 @@ The OpenReview Team.
 
         publications = client.get_all_notes(content={ 'authorids': username})
         for publication in publications:
-            authors = []
-            authorids = []
+            authors_value = publication.content.get('authors', {}).get('value', [])
+            authorids_value = publication.content.get('authorids', {}).get('value', [])
+            is_author_object_format = bool(authors_value) and isinstance(authors_value[0], dict)
+
+            new_authors = []
+            new_authorids = []
             signatures = None
             readers = None
             writers = None
             needs_change = False
-            for index, author in enumerate(publication.content.get('authorids', {}).get('value')):
-                if username == author:
-                    authors.append(preferred_name)
-                    authorids.append(preferred_id)
-                    needs_change = True
-                else:
-                    if publication.content.get('authors') and len(publication.content['authors']['value']) > index:
-                        authors.append(publication.content['authors']['value'][index])
-                    authorids.append(publication.content['authorids']['value'][index])
+
+            if is_author_object_format:
+                for author in authors_value:
+                    if isinstance(author, dict) and author.get('username') == username:
+                        new_authors.append({ **author, 'fullname': preferred_name, 'username': preferred_id })
+                        needs_change = True
+                    else:
+                        new_authors.append(author)
+            else:
+                for index, author in enumerate(authorids_value):
+                    if username == author:
+                        new_authors.append(preferred_name)
+                        new_authorids.append(preferred_id)
+                        needs_change = True
+                    else:
+                        if authors_value and len(authors_value) > index:
+                            new_authors.append(authors_value[index])
+                        new_authorids.append(authorids_value[index])
 
             if username in publication.signatures:
                 signatures = [profile.id if g == username else g for g in publication.signatures]
@@ -103,9 +116,10 @@ The OpenReview Team.
 
             if needs_change:
                 content = {
-                    'authors': { 'value': authors },
-                    'authorids': { 'value': authorids }
+                    'authors': { 'value': new_authors }
                 }
+                if not is_author_object_format:
+                    content['authorids'] = { 'value': new_authorids }
                 if '_bibtex' in publication.content:
                     content['_bibtex'] = { 'value': publication.content['_bibtex']['value'].replace(openreview.tools.pretty_id(username), preferred_name) }
                 client.post_note_edit(
@@ -117,9 +131,9 @@ The OpenReview Team.
                             "value": "remove name process function",
                             "readers": [SUPPORT_USER_ID]
                         },
-                    },                     
+                    },
                     note = openreview.api.Note(
-                        id=publication.id, 
+                        id=publication.id,
                         content=content,
                         readers=readers,
                         writers=writers,
@@ -131,7 +145,7 @@ The OpenReview Team.
                     print('Updating invitation', invitation.id)
                     invitation_content = invitation.edit['note'].get('content', {})
                     if invitation.edit['note'].get('id') == publication.id and 'authorids' in invitation_content and username in invitation_content['authorids'].get('value', []):
-                        
+
                         authors = []
                         authorids = []
                         needs_change = False
@@ -143,8 +157,8 @@ The OpenReview Team.
                             else:
                                 if invitation_content['authors'].get('value') and len(invitation_content['authors']['value']) > index:
                                     authors.append(invitation_content['authors']['value'][index])
-                                authorids.append(invitation_content['authorids']['value'][index])                        
-                        
+                                authorids.append(invitation_content['authorids']['value'][index])
+
                         if needs_change:
                             print('Updating invitation', invitation.id)
                             client.post_invitation_edit(
@@ -156,7 +170,7 @@ The OpenReview Team.
                                         "value": "remove name process function",
                                         "readers": [SUPPORT_USER_ID]
                                     },
-                                },                                
+                                },
                                 invitation = openreview.api.Invitation(
                                     id=invitation.id,
                                     edit={
@@ -169,7 +183,7 @@ The OpenReview Team.
                                     }
                                 )
                             )
-        
+
         print('Change all the notes that contain the name to remove as signatures')
         signed_notes = client_v1.get_all_notes(signature=username)
         for note in signed_notes:

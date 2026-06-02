@@ -341,7 +341,7 @@ class TestWorkshopV2():
         messages = openreview_client.get_messages(to='peter@mail.com', subject='PRL ICAPS 2023 has received a new revision of your submission titled Paper title No Abstract Version 2')
         assert messages and len(messages) == 1
         # Test that abstract doesn't appear in PC Revision email
-        assert messages[0]['content']['text'].startswith('Your new revision of the submission to PRL ICAPS 2023 has been posted.\n\nTitle: Paper title No Abstract Version 2\n\nTo view your submission, click here:')
+        assert messages[0]['content']['text'].startswith('Your new revision of the submission to PRL ICAPS 2023 has been posted.\n\nTitle: Paper title No Abstract Version 2\n\nAuthors: SomeFirstName User, Peter SomeLastName, Andrew Mc\n\nTo view your submission, click here:')
 
     def test_setup_matching(self, client, openreview_client, helpers):
 

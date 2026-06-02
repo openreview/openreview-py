@@ -41,6 +41,7 @@ class TestAbstractDeadline():
                     'full_submission_deadline': { 'value': openreview.tools.datetime_millis(full_submission_due_date) },
                     'reviewer_groups_names': { 'value': ['Reviewers'] },
                     'area_chair_groups_names': { 'value': ['Area_Chairs'] },
+                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'expected_submissions': { 'value': 20 },
                     'venue_organizer_agreement': { 
                         'value': [
@@ -276,6 +277,7 @@ class TestAbstractDeadline():
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Deletion-0-1', count=4)
         helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Message-0-1', count=3)
 
         full_submission_invitations = pc_client.get_invitations(invitation='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission')
