@@ -704,7 +704,10 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
         assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']
-        assert openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
+        reviewers_group = openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
+        assert reviewers_group
+        ## reviewer_to_reviewer_anonymity defaults to False in TMLR, so reviewers remain visible to each other
+        assert reviewers_group.deanonymizers == [venue_id, f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers"]
         assert openreview_client.get_group(f"{venue_id}/Paper1/Action_Editors")
 
         note = openreview_client.get_note(note_id_1)
