@@ -4138,16 +4138,20 @@ The OpenReview Team.
             support_client.moderate_profile('~Vouchee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
             assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
 
-            ## A non-institutional (Active Automatic) user cannot vouch
+            ## A non-institutional (Active Automatic) user cannot vouch. We attempt it twice in
+            ## a row: the preprocess rejection must release the in-process lock so the immediate
+            ## retry is processed again (and rejected for the same reason) instead of failing with
+            ## an "already in process" error.
             autovoucher_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='autovoucher@gmail.com', password=helpers.strong_password)
-            with pytest.raises(openreview.OpenReviewException, match=r'your profile must be active'):
-                autovoucher_client.post_tag(
-                    openreview.api.Tag(
-                        invitation='openreview.net/Support/-/Vouch',
-                        signature='~Autovoucher_User1',
-                        profile='~Vouchee_User1'
+            for _ in range(2):
+                with pytest.raises(openreview.OpenReviewException, match=r'your profile must be active'):
+                    autovoucher_client.post_tag(
+                        openreview.api.Tag(
+                            invitation='openreview.net/Support/-/Vouch',
+                            signature='~Autovoucher_User1',
+                            profile='~Vouchee_User1'
+                        )
                     )
-                )
 
             ## The profile is still rejected
             assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
