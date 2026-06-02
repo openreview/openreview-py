@@ -51,6 +51,7 @@ class TestSLADSJournal():
                             "author_anonymity": True,
                             "eic_submission_notification": True,
                             "AE_anonymity": True,
+                            "reviewer_to_reviewer_anonymity": True,
                             "assignment_delay": 5,
                             "submission_name": "Submission",
                             "issn": "3051-3901",
@@ -193,7 +194,11 @@ Thanks,
         author_group=openreview_client.get_group("SLADS/Paper1/Authors")
         assert author_group
         assert author_group.members == ['~SomeFirstName_User1', '~Melisa_Amex1']
-        assert openreview_client.get_group("SLADS/Paper1/Reviewers")
+        reviewers_group = openreview_client.get_group("SLADS/Paper1/Reviewers")
+        assert reviewers_group
+        ## reviewer_to_reviewer_anonymity is enabled, so reviewers must NOT be able to deanonymize each other
+        assert reviewers_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+        assert reviewers_group.deanonymizers == ['SLADS', 'SLADS/Paper1/Action_Editors']
         ae_group = openreview_client.get_group("SLADS/Paper1/Action_Editors")
         assert ae_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
 

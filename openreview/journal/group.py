@@ -496,9 +496,12 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
 
         reviewers_group=openreview.tools.get_group(self.client, reviewers_group_id)
         if not reviewers_group:
+            reviewer_deanonymizers = [venue_id, action_editors_group_id]
+            if not self.journal.is_reviewer_to_reviewer_anonymous():
+                reviewer_deanonymizers.append(reviewers_group_id)
             reviewers_group=self.post_group(Group(id=reviewers_group_id,
                 readers=[venue_id, action_editors_group_id, reviewers_group_id],
-                deanonymizers=[venue_id, action_editors_group_id, reviewers_group_id],
+                deanonymizers=reviewer_deanonymizers,
                 nonreaders=[authors_group_id],
                 writers=[venue_id, action_editors_group_id],
                 signatures=[venue_id],

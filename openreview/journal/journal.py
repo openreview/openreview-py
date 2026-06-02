@@ -664,7 +664,12 @@ class Journal(object):
         return self.settings.get('author_anonymity', True)
     
     def is_action_editor_anonymous(self):
-        return self.settings.get('AE_anonymity', False)    
+        return self.settings.get('AE_anonymity', False)
+
+    def is_reviewer_to_reviewer_anonymous(self):
+        ## Whether reviewers are anonymous to each other. Defaults to False to preserve
+        ## the TMLR behavior where assigned reviewers can see one another's identities.
+        return self.settings.get('reviewer_to_reviewer_anonymity', False)
 
     def release_submission_after_acceptance(self):
         """Return whether submission content is made public after acceptance.
