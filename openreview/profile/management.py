@@ -202,6 +202,12 @@ return {
                         'param': {
                             'regex': '^~.*'
                         }
+                    },
+                    'label': {
+                        'param': {
+                            'regex': '.*',
+                            'optional': True
+                        }
                     }
                 },
                 web='''// Webfield component

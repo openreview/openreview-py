@@ -2831,9 +2831,10 @@ The OpenReview Team.
             openreview.api.Tag(
                 invitation='openreview.net/Support/-/Vouch',
                 signature='~Javier_Alternate_Last1',
-                profile='~Paul_Alternate_Last1'
+                profile='~Paul_Alternate_Last1',
+                label='Colleague|Massachusetts Institute of Technology'
             )
-        )        
+        )
 
         ## Add Registration note
         paul_client.post_note_edit(
@@ -4161,7 +4162,8 @@ The OpenReview Team.
                 openreview.api.Tag(
                     invitation='openreview.net/Support/-/Vouch',
                     signature='~Voucher_User1',
-                    profile='~Vouchee_User1'
+                    profile='~Vouchee_User1',
+                    label='Colleague|Massachusetts Institute of Technology'
                 )
             )
 
@@ -4172,6 +4174,7 @@ The OpenReview Team.
             tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')
             assert len(tags) == 1
             assert tags[0].signature == '~Voucher_User1'
+            assert tags[0].label == 'Colleague|Massachusetts Institute of Technology'
 
             ## A user that was activated through a vouch cannot vouch for others
             register_unmoderated_user('vouchee2@gmail.com', 'Voucheetwo', 'User')
@@ -4218,7 +4221,8 @@ The OpenReview Team.
                     openreview.api.Tag(
                         invitation='openreview.net/Support/-/Vouch',
                         signature='~Voucher_User1',
-                        profile=f'~{name}_User1'
+                        profile=f'~{name}_User1',
+                        label='Colleague|Massachusetts Institute of Technology'
                     )
                 )
                 helpers.await_queue_edit(openreview_client, edit_id=limit_tag.id)
