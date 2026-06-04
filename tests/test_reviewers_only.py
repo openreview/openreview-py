@@ -1,6 +1,7 @@
 import os
 import re
 import csv
+import time
 import pytest
 import random
 import datetime
@@ -8,6 +9,9 @@ import re
 import openreview
 from openreview.api import Note
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from openreview.api import OpenReviewClient
 
 class TestReviewersOnly():
@@ -45,31 +49,6 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/-/Senior_Meta_Reviewer_Role')
         assert openreview_client.get_invitation('openreview.net/-/Ethics_Reviewer_Role')
 
-        # edit invitation to allow redeployment for testing purposes
-        openreview_client.post_invitation_edit(
-            invitations='openreview.net/Support/-/Edit',
-            signatures=['~Super_User1'],
-            invitation=openreview.api.Invitation(
-                id = 'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
-                edit = {
-                    'note': {
-                        'content': {
-                            'redeployment': {
-                                'value': {
-                                    'param':{
-                                        'type': 'boolean',
-                                        'enum': [True, False],
-                                        'input': 'radio',
-                                        'optional': True
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            )
-        )
-
         template_group = openreview.tools.get_group(openreview_client, 'openreview.net/Template')
         assert not template_group.members
 
@@ -90,8 +69,6 @@ class TestReviewersOnly():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewer_groups_names': { 'value': ['Program_Committee'] },
-                    'area_chair_groups_names': { 'value': ['Area_Chairs'] },
-                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'ABCD.cc/2024/Conference' },
                     'expected_submissions': { 'value': 1000 },
@@ -105,7 +82,7 @@ class TestReviewersOnly():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                             'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                     }
@@ -611,9 +588,6 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewer_groups_names': { 'value': ['Reviewers'] },
-                    'area_chair_groups_names': { 'value': ['Area_Chairs'] },
-                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'ABCD.cc/2024/Conference' },
                     'expected_submissions': { 'value': 50 },
@@ -627,7 +601,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                             'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                     }
@@ -2443,6 +2417,60 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         
         messages = openreview_client.get_messages(subject='Test message to all accepted authors')
         assert len(messages) == 3
+
+    def test_message_accepted_authors_from_group_ui(self, openreview_client, helpers, request_page, selenium):
+        '''
+        Send a message to all accepted authors through the group edit UI.
+
+        The "Message All" button on /group/edit?id=<group> uses the venue level
+        {domain}/-/Message invitation and passes the group id (Authors/Accepted) as both
+        the recipient and the parentGroup. This exercises the parentGroup prefix so a
+        subgroup of the domain (rather than only the domain itself) can be used as parentGroup.
+        '''
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        ## the "Message All" button uses the venue level /-/Message invitation, whose parentGroup
+        ## must accept any group under the domain (prefix), not just the domain itself
+        message_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Message')
+        assert message_invitation.edit['invitation']['message']['parentGroup'] == { 'param': { 'prefix': 'ABCD.cc/2025/Conference', 'optional': True } }
+
+        accepted_group = openreview_client.get_group('ABCD.cc/2025/Conference/Authors/Accepted')
+        assert 'ABCD.cc/2025/Conference/Submission1/Authors' in accepted_group.members
+
+        request_page(selenium, 'http://localhost:3030/group/edit?id=ABCD.cc/2025/Conference/Authors/Accepted', pc_client, by=By.CLASS_NAME, wait_for_element='members-container')
+
+        ## click "Message All" to open the message modal
+        message_all_button = next((button for button in selenium.find_elements(By.CSS_SELECTOR, '.members-container button') if button.text.strip() == 'Message All'), None)
+        assert message_all_button, 'Message All button not found'
+        message_all_button.click()
+
+        modal = WebDriverWait(selenium, 10).until(EC.visibility_of_element_located((By.ID, 'message-group-members')))
+
+        subject_input = modal.find_element(By.NAME, 'subject')
+        subject_input.send_keys(Keys.CONTROL, 'a')
+        subject_input.send_keys(Keys.DELETE)
+        subject_input.send_keys('Test message to accepted authors from UI')
+
+        modal.find_element(By.TAG_NAME, 'textarea').send_keys('Test message to accepted authors from UI')
+
+        send_button = next((button for button in modal.find_elements(By.TAG_NAME, 'button') if button.text.strip() == 'Send Messages'), None)
+        assert send_button, 'Send Messages button not found'
+        send_button.click()
+
+        ## the modal closes only when the message is posted successfully
+        WebDriverWait(selenium, 10).until(EC.invisibility_of_element_located((By.ID, 'message-group-members')))
+
+        helpers.await_queue(openreview_client)
+
+        ## the messages being delivered means the venue level /-/Message invitation accepted
+        ## Authors/Accepted as the parentGroup (a subgroup of the domain), which the prefix allows
+        ## Submission1 is always accepted, so its authors must receive the message
+        messages = openreview_client.get_messages(subject='Test message to accepted authors from UI')
+        assert len(messages) >= 3
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='Test message to accepted authors from UI')
+        assert len(messages) == 1
 
     def test_email_decisions(self, openreview_client, helpers):
 
