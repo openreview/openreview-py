@@ -2433,7 +2433,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         ## the "Message All" button uses the venue level /-/Message invitation, whose parentGroup
         ## must accept any group under the domain (prefix), not just the domain itself
         message_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Message')
-        assert message_invitation.edit['invitation']['message']['parentGroup'] == { 'param': { 'prefix': 'ABCD.cc/2025/Conference', 'optional': True } }
+        assert message_invitation.message['parentGroup'] == { 'param': { 'prefix': 'ABCD.cc/2025/Conference', 'optional': True } }
 
         accepted_group = openreview_client.get_group('ABCD.cc/2025/Conference/Authors/Accepted')
         assert 'ABCD.cc/2025/Conference/Submission1/Authors' in accepted_group.members
