@@ -2827,14 +2827,20 @@ The OpenReview Team.
         assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
 
         ## post vouch tag
-        tag = openreview_client.post_tag(
+        ## The voucher must be an active institutional user with a confirmed institutional email
+        rename_voucher_client = helpers.create_user('renamevoucher@umass.edu', 'Renamevoucher', 'Voucher', institution='umass.edu')
+        assert openreview_client.get_profile('~Renamevoucher_Voucher1').state == 'Active Institutional'
+
+        vouch_tag = rename_voucher_client.post_tag(
             openreview.api.Tag(
                 invitation='openreview.net/Support/-/Vouch',
-                signature='~Javier_Alternate_Last1',
+                signature='~Renamevoucher_Voucher1',
                 profile='~Paul_Alternate_Last1',
                 label='Colleague|Massachusetts Institute of Technology'
             )
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id=vouch_tag.id)
 
         ## Add Registration note
         paul_client.post_note_edit(
@@ -3151,6 +3157,12 @@ The OpenReview Team.
 '''
 
         assert openreview_client.get_edges(invitation='CABJ/Reviewers/-/Assignment_Availability', tail='~Paul_Last1')[0].label == 'Unavailable'
+
+        ## the vouch tag profile was renamed too
+        vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Last1')
+        assert len(vouch_tags) == 1
+        assert vouch_tags[0].signature == '~Renamevoucher_Voucher1'
+        assert vouch_tags[0].label == 'Colleague|Massachusetts Institute of Technology'
 
     def test_remove_name_and_update_relations(self, openreview_client, helpers, support_client):
 
