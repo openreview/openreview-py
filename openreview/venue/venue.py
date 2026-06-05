@@ -1662,7 +1662,7 @@ Total Errors: {len(errors)}
                             true_author_found = True
                             break
                     if not true_author_found:
-                        owner = submission.content["authorids"]["value"][0]
+                        owner = submission.authorids[0]
                 print(f"Creating submission for {submission.id} with owner {owner}")
                 try:
                     owner_profile = self.client.get_profile(owner)
