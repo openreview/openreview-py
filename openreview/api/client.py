@@ -846,12 +846,26 @@ class OpenReviewClient(object):
         """
         Updates the domain for an entire venue
 
-        :param old_domain: Current domain
-        :param new_domain: New domain
+        Renaming a venue does not re-schedule its date process functions to use the new
+        domain. To avoid leaving stale scheduled processes, the invitations that have
+        scheduled date processes are disabled before the rename and re-enabled (which
+        re-schedules them under the new domain) once the rename completes.
 
-        :return: Status of the request. The process can be tracked in the queue.
+        :param old_venue_id: Current venue id
+        :param new_venue_id: New venue id
+
+        :return: Status of the request.
         :rtype: dict
         """
+        ## Disable the scheduled date processes before renaming. They are captured so they
+        ## can be re-enabled under the new domain once the rename finishes. Only venues that
+        ## define a meta invitation (template-based venues) support this.
+        old_group = tools.get_group(self, old_venue_id)
+        date_process_invitations = []
+        if old_group and 'meta_invitation_id' in old_group.content:
+            date_process_invitations = tools.get_invitations_with_date_processes(self, old_venue_id)
+            tools.expire_date_processes(self, old_venue_id, date_process_invitations)
+
         json = {
                 'oldDomain': old_venue_id,
                 'newDomain': new_venue_id,
@@ -866,7 +880,28 @@ class OpenReviewClient(object):
 
 
         response = self.__handle_response(response)
-        return response.json()    
+        result = response.json()
+
+        ## Wait for the asynchronous rename to finish, then re-enable the date processes
+        ## under the new domain so they are re-scheduled there.
+        if date_process_invitations:
+            self.__await_rename(new_venue_id)
+            tools.enable_date_processes(self, old_venue_id, new_venue_id, date_process_invitations)
+
+        return result
+
+    def __await_rename(self, new_venue_id, timeout=1800, wait_time=0.5):
+        ## Wait until the venue rename (processed asynchronously in the internal queue) has
+        ## completed: the internal queue must be drained and the new venue group must exist.
+        max_iterations = int(timeout / wait_time) or 1
+        for _ in range(max_iterations):
+            jobs = self.get_jobs_status()
+            internal_queue = jobs.get('internalQueueMQStatus', {})
+            pending = internal_queue.get('waiting', 0) + internal_queue.get('active', 0) + internal_queue.get('delayed', 0)
+            if pending == 0 and tools.get_group(self, new_venue_id) is not None:
+                return
+            time.sleep(wait_time)
+        raise OpenReviewException(f'Time out waiting for venue rename to complete: {new_venue_id}')
 
     def put_attachment(self, file_path, invitation, name):
         """Upload a file attachment to the OpenReview server.
@@ -916,27 +951,16 @@ class OpenReviewClient(object):
         """
         Updates the domain for an entire venue
 
+        Alias of :meth:`rename_venue`; the scheduled date processes are re-scheduled under
+        the new domain as part of the rename.
+
         :param old_domain: Current domain
         :param new_domain: New domain
 
-        :return: Status of the request. The process can be tracked in the queue.
+        :return: Status of the request.
         :rtype: dict
         """
-        json = {
-                'oldDomain': old_domain,
-                'newDomain': new_domain,
-                'requestForm': request_form
-            }
-        if additional_renames:
-            json['additionalRenames'] = additional_renames
-        response = self.session.post(
-            self.domains_rename,
-            json = json,
-            headers = self.headers)
-
-
-        response = self.__handle_response(response)
-        return response.json()
+        return self.rename_venue(old_domain, new_domain, request_form, additional_renames)
 
     def rename_profile(self, current_id, new_id):
         """Rename a Profile by changing its tilde ID.
