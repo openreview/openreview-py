@@ -134,7 +134,7 @@ class Venue(object):
             "value": "CC BY 4.0",
             "description": "CC BY 4.0"
         }
-        if 'reviewer_groups_names' in request_note.content:
+        if request_note.content.get('reviewer_groups_names', {}).get('value'):
             self.reviewer_roles = request_note.content['reviewer_groups_names']['value']
             self.reviewers_name = self.reviewer_roles[0]
         elif 'reviewers_name' in request_note.content:
@@ -143,7 +143,7 @@ class Venue(object):
         preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
     
         if request_note.content.get('area_chairs_support',{}).get('value'):
-            if 'area_chair_groups_names' in request_note.content:
+            if request_note.content.get('area_chair_groups_names', {}).get('value'):
                 self.area_chair_roles = request_note.content['area_chair_groups_names']['value']
                 self.area_chairs_name = self.area_chair_roles[0]
             elif 'area_chairs_name' in request_note.content:
@@ -153,7 +153,7 @@ class Venue(object):
             preferred_email_groups.append(self.get_area_chairs_id())
 
         if request_note.content.get('senior_area_chairs_support',{}).get('value'):
-            if 'senior_area_chair_groups_names' in request_note.content:
+            if request_note.content.get('senior_area_chair_groups_names', {}).get('value'):
                 self.senior_area_chair_roles = request_note.content['senior_area_chair_groups_names']['value']
                 self.senior_area_chairs_name = self.senior_area_chair_roles[0]
             self.use_senior_area_chairs = True
