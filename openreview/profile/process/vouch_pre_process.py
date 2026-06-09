@@ -8,7 +8,7 @@ def process(client, tag, invitation):
         raise openreview.OpenReviewException(f'Voucher profile not found for {voucher_id}')
 
     ## The voucher's profile must be active
-    if getattr(voucher_profile, 'state', None) not in ['Active', 'Active Institutional']:
+    if getattr(voucher_profile, 'state', None) not in ['Active', 'Active Institutional', 'Active Automatic']:
         raise openreview.OpenReviewException('You are not allowed to vouch for another user: your profile must be active.')
 
     ## The voucher must not have been activated through a vouch themselves
