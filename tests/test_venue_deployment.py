@@ -303,20 +303,10 @@ class TestVenueDeployment():
 
     def test_rename_reschedules_date_processes(self, openreview_client, helpers):
 
-        # Regression test for a deployment timeout seen in the live site: a venue is
-        # deployed and then renamed to a new domain.
-        #
-        # Renaming a venue does not re-schedule its date process functions to use the new
-        # domain name, so the new domain's date-process logs (e.g.
-        # '<new_venue>/-/Withdrawal-0-1') are never produced, and a subsequent redeployment
-        # blocks waiting for them and times out.
-        #
-        # The fix: before renaming, disable the scheduled date processes by deleting the
-        # invitations that have them (tools.expire_date_processes) -- deleting preserves
-        # their cdate/expdate and the rename carries the trashed invitations to the new
-        # domain. After the rename completes, re-enable them (tools.enable_date_processes),
-        # which re-schedules their date processes under the new domain. This test asserts
-        # the renamed venue's date processes run under the new domain.
+        # Regression test: when a venue is renamed to a new domain, its date process
+        # functions must be re-scheduled under the new domain (the rename moves the
+        # process logs and queued jobs to the new domain), and nothing must be left
+        # pointing at the old domain. This is handled by the API rename.
 
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
@@ -380,33 +370,56 @@ class TestVenueDeployment():
         helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Withdrawal-0-1', count=1)
 
         assert openreview.tools.get_group(openreview_client, venue_id)
-        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Withdrawal')
-        assert any(
-            i.id == f'{venue_id}/-/Withdrawal'
-            for i in openreview.tools.get_invitations_with_date_processes(openreview_client, venue_id)
-        )
+        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Withdrawal').date_processes
+        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Preferred_Emails').date_processes
 
-        # 2. rename the venue to a new domain. rename_venue disables the scheduled date
-        #    processes, renames, and re-enables them under the new domain in a single call.
+        # Schedule the Withdrawal cdate date process (-0-0) to run a few minutes from now,
+        # so it is still a pending (in-flight) job when we rename. This lets us verify the
+        # rename re-schedules the pending job to actually run under the new domain. The
+        # request form rejects past dates, but the /Dates invitation lets us set the
+        # activation date directly.
+        activation_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(minutes=3))
+        dates_edit = pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Withdrawal/Dates',
+            content={
+                'activation_date': { 'value': activation_date },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52)) }
+            })
+        helpers.await_queue_edit(openreview_client, edit_id=dates_edit['id'])
+
+        # the -0-0 cdate process must be scheduled but not yet executed
+        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Withdrawal').cdate == activation_date
+        assert not [
+            log for log in openreview_client.get_process_logs(id=f'{venue_id}/-/Withdrawal-0-0')
+            if log['status'] in ['ok', 'error']
+        ]
+
+        # 2. rename the venue to a new domain
         openreview_client.rename_venue(venue_id, renamed_venue_id, request_note.id)
+        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
 
         assert openreview.tools.get_group(openreview_client, renamed_venue_id)
 
-        # 3. the date processes must run under the new domain
+        # 3. the date processes must be re-scheduled under the new domain
         helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-1', count=1)
 
         assert openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Withdrawal')
         assert openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Withdrawal/Dates')
 
-        # Preferred_Emails must also be renamed and re-enabled (its date processes
-        # re-scheduled) under the new domain.
         renamed_preferred_emails = openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Preferred_Emails')
         assert renamed_preferred_emails
         assert renamed_preferred_emails.date_processes
 
-        # the old Preferred_Emails invitation must not exist anymore, and its date
-        # processes must no longer be scheduled to run under the old domain (every
-        # remaining process log must be terminal -- nothing queued/running/scheduled)
+        # 4. nothing must be left pointing at the old domain: the invitation is gone and
+        #    no process logs remain under the old name (they were moved to the new domain)
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Preferred_Emails') is None
-        old_preferred_emails_logs = openreview_client.get_process_logs(invitation=f'{venue_id}/-/Preferred_Emails')
-        assert all(log['status'] in ['ok', 'error'] for log in old_preferred_emails_logs)
+        assert not openreview_client.get_process_logs(invitation=f'{venue_id}/-/Preferred_Emails')
+
+        # 5. the pending Withdrawal -0-0 date process must actually execute under the new
+        #    domain (the rename re-scheduled the in-flight job to run under the new domain),
+        #    and it must not run under the old domain
+        helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-0', count=1)
+        assert not [
+            log for log in openreview_client.get_process_logs(id=f'{venue_id}/-/Withdrawal-0-0')
+            if log['status'] in ['ok', 'error']
+        ]
