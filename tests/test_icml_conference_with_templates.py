@@ -1146,6 +1146,75 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 Please note that responding to this email will direct your reply to contact@icml.cc.
 '''
 
+    def test_invite_assignment_unified_authors(self, client, openreview_client, helpers):
+
+        ## Reproduces the unified-authors bug in invite_assignment_pre_process.js:
+        ## submissions store authors as author objects, so `submission.content.authorids`
+        ## does not exist and `getProfiles(undefined)` throws inside the pre-process.
+
+        pc_client_v2 = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        venue = openreview.helpers.get_venue(pc_client_v2, 'ICML.cc/2025/Conference', support_user='openreview.net/Support')
+
+        submissions = pc_client_v2.get_notes(content={'venueid': 'ICML.cc/2025/Conference/Submission'}, sort='number:asc')
+        submission = submissions[0]
+
+        ## submission uses the unified authors schema: authorids is not present
+        full_submission = openreview_client.get_note(submission.id)
+        assert 'authorids' not in full_submission.content
+        assert isinstance(full_submission.content['authors']['value'][0], dict)
+
+        now = datetime.datetime.now()
+        venue.setup_assignment_recruitment(
+            committee_id='ICML.cc/2025/Conference/Reviewers',
+            hash_seed='1234',
+            due_date=now + datetime.timedelta(days=3),
+            invitation_labels={'Invite': 'Invitation Sent', 'Invited': 'Invitation Sent'}
+        )
+
+        assert openreview_client.get_invitation('ICML.cc/2025/Conference/Reviewers/-/Invite_Assignment')
+
+        paper_sacs = f'ICML.cc/2025/Conference/Submission{submission.number}/Senior_Area_Chairs'
+        paper_acs = f'ICML.cc/2025/Conference/Submission{submission.number}/Area_Chairs'
+        paper_authors = f'ICML.cc/2025/Conference/Submission{submission.number}/Authors'
+
+        ## Invite an external (non-conflicting) reviewer -- this fails today because the
+        ## pre-process reads submission.content.authorids?.value (undefined) and calls
+        ## getProfiles(undefined), which throws "idsOrEmails is not iterable".
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation='ICML.cc/2025/Conference/Reviewers/-/Invite_Assignment',
+            readers=['ICML.cc/2025/Conference', paper_sacs, paper_acs, 'external_reviewer1@icmlexternal.com'],
+            nonreaders=[paper_authors],
+            writers=['ICML.cc/2025/Conference', paper_sacs, paper_acs],
+            signatures=['ICML.cc/2025/Conference/Program_Chairs'],
+            head=submission.id,
+            tail='external_reviewer1@icmlexternal.com',
+            label='Invitation Sent',
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        invite_edges = pc_client_v2.get_edges(
+            invitation='ICML.cc/2025/Conference/Reviewers/-/Invite_Assignment',
+            head=submission.id,
+            tail='external_reviewer1@icmlexternal.com'
+        )
+        assert len(invite_edges) == 1
+
+        ## Conflict detection must still work under the unified authors schema:
+        ## inviting an actual author of the submission should be rejected.
+        with pytest.raises(openreview.OpenReviewException, match=r'the user has a conflict'):
+            pc_client_v2.post_edge(openreview.api.Edge(
+                invitation='ICML.cc/2025/Conference/Reviewers/-/Invite_Assignment',
+                readers=['ICML.cc/2025/Conference', paper_sacs, paper_acs, '~Andrew_McAmazon1'],
+                nonreaders=[paper_authors],
+                writers=['ICML.cc/2025/Conference', paper_sacs, paper_acs],
+                signatures=['ICML.cc/2025/Conference/Program_Chairs'],
+                head=submission.id,
+                tail='~Andrew_McAmazon1',
+                label='Invitation Sent',
+                weight=1
+            ))
+
 #     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 
 #         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
