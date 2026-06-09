@@ -198,19 +198,18 @@ class InvitationBuilder(object):
             if invitation.id.split('/')[-1] not in exceptions:
                 self.expire_invitation(invitation.id, now)
 
-                if self.journal.get_review_id(number=note.number) == invitation.id:
-                    ## Discount all the pending reviews
-                    reviews = { r.signatures[0]: r for r in self.client.get_notes(invitation=invitation.id) }
-                    reviewers = self.client.get_group(self.journal.get_reviewers_id(number=note.number))
-                    for reviewer in reviewers.members:
-                        signatures_group = self.client.get_groups(prefix=self.journal.get_reviewers_id(number=note.number, anon=True), member=reviewer)[0]
-                        if signatures_group.id not in reviews:
-                            pending_edges = self.client.get_edges(invitation=self.journal.get_reviewer_pending_review_id(), tail=reviewer)
-                            if pending_edges:
-                                pending_edge = pending_edges[0]
-                                pending_edge.weight -= 1
-                                self.client.post_edge(pending_edge)
-             
+        ## Discount all the pending reviews even if review invitation is expired
+        review_invitation_id = self.journal.get_review_id(number=note.number)
+        reviews = { r.signatures[0]: r for r in self.client.get_notes(invitation=review_invitation_id) }
+        reviewers = self.client.get_group(self.journal.get_reviewers_id(number=note.number))
+        for reviewer in reviewers.members:
+            signatures_group = self.client.get_groups(prefix=self.journal.get_reviewers_id(number=note.number, anon=True), member=reviewer)[0]
+            if signatures_group.id not in reviews:
+                pending_edges = self.client.get_edges(invitation=self.journal.get_reviewer_pending_review_id(), tail=reviewer)
+                if pending_edges:
+                    pending_edge = pending_edges[0]
+                    pending_edge.weight -= 1
+                    self.client.post_edge(pending_edge)
 
     def expire_reviewer_responsibility_invitations(self):
 
