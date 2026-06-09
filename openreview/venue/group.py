@@ -348,6 +348,9 @@ class GroupBuilder(object):
 
         if self.venue.comment_notification_threshold:
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
+        
+        if venue_group.content.get('profile_minimum_requirements'):
+            content['profile_minimum_requirements'] = venue_group.content.get('profile_minimum_requirements')
 
         if self.venue.is_template_related_workflow():
             submission_name = self.venue.submission_stage.name
