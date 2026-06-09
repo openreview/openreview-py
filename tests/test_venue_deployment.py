@@ -403,3 +403,10 @@ class TestVenueDeployment():
         renamed_preferred_emails = openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Preferred_Emails')
         assert renamed_preferred_emails
         assert renamed_preferred_emails.date_processes
+
+        # the old Preferred_Emails invitation must not exist anymore, and its date
+        # processes must no longer be scheduled to run under the old domain (every
+        # remaining process log must be terminal -- nothing queued/running/scheduled)
+        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Preferred_Emails') is None
+        old_preferred_emails_logs = openreview_client.get_process_logs(invitation=f'{venue_id}/-/Preferred_Emails')
+        assert all(log['status'] in ['ok', 'error'] for log in old_preferred_emails_logs)
