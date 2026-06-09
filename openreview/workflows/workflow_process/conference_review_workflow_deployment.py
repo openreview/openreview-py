@@ -254,7 +254,26 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
             'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': authors_name }
+            'reviewers_name': { 'value': reviewers_name },
+            'authors_name': { 'value': authors_name },
+            'additional_readers': { 'value': additional_readers },
+            'decision_option': { 'value': 'Accepted' },
+            'decision_venue_id': { 'value': venue_id }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{invitation_prefix}/-/Submission_Release',
+        signatures=[invitation_prefix],
+        content={
+            'venue_id': { 'value': venue_id },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': reviewers_name },
+            'authors_name': { 'value': authors_name },
+            'additional_readers': { 'value': additional_readers },
+            'decision_option': { 'value': 'Rejected' },
+            'decision_venue_id': { 'value': venue.get_rejected_submission_venue_id() }
         }
     )
 
