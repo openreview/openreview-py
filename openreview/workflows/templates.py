@@ -1246,7 +1246,7 @@ If you would like to change your decision, please follow the link in the previou
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'regex': '${5/content/venue_id/value}.*' } },
-                        'parentGroup': '${3/content/venue_id/value}',
+                        'parentGroup': { 'param': { 'prefix': '${5/content/venue_id/value}', 'optional': True } },
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/venue_short_name/value}',

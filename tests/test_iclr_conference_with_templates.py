@@ -42,7 +42,6 @@ class TestSimpleDualAnonymous():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'full_submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
-                    'reviewer_groups_names': { 'value': ['Reviewers'] },
                     'area_chairs_support': { 'value': True },
                     'area_chair_groups_names': { 'value': ['Action_Editors'] },
                     'senior_area_chairs_support': { 'value': True },
@@ -57,7 +56,7 @@ class TestSimpleDualAnonymous():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                             'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                     }
