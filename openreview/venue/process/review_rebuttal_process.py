@@ -20,6 +20,8 @@ def process(client, edit, invitation):
     submission = client.get_note(edit.note.forum)
     rebuttal = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
+    authors_name = domain.get_content_value('authors_name')
+    paper_authors_id = f'{paper_group_id}/{authors_name}'
     ignore_groups = [edit.tauthor]
 
     if rebuttal.tcdate != rebuttal.tmdate:
@@ -52,7 +54,7 @@ Title: {submission.content['title']['value']}
     if email_authors:
         client.post_message(
             invitation=meta_invitation_id,
-            recipients=submission.content['authorids']['value'],
+            recipients=[paper_authors_id],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] An author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
             message=author_message,
