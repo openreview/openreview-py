@@ -201,12 +201,14 @@ class InvitationBuilder(object):
         ## Discount all the pending reviews even if review invitation is expired
         review_invitation_id = self.journal.get_review_id(number=note.number)
         reviews = { r.signatures[0]: r for r in self.client.get_notes(invitation=review_invitation_id) }
-        reviewers = self.client.get_group(self.journal.get_reviewers_id(number=note.number))
+        reviewers = openreview.tools.get_group(self.client, self.journal.get_reviewers_id(number=note.number))
+        if not reviewers:
+            return
         for reviewer in reviewers.members:
             signatures_group = self.client.get_groups(prefix=self.journal.get_reviewers_id(number=note.number, anon=True), member=reviewer)[0]
             if signatures_group.id not in reviews:
                 pending_edges = self.client.get_edges(invitation=self.journal.get_reviewer_pending_review_id(), tail=reviewer)
-                if pending_edges:
+                if pending_edges and pending_edges[0].weight > 0:
                     pending_edge = pending_edges[0]
                     pending_edge.weight -= 1
                     self.client.post_edge(pending_edge)

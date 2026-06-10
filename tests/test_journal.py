@@ -1440,11 +1440,12 @@ Please note that responding to this email will direct your reply to joelle@mails
             tail='~David_Belanger1',
             weight=1
         ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         forum_notes = journal.client.get_notes(invitation=journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
 
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Acknowledgement of Reviewer Responsibility')
-        assert len(messages) == 1
+        assert len(messages) == 2
         assert messages[0]['content']['text'] == f'''Hi David Belanger,
 
 TMLR operates somewhat differently to other journals and conferences. As a new reviewer, we'd like you to read and acknowledge some critical points of TMLR that might differ from your previous reviewing experience.
@@ -1498,7 +1499,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         ack_invitation = openreview_client.get_invitation(id=f'{venue_id}/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement')
         forum_id = ack_invitation.edit['note']['forum']
 
- ## Check responsibility ackowledgement reminder
+        ## Check responsibility ackowledgement reminder
         raia_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
             readers=[venue_id],
@@ -5102,8 +5103,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         submission = raia_client.get_note(note_id_8)
         assert '~Samy_Bengio1' == submission.content['assigned_action_editor']['value']
 
-        journal.invitation_builder.expire_paper_invitations(submission)        
-
+        journal.invitation_builder.expire_paper_invitations(submission)
 
     def test_desk_rejected_submission_by_eic(self, journal, openreview_client, helpers):
 
