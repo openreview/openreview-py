@@ -1,5 +1,17 @@
 def process(client, tag, invitation):
 
+    ## Validate the target profile before anything else: it must exist and have been
+    ## rejected by the moderation team. Otherwise the vouch tag would pollute the public
+    ## "Vouched Profiles" list and consume the voucher's monthly quota even though the
+    ## activation step later skips non-rejected profiles.
+    vouched_profile_id = tag.profile
+    vouched_profile = openreview.tools.get_profile(client, vouched_profile_id)
+    if not vouched_profile:
+        raise openreview.OpenReviewException(f'You can not vouch for {vouched_profile_id}: profile not found.')
+
+    if getattr(vouched_profile, 'state', None) != 'Rejected':
+        raise openreview.OpenReviewException('You can only vouch for a profile that has been rejected by the moderation team.')
+
     voucher_id = tag.signature
 
     ## Get the voucher's profile
@@ -29,9 +41,10 @@ def process(client, tag, invitation):
     if not has_institutional_email:
         raise openreview.OpenReviewException('You are not allowed to vouch for another user: you must have an institutional email in your profile.')
 
-    ## The voucher must have created fewer than 5 vouches in the last month
+    ## The voucher must have created fewer than 5 vouches in the last month. Push the
+    ## 30-day window into the query (mintmdate) and cap the result (limit) so the
+    ## preprocess stays fast even for voucers with a long vouching history.
     one_month_ago = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days=30))
-    voucher_vouch_tags = client.get_tags(invitation=invitation.id, signature=voucher_id)
-    recent_vouches = [t for t in voucher_vouch_tags if (t.tcdate or t.cdate or 0) >= one_month_ago]
+    recent_vouches = client.get_tags(invitation=invitation.id, signature=voucher_id, mintmdate=one_month_ago, limit=6)
     if len(recent_vouches) >= 5:
         raise openreview.OpenReviewException('You are not allowed to vouch for more than 5 users per month.')

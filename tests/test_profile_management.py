@@ -4324,13 +4324,14 @@ The OpenReview Team.
             support_client.moderate_profile('~Vouchee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
             assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
 
-            ## A non-institutional (Active Automatic) user cannot vouch. We attempt it twice in
-            ## a row: the preprocess rejection must release the in-process lock so the immediate
-            ## retry is processed again (and rejected for the same reason) instead of failing with
-            ## an "already in process" error.
+            ## A non-institutional (Active Automatic) user cannot vouch: their profile is active
+            ## but has no institutional email, so the preprocess rejects them at the email check.
+            ## We attempt it twice in a row: the preprocess rejection must release the in-process
+            ## lock so the immediate retry is processed again (and rejected for the same reason)
+            ## instead of failing with an "already in process" error.
             autovoucher_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='autovoucher@gmail.com', password=helpers.strong_password)
             for _ in range(2):
-                with pytest.raises(openreview.OpenReviewException, match=r'your profile must be active'):
+                with pytest.raises(openreview.OpenReviewException, match=r'you must have an institutional email in your profile'):
                     autovoucher_client.post_tag(
                         openreview.api.Tag(
                             invitation='openreview.net/Support/-/Vouch',
@@ -4341,6 +4342,30 @@ The OpenReview Team.
 
             ## The profile is still rejected
             assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+
+            ## The target profile must exist. Vouching for a non-existent profile is rejected
+            ## so it does not pollute the "Vouched Profiles" list or consume the voucher's quota.
+            with pytest.raises(openreview.OpenReviewException, match=r'(?i)profile not found'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Nonexistent_User1'
+                    )
+                )
+
+            ## The target profile must be in state Rejected. An already-active profile cannot be vouched for.
+            with pytest.raises(openreview.OpenReviewException, match=r'only vouch for a profile that has been rejected'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Autovoucher_User1'
+                    )
+                )
+
+            ## No vouch tag was created for either invalid target
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Autovoucher_User1')) == 0
 
             ## A qualified voucher vouches for the rejected user -> the profile gets activated
             vouch_tag = voucher_client.post_tag(
