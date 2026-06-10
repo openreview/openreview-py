@@ -277,46 +277,38 @@ jobs:
       - run:
           name: Detect modified test files
           command: |
-            PYTEST_FILES="<< pipeline.parameters.pytest-files >>"
+            # Get the base branch for comparison
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              # Extract PR number from URL
+              PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | grep -oE '[0-9]+$')
+              # Fetch the base branch (usually main or master)
+              git fetch origin master:refs/remotes/origin/master 2>/dev/null || git fetch origin main:refs/remotes/origin/main 2>/dev/null || true
 
-            if [ -n "$PYTEST_FILES" ]; then
-              echo "Manual override via pytest-files parameter: $PYTEST_FILES"
-              echo "$PYTEST_FILES" > /tmp/modified_tests.txt
-              echo "run" > /tmp/skip_pr_tests.txt
+              # Get modified/added test files compared to master/main
+              MODIFIED_TESTS=$(git diff --name-only --diff-filter=AM origin/master...HEAD -- 'tests/test_*.py' 2>/dev/null || \
+                               git diff --name-only --diff-filter=AM origin/main...HEAD -- 'tests/test_*.py' 2>/dev/null || \
+                               echo "")
             else
-              # Get the base branch for comparison
-              if [ -n "$CIRCLE_PULL_REQUEST" ]; then
-                # Extract PR number from URL
-                PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | grep -oE '[0-9]+$')
-                # Fetch the base branch (usually main or master)
-                git fetch origin master:refs/remotes/origin/master 2>/dev/null || git fetch origin main:refs/remotes/origin/main 2>/dev/null || true
+              # For non-PR builds (e.g., master branch), skip this job
+              MODIFIED_TESTS=""
+            fi
 
-                # Get modified/added test files compared to master/main
-                MODIFIED_TESTS=$(git diff --name-only --diff-filter=AM origin/master...HEAD -- 'tests/test_*.py' 2>/dev/null || \
-                                 git diff --name-only --diff-filter=AM origin/main...HEAD -- 'tests/test_*.py' 2>/dev/null || \
-                                 echo "")
-              else
-                # For non-PR builds (e.g., master branch), skip this job
-                MODIFIED_TESTS=""
-              fi
+            # Write the modified tests to a file for subsequent steps
+            echo "$MODIFIED_TESTS" > /tmp/modified_tests.txt
 
-              # Write the modified tests to a file for subsequent steps
-              echo "$MODIFIED_TESTS" > /tmp/modified_tests.txt
+            FILE_COUNT=$(echo "$MODIFIED_TESTS" | grep -c . || true)
 
-              FILE_COUNT=$(echo "$MODIFIED_TESTS" | grep -c . || true)
-
-              if [ -z "$MODIFIED_TESTS" ]; then
-                echo "No test files were modified in this PR. Skipping PR-specific tests."
-                echo "skip" > /tmp/skip_pr_tests.txt
-              elif [ "$FILE_COUNT" -gt 3 ]; then
-                echo "Too many modified test files ($FILE_COUNT). Deferring to full build job."
-                echo "$MODIFIED_TESTS"
-                echo "skip" > /tmp/skip_pr_tests.txt
-              else
-                echo "Modified test files found:"
-                echo "$MODIFIED_TESTS"
-                echo "run" > /tmp/skip_pr_tests.txt
-              fi
+            if [ -z "$MODIFIED_TESTS" ]; then
+              echo "No test files were modified in this PR. Skipping PR-specific tests."
+              echo "skip" > /tmp/skip_pr_tests.txt
+            elif [ "$FILE_COUNT" -gt 3 ]; then
+              echo "Too many modified test files ($FILE_COUNT). Deferring to full build job."
+              echo "$MODIFIED_TESTS"
+              echo "skip" > /tmp/skip_pr_tests.txt
+            else
+              echo "Modified test files found:"
+              echo "$MODIFIED_TESTS"
+              echo "run" > /tmp/skip_pr_tests.txt
             fi
       - run:
           name: Check if tests should run
@@ -374,13 +366,6 @@ jobs:
           transport.host: localhost
     steps:
       - checkout
-      - run:
-          name: Skip full build when pytest-files override is set
-          command: |
-            if [ -n "<< pipeline.parameters.pytest-files >>" ]; then
-              echo "pytest-files override is set; skipping full build job."
-              circleci-agent step halt
-            fi
       - get-github-token
       - install-nodejs
       - setup-mongodb
@@ -421,6 +406,49 @@ jobs:
             fi
       - copy-logs-on-failure
       - store-test-artifacts
+  debug-tests:
+    # Run an explicit set of tests against custom openreview-api / openreview-api-v1
+    # branches. Triggered by passing a non-empty `pytest-files` pipeline parameter
+    # from the CircleCI UI; bypasses install-package + build-pr-tests + build.
+    resource_class: large
+    working_directory: ~/openreview-py-repo
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: cimg/python:<<parameters.python-version>>
+      - image: cimg/redis:7.2
+      - image: mongo:8.0
+        command: [ --replSet, rs0 ]
+      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+        environment:
+          xpack.security.enabled: false
+          transport.host: localhost
+    steps:
+      - checkout
+      - get-github-token
+      - install-nodejs
+      - setup-mongodb
+      - clone-repos
+      - create-directories
+      - install-firefox
+      - start-apis
+      - setup-openreview-web
+      - install-geckodriver
+      - install-pytest
+      - run:
+          name: Run pytest-files
+          environment:
+            PYTHONUNBUFFERED: "1"
+          command: |
+            cd ~/openreview-py-repo
+            PYTEST_FILES="<< pipeline.parameters.pytest-files >>"
+            echo "Running tests from pytest-files parameter: $PYTEST_FILES"
+            pytest $PYTEST_FILES --durations=0 -v -o junit_family=legacy \
+              --junitxml=test-reports/junit-debug.xml \
+              --driver Firefox --driver-path tests/drivers/geckodriver
+      - copy-logs-on-failure
+      - store-test-artifacts
   deploy-dev:
     working_directory: ~/openreview-py-repo
     docker:
@@ -435,6 +463,8 @@ jobs:
 workflows:
   version: 2
   build-deploy:
+    when:
+      equal: [ "", << pipeline.parameters.pytest-files >> ]
     jobs:
       - install-package:
           matrix:
@@ -454,3 +484,9 @@ workflows:
           filters:
             branches:
               only: master
+  debug:
+    unless:
+      equal: [ "", << pipeline.parameters.pytest-files >> ]
+    jobs:
+      - debug-tests:
+          python-version: "3.10"
