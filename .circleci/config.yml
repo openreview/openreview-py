@@ -272,6 +272,7 @@ jobs:
         environment:
           xpack.security.enabled: false
           transport.host: localhost
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
     steps:
       - checkout
       - run:
@@ -364,6 +365,7 @@ jobs:
         environment:
           xpack.security.enabled: false
           transport.host: localhost
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
     steps:
       - checkout
       - get-github-token
@@ -424,6 +426,7 @@ jobs:
         environment:
           xpack.security.enabled: false
           transport.host: localhost
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
     steps:
       - checkout
       - get-github-token
