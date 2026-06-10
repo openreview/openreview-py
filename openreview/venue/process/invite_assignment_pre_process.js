@@ -87,7 +87,14 @@ async function process(client, edge, invitation) {
     }
   }
 
-  const authorProfiles = await client.tools.getProfiles(submission.content.authorids?.value, true)
+  const authorsValue = submission.content.authors?.value ?? []
+  // Unified authors schema stores author objects with a `username`; the legacy
+  // schema keeps the ids in a separate `authorids` field.
+  const authorIds = (authorsValue.length && typeof authorsValue[0] === 'object')
+    ? authorsValue.map(author => author.username).filter(Boolean)
+    : (submission.content.authorids?.value ?? [])
+
+  const authorProfiles = await client.tools.getProfiles(authorIds, true)
   const conflicts = await client.tools.getConflicts(authorProfiles, userProfile, conflictPolicy, conflictNYears)
   if (conflicts.length) { 
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user has a conflict` }))
