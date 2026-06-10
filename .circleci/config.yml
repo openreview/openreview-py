@@ -374,6 +374,13 @@ jobs:
           transport.host: localhost
     steps:
       - checkout
+      - run:
+          name: Skip full build when pytest-files override is set
+          command: |
+            if [ -n "<< pipeline.parameters.pytest-files >>" ]; then
+              echo "pytest-files override is set; skipping full build job."
+              circleci-agent step halt
+            fi
       - get-github-token
       - install-nodejs
       - setup-mongodb
@@ -440,8 +447,6 @@ workflows:
       - build:
           requires:
             - build-pr-tests
-          when:
-            equal: [ "", << pipeline.parameters.pytest-files >> ]
           python-version: "3.10"
       - deploy-dev:
           requires:
