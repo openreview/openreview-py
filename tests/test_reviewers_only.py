@@ -1848,10 +1848,8 @@ For more details, please check the following links:
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject='[ABCD 2025] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
 
     
-    @pytest.mark.skip(reason="Skipping LLM PDF response stage test")
     def test_LLM_PDF_response_stage(self, openreview_client, helpers):
 
-        print('Testing LLM PDF response stage')
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
         review_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
