@@ -3151,6 +3151,179 @@ The OpenReview Team.
 
         assert openreview_client.get_edges(invitation='CABJ/Reviewers/-/Assignment_Availability', tail='~Paul_Last1')[0].label == 'Unavailable'
 
+    def test_rename_unified_authors_submission(self, openreview_client, test_client, helpers, support_client):
+        '''A profile listed as an author of a submission that uses the unified
+        ``author{}`` schema should have its username (and display name) replaced in
+        the authors object when one of its names is removed.'''
+
+        ## Set up a venue whose submission uses the unified author object schema
+        venue = Venue(openreview_client, 'UNAME.org/2026/Conference', 'openreview.net/Support')
+        venue.submission_stage = openreview.stages.SubmissionStage(
+            double_blind=False,
+            unified_authors=True,
+            due_date=datetime.datetime.now() + datetime.timedelta(minutes=30))
+        venue.review_stage = openreview.stages.ReviewStage()
+        venue.setup(program_chair_ids=['uname_pc@mail.com'])
+        venue.create_submission_stage()
+
+        submission_inv = openreview_client.get_invitation('UNAME.org/2026/Conference/-/Submission')
+        assert submission_inv.edit['note']['content']['authors']['value']['param']['type'] == 'author{}'
+
+        ## Create a profile with an alternate name
+        marie_client = helpers.create_user('marie@profile.org', 'Marie', 'Last', alternates=[], institution='google.com')
+        profile = marie_client.get_profile(marie_client.profile.id)
+        profile.content['homepage'] = 'https://marie.google.com'
+        profile.content['names'].append({
+            'first': 'Marie',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        marie_client.post_profile(profile)
+        profile = marie_client.get_profile(email_or_id='~Marie_Last1')
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][1]['username'] == '~Marie_Alternate_Last1'
+
+        ## Marie submits a paper listing herself by the alternate username in the unified author object
+        submission = marie_client.post_note_edit(
+            invitation='UNAME.org/2026/Conference/-/Submission',
+            signatures=['~Marie_Alternate_Last1'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Unified Authors Name Removal' },
+                    'abstract': { 'value': 'Testing username replacement in the unified author object.' },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'Marie Alternate Last',
+                                'username': '~Marie_Alternate_Last1',
+                                'institutions': [{ 'domain': 'google.com', 'country': 'US' }]
+                            }
+                        ]
+                    },
+                    'keywords': { 'value': ['name', 'removal'] },
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
+        note_id = submission['note']['id']
+
+        note = openreview_client.get_note(note_id)
+        assert note.content['authors']['value'][1]['username'] == '~Marie_Alternate_Last1'
+        assert note.content['authors']['value'][1]['fullname'] == 'Marie Alternate Last'
+        assert note.authorids == ['~SomeFirstName_User1', '~Marie_Alternate_Last1']
+
+        group = openreview_client.get_group('UNAME.org/2026/Conference/Submission1/Authors')
+        assert '~Marie_Alternate_Last1' in group.members
+
+        ## A per-paper invitation that locks the authors with literal author objects
+        ## (the literal analog of the ${...} author-lock reference). Its embedded
+        ## username must also be rewritten when the name is removed.
+        openreview_client.post_invitation_edit(
+            invitations='UNAME.org/2026/Conference/-/Edit',
+            readers=['UNAME.org/2026/Conference'],
+            writers=['UNAME.org/2026/Conference'],
+            signatures=['UNAME.org/2026/Conference'],
+            replacement=False,
+            invitation=openreview.api.Invitation(
+                id='UNAME.org/2026/Conference/Submission1/-/Locked_Authors_Revision',
+                invitees=['UNAME.org/2026/Conference'],
+                readers=['everyone'],
+                writers=['UNAME.org/2026/Conference'],
+                signatures=['UNAME.org/2026/Conference'],
+                edit={
+                    'signatures': ['UNAME.org/2026/Conference/Submission1/Authors'],
+                    'readers': ['UNAME.org/2026/Conference', 'UNAME.org/2026/Conference/Submission1/Authors'],
+                    'writers': ['UNAME.org/2026/Conference'],
+                    'note': {
+                        'id': note_id,
+                        'content': {
+                            'authors': {
+                                'value': [
+                                    {
+                                        'fullname': 'SomeFirstName User',
+                                        'username': '~SomeFirstName_User1',
+                                        'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                                    },
+                                    {
+                                        'fullname': 'Marie Alternate Last',
+                                        'username': '~Marie_Alternate_Last1',
+                                        'institutions': [{ 'domain': 'google.com', 'country': 'US' }]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            ))
+
+        locked_inv = openreview_client.get_invitation('UNAME.org/2026/Conference/Submission1/-/Locked_Authors_Revision')
+        assert locked_inv.edit['note']['content']['authors']['value'][1]['username'] == '~Marie_Alternate_Last1'
+
+        ## Request to remove the alternate name
+        request_note = marie_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~Marie_Last1'],
+            note=openreview.api.Note(
+                content={
+                    'name': { 'value': 'Marie Alternate Last' },
+                    'usernames': { 'value': ['~Marie_Alternate_Last1'] },
+                    'comment': { 'value': 'typo in my name' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, request_note['id'])
+
+        ## The name appears in a publication, so the request is sent for manual review
+        messages = openreview_client.get_messages(to='marie@profile.org', subject='Profile name removal request has been received')
+        assert len(messages) == 1
+
+        ## Support accepts the request
+        decision_note = support_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            signatures=['openreview.net/Support'],
+            note=openreview.api.Note(
+                id=request_note['note']['id'],
+                content={
+                    'status': { 'value': 'Accepted' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, decision_note['id'])
+
+        note = openreview_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+        ## The username (and display name) is replaced with the preferred name in the unified author object
+        note = openreview_client.get_note(note_id)
+        assert note.content['authors']['value'][1]['username'] == '~Marie_Last1'
+        assert note.content['authors']['value'][1]['fullname'] == 'Marie Last'
+        assert note.authorids == ['~SomeFirstName_User1', '~Marie_Last1']
+
+        ## The per-paper Authors group membership is updated too
+        group = openreview_client.get_group('UNAME.org/2026/Conference/Submission1/Authors')
+        assert '~Marie_Alternate_Last1' not in group.members
+        assert '~Marie_Last1' in group.members
+
+        ## The literal author object embedded in the invitation is rewritten as well
+        locked_inv = openreview_client.get_invitation('UNAME.org/2026/Conference/Submission1/-/Locked_Authors_Revision')
+        assert locked_inv.edit['note']['content']['authors']['value'][1]['username'] == '~Marie_Last1'
+        assert locked_inv.edit['note']['content']['authors']['value'][1]['fullname'] == 'Marie Last'
+        assert locked_inv.edit['note']['content']['authors']['value'][0]['username'] == '~SomeFirstName_User1'
+
+        ## The alternate profile group is gone
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Marie_Alternate_Last1'):
+            openreview_client.get_group('~Marie_Alternate_Last1')
+
+        profile = marie_client.get_profile(email_or_id='~Marie_Last1')
+        assert len(profile.content['names']) == 1
+        assert profile.content['names'][0]['username'] == '~Marie_Last1'
+
     def test_remove_name_and_update_relations(self, openreview_client, helpers, support_client):
 
         juan_client = helpers.create_user('juan@profile.org', 'Juan', 'Last', alternates=[], institution='google.com')
