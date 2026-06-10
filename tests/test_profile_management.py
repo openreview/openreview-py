@@ -3164,7 +3164,7 @@ The OpenReview Team.
         assert vouch_tags[0].signature == '~Renamevoucher_Voucher1'
         assert vouch_tags[0].label == 'Colleague|Massachusetts Institute of Technology'
 
-   def test_rename_unified_authors_submission(self, openreview_client, test_client, helpers, support_client):
+    def test_rename_unified_authors_submission(self, openreview_client, test_client, helpers, support_client):
         '''A profile listed as an author of a submission that uses the unified
         ``author{}`` schema should have its username (and display name) replaced in
         the authors object when one of its names is removed.'''
