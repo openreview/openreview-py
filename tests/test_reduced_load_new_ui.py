@@ -36,8 +36,6 @@ class TestReducedLoadNewUI():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewer_groups_names': { 'value': ['Program_Committee'] },
-                    'area_chair_groups_names': { 'value': ['Area_Chairs'] },
-                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'RL.cc/2024/Conference' },
                     'expected_submissions': { 'value': 100 },
@@ -51,7 +49,7 @@ class TestReducedLoadNewUI():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                             'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                         ]
                     }
@@ -167,12 +165,19 @@ class TestReducedLoadNewUI():
             content={
                 'title': { 'value': 'Test Paper for RL Conference' },
                 'abstract': { 'value': 'This is a test abstract for the RL Conference submission.' },
-                'authorids': { 'value': ['~Author_RL1'] },
-                'authors': { 'value': ['Author RL'] },
+                'authors': {
+                    'value': [
+                        {
+                            'fullname': 'Author RL',
+                            'username': '~Author_RL1',
+                            'institutions': [{ 'domain': 'mail.cc', 'country': 'US' }]
+                        }
+                    ]
+                },
                 'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                 'keywords': { 'value': ['Reinforcement Learning', 'Artificial Intelligence'] },
                 'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },                
+                'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
             }
         )
 

@@ -26,9 +26,6 @@ class TestVenueDeployment():
                         'contact_email': { 'value': 'programchair@venuedeployment.cc' },
                         'submission_start_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=10)) },
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=5)) },
-                        'reviewer_groups_names': { 'value': ['Reviewers'] },
-                        'area_chair_groups_names': { 'value': ['Area_Chairs'] },
-                        'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -39,7 +36,7 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                                'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                                 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
@@ -61,9 +58,6 @@ class TestVenueDeployment():
                         'contact_email': { 'value': 'programchair@venuedeployment.cc' },
                         'submission_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=2)) },
-                        'reviewer_groups_names': { 'value': ['Reviewers'] },
-                        'area_chair_groups_names': { 'value': ['Area_Chairs'] },
-                        'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -74,7 +68,7 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                                'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                                 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
@@ -97,9 +91,6 @@ class TestVenueDeployment():
                         'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                         'submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=2)) },
                         'full_submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=1)) },
-                        'reviewer_groups_names': { 'value': ['Reviewers'] },
-                        'area_chair_groups_names': { 'value': ['Area_Chairs'] },
-                        'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                         'expected_submissions': { 'value': 50 },
                         'venue_organizer_agreement': {
                             'value': [
@@ -110,7 +101,7 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                                'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                                 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
@@ -152,7 +143,7 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                                'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                                 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
@@ -189,7 +180,7 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                                'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                                 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
@@ -226,7 +217,7 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                                'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                                 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
@@ -256,7 +247,6 @@ class TestVenueDeployment():
                     'reviewer_groups_names': { 'value': ['Program_Committee'] },
                     'area_chairs_support': { 'value': True },
                     'area_chair_groups_names': { 'value': ['Senior_Program_Committee'] },
-                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'expected_submissions': { 'value': 50 },
                     'venue_organizer_agreement': {
                         'value': [
@@ -267,7 +257,7 @@ class TestVenueDeployment():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                             'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                         ]
                     }
@@ -300,3 +290,83 @@ class TestVenueDeployment():
 
         assert openreview.tools.get_group(openreview_client, 'TVD.cc/2026/Conference/Program_Committee')
         assert openreview.tools.get_group(openreview_client, 'TVD.cc/2026/Conference/Senior_Program_Committee')
+
+    def test_cancel_request(self, openreview_client, helpers):
+
+        ## the requester or the support team can cancel a request that is still in the queue
+        ## (e.g. we asked for more information and the requester never replied) by setting the
+        ## note ddate through the Cancel_Request invitation
+        helpers.create_user('programchair@venuedeployment.cc', 'ProgramChair', 'VenueDeployment')
+        pc_client = openreview.api.OpenReviewClient(username='programchair@venuedeployment.cc', password=helpers.strong_password)
+        support_group_id = 'openreview.net/Support'
+        cancel_invitation_id = 'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Cancel_Request'
+        now = datetime.datetime.now()
+
+        agreement_value = [
+            'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+            'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+            'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+            'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+            'We will treat the OpenReview staff with kindness and consideration.',
+            'We acknowledge that authors and reviewers will be required to share their preferred email.',
+            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
+            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
+        ]
+
+        def post_request(name):
+            request = pc_client.post_note_edit(
+                invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow',
+                signatures=['~ProgramChair_VenueDeployment1'],
+                note=openreview.api.Note(
+                    content={
+                        'official_venue_name': { 'value': name },
+                        'abbreviated_venue_name': { 'value': name },
+                        'venue_website_url': { 'value': 'https://venue-deployment-test.cc' },
+                        'location': { 'value': 'Virtual' },
+                        'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=26)) },
+                        'program_chair_emails': { 'value': ['programchair@venuedeployment.cc'] },
+                        'contact_email': { 'value': 'programchair@venuedeployment.cc' },
+                        'submission_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=2)) },
+                        'submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=20)) },
+                        'expected_submissions': { 'value': 50 },
+                        'venue_organizer_agreement': { 'value': agreement_value }
+                    }
+                ))
+            helpers.await_queue_edit(openreview_client, edit_id=request['id'])
+            return request['note']['id']
+
+        ## the requester can cancel their own request
+        request_note_id = post_request('Cancel By Requester 2026')
+        assert openreview_client.get_note(request_note_id).ddate is None
+
+        ## Cancel_Request has no process function, so the ddate edit applies synchronously
+        cancel_ddate = openreview.tools.datetime_millis(now)
+        pc_client.post_note_edit(
+            invitation=cancel_invitation_id,
+            signatures=['~ProgramChair_VenueDeployment1'],
+            note=openreview.api.Note(
+                id=request_note_id,
+                ddate=cancel_ddate
+            ))
+        ## the note is deleted: its ddate matches the value we posted and it no longer
+        ## appears in the active request queue
+        assert openreview_client.get_note(request_note_id).ddate == cancel_ddate
+        active_request_ids = [ n.id for n in openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow') ]
+        assert request_note_id not in active_request_ids
+
+        ## the support team can cancel a request
+        request_note_id = post_request('Cancel By Support 2026')
+        assert openreview_client.get_note(request_note_id).ddate is None
+
+        cancel_ddate = openreview.tools.datetime_millis(now)
+        openreview_client.post_note_edit(
+            invitation=cancel_invitation_id,
+            signatures=[support_group_id],
+            note=openreview.api.Note(
+                id=request_note_id,
+                ddate=cancel_ddate
+            ))
+        assert openreview_client.get_note(request_note_id).ddate == cancel_ddate
+        active_request_ids = [ n.id for n in openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow') ]
+        assert request_note_id not in active_request_ids

@@ -134,7 +134,7 @@ class Venue(object):
             "value": "CC BY 4.0",
             "description": "CC BY 4.0"
         }
-        if 'reviewer_groups_names' in request_note.content:
+        if request_note.content.get('reviewer_groups_names', {}).get('value'):
             self.reviewer_roles = request_note.content['reviewer_groups_names']['value']
             self.reviewers_name = self.reviewer_roles[0]
         elif 'reviewers_name' in request_note.content:
@@ -143,7 +143,7 @@ class Venue(object):
         preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
     
         if request_note.content.get('area_chairs_support',{}).get('value'):
-            if 'area_chair_groups_names' in request_note.content:
+            if request_note.content.get('area_chair_groups_names', {}).get('value'):
                 self.area_chair_roles = request_note.content['area_chair_groups_names']['value']
                 self.area_chairs_name = self.area_chair_roles[0]
             elif 'area_chairs_name' in request_note.content:
@@ -153,7 +153,7 @@ class Venue(object):
             preferred_email_groups.append(self.get_area_chairs_id())
 
         if request_note.content.get('senior_area_chairs_support',{}).get('value'):
-            if 'senior_area_chair_groups_names' in request_note.content:
+            if request_note.content.get('senior_area_chair_groups_names', {}).get('value'):
                 self.senior_area_chair_roles = request_note.content['senior_area_chair_groups_names']['value']
                 self.senior_area_chairs_name = self.senior_area_chair_roles[0]
             self.use_senior_area_chairs = True
@@ -1488,16 +1488,16 @@ Total Errors: {len(errors)}
 
         all_authorids = []
         for submission in submissions:
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
             all_authorids = all_authorids + authorids
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True)
-        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, with_relations=True, as_dict=True)   
+        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, with_relations=True, as_dict=True)
 
         info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
 
         for submission in submissions:
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
 
             # Extract domains from each authorprofile
             author_ids = set()
@@ -1662,7 +1662,7 @@ Total Errors: {len(errors)}
                             true_author_found = True
                             break
                     if not true_author_found:
-                        owner = submission.content["authorids"]["value"][0]
+                        owner = submission.authorids[0]
                 print(f"Creating submission for {submission.id} with owner {owner}")
                 try:
                     owner_profile = self.client.get_profile(owner)
@@ -2438,7 +2438,7 @@ OpenReview Team'''
                                                 client.post_edge(invitation_edge)
 
                                             ## Check conflicts
-                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
+                                            author_profiles = openreview.tools.get_profiles(client, submission.authorids, with_publications=True, with_relations=True)
                                             conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
 
                                             if conflicts:
@@ -2561,7 +2561,7 @@ OpenReview Team'''
         all_authors = {
             author_id
             for s in submissions_from_scores
-            for author_id in s.content['authorids']['value']
+            for author_id in s.authorids
         }
 
         author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
@@ -2604,7 +2604,7 @@ OpenReview Team'''
                 authors_list_a = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
-                    for author_id in papers_by_id_a[paper_id_a].content['authorids']['value']
+                    for author_id in papers_by_id_a[paper_id_a].authorids
                 ]
                 authors_str_a = '|'.join(authors_list_a)
 
@@ -2614,7 +2614,7 @@ OpenReview Team'''
                 authors_list_b = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
-                    for author_id in papers_by_id_b[paper_id_b].content['authorids']['value']
+                    for author_id in papers_by_id_b[paper_id_b].authorids
                 ]
                 authors_str_b = '|'.join(authors_list_b)
 
