@@ -1467,9 +1467,8 @@ class Matching(object):
         score_invitation_id = venue.get_affinity_score_id(self.match_group.id)
         paper_number = '${{2/head}/number}'
 
-        readers = [venue_id]
         invitation_readers = [venue_id]
-        edge_readers = readers + ['${2/tail}']
+        edge_readers = [venue_id]
         edge_nonreaders = [venue.get_authors_id(number=paper_number)]
         edge_head = {
             'param': {
@@ -1486,16 +1485,19 @@ class Matching(object):
 
         if self.is_reviewer:
             if venue.use_senior_area_chairs:
-                readers.append(venue.get_senior_area_chairs_id(number=paper_number))
+                edge_readers.append(venue.get_senior_area_chairs_id(number=paper_number))
                 invitation_readers.append(self.senior_area_chairs_id)
             if venue.use_area_chairs:
-                readers.append(venue.get_area_chairs_id(number=paper_number))
+                edge_readers.append(venue.get_area_chairs_id(number=paper_number))
                 invitation_readers.append(self.area_chairs_id)
 
         if self.is_area_chair:
             if venue.use_senior_area_chairs:
-                readers.append(venue.get_senior_area_chairs_id(number=paper_number))
+                edge_readers.append(venue.get_senior_area_chairs_id(number=paper_number))
                 invitation_readers.append(self.senior_area_chairs_id)
+
+        #append tail to readers
+        edge_readers.append('${2/tail}')
 
         if self.is_senior_area_chair:
             edge_readers = [venue_id, '${2/tail}', '${2/head}']
@@ -1635,7 +1637,7 @@ class Matching(object):
                             'deletable': True
                         }
                     },
-                    'readers': readers + ['${2/tail}'],
+                    'readers': edge_readers,
                     'writers': [venue_id],
                     'signatures': {
                         'param': {
