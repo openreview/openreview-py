@@ -2807,6 +2807,30 @@ The OpenReview Team.
         assert openreview_client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
 
+        ## post vouch tag
+        ## A profile can only be vouched for after the moderation team has rejected it,
+        ## so reject Paul's profile first. The vouch below reactivates it.
+        support_client.moderate_profile('~Paul_Last1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+        assert openreview_client.get_profile('~Paul_Last1').state == 'Rejected'
+
+        ## The voucher must be an active institutional user with a confirmed institutional email
+        rename_voucher_client = helpers.create_user('renamevoucher@umass.edu', 'Renamevoucher', 'Voucher', institution='umass.edu')
+        assert openreview_client.get_profile('~Renamevoucher_Voucher1').state == 'Active Institutional'
+
+        vouch_tag = rename_voucher_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Vouch',
+                signature='~Renamevoucher_Voucher1',
+                profile='~Paul_Alternate_Last1',
+                label='Colleague|Massachusetts Institute of Technology'
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=vouch_tag.id)
+
+        ## The vouch reactivated Paul's profile
+        assert openreview_client.get_profile('~Paul_Last1').state == 'Active'
+
         openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
 
         ## post block status tag
@@ -2822,25 +2846,9 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=tag.id)
 
-        tags = support_client.get_tags(profile='~Paul_Alternate_Last1')
+        tags = support_client.get_tags(invitation='openreview.net/Support/-/Profile_Blocked_Status', profile='~Paul_Alternate_Last1')
         assert len(tags) == 1
         assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
-
-        ## post vouch tag
-        ## The voucher must be an active institutional user with a confirmed institutional email
-        rename_voucher_client = helpers.create_user('renamevoucher@umass.edu', 'Renamevoucher', 'Voucher', institution='umass.edu')
-        assert openreview_client.get_profile('~Renamevoucher_Voucher1').state == 'Active Institutional'
-
-        vouch_tag = rename_voucher_client.post_tag(
-            openreview.api.Tag(
-                invitation='openreview.net/Support/-/Vouch',
-                signature='~Renamevoucher_Voucher1',
-                profile='~Paul_Alternate_Last1',
-                label='Colleague|Massachusetts Institute of Technology'
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, edit_id=vouch_tag.id)
 
         ## Add Registration note
         paul_client.post_note_edit(
