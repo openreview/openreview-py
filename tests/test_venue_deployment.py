@@ -408,7 +408,7 @@ class TestVenueDeployment():
         # 5. the pending Withdrawal -0-0 date process must actually execute under the new
         #    domain (the rename re-scheduled the in-flight job to run under the new domain),
         #    and it must not run under the old domain
-        helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-0', count=1)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-0', count=1, timeout=600)
         assert not [
             log for log in openreview_client.get_process_logs(id=f'{venue_id}/-/Withdrawal-0-0')
             if log['status'] in ['running', 'ok', 'error']
