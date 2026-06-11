@@ -12,9 +12,51 @@ parameters:
   python-version:
     type: string
     default: "3.13.1"
+  pytest-files:
+    type: string
+    default: ""
 
 # Reusable commands to reduce duplication between jobs
 commands:
+  get-github-token:
+    description: "Generate a short-lived GitHub App installation token"
+    steps:
+      - run:
+          name: Generate GitHub App token
+          command: |
+            pip install PyJWT==2.12.1 cryptography==46.0.7 --quiet
+
+            cat > /tmp/get_token.py \<< 'PYEOF'
+            import jwt, time, json, os, urllib.request
+
+            private_key = os.environ["GITHUB_APP_PRIVATE_KEY"]
+            app_id = os.environ["GITHUB_APP_ID"]
+            install_id = os.environ["GITHUB_APP_INSTALLATION_ID"]
+            now = int(time.time())
+
+            app_jwt = jwt.encode(
+                {"iat": now - 60, "exp": now + (9 * 60), "iss": app_id},
+                private_key,
+                algorithm="RS256"
+            )
+
+            req = urllib.request.Request(
+                f"https://api.github.com/app/installations/{install_id}/access_tokens",
+                method="POST",
+                headers={
+                    "Authorization": f"Bearer {app_jwt}",
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28"
+                }
+            )
+            with urllib.request.urlopen(req) as resp:
+                print(json.load(resp)["token"])
+            PYEOF
+
+            TOKEN=$(python3 /tmp/get_token.py)
+
+            # Make token available to subsequent steps
+            echo "export GITHUB_TOKEN=$TOKEN" >> $BASH_ENV
   setup-mongodb:
     description: "Initialize MongoDB replica set"
     steps:
@@ -46,17 +88,17 @@ commands:
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
+            git clone https://x-access-token:$GITHUB_TOKEN@github.com/openreview/openreview-api-v1.git ~/openreview
             cd ~/openreview && git checkout << pipeline.parameters.openreview-api-v1-branch >>
       - run:
           name: Clone OpenReview API V2 branch << pipeline.parameters.openreview-api-v2-branch >>
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
+            git clone https://x-access-token:$GITHUB_TOKEN@github.com/openreview/openreview-api.git ~/openreview-v2
             cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
       - run:
           name: Clone openreview-web
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+            git clone https://github.com/openreview/openreview-web.git ~/openreview-web
 
   create-directories:
     description: "Create API directories"
@@ -125,7 +167,7 @@ commands:
           name: Start API V2
           command: |
             cd ~/openreview-v2
-            npm run cleanStart
+            NODE_OPTIONS="--max-old-space-size=4096" npm run cleanStart
           background: true
       - run:
           name: Wait for API V2 to start
@@ -230,6 +272,7 @@ jobs:
         environment:
           xpack.security.enabled: false
           transport.host: localhost
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
     steps:
       - checkout
       - run:
@@ -241,7 +284,7 @@ jobs:
               PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | grep -oE '[0-9]+$')
               # Fetch the base branch (usually main or master)
               git fetch origin master:refs/remotes/origin/master 2>/dev/null || git fetch origin main:refs/remotes/origin/main 2>/dev/null || true
-              
+
               # Get modified/added test files compared to master/main
               MODIFIED_TESTS=$(git diff --name-only --diff-filter=AM origin/master...HEAD -- 'tests/test_*.py' 2>/dev/null || \
                                git diff --name-only --diff-filter=AM origin/main...HEAD -- 'tests/test_*.py' 2>/dev/null || \
@@ -250,10 +293,10 @@ jobs:
               # For non-PR builds (e.g., master branch), skip this job
               MODIFIED_TESTS=""
             fi
-            
+
             # Write the modified tests to a file for subsequent steps
             echo "$MODIFIED_TESTS" > /tmp/modified_tests.txt
-            
+
             FILE_COUNT=$(echo "$MODIFIED_TESTS" | grep -c . || true)
 
             if [ -z "$MODIFIED_TESTS" ]; then
@@ -275,6 +318,7 @@ jobs:
               echo "No modified test files - skipping test environment setup"
               circleci-agent step halt
             fi
+      - get-github-token
       - install-nodejs
       - setup-mongodb
       - clone-repos
@@ -321,8 +365,10 @@ jobs:
         environment:
           xpack.security.enabled: false
           transport.host: localhost
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
     steps:
       - checkout
+      - get-github-token
       - install-nodejs
       - setup-mongodb
       - clone-repos
@@ -362,19 +408,66 @@ jobs:
             fi
       - copy-logs-on-failure
       - store-test-artifacts
+  debug-tests:
+    # Run an explicit set of tests against custom openreview-api / openreview-api-v1
+    # branches. Triggered by passing a non-empty `pytest-files` pipeline parameter
+    # from the CircleCI UI; bypasses install-package + build-pr-tests + build.
+    resource_class: large
+    working_directory: ~/openreview-py-repo
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: cimg/python:<<parameters.python-version>>
+      - image: cimg/redis:7.2
+      - image: mongo:8.0
+        command: [ --replSet, rs0 ]
+      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+        environment:
+          xpack.security.enabled: false
+          transport.host: localhost
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    steps:
+      - checkout
+      - get-github-token
+      - install-nodejs
+      - setup-mongodb
+      - clone-repos
+      - create-directories
+      - install-firefox
+      - start-apis
+      - setup-openreview-web
+      - install-geckodriver
+      - install-pytest
+      - run:
+          name: Run pytest-files
+          environment:
+            PYTHONUNBUFFERED: "1"
+          command: |
+            cd ~/openreview-py-repo
+            PYTEST_FILES="<< pipeline.parameters.pytest-files >>"
+            echo "Running tests from pytest-files parameter: $PYTEST_FILES"
+            pytest $PYTEST_FILES --durations=0 -v -o junit_family=legacy \
+              --junitxml=test-reports/junit-debug.xml \
+              --driver Firefox --driver-path tests/drivers/geckodriver
+      - copy-logs-on-failure
+      - store-test-artifacts
   deploy-dev:
     working_directory: ~/openreview-py-repo
     docker:
       - image: cimg/python:3.11.0
     steps:
       - checkout
+      - get-github-token
       - run:
           name: Deploy to dev instance
           command: |
-            curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $OPENREVIEW_GITHUB" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
+            curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
 workflows:
   version: 2
   build-deploy:
+    when:
+      equal: [ "", << pipeline.parameters.pytest-files >> ]
     jobs:
       - install-package:
           matrix:
@@ -394,3 +487,9 @@ workflows:
           filters:
             branches:
               only: master
+  debug:
+    unless:
+      equal: [ "", << pipeline.parameters.pytest-files >> ]
+    jobs:
+      - debug-tests:
+          python-version: "3.10"

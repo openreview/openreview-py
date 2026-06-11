@@ -75,7 +75,7 @@ class GroupBuilder(object):
             'submission_id': { 'value': self.journal.get_author_submission_id() },
             'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
             'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },
-            'preferred_emails_invitation_id': { 'value': self.journal.get_preferred_emails_invitation_id() },
+            'preferred_emails_invitation_id': { 'value': self.journal.get_preferred_emails_invitation_id() }
         }
 
         if self.journal.get_certifications():
@@ -90,6 +90,8 @@ class GroupBuilder(object):
             content['journal_to_conference_certification'] = { 'value': self.journal.get_journal_to_conference_certification() }
         if self.journal.get_website_url('videos'):
             content['videos_url'] = { 'value': self.journal.get_website_url('videos') }
+        if self.journal.request_form_id:
+            content['journal_request_id'] = { 'value': self.journal.request_form_id }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
@@ -494,9 +496,12 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
 
         reviewers_group=openreview.tools.get_group(self.client, reviewers_group_id)
         if not reviewers_group:
+            reviewer_deanonymizers = [venue_id, action_editors_group_id]
+            if not self.journal.is_reviewer_to_reviewer_anonymous():
+                reviewer_deanonymizers.append(reviewers_group_id)
             reviewers_group=self.post_group(Group(id=reviewers_group_id,
                 readers=[venue_id, action_editors_group_id, reviewers_group_id],
-                deanonymizers=[venue_id, action_editors_group_id, reviewers_group_id],
+                deanonymizers=reviewer_deanonymizers,
                 nonreaders=[authors_group_id],
                 writers=[venue_id, action_editors_group_id],
                 signatures=[venue_id],

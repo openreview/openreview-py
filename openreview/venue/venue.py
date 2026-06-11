@@ -102,6 +102,7 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_custom_sections = False
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
+        self.submission_human_verification = None
         venue_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
         self.homepage_webfield_path = os.path.join(venue_webfield_dir, 'homepageWebfield.js')
         self.program_chairs_webfield_path = os.path.join(venue_webfield_dir, 'programChairsWebfield.js')
@@ -133,20 +134,29 @@ class Venue(object):
             "value": "CC BY 4.0",
             "description": "CC BY 4.0"
         }
-        self.reviewers_name = request_note.content['reviewers_name']['value']
-        self.reviewer_roles = request_note.content.get('reviewer_roles', [self.reviewers_name])
+        if request_note.content.get('reviewer_groups_names', {}).get('value'):
+            self.reviewer_roles = request_note.content['reviewer_groups_names']['value']
+            self.reviewers_name = self.reviewer_roles[0]
+        elif 'reviewers_name' in request_note.content:
+            self.reviewers_name = request_note.content['reviewers_name']['value']
+            self.reviewer_roles = [self.reviewers_name]
         preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
     
         if request_note.content.get('area_chairs_support',{}).get('value'):
-            self.area_chairs_name = request_note.content['area_chairs_name']['value']
+            if request_note.content.get('area_chair_groups_names', {}).get('value'):
+                self.area_chair_roles = request_note.content['area_chair_groups_names']['value']
+                self.area_chairs_name = self.area_chair_roles[0]
+            elif 'area_chairs_name' in request_note.content:
+                self.area_chairs_name = request_note.content['area_chairs_name']['value']
+                self.area_chair_roles = [self.area_chairs_name]
             self.use_area_chairs = True
-            self.area_chair_roles = request_note.content.get('area_chair_roles', [self.area_chairs_name])
             preferred_email_groups.append(self.get_area_chairs_id())
 
-        if 'senior_area_chairs_name' in request_note.content:  ## change this once we add support for SACs
-            self.senior_area_chairs_name = request_note.content['senior_area_chairs_name']['value']
+        if request_note.content.get('senior_area_chairs_support',{}).get('value'):
+            if request_note.content.get('senior_area_chair_groups_names', {}).get('value'):
+                self.senior_area_chair_roles = request_note.content['senior_area_chair_groups_names']['value']
+                self.senior_area_chairs_name = self.senior_area_chair_roles[0]
             self.use_senior_area_chairs = True
-            self.senior_area_chair_roles = request_note.content.get('senior_area_chair_roles', [self.senior_area_chairs_name])
             preferred_email_groups.append(self.get_senior_area_chairs_id())
 
         self.preferred_emails_groups = preferred_email_groups
@@ -378,6 +388,11 @@ class Venue(object):
 
     def anon_ethics_reviewers_name(self, pretty=True):
         return self.get_anon_committee_name(self.ethics_reviewers_name)
+
+    def get_senior_area_chairs_name(self, pretty=True):
+        if pretty:
+            return self.get_committee_name(self.senior_area_chairs_name, pretty)
+        return self.senior_area_chairs_name
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
@@ -1235,8 +1250,24 @@ Total Errors: {len(errors)}
         """
         invitation_prefix = self.support_user.replace('Support', 'Template')
 
+        if self.use_senior_area_chairs:
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_senior_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+
+            self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.senior_area_chairs_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
+                    'committee_name': { 'value': self.senior_area_chairs_name },
+                    'committee_pretty_name': { 'value': self.get_senior_area_chairs_name(pretty=True) }
+                },
+                await_process=True
+            )
+
         if self.use_area_chairs:
-            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2))
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2.1))
 
             self.client.post_invitation_edit(
                 invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
@@ -1267,11 +1298,15 @@ Total Errors: {len(errors)}
 
     def setup_matching_invitations(self):
         """Create matching configuration invitations for reviewers and area chairs (if enabled).
-
         Sets up the matching invitations (affinity scores, conflicts, custom
         max papers, etc.) without computing scores. Use
         :meth:`setup_committee_matching` to also compute scores and conflicts.
         """
+
+        if self.use_senior_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_senior_area_chairs_id()), self.get_area_chairs_id())
+            venue_matching.setup_matching_invitations()
+
         if self.use_area_chairs:
             venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
             venue_matching.setup_matching_invitations()
@@ -1281,10 +1316,14 @@ Total Errors: {len(errors)}
 
     def setup_all_committees_matching(self):
         """Run full matching setup (invitations, affinity scores, conflicts) for all committees.
-
         Sets up matching for area chairs (if enabled) and reviewers, including
         computing affinity scores and conflicts with default settings.
         """
+
+        if self.use_senior_area_chairs:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_senior_area_chairs_id()), self.get_area_chairs_id())
+            venue_matching.setup()
+
         if self.use_area_chairs:
             venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
             venue_matching.setup()
@@ -1449,16 +1488,16 @@ Total Errors: {len(errors)}
 
         all_authorids = []
         for submission in submissions:
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
             all_authorids = all_authorids + authorids
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True)
-        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, with_relations=True, as_dict=True)   
+        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, with_relations=True, as_dict=True)
 
         info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
 
         for submission in submissions:
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
 
             # Extract domains from each authorprofile
             author_ids = set()
@@ -1623,7 +1662,7 @@ Total Errors: {len(errors)}
                             true_author_found = True
                             break
                     if not true_author_found:
-                        owner = submission.content["authorids"]["value"][0]
+                        owner = submission.authorids[0]
                 print(f"Creating submission for {submission.id} with owner {owner}")
                 try:
                     owner_profile = self.client.get_profile(owner)
@@ -2351,7 +2390,7 @@ OpenReview Team'''
 
             venue_group = client.get_group(venue_id)
             
-            if hasattr(venue_group, 'domain') and venue_group.content:
+            if hasattr(venue_group, 'domain') and venue_group.content and 'journal_request_id' not in venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
 
@@ -2399,7 +2438,7 @@ OpenReview Team'''
                                                 client.post_edge(invitation_edge)
 
                                             ## Check conflicts
-                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
+                                            author_profiles = openreview.tools.get_profiles(client, submission.authorids, with_publications=True, with_relations=True)
                                             conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
 
                                             if conflicts:
@@ -2463,16 +2502,16 @@ OpenReview Team'''
             job_id = res['jobId']
             print('Computing scores for active papers... Job ID: ', job_id)
 
-        results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
+        results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True, format='csv')
         print('Sparse scores retrieved')
 
         ## Score filtering
 
         unique_scores = []
         seen_pairs = set()
-        for r in results['results']:
-            paper_id_a = r.get('entityA', r.get('match_submission'))
-            paper_id_b = r.get('entityB', r.get('submission'))
+        for r in results:
+            paper_id_a = r['entityA']
+            paper_id_b = r['entityB']
             score = float(r['score'])
 
             # Remove self-matches
@@ -2522,7 +2561,7 @@ OpenReview Team'''
         all_authors = {
             author_id
             for s in submissions_from_scores
-            for author_id in s.content['authorids']['value']
+            for author_id in s.authorids
         }
 
         author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
@@ -2565,7 +2604,7 @@ OpenReview Team'''
                 authors_list_a = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
-                    for author_id in papers_by_id_a[paper_id_a].content['authorids']['value']
+                    for author_id in papers_by_id_a[paper_id_a].authorids
                 ]
                 authors_str_a = '|'.join(authors_list_a)
 
@@ -2575,7 +2614,7 @@ OpenReview Team'''
                 authors_list_b = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
-                    for author_id in papers_by_id_b[paper_id_b].content['authorids']['value']
+                    for author_id in papers_by_id_b[paper_id_b].authorids
                 ]
                 authors_str_b = '|'.join(authors_list_b)
 

@@ -36,8 +36,6 @@ class TestVenueRestriction():
                     'contact_email': {'value': 'programchair@restrict.cc'},
                     'submission_start_date': {'value': openreview.tools.datetime_millis(now)},
                     'submission_deadline': {'value': openreview.tools.datetime_millis(due_date)},
-                    'reviewers_name': {'value': 'Reviewers'},
-                    'area_chairs_name': {'value': 'Area_Chairs'},
                     'colocated': {'value': 'Independent'},
                     'previous_venue': {'value': 'RESTRICT.cc/2024/Conference'},
                     'expected_submissions': {'value': 10},
@@ -51,7 +49,7 @@ class TestVenueRestriction():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                             'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                         ]
                     }
@@ -103,12 +101,19 @@ class TestVenueRestriction():
                 content={
                     'title': {'value': 'A Submission for Restriction Testing'},
                     'abstract': {'value': 'This paper tests venue restriction.'},
-                    'authorids': {'value': ['~Author_Restrict1']},
-                    'authors': {'value': ['Author Restrict']},
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'Author Restrict',
+                                'username': '~Author_Restrict1',
+                                'institutions': [{ 'domain': 'restrict.cc', 'country': 'US' }]
+                            }
+                        ]
+                    },
                     'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
                     'keywords': {'value': ['testing', 'venue restriction']},
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },                    
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
                 }
             )
         )
@@ -195,12 +200,19 @@ class TestVenueRestriction():
                 content={
                     'title': {'value': 'A PC Submission While Restricted'},
                     'abstract': {'value': 'Testing that the process function works when domain is restricted.'},
-                    'authorids': {'value': ['~Program_ChairRestrict1']},
-                    'authors': {'value': ['Program ChairRestrict']},
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'Program ChairRestrict',
+                                'username': '~Program_ChairRestrict1',
+                                'institutions': [{ 'domain': 'restrict.cc', 'country': 'US' }]
+                            }
+                        ]
+                    },
                     'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
                     'keywords': {'value': ['testing', 'venue restriction']},
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },                    
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
                 }
             )
         )

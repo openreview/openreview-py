@@ -19,6 +19,7 @@ import re
 import time
 import jwt
 import json
+import csv
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from ..openreview import MfaRequiredException
@@ -229,14 +230,13 @@ class OpenReviewClient(object):
         })
 
     def __await_process(self, edit_id):
-    
+
         process_logs = self.get_process_logs(id=edit_id)
         if not process_logs:
             return ## no process function found
-        
-        for i in range(100):
 
-            print('Check logs for process function', process_logs[0])
+        for i in range(1200):  # 1200 × 0.5s = 10 minutes
+
             if process_logs[0]['status'] == 'ok':
                 return
             elif process_logs[0]['status'] == 'error':
@@ -245,7 +245,7 @@ class OpenReviewClient(object):
             time.sleep(0.5)
             process_logs = self.get_process_logs(id=edit_id)
 
-        raise OpenReviewException("Process timed out")    
+        raise OpenReviewException("Process timed out")
 
     def get_invitation_date_process_job(self, job_id):
         response = self.session.get(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/' + job_id.replace('/', '%2F'), params = {}, headers = self.headers)
@@ -2954,6 +2954,25 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def request_raw_expertise(self, expertise_request, baseurl=None):
+        """
+        Calls the Expertise API with a raw expertise request.
+
+        :param expertise_request: Dictionary containing the expertise request to be sent to the Expertise API
+        :type expertise_request: dict
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the response from the Expertise API
+        :rtype: dict
+        """
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
     def request_expertise(self, 
                         name, 
                         group_id, 
@@ -3339,7 +3358,21 @@ class OpenReviewClient(object):
         print('get expertise jobs', response_json)
         return response_json
     
-    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
+    def get_expertise_metadata(self, job_id, baseurl=None):
+
+        print('get expertise metadata', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            print('get expertise metadata localhost, return {}')
+            return {}
+
+        response = self.session.get(base_url + '/expertise/metadata', params = {'jobId': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        response_json = response.json()
+        print('get expertise metadata', response_json)
+        return response_json
+
+    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json'):
 
         print('get expertise results', baseurl, job_id)
         base_url = baseurl if baseurl else self.baseurl
@@ -3347,7 +3380,7 @@ class OpenReviewClient(object):
 
         if base_url.startswith('http://localhost'):
             print('return expertise results localhost, return []')
-            return { 'results': [] }
+            return iter([]) if format == 'csv' else { 'results': [] }
 
         if wait_for_complete:
             call_count = 0
@@ -3362,13 +3395,24 @@ class OpenReviewClient(object):
                 call_count += 1
 
             if 'Completed' == status_text:
-                return self.get_expertise_results(job_id, baseurl=base_url)
+                return self.get_expertise_results(job_id, baseurl=base_url, format=format)
             if 'Error' in status_text:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
+            if format == 'csv':
+                response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
+                response = self.__handle_response(response)
+                print('return expertise results', baseurl, job_id)
+                def _iter_csv_results(response):
+                    try:
+                        yield from csv.DictReader(response.iter_lines(decode_unicode=True))
+                    finally:
+                        response.close()
+                return _iter_csv_results(response)
+
             response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
             response = self.__handle_response(response)
             print('return expertise results', baseurl, job_id)
@@ -3575,6 +3619,32 @@ class Note(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
+    @property
+    def authors(self):
+        """
+        Returns the list of author display names, working for both the unified
+        ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
+        """
+        if not self.content:
+            return []
+        authors_value = self.content.get('authors', {}).get('value') or []
+        if authors_value and isinstance(authors_value[0], dict):
+            return [author.get('fullname', '') for author in authors_value]
+        return list(authors_value)
+
+    @property
+    def authorids(self):
+        """
+        Returns the list of author profile IDs / emails, working for both the
+        unified ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
+        """
+        if not self.content:
+            return []
+        authors_value = self.content.get('authors', {}).get('value') or []
+        if authors_value and isinstance(authors_value[0], dict):
+            return [author['username'] for author in authors_value if author.get('username')]
+        return list(self.content.get('authorids', {}).get('value') or [])
+
     def to_json(self):
         """
         Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
@@ -3697,7 +3767,8 @@ class Invitation(object):
         description = None,
         instructions = None,
         guestPosting = None,
-        secret = None):
+        secret = None,
+        humanVerificationRequired = None):
 
         self.id = id
         self.invitations = invitations
@@ -3736,6 +3807,7 @@ class Invitation(object):
         self.instructions = instructions
         self.guestPosting = guestPosting
         self.secret = secret
+        self.humanVerificationRequired = humanVerificationRequired
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -3862,6 +3934,8 @@ class Invitation(object):
             body['guestPosting']=self.guestPosting
         if self.secret is not None:
             body['secret']=self.secret
+        if self.humanVerificationRequired is not None:
+            body['humanVerificationRequired']=self.humanVerificationRequired
         return body
 
     @classmethod
@@ -3928,6 +4002,8 @@ class Invitation(object):
             invitation.guestPosting = i['guestPosting']
         if 'secret' in i:
             invitation.secret = i['secret']
+        if 'humanVerificationRequired' in i:
+            invitation.humanVerificationRequired = i['humanVerificationRequired']
         return invitation
 class Edge(object):
     def __init__(self, head, tail, invitation, domain=None, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):

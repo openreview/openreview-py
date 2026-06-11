@@ -1,0 +1,171 @@
+# All services share a single network namespace via the "pod" container.
+# This means localhost resolves to the same place in every container,
+# just like CircleCI — so we reuse NODE_ENV=circleci configs as-is.
+
+services:
+  pod:
+    image: alpine:3
+    command: sleep infinity
+    healthcheck:
+      test: "true"
+      interval: 5s
+      retries: 1
+
+  mongo:
+    image: mongo:8.0
+    command: ["--replSet", "rs0"]
+    network_mode: "service:pod"
+    depends_on:
+      pod:
+        condition: service_healthy
+    healthcheck:
+      test: >
+        mongosh --quiet --eval "
+          try { rs.status().ok && 1 }
+          catch(e) { rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]}); sleep(2000); rs.status().ok && 1 }
+        "
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  redis:
+    image: redis:7.2
+    network_mode: "service:pod"
+    depends_on:
+      pod:
+        condition: service_healthy
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.25
+    network_mode: "service:pod"
+    depends_on:
+      pod:
+        condition: service_healthy
+    environment:
+      - xpack.security.enabled=false
+      - transport.host=localhost
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    healthcheck:
+      test: curl -sf http://localhost:9200/_cluster/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  api-v1:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    network_mode: "service:pod"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=circleci
+      - CLEAN_START=${CLEAN_START:-true}
+    volumes:
+      - ${API_V1_PATH:-../../openreview-api-v1}:/mnt/src:ro
+      - ../:/mnt/openreview-py:ro
+      - ./scripts:/docker/scripts:ro
+      - api-v1-node-modules:/app/node_modules
+      - api-v1-venv:/opt/venv
+    tmpfs:
+      - /mnt/src/.git
+      - /mnt/openreview-py/.git
+    healthcheck:
+      test: test -f /tmp/setup-complete
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 180s
+    entrypoint: ["bash", "/docker/scripts/api-v1-entrypoint.sh"]
+
+  api-v2:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    network_mode: "service:pod"
+    depends_on:
+      api-v1:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=circleci
+      - CLEAN_START=${CLEAN_START:-true}
+    volumes:
+      - ${API_V2_PATH:-../../openreview-api}:/mnt/src:ro
+      - ../:/mnt/openreview-py:ro
+      - ./scripts:/docker/scripts:ro
+      - api-v2-node-modules:/app/node_modules
+      - api-v2-venv:/opt/venv
+    tmpfs:
+      - /mnt/src/.git
+      - /mnt/openreview-py/.git
+    healthcheck:
+      test: test -f /tmp/setup-complete
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 180s
+    entrypoint: ["bash", "/docker/scripts/api-v2-entrypoint.sh"]
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    network_mode: "service:pod"
+    depends_on:
+      pod:
+        condition: service_healthy
+    volumes:
+      - ${WEB_PATH:-../../openreview-web}:/mnt/src:ro
+      - ./scripts:/docker/scripts:ro
+      - web-node-modules:/app/node_modules
+    tmpfs:
+      - /mnt/src/.git
+    healthcheck:
+      test: curl -sf http://localhost:3030 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 300s
+    entrypoint: ["bash", "/docker/scripts/web-entrypoint.sh"]
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    network_mode: "service:pod"
+    depends_on:
+      web:
+        condition: service_healthy
+      api-v1:
+        condition: service_healthy
+      api-v2:
+        condition: service_healthy
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../:/mnt/src:ro
+      - ./scripts:/docker/scripts:ro
+      - test-venv:/opt/venv
+    tmpfs:
+      - /mnt/src/.git
+    shm_size: 2g
+    entrypoint: ["bash", "/docker/scripts/test-entrypoint.sh"]
+
+volumes:
+  api-v1-node-modules:
+  api-v1-venv:
+  api-v2-node-modules:
+  api-v2-venv:
+  web-node-modules:
+  test-venv:

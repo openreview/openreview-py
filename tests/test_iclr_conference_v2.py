@@ -331,6 +331,17 @@ note={under review}
 }'''
         assert submission.content['_bibtex']['value'] == valid_bibtex
 
+        guest_client = openreview.api.OpenReviewClient()
+        search_notes = guest_client.search_notes('Paper title 1 license revision')
+        assert search_notes
+        assert 'authors' not in search_notes[0].content
+        assert 'authorids' not in search_notes[0].content
+
+        search_notes = pc_client_v2.search_notes('Paper title 1 license revision')
+        assert search_notes
+        assert 'authors' in search_notes[0].content
+        assert 'authorids' in search_notes[0].content
+        assert search_notes[0].content['authors']['value'] == ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc', 'SAC ICLROne']      
 
         # Assert that activation date of matching invitation == abstract deadline
         matching_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')

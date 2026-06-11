@@ -531,7 +531,6 @@ class Templates():
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/committee_invited_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -551,6 +550,16 @@ class Templates():
                                 'type': 'string'
                             }
                         }
+                    },
+                    'committee_pretty_name': {
+                        'order': 3,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -559,7 +568,7 @@ class Templates():
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Invited',
-                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue.',
+                    'description': 'Group consisting of the users who have been invited to serve as ${2/content/committee_pretty_name/value} for the venue.',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Invited'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -596,6 +605,16 @@ class Templates():
                                 'type': 'string'
                             }
                         }
+                    },
+                    'committee_pretty_name': {
+                        'order': 3,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -604,7 +623,7 @@ class Templates():
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Declined',
-                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue and have declined the invitation.',
+                    'description': 'Group consisting of the users who have been invited to serve as ${2/content/committee_pretty_name/value} for the venue and have declined the invitation.',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Declined'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -1227,7 +1246,7 @@ If you would like to change your decision, please follow the link in the previou
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'regex': '${5/content/venue_id/value}.*' } },
-                        'parentGroup': '${3/content/venue_id/value}',
+                        'parentGroup': { 'param': { 'prefix': '${5/content/venue_id/value}', 'optional': True } },
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/venue_short_name/value}',

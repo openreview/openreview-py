@@ -17,6 +17,7 @@ import pprint
 import os
 import re
 import jwt
+import csv
 import traceback
 
 
@@ -2234,12 +2235,23 @@ class Client(object):
 
         return response.json()
 
-    def get_expertise_results(self, job_id, baseurl=None):
+    def get_expertise_metadata(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
+        response = self.session.get(base_url + '/expertise/metadata', params = {'jobId': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_expertise_results(self, job_id, baseurl=None, format='json'):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if format == 'csv':
+            response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
+            response = self.__handle_response(response)
+            return csv.DictReader(response.iter_lines(decode_unicode=True))
+
         response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
-
         return response.json()
 
 class Group(object):
@@ -2747,6 +2759,16 @@ class Note(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
+    @property
+    def authors(self):
+        """Returns the list of author display names."""
+        return list((self.content or {}).get('authors') or [])
+
+    @property
+    def authorids(self):
+        """Returns the list of author profile IDs / emails."""
+        return list((self.content or {}).get('authorids') or [])
+
     def to_json(self):
         """
         Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
@@ -3061,15 +3083,17 @@ class Profile(object):
         return username
 
     def get_preferred_email(self):
-        preferred_email=self.content.get('preferredEmail')
+        preferred_email = self.content.get('preferredEmail')
         if preferred_email:
             return preferred_email
 
-        if self.content['emailsConfirmed']:
-            return self.content['emailsConfirmed'][0]
+        emails_confirmed = self.content.get('emailsConfirmed')
+        if emails_confirmed:
+            return emails_confirmed[0]
 
-        if self.content['emails']:
-            return self.content['emails'][0]
+        emails = self.content.get('emails')
+        if emails:
+            return emails[0]
 
         return None
     

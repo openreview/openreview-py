@@ -33,9 +33,9 @@ DEV_API_V1 = 'https://api.dev.openreview.net'
 DEV_API_V2 = 'https://api2.dev.openreview.net'
 DEV_SITE   = 'https://dev.openreview.net'
 
-LOCAL_API_V1 = 'http://localhost:3000'
-LOCAL_API_V2 = 'http://localhost:3001'
-LOCAL_SITE   = 'http://localhost:3030'
+LOCAL_API_V1 = os.environ.get('OPENREVIEW_API_V1_URL', 'http://localhost:3000')
+LOCAL_API_V2 = os.environ.get('OPENREVIEW_API_V2_URL', 'http://localhost:3001')
+LOCAL_SITE   = os.environ.get('OPENREVIEW_WEB_URL', 'http://localhost:3030')
 
 # Remote-only lists (exclude localhost) used by client guards
 V1_REMOTE_URLS = [PROD_API_V1, DEV_API_V1]
@@ -514,7 +514,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
         first_author_last_name = 'anonymous'
         authors = 'Anonymous'
     else:
-        note_author_list = note.content['authors'] if isinstance(note.content['authors'], list) else note.content['authors']['value']
+        note_author_list = note.authors
         first_author_last_name = note_author_list[0].split(' ')[-1].lower()
         if names_reversed:
             # last, first

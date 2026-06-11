@@ -915,6 +915,8 @@ Please note that responding to this email will direct your reply to testvenue@co
 
 Title: Paper 1 Title REVISED AGAIN
 
+Authors: Celeste MartinezEleven
+
 To view your submission, click here: https://openreview.net/forum?id={updated_note.id}'''
         assert message_text in messages[0]['content']['text']
 

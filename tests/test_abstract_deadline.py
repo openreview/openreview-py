@@ -39,8 +39,6 @@ class TestAbstractDeadline():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'full_submission_deadline': { 'value': openreview.tools.datetime_millis(full_submission_due_date) },
-                    'reviewers_name': { 'value': 'Reviewers' },
-                    'area_chairs_name': { 'value': 'Area_Chairs' },
                     'expected_submissions': { 'value': 20 },
                     'venue_organizer_agreement': { 
                         'value': [
@@ -51,7 +49,7 @@ class TestAbstractDeadline():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                             'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                     }
@@ -243,8 +241,20 @@ class TestAbstractDeadline():
                 content = {
                     'title': { 'value': 'Test Submission 1' },
                     'abstract': { 'value': 'This is an abstract for submission 1' },
-                    'authors': { 'value': ['SomeFirstName User', 'AuthorOne EMAS'] },
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~AuthorOne_EMAS1'] },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'AuthorOne EMAS',
+                                'username': '~AuthorOne_EMAS1',
+                                'institutions': [{ 'domain': 'emas.cc', 'country': 'US' }]
+                            }
+                        ]
+                    },
                     'keywords': { 'value': ['machine learning', 'artificial intelligence'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
                     'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
@@ -276,6 +286,7 @@ class TestAbstractDeadline():
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Deletion-0-1', count=4)
         helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Message-0-1', count=3)
 
         full_submission_invitations = pc_client.get_invitations(invitation='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission')

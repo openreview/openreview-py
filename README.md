@@ -77,22 +77,156 @@ The openreview-py library can be used to easily access and modify any data store
 For more information, see [the official reference](https://openreview-py.readthedocs.io/en/latest/).
 You can also check the [OpenReview docs](https://docs.openreview.net/getting-started/using-the-api/installing-and-instantiating-the-python-client) for examples and How-To Guides
 
-Test Setup
-----------
+Run Tests with Docker (Recommended)
+------------------------------------
 
-Running the openreview-py test suite requires some initial setup. First, the OpenReview API V1, OpenReview API V2 and OpenReview Web frontend must be cloned and configured to run on ports 3000, 3001 and 3030 respectively. For more information on how to install and configure those services see the README for each project:
+The easiest way to run the integration tests is with Docker Compose. This requires [Docker](https://docs.docker.com/get-docker/) and that the following sibling repositories are cloned next to `openreview-py`:
+
+```bash
+├── openreview-api        # https://github.com/openreview/openreview-api
+├── openreview-api-v1     # https://github.com/openreview/openreview-api-v1
+├── openreview-web        # https://github.com/openreview/openreview-web
+└── openreview-py         # this repo
+```
+
+Set up your config file, then run tests:
+
+```bash
+cd docker
+cp config.example.json config.json
+# Edit config.json with your repo paths (required before first run)
+
+# Run a specific test file (services start, tests run, then everything tears down)
+./run.py tests/test_client.py
+
+# Run a specific test with verbose output
+./run.py tests/test_client.py::TestClient::test_get_groups -v
+
+# Run all tests (takes a long time)
+./run.py
+```
+
+Each test run starts infrastructure (MongoDB, Redis, Elasticsearch, web), restarts API servers with a clean database via `npm run cleanStart`, runs the tests, and **tears down all services** when done (unless `keep_infra` is enabled). All services share a network namespace so `localhost` works everywhere, reusing the same `circleci.json` configs used in CI.
+
+### Serve Mode (Manual Browser Testing)
+
+Start all services with ports exposed to your host machine for manual browser testing:
+
+```bash
+# Start services only (browse http://localhost:3030)
+./run.py --serve
+
+# Populate the database by running a test, then keep services running
+./run.py --serve tests/test_icml_conference.py
+
+# Preserve existing data across restarts (skip cleanStart)
+./run.py --serve --no-clean
+```
+
+Press `Ctrl+C` to stop. If `keep_infra` is enabled, only API servers are stopped and infrastructure stays running. Otherwise, all services are torn down. You can also run `docker compose down` from another terminal to stop everything.
+
+Combine with `--shell` to get an interactive shell while services are running:
+
+```bash
+# Serve with shell access (browse + run scripts/tests)
+./run.py --serve --shell
+
+# Populate DB, then drop into shell for manual testing
+./run.py --serve --shell tests/test_icml_conference.py
+```
+
+### Interactive Shell
+
+Drop into the test container shell for debugging or manual pytest runs:
+
+```bash
+./run.py --shell
+```
+
+### Branch Selection
+
+Use specific branches for sibling repos:
+
+```bash
+# Override branches via CLI
+./run.py --branch-api-v2 feature/new-endpoint tests/test_client.py
+
+# Or configure defaults in docker/config.json (copy from config.example.json)
+cp config.example.json config.json
+# Edit config.json with your paths and branches
+```
+
+### Keeping Infrastructure Between Runs
+
+Use `--keep-infra` (or set `keep_infra: true` in config) to keep MongoDB, Redis, Elasticsearch, and web running after tests. Then use `--no-clean` on the next run to preserve the database:
+
+```bash
+# First run: populate data, keep infrastructure running after tests
+./run.py --keep-infra tests/test_registration_step.py
+
+# Second run: reuse infrastructure and database (skips cleanStart)
+./run.py --serve --no-clean
+
+# Or combine: populate, then browse with shell access
+./run.py --keep-infra tests/test_registration_step.py
+./run.py --serve --shell --no-clean
+```
+
+> Note: `--no-clean` requires `keep_infra` to be used. Without it, the database is lost when services are torn down.
+
+### Configuration
+
+Copy `docker/config.example.json` to `docker/config.json` before your first run. The config file is required and gitignored.
+
+```json
+{
+  "api_v1": { "path": "../../openreview-api-v1", "branch": "main" },
+  "api_v2": { "path": "../../openreview-api",    "branch": "feature/x" },
+  "web":    { "path": "../../openreview-web",     "branch": "" },
+  "mode": "test",
+  "auto_checkout": true,
+  "keep_infra": false
+}
+```
+
+- **path**: Relative to `docker/` or absolute. Defaults to sibling directories.
+- **branch**: Branch to auto-checkout before starting. Empty means use whatever is checked out.
+- **mode**: Default mode (`test`, `serve`). CLI flags override this.
+- **auto_checkout**: Set to `false` to disable auto-checkout. `--no-checkout` also disables it.
+- **keep_infra**: Set to `true` to keep infrastructure (mongo, redis, ES, web) running after tests. API servers are always torn down in test mode. `--keep-infra` also enables it.
+
+### Cleanup
+
+```bash
+# Remove containers (keep volumes for faster next run)
+docker compose down
+
+# Full clean (remove volumes too)
+docker compose down -v
+```
+
+> Note: The first run takes several minutes to pull images and install dependencies. Subsequent runs are much faster thanks to cached named volumes for `node_modules` and Python virtual environments.
+
+Run Tests Locally
+-----------------
+
+To run tests without Docker, you need to manually start the required services.
+
+### Test Setup
+
+The OpenReview API V1, OpenReview API V2, and OpenReview Web frontend must be cloned and configured to run on ports 3000, 3001, and 3030 respectively. For more information on how to install and configure those services see the README for each project:
 
 - [OpenReview API V1](https://github.com/openreview/openreview-api-v1)
 - [OpenReview API V2](https://github.com/openreview/openreview-api)
 - [OpenReview Web](https://github.com/openreview/openreview-web)
 
-Next, install the package with test dependencies:
+Install the package with test dependencies:
 
 ```bash
 pip install -e ".[test]"
 ```
 
-Finally, you must download the proper Firefox Selenium driver for your OS [from GitHub](https://github.com/mozilla/geckodriver/releases), and place the `geckodriver` executable in the directory `openreview-py/tests/drivers`. When you are done your folder structure should look like this:
+Download the proper Firefox Selenium driver for your OS [from GitHub](https://github.com/mozilla/geckodriver/releases), and place the `geckodriver` executable in the directory `openreview-py/tests/drivers`. When you are done your folder structure should look like this:
 
 ```bash
 ├── openreview-py
@@ -102,10 +236,9 @@ Finally, you must download the proper Firefox Selenium driver for your OS [from 
 │   │   │    └── geckodriver
 ```
 
-Run Tests
----------
+### Running Tests
 
-Once the test setup above is complete you should be ready to run the test suite. To do so, start both OpenReview API versions running:
+Start both OpenReview API versions and the web frontend:
 
 Inside the OpenReview API V1 directory
 ```bash
@@ -132,5 +265,5 @@ pytest
 To run a single set of tests from a file, you can include the file name as an argument. For example:
 
 ```bash
-pytest tests/test_double_blind_conference.py
+pytest tests/test_client.py
 ```

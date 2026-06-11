@@ -3608,6 +3608,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
 Title: revised test submission 3
 
+Authors: VenueFour Author, VenueThree Author
+
 Abstract revised abstract 3
 
 To view your submission, click here: https://openreview.net/forum?id={updated_note.id}
