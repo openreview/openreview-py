@@ -381,7 +381,7 @@ class TestVenueDeployment():
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Withdrawal').cdate == activation_date
         assert not [
             log for log in openreview_client.get_process_logs(id=f'{venue_id}/-/Withdrawal-0-0')
-            if log['status'] in ['ok', 'error']
+            if log['status'] in ['running', 'ok', 'error']
         ]
 
         # 2. rename the venue to a new domain
