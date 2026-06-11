@@ -1468,6 +1468,7 @@ class Matching(object):
         paper_number = '${{2/head}/number}'
 
         readers = [venue_id]
+        invitation_readers = [venue_id]
         edge_readers = readers + ['${2/tail}']
         edge_nonreaders = [venue.get_authors_id(number=paper_number)]
         edge_head = {
@@ -1486,12 +1487,15 @@ class Matching(object):
         if self.is_reviewer:
             if venue.use_senior_area_chairs:
                 readers.append(venue.get_senior_area_chairs_id(number=paper_number))
+                invitation_readers.append(self.senior_area_chairs_id)
             if venue.use_area_chairs:
                 readers.append(venue.get_area_chairs_id(number=paper_number))
+                invitation_readers.append(self.area_chairs_id)
 
         if self.is_area_chair:
             if venue.use_senior_area_chairs:
                 readers.append(venue.get_senior_area_chairs_id(number=paper_number))
+                invitation_readers.append(self.senior_area_chairs_id)
 
         if self.is_senior_area_chair:
             edge_readers = [venue_id, '${2/tail}', '${2/head}']
@@ -1510,7 +1514,7 @@ class Matching(object):
         invitation = Invitation(
             id = score_invitation_id,
             invitees = [f'{venue_id}/Automated_Administrator'],
-            readers = readers,
+            readers = invitation_readers,
             writers = [venue_id],
             signatures = [venue_id],
             responseArchiveDate = venue.get_edges_archive_date(),
@@ -1592,7 +1596,7 @@ class Matching(object):
             invitation = Invitation(
                 id = conflict_invitation_id,
                 invitees = [f'{venue_id}/Automated_Administrator'],
-                readers = readers,
+                readers = invitation_readers,
                 writers = [venue_id],
                 signatures = [venue_id],
                 responseArchiveDate = venue.get_edges_archive_date(),
