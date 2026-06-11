@@ -366,9 +366,11 @@ class TestVenueDeployment():
         # Schedule the Withdrawal cdate date process (-0-0) to run a few minutes from now,
         # so it is still a pending (in-flight) job when we rename. This lets us verify the
         # rename re-schedules the pending job to actually run under the new domain. The
-        # request form rejects past dates, but the /Dates invitation lets us set the
-        # activation date directly.
-        activation_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(minutes=3))
+        # delay must be long enough that the (potentially multi-minute) rename finishes
+        # before the cdate fires, otherwise the process would run under the old domain
+        # while the rename is still in progress. The request form rejects past dates, but
+        # the /Dates invitation lets us set the activation date directly.
+        activation_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(minutes=5))
         dates_edit = pc_client.post_invitation_edit(
             invitations=f'{venue_id}/-/Withdrawal/Dates',
             content={
