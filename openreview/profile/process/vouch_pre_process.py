@@ -41,6 +41,19 @@ def process(client, tag, invitation):
     if not has_institutional_email:
         raise openreview.OpenReviewException('You are not allowed to vouch for another user: you must have an institutional email in your profile.')
 
+    ## The voucher must have declared a relation to the profile they are vouching for.
+    ## Relations reference the related user by username (when they have a profile) or by
+    ## email, so match against every id and email of the vouched profile.
+    vouched_usernames = [name['username'] for name in (vouched_profile.content.get('names', []) or []) if name.get('username')]
+    vouched_emails = vouched_profile.content.get('emails', []) or []
+    relations = voucher_profile.content.get('relations', []) or []
+    has_relation = any(
+        relation.get('username') in vouched_usernames or (relation.get('email') and relation.get('email') in vouched_emails)
+        for relation in relations
+    )
+    if not has_relation:
+        raise openreview.OpenReviewException('You are not allowed to vouch for this user: you must have a relation to them in your profile.')
+
     ## The voucher must have created fewer than 5 vouches in the last month. Push the
     ## 30-day window into the query (mintmdate) and cap the result (limit) so the
     ## preprocess stays fast even for voucers with a long vouching history.

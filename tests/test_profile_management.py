@@ -4305,6 +4305,18 @@ The OpenReview Team.
         voucher_client = helpers.create_user('voucher@umass.edu', 'Voucher', 'User', institution='umass.edu')
         assert openreview_client.get_profile('~Voucher_User1').state == 'Active Institutional'
 
+        def add_voucher_relation(username, name):
+            ## The voucher must declare a relation to the user they vouch for
+            profile = voucher_client.get_profile(voucher_client.profile.id)
+            profile.content.setdefault('relations', []).append({
+                'relation': 'Colleague',
+                'name': name,
+                'username': username,
+                'start': 2020,
+                'end': None
+            })
+            voucher_client.post_profile(profile)
+
         ## A user activated automatically without an institutional email is not allowed to vouch
         helpers.create_user('autovoucher@gmail.com', 'Autovoucher', 'User')
         assert openreview_client.get_profile('~Autovoucher_User1').state == 'Active Automatic'
@@ -4375,7 +4387,21 @@ The OpenReview Team.
             ## No vouch tag was created for either invalid target
             assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Autovoucher_User1')) == 0
 
-            ## A qualified voucher vouches for the rejected user -> the profile gets activated
+            ## The voucher must have a relation to the vouched user in their profile. The voucher
+            ## has not declared ~Vouchee_User1 as a relation yet, so the vouch is rejected.
+            with pytest.raises(openreview.OpenReviewException, match=r'you must have a relation to them in your profile'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Vouchee_User1'
+                    )
+                )
+
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')) == 0
+
+            ## A qualified voucher with a declared relation vouches for the rejected user -> the profile gets activated
+            add_voucher_relation('~Vouchee_User1', 'Vouchee User')
             vouch_tag = voucher_client.post_tag(
                 openreview.api.Tag(
                     invitation='openreview.net/Support/-/Vouch',
@@ -4435,6 +4461,7 @@ The OpenReview Team.
             for name in ['Voucheea', 'Voucheeb', 'Voucheec', 'Voucheed']:
                 register_unmoderated_user(f'{name.lower()}@gmail.com', name, 'User')
                 support_client.moderate_profile(f'~{name}_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+                add_voucher_relation(f'~{name}_User1', f'{name} User')
                 limit_tag = voucher_client.post_tag(
                     openreview.api.Tag(
                         invitation='openreview.net/Support/-/Vouch',
@@ -4449,6 +4476,7 @@ The OpenReview Team.
             ## The voucher now has 5 vouches in the last month, so the 6th one is rejected
             register_unmoderated_user('voucheee@gmail.com', 'Voucheee', 'User')
             support_client.moderate_profile('~Voucheee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            add_voucher_relation('~Voucheee_User1', 'Voucheee User')
             with pytest.raises(openreview.OpenReviewException, match=r'more than 5 users per month'):
                 voucher_client.post_tag(
                     openreview.api.Tag(
