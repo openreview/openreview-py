@@ -224,6 +224,18 @@ class Templates():
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this release step is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': ''
+                            }
+                        }
+                    },
                     'description': {
                         'value': {
                             'param': {
@@ -243,6 +255,11 @@ class Templates():
                     'cdate': '${2/content/activation_date/value}',
                     'expdate': '${2/content/activation_date/value}+1209600000',
                     'description': '${2/content/description/value}',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': '${4/content/workflow_stage_name/value}'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/release_notes_process.py')
@@ -346,6 +363,11 @@ class Templates():
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step runs automatically at the "Upload Date", and posts decisions to submissions based on the contents of a CSV file. The CSV file must contain one decision per line in the format: paper_number, decision, comment. The comment field is optional.',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': 'decision'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/upload_decisions_process.py'),
@@ -1507,6 +1529,9 @@ If you would like to change your decision, please follow the link in the previou
                         'script': self.get_process_content('process/email_decisions_process.py')
                     }],
                     'content': {
+                        'workflow_stage_name': {
+                            'value': 'decision'
+                        },
                         'subject': {
                             'value': '[${4/content/short_name/value}] The decision for your submission #{submission_number}, titled "{submission_title}" is now available'
                         },
@@ -1619,6 +1644,9 @@ If you would like to change your decision, please follow the link in the previou
                         'script': self.get_process_content('process/email_reviews_process.py')
                     }],
                     'content': {
+                        'workflow_stage_name': {
+                            'value': 'reviewing'
+                        },
                         'subject': {
                             'value': '[${4/content/short_name/value}] The reviews for your submission #{submission_number}, titled "{submission_title}" are now available'
                         },
@@ -1721,6 +1749,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step runs automatically at its "activation date", and releases submissions to the public. Configure which submissions (all submissions or only accepted submissions) to release to the public.',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': 'camera_ready'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')
