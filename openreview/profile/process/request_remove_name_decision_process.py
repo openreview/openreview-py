@@ -144,7 +144,46 @@ The OpenReview Team.
                 for invitation in invitations:
                     print('Updating invitation', invitation.id)
                     invitation_content = invitation.edit['note'].get('content', {})
-                    if invitation.edit['note'].get('id') == publication.id and 'authorids' in invitation_content and username in invitation_content['authorids'].get('value', []):
+                    if invitation.edit['note'].get('id') != publication.id:
+                        continue
+
+                    inv_authors_value = invitation_content.get('authors', {}).get('value', [])
+                    inv_is_author_object_format = isinstance(inv_authors_value, list) and bool(inv_authors_value) and isinstance(inv_authors_value[0], dict)
+
+                    if inv_is_author_object_format:
+                        if not any(isinstance(author, dict) and author.get('username') == username for author in inv_authors_value):
+                            continue
+
+                        new_authors = []
+                        for author in inv_authors_value:
+                            if isinstance(author, dict) and author.get('username') == username:
+                                new_authors.append({ **author, 'fullname': preferred_name, 'username': preferred_id })
+                            else:
+                                new_authors.append(author)
+
+                        print('Updating invitation', invitation.id)
+                        client.post_invitation_edit(
+                            invitations = publication.domain + '/-/Edit',
+                            readers = [publication.domain],
+                            signatures = [SUPPORT_USER_ID],
+                            content = {
+                                "origin": {
+                                    "value": "remove name process function",
+                                    "readers": [SUPPORT_USER_ID]
+                                },
+                            },
+                            invitation = openreview.api.Invitation(
+                                id=invitation.id,
+                                edit={
+                                    'note': {
+                                        'content': {
+                                            'authors': { 'value': new_authors }
+                                        }
+                                    }
+                                }
+                            )
+                        )
+                    elif 'authorids' in invitation_content and username in invitation_content['authorids'].get('value', []):
 
                         authors = []
                         authorids = []
