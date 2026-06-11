@@ -411,7 +411,7 @@ class TestVenueDeployment():
         helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-0', count=1)
         assert not [
             log for log in openreview_client.get_process_logs(id=f'{venue_id}/-/Withdrawal-0-0')
-            if log['status'] in ['ok', 'error']
+            if log['status'] in ['running', 'ok', 'error']
         ]
 
         
