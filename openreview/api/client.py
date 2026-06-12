@@ -871,7 +871,7 @@ class OpenReviewClient(object):
 
 
         response = self.__handle_response(response)
-        return response.json()    
+        return response.json()
 
     def put_attachment(self, file_path, invitation, name):
         """Upload a file attachment to the OpenReview server.
