@@ -1291,7 +1291,7 @@ def datetime_millis(dt):
     :rtype: int
     """
     if isinstance(dt, datetime.datetime):
-        return int(dt.timestamp() * 1000)        
+        return int(dt.timestamp() * 1000)
 
     return dt
 
