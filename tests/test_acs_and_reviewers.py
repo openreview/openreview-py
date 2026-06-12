@@ -584,6 +584,7 @@ For more details, please check the following links:
 
         conflicts_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict')
         assert conflicts_invitation
+        assert conflicts_invitation.readers == ['EFGH.cc/2025/Conference']
         domain_content = openreview_client.get_group('EFGH.cc/2025/Conference').content
         assert domain_content['area_chairs_conflict_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Conflict'
         assert domain_content['area_chairs_affinity_score_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score'
@@ -592,6 +593,12 @@ For more details, please check the following links:
         assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict/Policy')
         assert 'area_chairs_conflict_policy' not in domain_content
         assert 'area_chairs_conflict_n_years' not in domain_content
+        assert conflicts_invitation.edit['readers'] == ['EFGH.cc/2025/Conference', '${2/tail}']
+
+        conflicts_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Reviewers/-/Conflict')
+        assert conflicts_invitation
+        assert conflicts_invitation.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
+        assert conflicts_invitation.edit['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission${{2/head}/number}/Action_Editors', '${2/tail}']
 
         # select conflict policy
         pc_client.post_invitation_edit(
