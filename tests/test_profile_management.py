@@ -2817,6 +2817,17 @@ The OpenReview Team.
         rename_voucher_client = helpers.create_user('renamevoucher@umass.edu', 'Renamevoucher', 'Voucher', institution='umass.edu')
         assert openreview_client.get_profile('~Renamevoucher_Voucher1').state == 'Active Institutional'
 
+        ## The voucher must have declared a relation to the user they vouch for
+        voucher_profile = rename_voucher_client.get_profile(rename_voucher_client.profile.id)
+        voucher_profile.content.setdefault('relations', []).append({
+            'relation': 'Colleague',
+            'name': 'Paul Last',
+            'username': '~Paul_Last1',
+            'start': 2020,
+            'end': None
+        })
+        rename_voucher_client.post_profile(voucher_profile)
+
         vouch_tag = rename_voucher_client.post_tag(
             openreview.api.Tag(
                 invitation='openreview.net/Support/-/Vouch',
