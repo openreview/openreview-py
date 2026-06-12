@@ -2839,6 +2839,14 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=vouch_tag.id)
 
+        ## Capture the vouch tag's original id and creation date so we can confirm that the
+        ## profile/signature remaps triggered by the name removals below update the tag in
+        ## place (same id) and preserve its original cdate end-to-end.
+        original_vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Alternate_Last1')
+        assert len(original_vouch_tags) == 1
+        vouch_tag_id = original_vouch_tags[0].id
+        vouch_tag_cdate = original_vouch_tags[0].cdate
+
         ## The vouch reactivated Paul's profile
         assert openreview_client.get_profile('~Paul_Last1').state == 'Active'
 
@@ -3177,11 +3185,83 @@ The OpenReview Team.
 
         assert openreview_client.get_edges(invitation='CABJ/Reviewers/-/Assignment_Availability', tail='~Paul_Last1')[0].label == 'Unavailable'
 
-        ## the vouch tag profile was renamed too
+        ## Case 1: the name behind tag.profile was removed, so the vouch tag profile was
+        ## remapped to the vouchee's remaining profile id, in place (same id, original cdate)
         vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Last1')
         assert len(vouch_tags) == 1
         assert vouch_tags[0].signature == '~Renamevoucher_Voucher1'
         assert vouch_tags[0].label == 'Colleague|Massachusetts Institute of Technology'
+        assert vouch_tags[0].id == vouch_tag_id
+        assert vouch_tags[0].cdate == vouch_tag_cdate
+
+        ## Case 2: removing the name behind tag.signature must remap the vouch tag signature
+        ## to the voucher's new profile id. Give the voucher a publication (so the name removal
+        ## is not auto-accepted) and a second, preferred name, then remove the original one that
+        ## the tag is signed with.
+        rename_voucher_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Renamevoucher_Voucher1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Voucher paper' },
+                    'abstract': { 'value': 'Voucher abstract' },
+                    'authors': { 'value': ['Renamevoucher Voucher'] },
+                    'authorids': { 'value': ['~Renamevoucher_Voucher1'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+
+        voucher_profile = rename_voucher_client.get_profile('~Renamevoucher_Voucher1')
+        voucher_profile.content['names'].append({
+            'first': 'Renamevoucher',
+            'middle': 'Alternate',
+            'last': 'Voucher',
+            'preferred': True
+        })
+        rename_voucher_client.post_profile(voucher_profile)
+
+        voucher_profile = rename_voucher_client.get_profile('~Renamevoucher_Voucher1')
+        assert len(voucher_profile.content['names']) == 2
+        assert voucher_profile.content['names'][1]['username'] == '~Renamevoucher_Alternate_Voucher1'
+
+        ## Request removal of the original name (signed with the name being kept)
+        request_note = rename_voucher_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~Renamevoucher_Alternate_Voucher1'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'Renamevoucher Voucher' },
+                    'usernames': { 'value': ['~Renamevoucher_Voucher1'] },
+                    'comment': { 'value': 'remove the original name' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, request_note['id'])
+
+        decision_note = support_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            signatures=['openreview.net/Support'],
+            note = openreview.api.Note(
+                id = request_note['note']['id'],
+                content={ 'status': { 'value': 'Accepted' } }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, decision_note['id'])
+
+        ## the original voucher name is gone and the profile id is now the alternate
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Renamevoucher_Voucher1'):
+            openreview_client.get_group('~Renamevoucher_Voucher1')
+
+        ## the vouch tag signature was remapped to the voucher's new profile id, in place:
+        ## the same tag (same id) keeps its original creation date and label
+        vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Last1')
+        assert len(vouch_tags) == 1
+        assert vouch_tags[0].signature == '~Renamevoucher_Alternate_Voucher1'
+        assert vouch_tags[0].label == 'Colleague|Massachusetts Institute of Technology'
+        assert vouch_tags[0].id == vouch_tag_id
+        assert vouch_tags[0].cdate == vouch_tag_cdate
 
     def test_rename_unified_authors_submission(self, openreview_client, test_client, helpers, support_client):
         '''A profile listed as an author of a submission that uses the unified

@@ -1,5 +1,13 @@
 def process(client, tag, invitation):
 
+    ## The validations below apply to CREATING a new vouch. An existing vouch tag may be
+    ## re-posted as part of a profile name-removal cascade, which remaps tag.signature /
+    ## tag.profile to the renamed profile id. Skip validation in that case: the vouch was
+    ## already validated at creation, and by then the vouchee is no longer in 'Rejected'
+    ## state, so re-running the checks would wrongly block the rename.
+    if tag.id and client.get_tags(id=tag.id):
+        return
+
     ## Validate the target profile before anything else: it must exist and have been
     ## rejected by the moderation team. Otherwise the vouch tag would pollute the public
     ## "Vouched Profiles" list and consume the voucher's monthly quota even though the
