@@ -204,7 +204,7 @@ tinycss2==1.4.0
     # via bleach
 tld==0.13.2
     # via openreview-py (pyproject.toml)
-tornado==6.5.5
+tornado==6.5.6
     # via jupyter-client
 tqdm==4.67.3
     # via openreview-py (pyproject.toml)
