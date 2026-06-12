@@ -161,6 +161,7 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': additional_readers },
+            'workflow_stage_name': { 'value': 'reviewing' },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
         },
         await_process=True
@@ -196,6 +197,7 @@ def process(client, edit, invitation):
                 'reviewers_name': { 'value': reviewers_name },
                 'authors_name': { 'value': authors_name },
                 'additional_readers': { 'value': additional_readers },
+                'workflow_stage_name': { 'value': 'decision' },
                 'description': { 'value': 'This step runs automatically at its "activation date", and releases meta reviews to the specified readers.' }
             },
             await_process=True
@@ -225,6 +227,7 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': additional_readers },
+            'workflow_stage_name': { 'value': 'decision' },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases decisions to the specified readers.' }
         },
         await_process=True

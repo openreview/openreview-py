@@ -15,6 +15,32 @@ from openreview.venue_request.process.ithenticate_eula_process import process as
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
 
+# Each visible workflow invitation declares which timeline stage it belongs to through the
+# `workflow_stage_name` content field. The UI groups all invitations that share the same
+# value and renders each group as a stage in the timeline (the stage name is pretty-printed
+# for display, the groups are ordered by the dates of their invitations). The default
+# stages used below are: recruitment, submission, matching, bidding, reviewing, discussion,
+# decision, post_decision and camera_ready. Venue organizers can add a new stage simply by
+# passing a new `workflow_stage_name` to `venue.create_custom_stage`.
+#
+# Stage assignment for invitations whose name is fixed regardless of stage configuration.
+# Stage objects with configurable names (review, comment, decision, ...) are resolved
+# dynamically in `InvitationBuilder.get_workflow_stage_map`.
+STATIC_WORKFLOW_STAGE_BY_NAME = {
+    'Recruitment': 'recruitment',
+    'Submission': 'submission',
+    'Submission_Change_Before_Bidding': 'bidding',
+    'Submission_Change_Before_Reviewing': 'reviewing',
+    'Conflict': 'matching',
+    'Affinity_Score': 'matching',
+    'Assignment': 'matching',
+    'Submission_Group': 'matching',
+    'Bid': 'bidding',
+    'Review_Count': 'post_decision',
+    'Review_Assignment_Count': 'post_decision',
+    'Review_Days_Late_Count': 'post_decision',
+}
+
 class InvitationBuilder(object):
 
     def __init__(self, venue, update_wait_time=5000):
@@ -56,7 +82,52 @@ class InvitationBuilder(object):
         if invitation.content['group_edit_script']['value'] != self.get_process_content('process/group_edit_process.py'):
             return True
 
+    def get_workflow_stage_map(self):
+        '''Return a mapping from workflow invitation name to its `workflow_stage_name`.
+
+        Combines the fixed-name assignments in STATIC_WORKFLOW_STAGE_BY_NAME with the
+        names of the currently configured stage objects, so that renaming a stage (e.g.
+        a custom Official_Review name) keeps the grouping correct.
+        '''
+        venue = self.venue
+        stage_map = dict(STATIC_WORKFLOW_STAGE_BY_NAME)
+
+        for bid_stage in (venue.bid_stages or []):
+            stage_map[bid_stage.name] = 'bidding'
+        if venue.review_stage:
+            stage_map[venue.review_stage.name] = 'reviewing'
+        if venue.comment_stage:
+            stage_map[venue.comment_stage.official_comment_name] = 'discussion'
+        if venue.review_rebuttal_stage:
+            stage_map[venue.review_rebuttal_stage.name] = 'discussion'
+        if venue.meta_review_stage:
+            stage_map[venue.meta_review_stage.name] = 'decision'
+        if venue.decision_stage:
+            stage_map[venue.decision_stage.name] = 'decision'
+        if venue.submission_revision_stage:
+            stage_map[venue.submission_revision_stage.name] = 'camera_ready'
+        if venue.custom_stage and getattr(venue.custom_stage, 'workflow_stage_name', None):
+            stage_map[venue.custom_stage.name] = venue.custom_stage.workflow_stage_name
+
+        return stage_map
+
+    def get_workflow_stage_name(self, invitation_id):
+        '''Resolve the `workflow_stage_name` for an invitation from its id, or None.'''
+        if not invitation_id or '/-/' not in invitation_id:
+            return None
+        invitation_name = invitation_id.split('/-/')[-1]
+        return self.get_workflow_stage_map().get(invitation_name)
+
     def save_invitation(self, invitation, replacement=None):
+        # Stamp the workflow stage so the timeline UI can group invitations by stage.
+        # Only done for template-related workflows; unknown invitations are left untouched.
+        if self.venue.is_template_related_workflow():
+            workflow_stage_name = self.get_workflow_stage_name(invitation.id)
+            if workflow_stage_name:
+                if invitation.content is None:
+                    invitation.content = {}
+                invitation.content.setdefault('workflow_stage_name', { 'value': workflow_stage_name })
+
         self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
             readers=[self.venue_id],
             writers=[self.venue_id],
@@ -3152,6 +3223,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             'custom_stage_process_script': { 'value': self.get_process_content(process_path)}
         }
 
+        if custom_stage.workflow_stage_name:
+            invitation_content['workflow_stage_name'] = { 'value': custom_stage.workflow_stage_name }
+
         invitation = Invitation(id=custom_stage_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -3303,6 +3377,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
         self.save_invitation(invitation, replacement=False)
+
         return invitation
 
     def set_assignment_invitation(self, committee_id, submission_content=None, cdate=None):

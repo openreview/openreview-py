@@ -1647,9 +1647,13 @@ class CustomStage(object):
                  email_template=None, 
                  allow_de_anonymization=False,
                  description=None,
-                 child_invitations_name=None):
+                 child_invitations_name=None,
+                 workflow_stage_name=None):
         self.name = name
         self.child_invitations_name = child_invitations_name if child_invitations_name else self.name
+        # Timeline grouping: name of the workflow stage this custom stage belongs to. Reuse one
+        # of the default stage names (e.g. 'reviewing') or provide a new name to define a new stage.
+        self.workflow_stage_name = workflow_stage_name
         self.reply_to = reply_to
         self.source = source
         self.reply_type = reply_type
