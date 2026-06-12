@@ -358,7 +358,9 @@ class OpenReviewClient(object):
         response = self.session.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
-        self.__handle_authorization(json_response)
+        ## A profile pending moderation is activated without an authentication token
+        if json_response.get('token'):
+            self.__handle_authorization(json_response)
 
         return json_response
 
