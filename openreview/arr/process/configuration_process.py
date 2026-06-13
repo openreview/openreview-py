@@ -14,4 +14,11 @@ def process(client, note, invitation):
     support_group = request_form.invitation.split('/-/')[0]
     venue = openreview.helpers.get_conference(client, request_form_id, support_group)
 
+    openreview.arr.update_emergency_assignment_deadline(
+        client,
+        venue,
+        venue_id,
+        note.content.get('emergency_assignment_deadline')
+    )
+
     venue.set_arr_stages(note)
