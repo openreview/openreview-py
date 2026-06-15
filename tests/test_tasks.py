@@ -46,8 +46,6 @@ class TestTasks():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(start_date) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewer_groups_names': { 'value': ['Program_Committee'] },
-                    'area_chair_groups_names': { 'value': ['Area_Chairs'] },
-                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'Tasks.cc/2024/Conference' },
                     'expected_submissions': { 'value': 1000 },
@@ -61,7 +59,7 @@ class TestTasks():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                             'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                     }
@@ -173,10 +171,10 @@ class TestTasks():
                 replyto=request.id,
                 content={
                     'overall_rating': { 'value': 4 },
-                    'recommendation_likelihood': { 'value': 4 },
                     'support_resources_accessed': { 'value': ['OpenReview support team', 'OpenReview documentation site', 'Workflow step timeline descriptions'] },
                     'positives': { 'value': 'The new dashboard makes it easy to find the actions I need.' },
                     'pain_points': { 'value': 'Configuring reviewer assignments took longer than expected.' },
+                    'new_feature_requests': { 'value': 'Bulk reviewer assignment from a CSV file.' },
                     'other_comments': { 'value': 'Looking forward to continued improvements.' }
                 }
             )
@@ -186,7 +184,6 @@ class TestTasks():
 
         feedback_note = openreview_client.get_note(feedback_edit['note']['id'])
         assert feedback_note.content['overall_rating']['value'] == 4
-        assert feedback_note.content['recommendation_likelihood']['value'] == 4
         assert feedback_note.content['support_resources_accessed']['value'] == ['OpenReview support team', 'OpenReview documentation site', 'Workflow step timeline descriptions']
         assert feedback_note.forum == request.id
         assert feedback_note.readers == ['openreview.net/Support', 'Tasks.cc/2025/Conference']
@@ -207,13 +204,13 @@ To view the feedback, click here: https://openreview.net/forum?id={request.id}&n
 
 **Overall rating:** 4
 
-**Recommendation likelihood:** 4
-
 **Support resources accessed:** OpenReview support team, OpenReview documentation site, Workflow step timeline descriptions
 
 **Positives:** The new dashboard makes it easy to find the actions I need.
 
 **Pain points:** Configuring reviewer assignments took longer than expected.
+
+**New feature requests:** Bulk reviewer assignment from a CSV file.
 
 **Other comments:** Looking forward to continued improvements.
 
@@ -230,31 +227,6 @@ Workflow timeline: https://openreview.net/group/edit?id=Tasks.cc/2025/Conference
         venue_group = openreview.tools.get_group(openreview_client, 'Tasks.cc/2025/Conference')
         request_id = venue_group.content['request_form_id']['value']
         request = openreview_client.get_note(request_id)
-
-        # edit invitation to allow redeployment
-        openreview_client.post_invitation_edit(
-            invitations='openreview.net/Support/-/Edit',
-            signatures=['~Super_User1'],
-            invitation=openreview.api.Invitation(
-                id = 'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
-                edit = {
-                    'note': {
-                        'content': {
-                            'redeployment': {
-                                'value': {
-                                    'param':{
-                                        'type': 'boolean',
-                                        'enum': [True, False],
-                                        'input': 'radio',
-                                        'optional': True
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            )
-        )
 
         # update request form with past dates
         now = datetime.datetime.now()

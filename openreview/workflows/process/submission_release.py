@@ -55,7 +55,7 @@ def process(client, invitation):
 
         venue = openreview.tools.decision_to_venue(short_name, decision_value, accept_options)
 
-        note_content = {
+        updated_content = {
             'authors': {
                 'readers': { 'delete': True } if reveal_authors else [venue_id, f'{venue_id}/{submission_name}{submission.number}/{authors_name}']
             },
@@ -77,6 +77,11 @@ def process(client, invitation):
             }
         }
 
+        if 'authorids' in submission.content:
+            updated_content['authorids'] = {
+                'readers': { 'delete': True } if reveal_authors else [venue_id, f'{venue_id}/{submission_name}{submission.number}/{authors_name}']
+            }
+
         public = invitation.edit['note']['readers'] == ['everyone']
 
         client.post_note_edit(
@@ -84,7 +89,7 @@ def process(client, invitation):
             signatures=[venue_id],
             note=openreview.api.Note(
                 id=submission.id,
-                content=note_content,
+                content=updated_content,
                 odate=now if (public and submission.odate is None) else None,
                 pdate=now if (note_accepted and submission.pdate is None) else None
             )

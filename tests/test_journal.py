@@ -704,7 +704,10 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
         assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']
-        assert openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
+        reviewers_group = openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
+        assert reviewers_group
+        ## reviewer_to_reviewer_anonymity defaults to False in TMLR, so reviewers remain visible to each other
+        assert reviewers_group.deanonymizers == [venue_id, f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers"]
         assert openreview_client.get_group(f"{venue_id}/Paper1/Action_Editors")
 
         note = openreview_client.get_note(note_id_1)
@@ -6164,6 +6167,12 @@ note={Expert Certification}
         assert invite_edges[0].label == 'Pending Sign Up'
 
         helpers.create_user('harold@hotmail.com', 'Harold', 'Red')
+
+        ## Run venue job
+        openreview.venue.Venue.check_new_profiles(openreview_client)
+
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, label='Pending Sign Up')
+        assert len(invite_edges) == 1
 
         ## Run Job
         openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')                        

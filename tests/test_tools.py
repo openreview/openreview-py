@@ -720,6 +720,84 @@ class TestTools():
         assert len(conflicts) == 1
         assert 'umass.edu' in conflicts
 
+    def test_independent_researcher_conflicts(self):
+
+        ## Two profiles that both declare to be independent researchers should not
+        ## conflict with each other through the independent-researcher.org domain
+        independent1 = openreview.Profile(
+            id='~Independent_One1',
+            content={
+                'emails': ['independent_one@gmail.com'],
+                'history': [{
+                    'institution': {
+                        'domain': 'independent-researcher.org'
+                    }
+                }]
+            }
+        )
+
+        independent2 = openreview.Profile(
+            id='~Independent_Two1',
+            content={
+                'emails': ['independent_two@gmail.com'],
+                'history': [{
+                    'institution': {
+                        'domain': 'independent-researcher.org'
+                    }
+                }]
+            }
+        )
+
+        conflicts = openreview.tools.get_conflicts([independent1], independent2)
+        assert len(conflicts) == 0
+
+        conflicts = openreview.tools.get_conflicts([independent1], independent2, policy='NeurIPS')
+        assert len(conflicts) == 0
+
+        conflicts = openreview.tools.get_conflicts([independent1], independent2, policy='Comprehensive')
+        assert len(conflicts) == 0
+
+        ## A real shared institution domain should still be detected as a conflict
+        independent_and_affiliated = openreview.Profile(
+            id='~Independent_Three1',
+            content={
+                'emails': ['independent_three@gmail.com'],
+                'history': [
+                    {
+                        'institution': {
+                            'domain': 'independent-researcher.org'
+                        }
+                    },
+                    {
+                        'institution': {
+                            'domain': 'cmu.edu'
+                        }
+                    }
+                ]
+            }
+        )
+
+        affiliated = openreview.Profile(
+            id='~Affiliated_One1',
+            content={
+                'emails': ['affiliated_one@gmail.com'],
+                'history': [{
+                    'institution': {
+                        'domain': 'cmu.edu'
+                    }
+                }]
+            }
+        )
+
+        conflicts = openreview.tools.get_conflicts([independent_and_affiliated], affiliated)
+        assert len(conflicts) == 1
+        assert 'cmu.edu' in conflicts
+
+        ## The independent researcher domain should still be ignored even when another
+        ## institution is shared
+        conflicts = openreview.tools.get_conflicts([independent_and_affiliated], independent1)
+        assert len(conflicts) == 0
+
     def test_group(self, client):
 
         assert openreview.tools.get_group(client, '~Super_User1')

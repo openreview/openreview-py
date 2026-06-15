@@ -24,7 +24,8 @@ def process(client, edit, invitation):
         second_due_date=full_submission_duedate,
         withdraw_submission_exp_date=submission_deadline_datetime + datetime.timedelta(weeks=52),
         double_blind=True,
-        force_profiles=True
+        force_profiles=True,
+        unified_authors=True
     )
 
     authors_name = venue.authors_name
@@ -243,7 +244,8 @@ def process(client, edit, invitation):
 
     venue.submission_stage =  openreview.stages.SubmissionStage(
         double_blind=True,
-        author_names_revealed=True # we need this in order to not add readers to the authors and authorids fields
+        author_names_revealed=True, # we need this in order to not add readers to the unified authors field
+        unified_authors=True
     )
     venue.create_submission_revision_stage()
 

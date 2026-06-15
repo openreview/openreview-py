@@ -31,9 +31,6 @@ class TestSubmissionLimits():
                     'contact_email': { 'value': 'hvtest2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewer_groups_names': { 'value': ['Reviewers'] },
-                    'area_chair_groups_names': { 'value': ['Area_Chairs'] },
-                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'HVTest.cc/2024/Conference' },
                     'expected_submissions': { 'value': 50 },
@@ -47,7 +44,7 @@ class TestSubmissionLimits():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
                             'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                         ]
                     }
@@ -98,8 +95,7 @@ class TestSubmissionLimits():
                 content={
                     'title': { 'value': 'First HV Paper' },
                     'abstract': { 'value': 'First abstract' },
-                    'authors': { 'value': ['HVAuthor One'] },
-                    'authorids': { 'value': ['~HVAuthor_One1'] },
+                    'authors': { 'value': [{ 'fullname': 'HVAuthor One', 'username': '~HVAuthor_One1', 'institutions': [{ 'domain': 'hvtest.cc', 'country': 'US' }] }] },
                     'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                     'keywords': { 'value': ['kw'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -119,8 +115,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': 'Second HV Paper' },
                         'abstract': { 'value': 'Second abstract' },
-                        'authors': { 'value': ['HVAuthor One'] },
-                        'authorids': { 'value': ['~HVAuthor_One1'] },
+                        'authors': { 'value': [{ 'fullname': 'HVAuthor One', 'username': '~HVAuthor_One1', 'institutions': [{ 'domain': 'hvtest.cc', 'country': 'US' }] }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -156,8 +151,7 @@ class TestSubmissionLimits():
                 content={
                     'title': { 'value': 'First MaxReplies Paper' },
                     'abstract': { 'value': 'First abstract' },
-                    'authors': { 'value': ['MaxReplies One'] },
-                    'authorids': { 'value': ['~MaxReplies_One1'] },
+                    'authors': { 'value': [{ 'fullname': 'MaxReplies One', 'username': '~MaxReplies_One1', 'institutions': [{ 'domain': 'hvtest.cc', 'country': 'US' }] }] },
                     'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                     'keywords': { 'value': ['kw'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -177,8 +171,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': 'Second MaxReplies Paper' },
                         'abstract': { 'value': 'Second abstract' },
-                        'authors': { 'value': ['MaxReplies One'] },
-                        'authorids': { 'value': ['~MaxReplies_One1'] },
+                        'authors': { 'value': [{ 'fullname': 'MaxReplies One', 'username': '~MaxReplies_One1', 'institutions': [{ 'domain': 'hvtest.cc', 'country': 'US' }] }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -214,8 +207,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': f'MaxReplies Three Paper {i + 1}' },
                         'abstract': { 'value': f'Abstract {i + 1}' },
-                        'authors': { 'value': ['MaxReplies Three'] },
-                        'authorids': { 'value': ['~MaxReplies_Three1'] },
+                        'authors': { 'value': [{ 'fullname': 'MaxReplies Three', 'username': '~MaxReplies_Three1', 'institutions': [{ 'domain': 'hvtest.cc', 'country': 'US' }] }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -235,8 +227,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': 'MaxReplies Three Paper 4' },
                         'abstract': { 'value': 'Abstract 4' },
-                        'authors': { 'value': ['MaxReplies Three'] },
-                        'authorids': { 'value': ['~MaxReplies_Three1'] },
+                        'authors': { 'value': [{ 'fullname': 'MaxReplies Three', 'username': '~MaxReplies_Three1', 'institutions': [{ 'domain': 'hvtest.cc', 'country': 'US' }] }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -268,8 +259,7 @@ class TestSubmissionLimits():
                     content={
                         'title': { 'value': title },
                         'abstract': { 'value': 'Concurrent abstract' },
-                        'authors': { 'value': ['RaceCondition One'] },
-                        'authorids': { 'value': ['~RaceCondition_One1'] },
+                        'authors': { 'value': [{ 'fullname': 'RaceCondition One', 'username': '~RaceCondition_One1', 'institutions': [{ 'domain': 'hvtest.cc', 'country': 'US' }] }] },
                         'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                         'keywords': { 'value': ['kw'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
