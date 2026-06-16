@@ -695,6 +695,9 @@ class Journal(object):
 
     def should_skip_camera_ready_revision(self):
         return self.settings.get('skip_camera_ready_revision', False)
+    
+    def get_journal_experiment(self):
+        return self.settings.get('journal_experiment', False)
 
     def get_certifications(self):
         return self.settings.get('certifications', [])
