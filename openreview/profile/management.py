@@ -177,6 +177,10 @@ return {
                 invitees=['~'],
                 preprocess=self.get_process_content('process/vouch_pre_process.py'),
                 process=self.get_process_content('process/vouch_process.py'),
+                content={
+                    'lifetimeLimit': { 'value': 20 },
+                    'monthLimit': { 'value': 5 }
+                },
                 tag={
                     'id': {
                         'param': {

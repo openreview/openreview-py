@@ -62,10 +62,24 @@ def process(client, tag, invitation):
     if not has_relation:
         raise openreview.OpenReviewException('You are not allowed to vouch for this user: you must have a relation to them in your profile.')
 
-    ## The voucher must have created fewer than 5 vouches in the last month. Push the
-    ## 30-day window into the query (mintmdate) and cap the result (limit) so the
-    ## preprocess stays fast even for voucers with a long vouching history.
+    ## Vouching quotas live on the invitation so the UI can surface them to the voucher: at
+    ## most `month_limit` vouches in a rolling 30-day window and at most `lifetime_limit`
+    ## vouches in total. Fall back to the defaults if the invitation content is missing.
+    invitation_content = invitation.content or {}
+    month_limit = invitation_content.get('monthLimit', {}).get('value', 5)
+    lifetime_limit = invitation_content.get('lifetimeLimit', {}).get('value', 20)
+
+    ## Fetch the voucher's existing vouches once (capped just above the lifetime limit) and
+    ## count against both quotas in memory. We count by tcdate (true creation date) rather
+    ## than tmdate so a vouch that is edited later — e.g. re-posted by a profile name-removal
+    ## cascade — still counts toward the month it was originally created in, not the month of
+    ## the edit.
+    voucher_vouches = client.get_tags(invitation=invitation.id, signature=voucher_id, limit=lifetime_limit + 1)
+
+    if len(voucher_vouches) >= lifetime_limit:
+        raise openreview.OpenReviewException(f'You are not allowed to vouch for more than {lifetime_limit} users.')
+
     one_month_ago = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days=30))
-    recent_vouches = client.get_tags(invitation=invitation.id, signature=voucher_id, mintmdate=one_month_ago, limit=6)
-    if len(recent_vouches) >= 5:
-        raise openreview.OpenReviewException('You are not allowed to vouch for more than 5 users per month.')
+    recent_vouches = [tag for tag in voucher_vouches if tag.tcdate and tag.tcdate >= one_month_ago]
+    if len(recent_vouches) >= month_limit:
+        raise openreview.OpenReviewException(f'You are not allowed to vouch for more than {month_limit} users per month.')

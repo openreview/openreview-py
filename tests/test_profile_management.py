@@ -4392,6 +4392,11 @@ The OpenReview Team.
             guest.activate_user(email, profile_content)
             return username
 
+        ## The vouching quotas are stored on the invitation so the UI can show users their limits
+        vouch_invitation = openreview_client.get_invitation('openreview.net/Support/-/Vouch')
+        assert vouch_invitation.content['lifetimeLimit']['value'] == 20
+        assert vouch_invitation.content['monthLimit']['value'] == 5
+
         ## Voucher: established user with an institutional email -> activated automatically as institutional
         voucher_client = helpers.create_user('voucher@umass.edu', 'Voucher', 'User', institution='umass.edu')
         assert openreview_client.get_profile('~Voucher_User1').state == 'Active Institutional'
