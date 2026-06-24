@@ -6597,6 +6597,10 @@ url={https://openreview.net/forum?id='''
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review')
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review')
 
+        ## the parent groups for the new venue id must exist
+        assert openreview.tools.get_group(openreview_client, 'ICML.org')
+        assert openreview.tools.get_group(openreview_client, 'ICML.org/2023')
+
         ## the rename replaces the old venue id with the new one in the venues/active_venues groups
         assert 'ICML.cc/2023/Conference' not in openreview_client.get_group('venues').members
         assert 'ICML.cc/2023/Conference' not in openreview_client.get_group('active_venues').members

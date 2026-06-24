@@ -867,6 +867,30 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
 
+        ## Make sure the parent groups for the new venue id exist (e.g. ICML.org and
+        ## ICML.org/2023 for ICML.org/2023/Conference), creating any that are missing the
+        ## same way the venue group builder does.
+        path_components = new_venue_id.split('/')
+        paths = ['/'.join(path_components[0:index + 1]) for index in range(len(path_components))]
+        for path in paths:
+            if tools.get_group(self, path) is None:
+                self.post_group_edit(
+                    invitation = 'openreview.net/-/Edit',
+                    readers = ['everyone'],
+                    writers = ['~Super_User1'],
+                    signatures = ['~Super_User1'],
+                    group = Group(
+                        id = path,
+                        readers = ['everyone'],
+                        nonreaders = [],
+                        writers = [path],
+                        signatories = [path],
+                        signatures = ['~Super_User1'],
+                        members = [],
+                        details = { 'writable': True }
+                    )
+                )
+
         ## The old venue id no longer exists after the rename. Replace it with the new venue
         ## id in the active_venues/venues groups so the renamed venue stays registered and no
         ## stale member is left behind (which would break jobs that iterate these groups).
