@@ -392,9 +392,11 @@ class TestVenueDeployment():
 
         assert openreview.tools.get_group(openreview_client, renamed_venue_id)
 
-        # the old venue id must not be left behind in the active_venues/venues groups
+        # the rename replaces the old venue id with the new one in the active_venues/venues groups
         assert venue_id not in openreview_client.get_group('active_venues').members
         assert venue_id not in openreview_client.get_group('venues').members
+        assert renamed_venue_id in openreview_client.get_group('active_venues').members
+        assert renamed_venue_id in openreview_client.get_group('venues').members
 
         # 3. the date processes must be re-scheduled under the new domain
         helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-1', count=1)

@@ -867,15 +867,20 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
 
-        ## The old venue id no longer exists after the rename, make sure it is not left
-        ## behind in the active_venues/venues groups as a stale member.
+        ## The old venue id no longer exists after the rename. Replace it with the new venue
+        ## id in the active_venues/venues groups so the renamed venue stays registered and no
+        ## stale member is left behind (which would break jobs that iterate these groups).
         for group_id in ['active_venues', 'venues']:
             try:
-                self.remove_members_from_group(group_id, old_venue_id)
+                group = self.get_group(group_id)
             except OpenReviewException as e:
                 error = e.args[0]
-                if error.get('name') != 'NotFoundError' and not error.get('message', '').startswith('Group Not Found'):
-                    raise e
+                if error.get('name') == 'NotFoundError' or error.get('message', '').startswith('Group Not Found'):
+                    continue
+                raise e
+            if old_venue_id in (group.members or []):
+                self.remove_members_from_group(group_id, old_venue_id)
+                self.add_members_to_group(group_id, new_venue_id)
 
         return response.json()
 
