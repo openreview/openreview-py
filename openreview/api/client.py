@@ -866,6 +866,17 @@ class OpenReviewClient(object):
 
 
         response = self.__handle_response(response)
+
+        ## The old venue id no longer exists after the rename, make sure it is not left
+        ## behind in the active_venues/venues groups as a stale member.
+        for group_id in ['active_venues', 'venues']:
+            try:
+                self.remove_members_from_group(group_id, old_venue_id)
+            except OpenReviewException as e:
+                error = e.args[0]
+                if error.get('name') != 'NotFoundError' and not error.get('message', '').startswith('Group Not Found'):
+                    raise e
+
         return response.json()
 
     def put_attachment(self, file_path, invitation, name):
