@@ -147,20 +147,24 @@ def process(client, edit, invitation):
                 review_counts[review.forum] = 0
             review_counts[review.forum] += 1
 
-        eligible_submission_ids = []
+        eligible_submission_ids = set()
         for submission in submissions:
             if review_counts.get(submission.id, 0) < 3:
-                eligible_submission_ids.append(submission.id)
+                eligible_submission_ids.add(submission.id)
+
+        ## Get all the user's aggregate score edges in a single call and index them by submission
+        aggregate_score_edges_by_submission = {}
+        for edge in client.get_all_edges(
+            invitation=f"{role}/-/Aggregate_Score",
+            label=deployed_label,
+            tail=user,
+            domain=venue_id
+        ):
+            aggregate_score_edges_by_submission.setdefault(edge.head, []).append(edge)
 
         aggregate_score_edges = []
         for submission_id in eligible_submission_ids:
-            aggregate_score_edges.extend(client.get_all_edges(
-                invitation=f"{role}/-/Aggregate_Score",
-                label=deployed_label,
-                head=submission_id,
-                tail=user,
-                domain=venue_id
-            ))
+            aggregate_score_edges.extend(aggregate_score_edges_by_submission.get(submission_id, []))
 
         edges_to_post = []
         for edge in aggregate_score_edges:
