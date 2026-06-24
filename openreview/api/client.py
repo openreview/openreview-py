@@ -867,6 +867,21 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
 
+        ## The rename is processed asynchronously through the internalQueueMQStatus queue.
+        ## Wait for it to finish before doing any post-processing so we don't race with the
+        ## server-side rename (which would otherwise leave the venue in a half-renamed state).
+        wait_time = 0.5
+        max_iterations = int(600 / wait_time)
+        for _ in range(max_iterations):
+            jobs = self.get_jobs_status()
+            job_count = sum(
+                job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
+                for job_name, job in jobs.items() if job_name == 'internalQueueMQStatus'
+            )
+            if job_count == 0 and tools.get_group(self, new_venue_id) is not None:
+                break
+            time.sleep(wait_time)
+
         ## Make sure the parent groups for the new venue id exist (e.g. ICML.org and
         ## ICML.org/2023 for ICML.org/2023/Conference), creating any that are missing the
         ## same way the venue group builder does.
