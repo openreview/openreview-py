@@ -388,7 +388,6 @@ class TestVenueDeployment():
 
         # 2. rename the venue to a new domain
         openreview_client.rename_venue(venue_id, renamed_venue_id, request_note.id)
-        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
 
         assert openreview.tools.get_group(openreview_client, renamed_venue_id)
 
