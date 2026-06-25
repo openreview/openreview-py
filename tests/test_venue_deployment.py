@@ -387,10 +387,19 @@ class TestVenueDeployment():
         ]
 
         # 2. rename the venue to a new domain
+        # the server rejects the rename while a process job for the venue is active, so wait for
+        # this venue's running processes to finish first (the deliberately-delayed Withdrawal-0-0
+        # cdate job stays 'delayed', not 'running', so it does not block this wait)
+        helpers.await_venue_processes(openreview_client, venue_id)
         openreview_client.rename_venue(venue_id, renamed_venue_id, request_note.id)
-        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
 
         assert openreview.tools.get_group(openreview_client, renamed_venue_id)
+
+        # the rename replaces the old venue id with the new one in the active_venues/venues groups
+        assert venue_id not in openreview_client.get_group('active_venues').members
+        assert venue_id not in openreview_client.get_group('venues').members
+        assert renamed_venue_id in openreview_client.get_group('active_venues').members
+        assert renamed_venue_id in openreview_client.get_group('venues').members
 
         # 3. the date processes must be re-scheduled under the new domain
         helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-1', count=1)
