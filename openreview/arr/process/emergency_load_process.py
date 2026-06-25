@@ -147,10 +147,10 @@ def process(client, edit, invitation):
                 review_counts[review.forum] = 0
             review_counts[review.forum] += 1
 
-        eligible_submission_ids = set()
+        eligible_submission_ids = []
         for submission in submissions:
             if review_counts.get(submission.id, 0) < 3:
-                eligible_submission_ids.add(submission.id)
+                eligible_submission_ids.append(submission.id)
 
         ## Get all the user's aggregate score edges in a single call and index them by submission
         aggregate_score_edges_by_submission = {}
