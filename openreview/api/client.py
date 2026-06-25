@@ -871,6 +871,68 @@ class OpenReviewClient(object):
 
 
         response = self.__handle_response(response)
+        result = response.json()
+
+        ## The rename is processed asynchronously. Wait for the specific rename job to finish
+        ## (its id is returned in the response) before doing any post-processing, so we don't
+        ## race with the server-side rename (which would leave the venue half-renamed).
+        job_id = result.get('jobId')
+        if job_id:
+            wait_time = 0.5
+            max_iterations = int(600 / wait_time)
+            for _ in range(max_iterations):
+                try:
+                    job = self.get_job('internalQueueMQ', job_id)
+                except OpenReviewException as e:
+                    error = e.args[0] if e.args else {}
+                    message = error.get('message', '') if isinstance(error, dict) else str(error)
+                    ## the job finished and was removed from the queue
+                    if error.get('name') == 'NotFoundError' or 'not found' in message.lower():
+                        break
+                    raise
+                if not job or job.get('finishedOn'):
+                    break
+                time.sleep(wait_time)
+
+        ## Make sure the parent groups for the new venue id exist (e.g. ICML.org and
+        ## ICML.org/2023 for ICML.org/2023/Conference), creating any that are missing the
+        ## same way the venue group builder does.
+        path_components = new_venue_id.split('/')
+        paths = ['/'.join(path_components[0:index + 1]) for index in range(len(path_components))]
+        for path in paths:
+            if tools.get_group(self, path) is None:
+                self.post_group_edit(
+                    invitation = 'openreview.net/-/Edit',
+                    readers = ['everyone'],
+                    writers = ['~Super_User1'],
+                    signatures = ['~Super_User1'],
+                    group = Group(
+                        id = path,
+                        readers = ['everyone'],
+                        nonreaders = [],
+                        writers = [path],
+                        signatories = [path],
+                        signatures = ['~Super_User1'],
+                        members = [],
+                        details = { 'writable': True }
+                    )
+                )
+
+        ## The old venue id no longer exists after the rename. Replace it with the new venue
+        ## id in the active_venues/venues groups so the renamed venue stays registered and no
+        ## stale member is left behind (which would break jobs that iterate these groups).
+        for group_id in ['active_venues', 'venues']:
+            try:
+                group = self.get_group(group_id)
+            except OpenReviewException as e:
+                error = e.args[0]
+                if error.get('name') == 'NotFoundError' or error.get('message', '').startswith('Group Not Found'):
+                    continue
+                raise e
+            if old_venue_id in (group.members or []):
+                self.remove_members_from_group(group_id, old_venue_id)
+                self.add_members_to_group(group_id, new_venue_id)
+
         return response.json()
 
     def put_attachment(self, file_path, invitation, name):
@@ -2956,6 +3018,22 @@ class OpenReviewClient(object):
         """
 
         response = self.session.get(self.jobs_status, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_job(self, queue_name, job_id):
+        """
+        **Only for Super User**. Retrieves a single job from a queue by id.
+
+        :param queue_name: Name of the queue (e.g. ``internalQueueMQ``)
+        :type queue_name: str
+        :param job_id: Id of the job
+        :type job_id: str
+
+        :return: Job object
+        :rtype: dict
+        """
+        response = self.session.get(f'{self.baseurl}/jobs/queues/{queue_name}/{job_id}', headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
