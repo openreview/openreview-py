@@ -866,21 +866,28 @@ class OpenReviewClient(object):
 
 
         response = self.__handle_response(response)
+        result = response.json()
 
-        ## The rename is processed asynchronously through the internalQueueMQStatus queue.
-        ## Wait for it to finish before doing any post-processing so we don't race with the
-        ## server-side rename (which would otherwise leave the venue in a half-renamed state).
-        wait_time = 0.5
-        max_iterations = int(600 / wait_time)
-        for _ in range(max_iterations):
-            jobs = self.get_jobs_status()
-            job_count = sum(
-                job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
-                for job_name, job in jobs.items() if job_name == 'internalQueueMQStatus'
-            )
-            if job_count == 0 and tools.get_group(self, new_venue_id) is not None:
-                break
-            time.sleep(wait_time)
+        ## The rename is processed asynchronously. Wait for the specific rename job to finish
+        ## (its id is returned in the response) before doing any post-processing, so we don't
+        ## race with the server-side rename (which would leave the venue half-renamed).
+        job_id = result.get('jobId')
+        if job_id:
+            wait_time = 0.5
+            max_iterations = int(600 / wait_time)
+            for _ in range(max_iterations):
+                try:
+                    job = self.get_job('internalQueueMQ', job_id)
+                except OpenReviewException as e:
+                    error = e.args[0] if e.args else {}
+                    message = error.get('message', '') if isinstance(error, dict) else str(error)
+                    ## the job finished and was removed from the queue
+                    if error.get('name') == 'NotFoundError' or 'not found' in message.lower():
+                        break
+                    raise
+                if not job or job.get('finishedOn'):
+                    break
+                time.sleep(wait_time)
 
         ## Make sure the parent groups for the new venue id exist (e.g. ICML.org and
         ## ICML.org/2023 for ICML.org/2023/Conference), creating any that are missing the
@@ -3006,6 +3013,22 @@ class OpenReviewClient(object):
         """
 
         response = self.session.get(self.jobs_status, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_job(self, queue_name, job_id):
+        """
+        **Only for Super User**. Retrieves a single job from a queue by id.
+
+        :param queue_name: Name of the queue (e.g. ``internalQueueMQ``)
+        :type queue_name: str
+        :param job_id: Id of the job
+        :type job_id: str
+
+        :return: Job object
+        :rtype: dict
+        """
+        response = self.session.get(f'{self.baseurl}/jobs/queues/{queue_name}/{job_id}', headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
