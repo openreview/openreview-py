@@ -263,6 +263,11 @@ class OpenReviewClient(object):
         response = self.session.post(self.baseurl + '/invitations/dateprocesses', json = { 'ids': [invitation_id]}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
+
+    def delete_invitation_date_process_scheduler(self, job_id):
+        response = self.session.delete(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/schedulers/' + job_id.replace('/', '%2F'), headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
     
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
