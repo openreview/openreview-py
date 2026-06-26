@@ -121,7 +121,7 @@ pyotp==2.9.0
     # via openreview-py (pyproject.toml)
 pysocks==1.7.1
     # via urllib3
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   openreview-py (pyproject.toml)
     #   pytest-base-url
