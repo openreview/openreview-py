@@ -94,6 +94,19 @@ class Helpers:
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
+    def await_venue_processes(super_client, venue_id, timeout=300):
+        # Wait until no process function for this specific venue is running, so renaming the venue
+        # is not rejected with a 409. Filtering by the venue prefix means we only wait on this
+        # venue's jobs and ignore active/scheduled jobs belonging to other venues from previous tests.
+        wait_time = 0.5
+        max_iterations = int(timeout / wait_time)
+        for _ in range(max_iterations):
+            running = super_client.get_process_logs(invitation=f'{venue_id}/.*', status='running')
+            if not running:
+                break
+            time.sleep(wait_time)
+
+    @staticmethod
     def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0, timeout=300):
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
