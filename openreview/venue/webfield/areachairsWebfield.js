@@ -41,7 +41,7 @@ return {
     },
     venueId: domain.id,
     reviewerAssignment: {
-      showEdgeBrowserUrl: entity.content?.enable_reviewers_reassignment?.value || domain.content.enable_reviewers_assignment?.value,
+      showEdgeBrowserUrl: entity.content?.enable_reviewers_reassignment?.value || domain.content.enable_reviewers_reassignment?.value,
       proposedAssignmentTitle: reviewerAssignmentTitle,
       edgeBrowserProposedUrl: `/edges/browse?start=${startParam}&traverse=${traverseProposedParam}&edit=${replaceReviewerName(domain.content.reviewers_proposed_assignment_id?.value)},label:${reviewerAssignmentTitle};${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseProposedInvitations.join(';')}${otherParams}`,
       edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseInvitations.join(';')}${otherParams}`,
