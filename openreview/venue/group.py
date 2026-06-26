@@ -325,6 +325,9 @@ class GroupBuilder(object):
         if venue_group.content.get('reviewers_proposed_assignment_title'):
             content['reviewers_proposed_assignment_title'] = venue_group.content.get('reviewers_proposed_assignment_title')
 
+        if venue_group.content.get('emergency_assignment_deadline'):
+            content['emergency_assignment_deadline'] = venue_group.content.get('emergency_assignment_deadline')
+
         if venue_group.content.get('allow_gurobi_solver'):
             content['allow_gurobi_solver'] = venue_group.content.get('allow_gurobi_solver')
 

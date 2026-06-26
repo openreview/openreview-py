@@ -11,6 +11,7 @@ const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 const browseAreaChairInvitations = [
   `${areaChairsId}/-/Agreggate_Score`,
   domain.content.area_chairs_affinity_score_id?.value, 
+  `${areaChairsId}/-/Type`,
   `${areaChairsId}/-/Emergency_Score`,
   `${areaChairsId}/-/Research_Area`,
 ].join(';')
@@ -37,6 +38,7 @@ assignmentUrls[domain.content.area_chairs_name?.value] = {
 const browseReviewerInvitations = [
   domain.content.reviewers_affinity_score_id?.value,
   domain.content.reviewers_conflict_id?.value,
+  `${reviewersId}/-/Type`,
   `${reviewersId}/-/Research_Area`,
   `${reviewersId}/-/Status`,
   `${reviewersId}/-/Emergency_Score`,
