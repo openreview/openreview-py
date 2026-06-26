@@ -3964,7 +3964,55 @@ The OpenReview Team.
                 }
             ))
         
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])         
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
+
+        ## Add a DBLP publication and claim authorship as Harold
+        dblp_xml = '''<article key="journals/corr/abs-9999-12345" publtype="informal" mdate="2024-01-10">
+<author>Harold Last</author>
+<author>Test Client</author>
+<title>A DBLP Paper.</title>
+<year>2024</year>
+<journal>CoRR</journal>
+<url>db/journals/corr/corr9999.html#abs-9999-12345</url>
+</article>
+'''
+
+        dblp_edit = harold_client_v2.post_note_edit(
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            signatures = ['~Harold_Last1'],
+            content = {
+                'xml': { 'value': dblp_xml }
+            },
+            note = openreview.api.Note(
+                external_id = 'dblp:journals/corr/abs-9999-12345',
+                content={
+                    'title': { 'value': 'A DBLP Paper' },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'Harold Last', 'username': ''},
+                            {'fullname': 'Test Client', 'username': ''},
+                        ],
+                    },
+                    'venue': { 'value': 'CoRR' },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=dblp_edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=dblp_edit['id'], process_index=1)
+
+        harold_client_v2.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Harold_Last1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Harold_Last1' },
+                'author_name': { 'value': 'Harold Last' },
+            },
+            note = openreview.api.Note(
+                id = dblp_edit['note']['id']
+            )
+        )
 
         ## Create committee groups
         openreview_client.post_group_edit(
@@ -3998,7 +4046,7 @@ The OpenReview Team.
         first_anon_group_id = anon_groups[0].id                
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Harold_Last1'})
-        assert len(publications) == 3
+        assert len(publications) == 4
 
         edit = support_client.post_note_edit(
             invitation = 'openreview.net/Support/-/Profile_Email_Removal',
@@ -4015,19 +4063,36 @@ The OpenReview Team.
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Harold_Last1'})
-        assert len(publications) == 3
-        assert ['~SomeFirstName_User1', '~Paul_Last1', '~Harold_Last1'] == publications[0].content['authorids']['value']
-        assert '~Harold_Last1' in publications[1].writers
-        assert '~Harold_Last1' in publications[1].signatures
-        assert ['Harold Last', 'Test Client', 'Another Author'] == publications[1].content['authors']['value']
-        assert ['~Harold_Last1', 'test@mail.com', 'another@mail.com'] == publications[1].content['authorids']['value']
-        assert ['Harold Last', 'Test Client'] == publications[2].content['authors']['value']
-        assert ['~Harold_Last1', 'test@mail.com'] == publications[2].content['authorids']['value']
-        assert '~Harold_Last1' in publications[2].writers
-        assert '~Harold_Last1' in publications[2].signatures
-        publication_edits = openreview_client.get_note_edits(note_id=publications[0].id)
-        assert publication_edits[0].readers == [publications[0].domain]
-        assert publication_edits[0].content['origin']['value'] == 'remove email process function'        
+        assert len(publications) == 4
+        publications_by_title = { p.content['title']['value']: p for p in publications }
+
+        submission = publications_by_title['Paper title']
+        assert ['~SomeFirstName_User1', '~Paul_Last1', '~Harold_Last1'] == submission.content['authorids']['value']
+
+        paper_2 = publications_by_title['Paper title 2']
+        assert '~Harold_Last1' in paper_2.writers
+        assert '~Harold_Last1' in paper_2.signatures
+        assert ['Harold Last', 'Test Client', 'Another Author'] == paper_2.content['authors']['value']
+        assert ['~Harold_Last1', 'test@mail.com', 'another@mail.com'] == paper_2.content['authorids']['value']
+
+        paper_1 = publications_by_title['Paper title 1']
+        assert ['Harold Last', 'Test Client'] == paper_1.content['authors']['value']
+        assert ['~Harold_Last1', 'test@mail.com'] == paper_1.content['authorids']['value']
+        assert '~Harold_Last1' in paper_1.writers
+        assert '~Harold_Last1' in paper_1.signatures
+
+        ## The DBLP publication stores authors as dicts with the tilde id as username,
+        ## so it has no top-level authorids field and is left untouched by the email removal.
+        dblp_publication = publications_by_title['A DBLP Paper']
+        assert 'authorids' not in dblp_publication.content
+        assert dblp_publication.content['authors']['value'] == [
+            {'fullname': 'Harold Last', 'username': '~Harold_Last1'},
+            {'fullname': 'Test Client', 'username': ''},
+        ]
+
+        publication_edits = openreview_client.get_note_edits(note_id=submission.id)
+        assert publication_edits[0].readers == [submission.domain]
+        assert publication_edits[0].content['origin']['value'] == 'remove email process function'
 
         group = openreview_client.get_group('ICMLR.cc/Reviewers')
         assert 'alternate_harold@profile.org' not in group.members
