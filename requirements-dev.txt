@@ -113,7 +113,7 @@ pygments==2.20.0
     #   nbconvert
     #   pytest
     #   sphinx
-pyjwt==2.12.1
+pyjwt==2.13.0
     # via openreview-py (pyproject.toml)
 pylatexenc==2.10
     # via openreview-py (pyproject.toml)
