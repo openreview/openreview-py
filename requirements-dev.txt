@@ -121,7 +121,7 @@ pyotp==2.9.0
     # via openreview-py (pyproject.toml)
 pysocks==1.7.1
     # via urllib3
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   openreview-py (pyproject.toml)
     #   pytest-base-url
@@ -227,7 +227,7 @@ typing-extensions==4.15.0
     #   beautifulsoup4
     #   referencing
     #   selenium
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   requests
     #   selenium
