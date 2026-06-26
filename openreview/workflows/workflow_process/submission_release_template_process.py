@@ -6,3 +6,4 @@ def process(client, edit, invitation):
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     edit_invitations_builder.set_edit_submission_release_source_invitation(invitation_id)
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+    edit_invitations_builder.set_edit_content_invitation(invitation_id)
