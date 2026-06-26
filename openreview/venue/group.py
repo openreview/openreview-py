@@ -567,7 +567,7 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
                     additional_readers.append(senior_area_chairs_id)
 
-                self.client.post_group_edit(
+                edit = self.client.post_group_edit(
                     invitation=f'{self.openreview_template}/-/Committee_Group',
                     signatures=[self.openreview_template],
                     content={
@@ -580,6 +580,48 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     },
                     await_process=True
                 )
+
+                area_chairs_group_id = edit['group']['id']
+
+                # create invitation to edit area chairs group to add enable_reviewers_reassignment
+                self.client.post_invitation_edit(
+                    invitations=self.venue.get_meta_invitation_id(),
+                    signatures=[self.venue_id],
+                    readers=[self.venue_id],
+                    writers=[self.venue_id],
+                    invitation=openreview.api.Invitation(
+                        id=f'{area_chairs_group_id}/-/Reviewer_Reassignment',
+                        readers=[self.venue_id],
+                        writers=[self.venue_id],
+                        signatures=[self.venue_id],
+                        invitees=[self.venue_id],
+                        edit={
+                            'content': {
+                                'enable_reviewers_reassignment': {
+                                    'order': 2,
+                                    'description': 'Would you like to allow area chairs to reassign reviewers to submissions?',
+                                    'value': {
+                                        'param': {
+                                            'type': 'boolean',
+                                            'enum': [True, False],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                }
+                            },
+                            'signatures' : [self.venue.get_program_chairs_id()],
+                            'readers': [self.venue_id],
+                            'writers': [self.venue_id],
+                            'group': {
+                                'id': area_chairs_group_id,
+                                'content': {
+                                    'enable_reviewers_reassignment': { 'value': '${4/content/enable_reviewers_reassignment/value}'}
+                                }
+                            }
+                        }
+                    )
+                )
+
             return
 
         venue_id = self.venue.id
