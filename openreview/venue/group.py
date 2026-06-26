@@ -558,6 +558,7 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
     def create_area_chairs_group(self):
 
         if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue.id)
             for index, role in enumerate(self.venue.area_chair_roles):
                 
                 additional_readers = []
@@ -582,45 +583,8 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 )
 
                 area_chairs_group_id = edit['group']['id']
-
                 # create invitation to edit area chairs group to add enable_reviewers_reassignment
-                self.client.post_invitation_edit(
-                    invitations=self.venue.get_meta_invitation_id(),
-                    signatures=[self.venue_id],
-                    readers=[self.venue_id],
-                    writers=[self.venue_id],
-                    invitation=openreview.api.Invitation(
-                        id=f'{area_chairs_group_id}/-/Reviewer_Reassignment',
-                        readers=[self.venue_id],
-                        writers=[self.venue_id],
-                        signatures=[self.venue_id],
-                        invitees=[self.venue_id],
-                        edit={
-                            'content': {
-                                'enable_reviewers_reassignment': {
-                                    'order': 2,
-                                    'description': 'Would you like to allow area chairs to reassign reviewers to submissions?',
-                                    'value': {
-                                        'param': {
-                                            'type': 'boolean',
-                                            'enum': [True, False],
-                                            'input': 'radio'
-                                        }
-                                    }
-                                }
-                            },
-                            'signatures' : [self.venue.get_program_chairs_id()],
-                            'readers': [self.venue_id],
-                            'writers': [self.venue_id],
-                            'group': {
-                                'id': area_chairs_group_id,
-                                'content': {
-                                    'enable_reviewers_reassignment': { 'value': '${4/content/enable_reviewers_reassignment/value}'}
-                                }
-                            }
-                        }
-                    )
-                )
+                edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id)
 
             return
 
