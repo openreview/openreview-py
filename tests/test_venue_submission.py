@@ -458,6 +458,33 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         custom_load_edges = openreview_client.get_edges_count(invitation='TestVenue.cc/Reviewers/-/Custom_Max_Papers')
         assert custom_load_edges == 1
 
+    def test_ac_invite_assignment_via_invitation(self, venue, openreview_client, helpers):
+
+        ac_invite_inv = openreview_client.get_invitation('TestVenue.cc/-/AC_Invite_Assignment')
+        assert 'TestVenue.cc/Program_Chairs' in ac_invite_inv.invitees
+        assert 'enabled' in ac_invite_inv.edit['content']
+
+        assert openreview.tools.get_invitation(
+            openreview_client, 'TestVenue.cc/Area_Chairs/-/Invite_Assignment'
+        ) is None
+
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
+        pc_client.post_invitation_edit(
+            invitations='TestVenue.cc/-/AC_Invite_Assignment',
+            signatures=['TestVenue.cc/Program_Chairs'],
+            invitation=Invitation(
+                id='TestVenue.cc/-/AC_Invite_Assignment',
+                content={'enabled': {'value': True}},
+            ),
+        )
+        helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/AC_Invite_Assignment')
+
+        invite_assignment_inv = openreview_client.get_invitation(
+            'TestVenue.cc/Area_Chairs/-/Invite_Assignment'
+        )
+        assert invite_assignment_inv.content.get('hash_seed')
+        assert invite_assignment_inv.content.get('match_group', {}).get('value') == 'TestVenue.cc/Area_Chairs'
+
     def test_review_stage(self, venue, openreview_client, helpers):
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
