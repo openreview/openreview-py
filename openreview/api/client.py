@@ -123,7 +123,14 @@ class OpenReviewClient(object):
             'Accept': 'application/json'
         }
 
-        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=True)
+        retry_strategy = LogRetry(
+            total=8,
+            backoff_factor=1,
+            backoff_max=120,
+            backoff_jitter=1,
+            status_forcelist=[ 500, 502, 503, 504 ],
+            respect_retry_after_header=True
+        )
         self.session = requests.Session()
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount('https://', adapter)
@@ -358,7 +365,9 @@ class OpenReviewClient(object):
         response = self.session.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
-        self.__handle_authorization(json_response)
+        ## A profile pending moderation is activated without an authentication token
+        if json_response.get('token'):
+            self.__handle_authorization(json_response)
 
         return json_response
 
