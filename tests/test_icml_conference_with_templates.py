@@ -658,7 +658,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
         for domain in domains:
-            helpers.create_user(f'andrew@{domain}', 'Andrew', f'Mc{domain.split(".")[0].capitalize()}')
+            helpers.create_user(f'andrew_mc@{domain}', 'Andrew', f'Mc{domain.split(".")[0].capitalize()}')
 
         subject_areas = ['Algorithms: Approximate Inference', 'Algorithms: Belief Propagation', 'Learning: Deep Learning', 'Learning: General', 'Learning: Nonparametric Bayes', 'Methodology: Bayesian Methods', 'Methodology: Calibration', 'Principles: Causality', 'Principles: Cognitive Models', 'Representation: Constraints', 'Representation: Dempster-Shafer', 'Representation: Other']
         for i in range(1,102):
