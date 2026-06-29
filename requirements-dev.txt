@@ -113,7 +113,7 @@ pygments==2.20.0
     #   nbconvert
     #   pytest
     #   sphinx
-pyjwt==2.12.1
+pyjwt==2.13.0
     # via openreview-py (pyproject.toml)
 pylatexenc==2.10
     # via openreview-py (pyproject.toml)
@@ -121,7 +121,7 @@ pyotp==2.9.0
     # via openreview-py (pyproject.toml)
 pysocks==1.7.1
     # via urllib3
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   openreview-py (pyproject.toml)
     #   pytest-base-url
@@ -204,7 +204,7 @@ tinycss2==1.4.0
     # via bleach
 tld==0.13.2
     # via openreview-py (pyproject.toml)
-tornado==6.5.5
+tornado==6.5.7
     # via jupyter-client
 tqdm==4.67.3
     # via openreview-py (pyproject.toml)
@@ -227,7 +227,7 @@ typing-extensions==4.15.0
     #   beautifulsoup4
     #   referencing
     #   selenium
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   requests
     #   selenium

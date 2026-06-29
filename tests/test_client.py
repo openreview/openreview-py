@@ -11,6 +11,18 @@ from openreview.stages import SubmissionStage
 
 class TestClient():
 
+    def test_retry_strategy(self, client, openreview_client):
+        ## Transient 5xx errors should be retried with a capped, jittered backoff
+        ## so brief server overloads don't abort long-running jobs.
+        for api_client in [client, openreview_client]:
+            retry = api_client.session.get_adapter(api_client.baseurl).max_retries
+            assert retry.total == 8
+            assert retry.backoff_factor == 1
+            assert retry.backoff_max == 120
+            assert retry.backoff_jitter == 1
+            assert set(retry.status_forcelist) == {500, 502, 503, 504}
+            assert retry.respect_retry_after_header is True
+
     def test_get_groups(self, client):
         groups = client.get_groups(ids=[
             '(anonymous)',
