@@ -59,7 +59,6 @@ def process(client, invitation):
             submission_title=submission.content['title']['value']
         )
         decisions = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]
-        print(len(decisions), 'decisions found for submission', submission.number)
         if decisions:
             formatted_decision = ''
             decision = decisions[0]
@@ -70,7 +69,6 @@ def process(client, invitation):
 
             decision_value = decision.content.get(decision_field_name, {}).get('value')
             note_accepted = openreview.tools.is_accept_decision(decision_value, accept_options) if decision_value else False
-            print('decision_value:', decision_value, 'note_accepted:', note_accepted)
             if note_accepted:
                 message = accept_email_content.format(
                     submission_number=submission.number,
