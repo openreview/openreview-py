@@ -1460,7 +1460,7 @@ class EditInvitationsBuilder(object):
             }
 
         invitation_content = {
-            'email_subject': {
+            'subject': {
                 'value': '${4/content/email_subject/value}'
             }
         }
@@ -1473,7 +1473,7 @@ class EditInvitationsBuilder(object):
                 'value': '${4/content/reject_email_content/value}'
             }
         elif is_review_invitation:
-            invitation_content['email_content'] = {
+            invitation_content['message'] = {
                 'value': '${4/content/email_content/value}'
             }
 
