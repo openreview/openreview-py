@@ -1,0 +1,247 @@
+{
+  "signatures": [
+    "JMLR"
+  ],
+  "readers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "content": {
+    "noteNumber": {
+      "value": {
+        "param": {
+          "type": "integer"
+        }
+      }
+    },
+    "noteId": {
+      "value": {
+        "param": {
+          "type": "string"
+        }
+      }
+    },
+    "replytoId": {
+      "value": {
+        "param": {
+          "type": "string"
+        }
+      }
+    },
+    "reviewerAnonId": {
+      "value": {
+        "param": {
+          "type": "string",
+          "optional": true
+        }
+      }
+    },
+    "reviewerProfileId": {
+      "value": {
+        "param": {
+          "type": "string",
+          "optional": true
+        }
+      }
+    },
+    "reviewNoteId": {
+      "value": {
+        "param": {
+          "type": "string",
+          "optional": true
+        }
+      }
+    },
+    "defaultTimeliness": {
+      "value": {
+        "param": {
+          "type": "string",
+          "optional": true
+        }
+      }
+    },
+    "signature": {
+      "value": {
+        "param": {
+          "type": "string"
+        }
+      }
+    },
+    "duedate": {
+      "value": {
+        "param": {
+          "type": "integer"
+        }
+      }
+    }
+  },
+  "invitation": {
+    "id": "${2/content/signature/value}/-/Rating",
+    "duedate": "${2/content/duedate/value}",
+    "invitees": [
+      "JMLR/Paper${3/content/noteNumber/value}/Action_Editors"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief",
+      "JMLR/Paper${3/content/noteNumber/value}/Action_Editors"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "signatures": [
+      "JMLR"
+    ],
+    "maxReplies": 100,
+    "edit": {
+      "signatures": {
+        "param": {
+          "items": [
+            {
+              "prefix": "JMLR/Paper${3/content/noteNumber/value}/Action_Editor_",
+              "optional": true
+            }
+          ]
+        }
+      },
+      "readers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${4/content/noteNumber/value}/Action_Editors"
+      ],
+      "nonreaders": [
+        "JMLR/Paper${4/content/noteNumber/value}/Authors",
+        "JMLR/Paper${4/content/noteNumber/value}/Reviewers"
+      ],
+      "writers": [
+        "JMLR/Paper${4/content/noteNumber/value}/Action_Editors"
+      ],
+      "note": {
+        "forum": "${4/content/noteId/value}",
+        "replyto": "${4/content/replytoId/value}",
+        "signatures": [
+          "${3/signatures}"
+        ],
+        "readers": [
+          "JMLR/Editors_In_Chief",
+          "JMLR/Paper${5/content/noteNumber/value}/Action_Editors"
+        ],
+        "nonreaders": [
+          "JMLR/Paper${5/content/noteNumber/value}/Authors",
+          "JMLR/Paper${5/content/noteNumber/value}/Reviewers"
+        ],
+        "writers": [
+          "JMLR/Paper${5/content/noteNumber/value}/Action_Editors"
+        ],
+        "content": {
+          "rating": {
+            "order": 1,
+            "description": "AE reviewer rating. Use No rating when no quality rating is appropriate. Use Report problem for serious reviewer issues that should be noted or escalated.",
+            "value": {
+              "param": {
+                "type": "string",
+                "enum": [
+                  "No rating",
+                  "Exceeds expectations",
+                  "Meets expectations",
+                  "Falls below expectations",
+                  "Report problem"
+                ],
+                "input": "radio",
+                "default": "No rating"
+              }
+            }
+          },
+          "timeliness": {
+            "order": 2,
+            "description": "Default is derived from the review submission timestamp, review due date, and paper decision time. Modify only when there was a special agreement or the system default does not apply. Use Review not expected when the paper decision was made before the review was submitted and before the review deadline.",
+            "value": {
+              "param": {
+                "type": "string",
+                "enum": [
+                  "On time",
+                  "Past due",
+                  "Review not expected"
+                ],
+                "input": "radio",
+                "optional": true
+              }
+            }
+          },
+          "comment": {
+            "order": 4,
+            "description": "Optional explanation for special agreements, unusual timing, No rating, or Report problem.",
+            "value": {
+              "param": {
+                "type": "string",
+                "maxLength": 5000,
+                "input": "textarea",
+                "optional": true,
+                "deletable": true
+              }
+            }
+          },
+          "resubmission_auto_assignment": {
+            "order": 3,
+            "description": "Select this reviewer for automatic assignment if the paper is resubmitted.",
+            "value": {
+              "param": {
+                "type": "string",
+                "enum": [
+                  "Select this reviewer for automatic assignment if the paper is resubmitted."
+                ],
+                "input": "checkbox",
+                "optional": true,
+                "deletable": true
+              }
+            }
+          },
+          "reviewer_anon_id": {
+            "order": 90,
+            "description": "Internal anonymous reviewer id for this rating.",
+            "value": {
+              "param": {
+                "type": "string",
+                "optional": true,
+                "hidden": true
+              }
+            }
+          },
+          "reviewer_profile_id": {
+            "order": 91,
+            "description": "Internal reviewer profile id for this rating.",
+            "value": {
+              "param": {
+                "type": "string",
+                "optional": true,
+                "hidden": true
+              }
+            }
+          },
+          "review_note_id": {
+            "order": 92,
+            "description": "Internal submitted review note id when one exists.",
+            "value": {
+              "param": {
+                "type": "string",
+                "optional": true,
+                "hidden": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "preprocess": "{{PYTHON_SCRIPT_JSON:invitations/venue/rating/edit_preprocess.py}}",
+    "process": "def process(client, edit, invitation):\n    import datetime\n\n    meta_invitation = client.get_invitation(invitation.invitations[0])\n    script = getattr(meta_invitation, 'process', None)\n    if not script:\n        script = meta_invitation.content[\"process_script\"]['value']\n    funcs = {\n        'openreview': openreview,\n        'datetime': datetime\n    }\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n",
+    "dateprocesses": [
+      {
+        "dates": [
+          "#{4/duedate} + 86400000"
+        ],
+        "script": "def process(client, invitation):\n    return\n"
+      }
+    ]
+  },
+  "replacement": true
+}

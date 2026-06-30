@@ -1,0 +1,72 @@
+{
+  "id": {
+    "param": {
+      "withInvitation": "JMLR/Reviewers/-/Expert_Reviewer_Listing_Preference",
+      "optional": true
+    }
+  },
+  "ddate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "cdate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief",
+    "${2/tail}"
+  ],
+  "nonreaders": [],
+  "writers": [
+    "JMLR/Editors_In_Chief",
+    "${2/tail}"
+  ],
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "JMLR/Editors_In_Chief",
+          "optional": true
+        },
+        {
+          "value": "${3/tail}",
+          "optional": true
+        }
+      ]
+    }
+  },
+  "head": {
+    "param": {
+      "type": "group",
+      "const": "JMLR/Expert_Reviewer_State"
+    }
+  },
+  "tail": {
+    "param": {
+      "type": "profile",
+      "inGroup": "JMLR/Reviewers"
+    }
+  },
+  "label": {
+    "param": {
+      "enum": [
+        "List",
+        "Opt_Out"
+      ],
+      "default": "List"
+    }
+  }
+}

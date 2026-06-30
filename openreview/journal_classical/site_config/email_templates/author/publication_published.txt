@@ -1,0 +1,15 @@
+Dear {{{{fullname}}}},
+
+Your JMLR paper {submission_number}: {submission_title} has been marked as published in OpenReview after publication on the JMLR website.
+
+JMLR publication page:
+{jmlr_publication_url}
+
+JMLR PDF:
+{jmlr_pdf_url}
+
+OpenReview record:
+{paper_url}
+
+Regards,
+The {short_name} Editors-in-Chief

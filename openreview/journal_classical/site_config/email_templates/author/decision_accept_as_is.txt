@@ -1,0 +1,19 @@
+Dear {{{{fullname}}}},
+
+We are happy to inform you that, based on the editorial evaluation of your {short_name} submission "{submission_number}: {submission_title}", the paper is accepted as is.
+
+The camera-ready upload task is now available in OpenReview. Please submit the final version of your manuscript within {camera_ready_period_length} weeks ({camera_ready_duedate}):
+
+{paper_url}
+
+In your LaTeX source, use this generated OpenReview metadata block exactly as shown:
+
+{openreview_dates_block}
+
+For the Final Publication Author List field, enter OpenReview profile IDs only, separated by commas. Line breaks are not allowed. The list may reorder the submitted authors, but it must contain exactly the same author profile IDs as the submitted paper; adding, removing, replacing, or duplicating authors is not allowed.
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+We thank you for your contribution to {short_name} and congratulate you for your successful submission!
+
+The {short_name} Editors-in-Chief

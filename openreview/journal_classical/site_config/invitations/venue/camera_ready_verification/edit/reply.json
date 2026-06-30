@@ -1,0 +1,134 @@
+{
+  "signatures": [
+    "JMLR"
+  ],
+  "readers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "content": {
+    "noteNumber": {
+      "value": {
+        "param": {
+          "type": "integer"
+        }
+      }
+    },
+    "noteId": {
+      "value": {
+        "param": {
+          "type": "string"
+        }
+      }
+    },
+    "duedate": {
+      "value": {
+        "param": {
+          "type": "integer"
+        }
+      }
+    }
+  },
+  "invitation": {
+    "id": "JMLR/Paper${2/content/noteNumber/value}/-/Camera_Ready_Verification",
+    "duedate": "${2/content/duedate/value}",
+    "invitees": [
+      "JMLR/Editors_In_Chief",
+      "JMLR/Paper${3/content/noteNumber/value}/Action_Editors"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief",
+      "JMLR/Paper${3/content/noteNumber/value}/Action_Editors",
+      "JMLR/Paper${3/content/noteNumber/value}/Authors"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "signatures": [
+      "JMLR"
+    ],
+    "edit": {
+      "signatures": {
+        "param": {
+          "items": [
+            {
+              "value": "JMLR/Editors_In_Chief",
+              "optional": true
+            },
+            {
+              "prefix": "JMLR/Paper${7/content/noteNumber/value}/Action_Editor_",
+              "optional": true
+            }
+          ]
+        }
+      },
+      "readers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${4/content/noteNumber/value}/Action_Editors"
+      ],
+      "writers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${4/content/noteNumber/value}/Action_Editors"
+      ],
+      "note": {
+        "signatures": [
+          "${3/signatures}"
+        ],
+        "forum": "${4/content/noteId/value}",
+        "replyto": "${4/content/noteId/value}",
+        "readers": [
+          "JMLR/Editors_In_Chief",
+          "JMLR/Paper${5/content/noteNumber/value}/Action_Editors",
+          "JMLR/Paper${5/content/noteNumber/value}/Authors"
+        ],
+        "writers": [
+          "JMLR"
+        ],
+        "content": {
+          "verification": {
+            "order": 1,
+            "description": "Check the latest camera-ready PDF before approving.\n\nChecklist:\n- Complies with the JMLR stylefile and JMLR format.\n- Matches the accepted paper in content, except for approved minor revisions and camera-ready formatting changes.\n- Uses the accepted title and author list.\n- Includes all author information in the manuscript.\n- Does not render an Editor line in the manuscript header.",
+            "value": {
+              "param": {
+                "type": "string",
+                "enum": [
+                  "Approve camera-ready version",
+                  "Request camera-ready revision"
+                ],
+                "input": "radio"
+              }
+            }
+          },
+          "revision_comments": {
+            "order": 2,
+            "description": "Required if requesting revision. Explain exactly what the authors must change before camera-ready approval.",
+            "value": {
+              "param": {
+                "type": "string",
+                "maxLength": 200000,
+                "input": "textarea",
+                "optional": true,
+                "deletable": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "preprocess": "def process(client, edit, invitation):\n    choice = edit.note.content.get('verification', {}).get('value')\n    comments = edit.note.content.get('revision_comments', {}).get('value', '').strip()\n    if choice == 'Request camera-ready revision' and not comments:\n        raise openreview.OpenReviewException('Revision comments are required when requesting a camera-ready revision.')\n",
+      "process": "def process(client, edit, invitation):\n    script = None\n    for parent_invitation_id in invitation.invitations or []:\n        parent_invitation = client.get_invitation(parent_invitation_id)\n        parent_content = getattr(parent_invitation, 'content', {}) or {}\n        if 'process_script' in parent_content:\n            script = parent_content['process_script']['value']\n            break\n    if script is None:\n        raise openreview.OpenReviewException(f'Camera-ready verification invitation {invitation.id} has no parent process_script.')\n    funcs = {\n        'openreview': openreview,\n        'datetime': datetime\n    }\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n",
+    "dateprocesses": [
+      {
+        "dates": [
+          "#{4/duedate} + 86400000",
+          "#{4/duedate} + 604800000",
+          "#{4/duedate} + 2592000000"
+        ],
+        "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/camera_ready_verification/dateprocess_verification_reminder.py}}"
+      }
+    ]
+  },
+  "replacement": true
+}

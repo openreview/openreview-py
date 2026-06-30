@@ -1,0 +1,17 @@
+Dear {{{{fullname}}}},
+
+With this email, we request that you manage the review process for a new {short_name} submission "{submission_number}: {submission_title}".
+
+As a reminder, {short_name} Action Editors (AEs) are expected to handle assigned submissions that fall within your expertise and active-paper load. Reasonable exceptions are 1) situations where exceptional personal circumstances render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at {contact_info}.
+
+Please decide whether the submitted manuscript should proceed to reviewer assignment. If it is clearly unsuitable after your editorial assessment, use the normal Decision form for early rejection.
+
+Open the assigned paper or your Action Editor pending task from this link:
+
+{invitation_url}
+
+If the paper should proceed in review, assign {number_of_reviewers} reviewers. If it should not continue in review, use the paper-page decision action to desk reject it.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief

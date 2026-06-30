@@ -1,0 +1,6 @@
+Hi {recipient_name},
+Thank you for accepting the invitation to serve as {role_phrase} for {short_name}.
+
+You can now use the {short_name} console in OpenReview for your assigned role. Please add the OpenReview notification sender to your email contacts to ensure that you receive all communications.
+
+JMLR

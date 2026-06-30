@@ -1,0 +1,5 @@
+Sign in to OpenReview, then open the Accept link again.
+
+Your acceptance has not been recorded yet.
+
+This invitation will expire if no valid response is recorded before the deadline.

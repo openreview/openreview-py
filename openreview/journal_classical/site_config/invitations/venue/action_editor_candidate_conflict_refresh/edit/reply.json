@@ -1,0 +1,57 @@
+{
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "JMLR/Editors_In_Chief"
+        }
+      ]
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "note": {
+    "signatures": [
+      "${3/signatures}"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "writers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "content": {
+      "note_id": {
+        "value": {
+          "param": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      },
+      "paper_number": {
+        "value": {
+          "param": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "candidate_id": {
+        "value": {
+          "param": {
+            "type": "string",
+            "regex": "~.*",
+            "minLength": 2,
+            "maxLength": 200
+          }
+        }
+      }
+    }
+  }
+}

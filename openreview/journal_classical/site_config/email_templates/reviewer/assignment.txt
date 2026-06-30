@@ -1,0 +1,15 @@
+Dear {{{{fullname}}}},
+
+You have been assigned to review "{submission_title}" for {short_name}. The standard reviewer maximum active load is {reviewers_max_papers} papers.
+
+With this email, we request that you submit, within {review_period_length} weeks ({review_duedate}) a review for your newly assigned {short_name} submission "{submission_number}: {submission_title}".{submission_length}
+
+As a reminder, reviewers are expected to complete assigned reviews for submissions that fall within their expertise and active-paper load. Acceptable exceptions are 1) if you have an active, unsubmitted review for another {short_name} submission or 2) situations where exceptional personal circumstances render you incapable of performing your reviewing duties. If you believe you cannot review this submission, use Contact Action Editor on this paper's OpenReview page.
+
+To submit your review, please follow this link: {invitation_url} or check your tasks in the Reviewers Console: {reviewer_tasks_url}
+
+Once submitted, your review will be visible to the Action Editor and editorial staff, and it will remain visible to you. Authors and other assigned reviewers will not see the review text or recommendation before release. Reviews are released automatically when the review-release threshold has been met or when a decision is submitted, whichever happens first. For more details and guidelines on performing your review, visit {website}.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief

@@ -1,0 +1,81 @@
+{
+  "id": {
+    "param": {
+      "withInvitation": "JMLR/Reviewers/-/Review_Due_Date",
+      "optional": true
+    }
+  },
+  "ddate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "cdate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief",
+    "JMLR/Paper${{2/head}/number}/Action_Editors",
+    "${2/tail}"
+  ],
+  "nonreaders": [
+    "JMLR/Paper${{2/head}/number}/Authors"
+  ],
+  "writers": [
+    "JMLR/Editors_In_Chief",
+    "JMLR/Paper${{2/head}/number}/Action_Editors"
+  ],
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "JMLR",
+          "optional": true
+        },
+        {
+          "value": "JMLR/Editors_In_Chief",
+          "optional": true
+        },
+        {
+          "prefix": "JMLR/Paper${{3/head}/number}/Action_Editor_",
+          "optional": true
+        }
+      ]
+    }
+  },
+  "head": {
+    "param": {
+      "type": "note",
+      "withInvitation": "JMLR/-/Submission"
+    }
+  },
+  "tail": {
+    "param": {
+      "type": "profile"
+    }
+  },
+  "weight": {
+    "param": {
+      "minimum": 0
+    }
+  },
+  "label": {
+    "param": {
+      "optional": true,
+      "deletable": true,
+      "minLength": 1
+    }
+  }
+}

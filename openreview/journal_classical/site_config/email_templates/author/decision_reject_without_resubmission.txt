@@ -1,0 +1,11 @@
+Dear {{{{fullname}}}},
+
+We are sorry to inform you that your {short_name} submission "{submission_number}: {submission_title}" has been rejected without resubmission.
+
+To read the decision, please follow this link: {paper_url}
+
+This decision is terminal for this manuscript in {short_name}. A future JMLR resubmission of this manuscript will not be accepted.
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+The {short_name} Editors-in-Chief

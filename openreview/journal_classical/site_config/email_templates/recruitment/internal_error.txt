@@ -1,0 +1,6 @@
+Hi {recipient_name},
+A recruitment response reached {short_name}, but OpenReview could not complete {failure_context}.
+
+Please contact JMLR if this problem continues.
+
+JMLR

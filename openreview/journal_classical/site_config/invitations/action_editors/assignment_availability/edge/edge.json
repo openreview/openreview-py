@@ -1,0 +1,83 @@
+{
+  "id": {
+    "param": {
+      "withInvitation": "JMLR/Action_Editors/-/Assignment_Availability",
+      "optional": true
+    }
+  },
+  "ddate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "cdate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief",
+    "${2/tail}"
+  ],
+  "nonreaders": [],
+  "writers": [
+    "JMLR/Editors_In_Chief",
+    "${2/tail}"
+  ],
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "JMLR/Editors_In_Chief",
+          "optional": true
+        },
+        {
+          "prefix": "~.*",
+          "optional": true
+        },
+        {
+          "value": "${3/tail}",
+          "optional": true
+        }
+      ]
+    }
+  },
+  "head": {
+    "param": {
+      "type": "group",
+      "const": "JMLR/Action_Editors"
+    }
+  },
+  "tail": {
+    "param": {
+      "type": "profile",
+      "inGroup": "JMLR/Action_Editors"
+    }
+  },
+  "label": {
+    "param": {
+      "enum": [
+        "Available",
+        "Unavailable"
+      ],
+      "default": "Available"
+    }
+  },
+  "weight": {
+    "param": {
+      "minimum": 0,
+      "optional": true,
+      "deletable": true
+    }
+  }
+}

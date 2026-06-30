@@ -1,0 +1,69 @@
+{
+  "id": {
+    "param": {
+      "withInvitation": "JMLR/Action_Editors/-/Custom_Max_Papers",
+      "optional": true
+    }
+  },
+  "ddate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "cdate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief",
+    "JMLR/Action_Editors",
+    "${2/tail}"
+  ],
+  "nonreaders": [],
+  "writers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "signatures": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "head": {
+    "param": {
+      "type": "group",
+      "const": "JMLR/Action_Editors"
+    }
+  },
+  "tail": {
+    "param": {
+      "type": "profile",
+      "inGroup": "JMLR/Action_Editors"
+    }
+  },
+  "weight": {
+    "param": {
+      "enum": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "default": {{ACTION_EDITORS_MAX_PAPERS}}
+    }
+  }
+}

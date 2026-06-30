@@ -1,0 +1,9 @@
+Dear {{{{fullname}}}},
+
+We recently informed you that your help was requested to manage the review process for a new {short_name} submission "{submission_number}: {submission_title}".
+
+However, we've just determined that your help was no longer needed for this submission and have unassigned you as the AE for it.
+
+Apologies for the change and thank you for your continued involvement with {short_name}!
+
+The {short_name} Editors-in-Chief

@@ -1,0 +1,113 @@
+{
+  "signatures": [
+    "JMLR"
+  ],
+  "readers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "content": {
+    "noteNumber": {
+      "value": {
+        "param": {
+          "type": "integer"
+        }
+      }
+    },
+    "noteId": {
+      "value": {
+        "param": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "invitation": {
+    "id": "JMLR/Paper${2/content/noteNumber/value}/-/Retract_Publication",
+    "invitees": [
+      "JMLR/Editors_In_Chief",
+      "JMLR/Production_Editors"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief",
+      "JMLR/Production_Editors"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "signatures": [
+      "JMLR"
+    ],
+    "maxReplies": 1,
+    "edit": {
+      "signatures": {
+        "param": {
+          "items": [
+            {
+              "value": "JMLR/Editors_In_Chief",
+              "optional": true
+            },
+            {
+              "value": "JMLR/Production_Editors",
+              "optional": true
+            }
+          ]
+        }
+      },
+      "readers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Production_Editors"
+      ],
+      "writers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Production_Editors"
+      ],
+      "note": {
+        "signatures": [
+          "${3/signatures}"
+        ],
+        "forum": "${4/content/noteId/value}",
+        "replyto": "${4/content/noteId/value}",
+        "readers": [
+          "JMLR/Editors_In_Chief",
+          "JMLR/Production_Editors",
+          "JMLR/Paper${5/content/noteNumber/value}/Authors"
+        ],
+        "writers": [
+          "JMLR"
+        ],
+        "content": {
+          "retraction": {
+            "order": 1,
+            "description": "Confirm that this published paper should be marked as retracted in OpenReview. Website removal, replacement, correction, or public notice handling must be completed separately through the audited publication-operations process.",
+            "value": {
+              "param": {
+                "type": "string",
+                "enum": [
+                  "Retract publication"
+                ],
+                "input": "radio"
+              }
+            }
+          },
+          "reason": {
+            "order": 2,
+            "description": "Required reason for retracting this publication record. This note is immutable after submission.",
+            "value": {
+              "param": {
+                "type": "string",
+                "maxLength": 200000,
+                "input": "textarea"
+              }
+            }
+          }
+        }
+      }
+    },
+    "preprocess": "def process(client, edit, invitation):\n    signature = edit.signatures[0] if edit.signatures else None\n    if signature not in ['JMLR/Editors_In_Chief', 'JMLR/Production_Editors']:\n        raise openreview.OpenReviewException('Retract Publication must be signed as Editors In Chief or Production Editors.')\n    if edit.note.content.get('retraction', {}).get('value') != 'Retract publication':\n        raise openreview.OpenReviewException('Select Retract publication to retract the publication record.')\n    reason = edit.note.content.get('reason', {}).get('value', '').strip()\n    if not reason:\n        raise openreview.OpenReviewException('A retraction reason is required.')\n    submission = client.get_note(edit.note.forum)\n    venueid = submission.content.get('venueid', {}).get('value')\n    if venueid != 'JMLR/Camera_Ready_Published':\n        raise openreview.OpenReviewException('Only camera-ready published papers can be retracted.')\n",
+    "process": "def process(client, edit, invitation):\n    meta_invitation = client.get_invitation(invitation.invitations[0])\n    script = meta_invitation.content[\"process_script\"]['value']\n    funcs = {\n        'openreview': openreview,\n        'datetime': datetime\n    }\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n"
+  },
+  "replacement": true
+}

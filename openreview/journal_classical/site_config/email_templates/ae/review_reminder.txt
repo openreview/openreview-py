@@ -1,0 +1,15 @@
+Dear {{{{fullname}}}},
+
+Our records show that a reviewer on a paper you are handling is {days_late} late on a reviewing task, including the review recommendation:
+
+Task: {task}
+Reviewer: {reviewer_name}
+Submission: {submission_title}
+Reviews received: {review_status}
+Link: {paper_url}
+
+{action_guidance}
+
+We thank you for your cooperation.
+
+The {short_name} Editors-in-Chief

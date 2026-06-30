@@ -1,0 +1,11 @@
+Dear Reviewer,
+
+An editorial comment was posted for {{short_name}} submission {{submission_number}}: {{submission_title}}.
+
+Title: {{note_title}}
+
+{{note_message}}
+
+View the comment: {{note_url}}
+
+JMLR

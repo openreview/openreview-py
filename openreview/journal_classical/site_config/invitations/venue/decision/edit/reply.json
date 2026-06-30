@@ -1,0 +1,178 @@
+{
+    "signatures": [
+      "JMLR"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "content": {
+      "noteNumber": {
+        "value": {
+          "param": {
+            "type": "integer"
+          }
+        }
+      },
+      "noteId": {
+        "value": {
+          "param": {
+            "type": "string"
+          }
+        }
+      },
+      "cdate": {
+        "value": {
+          "param": {
+            "type": "integer"
+          }
+        }
+      },
+      "duedate": {
+        "value": {
+          "param": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "invitation": {
+      "id": "JMLR/Paper${2/content/noteNumber/value}/-/Decision",
+      "cdate": "${2/content/cdate/value}",
+      "duedate": "${2/content/duedate/value}",
+      "invitees": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${3/content/noteNumber/value}/Action_Editors"
+      ],
+      "readers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${3/content/noteNumber/value}/Action_Editors"
+      ],
+      "nonreaders": [
+        "JMLR/Paper${3/content/noteNumber/value}/Authors"
+      ],
+      "writers": [
+        "JMLR"
+      ],
+      "signatures": [
+        "JMLR/Editors_In_Chief"
+      ],
+      "maxReplies": 1,
+      "minReplies": 1,
+      "edit": {
+        "signatures": {
+          "param": {
+          "items": [
+              {
+                "value": "JMLR/Editors_In_Chief",
+                "optional": true
+              },
+              {
+                "prefix": "JMLR/Paper${7/content/noteNumber/value}/Action_Editor_",
+                "optional": true
+              }
+            ]
+          }
+        },
+        "readers": [
+          "JMLR/Editors_In_Chief",
+          "JMLR/Paper${4/content/noteNumber/value}/Action_Editors"
+        ],
+        "nonreaders": [
+          "JMLR/Paper${4/content/noteNumber/value}/Authors"
+        ],
+        "writers": [
+          "JMLR/Editors_In_Chief",
+          "JMLR/Paper${4/content/noteNumber/value}/Action_Editors"
+        ],
+        "note": {
+          "forum": "${4/content/noteId/value}",
+          "replyto": "${4/content/noteId/value}",
+          "signatures": [
+            "${3/signatures}"
+          ],
+          "readers": [
+            "JMLR/Editors_In_Chief",
+            "JMLR/Paper${5/content/noteNumber/value}/Action_Editors",
+            "JMLR/Paper${5/content/noteNumber/value}/Reviewers"
+          ],
+          "nonreaders": [
+            "JMLR/Paper${5/content/noteNumber/value}/Authors"
+          ],
+          "writers": [
+            "JMLR"
+          ],
+          "content": {
+            "recommendation": {
+              "order": 1,
+              "value": {
+                "param": {
+                  "type": "string",
+                  "enum": [
+                    "Accept",
+                    "Accept after minor revisions",
+                    "Reject with encouragement to resubmit",
+                    "Reject without resubmission"
+                  ],
+                  "input": "radio"
+                }
+              },
+              "description": "Please select the action editor decision for this work."
+            },
+            "comment": {
+              "order": 2,
+              "description": "AE Decision Comments. Provide details of the reasoning behind your decision. Also consider summarizing the discussion and recommendations of the reviewers for clarity. Reviewer recommendations are hidden from authors before review release and become visible when reviews are released. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX.",
+              "value": {
+                "param": {
+                  "type": "string",
+                  "maxLength": 200000,
+                  "input": "textarea",
+                  "markdown": true,
+                  "optional": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "preprocess": "{{PYTHON_SCRIPT_JSON:invitations/venue/decision/edit_preprocess.py}}",
+      "process": "def process(client, edit, invitation):\n    script = None\n    for parent_invitation_id in invitation.invitations or []:\n        parent_invitation = client.get_invitation(parent_invitation_id)\n        parent_content = getattr(parent_invitation, 'content', {}) or {}\n        if 'process_script' in parent_content:\n            script = parent_content['process_script']['value']\n            break\n    if script is None:\n        raise openreview.OpenReviewException(f'Decision invitation {invitation.id} has no parent process_script.')\n    funcs = {\n        'openreview': openreview,\n        'datetime': datetime\n    }\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n",
+      "dateprocesses": [
+        {
+          "dates": [
+            "#{4/duedate} + 86400000",
+            "#{4/duedate} + 604800000",
+            "#{4/duedate} + 1209600000",
+            "#{4/duedate} + 1814400000",
+            "#{4/duedate} + 2419200000",
+            "#{4/duedate} + 3024000000",
+            "#{4/duedate} + 3628800000",
+            "#{4/duedate} + 4233600000",
+            "#{4/duedate} + 4838400000",
+            "#{4/duedate} + 5443200000",
+            "#{4/duedate} + 6048000000",
+            "#{4/duedate} + 6652800000",
+            "#{4/duedate} + 7257600000",
+            "#{4/duedate} + 7862400000",
+            "#{4/duedate} + 8467200000",
+            "#{4/duedate} + 9072000000",
+            "#{4/duedate} + 9676800000",
+            "#{4/duedate} + 10281600000",
+            "#{4/duedate} + 10886400000",
+            "#{4/duedate} + 11491200000",
+            "#{4/duedate} + 12096000000",
+            "#{4/duedate} + 12700800000",
+            "#{4/duedate} + 13305600000",
+            "#{4/duedate} + 13910400000",
+            "#{4/duedate} + 14515200000",
+            "#{4/duedate} + 15120000000",
+            "#{4/duedate} + 15724800000"
+          ],
+          "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/decision/dateprocess_submit_decision_reminder.py}}"
+        }
+      ]
+    },
+    "replacement": true
+  }

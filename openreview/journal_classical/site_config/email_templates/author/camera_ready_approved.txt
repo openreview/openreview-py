@@ -1,0 +1,11 @@
+Dear {{{{fullname}}}},
+
+The camera-ready version of your {short_name} submission {submission_number}: {submission_title} has been approved.
+
+The paper is now ready for JMLR publication processing. You can view the paper record here:
+
+{paper_url}
+
+We thank you again for your contribution to {short_name}.
+
+The {short_name} Editors-in-Chief

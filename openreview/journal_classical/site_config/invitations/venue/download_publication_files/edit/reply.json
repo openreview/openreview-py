@@ -1,0 +1,123 @@
+{
+  "signatures": [
+    "JMLR"
+  ],
+  "readers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "content": {
+    "noteNumber": {
+      "value": {
+        "param": {
+          "type": "integer"
+        }
+      }
+    },
+    "noteId": {
+      "value": {
+        "param": {
+          "type": "string"
+        }
+      }
+    },
+    "publicationMetadata": {
+      "value": {
+        "param": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  "invitation": {
+    "id": "JMLR/Paper${2/content/noteNumber/value}/-/Download_Publication_Files",
+    "invitees": [
+      "JMLR/Editors_In_Chief",
+      "JMLR/Production_Editors"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief",
+      "JMLR/Production_Editors"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "signatures": [
+      "JMLR"
+    ],
+    "content": {
+      "noteNumber": {
+        "value": "${2/content/noteNumber/value}"
+      },
+      "noteId": {
+        "value": "${2/content/noteId/value}"
+      },
+      "publicationMetadata": {
+        "value": "${2/content/publicationMetadata/value}"
+      },
+      "label": {
+        "value": "Download publication files"
+      }
+    },
+    "web": "{{PYTHON_SCRIPT_JSON:invitations/venue/download_publication_files/web/web.js}}",
+    "edit": {
+      "signatures": {
+        "param": {
+          "items": [
+            {
+              "value": "JMLR/Editors_In_Chief",
+              "optional": true
+            },
+            {
+              "value": "JMLR/Production_Editors",
+              "optional": true
+            }
+          ]
+        }
+      },
+      "readers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Production_Editors"
+      ],
+      "writers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Production_Editors"
+      ],
+      "note": {
+        "signatures": [
+          "${3/signatures}"
+        ],
+        "forum": "${4/content/noteId/value}",
+        "replyto": "${4/content/noteId/value}",
+        "readers": [
+          "JMLR/Editors_In_Chief",
+          "JMLR/Production_Editors"
+        ],
+        "nonreaders": [
+          "JMLR/Paper${5/content/noteNumber/value}/Authors"
+        ],
+        "writers": [
+          "JMLR/Editors_In_Chief",
+          "JMLR/Production_Editors"
+        ],
+        "content": {
+          "download_publication_files": {
+            "order": 1,
+            "description": "Open the Download Publication Files invitation page to download the final PDF, optional supplementary material, and publication.json. This form is intentionally non-submittable and does not mark the paper as published.",
+            "value": {
+              "param": {
+                "type": "string",
+                "const": "Use browser download page"
+              }
+            }
+          }
+        }
+      }
+    },
+    "preprocess": "def process(client, edit, invitation):\n    raise openreview.OpenReviewException('Download publication files is a browser download action. Open /invitation?id=' + invitation.id + ' to download the final PDF, optional supplementary material, and publication.json; this action does not submit a note.')\n",
+    "process": "def process(client, edit, invitation):\n    return\n"
+  },
+  "replacement": true
+}

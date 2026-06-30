@@ -1,0 +1,75 @@
+{
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "JMLR/Editors_In_Chief",
+          "optional": true
+        },
+        {
+          "prefix": "JMLR/Paper",
+          "optional": true
+        }
+      ]
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief",
+    "JMLR/Action_Editors"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "note": {
+    "signatures": [
+      "${3/signatures}"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief",
+      "${3/signatures}"
+    ],
+    "writers": [
+      "JMLR/Editors_In_Chief",
+      "${3/signatures}"
+    ],
+    "content": {
+      "note_id": {
+        "value": {
+          "param": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      },
+      "paper_number": {
+        "value": {
+          "param": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "candidate_id": {
+        "value": {
+          "param": {
+            "type": "string",
+            "regex": "~.*",
+            "minLength": 2,
+            "maxLength": 200
+          }
+        }
+      },
+      "role": {
+        "value": {
+          "param": {
+            "type": "string",
+            "enum": [
+              "reviewer"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+Dear {{{{fullname}}}},
+
+JMLR submission {submission_number}: {submission_title} has a detected author-name change that needs Action Editor review before reviewer assignment continues.
+
+Approval deadline: {approval_duedate}
+
+Please review the previous and current author information and approve or reject the request from the paper page:
+
+{paper_url}
+
+We thank you for your essential contribution to {short_name}.
+
+The {short_name} Editors-in-Chief

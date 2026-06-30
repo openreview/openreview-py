@@ -1,0 +1,13 @@
+Dear {{{{fullname}}}},
+
+This is a reminder that a camera-ready revision is still required for your {short_name} submission {submission_number}: {submission_title}.
+
+Camera-ready revision deadline: {camera_ready_duedate}
+
+Please upload the revised camera-ready material from the paper page:
+
+{paper_url}
+
+If you have questions, please contact {contact_info}.
+
+The {short_name} Editors-in-Chief

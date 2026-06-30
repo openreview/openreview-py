@@ -1,0 +1,177 @@
+{
+  "signatures": [
+    "JMLR"
+  ],
+  "readers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "content": {
+    "noteId": {
+      "value": {
+        "param": {
+          "type": "string"
+        }
+      }
+    },
+    "noteNumber": {
+      "value": {
+        "param": {
+          "type": "integer"
+        }
+      }
+    },
+    "duedate": {
+      "value": {
+        "param": {
+          "type": "integer"
+        }
+      }
+    }
+  },
+  "invitation": {
+    "id": "JMLR/Paper${2/content/noteNumber/value}/-/Review",
+    "signatures": [
+      "JMLR"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief",
+      "JMLR/Paper${3/content/noteNumber/value}/Action_Editors",
+      "JMLR/Paper${3/content/noteNumber/value}/Reviewers",
+      "JMLR/Paper${3/content/noteNumber/value}/Authors"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "invitees": [
+      "JMLR/Paper${3/content/noteNumber/value}/Reviewers"
+    ],
+    "noninvitees": [],
+    "maxReplies": 1,
+    "duedate": "${2/content/duedate/value}",
+    "process": "def process(client, edit, invitation):\n    meta_invitation = client.get_invitation(invitation.invitations[0])\n    script = meta_invitation.content[\"process_script\"]['value']\n    funcs = {\n        'openreview': openreview,\n        'datetime': datetime\n    }\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n",
+    "dateprocesses": [
+      {
+        "dates": [
+          "#{4/duedate} + 86400000",
+          "#{4/duedate} + 604800000",
+          "#{4/duedate} + 1209600000",
+          "#{4/duedate} + 1814400000",
+          "#{4/duedate} + 2419200000",
+          "#{4/duedate} + 3024000000",
+          "#{4/duedate} + 3628800000",
+          "#{4/duedate} + 4233600000",
+          "#{4/duedate} + 4838400000",
+          "#{4/duedate} + 5443200000",
+          "#{4/duedate} + 6048000000",
+          "#{4/duedate} + 6652800000",
+          "#{4/duedate} + 7257600000",
+          "#{4/duedate} + 7862400000",
+          "#{4/duedate} + 8467200000",
+          "#{4/duedate} + 9072000000",
+          "#{4/duedate} + 9676800000",
+          "#{4/duedate} + 10281600000",
+          "#{4/duedate} + 10886400000",
+          "#{4/duedate} + 11491200000",
+          "#{4/duedate} + 12096000000",
+          "#{4/duedate} + 12700800000",
+          "#{4/duedate} + 13305600000",
+          "#{4/duedate} + 13910400000",
+          "#{4/duedate} + 14515200000",
+          "#{4/duedate} + 15120000000",
+          "#{4/duedate} + 15724800000"
+        ],
+        "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/review/dateprocess_review_reminder.py}}"
+      }
+    ],
+    "postprocesses": [
+      {
+        "script": "def process(client, edit, invitation):\n    meta_invitation = client.get_invitation(invitation.invitations[0])\n    script = meta_invitation.content[\"post_process_script\"]['value']\n    funcs = {\n        'openreview': openreview,\n        'datetime': datetime\n    }\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n",
+        "delay": 0
+      }
+    ],
+    "edit": {
+      "signatures": {
+        "param": {
+          "items": [
+            {
+              "prefix": "JMLR/Paper${7/content/noteNumber/value}/Reviewer_",
+              "optional": true
+            }
+          ]
+        }
+      },
+      "readers": [
+        "JMLR/Paper${4/content/noteNumber/value}/Action_Editors",
+        "${2/signatures}"
+      ],
+      "note": {
+        "forum": "${4/content/noteId/value}",
+        "replyto": "${4/content/noteId/value}",
+        "signatures": [
+          "${3/signatures}"
+        ],
+      "readers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${5/content/noteNumber/value}/Action_Editors",
+        "${3/signatures}"
+      ],
+      "nonreaders": [
+        "JMLR/Paper${5/content/noteNumber/value}/Authors"
+      ],
+      "writers": [
+        "JMLR"
+      ],
+        "content": {
+          "comments": {
+            "order": 1,
+            "description": "Reviewer comments. If you prefer to upload a PDF review, enter \"See PDF below\" and upload the file below. You can submit your review only once; after submission, send corrections or clarifications privately through Contact Action Editor.",
+            "value": {
+              "param": {
+                "maxLength": 200000,
+                "input": "textarea",
+                "type": "string",
+                "markdown": true
+              }
+            }
+          },
+          "recommendation_for_acceptance": {
+            "order": 3,
+            "description": "Recommendation.",
+            "value": {
+              "param": {
+                "type": "string",
+                "enum": [
+                  "Accept",
+                  "Accept after minor revisions",
+                  "Reject with encouragement to resubmit",
+                  "Reject without resubmission"
+                ],
+                "input": "radio"
+              }
+            }
+          },
+          "review_file": {
+            "order": 2,
+            "description": "Optional PDF or ZIP review file.",
+            "value": {
+              "param": {
+                "type": "file",
+                "extensions": [
+                  "zip",
+                  "pdf"
+                ],
+                "maxSize": 50,
+                "optional": true,
+                "deletable": true
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "replacement": true
+}

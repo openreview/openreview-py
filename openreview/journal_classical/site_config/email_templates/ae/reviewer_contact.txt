@@ -1,0 +1,14 @@
+Dear {{{{fullname}}}},
+
+A reviewer has contacted the Action Editor for a paper you are handling.
+
+Submission: {submission_number}: {submission_title}
+Reviewer: {reviewer_signature}
+Subject: {contact_title}
+
+Message:
+{contact_message}
+
+OpenReview note: {contact_note_url}
+
+The {short_name} Editors-in-Chief
