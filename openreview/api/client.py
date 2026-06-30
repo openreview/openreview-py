@@ -27,9 +27,31 @@ from .. import tools
 from .. import mfa
 
 class LogRetry(Retry):
-     
+
+    # Connection failures whose signature means the request almost certainly
+    # never reached the server (e.g. a stale keep-alive socket the server had
+    # already closed during a long idle period). These are safe to retry even
+    # for non-idempotent methods like POST, which urllib3 will not retry by
+    # default. A plain read *timeout* is intentionally NOT included here, since
+    # the server may have processed the request before the response was lost.
+    STALE_CONNECTION_SIGNATURES = ('connection aborted', 'connection reset', 'econnreset', 'broken pipe')
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)   
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def _is_stale_connection_error(cls, error):
+        if error is None:
+            return False
+        text = str(error).lower()
+        return any(signature in text for signature in cls.STALE_CONNECTION_SIGNATURES)
+
+    def _is_method_retryable(self, method):
+        # Allow retrying a broken/stale connection on any method (incl. POST);
+        # otherwise defer to urllib3's default idempotent-method whitelist.
+        if getattr(self, '_retry_broken_connection', False):
+            return True
+        return super()._is_method_retryable(method)
 
     def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
         # Log retry information before calling the parent class method
@@ -42,6 +64,11 @@ class LogRetry(Retry):
             else:
                 response_string = response.reason
         print(f"Retrying request: {method} {url}, response: {response_string}, error: {error}")
+
+        # Flag (consumed by _is_method_retryable during the call below) whether
+        # this particular error is a broken connection that is safe to retry
+        # regardless of HTTP method. Recomputed on every attempt.
+        self._retry_broken_connection = self._is_stale_connection_error(error)
 
         # Call the parent class method to perform the actual retry increment
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)

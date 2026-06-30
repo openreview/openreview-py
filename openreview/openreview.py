@@ -37,13 +37,35 @@ class MfaRequiredException(OpenReviewException):
         })
 
 class LogRetry(Retry):
-     
+
+    # See openreview/api/client.py LogRetry for the rationale: a broken/stale
+    # connection means the request almost certainly never reached the server,
+    # so it is safe to retry even for non-idempotent methods like POST.
+    STALE_CONNECTION_SIGNATURES = ('connection aborted', 'connection reset', 'econnreset', 'broken pipe')
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)   
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def _is_stale_connection_error(cls, error):
+        if error is None:
+            return False
+        text = str(error).lower()
+        return any(signature in text for signature in cls.STALE_CONNECTION_SIGNATURES)
+
+    def _is_method_retryable(self, method):
+        if getattr(self, '_retry_broken_connection', False):
+            return True
+        return super()._is_method_retryable(method)
 
     def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
         # Log retry information before calling the parent class method
         print(f"Retrying request: {method} {url}, response: {response}, error: {error}")
+
+        # Flag (consumed by _is_method_retryable during the call below) whether
+        # this particular error is a broken connection that is safe to retry
+        # regardless of HTTP method. Recomputed on every attempt.
+        self._retry_broken_connection = self._is_stale_connection_error(error)
 
         # Call the parent class method to perform the actual retry increment
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
