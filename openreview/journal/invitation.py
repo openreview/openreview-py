@@ -1,5 +1,6 @@
 import os
 import json
+import random
 import datetime
 from sys import prefix
 import openreview
@@ -121,6 +122,7 @@ class InvitationBuilder(object):
             self.set_official_recommendation_enabling_invitation()
         if self.journal.should_enable_llm_review():
             self.set_llm_review_invitation()
+            self.set_survey_invitation()
     
     def get_super_process_content(self, field_name):
         return '''def process(client, edit, invitation):
@@ -7017,6 +7019,232 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             content={
                 'noteId': { 'value': note.id },
                 'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
+    def set_survey_invitation(self):
+
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        survey_invitation_id = self.journal.get_survey_invitation_id()
+
+        edit_content = {
+            'noteId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'duedate': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'duedate': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'cdate': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'content': {
+                'value': {
+                    'param': {
+                        'type': 'json'
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_survey_invitation_id(number='${2/content/noteNumber/value}'),
+            'signatures': [ venue_id ],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'writers': [venue_id],
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'noninvitees': [editors_in_chief_id],
+            'maxReplies': 1,
+            'duedate': '${2/content/duedate/value}',
+            'cdate': '${2/content/cdate/value}',
+            'edit': {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'prefix': self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
+                            { 'prefix': self.journal.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [ venue_id, '${2/signatures}'],
+                'writers': [ venue_id, '${2/signatures}'],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_survey_invitation_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }
+                    },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ venue_id, '${3/signatures}'],
+                    'writers': [ venue_id, '${3/signatures}'],
+                    'content': '${4/content/content/value}'
+                }
+            }
+        }
+
+        self.save_super_invitation(survey_invitation_id, {}, edit_content, invitation)
+
+    def set_note_survey_invitation(self, note, cdate, duedate):
+
+        result = random.choice(["Heads", "Tails"])
+        print(f"Randomizing survey option order for note {note.id}: {result}")
+        reverse_options = result == 'Tails'
+
+        likert = ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree']
+        if reverse_options:
+            likert = list(reversed(likert))
+
+        content = {
+            'share_of_valid_issues': {
+                'description': 'Approximately what share of the issues the LLM reviewer raised were valid issues?',
+                'order': 1,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['None', 'Less than 25%', 'About 50%', 'More than 75%', 'All'] if not reverse_options else ['All', 'More than 75%', 'About 50%', 'Less than 25%', 'None'],
+                        'input': 'radio'
+                    }
+                }
+            },
+            'missed_technical_issues': {
+                'description': 'Did the LLM reviewer miss any significant technical issues that you believe should have been caught? **This question is for the AE and reviewers only.**',
+                'order': 2,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['Yes', 'No', 'Unsure'] if not reverse_options else ['Unsure', 'No', 'Yes'],
+                        'input': 'radio',
+                        'optional': True
+                    }
+                }
+            },
+            'missed_technical_issues_explanation': {
+                'description': 'If you answered "Yes" to the previous question, please describe briefly. **This question is for the AE and reviewers only.**',
+                'order': 3,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
+            },
+            'false_claims': {
+                'description': 'The LLM review contained false claims, hallucinated content, or misunderstandings of the submission.',
+                'order': 4,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['None', 'One minor', 'Several minor', 'At least one serious', 'Unsure'] if not reverse_options else ['Unsure', 'At least one serious', 'Several minor', 'One minor', 'None'],
+                        'input': 'radio'
+                    }
+                }
+            },
+            'addressing_suggestions': {
+                'description': 'Addressing the LLM reviewer\'s suggestions would genuinely improve the submission.',
+                'order': 5,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': likert,
+                        'input': 'radio'
+                    }
+                }
+            },
+            'actionable_suggestions': {
+                'description': 'The LLM reviewer\'s suggestions were actionable.',
+                'order': 6,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': likert,
+                        'input': 'radio'
+                    }
+                }
+            },
+            'clear_feedback': {
+                'description': 'The feedback was clearly written and easy to understand.',
+                'order': 7,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': likert,
+                        'input': 'radio'
+                    }
+                }
+            },
+            'added_value': {
+                'description': 'Overall, the LLM review added value to the assessment of this submission\'s evidence and claims. **This question is for the AE and reviewers only.**',
+                'order': 8,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': likert,
+                        'input': 'radio',
+                        'optional': True
+                    }
+                }
+            },
+            'comments': {
+                'description': 'Any other comments on the LLM reviewer\'s performance, accuracy, or usefulness?',
+                'order': 9,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
+            }
+        }
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_survey_invitation_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'cdate': { 'value': openreview.tools.datetime_millis(cdate) },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate) },
+                'content': { 'value': content }
             },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],

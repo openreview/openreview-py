@@ -519,6 +519,11 @@ class TestTMLRExperiment():
         assert llm_review.readers == ['everyone']
         assert llm_review.nonreaders == []
 
+        # assert Survey invitation has been created
+        survey_invitation = openreview.tools.get_invitation(openreview_client, f'{venue_id}/Paper1/-/Survey')
+        assert survey_invitation
+        assert survey_invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
+
         # author posts a reply to the LLM review
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
