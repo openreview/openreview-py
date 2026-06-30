@@ -94,6 +94,9 @@ class Journal(object):
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
 
+    def get_llm_reviewer_id(self):
+        return f'{self.venue_id}/LLM_Reviewer'
+
     def get_reviewers_archived_id(self):
         return f'{self.get_reviewers_id()}/Archived'
 
@@ -231,12 +234,15 @@ class Journal(object):
     def get_review_id(self, number=None):
         return self.__get_invitation_id(name='Review', number=number)
 
+    def get_llm_review_id(self, number=None):
+        return self.__get_invitation_id(name='LLM_Review', number=number)
+
     def get_review_rating_id(self, signature=None):
         return self.__get_invitation_id(name='Rating', prefix=signature)
 
     def get_review_rating_enabling_id(self, number=None):
         return self.__get_invitation_id(name='Review_Rating_Enabling', number=number)
-    
+
     def get_official_recommendation_enabling_id(self, number=None):
         return self.__get_invitation_id(name='Official_Recommendation_Enabling', number=number)
 
@@ -696,8 +702,8 @@ class Journal(object):
     def should_skip_camera_ready_revision(self):
         return self.settings.get('skip_camera_ready_revision', False)
     
-    def get_journal_experiment(self):
-        return self.settings.get('journal_experiment', False)
+    def should_enable_llm_review(self):
+        return self.settings.get('enable_llm_review', False)
 
     def get_certifications(self):
         return self.settings.get('certifications', [])

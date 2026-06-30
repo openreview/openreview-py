@@ -119,7 +119,8 @@ class InvitationBuilder(object):
         self.set_reviewers_archived_invitation()
         if not self.journal.should_skip_official_recommendation():
             self.set_official_recommendation_enabling_invitation()
-
+        if self.journal.should_enable_llm_review():
+            self.set_llm_review_invitation()
     
     def get_super_process_content(self, field_name):
         return '''def process(client, edit, invitation):
@@ -6865,3 +6866,104 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         self.save_invitation(invitation)                
+
+    def set_llm_review_invitation(self):
+
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        llm_review_invitation_id = self.journal.get_llm_review_id()
+
+        edit_content = {
+            'noteId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_llm_review_id(number='${2/content/noteNumber/value}'),
+            'signatures': [ venue_id ],
+            'readers': [venue_id],
+            'writers': [venue_id],
+            'invitees': [venue_id],
+            'maxReplies': 1,
+            # 'process': self.process_script,
+            # 'dateprocesses': [self.reviewer_reminder_process_with_EIC, self.review_reminder_process_with_no_ACK],
+            # 'postprocesses': [
+            #     {
+            #         'script': self.get_super_process_content('post_process_script'),
+            #         'delay': milliseconds
+            #     }
+            # ],
+            'edit': {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'prefix': self.journal.get_llm_reviewer_id(), 'optional': False }
+                        ]
+                    }
+                },
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_llm_review_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }
+                    },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id, '${3/signatures}'],
+                    'content': {
+                        'llm_review': {
+                            'order': 1,
+                            'description': 'Brief description, in the reviewer\'s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'type': 'string',
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_llm_review_id(), {}, edit_content, invitation)
+
+    def set_note_llm_review_invitation(self, note):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_llm_review_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )

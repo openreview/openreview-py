@@ -244,6 +244,7 @@ class TestTMLRExperiment():
                             'assignment_delay_after_submitted_review': 0.0001,
                             'max_solicit_review_per_month': 3,
                             'enable_blocked_authors': True,
+                            'enable_llm_review': True
                         }
                     }
                 }
@@ -254,6 +255,9 @@ class TestTMLRExperiment():
         tmlre = openreview_client.get_group('TMLRE')
         assert tmlre
         assert tmlre.members == ['~Percy_Liang1', 'TMLRE/Editors_In_Chief']
+
+        assert openreview_client.get_invitation('TMLRE/-/LLM_Review')
+        assert openreview_client.get_group('TMLRE/LLM_Reviewer')
 
     def test_invite_action_editors(self, journal, openreview_client, helpers):
         openreview_client.add_members_to_group('TMLRE/Action_Editors', ['~Alice_Johnson1'])
@@ -295,6 +299,23 @@ class TestTMLRExperiment():
 
         author_group = openreview_client.get_group(f'{venue_id}/Paper1/Authors')
         assert author_group.members == ['~SomeFirstName_User1', '~Eve_Garcia1']
+
+        assert openreview_client.get_invitation(f'{venue_id}/Paper1/-/LLM_Review')
+
+        # post LLM Review before AE is assigned
+        edit = openreview_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/LLM_Review',
+            signatures=[f'{venue_id}/LLM_Reviewer'],
+            note=Note(
+                content={
+                    'llm_review': {'value': 'This is a LLM review.'}
+                }
+            )
+        )
+
+        llm_review = openreview_client.get_note(edit['note']['id'])
+        assert llm_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper1/Action_Editors', 'TMLRE/LLM_Reviewer']
+        assert llm_review.nonreaders == ['TMLRE/Paper1/Authors']
 
         # Author recommends AE
         test_client.post_edge(openreview.api.Edge(
@@ -343,6 +364,97 @@ class TestTMLRExperiment():
         assert note.content['venueid']['value'] == 'TMLRE/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Alice_Johnson1'
 
+    def test_desk_rejection(self, journal, openreview_client, helpers):
+        venue_id = journal.venue_id
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        sarah_client = OpenReviewClient(username='sarah@expmail.com', password=helpers.strong_password)
+        alice_client = OpenReviewClient(username='alice@expmailseven.com', password=helpers.strong_password)
+
+        # Submit a second paper
+        submission_note = test_client.post_note_edit(invitation='TMLRE/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(content={
+                'title': {'value': 'Desk Rejected Paper Title'},
+                'abstract': {'value': 'Abstract of a paper that will be desk rejected'},
+                'authors': {'value': ['SomeFirstName User', 'Eve Garcia']},
+                'authorids': {'value': ['~SomeFirstName_User1', '~Eve_Garcia1']},
+                'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
+                'competing_interests': {'value': 'None beyond the authors normal conflict of interests'},
+                'human_subjects_reporting': {'value': 'Not applicable'},
+                'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)'}
+            }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'])
+        note_id = submission_note['note']['id']
+
+        note = openreview_client.get_note(note_id)
+        assert note.content['venue']['value'] == 'Submitted to TMLRE'
+        assert note.content['venueid']['value'] == 'TMLRE/Submitted'
+
+        # post LLM Review before AE is assigned
+        edit = openreview_client.post_note_edit(
+            invitation=f'{venue_id}/Paper2/-/LLM_Review',
+            signatures=[f'{venue_id}/LLM_Reviewer'],
+            note=Note(
+                content={
+                    'llm_review': {'value': 'This is another LLM review.'}
+                }
+            )
+        )
+
+        llm_review = openreview_client.get_note(edit['note']['id'])
+        assert llm_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper2/Action_Editors', 'TMLRE/LLM_Reviewer']
+
+        # EIC assigns AE to Paper 2
+        editor_in_chief_group_id = f'{venue_id}/Editors_In_Chief'
+        paper_assignment_edge = sarah_client.post_edge(openreview.api.Edge(
+            invitation='TMLRE/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Alice_Johnson1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id,
+            tail='~Alice_Johnson1',
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ae_group = openreview_client.get_group(f'{venue_id}/Paper2/Action_Editors')
+        assert ae_group.members == ['~Alice_Johnson1']
+
+        alice_paper2_anon_groups = alice_client.get_groups(
+            prefix=f'{venue_id}/Paper2/Action_Editor_.*', signatory='~Alice_Johnson1')
+        assert len(alice_paper2_anon_groups) == 1
+        alice_paper2_anon_group = alice_paper2_anon_groups[0]
+
+        # AE desk-rejects the submission
+        desk_reject_note = alice_client.post_note_edit(invitation='TMLRE/Paper2/-/Review_Approval',
+            signatures=[alice_paper2_anon_group.id],
+            note=Note(content={
+                'under_review': {'value': 'Desk Reject'},
+                'comment': {'value': 'This paper is out of scope for TMLRE.'}
+            }))
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        # EIC approves the desk rejection
+        approval_note = sarah_client.post_note_edit(invitation='TMLRE/Paper2/-/Desk_Rejection_Approval',
+            signatures=['TMLRE/Editors_In_Chief'],
+            note=Note(content={'approval': {'value': "I approve the AE's decision."}}))
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+
+        note = openreview_client.get_note(note_id)
+        assert note.content['venueid']['value'] == 'TMLRE/Desk_Rejected'
+        assert note.content['venue']['value'] == 'Desk rejected by TMLRE'
+
+        messages = openreview_client.get_messages(
+            to='test@mail.com',
+            subject='[TMLRE] Decision for your TMLRE submission 2: Desk Rejected Paper Title')
+        assert len(messages) == 1
+
+        # assert LLM review does not become visible to authors after desk rejection
+        llm_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper2/-/LLM_Review')[0]
+        assert llm_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper2/Action_Editors', 'TMLRE/LLM_Reviewer']
+        assert llm_review.nonreaders == ['TMLRE/Paper2/Authors']
+
     def test_review_process(self, journal, openreview_client, test_client, helpers):
         venue_id = journal.venue_id
         sarah_client = OpenReviewClient(username='sarah@expmail.com', password=helpers.strong_password)
@@ -351,7 +463,7 @@ class TestTMLRExperiment():
         carol_client = OpenReviewClient(username='carol@expmailtwo.com', password=helpers.strong_password)
         dan_client = OpenReviewClient(username='dan@expmailthree.com', password=helpers.strong_password)
 
-        submissions = openreview_client.get_notes(invitation='TMLRE/-/Submission')
+        submissions = openreview_client.get_notes(invitation='TMLRE/-/Submission', number=1)
         note_id = submissions[0].id
 
         alice_paper1_anon_groups = alice_client.get_groups(
@@ -497,7 +609,7 @@ class TestTMLRExperiment():
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         alice_client = OpenReviewClient(username='alice@expmailseven.com', password=helpers.strong_password)
 
-        submissions = openreview_client.get_notes(invitation='TMLRE/-/Submission')
+        submissions = openreview_client.get_notes(invitation='TMLRE/-/Submission', sort='number:asc')
         note_id = submissions[0].id
 
         alice_paper1_anon_groups = alice_client.get_groups(
