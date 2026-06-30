@@ -1,0 +1,253 @@
+{
+  "defaults": {
+    "site_url": "https://openreview.net",
+    "base_url": "https://api2.openreview.net",
+    "venue_id": "JMLR",
+    "official_venue_name": "Journal of Machine Learning Research",
+    "abbreviated_venue_name": "JMLR",
+    "role_groups": {
+      "author": "JMLR/Authors",
+      "reviewer": "JMLR/Reviewers",
+      "action_editor": "JMLR/Action_Editors",
+      "ae": "JMLR/Action_Editors",
+      "editors_in_chief": "JMLR/Editors_In_Chief",
+      "eic": "JMLR/Editors_In_Chief",
+      "production_editor": "JMLR/Production_Editors",
+      "pe": "JMLR/Production_Editors",
+      "oss_action_editor": "JMLR/OSS_Action_Editors",
+      "expert_reviewer": "JMLR/Expert_Reviewers"
+    },
+    "invitations": {
+      "action_editor_new_assignment_cooldown_days": 21,
+      "action_editor_conflict_precheck_top_candidates": 50,
+      "reviewer_new_assignment_cooldown_days": 30,
+      "bulk_recruitment_no_response_expiration_days": 21,
+      "invite_assignment_no_response_reminder_days": 14,
+      "invite_assignment_no_response_expiration_days": 21,
+      "pending_profile_linkage_reminder_days": 14,
+      "pending_profile_linkage_expiration_days": 21,
+      "assignment_setup_automation_delay_minutes": 5,
+      "oss_action_editor_group_id": "JMLR/OSS_Action_Editors",
+      "supplementary_material_max_size_mb": 10,
+      "reviewer_publication_expertise": {
+        "enabled": true,
+        "publication_score_cap": 6,
+        "self_volunteer_min_effective_count": 3,
+        "bulk_recruitment_min_effective_count": 3
+      },
+      "expert_reviewer_selection": {
+        "review_stats_lookback_months": 12,
+        "minimum_retention_months": 3,
+        "maintenance_interval_days": 7,
+        "maintenance_scheduled_runs": 1043,
+        "conditions": [
+          {
+            "min_reviews": 8,
+            "max_past_due_rate": 0.2,
+            "min_average_rating": 0.1
+          },
+          {
+            "min_reviews": 8,
+            "max_past_due_rate": 0.1,
+            "min_average_rating": 0
+          }
+        ],
+        "rating_scores": {
+          "No rating": 0,
+          "Exceeds expectations": 1,
+          "Meets expectations": 0,
+          "Falls below expectations": -1,
+          "Report problem": -2
+        }
+      }
+    },
+    "request_form": {
+      "submission_public": false,
+      "author_anonymity": false,
+      "AE_anonymity": true,
+      "assignment_delay": 0,
+      "submission_name": "Submission",
+      "issn": "NA",
+      "submission_license": "CC BY-SA 4.0",
+      "eic_submission_notification": false,
+      "website_urls": {
+        "editorial_board": "https://jmlr.org/editorial-board.html",
+        "submission_info_for_authors": "https://jmlr.org/author-info.html",
+        "reviewer_guide": "https://jmlr.org/reviewer-guide.html",
+        "editorial_policies": "https://jmlr.org/tmlr/editorial-policies.html",
+        "faq": "https://jmlr.org/faq.html",
+        "stats": "https://jmlr.org/stats.html"
+      },
+      "submission_additional_fields": {
+        "author_list": {
+          "order": 3,
+          "description": "Enter every author by OpenReview profile ID, in the same order as the paper author list. Separate IDs with commas only; line breaks are not allowed. Every author must have an OpenReview profile ID; email-only authors are not allowed. The submitting author's profile ID must be included. To find a profile ID, open the OpenReview profile page and copy the value after profile?id= in the URL, including the leading tilde character.",
+          "value": {
+            "param": {
+              "type": "string",
+              "input": "textarea",
+              "deletable": true
+            }
+          }
+        },
+        "human_subjects_reporting": false,
+        "competing_interests": false,
+        "previous_JMLR_submission_url": false,
+        "previous_JMLR_submission_number": {
+          "value": {
+              "param": {
+                "type": "string",
+                "regex": "[0-9]+|N/A",
+                "optional": false,
+                "hidden": true,
+                "deletable": true
+              }
+          },
+          "description": "For resubmissions, enter the previous JMLR submission number. Fill in N/A if this is a new submission. Only author ordering changes are allowed for resubmissions. Adding, removing, replacing, renaming, or otherwise changing authors is not allowed. Impermissible author changes may cause desk rejection or later rejection at editorial discretion.",
+          "order": 10
+        },
+        "previous_JMLR_submission_URL": {
+          "value": {
+            "param": {
+              "type": "string",
+              "regex": "https:\\/\\/(dev\\.)?openreview\\.net\\/forum\\?id=.*|N/A",
+              "optional": true,
+              "hidden": true,
+              "deletable": true
+            }
+          },
+          "description": "Internal previous JMLR submission URL derived from Previous JMLR Submission Number.",
+          "order": 90
+        },
+        "previous_JMLR_submissions": {
+          "value": {
+            "param": {
+              "type": "string",
+              "optional": true,
+              "hidden": true,
+              "markdown": true,
+              "deletable": true
+            }
+          },
+          "description": "Derived previous JMLR submission chain, newest previous submission first. Each row is rendered as a linked paper number.",
+          "order": 91
+        },
+        "author_change_summary": {
+          "value": {
+            "param": {
+              "type": "string",
+              "optional": true,
+              "hidden": true,
+              "deletable": true
+            }
+          },
+          "description": "Internal summary of detected resubmission author-name changes.",
+          "order": 92
+        },
+        "previous_author_names": {
+          "value": {
+            "param": {
+              "type": "string",
+              "optional": true,
+              "hidden": true,
+              "deletable": true
+            }
+          },
+          "description": "Internal previous author names used for resubmission author-change metadata.",
+          "order": 94
+        },
+        "current_author_names": {
+          "value": {
+            "param": {
+              "type": "string",
+              "optional": true,
+              "hidden": true,
+              "deletable": true
+            }
+          },
+          "description": "Internal current author names used for resubmission author-change metadata.",
+          "order": 95
+        },
+        "open_source_software": {
+          "order": 9,
+          "description": "Open Source Software (OSS) track submission. Check this box if this submission is for the JMLR Open Source Software (OSS) track.",
+          "value": {
+            "param": {
+              "type": "boolean",
+              "input": "checkbox",
+              "optional": true,
+              "deletable": true
+            }
+          }
+        },
+        "conflict_of_interests": {
+          "order": 5,
+          "description": "Optional. Enter OpenReview profile IDs for people who may have a conflict of interest with this submission. Separate IDs with commas only; line breaks are not allowed. Leave this field empty if there are no OpenReview-profile conflicts to declare. Mention any other conflicts in the Cover Letter; they may be ignored by structured OpenReview conflict handling.",
+          "value": {
+            "param": {
+              "type": "string",
+              "input": "textarea",
+              "optional": true,
+              "deletable": true
+            }
+          }
+        },
+        "cover_letter": {
+          "order": 6,
+          "description": "Optional. Use this text box to explain whether this submission is an extended version of an earlier conference paper, and to explain any declared conflicts of interest. For resubmissions, authors may use this field for resubmission context and author-list policy explanations. Only author ordering changes are allowed for resubmissions. Adding, removing, replacing, renaming, or otherwise changing authors is not allowed. Use this field only to explain unusual author-list issues or editorial context. Impermissible author changes may cause desk rejection or later rejection at editorial discretion. You may also optionally recommend suitable action editors and reviewers.",
+          "value": {
+            "param": {
+              "type": "string",
+              "input": "textarea",
+              "maxLength": 10000,
+              "optional": true,
+              "deletable": true
+            }
+          }
+        },
+        "changes_since_last_submission": false
+      },
+      "editors_email": "no-reply@jmlr.org",
+      "skip_ac_recommendation": true,
+      "skip_official_recommendation": true,
+      "oss_action_editors_enabled": true,
+      "publication_mode": "camera_ready_mark_published",
+      "publication_export_enabled": true,
+      "openreview_publication_enabled": true,
+      "number_of_reviewers": 3,
+      "action_editors_max_papers": 8,
+      "oss_action_editors_max_papers": 10,
+      "reviewers_max_papers": 2,
+      "ae_recommendation_period": 1,
+      "reviewer_assignment_period": 1,
+      "review_period": 8,
+      "discussion_period": 2,
+      "recommendation_period": 2,
+      "decision_period": 1,
+      "camera_ready_period": 4,
+      "camera_ready_verification_period": 1,
+      "archived_action_editors": true,
+      "archived_reviewers": true,
+      "expert_reviewers": true,
+      "external_reviewers": true,
+      "expertise_model": "specter+mfr"
+    }
+  },
+  "environments": {
+    "dev": {
+      "site_url": "https://dev.openreview.net",
+      "base_url": "https://api2.dev.openreview.net",
+      "invitations": {
+        "action_editor_new_assignment_cooldown_days": 1,
+        "reviewer_new_assignment_cooldown_days": 1,
+        "assignment_setup_automation_delay_minutes": 2
+      },
+      "request_form": {
+        "action_editors_max_papers": 4,
+        "oss_action_editors_max_papers": 4,
+        "reviewers_max_papers": 3
+      }
+    },
+    "prod": {}
+  }
+}

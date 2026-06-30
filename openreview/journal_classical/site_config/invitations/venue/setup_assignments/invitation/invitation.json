@@ -1,0 +1,17 @@
+{
+  "id": "JMLR/-/Setup_Assignments",
+  "readers": [
+    "JMLR",
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "invitees": [
+    "JMLR",
+    "JMLR/Editors_In_Chief"
+  ],
+  "signatures": [
+    "JMLR"
+  ]
+}

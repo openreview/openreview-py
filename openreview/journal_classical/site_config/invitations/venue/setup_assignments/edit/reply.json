@@ -1,0 +1,139 @@
+{
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "JMLR",
+          "optional": true
+        },
+        {
+          "value": "JMLR/Editors_In_Chief",
+          "optional": true
+        }
+      ]
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "note": {
+    "signatures": {
+      "param": {
+        "items": [
+          {
+            "value": "JMLR",
+            "optional": true
+          },
+          {
+            "value": "JMLR/Editors_In_Chief",
+            "optional": true
+          }
+        ]
+      }
+    },
+    "readers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "writers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "content": {
+      "note_id": {
+        "value": {
+          "param": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      },
+      "paper_number": {
+        "value": {
+          "param": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "setup_readiness_status": {
+        "value": {
+          "param": {
+            "type": "string",
+            "optional": true
+          }
+        }
+      },
+      "setup_readiness_recorded_at": {
+        "value": {
+          "param": {
+            "type": "integer",
+            "optional": true
+          }
+        }
+      },
+      "setup_started_at": {
+        "value": {
+          "param": {
+            "type": "integer",
+            "optional": true
+          }
+        }
+      },
+      "setup_actor": {
+        "value": {
+          "param": {
+            "type": "string",
+            "optional": true,
+            "maxLength": 200
+          }
+        }
+      },
+      "setup_operation_key": {
+        "value": {
+          "param": {
+            "type": "string",
+            "optional": true,
+            "maxLength": 300
+          }
+        }
+      },
+      "setup_superseded_note_id": {
+        "value": {
+          "param": {
+            "type": "string",
+            "optional": true,
+            "maxLength": 200
+          }
+        }
+      },
+      "setup_superseded_started_at": {
+        "value": {
+          "param": {
+            "type": "integer",
+            "optional": true
+          }
+        }
+      },
+      "setup_failed_at": {
+        "value": {
+          "param": {
+            "type": "integer",
+            "optional": true
+          }
+        }
+      },
+      "setup_error": {
+        "value": {
+          "param": {
+            "type": "string",
+            "optional": true,
+            "maxLength": 500
+          }
+        }
+      }
+    }
+  }
+}

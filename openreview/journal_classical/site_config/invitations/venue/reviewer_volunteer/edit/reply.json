@@ -1,0 +1,55 @@
+{
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "prefix": "~"
+        }
+      ]
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief",
+    "${2/signatures}"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "note": {
+    "signatures": [
+      "${3/signatures}"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief",
+      "${2/signatures}"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "content": {
+      "title": {
+        "order": 1,
+        "value": {
+          "param": {
+            "type": "string",
+            "const": "Willing to review for JMLR",
+            "hidden": true
+          }
+        }
+      },
+      "confirmation": {
+        "order": 2,
+        "description": "Serving as a JMLR reviewer is an important service to the community. Active assignments are limited by default, and reviewers may adjust their reviewing load from the Reviewer Console, including setting it to zero.",
+        "value": {
+          "param": {
+            "type": "string",
+            "enum": [
+              "Yes, I am willing to review for JMLR"
+            ],
+            "input": "checkbox"
+          }
+        }
+      }
+    }
+  }
+}

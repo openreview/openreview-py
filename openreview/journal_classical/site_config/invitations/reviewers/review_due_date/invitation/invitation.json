@@ -1,0 +1,19 @@
+{
+  "id": "JMLR/Reviewers/-/Review_Due_Date",
+  "readers": [
+    "JMLR",
+    "JMLR/Action_Editors",
+    "JMLR/Action_Editors/Archived"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "invitees": [
+    "JMLR",
+    "JMLR/Action_Editors",
+    "JMLR/Action_Editors/Archived"
+  ],
+  "signatures": [
+    "JMLR"
+  ]
+}

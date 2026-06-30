@@ -1,0 +1,134 @@
+{
+    "signatures": [
+      "JMLR"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "content": {
+      "noteId": {
+        "value": {
+          "param": {
+            "type": "string"
+          }
+        }
+      },
+      "noteNumber": {
+        "value": {
+          "param": {
+            "type": "integer"
+          }
+        }
+      },
+      "signature": {
+        "value": {
+          "param": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "invitation": {
+      "id": "JMLR/Paper${2/content/noteNumber/value}/-/Editorial_Comment",
+      "invitees": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${3/content/noteNumber/value}/Action_Editors"
+      ],
+      "readers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${3/content/noteNumber/value}/Action_Editors"
+      ],
+      "nonreaders": [
+        "JMLR/Paper${3/content/noteNumber/value}/Authors"
+      ],
+      "writers": [
+        "JMLR"
+      ],
+      "signatures": [
+        "JMLR"
+      ],
+      "edit": {
+        "signatures": {
+          "param": {
+            "items": [
+              {
+                "value": "${3/content/signature/value}",
+                "optional": true
+              }
+            ]
+          }
+        },
+        "readers": [
+          "${2/signatures}"
+        ],
+        "writers": [
+          "${2/signatures}"
+        ],
+        "note": {
+          "forum": "${4/content/noteId/value}",
+          "replyto": "${4/content/noteId/value}",
+          "signatures": [
+            "${3/signatures}"
+          ],
+          "readers": {
+            "param": {
+              "items": [
+                {
+                  "value": "JMLR/Editors_In_Chief",
+                  "optional": false
+                },
+                {
+                  "value": "JMLR/Paper${8/content/noteNumber/value}/Action_Editors",
+                  "optional": false
+                },
+                {
+                  "value": "JMLR/Paper${8/content/noteNumber/value}/Reviewers",
+                  "optional": true
+                },
+                {
+                  "value": "JMLR/Paper${8/content/noteNumber/value}/Authors",
+                  "optional": true
+                }
+              ]
+            }
+          },
+          "writers": [
+            "JMLR"
+          ],
+          "content": {
+            "title": {
+              "order": 1,
+              "description": "Brief summary of your comment.",
+              "value": {
+                "param": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "input": "text",
+                  "optional": true,
+                  "deletable": true
+                }
+              }
+            },
+            "comment": {
+              "order": 2,
+              "description": "Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX.",
+              "value": {
+                "param": {
+                  "type": "string",
+                  "maxLength": 5000,
+                  "input": "textarea",
+                  "markdown": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "preprocess": "{{PYTHON_SCRIPT_JSON:invitations/venue/editorial_comment/edit_preprocess.py}}",
+      "process": "def process(client, edit, invitation):\n    meta_invitation = client.get_invitation(invitation.invitations[0])\n    script = meta_invitation.content[\"process_script\"]['value']\n    funcs = {\n        'openreview': openreview,\n        'datetime': datetime\n    }\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n"
+    },
+    "replacement": true
+  }

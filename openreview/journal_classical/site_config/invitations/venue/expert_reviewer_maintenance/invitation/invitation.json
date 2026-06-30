@@ -1,0 +1,35 @@
+{
+  "id": "JMLR/-/Expert_Reviewer_Maintenance",
+  "readers": [
+    "JMLR",
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "invitees": [],
+  "signatures": [
+    "JMLR"
+  ],
+  "duedate": 4102444800000,
+  "content": {
+    "description": {
+      "value": "Hidden venue-owned dateprocess for recomputing the public Top Reviewer recognition group. This is not an assignment workflow."
+    },
+    "managedGroupId": {
+      "value": "JMLR/Expert_Reviewers"
+    },
+    "stateGroupId": {
+      "value": "JMLR/Expert_Reviewer_State"
+    },
+    "selectionConfigSource": {
+      "value": "site_config/openreview.json defaults.invitations.expert_reviewer_selection"
+    }
+  },
+  "dateprocesses": [
+    {
+      "dates": "{{EXPERT_REVIEWER_MAINTENANCE_DATES_JSON}}",
+      "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/expert_reviewers/dateprocess_update_expert_reviewers.py}}"
+    }
+  ]
+}

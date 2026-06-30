@@ -1,0 +1,73 @@
+{
+  "id": {
+    "param": {
+      "withInvitation": "JMLR/Action_Editors/-/Recruitment_Invite",
+      "optional": true
+    }
+  },
+  "ddate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "cdate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief",
+    "${2/tail}"
+  ],
+  "writers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "JMLR/Editors_In_Chief",
+          "optional": true
+        },
+        {
+          "value": "JMLR",
+          "optional": true
+        }
+      ]
+    }
+  },
+  "head": {
+    "param": {
+      "type": "group",
+      "const": "JMLR/Action_Editors"
+    }
+  },
+  "tail": {
+    "param": {
+      "type": "string"
+    }
+  },
+  "label": {
+    "param": {
+      "minLength": 1,
+      "default": "Invitation Sent"
+    }
+  },
+  "weight": {
+    "param": {
+      "minimum": 0,
+      "optional": true,
+      "deletable": true
+    }
+  }
+}

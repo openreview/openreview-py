@@ -1,0 +1,18 @@
+Dear {{{{fullname}}}},
+
+Thank you again for your previous review of the JMLR submission "{submission_title}." The authors have submitted a revised version, and we would greatly appreciate it if you could review this revision.
+
+For this assignment, we kindly ask that you submit your review within {review_period_length} weeks (by {review_duedate}) for: "{submission_number}: {submission_title}".{submission_length}
+
+You may submit your review at: {invitation_url}
+
+You can also access all your assignments through the Reviewers Console: {reviewer_tasks_url}
+
+Once submitted, your review will be visible to the Action Editor and editorial staff, and it will remain visible to you. Authors and other assigned reviewers will not see the review text or recommendation before release. Reviews are released automatically when the review-release threshold has been met or when a decision is submitted, whichever happens first. Additional reviewing guidelines are available at {website}.
+
+Please note that reviewers are generally expected to handle resubmissions of papers they previously reviewed when possible. If exceptional personal circumstances prevent you from completing this review on time, use Contact Action Editor on this paper's OpenReview page.
+
+Thank you again for your continued service to {short_name}.
+
+Best regards,
+The {short_name} Editors-in-Chief

@@ -1,0 +1,20 @@
+Dear {{{{fullname}}}},
+
+The Action Editor reviewed the camera-ready version of submission {submission_number}: {submission_title} and requested revisions before approval.
+
+Requested changes:
+
+{revision_comments}
+
+Please upload a revised camera-ready version in OpenReview. You may include optional comments to the Action Editor explaining the changes you made.
+
+Paper forum:
+{paper_url}
+
+In your LaTeX source, use this generated OpenReview metadata block exactly as shown:
+
+{openreview_dates_block}
+
+For the Final Publication Author List field, enter OpenReview profile IDs only, separated by commas. Line breaks are not allowed. The list may reorder the submitted authors, but it must contain exactly the same author profile IDs as the submitted paper; adding, removing, replacing, or duplicating authors is not allowed.
+
+The {short_name} Editors-in-Chief

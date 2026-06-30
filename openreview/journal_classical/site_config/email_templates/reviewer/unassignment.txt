@@ -1,0 +1,11 @@
+Dear {{{{fullname}}}},
+
+We recently informed you that your help was requested to review a {short_name} submission "{submission_number}: {submission_title}".
+
+However, it was just determined that your help is no longer needed for this submission and you have been unassigned as a reviewer for it.
+
+If you have any questions, contact the JMLR editors.
+
+Apologies for the change and thank you for your continued involvement with {short_name}!
+
+The {short_name} Editors-in-Chief

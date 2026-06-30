@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "publication_score_cap": 6,
+  "unmatched_publication_weight": 0.75,
+  "canonical_venues": {
+    "neurips": {
+      "acronym": "NeurIPS",
+      "kind": "conference",
+      "weight": 1,
+      "category": "machine_learning",
+      "aliases": ["NeurIPS", "NIPS", "Advances in Neural Information Processing Systems"],
+      "patterns": ["\\b(?:neurips|nips)\\b", "\\badvances\\s+in\\s+neural\\s+information\\s+processing\\s+systems\\b"]
+    },
+    "icml": {
+      "acronym": "ICML",
+      "kind": "conference",
+      "weight": 1,
+      "category": "machine_learning",
+      "aliases": ["ICML", "International Conference on Machine Learning"],
+      "patterns": ["\\bicml\\b", "\\binternational\\s+conference\\s+on\\s+machine\\s+learning\\b"]
+    },
+    "iclr": {
+      "acronym": "ICLR",
+      "kind": "conference",
+      "weight": 1,
+      "category": "machine_learning",
+      "aliases": ["ICLR", "International Conference on Learning Representations"],
+      "patterns": ["\\biclr\\b", "\\binternational\\s+conference\\s+on\\s+learning\\s+representations\\b"]
+    },
+    "aistats": {
+      "acronym": "AISTATS",
+      "kind": "conference",
+      "weight": 0.5,
+      "category": "machine_learning",
+      "aliases": ["AISTATS", "Artificial Intelligence and Statistics", "International Conference on Artificial Intelligence and Statistics"],
+      "patterns": ["\\baistats\\b", "\\b(?:international\\s+conference\\s+on\\s+)?artificial\\s+intelligence\\s+and\\s+statistics\\b"]
+    },
+    "colt": {
+      "acronym": "COLT",
+      "kind": "conference",
+      "weight": 1,
+      "category": "machine_learning",
+      "aliases": ["COLT", "Conference on Learning Theory"],
+      "patterns": ["\\bcolt\\b", "\\bconference\\s+on\\s+learning\\s+theory\\b"]
+    },
+    "uai": {
+      "acronym": "UAI",
+      "kind": "conference",
+      "weight": 0.5,
+      "category": "machine_learning",
+      "aliases": ["UAI", "Uncertainty in Artificial Intelligence"],
+      "patterns": ["\\buai\\b", "\\buncertainty\\s+in\\s+artificial\\s+intelligence\\b"]
+    },
+    "jmlr": {
+      "acronym": "JMLR",
+      "kind": "journal",
+      "weight": 2,
+      "category": "machine_learning",
+      "aliases": ["JMLR", "Journal of Machine Learning Research", "Journal of Machine Learning Research (JMLR)"],
+      "patterns": ["\\bjmlr\\b", "\\bjournal\\s+of\\s+machine\\s+learning\\s+research\\b"]
+    },
+    "mlj": {
+      "acronym": "MLJ",
+      "kind": "journal",
+      "weight": 0.5,
+      "category": "machine_learning",
+      "aliases": ["MLJ", "Machine Learning", "Machine Learning Journal"],
+      "patterns": ["\\bmachine\\s+learning\\s+journal\\b", "\\bmachine\\s+learning\\b"]
+    },
+    "cvpr": {
+      "acronym": "CVPR",
+      "kind": "conference",
+      "weight": 1,
+      "category": "vision",
+      "aliases": ["CVPR", "IEEE/CVF Conference on Computer Vision and Pattern Recognition", "Conference on Computer Vision and Pattern Recognition"],
+      "patterns": ["\\bcvpr\\b", "\\b(?:ieee\\s+cvf\\s+)?conference\\s+on\\s+computer\\s+vision\\s+and\\s+pattern\\s+recognition\\b"]
+    },
+    "iccv": {
+      "acronym": "ICCV",
+      "kind": "conference",
+      "weight": 1,
+      "category": "vision",
+      "aliases": ["ICCV", "IEEE/CVF International Conference on Computer Vision", "International Conference on Computer Vision"],
+      "patterns": ["\\biccv\\b", "\\b(?:ieee\\s+cvf\\s+)?international\\s+conference\\s+on\\s+computer\\s+vision\\b"]
+    },
+    "eccv": {
+      "acronym": "ECCV",
+      "kind": "conference",
+      "weight": 1,
+      "category": "vision",
+      "aliases": ["ECCV", "European Conference on Computer Vision"],
+      "patterns": ["\\beccv\\b", "\\beuropean\\s+conference\\s+on\\s+computer\\s+vision\\b"]
+    },
+    "tpami": {
+      "acronym": "TPAMI",
+      "kind": "journal",
+      "weight": 2,
+      "category": "vision",
+      "aliases": ["TPAMI", "PAMI", "IEEE TPAMI", "IEEE Transactions on Pattern Analysis and Machine Intelligence", "Transactions on Pattern Analysis and Machine Intelligence"],
+      "patterns": ["\\bieee\\s+trans(?:actions)?\\s+(?:on\\s+)?pattern\\s+analysis\\s+(?:and|&)\\s+machine\\s+intelligence\\b", "\\btrans(?:actions)?\\s+(?:on\\s+)?pattern\\s+analysis\\s+(?:and|&)\\s+machine\\s+intelligence\\b"]
+    },
+    "ijcv": {
+      "acronym": "IJCV",
+      "kind": "journal",
+      "weight": 2,
+      "category": "vision",
+      "aliases": ["IJCV", "International Journal of Computer Vision"],
+      "patterns": ["\\bijcv\\b", "\\binternational\\s+journal\\s+of\\s+computer\\s+vision\\b"]
+    },
+    "acl": {
+      "acronym": "ACL",
+      "kind": "conference",
+      "weight": 1,
+      "category": "nlp",
+      "aliases": ["ACL", "Association for Computational Linguistics", "Annual Meeting of the Association for Computational Linguistics"],
+      "patterns": ["\\bacl\\b", "\\b(?:annual\\s+meeting\\s+of\\s+the\\s+)?association\\s+for\\s+computational\\s+linguistics\\b"]
+    },
+    "emnlp": {
+      "acronym": "EMNLP",
+      "kind": "conference",
+      "weight": 1,
+      "category": "nlp",
+      "aliases": ["EMNLP", "Empirical Methods in Natural Language Processing", "Conference on Empirical Methods in Natural Language Processing"],
+      "patterns": ["\\bemnlp\\b", "\\b(?:conference\\s+on\\s+)?empirical\\s+methods\\s+in\\s+natural\\s+language\\s+processing\\b"]
+    },
+    "naacl": {
+      "acronym": "NAACL",
+      "kind": "conference",
+      "weight": 1,
+      "category": "nlp",
+      "aliases": ["NAACL", "North American Chapter of the Association for Computational Linguistics"],
+      "patterns": ["\\bnaacl\\b", "\\bnorth\\s+american\\s+chapter\\s+of\\s+the\\s+association\\s+for\\s+computational\\s+linguistics\\b"]
+    },
+    "tacl": {
+      "acronym": "TACL",
+      "kind": "journal",
+      "weight": 1,
+      "category": "nlp",
+      "aliases": ["TACL", "Transactions of the Association for Computational Linguistics"],
+      "patterns": ["\\btacl\\b", "\\btransactions\\s+of\\s+the\\s+association\\s+for\\s+computational\\s+linguistics\\b"]
+    },
+    "cl": {
+      "acronym": "CL",
+      "kind": "journal",
+      "weight": 1,
+      "category": "nlp",
+      "aliases": ["CL", "Computational Linguistics"],
+      "patterns": ["\\bcomputational\\s+linguistics\\b"]
+    },
+    "aos": {
+      "acronym": "AOS",
+      "kind": "journal",
+      "weight": 2,
+      "category": "statistics",
+      "aliases": ["Annals of Statistics", "The Annals of Statistics", "Ann. Statist.", "Ann Stat"],
+      "patterns": ["\\b(?:the\\s+)?annals\\s+of\\s+statistics\\b", "\\bann\\s+stat(?:ist|istics)?\\b"]
+    },
+    "jasa": {
+      "acronym": "JASA",
+      "kind": "journal",
+      "weight": 2,
+      "category": "statistics",
+      "aliases": ["JASA", "Journal of the American Statistical Association"],
+      "patterns": ["\\bjasa\\b", "\\bjournal\\s+of\\s+the\\s+american\\s+statistical\\s+association\\b"]
+    },
+    "jrssb": {
+      "acronym": "JRSSB",
+      "kind": "journal",
+      "weight": 2,
+      "category": "statistics",
+      "aliases": ["JRSSB", "Journal of the Royal Statistical Society Series B", "Journal of the Royal Statistical Society: Series B", "Royal Statistical Society Series B"],
+      "patterns": ["\\bjrss\\s*b\\b", "\\bjournal\\s+of\\s+the\\s+royal\\s+statistical\\s+society\\s*(?::?\\s*)series\\s+b\\b"]
+    },
+    "biometrika": {
+      "acronym": "Biometrika",
+      "kind": "journal",
+      "weight": 2,
+      "category": "statistics",
+      "aliases": ["Biometrika"],
+      "patterns": ["\\bbiometrika\\b"]
+    },
+    "mp": {
+      "acronym": "MP",
+      "kind": "journal",
+      "weight": 2,
+      "category": "optimization",
+      "aliases": ["MP", "Mathematical Programming", "Math Programming", "Math. Program."],
+      "patterns": ["\\bmathematical\\s+programming\\b", "\\bmath(?:ematical)?\\s+program(?:ming)?\\b"]
+    },
+    "or": {
+      "acronym": "OR",
+      "kind": "journal",
+      "weight": 2,
+      "category": "optimization",
+      "aliases": ["OR", "Operations Research", "Oper. Res."],
+      "patterns": ["\\boperations\\s+research\\b", "\\boper\\s+res\\b"]
+    },
+    "siopt": {
+      "acronym": "SIOPT",
+      "kind": "journal",
+      "weight": 2,
+      "category": "optimization",
+      "aliases": ["SIOPT", "SIAM Journal on Optimization", "SIAM J. Optim.", "SIAM Journal of Optimization"],
+      "patterns": ["\\bsiam\\s+j(?:ournal)?\\s+(?:on|of)\\s+optimization\\b", "\\bsiam\\s+j\\s+optim\\b"]
+    },
+    "tit": {
+      "acronym": "TIT",
+      "kind": "journal",
+      "weight": 2,
+      "category": "signal_information_theory",
+      "aliases": ["TIT", "IEEE TIT", "IEEE Transactions on Information Theory", "Transactions on Information Theory"],
+      "patterns": ["\\bieee\\s+trans(?:actions)?\\s+(?:on\\s+)?information\\s+theory\\b", "\\btrans(?:actions)?\\s+(?:on\\s+)?information\\s+theory\\b"]
+    },
+    "tsp": {
+      "acronym": "TSP",
+      "kind": "journal",
+      "weight": 1,
+      "category": "signal_information_theory",
+      "aliases": ["TSP", "IEEE TSP", "IEEE Transactions on Signal Processing", "Transactions on Signal Processing"],
+      "patterns": ["\\bieee\\s+trans(?:actions)?\\s+(?:on\\s+)?signal\\s+processing\\b", "\\btrans(?:actions)?\\s+(?:on\\s+)?signal\\s+processing\\b"]
+    }
+  }
+}

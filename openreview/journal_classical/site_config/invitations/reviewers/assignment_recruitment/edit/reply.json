@@ -1,0 +1,126 @@
+{
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "(anonymous)",
+          "optional": true
+        },
+        {
+          "value": "(guest)",
+          "optional": true
+        },
+        {
+          "prefix": "~.*",
+          "optional": true
+        }
+      ]
+    }
+  },
+  "readers": [
+    "JMLR"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "note": {
+    "signatures": [
+      "${3/signatures}"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "content": {
+      "title": {
+        "order": 1,
+        "description": "Title",
+        "value": {
+          "param": {
+            "type": "string",
+            "const": "Recruit response"
+          }
+        }
+      },
+      "user": {
+        "order": 2,
+        "description": "email address",
+        "value": {
+          "param": {
+            "type": "string",
+            "regex": ".*"
+          }
+        }
+      },
+      "key": {
+        "order": 3,
+        "description": "Email key hash",
+        "value": {
+          "param": {
+            "type": "string",
+            "regex": ".{0,100}"
+          }
+        }
+      },
+      "response": {
+        "order": 4,
+        "description": "Invitation response",
+        "value": {
+          "param": {
+            "type": "string",
+            "enum": [
+              "Yes",
+              "No"
+            ],
+            "input": "radio"
+          }
+        }
+      },
+      "comment": {
+        "order": 5,
+        "description": "(Optionally) Leave a comment to the organizers of the venue.",
+        "value": {
+          "param": {
+            "type": "string",
+            "maxLength": 5000,
+            "optional": true,
+            "input": "textarea"
+          }
+        }
+      },
+      "submission_id": {
+        "order": 6,
+        "description": "submission id",
+        "value": {
+          "param": {
+            "type": "string",
+            "regex": ".*"
+          }
+        }
+      },
+      "inviter": {
+        "order": 7,
+        "description": "inviter id",
+        "value": {
+          "param": {
+            "type": "string",
+            "regex": ".*"
+          }
+        }
+      },
+      "edge_id": {
+        "order": 8,
+        "description": "Recruitment invite edge id",
+        "value": {
+          "param": {
+            "type": "string",
+            "regex": ".*",
+            "optional": true
+          }
+        }
+      }
+    }
+  }
+}

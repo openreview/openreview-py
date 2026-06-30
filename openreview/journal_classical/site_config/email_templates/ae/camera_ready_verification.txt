@@ -1,0 +1,11 @@
+Dear {{{{fullname}}}},
+
+The authors of {short_name} paper {submission_number}: {submission_title} have now submitted the camera-ready version of their work.
+
+As your final task for this submission, please verify the camera-ready manuscript using the checklist shown in the OpenReview verification form:
+
+{invitation_url}
+
+If any correction is needed, request a camera-ready revision through the verification form and include comments explaining what the authors should change. Authors may upload a corrected camera-ready version until you approve the final camera-ready material.
+
+The {short_name} Editors-in-Chief

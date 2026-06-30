@@ -1,0 +1,13 @@
+Dear {{{{fullname}}}},
+
+{reviewer_label} has submitted a review for {short_name} paper {submission_number}: {submission_title}.
+
+Review progress: {review_status}
+
+You may make a decision at any time, but it is normally recommended to decide after receiving 3 reviews.
+
+You can view the review from the paper page:
+
+{paper_url}
+
+The {short_name} Editors-in-Chief

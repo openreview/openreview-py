@@ -1,0 +1,10 @@
+Dear {{{{fullname}}}},
+
+The camera-ready version of {short_name} submission {submission_number}: {submission_title} has been approved by the Action Editor and is ready for publication processing.
+
+Paper forum: {paper_url}
+Submission ID: {submission_id}
+
+{publication_processing_instructions}
+
+The {short_name} Editors-in-Chief

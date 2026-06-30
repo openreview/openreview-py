@@ -1,0 +1,17 @@
+Dear {{{{fullname}}}},
+
+We are writing to inform you that, based on the editorial evaluation of your {short_name} submission "{submission_number}: {submission_title}", the paper has received a decision of accept after minor revision.
+
+To read the decision, please follow this link: {paper_url}
+
+This decision requires a revised JMLR submission rather than a camera-ready upload. If you submit the revised manuscript to {short_name}, open the paper forum using the link above and use the Start Resubmission button. The resubmission form will carry forward this paper as the previous JMLR submission.
+
+Only author ordering changes are allowed for resubmissions. Adding, removing, replacing, renaming, or otherwise changing authors is not allowed. Impermissible author changes may cause desk rejection or later rejection at editorial discretion. The resubmission must also include a PDF response to the reviewers.
+
+The Action Editor responsible for your submission will have provided a description of the required revisions.
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+We thank you for your contribution to {short_name}.
+
+The {short_name} Editors-in-Chief

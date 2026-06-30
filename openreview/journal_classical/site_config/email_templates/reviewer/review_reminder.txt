@@ -1,0 +1,14 @@
+Dear {{{{fullname}}}},
+
+Our records show that you are late on the current reviewing task:
+
+Task: {task}
+Submission: {submission_title}
+Number of days late: {days_late}
+Link: {paper_url}
+
+Please follow the provided link and complete your review, including your recommendation, as soon as possible.
+
+We thank you for your cooperation.
+
+The {short_name} Editors-in-Chief

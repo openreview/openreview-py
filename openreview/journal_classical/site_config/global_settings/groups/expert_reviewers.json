@@ -1,0 +1,12 @@
+{
+  "id": "JMLR/Expert_Reviewers",
+  "readers": [
+    "everyone"
+  ],
+  "signatures": [
+    "JMLR"
+  ],
+  "writers": [
+    "JMLR"
+  ]
+}
