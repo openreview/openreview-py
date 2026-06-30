@@ -3940,7 +3940,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             }
-        }        
+        }
 
         self.save_super_invitation(self.journal.get_release_review_id(), {}, edit_content, invitation)        
 
@@ -3963,14 +3963,34 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'readers': self.journal.get_release_review_readers(number=note.number)
                     }
                 }
-        ))        
+        ))
 
         return self.client.post_invitation_edit(invitations=self.journal.get_release_review_id(),
             content={ 'noteNumber': { 'value': note.number } },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
-        )        
+        )
+
+    def set_note_release_llm_review_invitation(self, note):
+
+        ## Change AI review invitation readers
+        invitation = self.post_invitation_edit(invitation=openreview.api.Invitation(id=self.journal.get_llm_review_id(number=note.number),
+                signatures=[self.journal.venue_id],
+                edit={
+                    'note': {
+                        'readers': self.journal.get_release_review_readers(number=note.number),
+                        'nonreaders': []
+                    }
+                }
+        ))
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_release_llm_review_id(),
+            content={ 'noteNumber': { 'value': note.number } },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_official_recommendation_invitation(self):
 
@@ -6954,7 +6974,42 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }
         }
 
-        self.save_super_invitation(self.journal.get_llm_review_id(), {}, edit_content, invitation)
+        self.save_super_invitation(llm_review_invitation_id, {}, edit_content, invitation)
+
+        invitation = {
+            'id': self.journal.get_release_llm_review_id(number='${2/content/noteNumber/value}'),
+            'bulk': True,
+            'invitees': [venue_id],
+            'readers': [venue_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${{2/note/id}/signatures}'],
+                'writers': [ venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_llm_review_id(number='${6/content/noteNumber/value}')
+                        }
+                    },
+                    'readers': self.journal.get_release_review_readers(number='${5/content/noteNumber/value}'),
+                    'nonreaders': []
+                }
+            }
+        }
+
+        edit_content = {
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_release_llm_review_id(), {}, edit_content, invitation)
 
     def set_note_llm_review_invitation(self, note):
 

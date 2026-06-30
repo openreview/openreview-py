@@ -172,6 +172,9 @@ class Journal(object):
     def get_release_review_id(self, number=None):
         return self.__get_invitation_id(name='Review_Release', number=number)
 
+    def get_release_llm_review_id(self, number=None):
+        return self.__get_invitation_id(name='LLM_Review_Release', number=number)
+
     def get_release_comment_id(self, number=None):
         return self.__get_invitation_id(name='Comment_Release', number=number)
 
@@ -1270,6 +1273,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         print('Release reviews...')
         invitation = self.invitation_builder.set_note_release_review_invitation(submission)
+
+        if self.should_enable_llm_review():
+            print('Release LLM review...')
+            self.invitation_builder.set_note_release_llm_review_invitation(submission)
 
         print('Release comments...')
         invitation = self.invitation_builder.set_note_release_comment_invitation(submission)

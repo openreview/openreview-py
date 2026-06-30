@@ -258,6 +258,7 @@ class TestTMLRExperiment():
 
         assert openreview_client.get_invitation('TMLRE/-/LLM_Review')
         assert openreview_client.get_group('TMLRE/LLM_Reviewer')
+        assert openreview_client.get_invitation('TMLRE/-/LLM_Review_Release')
 
     def test_invite_action_editors(self, journal, openreview_client, helpers):
         openreview_client.add_members_to_group('TMLRE/Action_Editors', ['~Alice_Johnson1'])
@@ -513,6 +514,31 @@ class TestTMLRExperiment():
         for review in reviews:
             assert review.readers == ['everyone']
 
+        # LLM Review should be released to authors after all human reviews are posted
+        llm_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper1/-/LLM_Review')[0]
+        assert llm_review.readers == ['everyone']
+        assert llm_review.nonreaders == []
+
+        # author posts a reply to the LLM review
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        comment_edit = test_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            signatures=[f'{venue_id}/Paper1/Authors'],
+            note=Note(
+                replyto=llm_review.id,
+                readers=['everyone'],
+                content={
+                    'comment': {'value': 'Thank you for the LLM review.'}
+                }
+            )
+        )
+
+        comment = openreview_client.get_note(comment_edit['note']['id'])
+        assert comment.readers == ['everyone']
+        assert comment.replyto == llm_review.id
+        assert comment.signatures == [f'{venue_id}/Paper1/Authors']
+
         # Move recommendation cdate to now since the discussion period hasn't elapsed
         sarah_client.post_invitation_edit(
             invitations='TMLRE/-/Edit',
@@ -567,6 +593,10 @@ class TestTMLRExperiment():
                 signatures=[alice_paper1_anon_group.id],
                 note=Note(content={'rating': {'value': 'Exceeds expectations'}}))
             helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+
+        # LLM review is not rated
+        llm_review_signature = llm_review.signatures[0]
+        assert not openreview.tools.get_invitation(openreview_client, f'{llm_review_signature}/-/Rating')
 
         # AE posts decision
         decision_note = alice_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
