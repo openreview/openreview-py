@@ -1510,8 +1510,11 @@ If you would like to change your decision, please follow the link in the previou
                         'subject': {
                             'value': '[${4/content/short_name/value}] The decision for your submission #{submission_number}, titled "{submission_title}" is now available'
                         },
-                        'message': {
-                            'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the decision for your submission #{submission_number}, "{submission_title}", to ${4/content/short_name/value} is now available.\n\n{formatted_decision}\n\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}'
+                        'accept_message': {
+                            'value': 'Hi {{{{fullname}}}},\n\nWe are delighted to inform you that your submission has been accepted. Congratulations!\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n${4/content/short_name/value} Program Chairs'
+                        },
+                        'reject_message': {
+                            'value': 'Hi {{{{fullname}}}},\n\nWe regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n${4/content/short_name/value} Program Chairs'
                         }
                     },
                     'message': {

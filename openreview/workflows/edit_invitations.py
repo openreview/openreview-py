@@ -1409,10 +1409,73 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_email_template_invitation(self, super_invitation_id):
+    def set_edit_email_template_invitation(self, super_invitation_id, is_review_invitation=False):
 
         venue_id = self.venue_id
-        invitation_id = super_invitation_id + '/Message'
+        invitation_id = super_invitation_id + '/Templates'
+
+        edit_content = {
+            'email_subject': {
+                'description': 'The subject of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '.+',
+                    }
+                }
+            }
+        }
+
+        if not is_review_invitation:
+            edit_content['accept_email_content'] = {
+                'description': 'The content of the email to be sent to authors for accepted submissions.  Make sure not to remove the parenthesized tokens.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 100000,
+                        'input': 'textarea'
+                    }
+                }
+            }
+            edit_content['reject_email_content'] = {
+                'description': 'The content of the email to be sent to authors for rejected submissions.  Make sure not to remove the parenthesized tokens.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 100000,
+                        'input': 'textarea'
+                    }
+                }
+            }
+        elif is_review_invitation:
+            edit_content['email_content'] = {
+                'description': 'The content of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 100000,
+                        'input': 'textarea'
+                    }
+                }
+            }
+
+        invitation_content = {
+            'subject': {
+                'value': '${4/content/email_subject/value}'
+            }
+        }
+
+        if not is_review_invitation:
+            invitation_content['accept_message'] = {
+                'value': '${4/content/accept_email_content/value}'
+            }
+            invitation_content['reject_message'] = {
+                'value': '${4/content/reject_email_content/value}'
+            }
+        elif is_review_invitation:
+            invitation_content['message'] = {
+                'value': '${4/content/email_content/value}'
+            }
 
         invitation = Invitation(
             id = invitation_id,
@@ -1421,41 +1484,14 @@ class EditInvitationsBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             edit = {
-                'content': {
-                    'email_subject': {
-                        'description': 'The subject of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'regex': '.+',
-                            }
-                        }
-                    },
-                    'email_content': {
-                        'description': 'The content of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100000,
-                                'input': 'textarea'
-                            }
-                        }
-                    }
-                },
+                'content': edit_content,
                 'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'invitation': {
                     'id': super_invitation_id,
                     'signatures': [venue_id],
-                    'content': {
-                        'subject': {
-                            'value': '${4/content/email_subject/value}'
-                        },
-                        'message': {
-                            'value': '${4/content/email_content/value}'
-                        }
-                    }
+                    'content': invitation_content
                 }
             }
         )

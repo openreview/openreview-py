@@ -20,7 +20,13 @@ def process(client, invitation):
     support_user = invitation.invitations[0].split('Template')[0] + 'Support'
 
     email_subject = invitation.get_content_value('subject')
-    email_content = invitation.get_content_value('message')
+    accept_email_content = invitation.get_content_value('accept_message')
+    reject_email_content = invitation.get_content_value('reject_message')
+    decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
+    accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
+    print('accept_options', accept_options)
+    decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
+    print('decision_field_name', decision_field_name)
     fields_to_include = invitation.get_content_value('fields_to_include')
     contact_email = domain.get_content_value('contact')
 
@@ -61,12 +67,22 @@ def process(client, invitation):
                 if value:
                     formatted_decision+=f'''**{key}**: {value}\n'''
 
-            message = email_content.format(
-                submission_number=submission.number,
-                submission_title=submission.content['title']['value'],
-                formatted_decision=formatted_decision,
-                submission_forum=submission.id
-            )
+            decision_value = decision.content.get(decision_field_name, {}).get('value')
+            note_accepted = openreview.tools.is_accept_decision(decision_value, accept_options) if decision_value else False
+            if note_accepted:
+                message = accept_email_content.format(
+                    submission_number=submission.number,
+                    submission_title=submission.content['title']['value'],
+                    formatted_decision=formatted_decision,
+                    submission_forum=submission.id
+                )
+            else:
+                message = reject_email_content.format(
+                    submission_number=submission.number,
+                    submission_title=submission.content['title']['value'],
+                    formatted_decision=formatted_decision,
+                    submission_forum=submission.id
+                )
 
             client.post_message(
                 subject=subject,
