@@ -358,6 +358,7 @@ The OpenReview Team.
             tag.signature = profile.id if tag.signature == username else tag.signature
             tag.readers = [profile.id if g == username else g for g in tag.readers]
             tag.writers = [profile.id if g == username else g for g in tag.writers]
+            tag.cdate = None
             client.post_tag(tag)
         
         print('Post a profile reference to remove the name')

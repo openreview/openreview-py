@@ -2807,6 +2807,49 @@ The OpenReview Team.
         assert openreview_client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
 
+        ## post vouch tag
+        ## A profile can only be vouched for after the moderation team has rejected it,
+        ## so reject Paul's profile first. The vouch below reactivates it.
+        support_client.moderate_profile('~Paul_Last1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+        assert openreview_client.get_profile('~Paul_Last1').state == 'Rejected'
+
+        ## The voucher must be an active institutional user with a confirmed institutional email
+        rename_voucher_client = helpers.create_user('renamevoucher@umass.edu', 'Renamevoucher', 'Voucher', institution='umass.edu')
+        assert openreview_client.get_profile('~Renamevoucher_Voucher1').state == 'Active Institutional'
+
+        ## The voucher must have declared a relation to the user they vouch for
+        voucher_profile = rename_voucher_client.get_profile(rename_voucher_client.profile.id)
+        voucher_profile.content.setdefault('relations', []).append({
+            'relation': 'Colleague',
+            'name': 'Paul Last',
+            'username': '~Paul_Last1',
+            'start': 2020,
+            'end': None
+        })
+        rename_voucher_client.post_profile(voucher_profile)
+
+        vouch_tag = rename_voucher_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Vouch',
+                signature='~Renamevoucher_Voucher1',
+                profile='~Paul_Alternate_Last1',
+                label='Colleague|Massachusetts Institute of Technology'
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=vouch_tag.id)
+
+        ## Capture the vouch tag's original id and creation date so we can confirm that the
+        ## profile/signature remaps triggered by the name removals below update the tag in
+        ## place (same id) and preserve its original cdate end-to-end.
+        original_vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Alternate_Last1')
+        assert len(original_vouch_tags) == 1
+        vouch_tag_id = original_vouch_tags[0].id
+        vouch_tag_cdate = original_vouch_tags[0].cdate
+
+        ## The vouch reactivated Paul's profile
+        assert openreview_client.get_profile('~Paul_Last1').state == 'Active'
+
         openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
 
         ## post block status tag
@@ -2822,18 +2865,9 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=tag.id)
 
-        tags = support_client.get_tags(profile='~Paul_Alternate_Last1')
+        tags = support_client.get_tags(invitation='openreview.net/Support/-/Profile_Blocked_Status', profile='~Paul_Alternate_Last1')
         assert len(tags) == 1
         assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
-
-        ## post vouch tag
-        tag = openreview_client.post_tag(
-            openreview.api.Tag(
-                invitation='openreview.net/Support/-/Vouch',
-                signature='~Javier_Alternate_Last1',
-                profile='~Paul_Alternate_Last1'
-            )
-        )        
 
         ## Add Registration note
         paul_client.post_note_edit(
@@ -3150,6 +3184,84 @@ The OpenReview Team.
 '''
 
         assert openreview_client.get_edges(invitation='CABJ/Reviewers/-/Assignment_Availability', tail='~Paul_Last1')[0].label == 'Unavailable'
+
+        ## Case 1: the name behind tag.profile was removed, so the vouch tag profile was
+        ## remapped to the vouchee's remaining profile id, in place (same id, original cdate)
+        vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Last1')
+        assert len(vouch_tags) == 1
+        assert vouch_tags[0].signature == '~Renamevoucher_Voucher1'
+        assert vouch_tags[0].label == 'Colleague|Massachusetts Institute of Technology'
+        assert vouch_tags[0].id == vouch_tag_id
+        assert vouch_tags[0].cdate == vouch_tag_cdate
+
+        ## Case 2: removing the name behind tag.signature must remap the vouch tag signature
+        ## to the voucher's new profile id. Give the voucher a publication (so the name removal
+        ## is not auto-accepted) and a second, preferred name, then remove the original one that
+        ## the tag is signed with.
+        rename_voucher_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Renamevoucher_Voucher1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Voucher paper' },
+                    'abstract': { 'value': 'Voucher abstract' },
+                    'authors': { 'value': ['Renamevoucher Voucher'] },
+                    'authorids': { 'value': ['~Renamevoucher_Voucher1'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+
+        voucher_profile = rename_voucher_client.get_profile('~Renamevoucher_Voucher1')
+        voucher_profile.content['names'].append({
+            'first': 'Renamevoucher',
+            'middle': 'Alternate',
+            'last': 'Voucher',
+            'preferred': True
+        })
+        rename_voucher_client.post_profile(voucher_profile)
+
+        voucher_profile = rename_voucher_client.get_profile('~Renamevoucher_Voucher1')
+        assert len(voucher_profile.content['names']) == 2
+        assert voucher_profile.content['names'][1]['username'] == '~Renamevoucher_Alternate_Voucher1'
+
+        ## Request removal of the original name (signed with the name being kept)
+        request_note = rename_voucher_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~Renamevoucher_Alternate_Voucher1'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'Renamevoucher Voucher' },
+                    'usernames': { 'value': ['~Renamevoucher_Voucher1'] },
+                    'comment': { 'value': 'remove the original name' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, request_note['id'])
+
+        decision_note = support_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            signatures=['openreview.net/Support'],
+            note = openreview.api.Note(
+                id = request_note['note']['id'],
+                content={ 'status': { 'value': 'Accepted' } }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, decision_note['id'])
+
+        ## the original voucher name is gone and the profile id is now the alternate
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Renamevoucher_Voucher1'):
+            openreview_client.get_group('~Renamevoucher_Voucher1')
+
+        ## the vouch tag signature was remapped to the voucher's new profile id, in place:
+        ## the same tag (same id) keeps its original creation date and label
+        vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Last1')
+        assert len(vouch_tags) == 1
+        assert vouch_tags[0].signature == '~Renamevoucher_Alternate_Voucher1'
+        assert vouch_tags[0].label == 'Colleague|Massachusetts Institute of Technology'
+        assert vouch_tags[0].id == vouch_tag_id
+        assert vouch_tags[0].cdate == vouch_tag_cdate
 
     def test_rename_unified_authors_submission(self, openreview_client, test_client, helpers, support_client):
         '''A profile listed as an author of a submission that uses the unified
@@ -4257,3 +4369,232 @@ The OpenReview Team.
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=tag.id)
+
+    def test_vouch_for_profile(self, openreview_client, support_client, helpers):
+
+        def register_unmoderated_user(email, first, last):
+            ## Creates a profile without logging the user in (it may be pending moderation)
+            guest = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+            res = guest.register_user(email=email, fullname=f'{first} {last}', password=helpers.strong_password)
+            username = res.get('id')
+            profile_content = {
+                'names': [{ 'fullname': f'{first} {last}', 'username': username, 'preferred': True }],
+                'emails': [email],
+                'preferredEmail': email,
+                'homepage': f"https://{first}{last}{int(time.time())}.openreview.net",
+                'history': [{
+                    'position': 'PhD Student',
+                    'start': 2017,
+                    'end': None,
+                    'institution': { 'country': 'US', 'domain': email.split('@')[1] }
+                }]
+            }
+            guest.activate_user(email, profile_content)
+            return username
+
+        ## The vouching quotas are stored on the invitation so the UI can show users their limits
+        vouch_invitation = openreview_client.get_invitation('openreview.net/Support/-/Vouch')
+        assert vouch_invitation.content['lifetimeLimit']['value'] == 20
+        assert vouch_invitation.content['monthLimit']['value'] == 5
+
+        ## Voucher: established user with an institutional email -> activated automatically as institutional
+        voucher_client = helpers.create_user('voucher@umass.edu', 'Voucher', 'User', institution='umass.edu')
+        assert openreview_client.get_profile('~Voucher_User1').state == 'Active Institutional'
+
+        def add_voucher_relation(username, name):
+            ## The voucher must declare a relation to the user they vouch for
+            profile = voucher_client.get_profile(voucher_client.profile.id)
+            profile.content.setdefault('relations', []).append({
+                'relation': 'Colleague',
+                'name': name,
+                'username': username,
+                'start': 2020,
+                'end': None
+            })
+            voucher_client.post_profile(profile)
+
+        ## A user activated automatically without an institutional email is not allowed to vouch
+        helpers.create_user('autovoucher@gmail.com', 'Autovoucher', 'User')
+        assert openreview_client.get_profile('~Autovoucher_User1').state == 'Active Automatic'
+
+        ## Enable moderation so newly created profiles without an institutional email need moderation
+        config_note = openreview_client.get_notes(invitation='openreview.net/-/OpenReview_Config')[0]
+        support_client.post_note_edit(
+            invitation='openreview.net/-/OpenReview_Config',
+            signatures=['openreview.net/Support'],
+            note=openreview.api.Note(
+                id=config_note.id,
+                content={
+                    'moderate': { 'value': 'Yes' },
+                    'weekend_moderation': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        try:
+            ## New user without an institutional email -> pending moderation, then rejected
+            ## by the moderation team. A profile must be rejected before it can be vouched for.
+            register_unmoderated_user('vouchee@gmail.com', 'Vouchee', 'User')
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Needs Moderation'
+
+            support_client.moderate_profile('~Vouchee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+
+            ## A non-institutional (Active Automatic) user cannot vouch: their profile is active
+            ## but has no institutional email, so the preprocess rejects them at the email check.
+            ## We attempt it twice in a row: the preprocess rejection must release the in-process
+            ## lock so the immediate retry is processed again (and rejected for the same reason)
+            ## instead of failing with an "already in process" error.
+            autovoucher_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='autovoucher@gmail.com', password=helpers.strong_password)
+            for _ in range(2):
+                with pytest.raises(openreview.OpenReviewException, match=r'you must have an institutional email in your profile'):
+                    autovoucher_client.post_tag(
+                        openreview.api.Tag(
+                            invitation='openreview.net/Support/-/Vouch',
+                            signature='~Autovoucher_User1',
+                            profile='~Vouchee_User1'
+                        )
+                    )
+
+            ## The profile is still rejected
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+
+            ## The target profile must exist. Vouching for a non-existent profile is rejected
+            ## so it does not pollute the "Vouched Profiles" list or consume the voucher's quota.
+            with pytest.raises(openreview.OpenReviewException, match=r'(?i)profile not found'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Nonexistent_User1'
+                    )
+                )
+
+            ## The target profile must be in state Rejected. An already-active profile cannot be vouched for.
+            with pytest.raises(openreview.OpenReviewException, match=r'only vouch for a profile that has been rejected'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Autovoucher_User1'
+                    )
+                )
+
+            ## No vouch tag was created for either invalid target
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Autovoucher_User1')) == 0
+
+            ## The voucher must have a relation to the vouched user in their profile. The voucher
+            ## has not declared ~Vouchee_User1 as a relation yet, so the vouch is rejected.
+            with pytest.raises(openreview.OpenReviewException, match=r'you must have a relation to them in your profile'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Vouchee_User1'
+                    )
+                )
+
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')) == 0
+
+            ## A qualified voucher with a declared relation vouches for the rejected user -> the profile gets activated
+            add_voucher_relation('~Vouchee_User1', 'Vouchee User')
+            vouch_tag = voucher_client.post_tag(
+                openreview.api.Tag(
+                    invitation='openreview.net/Support/-/Vouch',
+                    signature='~Voucher_User1',
+                    profile='~Vouchee_User1',
+                    label='Colleague|Massachusetts Institute of Technology'
+                )
+            )
+
+            helpers.await_queue_edit(openreview_client, edit_id=vouch_tag.id)
+
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Active'
+
+            tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')
+            assert len(tags) == 1
+            assert tags[0].signature == '~Voucher_User1'
+            assert tags[0].label == 'Colleague|Massachusetts Institute of Technology'
+
+            ## A user that was activated through a vouch cannot vouch for others
+            register_unmoderated_user('vouchee2@gmail.com', 'Voucheetwo', 'User')
+            support_client.moderate_profile('~Voucheetwo_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            assert openreview_client.get_profile('~Voucheetwo_User1').state == 'Rejected'
+
+            vouchee_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='vouchee@gmail.com', password=helpers.strong_password)
+            with pytest.raises(openreview.OpenReviewException, match=r'your profile was activated by a vouch'):
+                vouchee_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Vouchee_User1',
+                        profile='~Voucheetwo_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Voucheetwo_User1').state == 'Rejected'
+
+            ## A user with an active profile but no institutional email cannot vouch.
+            ## This profile is accepted manually by support (not through a vouch) so it
+            ## passes the active-state and not-vouched checks and reaches the email check.
+            register_unmoderated_user('manualaccept@gmail.com', 'Manualaccept', 'User')
+            support_client.moderate_profile('~Manualaccept_User1', 'accept')
+            assert openreview_client.get_profile('~Manualaccept_User1').state == 'Active'
+
+            manualaccept_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='manualaccept@gmail.com', password=helpers.strong_password)
+            with pytest.raises(openreview.OpenReviewException, match=r'you must have an institutional email in your profile'):
+                manualaccept_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Manualaccept_User1',
+                        profile='~Voucheetwo_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Voucheetwo_User1').state == 'Rejected'
+
+            ## The voucher can vouch for at most 5 users per month. They already vouched for
+            ## ~Vouchee_User1 above, so 4 more vouches bring them to the limit of 5.
+            for name in ['Voucheea', 'Voucheeb', 'Voucheec', 'Voucheed']:
+                register_unmoderated_user(f'{name.lower()}@gmail.com', name, 'User')
+                support_client.moderate_profile(f'~{name}_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+                add_voucher_relation(f'~{name}_User1', f'{name} User')
+                limit_tag = voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile=f'~{name}_User1',
+                        label='Colleague|Massachusetts Institute of Technology'
+                    )
+                )
+                helpers.await_queue_edit(openreview_client, edit_id=limit_tag.id)
+                assert openreview_client.get_profile(f'~{name}_User1').state == 'Active'
+
+            ## The voucher now has 5 vouches in the last month, so the 6th one is rejected
+            register_unmoderated_user('voucheee@gmail.com', 'Voucheee', 'User')
+            support_client.moderate_profile('~Voucheee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            add_voucher_relation('~Voucheee_User1', 'Voucheee User')
+            with pytest.raises(openreview.OpenReviewException, match=r'more than 5 users per month'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Voucheee_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Voucheee_User1').state == 'Rejected'
+
+        finally:
+            ## Restore moderation to its disabled state so the rest of the suite keeps auto-activating users
+            config_note = openreview_client.get_notes(invitation='openreview.net/-/OpenReview_Config')[0]
+            support_client.post_note_edit(
+                invitation='openreview.net/-/OpenReview_Config',
+                signatures=['openreview.net/Support'],
+                note=openreview.api.Note(
+                    id=config_note.id,
+                    content={
+                        'moderate': { 'value': 'No' },
+                        'weekend_moderation': { 'value': 'Yes' }
+                    }
+                )
+            )
