@@ -563,6 +563,7 @@ def test_sac_deployment(client, openreview_client, helpers):
     notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
     assert len(notes) == 2
     assert notes[-1].content['title']['value'] == 'Senior Action Editors Assignment Deployment Failed'
+    assert 'To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?id=ICLR.cc/2026/Conference)' in notes[-1].content['comment']['value']
 
     # try to deploy initialized configuration and get an error
     with pytest.raises(openreview.OpenReviewException, match=r'The matching configuration with title "sac-matching-1" does not have status "Complete".'):
