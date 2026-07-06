@@ -117,7 +117,15 @@ class Client(object):
             'Accept': 'application/json',
         }
 
-        retry_strategy = LogRetry(total=3, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=True)
+        retry_strategy = LogRetry(
+            total=8,
+            connect=1,
+            backoff_factor=1,
+            backoff_max=120,
+            backoff_jitter=1,
+            status_forcelist=[ 500, 502, 503, 504 ],
+            respect_retry_after_header=True
+        )
         self.session = requests.Session()
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount('https://', adapter)

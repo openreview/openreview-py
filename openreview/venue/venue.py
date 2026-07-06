@@ -2388,8 +2388,11 @@ OpenReview Team'''
 
         for venue_id in active_venues:
 
-            venue_group = client.get_group(venue_id)
-            
+            venue_group = openreview.tools.get_group(client, venue_id)
+
+            if venue_group is None:
+                continue
+
             if hasattr(venue_group, 'domain') and venue_group.content and 'journal_request_id' not in venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
