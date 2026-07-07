@@ -119,6 +119,7 @@ class Client(object):
 
         retry_strategy = LogRetry(
             total=8,
+            connect=1,
             backoff_factor=1,
             backoff_max=120,
             backoff_jitter=1,

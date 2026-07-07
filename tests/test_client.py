@@ -17,6 +17,7 @@ class TestClient():
         for api_client in [client, openreview_client]:
             retry = api_client.session.get_adapter(api_client.baseurl).max_retries
             assert retry.total == 8
+            assert retry.connect == 1
             assert retry.backoff_factor == 1
             assert retry.backoff_max == 120
             assert retry.backoff_jitter == 1
