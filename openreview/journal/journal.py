@@ -2252,6 +2252,7 @@ OpenReview Team'''
 
         return True
 
+    @classmethod
     def check_pending_reviews(Journal, client, support_group_id='OpenReview.net/Support', fix=False):
         '''
         Sanity check for the reviewer `Pending_Reviews` edges.
@@ -2331,9 +2332,15 @@ OpenReview Team'''
                         expected_pending[reviewer] = expected_pending.get(reviewer, 0) + 1
 
             ## Compare the expected count against the stored Pending_Reviews edges
-            pending_edge_by_reviewer = { edge.tail: edge for edge in client.get_edges(invitation=journal.get_reviewer_pending_review_id()) }
+            pending_edge_by_reviewer = {
+                group['id']['tail']: openreview.api.Edge.from_json(group['values'][0])
+                for group in client.get_grouped_edges(invitation=journal.get_reviewer_pending_review_id(), groupby='tail', domain=journal.venue_id)
+            }
 
-            for reviewer in set(expected_pending) | set(pending_edge_by_reviewer):
+            ## Only check official reviewers, that is, members of the Reviewers group
+            official_reviewers = set(client.get_group(journal.get_reviewers_id()).members)
+
+            for reviewer in (set(expected_pending) | set(pending_edge_by_reviewer)) & official_reviewers:
 
                 expected_weight = expected_pending.get(reviewer, 0)
                 pending_edge = pending_edge_by_reviewer.get(reviewer)
