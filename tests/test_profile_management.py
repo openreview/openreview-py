@@ -4390,7 +4390,7 @@ The OpenReview Team.
                 readers=['everyone'],
                 writers=[venue_id],
                 signatories=[venue_id],
-                members=[pc_group_id],
+                members=[],
                 signatures=['~Super_User1']
             )
         )
@@ -4408,6 +4408,7 @@ The OpenReview Team.
             )
         )
 
+        openreview_client.add_members_to_group(venue_id, pc_group_id)
         openreview_client.add_members_to_group('active_venues', venue_id)
 
         ## A program chair of an active venue can read the invitation
