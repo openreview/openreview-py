@@ -3436,6 +3436,120 @@ The OpenReview Team.
         assert len(profile.content['names']) == 1
         assert profile.content['names'][0]['username'] == '~Marie_Last1'
 
+    def test_replace_email_unified_authors_submission(self, openreview_client, helpers, support_client):
+        '''An author listed by email (no profile yet) in the unified ``author{}``
+        schema should have its username (and the derived author group membership)
+        replaced with the profile ID once a profile is created for that email.'''
+
+        ## 1. Configure the Submission invitation to allow emails in the username field of the authors object
+        openreview_client.post_invitation_edit(
+            invitations='UNAME.org/2026/Conference/-/Edit',
+            readers=['UNAME.org/2026/Conference'],
+            writers=['UNAME.org/2026/Conference'],
+            signatures=['UNAME.org/2026/Conference'],
+            replacement=False,
+            invitation=openreview.api.Invitation(
+                id='UNAME.org/2026/Conference/-/Submission',
+                edit={
+                    'note': {
+                        'content': {
+                            'authors': {
+                                'value': {
+                                    'param': {
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'regex': r'^(~\S+|\S+@\S+\.\S+)$',
+                                                    'mismatchError': 'must be a valid profile ID or email'
+                                                }
+                                            },
+                                            'institutions': {
+                                                'param': {
+                                                    'type': 'object{}',
+                                                    'properties': {
+                                                        'name': { 'param': { 'type': 'string' } },
+                                                        'domain': { 'param': { 'type': 'string' } },
+                                                        'country': { 'param': { 'type': 'string' } },
+                                                    },
+                                                    'optional': True
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ))
+
+        submission_inv = openreview_client.get_invitation('UNAME.org/2026/Conference/-/Submission')
+        username_param = submission_inv.edit['note']['content']['authors']['value']['param']['properties']['username']['param']
+        assert username_param['regex'] == r'^(~\S+|\S+@\S+\.\S+)$'
+
+        ## Marie submits a paper listing a co-author by an email that has no profile yet
+        marie_client = helpers.get_user('marie@profile.org')
+        submission = marie_client.post_note_edit(
+            invitation='UNAME.org/2026/Conference/-/Submission',
+            signatures=['~Marie_Last1'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Unified Authors Email Replacement' },
+                    'abstract': { 'value': 'Testing email replacement in the unified author object.' },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'Marie Last',
+                                'username': '~Marie_Last1',
+                                'institutions': [{ 'domain': 'google.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'Sofia Author',
+                                'username': 'sofia@profile.org',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            }
+                        ]
+                    },
+                    'keywords': { 'value': ['email', 'replacement'] },
+                    'pdf': { 'value': '/pdf/' + 'q' * 40 + '.pdf' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
+        note_id = submission['note']['id']
+        paper_number = submission['note']['number']
+
+        ## 2. The paper is submitted with the email in the username field of the author object
+        note = openreview_client.get_note(note_id)
+        assert note.content['authors']['value'][1]['username'] == 'sofia@profile.org'
+        assert note.content['authors']['value'][1]['fullname'] == 'Sofia Author'
+        assert note.authorids == ['~Marie_Last1', 'sofia@profile.org']
+
+        authors_group_id = f'UNAME.org/2026/Conference/Submission{paper_number}/Authors'
+        group = openreview_client.get_group(authors_group_id)
+        assert 'sofia@profile.org' in group.members
+        assert '~Sofia_Author1' not in group.members
+
+        ## 3. Create a profile with that email; the API replaces the email with the profile ID
+        helpers.create_user('sofia@profile.org', 'Sofia', 'Author', alternates=[], institution='mail.com')
+
+        ## Wait for the internal process that replaces the email with the tilde id in submissions
+        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
+
+        note = openreview_client.get_note(note_id)
+        assert note.content['authors']['value'][1]['username'] == '~Sofia_Author1'
+        assert note.content['authors']['value'][1]['fullname'] == 'Sofia Author'
+        assert note.content['authors']['value'][0]['username'] == '~Marie_Last1'
+        assert note.authorids == ['~Marie_Last1', '~Sofia_Author1']
+
+        ## The derived per-paper Authors group membership is updated too
+        group = openreview_client.get_group(authors_group_id)
+        assert 'sofia@profile.org' not in group.members
+        assert '~Sofia_Author1' in group.members
+
     def test_remove_name_and_update_relations(self, openreview_client, helpers, support_client):
 
         juan_client = helpers.create_user('juan@profile.org', 'Juan', 'Last', alternates=[], institution='google.com')
