@@ -4549,6 +4549,57 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=tag.id)
 
+    def test_blocked_status_visible_to_active_venues(self, openreview_client, support_client, helpers):
+
+        ## The Profile_Blocked_Status invitation should be readable by members of active_venues,
+        ## so program chairs of active venues can see which profiles have been blocked.
+
+        pc_client = helpers.create_user('pc_blocked@venue.org', 'ProgramChair', 'Blocked', alternates=[], institution='google.com')
+
+        venue_id = 'BlockedStatus.cc/2025/Conference'
+        pc_group_id = f'{venue_id}/Program_Chairs'
+
+        ## Set up the venue group and its Program Chairs group, mirroring how a real venue is wired:
+        ## PC user -> Program_Chairs -> venue group -> active_venues
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=venue_id,
+                readers=['everyone'],
+                writers=[venue_id],
+                signatories=[venue_id],
+                members=[],
+                signatures=['~Super_User1']
+            )
+        )
+
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=pc_group_id,
+                readers=['everyone'],
+                writers=[venue_id],
+                signatories=[venue_id, pc_group_id],
+                members=['~ProgramChair_Blocked1'],
+                signatures=['~Super_User1']
+            )
+        )
+
+        openreview_client.add_members_to_group(venue_id, pc_group_id)
+        openreview_client.add_members_to_group('active_venues', venue_id)
+
+        ## A program chair of an active venue can read the invitation
+        invitation = pc_client.get_invitation('openreview.net/Support/-/Profile_Blocked_Status')
+        assert invitation
+        assert 'active_venues' in invitation.readers
+
+        ## A user who does not belong to any active venue cannot read it
+        random_client = helpers.create_user('random_blocked@venue.org', 'Random', 'Blocked', alternates=[], institution='google.com')
+        with pytest.raises(openreview.OpenReviewException):
+            random_client.get_invitation('openreview.net/Support/-/Profile_Blocked_Status')
+
     def test_vouch_for_profile(self, openreview_client, support_client, helpers):
 
         def register_unmoderated_user(email, first, last):
