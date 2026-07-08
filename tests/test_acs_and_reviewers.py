@@ -845,6 +845,9 @@ For more details, please check the following links:
         match_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reviewers_Assignment_Deployment/Match')
         assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['rev-matching-1']
 
+        reviewer_reassignment_inv = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Reviewer_Reassignment')
+        assert reviewer_reassignment_inv.edit['content']['reviewers_proposed_assignment_title']['value']['param']['enum'] == ['rev-matching-1', 'None']
+
         # post proposed assignments to test deployment process
         submissions = pc_client.get_all_notes(content={'venueid': 'EFGH.cc/2025/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 10
@@ -884,6 +887,24 @@ For more details, please check the following links:
             )
         )
 
+        # check ACs can see link to proposed assignments
+        pc_client.post_group_edit(
+            invitation='EFGH.cc/2025/Conference/Action_Editors/-/Reviewer_Reassignment',
+            content = {
+                'enable_reviewers_reassignment': { 'value': True },
+                'reviewers_proposed_assignment_title': { 'value': 'rev-matching-1' }
+            }
+        )
+
+        ac_client = openreview.api.OpenReviewClient(username='areachair_one@efgh.cc', password=helpers.strong_password)
+        request_page(selenium, "http://localhost:3030/group?id=EFGH.cc/2025/Conference/Action_Editors", ac_client, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Reviewer Assignment Browser:' in header.text
+
+        url = header.find_element(By.ID, 'edge_browser_url')
+        assert url
+        assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=EFGH.cc/2025/Conference/Action_Editors/-/Assignment,tail:~ACOne_EFGH1&traverse=EFGH.cc/2025/Conference/Reviewers/-/Proposed_Assignment,label:rev-matching-1&edit=EFGH.cc/2025/Conference/Reviewers/-/Proposed_Assignment,label:rev-matching-1;EFGH.cc/2025/Conference/Reviewers/-/Invite_Assignment&browse=EFGH.cc/2025/Conference/Reviewers/-/Aggregate_Score,label:rev-matching-1;EFGH.cc/2025/Conference/Reviewers/-/Affinity_Score;EFGH.cc/2025/Conference/Reviewers/-/Bid;EFGH.cc/2025/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=EFGH.cc/2025/Conference/Reviewers/-/Conflict&maxColumns=2&preferredEmailInvitationId=EFGH.cc/2025/Conference/-/Preferred_Emails&version=2&referrer=[Action%20Editors%20Console](/group?id=EFGH.cc/2025/Conference/Action_Editors)'
+
         # deploy assignments
         openreview_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Reviewers_Assignment_Deployment/Match',
@@ -904,17 +925,15 @@ For more details, please check the following links:
         )
         helpers.await_queue_edit(openreview_client,  edit_id=f'EFGH.cc/2025/Conference/-/Reviewers_Assignment_Deployment-0-1', count=3)
 
+        # check deploying the assignments removes reviewers_proposed_assignment_title from the AC group content
+        ac_group = openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors')
+        assert 'reviewers_proposed_assignment_title' not in ac_group.content
+        assert 'enable_reviewers_reassignment' in ac_group.content and ac_group.content['enable_reviewers_reassignment']['value'] == True
+
         grouped_edges = openreview_client.get_grouped_edges(invitation='EFGH.cc/2025/Conference/Reviewers/-/Assignment', groupby='id')
         assert len(grouped_edges) == 3
 
-        # allow Action Editors to reassign reviewers
-        pc_client.post_group_edit(
-            invitation='EFGH.cc/2025/Conference/Action_Editors/-/Reviewer_Reassignment',
-            content = {
-                'enable_reviewers_reassignment': { 'value': True }
-            }
-        )
-
+        # check Action Editors can edit deployed reviewers assignments
         ac_client = openreview.api.OpenReviewClient(username='areachair_one@efgh.cc', password=helpers.strong_password)
 
         request_page(selenium, "http://localhost:3030/group?id=EFGH.cc/2025/Conference/Action_Editors", ac_client, wait_for_element='header')

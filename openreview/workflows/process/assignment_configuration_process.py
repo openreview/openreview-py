@@ -4,6 +4,8 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     committee_name = invitation.get_content_value('committee_name')
+    reviewers_roles = domain.get_content_value('reviewers_name')
+    area_chairs_name = domain.get_content_value('area_chairs_name')
 
     assignment_title = edit.note.content['title']['value']
 
@@ -32,6 +34,42 @@ def process(client, edit, invitation):
                 }
             )
         )
+
+    # if reviewer assignment was created, add it to list of possible reviewer assignment titles that ACs could edit
+    if committee_name in reviewers_roles:
+        edit_invitation_id = f'{venue_id}/{area_chairs_name}/-/Reviewer_Reassignment'
+        all_assignment_titles.append('None')
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=edit_invitation_id,
+                edit={
+                    'content': {
+                        'reviewers_proposed_assignment_title': {
+                            'order': 2,
+                            'description': 'If you would like area chairs to edit reviewer proposed assignments, select the title of the matching that you would like them to edit. If area chairs should edit deployed assignments, select "None".',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': all_assignment_titles
+                                }
+                            }
+                        }
+                    },
+                    'group': {
+                        'content': {
+                            'reviewers_proposed_assignment_title': {
+                                'value': '${4/content/reviewers_proposed_assignment_title/value}'
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+
+
 
 
 

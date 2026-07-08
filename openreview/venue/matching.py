@@ -1310,6 +1310,17 @@ class Matching(object):
                 )
             )
 
+            self.client.post_group_edit(
+                invitation = venue.get_meta_invitation_id(),
+                signatures = [venue.venue_id],
+                group = openreview.api.Group(
+                    id = venue.get_area_chairs_id(),
+                    content = {
+                        'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
+                    }
+                )
+            )
+
     def undeploy_sac_assignments(self, assignment_title):
 
         client = self.client

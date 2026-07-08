@@ -1970,15 +1970,14 @@ class EditInvitationsBuilder(object):
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
-                'content' :{
+                'content': {
                     'enable_reviewers_reassignment': {
-                        'order': 2,
+                        'order': 1,
                         'description': 'Would you like to allow area chairs to reassign reviewers to submissions?',
                         'value': {
                             'param': {
                                 'type': 'boolean',
-                                'enum': [True, False],
-                                'input': 'radio'
+                                'enum': [True, False]
                             }
                         }
                     }
