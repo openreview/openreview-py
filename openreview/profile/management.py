@@ -106,7 +106,7 @@ return {
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Profile_Blocked_Status',
-                readers=[self.support_group_id],
+                readers=[self.support_group_id, 'active_venues'],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
                 invitees=[self.support_group_id],
