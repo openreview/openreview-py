@@ -72,7 +72,7 @@ def process(client, edit, invitation):
         readers = None
         writers = None
         needs_change = False
-        for index, author in enumerate(publication.content.get('authorids', {}).get('value')):
+        for index, author in enumerate(publication.content.get('authorids', {}).get('value') or []):
             if email == author:
                 authors.append(preferred_name)
                 authorids.append(preferred_id)
