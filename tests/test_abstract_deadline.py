@@ -134,7 +134,8 @@ class TestAbstractDeadline():
         assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Bid')
         assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Venue_Information')
         assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Author_Reviews_Notification')
-        assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Author_Decision_Notification')
+        assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Author_Accept_Decision_Notification')
+        assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Author_Reject_Decision_Notification')
 
     def test_update_submission_deadline(self, openreview_client, helpers):
 

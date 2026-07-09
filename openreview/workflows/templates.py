@@ -1459,8 +1459,7 @@ If you would like to change your decision, please follow the link in the previou
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Author_Decision_Notification'
+                                'regex': '^[a-zA-Z0-9_]*$'
                             }
                         }
                     },
@@ -1491,6 +1490,24 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
+                    },
+                    'decision': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['Accept', 'Reject']
+                            }
+                        }
+                    },
+                    'message': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'input': 'textarea',
+                                'markdown': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1510,11 +1527,11 @@ If you would like to change your decision, please follow the link in the previou
                         'subject': {
                             'value': '[${4/content/short_name/value}] The decision for your submission #{submission_number}, titled "{submission_title}" is now available'
                         },
-                        'accept_message': {
-                            'value': 'Hi {{{{fullname}}}},\n\nWe are delighted to inform you that your submission has been accepted. Congratulations!\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n${4/content/short_name/value} Program Chairs'
+                        'message': {
+                            'value': '${4/content/message/value}'
                         },
-                        'reject_message': {
-                            'value': 'Hi {{{{fullname}}}},\n\nWe regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n${4/content/short_name/value} Program Chairs'
+                        'decision_option': {
+                            'value': '${4/content/decision/value}'
                         }
                     },
                     'message': {

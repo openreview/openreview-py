@@ -1436,32 +1436,8 @@ class EditInvitationsBuilder(object):
                         'regex': '.+',
                     }
                 }
-            }
-        }
-
-        if not is_review_invitation:
-            edit_content['accept_email_content'] = {
-                'description': 'The content of the email to be sent to authors for accepted submissions.  Make sure not to remove the parenthesized tokens.',
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'maxLength': 100000,
-                        'input': 'textarea'
-                    }
-                }
-            }
-            edit_content['reject_email_content'] = {
-                'description': 'The content of the email to be sent to authors for rejected submissions.  Make sure not to remove the parenthesized tokens.',
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'maxLength': 100000,
-                        'input': 'textarea'
-                    }
-                }
-            }
-        elif is_review_invitation:
-            edit_content['email_content'] = {
+            },
+            'email_content': {
                 'description': 'The content of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
                 'value': {
                     'param': {
@@ -1471,24 +1447,7 @@ class EditInvitationsBuilder(object):
                     }
                 }
             }
-
-        invitation_content = {
-            'subject': {
-                'value': '${4/content/email_subject/value}'
-            }
         }
-
-        if not is_review_invitation:
-            invitation_content['accept_message'] = {
-                'value': '${4/content/accept_email_content/value}'
-            }
-            invitation_content['reject_message'] = {
-                'value': '${4/content/reject_email_content/value}'
-            }
-        elif is_review_invitation:
-            invitation_content['message'] = {
-                'value': '${4/content/email_content/value}'
-            }
 
         invitation = Invitation(
             id = invitation_id,
@@ -1504,7 +1463,14 @@ class EditInvitationsBuilder(object):
                 'invitation': {
                     'id': super_invitation_id,
                     'signatures': [venue_id],
-                    'content': invitation_content
+                    'content': {
+                        'subject': {
+                            'value': '${4/content/email_subject/value}'
+                        },
+                        'message': {
+                            'value': '${4/content/email_content/value}'
+                        }
+                    }
                 }
             }
         )

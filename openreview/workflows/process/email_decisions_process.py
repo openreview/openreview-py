@@ -20,15 +20,13 @@ def process(client, invitation):
     support_user = invitation.invitations[0].split('Template')[0] + 'Support'
 
     email_subject = invitation.get_content_value('subject')
-    accept_email_content = invitation.get_content_value('accept_message')
-    reject_email_content = invitation.get_content_value('reject_message')
+    email_content = invitation.get_content_value('message')
     decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
     accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
-    print('accept_options', accept_options)
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
-    print('decision_field_name', decision_field_name)
     fields_to_include = invitation.get_content_value('fields_to_include')
     contact_email = domain.get_content_value('contact')
+    decision_option = invitation.get_content_value('decision_option')
 
     status_invitation_id = domain.get_content_value('status_invitation_id')
     request_form_id = domain.get_content_value('request_form_id')
@@ -43,7 +41,7 @@ def process(client, invitation):
                 forum=request_form_id,
                 signatures=[venue_id],
                 content={
-                    'title': { 'value': 'Author Decision Notification Failed' },
+                    'title': { 'value': f'Author {decision_option} Decision Notification Failed' },
                     'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid decision fields to include in the email notification. Please re-schedule this process to run at a later time and then select which fields to include.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split("/")[-1].replace("_", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Fields To Include" invitation, select the fields to include when emailing decisions to authors and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid fields to include. Once you have selected the fields to include, click "Submit" and the process will automatically be scheduled to run shortly.'}
                 }
             )
@@ -68,30 +66,24 @@ def process(client, invitation):
                     formatted_decision+=f'''**{key}**: {value}\n'''
 
             decision_value = decision.content.get(decision_field_name, {}).get('value')
-            note_accepted = openreview.tools.is_accept_decision(decision_value, accept_options) if decision_value else False
-            if note_accepted:
-                message = accept_email_content.format(
-                    submission_number=submission.number,
-                    submission_title=submission.content['title']['value'],
-                    formatted_decision=formatted_decision,
-                    submission_forum=submission.id
-                )
-            else:
-                message = reject_email_content.format(
+
+            # if the decision matches, send email. ## To-do: support this in the submission source instead
+            if decision_value == decision_option:
+                message = email_content.format(
                     submission_number=submission.number,
                     submission_title=submission.content['title']['value'],
                     formatted_decision=formatted_decision,
                     submission_forum=submission.id
                 )
 
-            client.post_message(
-                subject=subject,
-                recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
-                message=message,
-                invitation=invitation.id,
-                replyTo=contact_email
-            )
+                client.post_message(
+                    subject=subject,
+                    recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
+                    message=message,
+                    invitation=invitation.id,
+                    replyTo=contact_email
+                )
 
     openreview.tools.concurrent_requests(send_decision_email, active_submissions)
 
-    print('Decision emails sent to authors')
+    print(f'{decision_option} decision emails sent to authors')
