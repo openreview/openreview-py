@@ -2807,6 +2807,49 @@ The OpenReview Team.
         assert openreview_client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
 
+        ## post vouch tag
+        ## A profile can only be vouched for after the moderation team has rejected it,
+        ## so reject Paul's profile first. The vouch below reactivates it.
+        support_client.moderate_profile('~Paul_Last1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+        assert openreview_client.get_profile('~Paul_Last1').state == 'Rejected'
+
+        ## The voucher must be an active institutional user with a confirmed institutional email
+        rename_voucher_client = helpers.create_user('renamevoucher@umass.edu', 'Renamevoucher', 'Voucher', institution='umass.edu')
+        assert openreview_client.get_profile('~Renamevoucher_Voucher1').state == 'Active Institutional'
+
+        ## The voucher must have declared a relation to the user they vouch for
+        voucher_profile = rename_voucher_client.get_profile(rename_voucher_client.profile.id)
+        voucher_profile.content.setdefault('relations', []).append({
+            'relation': 'Colleague',
+            'name': 'Paul Last',
+            'username': '~Paul_Last1',
+            'start': 2020,
+            'end': None
+        })
+        rename_voucher_client.post_profile(voucher_profile)
+
+        vouch_tag = rename_voucher_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Vouch',
+                signature='~Renamevoucher_Voucher1',
+                profile='~Paul_Alternate_Last1',
+                label='Colleague|Massachusetts Institute of Technology'
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=vouch_tag.id)
+
+        ## Capture the vouch tag's original id and creation date so we can confirm that the
+        ## profile/signature remaps triggered by the name removals below update the tag in
+        ## place (same id) and preserve its original cdate end-to-end.
+        original_vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Alternate_Last1')
+        assert len(original_vouch_tags) == 1
+        vouch_tag_id = original_vouch_tags[0].id
+        vouch_tag_cdate = original_vouch_tags[0].cdate
+
+        ## The vouch reactivated Paul's profile
+        assert openreview_client.get_profile('~Paul_Last1').state == 'Active'
+
         openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
 
         ## post block status tag
@@ -2822,18 +2865,9 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=tag.id)
 
-        tags = support_client.get_tags(profile='~Paul_Alternate_Last1')
+        tags = support_client.get_tags(invitation='openreview.net/Support/-/Profile_Blocked_Status', profile='~Paul_Alternate_Last1')
         assert len(tags) == 1
         assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
-
-        ## post vouch tag
-        tag = openreview_client.post_tag(
-            openreview.api.Tag(
-                invitation='openreview.net/Support/-/Vouch',
-                signature='~Javier_Alternate_Last1',
-                profile='~Paul_Alternate_Last1'
-            )
-        )        
 
         ## Add Registration note
         paul_client.post_note_edit(
@@ -3150,6 +3184,371 @@ The OpenReview Team.
 '''
 
         assert openreview_client.get_edges(invitation='CABJ/Reviewers/-/Assignment_Availability', tail='~Paul_Last1')[0].label == 'Unavailable'
+
+        ## Case 1: the name behind tag.profile was removed, so the vouch tag profile was
+        ## remapped to the vouchee's remaining profile id, in place (same id, original cdate)
+        vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Last1')
+        assert len(vouch_tags) == 1
+        assert vouch_tags[0].signature == '~Renamevoucher_Voucher1'
+        assert vouch_tags[0].label == 'Colleague|Massachusetts Institute of Technology'
+        assert vouch_tags[0].id == vouch_tag_id
+        assert vouch_tags[0].cdate == vouch_tag_cdate
+
+        ## Case 2: removing the name behind tag.signature must remap the vouch tag signature
+        ## to the voucher's new profile id. Give the voucher a publication (so the name removal
+        ## is not auto-accepted) and a second, preferred name, then remove the original one that
+        ## the tag is signed with.
+        rename_voucher_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Renamevoucher_Voucher1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Voucher paper' },
+                    'abstract': { 'value': 'Voucher abstract' },
+                    'authors': { 'value': ['Renamevoucher Voucher'] },
+                    'authorids': { 'value': ['~Renamevoucher_Voucher1'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+
+        voucher_profile = rename_voucher_client.get_profile('~Renamevoucher_Voucher1')
+        voucher_profile.content['names'].append({
+            'first': 'Renamevoucher',
+            'middle': 'Alternate',
+            'last': 'Voucher',
+            'preferred': True
+        })
+        rename_voucher_client.post_profile(voucher_profile)
+
+        voucher_profile = rename_voucher_client.get_profile('~Renamevoucher_Voucher1')
+        assert len(voucher_profile.content['names']) == 2
+        assert voucher_profile.content['names'][1]['username'] == '~Renamevoucher_Alternate_Voucher1'
+
+        ## Request removal of the original name (signed with the name being kept)
+        request_note = rename_voucher_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~Renamevoucher_Alternate_Voucher1'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'Renamevoucher Voucher' },
+                    'usernames': { 'value': ['~Renamevoucher_Voucher1'] },
+                    'comment': { 'value': 'remove the original name' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, request_note['id'])
+
+        decision_note = support_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            signatures=['openreview.net/Support'],
+            note = openreview.api.Note(
+                id = request_note['note']['id'],
+                content={ 'status': { 'value': 'Accepted' } }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, decision_note['id'])
+
+        ## the original voucher name is gone and the profile id is now the alternate
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Renamevoucher_Voucher1'):
+            openreview_client.get_group('~Renamevoucher_Voucher1')
+
+        ## the vouch tag signature was remapped to the voucher's new profile id, in place:
+        ## the same tag (same id) keeps its original creation date and label
+        vouch_tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Paul_Last1')
+        assert len(vouch_tags) == 1
+        assert vouch_tags[0].signature == '~Renamevoucher_Alternate_Voucher1'
+        assert vouch_tags[0].label == 'Colleague|Massachusetts Institute of Technology'
+        assert vouch_tags[0].id == vouch_tag_id
+        assert vouch_tags[0].cdate == vouch_tag_cdate
+
+    def test_rename_unified_authors_submission(self, openreview_client, test_client, helpers, support_client):
+        '''A profile listed as an author of a submission that uses the unified
+        ``author{}`` schema should have its username (and display name) replaced in
+        the authors object when one of its names is removed.'''
+
+        ## Set up a venue whose submission uses the unified author object schema
+        venue = Venue(openreview_client, 'UNAME.org/2026/Conference', 'openreview.net/Support')
+        venue.submission_stage = openreview.stages.SubmissionStage(
+            double_blind=False,
+            unified_authors=True,
+            due_date=datetime.datetime.now() + datetime.timedelta(minutes=30))
+        venue.review_stage = openreview.stages.ReviewStage()
+        venue.setup(program_chair_ids=['uname_pc@mail.com'])
+        venue.create_submission_stage()
+
+        submission_inv = openreview_client.get_invitation('UNAME.org/2026/Conference/-/Submission')
+        assert submission_inv.edit['note']['content']['authors']['value']['param']['type'] == 'author{}'
+
+        ## Create a profile with an alternate name
+        marie_client = helpers.create_user('marie@profile.org', 'Marie', 'Last', alternates=[], institution='google.com')
+        profile = marie_client.get_profile(marie_client.profile.id)
+        profile.content['homepage'] = 'https://marie.google.com'
+        profile.content['names'].append({
+            'first': 'Marie',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        marie_client.post_profile(profile)
+        profile = marie_client.get_profile(email_or_id='~Marie_Last1')
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][1]['username'] == '~Marie_Alternate_Last1'
+
+        ## Marie submits a paper listing herself by the alternate username in the unified author object
+        submission = marie_client.post_note_edit(
+            invitation='UNAME.org/2026/Conference/-/Submission',
+            signatures=['~Marie_Alternate_Last1'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Unified Authors Name Removal' },
+                    'abstract': { 'value': 'Testing username replacement in the unified author object.' },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'Marie Alternate Last',
+                                'username': '~Marie_Alternate_Last1',
+                                'institutions': [{ 'domain': 'google.com', 'country': 'US' }]
+                            }
+                        ]
+                    },
+                    'keywords': { 'value': ['name', 'removal'] },
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
+        note_id = submission['note']['id']
+
+        note = openreview_client.get_note(note_id)
+        assert note.content['authors']['value'][1]['username'] == '~Marie_Alternate_Last1'
+        assert note.content['authors']['value'][1]['fullname'] == 'Marie Alternate Last'
+        assert note.authorids == ['~SomeFirstName_User1', '~Marie_Alternate_Last1']
+
+        group = openreview_client.get_group('UNAME.org/2026/Conference/Submission1/Authors')
+        assert '~Marie_Alternate_Last1' in group.members
+
+        ## A per-paper invitation that locks the authors with literal author objects
+        ## (the literal analog of the ${...} author-lock reference). Its embedded
+        ## username must also be rewritten when the name is removed.
+        openreview_client.post_invitation_edit(
+            invitations='UNAME.org/2026/Conference/-/Edit',
+            readers=['UNAME.org/2026/Conference'],
+            writers=['UNAME.org/2026/Conference'],
+            signatures=['UNAME.org/2026/Conference'],
+            replacement=False,
+            invitation=openreview.api.Invitation(
+                id='UNAME.org/2026/Conference/Submission1/-/Locked_Authors_Revision',
+                invitees=['UNAME.org/2026/Conference'],
+                readers=['everyone'],
+                writers=['UNAME.org/2026/Conference'],
+                signatures=['UNAME.org/2026/Conference'],
+                edit={
+                    'signatures': ['UNAME.org/2026/Conference/Submission1/Authors'],
+                    'readers': ['UNAME.org/2026/Conference', 'UNAME.org/2026/Conference/Submission1/Authors'],
+                    'writers': ['UNAME.org/2026/Conference'],
+                    'note': {
+                        'id': note_id,
+                        'content': {
+                            'authors': {
+                                'value': [
+                                    {
+                                        'fullname': 'SomeFirstName User',
+                                        'username': '~SomeFirstName_User1',
+                                        'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                                    },
+                                    {
+                                        'fullname': 'Marie Alternate Last',
+                                        'username': '~Marie_Alternate_Last1',
+                                        'institutions': [{ 'domain': 'google.com', 'country': 'US' }]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            ))
+
+        locked_inv = openreview_client.get_invitation('UNAME.org/2026/Conference/Submission1/-/Locked_Authors_Revision')
+        assert locked_inv.edit['note']['content']['authors']['value'][1]['username'] == '~Marie_Alternate_Last1'
+
+        ## Request to remove the alternate name
+        request_note = marie_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~Marie_Last1'],
+            note=openreview.api.Note(
+                content={
+                    'name': { 'value': 'Marie Alternate Last' },
+                    'usernames': { 'value': ['~Marie_Alternate_Last1'] },
+                    'comment': { 'value': 'typo in my name' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, request_note['id'])
+
+        ## The name appears in a publication, so the request is sent for manual review
+        messages = openreview_client.get_messages(to='marie@profile.org', subject='Profile name removal request has been received')
+        assert len(messages) == 1
+
+        ## Support accepts the request
+        decision_note = support_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            signatures=['openreview.net/Support'],
+            note=openreview.api.Note(
+                id=request_note['note']['id'],
+                content={
+                    'status': { 'value': 'Accepted' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, decision_note['id'])
+
+        note = openreview_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+        ## The username (and display name) is replaced with the preferred name in the unified author object
+        note = openreview_client.get_note(note_id)
+        assert note.content['authors']['value'][1]['username'] == '~Marie_Last1'
+        assert note.content['authors']['value'][1]['fullname'] == 'Marie Last'
+        assert note.authorids == ['~SomeFirstName_User1', '~Marie_Last1']
+
+        ## The per-paper Authors group membership is updated too
+        group = openreview_client.get_group('UNAME.org/2026/Conference/Submission1/Authors')
+        assert '~Marie_Alternate_Last1' not in group.members
+        assert '~Marie_Last1' in group.members
+
+        ## The literal author object embedded in the invitation is rewritten as well
+        locked_inv = openreview_client.get_invitation('UNAME.org/2026/Conference/Submission1/-/Locked_Authors_Revision')
+        assert locked_inv.edit['note']['content']['authors']['value'][1]['username'] == '~Marie_Last1'
+        assert locked_inv.edit['note']['content']['authors']['value'][1]['fullname'] == 'Marie Last'
+        assert locked_inv.edit['note']['content']['authors']['value'][0]['username'] == '~SomeFirstName_User1'
+
+        ## The alternate profile group is gone
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Marie_Alternate_Last1'):
+            openreview_client.get_group('~Marie_Alternate_Last1')
+
+        profile = marie_client.get_profile(email_or_id='~Marie_Last1')
+        assert len(profile.content['names']) == 1
+        assert profile.content['names'][0]['username'] == '~Marie_Last1'
+
+    def test_replace_email_unified_authors_submission(self, openreview_client, helpers, support_client):
+        '''An author listed by email (no profile yet) in the unified ``author{}``
+        schema should have its username (and the derived author group membership)
+        replaced with the profile ID once a profile is created for that email.'''
+
+        ## 1. Configure the Submission invitation to allow emails in the username field of the authors object
+        openreview_client.post_invitation_edit(
+            invitations='UNAME.org/2026/Conference/-/Edit',
+            readers=['UNAME.org/2026/Conference'],
+            writers=['UNAME.org/2026/Conference'],
+            signatures=['UNAME.org/2026/Conference'],
+            replacement=False,
+            invitation=openreview.api.Invitation(
+                id='UNAME.org/2026/Conference/-/Submission',
+                edit={
+                    'note': {
+                        'content': {
+                            'authors': {
+                                'value': {
+                                    'param': {
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'regex': r'^(~\S+|\S+@\S+\.\S+)$',
+                                                    'mismatchError': 'must be a valid profile ID or email'
+                                                }
+                                            },
+                                            'institutions': {
+                                                'param': {
+                                                    'type': 'object{}',
+                                                    'properties': {
+                                                        'name': { 'param': { 'type': 'string' } },
+                                                        'domain': { 'param': { 'type': 'string' } },
+                                                        'country': { 'param': { 'type': 'string' } },
+                                                    },
+                                                    'optional': True
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ))
+
+        submission_inv = openreview_client.get_invitation('UNAME.org/2026/Conference/-/Submission')
+        username_param = submission_inv.edit['note']['content']['authors']['value']['param']['properties']['username']['param']
+        assert username_param['regex'] == r'^(~\S+|\S+@\S+\.\S+)$'
+
+        ## Marie submits a paper listing a co-author by an email that has no profile yet
+        marie_client = helpers.get_user('marie@profile.org')
+        submission = marie_client.post_note_edit(
+            invitation='UNAME.org/2026/Conference/-/Submission',
+            signatures=['~Marie_Last1'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Unified Authors Email Replacement' },
+                    'abstract': { 'value': 'Testing email replacement in the unified author object.' },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'Marie Last',
+                                'username': '~Marie_Last1',
+                                'institutions': [{ 'domain': 'google.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'Sofia Author',
+                                'username': 'sofia@profile.org',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            }
+                        ]
+                    },
+                    'keywords': { 'value': ['email', 'replacement'] },
+                    'pdf': { 'value': '/pdf/' + 'q' * 40 + '.pdf' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
+        note_id = submission['note']['id']
+        paper_number = submission['note']['number']
+
+        ## 2. The paper is submitted with the email in the username field of the author object
+        note = openreview_client.get_note(note_id)
+        assert note.content['authors']['value'][1]['username'] == 'sofia@profile.org'
+        assert note.content['authors']['value'][1]['fullname'] == 'Sofia Author'
+        assert note.authorids == ['~Marie_Last1', 'sofia@profile.org']
+
+        authors_group_id = f'UNAME.org/2026/Conference/Submission{paper_number}/Authors'
+        group = openreview_client.get_group(authors_group_id)
+        assert 'sofia@profile.org' in group.members
+        assert '~Sofia_Author1' not in group.members
+
+        ## 3. Create a profile with that email; the API replaces the email with the profile ID
+        helpers.create_user('sofia@profile.org', 'Sofia', 'Author', alternates=[], institution='mail.com')
+
+        ## Wait for the internal process that replaces the email with the tilde id in submissions
+        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
+
+        note = openreview_client.get_note(note_id)
+        assert note.content['authors']['value'][1]['username'] == '~Sofia_Author1'
+        assert note.content['authors']['value'][1]['fullname'] == 'Sofia Author'
+        assert note.content['authors']['value'][0]['username'] == '~Marie_Last1'
+        assert note.authorids == ['~Marie_Last1', '~Sofia_Author1']
+
+        ## The derived per-paper Authors group membership is updated too
+        group = openreview_client.get_group(authors_group_id)
+        assert 'sofia@profile.org' not in group.members
+        assert '~Sofia_Author1' in group.members
 
     def test_remove_name_and_update_relations(self, openreview_client, helpers, support_client):
 
@@ -3679,7 +4078,55 @@ The OpenReview Team.
                 }
             ))
         
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])         
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
+
+        ## Add a DBLP publication and claim authorship as Harold
+        dblp_xml = '''<article key="journals/corr/abs-9999-12345" publtype="informal" mdate="2024-01-10">
+<author>Harold Last</author>
+<author>Test Client</author>
+<title>A DBLP Paper.</title>
+<year>2024</year>
+<journal>CoRR</journal>
+<url>db/journals/corr/corr9999.html#abs-9999-12345</url>
+</article>
+'''
+
+        dblp_edit = harold_client_v2.post_note_edit(
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            signatures = ['~Harold_Last1'],
+            content = {
+                'xml': { 'value': dblp_xml }
+            },
+            note = openreview.api.Note(
+                external_id = 'dblp:journals/corr/abs-9999-12345',
+                content={
+                    'title': { 'value': 'A DBLP Paper' },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'Harold Last', 'username': ''},
+                            {'fullname': 'Test Client', 'username': ''},
+                        ],
+                    },
+                    'venue': { 'value': 'CoRR' },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=dblp_edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=dblp_edit['id'], process_index=1)
+
+        harold_client_v2.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Harold_Last1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Harold_Last1' },
+                'author_name': { 'value': 'Harold Last' },
+            },
+            note = openreview.api.Note(
+                id = dblp_edit['note']['id']
+            )
+        )
 
         ## Create committee groups
         openreview_client.post_group_edit(
@@ -3713,7 +4160,7 @@ The OpenReview Team.
         first_anon_group_id = anon_groups[0].id                
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Harold_Last1'})
-        assert len(publications) == 3
+        assert len(publications) == 4
 
         edit = support_client.post_note_edit(
             invitation = 'openreview.net/Support/-/Profile_Email_Removal',
@@ -3730,19 +4177,36 @@ The OpenReview Team.
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Harold_Last1'})
-        assert len(publications) == 3
-        assert ['~SomeFirstName_User1', '~Paul_Last1', '~Harold_Last1'] == publications[0].content['authorids']['value']
-        assert '~Harold_Last1' in publications[1].writers
-        assert '~Harold_Last1' in publications[1].signatures
-        assert ['Harold Last', 'Test Client', 'Another Author'] == publications[1].content['authors']['value']
-        assert ['~Harold_Last1', 'test@mail.com', 'another@mail.com'] == publications[1].content['authorids']['value']
-        assert ['Harold Last', 'Test Client'] == publications[2].content['authors']['value']
-        assert ['~Harold_Last1', 'test@mail.com'] == publications[2].content['authorids']['value']
-        assert '~Harold_Last1' in publications[2].writers
-        assert '~Harold_Last1' in publications[2].signatures
-        publication_edits = openreview_client.get_note_edits(note_id=publications[0].id)
-        assert publication_edits[0].readers == [publications[0].domain]
-        assert publication_edits[0].content['origin']['value'] == 'remove email process function'        
+        assert len(publications) == 4
+        publications_by_title = { p.content['title']['value']: p for p in publications }
+
+        submission = publications_by_title['Paper title']
+        assert ['~SomeFirstName_User1', '~Paul_Last1', '~Harold_Last1'] == submission.content['authorids']['value']
+
+        paper_2 = publications_by_title['Paper title 2']
+        assert '~Harold_Last1' in paper_2.writers
+        assert '~Harold_Last1' in paper_2.signatures
+        assert ['Harold Last', 'Test Client', 'Another Author'] == paper_2.content['authors']['value']
+        assert ['~Harold_Last1', 'test@mail.com', 'another@mail.com'] == paper_2.content['authorids']['value']
+
+        paper_1 = publications_by_title['Paper title 1']
+        assert ['Harold Last', 'Test Client'] == paper_1.content['authors']['value']
+        assert ['~Harold_Last1', 'test@mail.com'] == paper_1.content['authorids']['value']
+        assert '~Harold_Last1' in paper_1.writers
+        assert '~Harold_Last1' in paper_1.signatures
+
+        ## The DBLP publication stores authors as dicts with the tilde id as username,
+        ## so it has no top-level authorids field and is left untouched by the email removal.
+        dblp_publication = publications_by_title['A DBLP Paper']
+        assert 'authorids' not in dblp_publication.content
+        assert dblp_publication.content['authors']['value'] == [
+            {'fullname': 'Harold Last', 'username': '~Harold_Last1'},
+            {'fullname': 'Test Client', 'username': ''},
+        ]
+
+        publication_edits = openreview_client.get_note_edits(note_id=submission.id)
+        assert publication_edits[0].readers == [submission.domain]
+        assert publication_edits[0].content['origin']['value'] == 'remove email process function'
 
         group = openreview_client.get_group('ICMLR.cc/Reviewers')
         assert 'alternate_harold@profile.org' not in group.members
@@ -4084,3 +4548,283 @@ The OpenReview Team.
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=tag.id)
+
+    def test_blocked_status_visible_to_active_venues(self, openreview_client, support_client, helpers):
+
+        ## The Profile_Blocked_Status invitation should be readable by members of active_venues,
+        ## so program chairs of active venues can see which profiles have been blocked.
+
+        pc_client = helpers.create_user('pc_blocked@venue.org', 'ProgramChair', 'Blocked', alternates=[], institution='google.com')
+
+        venue_id = 'BlockedStatus.cc/2025/Conference'
+        pc_group_id = f'{venue_id}/Program_Chairs'
+
+        ## Set up the venue group and its Program Chairs group, mirroring how a real venue is wired:
+        ## PC user -> Program_Chairs -> venue group -> active_venues
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=venue_id,
+                readers=['everyone'],
+                writers=[venue_id],
+                signatories=[venue_id],
+                members=[],
+                signatures=['~Super_User1']
+            )
+        )
+
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=pc_group_id,
+                readers=['everyone'],
+                writers=[venue_id],
+                signatories=[venue_id, pc_group_id],
+                members=['~ProgramChair_Blocked1'],
+                signatures=['~Super_User1']
+            )
+        )
+
+        openreview_client.add_members_to_group(venue_id, pc_group_id)
+        openreview_client.add_members_to_group('active_venues', venue_id)
+
+        ## A program chair of an active venue can read the invitation
+        invitation = pc_client.get_invitation('openreview.net/Support/-/Profile_Blocked_Status')
+        assert invitation
+        assert 'active_venues' in invitation.readers
+
+        ## A user who does not belong to any active venue cannot read it
+        random_client = helpers.create_user('random_blocked@venue.org', 'Random', 'Blocked', alternates=[], institution='google.com')
+        with pytest.raises(openreview.OpenReviewException):
+            random_client.get_invitation('openreview.net/Support/-/Profile_Blocked_Status')
+
+    def test_vouch_for_profile(self, openreview_client, support_client, helpers):
+
+        def register_unmoderated_user(email, first, last):
+            ## Creates a profile without logging the user in (it may be pending moderation)
+            guest = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+            res = guest.register_user(email=email, fullname=f'{first} {last}', password=helpers.strong_password)
+            username = res.get('id')
+            profile_content = {
+                'names': [{ 'fullname': f'{first} {last}', 'username': username, 'preferred': True }],
+                'emails': [email],
+                'preferredEmail': email,
+                'homepage': f"https://{first}{last}{int(time.time())}.openreview.net",
+                'history': [{
+                    'position': 'PhD Student',
+                    'start': 2017,
+                    'end': None,
+                    'institution': { 'country': 'US', 'domain': email.split('@')[1] }
+                }]
+            }
+            guest.activate_user(email, profile_content)
+            return username
+
+        ## The vouching quotas are stored on the invitation so the UI can show users their limits
+        vouch_invitation = openreview_client.get_invitation('openreview.net/Support/-/Vouch')
+        assert vouch_invitation.content['lifetimeLimit']['value'] == 20
+        assert vouch_invitation.content['monthLimit']['value'] == 5
+
+        ## Voucher: established user with an institutional email -> activated automatically as institutional
+        voucher_client = helpers.create_user('voucher@umass.edu', 'Voucher', 'User', institution='umass.edu')
+        assert openreview_client.get_profile('~Voucher_User1').state == 'Active Institutional'
+
+        def add_voucher_relation(username, name):
+            ## The voucher must declare a relation to the user they vouch for
+            profile = voucher_client.get_profile(voucher_client.profile.id)
+            profile.content.setdefault('relations', []).append({
+                'relation': 'Colleague',
+                'name': name,
+                'username': username,
+                'start': 2020,
+                'end': None
+            })
+            voucher_client.post_profile(profile)
+
+        ## A user activated automatically without an institutional email is not allowed to vouch
+        helpers.create_user('autovoucher@gmail.com', 'Autovoucher', 'User')
+        assert openreview_client.get_profile('~Autovoucher_User1').state == 'Active Automatic'
+
+        ## Enable moderation so newly created profiles without an institutional email need moderation
+        config_note = openreview_client.get_notes(invitation='openreview.net/-/OpenReview_Config')[0]
+        support_client.post_note_edit(
+            invitation='openreview.net/-/OpenReview_Config',
+            signatures=['openreview.net/Support'],
+            note=openreview.api.Note(
+                id=config_note.id,
+                content={
+                    'moderate': { 'value': 'Yes' },
+                    'weekend_moderation': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        try:
+            ## New user without an institutional email -> pending moderation, then rejected
+            ## by the moderation team. A profile must be rejected before it can be vouched for.
+            register_unmoderated_user('vouchee@gmail.com', 'Vouchee', 'User')
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Needs Moderation'
+
+            support_client.moderate_profile('~Vouchee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+
+            ## A non-institutional (Active Automatic) user cannot vouch: their profile is active
+            ## but has no institutional email, so the preprocess rejects them at the email check.
+            ## We attempt it twice in a row: the preprocess rejection must release the in-process
+            ## lock so the immediate retry is processed again (and rejected for the same reason)
+            ## instead of failing with an "already in process" error.
+            autovoucher_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='autovoucher@gmail.com', password=helpers.strong_password)
+            for _ in range(2):
+                with pytest.raises(openreview.OpenReviewException, match=r'you must have an institutional email in your profile'):
+                    autovoucher_client.post_tag(
+                        openreview.api.Tag(
+                            invitation='openreview.net/Support/-/Vouch',
+                            signature='~Autovoucher_User1',
+                            profile='~Vouchee_User1'
+                        )
+                    )
+
+            ## The profile is still rejected
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+
+            ## The target profile must exist. Vouching for a non-existent profile is rejected
+            ## so it does not pollute the "Vouched Profiles" list or consume the voucher's quota.
+            with pytest.raises(openreview.OpenReviewException, match=r'(?i)profile not found'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Nonexistent_User1'
+                    )
+                )
+
+            ## The target profile must be in state Rejected. An already-active profile cannot be vouched for.
+            with pytest.raises(openreview.OpenReviewException, match=r'only vouch for a profile that has been rejected'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Autovoucher_User1'
+                    )
+                )
+
+            ## No vouch tag was created for either invalid target
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Autovoucher_User1')) == 0
+
+            ## The voucher must have a relation to the vouched user in their profile. The voucher
+            ## has not declared ~Vouchee_User1 as a relation yet, so the vouch is rejected.
+            with pytest.raises(openreview.OpenReviewException, match=r'you must have a relation to them in your profile'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Vouchee_User1'
+                    )
+                )
+
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')) == 0
+
+            ## A qualified voucher with a declared relation vouches for the rejected user -> the profile gets activated
+            add_voucher_relation('~Vouchee_User1', 'Vouchee User')
+            vouch_tag = voucher_client.post_tag(
+                openreview.api.Tag(
+                    invitation='openreview.net/Support/-/Vouch',
+                    signature='~Voucher_User1',
+                    profile='~Vouchee_User1',
+                    label='Colleague|Massachusetts Institute of Technology'
+                )
+            )
+
+            helpers.await_queue_edit(openreview_client, edit_id=vouch_tag.id)
+
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Active'
+
+            tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')
+            assert len(tags) == 1
+            assert tags[0].signature == '~Voucher_User1'
+            assert tags[0].label == 'Colleague|Massachusetts Institute of Technology'
+
+            ## A user that was activated through a vouch cannot vouch for others
+            register_unmoderated_user('vouchee2@gmail.com', 'Voucheetwo', 'User')
+            support_client.moderate_profile('~Voucheetwo_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            assert openreview_client.get_profile('~Voucheetwo_User1').state == 'Rejected'
+
+            vouchee_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='vouchee@gmail.com', password=helpers.strong_password)
+            with pytest.raises(openreview.OpenReviewException, match=r'your profile was activated by a vouch'):
+                vouchee_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Vouchee_User1',
+                        profile='~Voucheetwo_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Voucheetwo_User1').state == 'Rejected'
+
+            ## A user with an active profile but no institutional email cannot vouch.
+            ## This profile is accepted manually by support (not through a vouch) so it
+            ## passes the active-state and not-vouched checks and reaches the email check.
+            register_unmoderated_user('manualaccept@gmail.com', 'Manualaccept', 'User')
+            support_client.moderate_profile('~Manualaccept_User1', 'accept')
+            assert openreview_client.get_profile('~Manualaccept_User1').state == 'Active'
+
+            manualaccept_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='manualaccept@gmail.com', password=helpers.strong_password)
+            with pytest.raises(openreview.OpenReviewException, match=r'you must have an institutional email in your profile'):
+                manualaccept_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Manualaccept_User1',
+                        profile='~Voucheetwo_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Voucheetwo_User1').state == 'Rejected'
+
+            ## The voucher can vouch for at most 5 users per month. They already vouched for
+            ## ~Vouchee_User1 above, so 4 more vouches bring them to the limit of 5.
+            for name in ['Voucheea', 'Voucheeb', 'Voucheec', 'Voucheed']:
+                register_unmoderated_user(f'{name.lower()}@gmail.com', name, 'User')
+                support_client.moderate_profile(f'~{name}_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+                add_voucher_relation(f'~{name}_User1', f'{name} User')
+                limit_tag = voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile=f'~{name}_User1',
+                        label='Colleague|Massachusetts Institute of Technology'
+                    )
+                )
+                helpers.await_queue_edit(openreview_client, edit_id=limit_tag.id)
+                assert openreview_client.get_profile(f'~{name}_User1').state == 'Active'
+
+            ## The voucher now has 5 vouches in the last month, so the 6th one is rejected
+            register_unmoderated_user('voucheee@gmail.com', 'Voucheee', 'User')
+            support_client.moderate_profile('~Voucheee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            add_voucher_relation('~Voucheee_User1', 'Voucheee User')
+            with pytest.raises(openreview.OpenReviewException, match=r'more than 5 users per month'):
+                voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Voucher_User1',
+                        profile='~Voucheee_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Voucheee_User1').state == 'Rejected'
+
+        finally:
+            ## Restore moderation to its disabled state so the rest of the suite keeps auto-activating users
+            config_note = openreview_client.get_notes(invitation='openreview.net/-/OpenReview_Config')[0]
+            support_client.post_note_edit(
+                invitation='openreview.net/-/OpenReview_Config',
+                signatures=['openreview.net/Support'],
+                note=openreview.api.Note(
+                    id=config_note.id,
+                    content={
+                        'moderate': { 'value': 'No' },
+                        'weekend_moderation': { 'value': 'Yes' }
+                    }
+                )
+            )

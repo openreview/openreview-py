@@ -1513,16 +1513,16 @@ Total Errors: {len(errors)}
 
         all_authorids = []
         for submission in submissions:
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
             all_authorids = all_authorids + authorids
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True)
-        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, with_relations=True, as_dict=True)   
+        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, with_relations=True, as_dict=True)
 
         info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
 
         for submission in submissions:
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
 
             # Extract domains from each authorprofile
             author_ids = set()
@@ -1687,7 +1687,7 @@ Total Errors: {len(errors)}
                             true_author_found = True
                             break
                     if not true_author_found:
-                        owner = submission.content["authorids"]["value"][0]
+                        owner = submission.authorids[0]
                 print(f"Creating submission for {submission.id} with owner {owner}")
                 try:
                     owner_profile = self.client.get_profile(owner)
@@ -2413,8 +2413,11 @@ OpenReview Team'''
 
         for venue_id in active_venues:
 
-            venue_group = client.get_group(venue_id)
-            
+            venue_group = openreview.tools.get_group(client, venue_id)
+
+            if venue_group is None:
+                continue
+
             if hasattr(venue_group, 'domain') and venue_group.content and 'journal_request_id' not in venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
@@ -2463,7 +2466,7 @@ OpenReview Team'''
                                                 client.post_edge(invitation_edge)
 
                                             ## Check conflicts
-                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
+                                            author_profiles = openreview.tools.get_profiles(client, submission.authorids, with_publications=True, with_relations=True)
                                             conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
 
                                             if conflicts:
@@ -2586,7 +2589,7 @@ OpenReview Team'''
         all_authors = {
             author_id
             for s in submissions_from_scores
-            for author_id in s.content['authorids']['value']
+            for author_id in s.authorids
         }
 
         author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
@@ -2629,7 +2632,7 @@ OpenReview Team'''
                 authors_list_a = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
-                    for author_id in papers_by_id_a[paper_id_a].content['authorids']['value']
+                    for author_id in papers_by_id_a[paper_id_a].authorids
                 ]
                 authors_str_a = '|'.join(authors_list_a)
 
@@ -2639,7 +2642,7 @@ OpenReview Team'''
                 authors_list_b = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
-                    for author_id in papers_by_id_b[paper_id_b].content['authorids']['value']
+                    for author_id in papers_by_id_b[paper_id_b].authorids
                 ]
                 authors_str_b = '|'.join(authors_list_b)
 

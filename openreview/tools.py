@@ -514,7 +514,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
         first_author_last_name = 'anonymous'
         authors = 'Anonymous'
     else:
-        note_author_list = note.content['authors'] if isinstance(note.content['authors'], list) else note.content['authors']['value']
+        note_author_list = note.authors
         first_author_last_name = note_author_list[0].split(' ')[-1].lower()
         if names_reversed:
             # last, first
@@ -1291,7 +1291,7 @@ def datetime_millis(dt):
     :rtype: int
     """
     if isinstance(dt, datetime.datetime):
-        return int(dt.timestamp() * 1000)        
+        return int(dt.timestamp() * 1000)
 
     return dt
 
@@ -1473,7 +1473,8 @@ def get_all_venues(client):
 def info_function_builder(policy_function):
     def inner(profile, n_years=None, submission_venueid=None):
         common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
-                    'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+                    'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com',
+                    'independent-researcher.org']
         argspec = inspect.getfullargspec(policy_function)
         if 'submission_venueid' in argspec.args:
             result = policy_function(profile, n_years, submission_venueid)

@@ -78,14 +78,14 @@ Title: {note.content['title']['value']}{note_abstract}
         )
 
     # send co-author emails
-    if ('authorids' in note.content and len(note.content['authorids']['value'])):
+    if note.authorids:
         author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
             subject=author_subject,
             message=author_message,
-            recipients=note.content['authorids']['value'],
+            recipients=[authors_group_id],
             ignoreRecipients=[edit.tauthor],
             replyTo=contact,
             sender=sender
