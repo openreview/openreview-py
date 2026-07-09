@@ -98,7 +98,8 @@ def process(client, edit, invitation):
     venue.decision_stage = openreview.stages.DecisionStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=6),
         due_date=submission_deadline_datetime + datetime.timedelta(weeks=7),
-        accept_options=['Accept (Oral)', 'Accept (Poster)']
+        options=['Accept', 'Reject'],
+        accept_options=['Accept']
     )
 
     venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(

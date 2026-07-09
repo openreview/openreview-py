@@ -1073,11 +1073,24 @@ note={under review}
 
         invitation =  pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision')
         assert invitation
+        assert invitation.content['decision_options']['value'] == ['Accept', 'Reject']
+        assert invitation.content['accept_decision_options']['value'] == ['Accept']
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision/Dates')
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision/Readers')
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision/Decision_Options')
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision_Upload')
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
+
+        # edit decision options
+        edit = pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Decision/Decision_Options',
+            content={
+                'decision_options': { 'value': ['Accept (Oral)', 'Accept (Poster)', 'Reject'] },
+                'accept_decision_options': { 'value': ['Accept (Oral)', 'Accept (Poster)'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision-0-1', count=2)
 
         # create child invitations
         now = datetime.datetime.now()
@@ -1092,7 +1105,7 @@ note={under review}
                 'expiration_date': { 'value': new_duedate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision-0-1', count=3)
 
         invitations = openreview_client.get_invitations(invitation='EFGH.cc/2025/Conference/-/Decision')
         assert len(invitations) == 10
@@ -1207,7 +1220,7 @@ note={under review}
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision_Release-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision-0-1', count=4)
 
         # assert decisions are visible to PCs, paper ACs and paper authors
         decisions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/Submission1/-/Decision', sort='number:asc')

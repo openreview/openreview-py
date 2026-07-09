@@ -2258,7 +2258,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
 
-        assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
+        assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept']
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
@@ -2278,18 +2278,18 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         edit = pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Decision/Decision_Options',
             content={
-                'decision_options': { 'value': ['Accept', 'Revision Needed', 'Reject'] },
-                'accept_decision_options': { 'value': ['Accept'] }
+                'decision_options': { 'value': ['Accept', 'Poster', 'Revision Needed', 'Reject'] },
+                'accept_decision_options': { 'value': ['Accept', 'Poster'] }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=3)
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
-        assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept']
+        assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept', 'Poster']
 
         venue_group = openreview_client.get_group('ABCD.cc/2025/Conference')
-        assert 'accept_decision_options' in venue_group.content and venue_group.content['accept_decision_options']['value'] == ['Accept']
+        assert 'accept_decision_options' in venue_group.content and venue_group.content['accept_decision_options']['value'] == ['Accept', 'Poster']
 
         now = datetime.datetime.now()
         now = openreview.tools.datetime_millis(now)
