@@ -268,6 +268,11 @@ jobs:
       - image: cimg/redis:7.2
       - image: mongo:8.0
         command: [ --replSet, rs0 ]
+        environment:
+          # Workaround for SERVER-121912: MongoDB 8.x's vendored TCMalloc violates
+          # the rseq ABI and crashes on Linux kernel >= 6.19 (CircleCI's runner
+          # kernel). Disabling glibc rseq sidesteps the crash.
+          GLIBC_TUNABLES: "glibc.pthread.rseq=0"
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
@@ -361,6 +366,11 @@ jobs:
       - image: cimg/redis:7.2
       - image: mongo:8.0
         command: [ --replSet, rs0 ]
+        environment:
+          # Workaround for SERVER-121912: MongoDB 8.x's vendored TCMalloc violates
+          # the rseq ABI and crashes on Linux kernel >= 6.19 (CircleCI's runner
+          # kernel). Disabling glibc rseq sidesteps the crash.
+          GLIBC_TUNABLES: "glibc.pthread.rseq=0"
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
@@ -422,6 +432,11 @@ jobs:
       - image: cimg/redis:7.2
       - image: mongo:8.0
         command: [ --replSet, rs0 ]
+        environment:
+          # Workaround for SERVER-121912: MongoDB 8.x's vendored TCMalloc violates
+          # the rseq ABI and crashes on Linux kernel >= 6.19 (CircleCI's runner
+          # kernel). Disabling glibc rseq sidesteps the crash.
+          GLIBC_TUNABLES: "glibc.pthread.rseq=0"
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
