@@ -145,43 +145,51 @@ class TestServeAsReviewerValidation():
         assert 'serve_as_reviewer' in submission_inv.edit['note']['content']
         assert submission_inv.edit['note']['content']['serve_as_reviewer']['value']['param']['enum'] == ['${...3/authors/value/*/username}']
 
+    def _submission_content(self, serve_as_reviewer):
+        '''Full submission content with a given serve_as_reviewer value. The authors
+        are always included because the enum reference resolves against the posted
+        edit, not the merged note -- omitting authors would leave the reference
+        unresolved and reject even valid values.'''
+        return {
+            'title': { 'value': 'Serve As Reviewer Submission' },
+            'abstract': { 'value': 'Abstract for the serve-as-reviewer test.' },
+            'authors': {
+                'value': [
+                    {
+                        'fullname': 'SomeFirstName User',
+                        'username': '~SomeFirstName_User1',
+                        'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                    },
+                    {
+                        'fullname': 'AuthorOne SARC',
+                        'username': '~AuthorOne_SARC1',
+                        'institutions': [{ 'domain': 'sarc.cc', 'country': 'US' }]
+                    }
+                ]
+            },
+            'keywords': { 'value': ['serve', 'as', 'reviewer'] },
+            'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+            'serve_as_reviewer': { 'value': serve_as_reviewer },
+            'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+            'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+        }
+
     def test_submission_with_valid_serve_as_reviewer_succeeds(self, openreview_client, test_client, helpers):
         '''
         `serve_as_reviewer` is a list whose every element is one of the authors
-        (a valid subset of authors/username). This must be accepted.
+        (a valid subset of authors/username). This must be accepted, regardless of
+        order and for any subset size.
         '''
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
+        # both authors -> valid subset
         edit = test_client.post_note_edit(
             invitation='sarc.cc/2026/Conference/-/Submission',
             signatures=['~SomeFirstName_User1'],
             note=openreview.api.Note(
                 license='CC BY 4.0',
-                content={
-                    'title': { 'value': 'Serve As Reviewer Submission' },
-                    'abstract': { 'value': 'Abstract for the serve-as-reviewer test.' },
-                    'authors': {
-                        'value': [
-                            {
-                                'fullname': 'SomeFirstName User',
-                                'username': '~SomeFirstName_User1',
-                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
-                            },
-                            {
-                                'fullname': 'AuthorOne SARC',
-                                'username': '~AuthorOne_SARC1',
-                                'institutions': [{ 'domain': 'sarc.cc', 'country': 'US' }]
-                            }
-                        ]
-                    },
-                    'keywords': { 'value': ['serve', 'as', 'reviewer'] },
-                    'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
-                    # every element is one of the authors above -> valid subset
-                    'serve_as_reviewer': { 'value': ['~SomeFirstName_User1', '~AuthorOne_SARC1'] },
-                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
-                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
-                }
+                content=self._submission_content(['~SomeFirstName_User1', '~AuthorOne_SARC1'])
             )
         )
 
@@ -189,7 +197,40 @@ class TestServeAsReviewerValidation():
 
         submissions = openreview_client.get_notes(invitation='sarc.cc/2026/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 1
-        assert submissions[0].content['serve_as_reviewer']['value'] == ['~SomeFirstName_User1', '~AuthorOne_SARC1']
+        submission = submissions[0]
+        assert submission.content['serve_as_reviewer']['value'] == ['~SomeFirstName_User1', '~AuthorOne_SARC1']
+
+        # 1. both authors in reverse order -> still a valid subset (order-independent)
+        edit = test_client.post_note_edit(
+            invitation='sarc.cc/2026/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                id=submission.id,
+                license='CC BY 4.0',
+                content=self._submission_content(['~AuthorOne_SARC1', '~SomeFirstName_User1'])
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        submission = openreview_client.get_note(submission.id)
+        assert submission.content['serve_as_reviewer']['value'] == ['~AuthorOne_SARC1', '~SomeFirstName_User1']
+
+        # 2. a single author -> still a valid subset
+        edit = test_client.post_note_edit(
+            invitation='sarc.cc/2026/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                id=submission.id,
+                license='CC BY 4.0',
+                content=self._submission_content(['~AuthorOne_SARC1'])
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        submission = openreview_client.get_note(submission.id)
+        assert submission.content['serve_as_reviewer']['value'] == ['~AuthorOne_SARC1']
+
+        # still just the one submission
+        submissions = openreview_client.get_notes(invitation='sarc.cc/2026/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 1
 
     def test_submission_with_invalid_serve_as_reviewer_fails(self, openreview_client, test_client, helpers):
         '''
