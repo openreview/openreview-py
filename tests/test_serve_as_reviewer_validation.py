@@ -120,10 +120,7 @@ class TestServeAsReviewerValidation():
                             'value': {
                                 'param': {
                                     'type': 'string[]',
-                                    # allowed values = the usernames of this submission's authors (same edit).
-                                    # `...` spreads the resolved array into the enum; `3/` pops enum/0, value,
-                                    # serve_as_reviewer to land at note/content, then reads authors/value/*/username.
-                                    'enum': ['${...3/authors/value/*/username}'],
+                                    'enum': ['${3/authors/value/*/username}'],
                                     'input': 'select'
                                 }
                             }
@@ -143,7 +140,7 @@ class TestServeAsReviewerValidation():
         submission_inv = openreview.tools.get_invitation(openreview_client, 'sarc.cc/2026/Conference/-/Submission')
         assert submission_inv
         assert 'serve_as_reviewer' in submission_inv.edit['note']['content']
-        assert submission_inv.edit['note']['content']['serve_as_reviewer']['value']['param']['enum'] == ['${...3/authors/value/*/username}']
+        assert submission_inv.edit['note']['content']['serve_as_reviewer']['value']['param']['enum'] == ['${3/authors/value/*/username}']
 
     def _submission_content(self, serve_as_reviewer):
         '''Full submission content with a given serve_as_reviewer value. The authors
