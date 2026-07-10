@@ -73,7 +73,7 @@ markupsafe==3.0.3
     # via
     #   jinja2
     #   nbconvert
-mistune==3.2.1
+mistune==3.3.0
     # via nbconvert
 nbclient==0.10.4
     # via nbconvert
