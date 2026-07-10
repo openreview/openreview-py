@@ -13,18 +13,22 @@ class TestServeAsReviewerValidation():
     should validate that the value of `serve_as_reviewer` (a list) is a subset of the
     `authors` field's usernames *of the same edit*.
 
-    The proposed way to express this in the invitation is a `$` reference that points
-    at a sibling field of the edit, e.g. the enum of allowed values is:
+    This is expressed with a `$` reference in the field's enum that points at the
+    sibling `authors` field of the same edit:
 
-        "${4/authors/username/*}"
+        "${...3/authors/value/*/username}"
 
-    i.e. "the set of usernames of every author of this submission".
+    which resolves, per edit, to the list of author usernames. The existing API
+    interpreter already supports this (no server-side change needed):
+      - `...`      spreads the resolved array into the enum (so enum becomes the
+                   flat list of usernames, not a single nested array);
+      - `3/`       pops enum-index, `value`, `serve_as_reviewer` off the field's path
+                   to land at `note/content`;
+      - `authors/value/*/username` reads each author-object's username.
 
-    This file drives the desired behaviour: posting a submission whose
-    `serve_as_reviewer` is NOT one of the authors must be rejected, while posting one
-    that IS one of the authors must succeed. The exact reference (level number, the
-    `*` wildcard, whether it needs the spread `...` prefix) is what we will pin down
-    while implementing the validation on the API side.
+    Because `serve_as_reviewer` is a `string[]` whose allowed values are exactly the
+    author usernames, AJV validates it as a subset of the authors: posting a value
+    that is NOT one of the authors is rejected, one that IS an author is accepted.
     '''
 
     def test_setup(self, openreview_client, helpers):
@@ -116,8 +120,10 @@ class TestServeAsReviewerValidation():
                             'value': {
                                 'param': {
                                     'type': 'string[]',
-                                    # allowed values = the usernames of this submission's authors (same edit)
-                                    'enum': ['${4/authors/username/*}'],
+                                    # allowed values = the usernames of this submission's authors (same edit).
+                                    # `...` spreads the resolved array into the enum; `3/` pops enum/0, value,
+                                    # serve_as_reviewer to land at note/content, then reads authors/value/*/username.
+                                    'enum': ['${...3/authors/value/*/username}'],
                                     'input': 'select'
                                 }
                             }
@@ -137,7 +143,7 @@ class TestServeAsReviewerValidation():
         submission_inv = openreview.tools.get_invitation(openreview_client, 'sarc.cc/2026/Conference/-/Submission')
         assert submission_inv
         assert 'serve_as_reviewer' in submission_inv.edit['note']['content']
-        assert submission_inv.edit['note']['content']['serve_as_reviewer']['value']['param']['enum'] == ['${4/authors/username/*}']
+        assert submission_inv.edit['note']['content']['serve_as_reviewer']['value']['param']['enum'] == ['${...3/authors/value/*/username}']
 
     def test_submission_with_valid_serve_as_reviewer_succeeds(self, openreview_client, test_client, helpers):
         '''
@@ -227,5 +233,7 @@ class TestServeAsReviewerValidation():
                 )
             )
 
-        # The exact message will be defined when the validation is implemented.
-        print(openReviewError.value)
+        # The non-author value is rejected against the resolved enum of author usernames.
+        error = str(openReviewError.value)
+        assert 'serve_as_reviewer' in error
+        assert '~ProgramChair_SARC1' in error
