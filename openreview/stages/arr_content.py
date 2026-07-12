@@ -1500,7 +1500,7 @@ arr_official_review_content = {
         "value": {
             "param": {
                 "type": "string",
-                "enum": [{ "value": "Yes", "description": "I certify that the review I entered accurately reflects my assessment of the work. If you used any type of automated tool to help you craft your review, I hereby certify that its use was restricted to improving grammar and style, and the substance of the review is either my own work or the work of an acknowledged secondary reviewer."}],
+                "enum": [{ "value": "Yes", "description": "I certify that the review I entered accurately reflects my assessment of the work, and any assistance is appropriately declared in the following questions."}],
                 "input": "checkbox"
             }
         }        
@@ -1513,7 +1513,7 @@ arr_official_review_content = {
             "optional": True
             }
         },
-        "description": "If another person contributed significantly to this review, please indicate their OpenReview profile ID here. If they do not have a profile, please ask them to create one. Note that only EICs, SAEs, and AEs can see this field - other reviewers cannot. (optional)",
+        "description": "[OPTIONAL] If another person contributed significantly to this review, please indicate their OpenReview profile ID here. If they do not have a profile, please ask them to create one. Note that only EICs, SAEs, and AEs can see this field - other reviewers cannot. You can also use the new 'declare secondary reviewer' button, which will allow the secondary reviewer to have read-only access to author response, so that it is easier for them to check whether the review needs updating (see https://aclrollingreview.org/reviewerguidelines#secondary-reviewer).",
         "order": 24
     },
     "publication_ethics_policy_compliance": {
@@ -1549,7 +1549,7 @@ arr_official_review_content = {
             }
         },
         "order": 26,
-        "description": "This field is only used for improving the paper-reviewer matching at ARR. It is shown to the chairs, but not to the authors. If this wasn't a good match for you, please indicate why:"
+        "description": "[OPTIONAL] This field is only used for improving the paper-reviewer matching at ARR. It is shown to the chairs, but not to the authors. If this wasn't a good match for you, please indicate why:"
     }
 }
 
