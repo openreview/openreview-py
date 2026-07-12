@@ -1046,7 +1046,7 @@ arr_official_review_content = {
             }
         },
         "order": 4,
-        "description": "What are the concerns that you have about the paper that would cause you to favor prioritizing other high-quality papers that are also under consideration for publication? These could include concerns about correctness of the results or argumentation, limited perceived impact of the methods or findings (note that impact can be significant both in broad or in narrow sub-fields), lack of clarity in exposition, or any other reason why interested readers of *ACL papers may gain less from this paper than they would from other papers under consideration. Where possible, please number your concerns so authors may respond to them individually. Maximum length 20000 characters. \n\n If the paper is a resubmission, please discuss whether previous feedback has been adequately addressed (revision notes should be in the submission under 'explanation of revisions PDF')."
+        "description": "What are the concerns that you have about the paper that would cause you to favor prioritizing other high-quality papers that are also under consideration for publication? These could include concerns about correctness of the results or argumentation, limited perceived impact of the methods or findings (note that impact can be significant both in broad or in narrow sub-fields), lack of clarity in exposition, or any other reason why interested readers of *ACL papers may gain less from this paper than they would from other papers under consideration. Where possible, please number your concerns so authors may respond to them individually, and mark the points where a convincing response could lead you to reconsider your assessment. Maximum length 20000 characters. \n\n If the paper is a resubmission, please discuss whether previous feedback has been adequately addressed (revision notes should be in the submission under 'explanation of revisions PDF')."
     },
     "comments_suggestions_and_typos": {
         "value": {
@@ -1240,6 +1240,22 @@ arr_official_review_content = {
         "order": 9,
         "description": "If this paper was committed to an *ACL conference, do you believe it should be accepted? If you recommend conference, Findings and or even award consideration, you can still suggest minor revisions (e.g. typos, non-core missing refs, etc.).\n\n Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper. ACL award policy: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy \n\n Main vs Findings papers: the main criteria for Findings are soundness and reproducibility. Conference recommendations may also consider novelty, impact and other factors."
     },
+    "revisions_confirmation": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "N/A, this is not a resubmission",
+                    "N/A, the authors have not supplied it",
+                    "Yes, I have checked the revisions"
+                ],
+                "optional": False,
+                "type": "string[]"
+            }
+        },
+        "order": 10,
+        "description": "If this paper is a resubmission, please search for the author-supplied explanation of revisions (see https://aclrollingreview.org/authors#step4) at the top of the page, and confirm that you've considered it."
+    },
     "best_paper_justification": {
         "value": {
             "param": {
@@ -1250,7 +1266,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 10,
+        "order": 11,
         "description": "If your overall assessment for this paper is either 'Consider for award' or 'Borderline award', please briefly describe why."
     },
     "limitations_and_societal_impact": {
@@ -1263,7 +1279,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 11,
+        "order": 12,
         "description": "Have the authors adequately discussed the limitations and potential positive and negative societal impacts of their work? If not, please include constructive suggestions for improvement. Authors should be rewarded rather than punished for being up front about the limitations of their work and any potential negative societal impact. You are encouraged to think through whether any critical points are missing and provide these as feedback for the authors. Consider, for example, cases of exclusion of user groups, overgeneralization of findings, unfair impacts on traditionally marginalized populations, bias confirmation, under- and overexposure of languages or approaches, and dual use (see Hovy and Spruit, 2016, for examples of those). Consider who benefits from the technology if it is functioning as intended, as well as who might be harmed, and how. Consider the failure modes, and in case of failure, who might be harmed and how."
     },
     "ethical_concerns": {
@@ -1277,7 +1293,7 @@ arr_official_review_content = {
                 "default": "There are no concerns with this submission"
             }
         },
-        "order": 12,
+        "order": 13,
         "description": "Please review the ACL code of ethics (https://www.aclweb.org/portal/content/acl-code-ethics) and the ARR checklist submitted by the authors in the submission form. If there are ethical issues with this paper, please describe them and the extent to which they have been acknowledged or addressed by the authors. Otherwise, enter None."
     },
     "needs_ethics_review": {
@@ -1292,7 +1308,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 13,
+        "order": 14,
         "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then ensure you have explained why in the question above, and we will try to ensure that it receives a separate ethics review."
     },
     "reproducibility": {
@@ -1325,7 +1341,7 @@ arr_official_review_content = {
                 "type": "integer"
             }
         },
-        "order": 14,
+        "order": 15,
         "description": "Is there enough information in this paper for a reader to reproduce the main results, use results presented in this paper in future work (e.g., as a baseline), or build upon this work?"
     },
     "datasets": {
@@ -1358,7 +1374,7 @@ arr_official_review_content = {
                 "type": "integer"
             }
         },
-        "order": 15,
+        "order": 16,
         "description": "If the authors state (in anonymous fashion) that datasets will be released, how valuable will they be to others?"
     },
     "software": {
@@ -1391,7 +1407,7 @@ arr_official_review_content = {
                 "type": "integer"
             }
         },
-        "order": 16,
+        "order": 17,
         "description": "If the authors state (in anonymous fashion) that their software will be available, how valuable will it be to others?"
     },
     "Knowledge_of_or_educated_guess_at_author_identity": {
@@ -1406,7 +1422,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 17,
+        "order": 18,
         "description": "Do you think you know who wrote this paper (at least one author name or affiliation)?"
     },
     "Knowledge_of_paper": {
@@ -1422,7 +1438,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 18,
+        "order": 19,
         "description": "When did you come to know about the paper from outsde sources?"
     },
     "Knowledge_of_paper_source": {
@@ -1441,7 +1457,7 @@ arr_official_review_content = {
                 "type": "string[]"
             }
         },
-        "order": 19,
+        "order": 20,
         "description": "How did you come to know about the paper from outside sources?"
     },
     "Knowledge_of_paper_source_other": {
@@ -1453,7 +1469,7 @@ arr_official_review_content = {
             }
         },
         "description": "If you selected 'other' in the previous question, please provide details here.",
-        "order": 20
+        "order": 21
     },
     "impact_of_knowledge_of_paper": {
         "value": {
@@ -1471,7 +1487,7 @@ arr_official_review_content = {
             }
         },
         "description": "How (if at all) do you think your comments and ratings might have been different without this outside knowledge?",
-        "order": 21
+        "order": 22
     },
     "Knowledge_of_paper_additional": {
         "value": {
@@ -1482,7 +1498,7 @@ arr_official_review_content = {
             }
         },
         "description": "Is there anything you would like to explain about your answers to the last six questions? (optional)",
-        "order": 22
+        "order": 23
     },
     "Knowledge_of_authors_guess": {
         "value": {
@@ -1493,10 +1509,10 @@ arr_official_review_content = {
             }
         },
         "description": "If you chose that you 'can guess' authors identity in the question above, please write your guess here. (optional)",
-        "order": 23
+        "order": 24
     },
     "reviewer_certification": {
-        "order": 24,
+        "order": 25,
         "value": {
             "param": {
                 "type": "string",
@@ -1514,7 +1530,7 @@ arr_official_review_content = {
             }
         },
         "description": "[OPTIONAL] If another person contributed significantly to this review, please indicate their OpenReview profile ID here. If they do not have a profile, please ask them to create one. Note that only EICs, SAEs, and AEs can see this field - other reviewers cannot. You can also use the new 'declare secondary reviewer' button, which will allow the secondary reviewer to have read-only access to author response, so that it is easier for them to check whether the review needs updating (see https://aclrollingreview.org/reviewerguidelines#secondary-reviewer).",
-        "order": 24
+        "order": 26
     },
     "publication_ethics_policy_compliance": {
         "value": {
@@ -1529,7 +1545,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 25,
+        "order": 27,
         "description": "I certify that this review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read the paper fully and drafted the content and argumentation of the review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
     },
     "paper_matching_feedback": {
@@ -1548,7 +1564,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 26,
+        "order": 28,
         "description": "[OPTIONAL] This field is only used for improving the paper-reviewer matching at ARR. It is shown to the chairs, but not to the authors. If this wasn't a good match for you, please indicate why:"
     }
 }
