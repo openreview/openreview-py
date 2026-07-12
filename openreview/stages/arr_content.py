@@ -1531,7 +1531,26 @@ arr_official_review_content = {
         },
         "order": 25,
         "description": "I certify that this review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read the paper fully and drafted the content and argumentation of the review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
-    }        
+    },
+    "paper_matching_feedback": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "This work is too far out of my technical expertise",
+                    "This work is too far from my application/domain expertise or language(s)",
+                    "This match does not match my current research interests",
+                    "The core goals/premises of this work aren't aligned with mine",
+                    "The match is reasonable, but not my top choice if there was bidding",
+                    "Other"
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 26,
+        "description": "This field is only used for improving the paper-reviewer matching at ARR. It is shown to the chairs, but not to the authors. If this wasn't a good match for you, please indicate why:"
+    }
 }
 
 arr_metareview_content = {
