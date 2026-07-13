@@ -39,3 +39,8 @@ def process(client, edit, invitation):
             signature=journal.venue_id,
             sender=journal.get_message_sender()
         )   
+
+    if journal.should_enable_llm_review():
+        journal.invitation_builder.set_note_llm_review_invitation(note)
+
+        # add code here to call llm services, do not wait for the response, just send the request to the llm service and return

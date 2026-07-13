@@ -94,6 +94,9 @@ class Journal(object):
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
 
+    def get_llm_reviewer_id(self):
+        return f'{self.venue_id}/LLM_Reviewer'
+
     def get_reviewers_archived_id(self):
         return f'{self.get_reviewers_id()}/Archived'
 
@@ -169,6 +172,12 @@ class Journal(object):
     def get_release_review_id(self, number=None):
         return self.__get_invitation_id(name='Review_Release', number=number)
 
+    def get_release_llm_review_id(self, number=None):
+        return self.__get_invitation_id(name='LLM_Review_Release', number=number)
+
+    def get_survey_invitation_id(self, number=None):
+        return self.__get_invitation_id(name='Survey', number=number)
+
     def get_release_comment_id(self, number=None):
         return self.__get_invitation_id(name='Comment_Release', number=number)
 
@@ -231,12 +240,15 @@ class Journal(object):
     def get_review_id(self, number=None):
         return self.__get_invitation_id(name='Review', number=number)
 
+    def get_llm_review_id(self, number=None):
+        return self.__get_invitation_id(name='LLM_Review', number=number)
+
     def get_review_rating_id(self, signature=None):
         return self.__get_invitation_id(name='Rating', prefix=signature)
 
     def get_review_rating_enabling_id(self, number=None):
         return self.__get_invitation_id(name='Review_Rating_Enabling', number=number)
-    
+
     def get_official_recommendation_enabling_id(self, number=None):
         return self.__get_invitation_id(name='Official_Recommendation_Enabling', number=number)
 
@@ -695,6 +707,9 @@ class Journal(object):
 
     def should_skip_camera_ready_revision(self):
         return self.settings.get('skip_camera_ready_revision', False)
+    
+    def should_enable_llm_review(self):
+        return self.settings.get('enable_llm_review', False)
 
     def get_certifications(self):
         return self.settings.get('certifications', [])
@@ -1262,6 +1277,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
         print('Release reviews...')
         invitation = self.invitation_builder.set_note_release_review_invitation(submission)
 
+        if self.should_enable_llm_review():
+            print('Release LLM review...')
+            self.invitation_builder.set_note_release_llm_review_invitation(submission)
+
         print('Release comments...')
         invitation = self.invitation_builder.set_note_release_comment_invitation(submission)
 
@@ -1272,6 +1291,9 @@ Your {lower_formatted_invitation} on a submission has been {action}
             duedate = cdate + datetime.timedelta(weeks=self.get_recommendation_period_length())
             self.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
             assigned_action_editor = openreview.tools.get_profiles(self.client, ids_or_emails=[submission.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=self.get_preferred_emails_invitation_id())[0]
+
+            if self.should_enable_llm_review():
+                self.invitation_builder.set_note_survey_invitation(submission, cdate, duedate)
 
             review_visibility = 'public' if self.is_submission_public() else 'visible to all the reviewers'
 
