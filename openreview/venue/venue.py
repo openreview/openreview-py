@@ -159,6 +159,10 @@ class Venue(object):
             self.use_senior_area_chairs = True
             preferred_email_groups.append(self.get_senior_area_chairs_id())
 
+        if request_note.content.get('publication_chairs_support',{}).get('value', False):
+            self.use_publication_chairs = True
+            preferred_email_groups.append(self.get_publication_chairs_id())
+
         self.preferred_emails_groups = preferred_email_groups
         self.automatic_reviewer_assignment = True
 
