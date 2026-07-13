@@ -95,6 +95,7 @@ def set_initial_stages_v2(request_forum, venue):
     venue.review_stage = openreview.stages.ReviewStage(
         start_date = (submission_second_due_date if submission_second_due_date else submission_due_date) + datetime.timedelta(weeks=1),
         allow_de_anonymization = (request_forum.content.get('author_and_reviewer_anonymity', {}).get('value', 'No anonymity') == 'No anonymity'),
+        submission_reviewer_roles = [venue.reviewers_name],
     )
 
 def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=False):
@@ -128,8 +129,10 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.senior_area_chairs_name = venue.senior_area_chair_roles[0]
         venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
         venue.area_chairs_name = venue.area_chair_roles[0]
+        venue.submission_area_chair_roles = [venue.area_chairs_name]
         venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
         venue.reviewers_name = venue.reviewer_roles[0]
+        venue.submission_reviewer_roles = [venue.reviewers_name]
         venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
         venue.submission_human_verification = venue_content.get('submission_human_verification', {}).get('value')
         venue.submission_license = note.content.get('submission_license', ['CC BY 4.0'])
@@ -176,6 +179,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)
+        venue.review_stage.submission_reviewer_roles = [venue.reviewers_name]
         if 'bid_due_date' in note.content:
             venue.bid_stages = get_bid_stages(note, reviewers_id=venue.get_reviewers_id(), area_chairs_id=venue.get_area_chairs_id(), senior_area_chairs_id=venue.get_senior_area_chairs_id())
         venue.meta_review_stage = get_meta_review_stage(note)
