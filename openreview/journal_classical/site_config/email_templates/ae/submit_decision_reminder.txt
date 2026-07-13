@@ -1,0 +1,14 @@
+Dear {{{{fullname}}}},
+
+This is a reminder that {short_name} submission {submission_number}: {submission_title} is ready for an action-editor decision and the decision deadline has passed.
+
+Reviews received: {reviews_received} submitted; release threshold {required_reviews}
+Decision deadline: {decision_duedate}
+
+Please submit the decision from the paper page:
+
+{paper_url}
+
+We thank you for your essential contribution to {short_name}.
+
+The {short_name} Editors-in-Chief

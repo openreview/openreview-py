@@ -1,0 +1,11 @@
+Dear Action Editor,
+
+An author sent a private note for {short_name} submission {submission_number}: {submission_title}.
+
+Title: {contact_title}
+
+{contact_message}
+
+View the note: {contact_note_url}
+
+JMLR

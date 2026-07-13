@@ -1,0 +1,13 @@
+{
+  "workflow_version": "2026-05-ui-helper",
+  "paper_states": {},
+  "categories": [
+    "invitation",
+    "note-readers",
+    "groups",
+    "group-readers",
+    "edges",
+    "details",
+    "role-context-ui"
+  ]
+}

@@ -1,0 +1,13 @@
+Dear {{{{fullname}}}},
+
+This is a reminder that the camera-ready verification for {short_name} submission {submission_number}: {submission_title} is still unresolved.
+
+Verification deadline: {verification_duedate}
+
+Please check the latest uploaded camera-ready material and either approve it or request a revision from the paper page. Verify the JMLR formatting, generated OpenReview-aware dates and paper id, accepted-paper publication date, and absence of an Editor line:
+
+{paper_url}
+
+We thank you for your essential contribution to {short_name}.
+
+The {short_name} Editors-in-Chief

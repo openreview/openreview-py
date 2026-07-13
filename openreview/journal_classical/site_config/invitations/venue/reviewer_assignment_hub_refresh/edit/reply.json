@@ -1,0 +1,41 @@
+{
+  "signatures": [
+    "JMLR"
+  ],
+  "readers": [
+    "JMLR"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "note": {
+    "signatures": [
+      "JMLR"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "writers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "content": {
+      "note_id": {
+        "value": {
+          "param": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      },
+      "paper_number": {
+        "value": {
+          "param": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+Dear {{{{fullname}}}},
+
+This is a reminder that {short_name} submission {submission_number}: {submission_title} is past its paper-level review deadline and still has not reached its review-release threshold.
+
+Reviews received: {reviews_received} submitted; release threshold {required_reviews}
+Review deadline: {review_duedate}
+
+Please check the paper page, follow up with reviewers, extend the review deadline, modify reviewer assignments, proceed with available reviews, or submit a decision if appropriate:
+
+{paper_url}
+
+We thank you for your essential contribution to {short_name}.
+
+The {short_name} Editors-in-Chief

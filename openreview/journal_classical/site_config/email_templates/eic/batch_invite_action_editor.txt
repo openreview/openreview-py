@@ -1,0 +1,36 @@
+Dear {{fullname}},
+
+You have been invited by the JMLR Editors-in-Chief to serve as an Action Editor for the Journal of Machine Learning Research (JMLR).
+
+JMLR is one of the premier journals in machine learning, publishing high-quality work across the field. See https://www.jmlr.org/ for more information about the journal.
+
+Action Editors play a central role in JMLR's review process: they handle assigned submissions, select reviewers, guide review progress, and submit editorial decisions according to JMLR policy. We would be grateful for your expertise and judgment in this role.
+
+JMLR uses OpenReview to manage reviewer invitations, review progress, reviewer matching, and reviewer assignment automation, reducing the administrative effort required of Action Editors.
+
+As a rough guide, an Action Editor would normally carry up to about {{ACTION_EDITORS_MAX_PAPERS}} active papers, with no two new paper assignments within {{ACTION_EDITOR_NEW_ASSIGNMENT_COOLDOWN_DAYS}} days. Resubmission reassignments may exceed this rough guidance.
+
+If you are willing to serve as a JMLR Action Editor, please accept below.
+
+Accepting this invitation requires signing in to OpenReview. If you already have an OpenReview account, please log in before opening the Accept link:
+
+{{SITE_URL}}/login
+
+If you do not yet have an OpenReview account, please create one, then log in and open the Accept link. OpenReview account sign-in is required to accept this invitation:
+
+{{SITE_URL}}/signup
+
+Accept:
+{{accept_url}}
+
+If you prefer not to serve as an Action Editor at this time, you may decline below. Declining does not require OpenReview login.
+
+Decline:
+{{decline_url}}
+
+This invitation expires {{BULK_RECRUITMENT_NO_RESPONSE_EXPIRATION_DAYS}} days after it is sent if no response is recorded.
+
+Thank you for considering this invitation.
+
+Best regards,
+The JMLR Editors-in-Chief

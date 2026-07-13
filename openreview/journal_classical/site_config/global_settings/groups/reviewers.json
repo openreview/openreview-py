@@ -1,0 +1,14 @@
+{
+  "id": "JMLR/Reviewers",
+  "readers": [
+    "JMLR",
+    "JMLR/Editors_In_Chief",
+    "JMLR/Reviewers"
+  ],
+  "signatures": [
+    "JMLR"
+  ],
+  "writers": [
+    "JMLR"
+  ]
+}

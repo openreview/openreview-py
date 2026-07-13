@@ -1,0 +1,12 @@
+{
+  "id": "JMLR/Action_Editors",
+  "readers": [
+    "everyone"
+  ],
+  "signatures": [
+    "JMLR"
+  ],
+  "writers": [
+    "JMLR"
+  ]
+}

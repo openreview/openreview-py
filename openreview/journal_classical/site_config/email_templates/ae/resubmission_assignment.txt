@@ -1,0 +1,17 @@
+Dear {{{{fullname}}}},
+
+With this email, we request that you continue managing the review process for a revised {short_name} submission "{submission_number}: {submission_title}".
+
+This paper appears to be a resubmission of a previous {short_name} submission that you handled. When possible, {short_name} preserves action-editor continuity across resubmission rounds.
+
+Please review the revised submission and inspect the reviewer-assignment workflow from the paper page or your Action Editor pending tasks. Selected previous reviewers may already have been assigned automatically for continuity. Add or adjust reviewers there if needed. If the paper should not continue in review, use the normal decision path.
+
+{previous_reviewer_assignment_prep_section}
+
+Open the revised paper task here:
+
+{invitation_url}
+
+We thank you for your continued contribution to {short_name}.
+
+The {short_name} Editors-in-Chief

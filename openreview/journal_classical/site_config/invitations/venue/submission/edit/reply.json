@@ -1,0 +1,328 @@
+{
+"signatures": {
+	"param": {
+	"items": [
+		{
+		"prefix": "~.*"
+		}
+	]
+	}
+},
+"readers": [
+	"JMLR/Editors_In_Chief",
+	"JMLR/Paper${2/note/number}/Reviewers",
+	"JMLR/Paper${2/note/number}/Action_Editors",
+	"JMLR/Paper${2/note/number}/Authors"
+],
+"writers": [
+	"JMLR"
+],
+	"note": {
+		"signatures": [
+		"JMLR/Paper${2/number}/Authors"
+		],
+		"readers": [
+		"JMLR/Editors_In_Chief",
+		"JMLR/Paper${2/number}/Reviewers",
+		"JMLR/Paper${2/number}/Action_Editors",
+		"JMLR/Paper${2/number}/Authors",
+		"${2/content/authorids/value}"
+		],
+	"writers": [
+	"JMLR"
+	],
+	"content": {
+	"title": {
+		"value": {
+		"param": {
+			"type": "string",
+			"maxLength": 250
+		}
+		},
+		"description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
+		"order": 1
+	},
+	"abstract": {
+		"value": {
+		"param": {
+			"type": "string",
+			"maxLength": 5000,
+			"input": "textarea"
+		}
+		},
+		"description": "Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
+		"order": 2
+	},
+	"authors": {
+		"value": {
+		"param": {
+			"type": "string[]",
+			"regex": "[^;,\\n]+(,[^,\\n]+)*",
+			"hidden": true,
+			"optional": true
+		}
+		},
+		"description": "Comma separated list of author names.",
+		"order": 98
+	},
+	"authorids": {
+		"order": 99,
+		"description": "Internal OpenReview author identities derived from Author List.",
+		"value": {
+		"param": {
+			"type": "profile[]",
+			"regex": "^~\\S+$",
+			"mismatchError": "must be a valid OpenReview profile ID",
+			"hidden": true,
+			"optional": true
+		}
+		}
+	},
+	"author_list": {
+		"order": 3,
+		"description": "Enter every author by OpenReview profile ID, in the same order as the paper author list. Separate IDs with commas only; line breaks are not allowed. Every author must have an OpenReview profile ID; email-only authors are not allowed. The submitting author's profile ID must be included. To find a profile ID, open the OpenReview profile page and copy the value after profile?id= in the URL, including the leading tilde character.",
+		"value": {
+		"param": {
+			"type": "string",
+			"input": "textarea",
+			"deletable": true
+		}
+		}
+	},
+	"conflict_of_interests": {
+		"order": 5,
+		"description": "Optional. Enter OpenReview profile IDs for people who may have a conflict of interest with this submission. Separate IDs with commas only; line breaks are not allowed. Leave this field empty if there are no OpenReview-profile conflicts to declare. Mention any other conflicts in the Cover Letter; they may be ignored by structured OpenReview conflict handling.",
+		"value": {
+		"param": {
+			"type": "string",
+			"input": "textarea",
+			"optional": true,
+			"deletable": true
+		}
+		}
+	},
+	"cover_letter": {
+		"order": 6,
+		"description": "Optional. Use this text box to explain whether this submission is an extended version of an earlier conference paper, and to explain any declared conflicts of interest. For resubmissions, authors may use this field for resubmission context and author-list policy explanations. Only author ordering changes are allowed for resubmissions. Adding, removing, replacing, renaming, or otherwise changing authors is not allowed. Use this field only to explain unusual author-list issues or editorial context. Impermissible author changes may cause desk rejection or later rejection at editorial discretion. You may also optionally recommend suitable action editors and reviewers.",
+		"value": {
+		"param": {
+			"type": "string",
+			"input": "textarea",
+			"maxLength": 10000,
+			"optional": true,
+			"deletable": true
+		}
+		}
+	},
+	"pdf": {
+		"value": {
+		"param": {
+			"type": "file",
+			"extensions": [
+			"pdf"
+			],
+			"maxSize": 50,
+			"optional": true
+		}
+		},
+		"description": "Required. Use the file chooser below to upload the main paper PDF. The file must end with .pdf.",
+		"order": 7
+	},
+	"previous_JMLR_submission_number": {
+		"value": {
+		"param": {
+			"type": "string",
+			"regex": "[0-9]+|N/A",
+			"optional": false,
+			"hidden": true
+		}
+		},
+		"description": "For resubmissions, enter the previous JMLR submission number. Fill in N/A if this is a new submission. Only author ordering changes are allowed for resubmissions. Adding, removing, replacing, renaming, or otherwise changing authors is not allowed. Impermissible author changes may cause desk rejection or later rejection at editorial discretion.",
+		"order": 11,
+		"readers": [
+		"JMLR"
+		]
+	},
+	"previous_JMLR_submission_URL": {
+		"value": {
+		"param": {
+			"type": "string",
+				"regex": "{{SITE_FORUM_REGEX}}|N/A",
+			"optional": true,
+			"hidden": true,
+			"default": "N/A"
+		}
+		},
+		"description": "Internal previous JMLR submission URL derived from Previous JMLR Submission Number.",
+		"order": 90,
+		"readers": [
+		"JMLR"
+		]
+	},
+	"previous_JMLR_submissions": {
+		"value": {
+		"param": {
+			"type": "string",
+			"optional": true,
+			"hidden": true,
+			"markdown": true
+		}
+		},
+		"description": "Derived previous JMLR submission chain, newest previous submission first. Each row is rendered as a linked paper number.",
+		"order": 91
+	},
+	"camera_ready_revision_action": {
+		"value": {
+		"param": {
+			"type": "string",
+			"optional": true,
+			"hidden": true,
+			"markdown": true
+		}
+		},
+		"description": "Internal author-visible launcher for the active Camera Ready Revision paper edit action.",
+		"order": 93,
+		"readers": [
+		"JMLR/Paper${4/number}/Authors"
+		]
+	},
+	"download_publication_files_action": {
+		"value": {
+		"param": {
+			"type": "string",
+			"optional": true,
+			"hidden": true,
+			"markdown": true
+		}
+		},
+		"description": "Internal Production Editor and Editor-in-Chief launcher for the active Download Publication Files browser page.",
+		"order": 94,
+		"readers": [
+		"JMLR/Editors_In_Chief",
+		"JMLR/Production_Editors"
+		]
+	},
+	"publication_metadata": {
+		"value": {
+		"param": {
+			"type": "object",
+			"optional": true,
+			"hidden": true
+		}
+		},
+		"description": "Derived publication metadata for final publication processing. This must not render inline on the paper forum; PE/EIC users download it as JSON through Download Publication Files.",
+		"order": 95,
+		"readers": [
+		"JMLR"
+		]
+	},
+	"author_change_summary": {
+		"value": {
+		"param": {
+			"type": "string",
+			"optional": true,
+			"hidden": true
+		}
+		},
+		"description": "Internal summary of detected resubmission author-name changes.",
+		"order": 92
+	},
+	"previous_author_names": {
+		"value": {
+		"param": {
+			"type": "string",
+			"optional": true,
+			"hidden": true
+		}
+		},
+		"description": "Internal previous author names used for resubmission author-change metadata.",
+		"order": 94
+	},
+	"current_author_names": {
+		"value": {
+		"param": {
+			"type": "string",
+			"optional": true,
+			"hidden": true
+		}
+		},
+		"description": "Internal current author names used for resubmission author-change metadata.",
+		"order": 95
+	},
+	"open_source_software": {
+		"value": {
+		"param": {
+			"type": "boolean",
+			"input": "checkbox",
+			"optional": true,
+			"deletable": true
+		}
+		},
+		"description": "Open Source Software (OSS) track submission. Check this box if this submission is for the JMLR Open Source Software (OSS) track.",
+		"order": 10
+	},
+	"supplementary_material": {
+		"value": {
+		"param": {
+			"type": "file",
+			"extensions": [
+			"zip",
+			"pdf"
+			],
+			"maxSize": {{SUPPLEMENTARY_MATERIAL_MAX_SIZE_MB}},
+			"optional": true,
+			"deletable": true
+		}
+		},
+		"description": "Optional. All supplementary material must be self-contained and zipped into a single file. The maximum file size is {{SUPPLEMENTARY_MATERIAL_MAX_SIZE_MB}}MB.",
+		"order": 8,
+		"readers": [
+		"JMLR/Editors_In_Chief",
+		"JMLR/Paper${4/number}/Action_Editors",
+		"JMLR/Paper${4/number}/Reviewers",
+		"JMLR/Paper${4/number}/Authors"
+		]
+	},
+	"response_to_reviewers": {
+		"value": {
+		"param": {
+			"type": "file",
+			"extensions": [
+			"pdf"
+			],
+			"maxSize": 50,
+			"optional": true,
+			"deletable": true
+		}
+		},
+		"description": "Required for resubmissions. Upload a PDF response to the previous reviewers. This field is hidden for new submissions.",
+		"order": 9,
+		"readers": [
+		"JMLR/Editors_In_Chief",
+		"JMLR/Paper${4/number}/Action_Editors",
+		"JMLR/Paper${4/number}/Reviewers",
+		"JMLR/Paper${4/number}/Authors"
+		]
+	},
+	"venue": {
+		"value": {
+		"param": {
+			"type": "string",
+			"const": "Submitted to JMLR",
+			"hidden": true
+		}
+		}
+	},
+	"venueid": {
+		"value": {
+		"param": {
+			"type": "string",
+			"const": "JMLR/Submitted",
+			"hidden": true
+		}
+		}
+	}
+	},
+	"license": "CC BY-SA 4.0"
+}
+}

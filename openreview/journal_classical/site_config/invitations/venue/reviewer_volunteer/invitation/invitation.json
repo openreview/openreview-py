@@ -1,0 +1,18 @@
+{
+  "id": "JMLR/-/Reviewer_Volunteer",
+  "readers": [
+    "everyone"
+  ],
+  "nonreaders": [
+    "JMLR/Reviewers"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "invitees": [
+    "~.*"
+  ],
+  "signatures": [
+    "JMLR"
+  ]
+}

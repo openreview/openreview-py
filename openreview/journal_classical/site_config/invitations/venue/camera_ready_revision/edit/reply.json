@@ -1,0 +1,156 @@
+  {
+    "signatures": [
+      "JMLR"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "content": {
+      "noteNumber": {
+        "value": {
+          "param": {
+            "type": "integer"
+          }
+        }
+      },
+      "noteId": {
+        "value": {
+          "param": {
+            "type": "string"
+          }
+        }
+      },
+      "duedate": {
+        "value": {
+          "param": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "invitation": {
+      "id": "JMLR/Paper${2/content/noteNumber/value}/-/Camera_Ready_Revision",
+      "invitees": [
+        "JMLR/Paper${3/content/noteNumber/value}/Authors"
+      ],
+      "readers": [
+        "JMLR/Paper${3/content/noteNumber/value}/Action_Editors",
+        "JMLR/Paper${3/content/noteNumber/value}/Authors"
+      ],
+      "writers": [
+        "JMLR"
+      ],
+      "signatures": [
+        "JMLR"
+      ],
+      "duedate": "${2/content/duedate/value}",
+      "dateprocesses": [
+        {
+          "dates": [
+            "#{4/duedate} + 86400000",
+            "#{4/duedate} + 604800000",
+            "#{4/duedate} + 2592000000"
+          ],
+          "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/camera_ready_revision/dateprocess_revision_reminder.py}}"
+        }
+      ],
+      "edit": {
+        "signatures": [
+          "JMLR/Paper${4/content/noteNumber/value}/Authors"
+        ],
+        "readers": [
+          "JMLR/Editors_In_Chief",
+          "JMLR/Paper${4/content/noteNumber/value}/Action_Editors",
+          "JMLR/Paper${4/content/noteNumber/value}/Authors"
+        ],
+        "writers": [
+          "JMLR/Paper${4/content/noteNumber/value}/Authors"
+        ],
+        "note": {
+          "id": "${4/content/noteId/value}",
+          "forum": "${4/content/noteId/value}",
+          "content": {
+            "pdf": {
+              "value": {
+                "param": {
+                  "type": "file",
+                  "extensions": [
+                    "pdf"
+                  ],
+                  "maxSize": 50
+                }
+              },
+              "description": "Camera-ready Main PDF.\n\nUpload checklist:\n- The existing file shown here is the current active main PDF from the paper record.\n- Upload the final camera-ready manuscript PDF to replace it for camera-ready verification and publication.\n- The file must end with .pdf.\n- Do not delete the existing file unless you are replacing it with a new PDF; submitting without a PDF is not allowed.",
+              "order": 1,
+              "readers": [
+                "JMLR/Editors_In_Chief",
+                "JMLR/Paper${7/content/noteNumber/value}/Action_Editors",
+                "JMLR/Paper${7/content/noteNumber/value}/Authors"
+              ]
+            },
+            "supplementary_material": {
+              "value": {
+                "param": {
+                  "type": "file",
+                  "extensions": [
+                    "zip",
+                    "pdf"
+                  ],
+                  "maxSize": {{SUPPLEMENTARY_MATERIAL_MAX_SIZE_MB}},
+                  "optional": true,
+                  "deletable": true
+                }
+              },
+              "description": "Camera-ready supplementary material. Optional single PDF or ZIP file only; leave empty if there is no supplementary material. The maximum file size is {{SUPPLEMENTARY_MATERIAL_MAX_SIZE_MB}}MB.",
+              "order": 2,
+              "readers": [
+                "JMLR/Editors_In_Chief",
+                "JMLR/Paper${7/content/noteNumber/value}/Action_Editors",
+                "JMLR/Paper${7/content/noteNumber/value}/Authors"
+              ]
+            },
+            "comments_to_action_editor": {
+              "order": 4,
+              "description": "Comments to Action Editor. Optional. Use this to explain requested revisions, formatting changes, or anything the Action Editor should check during camera-ready verification. This is not a paper metadata correction field.",
+              "value": {
+                "param": {
+                  "type": "string",
+                  "input": "textarea",
+                  "maxLength": 200000,
+                  "optional": true,
+                  "deletable": true
+                }
+              },
+              "readers": [
+                "JMLR/Editors_In_Chief",
+                "JMLR/Paper${7/content/noteNumber/value}/Action_Editors",
+                "JMLR/Paper${7/content/noteNumber/value}/Authors"
+              ]
+            },
+            "final_publication_author_list": {
+              "order": 3,
+              "description": "Final Publication Author List. Required. Enter OpenReview profile IDs only, separated by commas, in publication order. Line breaks are not allowed. Reordering the submitted authors is allowed. Adding, removing, replacing, or duplicating authors is not allowed and will be rejected when this form is submitted.",
+              "value": {
+                "param": {
+                  "type": "string",
+                  "input": "textarea",
+                  "maxLength": 200000
+                }
+              },
+              "readers": [
+                "JMLR/Editors_In_Chief",
+                "JMLR/Paper${7/content/noteNumber/value}/Action_Editors",
+                "JMLR/Paper${7/content/noteNumber/value}/Authors"
+              ]
+            }
+          }
+        }
+      },
+      "preprocess": "{{PYTHON_SCRIPT_JSON:invitations/venue/camera_ready_revision/edit_preprocess.py}}",
+      "process": "def process(client, edit, invitation):\n    meta_invitation = client.get_invitation(invitation.invitations[0])\n    script = meta_invitation.content[\"process_script\"]['value']\n    funcs = {\n        'openreview': openreview,\n        'datetime': datetime\n    }\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n"
+    },
+    "replacement": true
+  }

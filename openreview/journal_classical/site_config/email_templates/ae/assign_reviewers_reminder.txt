@@ -1,0 +1,15 @@
+Dear {{{{fullname}}}},
+
+This is a reminder that {short_name} submission {submission_number}: {submission_title} still needs reviewer assignments.
+
+Assigned reviewers: {assigned_count}/{required_reviewers}
+
+The reviewer-assignment deadline has passed and no decision has been made. Please assign reviewers or decide the paper if reviewer assignment is no longer appropriate.
+
+Assign reviewers here:
+
+{assign_reviewers_url}
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief

@@ -1,0 +1,9 @@
+Dear {{{{fullname}}}},
+
+{receipt_intro}
+
+Submission Number: {submission_number}
+
+Title: {submission_title}
+
+To view the submission, click here: {paper_url}

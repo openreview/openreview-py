@@ -1,0 +1,15 @@
+{
+  "id": "JMLR/-/Action_Editor_Candidate_Conflict_Refresh",
+  "readers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "invitees": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "signatures": [
+    "JMLR"
+  ]
+}

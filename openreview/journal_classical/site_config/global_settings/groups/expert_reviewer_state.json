@@ -1,0 +1,25 @@
+{
+  "id": "JMLR/Expert_Reviewer_State",
+  "readers": [
+    "JMLR",
+    "JMLR/Editors_In_Chief"
+  ],
+  "signatures": [
+    "JMLR"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "members": [],
+  "content": {
+    "description": {
+      "value": "Non-assigning Top Reviewer recognition state. Stores last_qualified_at timestamps and public-listing opt-out preferences only."
+    },
+    "last_qualified_at": {
+      "value": "{}"
+    },
+    "listing_opt_out": {
+      "value": "{}"
+    }
+  }
+}

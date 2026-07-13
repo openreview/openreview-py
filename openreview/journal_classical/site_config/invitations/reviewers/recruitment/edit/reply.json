@@ -1,0 +1,96 @@
+{
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "(anonymous)",
+          "optional": true
+        },
+        {
+          "value": "(guest)",
+          "optional": true
+        },
+        {
+          "prefix": "~",
+          "optional": true
+        }
+      ]
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief"
+  ],
+  "writers": [
+    "JMLR"
+  ],
+  "note": {
+    "signatures": [
+      "${3/signatures}"
+    ],
+    "readers": [
+      "JMLR/Editors_In_Chief",
+      "${2/content/user/value}"
+    ],
+    "writers": [
+      "JMLR"
+    ],
+    "content": {
+      "title": {
+        "order": 1,
+        "value": "Recruit response"
+      },
+      "user": {
+        "description": "email address or profile id",
+        "order": 2,
+        "value": {
+          "param": {
+            "type": "string"
+          }
+        }
+      },
+      "edge_id": {
+        "description": "Recruitment invite edge id",
+        "order": 3,
+        "value": {
+          "param": {
+            "type": "string"
+          }
+        }
+      },
+      "key": {
+        "description": "Email key hash",
+        "order": 4,
+        "value": {
+          "param": {
+            "type": "string",
+            "regex": ".{0,100}"
+          }
+        }
+      },
+      "response": {
+        "description": "Invitation response",
+        "order": 5,
+        "value": {
+          "param": {
+            "type": "string",
+            "enum": [
+              "Yes",
+              "No"
+            ],
+            "input": "radio"
+          }
+        }
+      },
+      "profile_id": {
+        "description": "resolved OpenReview profile id",
+        "order": 6,
+        "value": {
+          "param": {
+            "type": "string",
+            "optional": true
+          }
+        }
+      }
+    }
+  }
+}

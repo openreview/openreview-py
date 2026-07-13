@@ -1,0 +1,9 @@
+Many thanks for your submission to JMLR, "{submission_number}: {submission_title}". Unfortunately, after an initial editorial assessment, we have decided not to send it out for detailed review.
+
+JMLR receives many submissions, and some papers are rejected without external reviews after an initial editorial assessment. Common reasons include one or more of the following:
+
+- the paper is out of scope and would fit better in a different journal
+- the paper is in a field that is not of sufficient interest to our current group of action editors, making it difficult to find an action editor willing and able to handle its reviewing process
+- our initial assessment indicates that the chances of acceptance are very low
+
+We hope that this prompt decision lets you submit your work elsewhere without waiting through a long review process.
