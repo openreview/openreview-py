@@ -6392,21 +6392,22 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             referent=request_form.id,
             invitation=config_invitation.id
         )
-        author_response_date = next(
-            configuration.content['setup_author_response_date']
-            for configuration in configuration_notes
-            if configuration.content.get('setup_author_response_date')
-        )
+        close_author_response_date = None
+        for configuration in configuration_notes:
+            if configuration.content.get('close_author_response_date'):
+                close_author_response_date = configuration.content['close_author_response_date']
+                break
+        assert close_author_response_date
 
-        ## Step 1: Reject an extension that does not start after the configured author response date
+        ## Step 1: Reject an extension that does not start after the configured close author response date
         with pytest.raises(
             openreview.OpenReviewException,
-            match=r'The author response extension start date must be after the author response date.'
+            match=r'The author response extension start date must be after the close author response date.'
         ):
             pc_client.post_note(
                 openreview.Note(
                     content={
-                        'author_response_extension_start_date': author_response_date,
+                        'author_response_extension_start_date': close_author_response_date,
                         'author_response_extension_end_date': (now + datetime.timedelta(days=14)).strftime('%Y/%m/%d %H:%M')
                     },
                     invitation=config_invitation.id,
