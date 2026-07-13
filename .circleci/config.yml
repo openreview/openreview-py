@@ -73,17 +73,32 @@ commands:
             # Make token available to subsequent steps
             echo "export GITHUB_TOKEN=$TOKEN" >> $BASH_ENV
   setup-python:
-    description: "Select Python 3.10 for pip/python on the VM (matches the old cimg/python:3.10)"
+    description: "Select the requested Python version (latest patch) via pyenv on the VM"
+    parameters:
+      python-version:
+        type: string
     steps:
       - run:
-          name: Select Python 3.10
+          name: Select Python << parameters.python-version >>
           command: |
-            # Machine images manage Python through pyenv. Prefer a preinstalled 3.10.x;
-            # install the latest 3.10 only if none is present.
-            PY_VERSION=$(pyenv versions --bare | grep -E '^3\.10\.' | tail -1 || true)
-            if [ -z "$PY_VERSION" ]; then
-              pyenv install 3.10
-              PY_VERSION=$(pyenv versions --bare | grep -E '^3\.10\.' | tail -1)
+            REQUESTED="<< parameters.python-version >>"
+            # Machine images manage Python through pyenv. `pyenv install` needs a full
+            # version (e.g. 3.10.14). If a full X.Y.Z was requested, use it as-is;
+            # if only a minor (e.g. 3.10) was requested, resolve the latest installable
+            # patch (preferring one already present on the image).
+            if echo "$REQUESTED" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              PY_VERSION="$REQUESTED"
+              pyenv install -s "$PY_VERSION"
+            else
+              PY_VERSION=$(pyenv versions --bare | grep -E "^${REQUESTED}\.[0-9]+$" | sort -V | tail -1 || true)
+              if [ -z "$PY_VERSION" ]; then
+                PY_VERSION=$(pyenv install --list | tr -d ' ' | grep -E "^${REQUESTED}\.[0-9]+$" | sort -V | tail -1)
+                if [ -z "$PY_VERSION" ]; then
+                  echo "ERROR: could not resolve a ${REQUESTED}.x version from pyenv" >&2
+                  exit 1
+                fi
+                pyenv install -s "$PY_VERSION"
+              fi
             fi
             pyenv global "$PY_VERSION"
             python --version
@@ -107,24 +122,35 @@ commands:
       - run:
           name: Initialize MongoDB replica set
           command: |
+            ready=false
             for i in $(seq 1 30); do
               if docker exec mongo mongosh --quiet --eval 'db.adminCommand("ping").ok' >/dev/null 2>&1; then
+                ready=true
                 break
               fi
               echo "waiting for mongod... ($i)"
               sleep 2
             done
+            if [ "$ready" != "true" ]; then
+              echo "ERROR: mongod did not become ready after 60s" >&2
+              docker logs mongo 2>&1 | tail -50 || true
+              exit 1
+            fi
             docker exec mongo mongosh --quiet --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
       - run:
           name: Wait for Elasticsearch
           command: |
             for i in $(seq 1 30); do
               if curl -s http://localhost:9200 >/dev/null 2>&1; then
-                break
+                echo "elasticsearch is up"
+                exit 0
               fi
               echo "waiting for elasticsearch... ($i)"
               sleep 2
             done
+            echo "ERROR: elasticsearch did not become ready after 60s" >&2
+            docker logs elasticsearch 2>&1 | tail -50 || true
+            exit 1
 
   clone-repos:
     description: "Clone OpenReview API repositories"
@@ -308,8 +334,7 @@ jobs:
     # Run only tests from files that were modified/added in the PR
     executor: mongo8-vm
     parameters:
-      # Unused now that the test jobs run on the VM (system Python 3.10); kept so the
-      # workflow's `python-version: "3.10"` argument stays valid.
+      # Passed to setup-python; selects the Python the VM test job runs on.
       python-version:
         type: string
     steps:
@@ -357,7 +382,8 @@ jobs:
               echo "No modified test files - skipping test environment setup"
               circleci-agent step halt
             fi
-      - setup-python
+      - setup-python:
+          python-version: << parameters.python-version >>
       - start-services
       - get-github-token
       - install-nodejs
@@ -392,13 +418,13 @@ jobs:
     executor: mongo8-vm
     parallelism: 10
     parameters:
-      # Unused now that the test jobs run on the VM (system Python 3.10); kept so the
-      # workflow's `python-version: "3.10"` argument stays valid.
+      # Passed to setup-python; selects the Python the VM test job runs on.
       python-version:
         type: string
     steps:
       - checkout
-      - setup-python
+      - setup-python:
+          python-version: << parameters.python-version >>
       - start-services
       - get-github-token
       - install-nodejs
@@ -445,13 +471,13 @@ jobs:
     # from the CircleCI UI; bypasses install-package + build-pr-tests + build.
     executor: mongo8-vm
     parameters:
-      # Unused now that the test jobs run on the VM (system Python 3.10); kept so the
-      # workflow's `python-version: "3.10"` argument stays valid.
+      # Passed to setup-python; selects the Python the VM test job runs on.
       python-version:
         type: string
     steps:
       - checkout
-      - setup-python
+      - setup-python:
+          python-version: << parameters.python-version >>
       - start-services
       - get-github-token
       - install-nodejs
