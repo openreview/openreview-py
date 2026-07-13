@@ -139,6 +139,7 @@ class InvitationBuilder(object):
             invitees=[venue_id],
             multiReply=True,
             process_string=self.get_process_content('process/configuration_process.py'),
+            preprocess=self.get_process_content('process/configuration_pre_process.py'),
             reply={
                 'forum':request_form_id,
                 'referent': request_form_id,

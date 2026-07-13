@@ -6381,13 +6381,45 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         venue_id = 'aclweb.org/ACL/ARR/2023/August'
         submissions = pc_client_v2.get_all_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc', details='replies')
         now = datetime.datetime.now()
-        config_invitation = pc_client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration')
+        config_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration')
+        assert config_invitation.preprocess
         assert 'author_response_extension_start_date' in config_invitation.reply['content']
         assert 'author_response_extension_end_date' in config_invitation.reply['content']
         assert 'author_response_extension_cron' in config_invitation.reply['content']
         assert config_invitation.reply['content']['author_response_extension_cron']['default'] == '0 */12 * * *'
 
-        ## Step 1: Enable author response extension and verify invitation structure/default cron
+        configuration_notes = pc_client.get_references(
+            referent=request_form.id,
+            invitation=config_invitation.id
+        )
+        author_response_date = next(
+            configuration.content['setup_author_response_date']
+            for configuration in configuration_notes
+            if configuration.content.get('setup_author_response_date')
+        )
+
+        ## Step 1: Reject an extension that does not start after the configured author response date
+        with pytest.raises(
+            openreview.OpenReviewException,
+            match=r'The author response extension start date must be after the author response date.'
+        ):
+            pc_client.post_note(
+                openreview.Note(
+                    content={
+                        'author_response_extension_start_date': author_response_date,
+                        'author_response_extension_end_date': (now + datetime.timedelta(days=14)).strftime('%Y/%m/%d %H:%M')
+                    },
+                    invitation=config_invitation.id,
+                    forum=request_form.id,
+                    readers=[f'{venue_id}/Program_Chairs', 'openreview.net/Support'],
+                    referent=request_form.id,
+                    replyto=request_form.id,
+                    signatures=['~Program_ARRChair1'],
+                    writers=[],
+                )
+            )
+
+        ## Step 2: Enable author response extension and verify invitation structure/default cron
         pc_client.post_note(
             openreview.Note(
                 content={
