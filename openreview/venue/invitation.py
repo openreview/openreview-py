@@ -5412,78 +5412,80 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         ) 
 
         ## Only collect and publicly release role participation tags if the PC opted in
-        if self.venue.release_role_participation:
+        if not self.venue.release_role_participation:
+            return
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Reviewer_Role',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'committee_name': {'value': tools.singularize(self.venue.reviewers_name) },
+                'activation_date': { 'value': activation_date },
+            }
+        )
+
+        if self.venue.use_ethics_reviewers:
             self.client.post_invitation_edit(
-                invitations=f'{super_id}/-/Reviewer_Role',
+                invitations=f'{super_id}/-/Ethics_Reviewer_Role',
                 signatures=[template_domain],
                 content={
                     'venue_id': {'value': self.venue_id},
-                    'committee_name': {'value': tools.singularize(self.venue.reviewers_name) },
+                    'committee_name': {'value': tools.singularize(self.venue.ethics_reviewers_name) },
                     'activation_date': { 'value': activation_date },
                 }
             )
 
-            if self.venue.use_ethics_reviewers:
-                self.client.post_invitation_edit(
-                    invitations=f'{super_id}/-/Ethics_Reviewer_Role',
-                    signatures=[template_domain],
-                    content={
-                        'venue_id': {'value': self.venue_id},
-                        'committee_name': {'value': tools.singularize(self.venue.ethics_reviewers_name) },
-                        'activation_date': { 'value': activation_date },
-                    }
-                )
-
-            if self.venue.use_area_chairs:
-                self.client.post_invitation_edit(
-                    invitations=f'{super_id}/-/Meta_Reviewer_Role',
-                    signatures=[template_domain],
-                    content={
-                        'venue_id': {'value': self.venue_id},
-                        'committee_name': {'value': tools.singularize(self.venue.area_chairs_name) },
-                        'activation_date': { 'value': activation_date },
-                    }
-                )
-
-            if self.venue.use_senior_area_chairs:
-                self.client.post_invitation_edit(
-                    invitations=f'{super_id}/-/Senior_Meta_Reviewer_Role',
-                    signatures=[template_domain],
-                    content={
-                        'venue_id': {'value': self.venue_id},
-                        'committee_name': {'value': tools.singularize(self.venue.senior_area_chairs_name) },
-                        'activation_date': { 'value': activation_date },
-                    }
-                )
-
+        if self.venue.use_area_chairs:
             self.client.post_invitation_edit(
-                invitations=f'{super_id}/-/Program_Chair_Role',
+                invitations=f'{super_id}/-/Meta_Reviewer_Role',
                 signatures=[template_domain],
                 content={
                     'venue_id': {'value': self.venue_id},
-                    'committee_name': {'value': tools.singularize(self.venue.program_chairs_name) },
+                    'committee_name': {'value': tools.singularize(self.venue.area_chairs_name) },
                     'activation_date': { 'value': activation_date },
                 }
             )
 
-            if self.venue.use_ethics_chairs:
-                self.client.post_invitation_edit(
-                    invitations=f'{super_id}/-/Ethics_Chair_Role',
-                    signatures=[template_domain],
-                    content={
-                        'venue_id': {'value': self.venue_id},
-                        'committee_name': {'value': tools.singularize(self.venue.ethics_chairs_name) },
-                        'activation_date': { 'value': activation_date },
-                    }
-                )
+        if self.venue.use_senior_area_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Senior_Meta_Reviewer_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.senior_area_chairs_name) },
+                    'activation_date': { 'value': activation_date },
+                }
+            )
 
-            if self.venue.use_publication_chairs:
-                self.client.post_invitation_edit(
-                    invitations=f'{super_id}/-/Publication_Chair_Role',
-                    signatures=[template_domain],
-                    content={
-                        'venue_id': {'value': self.venue_id},
-                        'committee_name': {'value': tools.singularize(self.venue.publication_chairs_name) },
-                        'activation_date': { 'value': activation_date },
-                    }
-                )
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Program_Chair_Role',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'committee_name': {'value': tools.singularize(self.venue.program_chairs_name) },
+                'activation_date': { 'value': activation_date },
+            }
+        )
+
+        if self.venue.use_ethics_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Ethics_Chair_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.ethics_chairs_name) },
+                    'activation_date': { 'value': activation_date },
+                }
+            )
+
+        if self.venue.use_publication_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Publication_Chair_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.publication_chairs_name) },
+                    'activation_date': { 'value': activation_date },
+                }
+            )
