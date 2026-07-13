@@ -16,6 +16,21 @@ parameters:
     type: string
     default: ""
 
+executors:
+  # Test jobs run on a VM (machine executor) rather than the Docker executor so we
+  # control the kernel. MongoDB 8.x refuses to start on Linux kernel >= 6.19
+  # (SERVER-121912), which is what CircleCI's shared Docker hosts now run. Ubuntu
+  # 22.04's kernel stays well below 6.19, so Mongo 8 boots here. The redis/mongo/
+  # elasticsearch "service containers" the Docker executor provided are started
+  # manually with --network host in the start-services command, which reproduces the
+  # same localhost-shared networking (so transport.host=localhost, the replica-set
+  # member host, etc. behave exactly as before).
+  mongo8-vm:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large
+    working_directory: ~/openreview-py-repo
+
 # Reusable commands to reduce duplication between jobs
 commands:
   get-github-token:
@@ -57,26 +72,85 @@ commands:
 
             # Make token available to subsequent steps
             echo "export GITHUB_TOKEN=$TOKEN" >> $BASH_ENV
-  setup-mongodb:
-    description: "Initialize MongoDB replica set"
+  setup-python:
+    description: "Select the requested Python version (latest patch) via pyenv on the VM"
+    parameters:
+      python-version:
+        type: string
     steps:
       - run:
-          name: Initialize replica set
+          name: Select Python << parameters.python-version >>
           command: |
-            # Source the utility functions
-            source ~/openreview-py-repo/.circleci/ci-utils.sh
-            
-            retry sudo apt-get update
-            retry sudo apt-get install -y gnupg curl
+            REQUESTED="<< parameters.python-version >>"
+            # Machine images manage Python through pyenv. `pyenv install` needs a full
+            # version (e.g. 3.10.14). If a full X.Y.Z was requested, use it as-is;
+            # if only a minor (e.g. 3.10) was requested, resolve the latest installable
+            # patch (preferring one already present on the image).
+            if echo "$REQUESTED" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              PY_VERSION="$REQUESTED"
+              pyenv install -s "$PY_VERSION"
+            else
+              PY_VERSION=$(pyenv versions --bare | grep -E "^${REQUESTED}\.[0-9]+$" | sort -V | tail -1 || true)
+              if [ -z "$PY_VERSION" ]; then
+                PY_VERSION=$(pyenv install --list | tr -d ' ' | grep -E "^${REQUESTED}\.[0-9]+$" | sort -V | tail -1)
+                if [ -z "$PY_VERSION" ]; then
+                  echo "ERROR: could not resolve a ${REQUESTED}.x version from pyenv" >&2
+                  exit 1
+                fi
+                pyenv install -s "$PY_VERSION"
+              fi
+            fi
+            pyenv global "$PY_VERSION"
+            python --version
+            pip --version
 
-            curl -fsSL https://pgp.mongodb.com/server-8.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
-            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
-
-            retry sudo apt-get update
-            retry sudo apt-get upgrade -y
-            retry sudo apt-get install -y mongodb-org=8.0.0
-
-            mongosh mongodb://localhost:27017 --eval "rs.initiate()"
+  start-services:
+    description: "Start redis, MongoDB 8 (replica set) and elasticsearch as host-networked containers"
+    steps:
+      - run:
+          name: Start service containers
+          command: |
+            # --network host reproduces the localhost-shared networking the Docker
+            # executor's service containers had, so nothing downstream changes.
+            docker run -d --name redis --network host redis:7.2 redis-server --protected-mode no
+            docker run -d --name mongo --network host mongo:8.0 --replSet rs0
+            docker run -d --name elasticsearch --network host \
+              -e xpack.security.enabled=false \
+              -e transport.host=localhost \
+              -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+              docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+      - run:
+          name: Initialize MongoDB replica set
+          command: |
+            ready=false
+            for i in $(seq 1 30); do
+              if docker exec mongo mongosh --quiet --eval 'db.adminCommand("ping").ok' >/dev/null 2>&1; then
+                ready=true
+                break
+              fi
+              echo "waiting for mongod... ($i)"
+              sleep 2
+            done
+            if [ "$ready" != "true" ]; then
+              echo "ERROR: mongod did not become ready after 60s" >&2
+              docker logs mongo 2>&1 | tail -50 || true
+              exit 1
+            fi
+            docker exec mongo mongosh --quiet --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
+      - run:
+          name: Wait for Elasticsearch
+          command: |
+            for i in $(seq 1 30); do
+              if curl -s http://localhost:9200 >/dev/null 2>&1; then
+                echo "elasticsearch is up"
+                exit 0
+              fi
+              echo "waiting for elasticsearch... ($i)"
+              sleep 2
+            done
+            echo "ERROR: elasticsearch did not become ready after 60s" >&2
+            docker logs elasticsearch 2>&1 | tail -50 || true
+            exit 1
 
   clone-repos:
     description: "Clone OpenReview API repositories"
@@ -258,21 +332,11 @@ jobs:
           command: python -c "import openreview"
   build-pr-tests:
     # Run only tests from files that were modified/added in the PR
-    resource_class: large
-    working_directory: ~/openreview-py-repo
+    executor: mongo8-vm
     parameters:
+      # Passed to setup-python; selects the Python the VM test job runs on.
       python-version:
         type: string
-    docker:
-      - image: cimg/python:<<parameters.python-version>>
-      - image: cimg/redis:7.2
-      - image: mongo:8.0
-        command: [ --replSet, rs0 ]
-      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
-        environment:
-          xpack.security.enabled: false
-          transport.host: localhost
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
     steps:
       - checkout
       - run:
@@ -318,9 +382,11 @@ jobs:
               echo "No modified test files - skipping test environment setup"
               circleci-agent step halt
             fi
+      - setup-python:
+          python-version: << parameters.python-version >>
+      - start-services
       - get-github-token
       - install-nodejs
-      - setup-mongodb
       - clone-repos
       - create-directories
       - install-firefox
@@ -349,28 +415,19 @@ jobs:
       - copy-logs-on-failure
       - store-test-artifacts
   build:
-    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
-    resource_class: large
+    executor: mongo8-vm
     parallelism: 10
-    working_directory: ~/openreview-py-repo
     parameters:
+      # Passed to setup-python; selects the Python the VM test job runs on.
       python-version:
         type: string
-    docker:
-      - image: cimg/python:<<parameters.python-version>>
-      - image: cimg/redis:7.2
-      - image: mongo:8.0
-        command: [ --replSet, rs0 ]
-      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
-        environment:
-          xpack.security.enabled: false
-          transport.host: localhost
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
     steps:
       - checkout
+      - setup-python:
+          python-version: << parameters.python-version >>
+      - start-services
       - get-github-token
       - install-nodejs
-      - setup-mongodb
       - clone-repos
       - create-directories
       - install-firefox
@@ -412,26 +469,18 @@ jobs:
     # Run an explicit set of tests against custom openreview-api / openreview-api-v1
     # branches. Triggered by passing a non-empty `pytest-files` pipeline parameter
     # from the CircleCI UI; bypasses install-package + build-pr-tests + build.
-    resource_class: large
-    working_directory: ~/openreview-py-repo
+    executor: mongo8-vm
     parameters:
+      # Passed to setup-python; selects the Python the VM test job runs on.
       python-version:
         type: string
-    docker:
-      - image: cimg/python:<<parameters.python-version>>
-      - image: cimg/redis:7.2
-      - image: mongo:8.0
-        command: [ --replSet, rs0 ]
-      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
-        environment:
-          xpack.security.enabled: false
-          transport.host: localhost
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
     steps:
       - checkout
+      - setup-python:
+          python-version: << parameters.python-version >>
+      - start-services
       - get-github-token
       - install-nodejs
-      - setup-mongodb
       - clone-repos
       - create-directories
       - install-firefox
