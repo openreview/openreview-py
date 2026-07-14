@@ -261,7 +261,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False, content={}):
+    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False, content={}, include_public=True):
 
         venue_id = self.venue_id
         submission_name = self.get_content_value('submission_name', 'Submission')
@@ -301,10 +301,13 @@ class EditInvitationsBuilder(object):
                 {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'}
             )
 
-        readers_items.extend([
-            {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
-            {'value': 'everyone', 'optional': True, 'description': 'Public'}
-        ])
+        readers_items.append(
+            {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'}
+        )
+        if include_public:
+            readers_items.append(
+                {'value': 'everyone', 'optional': True, 'description': 'Public'}
+            )
 
         edit_content = {
             'readers': {

@@ -1,4 +1,5 @@
 import pytest
+import time
 import datetime
 import openreview
 
@@ -36,7 +37,6 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
                     }
@@ -67,7 +67,6 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
                     }
@@ -99,7 +98,6 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
                     }
@@ -140,7 +138,6 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
                     }
@@ -176,7 +173,6 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
                     }
@@ -212,7 +208,6 @@ class TestVenueDeployment():
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                         }
                     }
@@ -243,6 +238,7 @@ class TestVenueDeployment():
                     'area_chair_groups_names': { 'value': ['Senior_Program_Committee'] },
                     'expected_submissions': { 'value': 50 },
                     'release_role_participation': { 'value': False },
+                    'release_accepted_submissions': { 'value': False },
                     'venue_organizer_agreement': {
                         'value': [
                             'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
@@ -252,7 +248,6 @@ class TestVenueDeployment():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                         ]
                     }
                 }
@@ -290,6 +285,31 @@ class TestVenueDeployment():
         assert openreview.tools.get_invitation(openreview_client, 'TVD.cc/2026/Conference/-/Program_Committee') is None
         assert openreview.tools.get_invitation(openreview_client, 'TVD.cc/2026/Conference/-/Senior_Program_Committee') is None
         assert openreview.tools.get_invitation(openreview_client, 'TVD.cc/2026/Conference/-/Program_Chair') is None
+
+        # this venue opted out of publicly releasing accepted papers, so the "Public" (everyone)
+        # reader option must NOT be offered and the accepted release must not default to public
+        assert venue_group.content['release_accepted_submissions']['value'] == False
+
+        accepted_readers_invitation = None
+        for _ in range(60):
+            accepted_readers_invitation = openreview.tools.get_invitation(openreview_client, 'TVD.cc/2026/Conference/-/Accepted_Submission_Release/Readers')
+            if accepted_readers_invitation:
+                break
+            time.sleep(1)
+        assert accepted_readers_invitation, 'Accepted_Submission_Release/Readers invitation was not created'
+        accepted_reader_values = [item['value'] for item in accepted_readers_invitation.edit['content']['readers']['value']['param']['items']]
+        assert 'everyone' not in accepted_reader_values
+
+        # the accepted release readers must NOT default to everyone when the venue opted out
+        accepted_release_invitation = openreview.tools.get_invitation(openreview_client, 'TVD.cc/2026/Conference/-/Accepted_Submission_Release')
+        assert accepted_release_invitation
+        assert accepted_release_invitation.edit['note']['readers'] != ['everyone']
+
+        # the rejected release is not gated by this option, so it still offers all reader options
+        rejected_readers_invitation = openreview.tools.get_invitation(openreview_client, 'TVD.cc/2026/Conference/-/Rejected_Submission_Release/Readers')
+        assert rejected_readers_invitation
+        rejected_reader_values = [item['value'] for item in rejected_readers_invitation.edit['content']['readers']['value']['param']['items']]
+        assert 'everyone' in rejected_reader_values
 
     def test_rename_reschedules_date_processes(self, openreview_client, helpers):
 
@@ -336,7 +356,6 @@ class TestVenueDeployment():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                         ]
                     }
                 }
@@ -361,6 +380,21 @@ class TestVenueDeployment():
         assert openreview.tools.get_group(openreview_client, venue_id)
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Withdrawal').date_processes
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Preferred_Emails').date_processes
+
+        # release_accepted_submissions defaults to Yes, so accepted papers are released to the public:
+        # the accepted release readers default to everyone and the "Public" option is offered
+        assert openreview.tools.get_group(openreview_client, venue_id).content['release_accepted_submissions']['value'] == True
+        accepted_release_invitation = None
+        for _ in range(60):
+            accepted_release_invitation = openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Accepted_Submission_Release')
+            if accepted_release_invitation and accepted_release_invitation.edit['note']['readers'] == ['everyone']:
+                break
+            time.sleep(1)
+        assert accepted_release_invitation.edit['note']['readers'] == ['everyone']
+        accepted_readers_invitation = openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Accepted_Submission_Release/Readers')
+        assert accepted_readers_invitation
+        accepted_reader_values = [item['value'] for item in accepted_readers_invitation.edit['content']['readers']['value']['param']['items']]
+        assert 'everyone' in accepted_reader_values
 
         # Schedule the Withdrawal cdate date process (-0-0) to run a few minutes from now,
         # so it is still a pending (in-flight) job when we rename. This lets us verify the
@@ -444,7 +478,6 @@ class TestVenueDeployment():
             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
             'We will treat the OpenReview staff with kindness and consideration.',
             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
         ]
 
         def post_request(name):

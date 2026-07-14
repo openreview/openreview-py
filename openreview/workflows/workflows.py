@@ -371,8 +371,25 @@ class Workflows():
                                 }
                             }
                         },
-                        'venue_organizer_agreement': {
+                        'release_accepted_submissions': {
                             'order': 23,
+                            'description': 'Should accepted papers—including their metadata (title, authors, abstract) and PDF—be made publicly available in OpenReview? Select "Yes" to release accepted submissions to the public by default. Select "No" if you do not want accepted papers to become public; in that case the "Public" option will not be offered when releasing accepted submissions.',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [
+                                        { 'value': True, 'description': 'Yes, make accepted papers (metadata and PDF) publicly available in OpenReview.' },
+                                        { 'value': False, 'description': 'No, do not make accepted papers publicly available.' }
+                                    ],
+                                    'input': 'radio',
+                                    'default': True,
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'venue_organizer_agreement': {
+                            'order': 24,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {
@@ -384,8 +401,7 @@ class Workflows():
                                         { 'value': 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'description': 'We acknowledge that, if our venue’s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'optional': True},
                                         { 'value': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'description': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'optional': True},
                                         { 'value': 'We will treat the OpenReview staff with kindness and consideration.', 'description': 'We will treat the OpenReview staff with kindness and consideration.', 'optional': True},
-                                        { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True},
-                                        { 'value': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'description': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'optional': True}
+                                        { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True}
                                     ],
                                     'input': 'checkbox'
                                 }
