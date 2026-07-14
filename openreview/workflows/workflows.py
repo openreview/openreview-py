@@ -371,25 +371,8 @@ class Workflows():
                                 }
                             }
                         },
-                        'release_accepted_submissions': {
-                            'order': 23,
-                            'description': 'Should accepted papers—including their metadata (title, authors, abstract) and PDF—be made publicly available in OpenReview? Select "Yes" to release accepted submissions to the public by default. Select "No" if you do not want accepted papers to become public; in that case the "Public" option will not be offered when releasing accepted submissions.',
-                            'value': {
-                                'param': {
-                                    'type': 'boolean',
-                                    'enum': [
-                                        { 'value': True, 'description': 'Yes, make accepted papers (metadata and PDF) publicly available in OpenReview.' },
-                                        { 'value': False, 'description': 'No, do not make accepted papers publicly available.' }
-                                    ],
-                                    'input': 'radio',
-                                    'default': True,
-                                    'optional': True,
-                                    'deletable': True
-                                }
-                            }
-                        },
                         'venue_organizer_agreement': {
-                            'order': 24,
+                            'order': 23,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {

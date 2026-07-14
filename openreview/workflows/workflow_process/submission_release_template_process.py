@@ -36,26 +36,5 @@ def process(client, edit, invitation):
             }
         }
     }
-    # release_accepted_submissions controls whether accepted papers (metadata and PDF) are released
-    # to the public. When the venue opted out, do not offer the "Public" (everyone) reader option for
-    # the accepted release.
-    release_accepted_submissions = domain.content.get('release_accepted_submissions', {}).get('value', True)
-    include_public = release_accepted_submissions or not with_decision_accept
-    edit_invitations_builder.set_edit_submission_readers_invitation(invitation_id, True, content, include_public=include_public)
+    edit_invitations_builder.set_edit_submission_readers_invitation(invitation_id, True, content)
     # edit_invitations_builder.set_edit_reveal_authors(invitation_id)
-
-    # When the venue releases accepted submissions publicly, default the accepted release readers to
-    # everyone so accepted papers become public. The PC can still change this via the Readers step.
-    if with_decision_accept and release_accepted_submissions:
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            signatures=[domain.id],
-            invitation=openreview.api.Invitation(
-                id=invitation_id,
-                edit={
-                    'note': {
-                        'readers': ['everyone']
-                    }
-                }
-            )
-        )
