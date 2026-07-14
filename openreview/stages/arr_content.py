@@ -1399,101 +1399,17 @@ arr_official_review_content = {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "Yes",
-                    "No"
+                    "Yes, I learned it orthogonally to the review process ",
+                    "Yes, I learned it during review process (e.g. checking literature)",
+                    "I can guess from the content of the submission",
+                    "No, I do not have even an educated guess about author identity"
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
         "order": 18,
-        "description": "Do you think you know who wrote this paper (at least one author name or affiliation)?"
-    },
-    "Knowledge_of_paper": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "N/A, I do not know anything about the paper from outside sources",
-                    "Before the review process",
-                    "After the review process started"
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "order": 19,
-        "description": "When did you come to know about the paper from outsde sources?"
-    },
-    "Knowledge_of_paper_source": {
-        "value": {
-            "param": {
-                "input": "checkbox",
-                "enum": [
-                    "N/A, I do not know anything about the paper from outside sources",
-                    "Preprint on arxiv",
-                    "Social media post",
-                    "A research talk",
-                    "I can guess",
-                    "other (specify)"
-                ],
-                "optional": False,
-                "type": "string[]"
-            }
-        },
-        "order": 20,
-        "description": "How did you come to know about the paper from outside sources?"
-    },
-    "Knowledge_of_paper_source_other": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "optional": True,
-                "type": "string"
-            }
-        },
-        "description": "If you selected 'other' in the previous question, please provide details here.",
-        "order": 21
-    },
-    "impact_of_knowledge_of_paper": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "N/A, I do not know anything about the paper from outside sources",
-                    "Not at all",
-                    "Not much",
-                    "Somehow",
-                    "A lot"
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "How (if at all) do you think your comments and ratings might have been different without this outside knowledge?",
-        "order": 22
-    },
-    "Knowledge_of_paper_additional": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "optional": True,
-                "type": "string"
-            }
-        },
-        "description": "Is there anything you would like to explain about your answers to the last six questions? (optional)",
-        "order": 23
-    },
-    "Knowledge_of_authors_guess": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "optional": True,
-                "type": "string"
-            }
-        },
-        "description": "If you chose that you 'can guess' authors identity in the question above, please write your guess here. (optional)",
-        "order": 24
+        "description": "Do you think you know the author(s) of this paper (at least one author name or affiliation)?"
     },
     "secondary_reviewer": {
         "value": {
