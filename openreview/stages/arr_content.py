@@ -1240,22 +1240,6 @@ arr_official_review_content = {
         "order": 9,
         "description": "If this paper was committed to an *ACL conference, do you believe it should be accepted? If you recommend conference, Findings and or even award consideration, you can still suggest minor revisions (e.g. typos, non-core missing refs, etc.).\n\n Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper. ACL award policy: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy \n\n Main vs Findings papers: the main criteria for Findings are soundness and reproducibility. Conference recommendations may also consider novelty, impact and other factors."
     },
-    "revisions_confirmation": {
-        "value": {
-            "param": {
-                "input": "checkbox",
-                "enum": [
-                    "N/A, this is not a resubmission",
-                    "N/A, the authors have not supplied it",
-                    "Yes, I have checked the revisions"
-                ],
-                "optional": False,
-                "type": "string[]"
-            }
-        },
-        "order": 10,
-        "description": "If this paper is a resubmission, please search for the author-supplied explanation of revisions (see https://aclrollingreview.org/authors#step4) at the top of the page, and confirm that you've considered it."
-    },
     "best_paper_justification": {
         "value": {
             "param": {
@@ -1511,16 +1495,6 @@ arr_official_review_content = {
         "description": "If you chose that you 'can guess' authors identity in the question above, please write your guess here. (optional)",
         "order": 24
     },
-    "reviewer_certification": {
-        "order": 25,
-        "value": {
-            "param": {
-                "type": "string",
-                "enum": [{ "value": "Yes", "description": "I certify that the review I entered accurately reflects my assessment of the work, and any assistance is appropriately declared in the following questions."}],
-                "input": "checkbox"
-            }
-        }        
-    },
     "secondary_reviewer": {
         "value": {
             "param": {
@@ -1546,7 +1520,7 @@ arr_official_review_content = {
             }
         },
         "order": 27,
-        "description": "I certify that this review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read the paper fully and drafted the content and argumentation of the review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
+        "description": "The reviewers (the primary and, if applicable, the secondary reviewer) certify that the review accurately reflects their assessment of the submission, and complies  with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). The reviewers have read the paper fully and drafted the content and argumentation of the review without the use of generative AI, or only in cases allowed by the policy (such as language checks). If AI was used in the allowed cases, the reviewers certify that neither the submission materials nor review content were submitted to any third-party services that could retain it."
     },
     "paper_matching_feedback": {
         "value": {
