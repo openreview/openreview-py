@@ -199,7 +199,7 @@ arr_submission_content = {
                 "optional": True
             }
         },
-        "description": "[COMPULSORY IF THIS IS A RESUBMISSION]: Upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. If any changes to the author list were made in the resubmission, do NOT include this information here See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
+        "description": "[COMPULSORY IF THIS IS A RESUBMISSION]: Upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. If any changes to the author list were made in the resubmission, do NOT include this information here. You may optionally prepend this content to the main submission pdf, to increase its visibility for reviewers (in addition to the compulsory upload of the separate file in this field). See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
         "order": 17
     },
     "justification_for_author_changes": {
