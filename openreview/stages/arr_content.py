@@ -1553,11 +1553,12 @@ arr_official_review_content = {
             "param": {
                 "input": "radio",
                 "enum": [
+                    "This work aligns well with both my expertise and interests",
+                    "The match is reasonable, but not my top choice if there was bidding",
                     "This work is too far out of my technical expertise",
                     "This work is too far from my application/domain expertise or language(s)",
-                    "This match does not match my current research interests",
                     "The core goals/premises of this work aren't aligned with mine",
-                    "The match is reasonable, but not my top choice if there was bidding",
+                    "This match does not match my current research interests",
                     "Other"
                 ],
                 "optional": True,
