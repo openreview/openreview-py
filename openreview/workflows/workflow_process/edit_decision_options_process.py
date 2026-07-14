@@ -43,7 +43,7 @@ def process(client, edit, invitation):
 
     # delete the decision notification invitations for the removed decision options
     for decision_option in removed_decision_options:
-        formatted_decision_option = decision_option.replace(' ', '_')
+        formatted_decision_option = decision_option.replace(' ', '_').replace('(', '').replace(')', '')
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             readers=[venue_id],
@@ -62,7 +62,7 @@ def process(client, edit, invitation):
     from_email = domain.content['message_sender']['value']['fromEmail']
 
     for decision_option in added_decision_options:
-        formatted_decision_option = decision_option.replace(' ', '_')
+        formatted_decision_option = decision_option.replace(' ', '_').replace('(', '').replace(')', '')
         client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
         signatures=[venue_id],

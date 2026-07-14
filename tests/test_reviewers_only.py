@@ -2516,10 +2516,18 @@ ABCD 2025 Program Chairs'''
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Fields_to_Include')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Fields_to_Include')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification/Fields_to_Include')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification/Fields_to_Include')
         invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Templates')
         assert invitation
         assert all(key in invitation.edit['content'] for key in ['email_subject', 'email_content'])
         invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Templates')
+        assert invitation
+        assert all(key in invitation.edit['content'] for key in ['email_subject', 'email_content'])
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification/Templates')
+        assert invitation
+        assert all(key in invitation.edit['content'] for key in ['email_subject', 'email_content'])
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification/Templates')
         assert invitation
         assert all(key in invitation.edit['content'] for key in ['email_subject', 'email_content'])
 
