@@ -2292,6 +2292,18 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         venue_group = openreview_client.get_group('ABCD.cc/2025/Conference')
         assert 'accept_decision_options' in venue_group.content and venue_group.content['accept_decision_options']['value'] == ['Accept', 'Poster']
 
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+        assert invitation and not invitation.ddate
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification')
+        assert invitation and not invitation.ddate
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification')
+        assert invitation and not invitation.ddate
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification')
+        assert invitation and not invitation.ddate
+
         now = datetime.datetime.now()
         now = openreview.tools.datetime_millis(now)
 
@@ -2459,6 +2471,19 @@ To view this paper, please go to https://openreview.net/forum?id={submission_for
 Best,
 ABCD 2025 Program Chairs'''
 
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification')
+        assert invitation
+        assert 'subject' in invitation.content
+        assert 'message' in invitation.content and invitation.content['message']['value'] == '''Hi {{{{fullname}}}},
+
+We are delighted to inform you that your submission has been accepted. Congratulations!
+
+{formatted_decision}
+To view this paper, please go to https://openreview.net/forum?id={submission_forum}
+
+Best,
+ABCD 2025 Program Chairs'''
+
         invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification')
         assert invitation
         assert 'subject' in invitation.content
@@ -2472,7 +2497,22 @@ To view this paper, please go to https://openreview.net/forum?id={submission_for
 Best,
 ABCD 2025 Program Chairs'''
 
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification')
+        assert invitation
+        assert 'subject' in invitation.content
+        assert 'message' in invitation.content and invitation.content['message']['value'] == '''Hi {{{{fullname}}}},
+
+We regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.
+
+{formatted_decision}
+To view this paper, please go to https://openreview.net/forum?id={submission_forum}
+
+Best,
+ABCD 2025 Program Chairs'''
+
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Fields_to_Include')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Fields_to_Include')

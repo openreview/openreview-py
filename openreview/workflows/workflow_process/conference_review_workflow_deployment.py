@@ -240,8 +240,7 @@ def process(client, edit, invitation):
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
-            'decision': { 'value': 'Accept' },
-            'message': { 'value': 'Hi {{{{fullname}}}},\n\nWe are delighted to inform you that your submission has been accepted. Congratulations!\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n${4/content/short_name/value} Program Chairs' }
+            'decision': { 'value': 'Accept' }
         }
     )
 
@@ -254,8 +253,7 @@ def process(client, edit, invitation):
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
-            'decision': { 'value': 'Reject' },
-            'message': { 'value': 'Hi {{{{fullname}}}},\n\nWe regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n${4/content/short_name/value} Program Chairs' }
+            'decision': { 'value': 'Reject' }
         }
     )
 

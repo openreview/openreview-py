@@ -1428,11 +1428,19 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/email_authors_template_process.py'),
+            content={
+                'accept_message': {
+                    'value': 'Hi {{{{fullname}}}},\n\nWe are delighted to inform you that your submission has been accepted. Congratulations!\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n{short_name} Program Chairs'
+                },
+                'reject_message': {
+                    'value': 'Hi {{{{fullname}}}},\n\nWe regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n{short_name} Program Chairs'
+                }
+            },
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
-                            { 'prefix': '~.*', 'optional': True },
+                            { 'prefix': '.*', 'optional': True },
                             { 'value': self.template_domain, 'optional': True }
                         ]
                     }
@@ -1495,17 +1503,7 @@ If you would like to change your decision, please follow the link in the previou
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'enum': ['Accept', 'Reject']
-                            }
-                        }
-                    },
-                    'message': {
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 200000,
-                                'input': 'textarea',
-                                'markdown': True
+                                'regex': '.*'
                             }
                         }
                     }
@@ -1526,9 +1524,6 @@ If you would like to change your decision, please follow the link in the previou
                     'content': {
                         'subject': {
                             'value': '[${4/content/short_name/value}] The decision for your submission #{submission_number}, titled "{submission_title}" is now available'
-                        },
-                        'message': {
-                            'value': '${4/content/message/value}'
                         },
                         'decision_option': {
                             'value': '${4/content/decision/value}'
