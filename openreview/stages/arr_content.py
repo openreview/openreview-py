@@ -3429,8 +3429,8 @@ arr_submitted_author_content = {
 
 arr_withdrawal_content = {
     "comment": {
-        "order": 1,
-        "description": "Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.",
+        "order": 3,
+        "description": "Any comments? (optional)",
         "value": {
             "param": {
                 "type": "string",
@@ -3447,56 +3447,28 @@ arr_withdrawal_content = {
             "param": {
                 "input": "checkbox",
                 "enum": [
-                    "I confirm that I need to withdraw the paper."
+                    "I confirm that I need to withdraw my submission, for which I have not yet received a meta-review."
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
-        "description": "You only need to withdraw the paper if you plan to resubmit to another venue before the end of this reviewing cycle. After meta-reviews are released, the paper is no longer under review at ARR, and you can resubmit anywhere without withdrawing and limiting your resubmission options (see below).",
-        "order": 2
-    },
-    "confirm_penalty_rules": {
-        "value": {
-            "param": {
-                "input": "checkbox",
-                "enum": [
-                    "I confirm that I understand the next cycle penalty."
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "If you withdraw more than 48 hours after submission deadline, you cannot resubmit this work in the next cycle.",
-        "order": 3
-    },
-    "confirm_restoring_rules": {
-        "value": {
-            "param": {
-                "input": "checkbox",
-                "enum": [
-                    "I understand that if my withdrawn paper received even one review, this version has to be acknowledged."
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "If a withdrawn paper received any reviews, they can only be resubmitted to ARR as revisions, acknowledging the past version. If you withdraw and later decide to resubmit to ARR, you will have to ask to restore this version and acknowledge it in the submission form.",
-        "order": 4
+        "description": "I confirm that I actually need to withdraw this submission (e.g. because I plan to resubmit it to another venue before the end of this cycle).\n\n We ask you to confirm this, because many authors request a withdrawal AFTER the release of meta-reviews. This is NOT needed, because the paper is NO LONGER UNDER REVIEW and can be resubmitted anywhere without withdrawal from ARR.",
+        "order": 1
     },
     "withdrawal_confirmation": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "I have read and agree with the venue's withdrawal policy on behalf of myself and my co-authors."
+                    "I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors."
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
-        "description": "Please confirm to withdraw.",
-        "order": 5
+        "description": "I confirm that I am aware of and accept the implications of withdrawing this submission from ARR. In particular, the submission will not be fully reviewed and ready for commitment in this cycle, and any earlier reviewed versions will also be ineligible for commitment. I will also not be able to resubmit it to ARR without restoring this submission, and if I have received even one review for it -- it would count as a resubmission, it would need to be disclosed and accompanied with an explanation of revisions. See https://aclrollingreview.org/cfp#withdrawal and https://aclrollingreview.org/cfp#resubmissions",
+        "order": 2
     }
 }
 
