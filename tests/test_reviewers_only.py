@@ -2645,6 +2645,48 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #10, titled \"Paper title 10\" is now available')
         assert not messages
 
+    def test_retrigger_accept_decision_notification_with_same_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # accepted paper #1 already received an accept decision notification earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #1, titled \"Paper title 1\" is now available')
+        assert messages and len(messages) == 1
+
+        # retrigger the accept decision notification
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification-0-1', count=5)
+
+        # emails should not be sent again since the subject matches the subject of the email sent earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #1, titled \"Paper title 1\" is now available')
+        assert messages and len(messages) == 1
+
+    def test_retrigger_accept_decision_notification_new_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # change the accept email subject
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Templates',
+            content={
+                'email_subject': { 'value': '[ABCD 2025] Update on your submission #{submission_number}, titled "{submission_title}"' },
+                'email_content': { 'value': 'Hi {{{{fullname}}}},\n\nWe are happy to inform you that, based on the evaluation of the reviewers, your submission has been accepted. Congratulations!\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\nABCD 2025 Program Chairs' },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification-0-1', count=6)
+
+        # the email now gets sent since the subject no longer matches a previously sent email
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] Update on your submission #1, titled \"Paper title 1\"')
+        assert messages and len(messages) == 1
+
     def test_camera_ready_revisions(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)

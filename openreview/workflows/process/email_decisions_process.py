@@ -56,33 +56,36 @@ def process(client, invitation):
             submission_number=submission.number,
             submission_title=submission.content['title']['value']
         )
-        decisions = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]
-        if decisions:
-            formatted_decision = ''
-            decision = decisions[0]
-            for key in fields_to_include:
-                value = decision.content.get(key, {}).get('value')
-                if value:
-                    formatted_decision+=f'''**{key}**: {value}\n'''
 
-            decision_value = decision.content.get(decision_field_name, {}).get('value')
+        # if email with this subject has already been sent, skip sending email
+        if not client.get_messages(subject=subject):
+            decisions = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]
+            if decisions:
+                formatted_decision = ''
+                decision = decisions[0]
+                for key in fields_to_include:
+                    value = decision.content.get(key, {}).get('value')
+                    if value:
+                        formatted_decision+=f'''**{key}**: {value}\n'''
 
-            # if the decision matches, send email. ## To-do: support this in the submission source instead
-            if decision_value == decision_option:
-                message = email_content.format(
-                    submission_number=submission.number,
-                    submission_title=submission.content['title']['value'],
-                    formatted_decision=formatted_decision,
-                    submission_forum=submission.id
-                )
+                decision_value = decision.content.get(decision_field_name, {}).get('value')
 
-                client.post_message(
-                    subject=subject,
-                    recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
-                    message=message,
-                    invitation=invitation.id,
-                    replyTo=contact_email
-                )
+                # if the decision matches, send email. ## To-do: support this in the submission source instead
+                if decision_value == decision_option:
+                    message = email_content.format(
+                        submission_number=submission.number,
+                        submission_title=submission.content['title']['value'],
+                        formatted_decision=formatted_decision,
+                        submission_forum=submission.id
+                    )
+
+                    client.post_message(
+                        subject=subject,
+                        recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
+                        message=message,
+                        invitation=invitation.id,
+                        replyTo=contact_email
+                    )
 
     openreview.tools.concurrent_requests(send_decision_email, active_submissions)
 
