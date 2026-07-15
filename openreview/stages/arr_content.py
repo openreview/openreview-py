@@ -2389,7 +2389,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Have the authors completed the responsible NLP research checklist appropriately?",
+        "description": "Have the authors completed the responsible NLP research checklist in good faith?",
         "order": 13
     },
     "potential_violation_justification": {
@@ -2397,11 +2397,11 @@ arr_ae_checklist = {
             "param": {
                 "regex": ".{1,250}",
                 "optional": False,
-                "default": "N/A - the authors filled in the responsible NLP checklist appropriately.",
+                "default": "N/A - the authors filled in the responsible NLP checklist in good faith.",
                 "type": "string"
             }
         },
-        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue",
+        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue. Bad-faith responses can be grounds for desk rejection. If the authors did provide a reasonable response, but you disagree with it scientifically, this should be considered in the review process.",
         "order": 14
     },
     "need_ethics_review": {
@@ -2699,7 +2699,7 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Have the authors completed the responsible NLP research checklist appropriately?",
+        "description": "Have the authors completed the responsible NLP research checklist in good faith?",
         "order": 13
     },
     "potential_violation_justification": {
@@ -2711,7 +2711,7 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue",
+        "description": "If the authors provided incorrect, incomplete or misleading information in this checklist, please give a brief explanation of the issue. Bad-faith responses can be grounds for desk rejection. If the authors did provide a reasonable response, but you disagree with it scientifically, this should be considered in the review process.",
         "order": 14
     },
     "need_ethics_review": {
