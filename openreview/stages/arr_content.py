@@ -1825,8 +1825,8 @@ arr_reviewer_ac_recognition_task = {
 }
 
 arr_max_load_task_forum = {
-    "title": "Unavailability and Maximum Load Request",
-    "instructions": "Please complete this form to indicate your (un)availability for reviewing. If you do not complete this form, you will receive the default load of this cycle.\n\nIf you wish to change your maximum load, please delete your previous request using the trash can icon, refresh the page and submit a new request."
+    "title": "Unavailability and Maximum Load Request for Volunteer Service",
+    "instructions": "Please complete this form to indicate your (un)availability for reviewing. If you do not complete this form, you will receive the default load of this cycle.\n\nIf you wish to change your maximum load, please delete your previous request using the trash can icon, refresh the page and submit a new request. This form only applies to volunteer service, and is overridden by applicable author service requirements for authors submitting in a given cycle."
 }
 
 arr_max_load_task = {
