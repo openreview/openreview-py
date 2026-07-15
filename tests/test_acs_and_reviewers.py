@@ -1094,6 +1094,12 @@ note={under review}
 
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification')
         assert invitation and invitation.ddate
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Dates')
+        assert invitation and invitation.ddate
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Fields_to_Include')
+        assert invitation and invitation.ddate
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Templates')
+        assert invitation and invitation.ddate
 
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Poster_Decision_Notification')
         assert invitation and not invitation.ddate

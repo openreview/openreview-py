@@ -44,16 +44,20 @@ def process(client, edit, invitation):
     # delete the decision notification invitations for the removed decision options
     for decision_option in removed_decision_options:
         formatted_decision_option = decision_option.replace(' ', '_').replace('(', '').replace(')', '')
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=f'{venue_id}/-/Author_{formatted_decision_option}_Decision_Notification',
-                ddate=now
+        invitation_id = f'{venue_id}/-/Author_{formatted_decision_option}_Decision_Notification'
+        invitations_to_delete = client.get_invitations(prefix=invitation_id)
+
+        for inv in invitations_to_delete:
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=inv.id,
+                    ddate=now
+                )
             )
-        )
 
     # post new decision notification invitations for the added decision options
     request_form_inv = domain.get_content_value('request_form_invitation')
