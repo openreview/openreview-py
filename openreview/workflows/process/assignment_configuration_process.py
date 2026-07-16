@@ -38,7 +38,6 @@ def process(client, edit, invitation):
     # if reviewer assignment was created, add it to list of possible reviewer assignment titles that ACs could edit
     if committee_name in reviewers_roles:
         edit_invitation_id = f'{venue_id}/{area_chairs_name}/-/Reviewer_Reassignment'
-        all_assignment_titles.append('None')
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             signatures=[venue_id],
@@ -52,7 +51,9 @@ def process(client, edit, invitation):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'enum': all_assignment_titles
+                                    'enum': all_assignment_titles,
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         }
@@ -60,7 +61,7 @@ def process(client, edit, invitation):
                     'group': {
                         'content': {
                             'reviewers_proposed_assignment_title': {
-                                'value': '${4/content/reviewers_proposed_assignment_title/value}'
+                                'value': '${4/content/reviewers_proposed_assignment_title/value?}'
                             }
                         }
                     }

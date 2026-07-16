@@ -844,7 +844,7 @@ For more details, please check the following links:
         assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['rev-matching-1']
 
         reviewer_reassignment_inv = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Reviewer_Reassignment')
-        assert reviewer_reassignment_inv.edit['content']['reviewers_proposed_assignment_title']['value']['param']['enum'] == ['rev-matching-1', 'None']
+        assert reviewer_reassignment_inv.edit['content']['reviewers_proposed_assignment_title']['value']['param']['enum'] == ['rev-matching-1']
 
         # post proposed assignments to test deployment process
         submissions = pc_client.get_all_notes(content={'venueid': 'EFGH.cc/2025/Conference/Submission'}, sort='number:asc')
@@ -941,6 +941,18 @@ For more details, please check the following links:
         url = header.find_element(By.ID, 'edge_browser_url')
         assert url
         assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=EFGH.cc/2025/Conference/Action_Editors/-/Assignment,tail:~ACOne_EFGH1&traverse=EFGH.cc/2025/Conference/Reviewers/-/Assignment&edit=EFGH.cc/2025/Conference/Reviewers/-/Invite_Assignment&browse=EFGH.cc/2025/Conference/Reviewers/-/Affinity_Score;EFGH.cc/2025/Conference/Reviewers/-/Bid;EFGH.cc/2025/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=EFGH.cc/2025/Conference/Reviewers/-/Conflict&maxColumns=2&preferredEmailInvitationId=EFGH.cc/2025/Conference/-/Preferred_Emails&version=2&referrer=[Action%20Editors%20Console](/group?id=EFGH.cc/2025/Conference/Action_Editors)'
+
+        # disable ACs from editing deployed reviewers assignments, check optional field is ignored
+        pc_client.post_group_edit(
+            invitation='EFGH.cc/2025/Conference/Action_Editors/-/Reviewer_Reassignment',
+            content = {
+                'enable_reviewers_reassignment': { 'value': False }
+            }
+        )
+
+        ac_group = openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors')
+        assert 'reviewers_proposed_assignment_title' not in ac_group.content
+        assert 'enable_reviewers_reassignment' in ac_group.content and ac_group.content['enable_reviewers_reassignment']['value'] == False
 
     def test_review_stage(self, openreview_client, helpers):
 
