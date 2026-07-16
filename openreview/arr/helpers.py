@@ -17,6 +17,7 @@ from openreview.stages.arr_content import (
     arr_reviewer_ac_recognition_task_forum,
     arr_reviewer_ac_recognition_task,
     arr_max_load_task_forum,
+    arr_voluntary_reviewing_task_forum,
     arr_ethics_max_load_task,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
@@ -784,8 +785,8 @@ class ARRWorkflow(object):
                 stage_arguments={
                     'committee_id': venue.get_reviewers_id(),
                     'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
-                    'instructions': arr_max_load_task_forum['instructions'] + '\n\nThis will be overridden with the mandatory reviewing load if you submit at least one paper in this cycle and are qualified to review.',
-                    'title': venue.get_reviewers_name() + ' Volunteer ' + arr_max_load_task_forum['title'],
+                    'instructions': arr_voluntary_reviewing_task_forum['instructions'],
+                    'title': venue.get_reviewers_name() + ' ' + arr_voluntary_reviewing_task_forum['title'],
                     'additional_fields': arr_reviewer_max_load_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
@@ -802,8 +803,8 @@ class ARRWorkflow(object):
                 stage_arguments={
                     'committee_id': venue.get_area_chairs_id(),
                     'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
-                    'instructions': arr_max_load_task_forum['instructions'] + '\n\nThis will be overridden with the mandatory meta-reviewing load if you submit at least one paper in this cycle and are qualified to review.',
-                    'title': venue.get_area_chairs_name() + ' Volunteer ' + arr_max_load_task_forum['title'],
+                    'instructions': arr_voluntary_reviewing_task_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_voluntary_reviewing_task_forum['title'],
                     'additional_fields': arr_ac_max_load_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
