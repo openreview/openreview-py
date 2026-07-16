@@ -164,6 +164,7 @@ class GroupBuilder(object):
             'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
             'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },
             'date': { 'value': self.venue.date if self.venue.date else '' },
+            'release_role_participation': { 'value': self.venue.release_role_participation },
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
