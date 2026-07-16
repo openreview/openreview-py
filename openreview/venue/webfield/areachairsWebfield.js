@@ -6,8 +6,7 @@ const replaceAreaChairName = (invitationId) => invitationId?.replace(domain.cont
 const replaceReviewerName = (invitationId) => invitationId?.replace(domain.content.reviewers_name?.value, committee_reviewer_name)
 const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 
-const proposedAssignmentTitle = entity?.content.reviewers_proposed_assignment_title?.value || domain.content.reviewers_proposed_assignment_title?.value
-const reviewerAssignmentTitle = proposedAssignmentTitle && proposedAssignmentTitle !== 'None' ? proposedAssignmentTitle : null
+const reviewerAssignmentTitle = entity?.content?.reviewers_proposed_assignment_title?.value || domain.content.reviewers_proposed_assignment_title?.value
 const reviewerGroup = replaceReviewerName(domain.content.reviewers_id?.value)
 const startParam = `${replaceAreaChairName(domain.content.area_chairs_assignment_id?.value)},tail:${user.profile.id}`
 const traverseProposedParam = `${replaceReviewerName(domain.content.reviewers_proposed_assignment_id?.value)},label:${reviewerAssignmentTitle}`
