@@ -1843,7 +1843,7 @@ arr_reviewer_ac_recognition_task = {
 
 arr_max_load_task_forum = {
     "title": "Unavailability and Maximum Load Request for Volunteer Service",
-    "instructions": "Please complete this form to indicate your (un)availability for reviewing. If you do not complete this form, you will receive the default load of this cycle.\n\nIf you wish to change your maximum load, please delete your previous request using the trash can icon, refresh the page and submit a new request. This form only applies to volunteer service, and is overridden by applicable author service requirements for authors submitting in a given cycle."
+    "instructions": "Please complete this form to indicate your (un)availability for reviewing performed as volunteer ARR service. If you wish to change your maximum load, please delete your previous request using the trash can icon, refresh the page and submit a new request. Please note that this form only applies to *volunteer* service, and is overridden by applicable author service requirements for authors submitting in a given cycle."
 }
 
 arr_max_load_task = {
@@ -2138,8 +2138,8 @@ arr_metareview_license_task = {
 }
 
 arr_registration_task_forum = {
-    "title": "Registration",
-    "instructions": "Please check below points and verify that you provided the required pieces of information in your OpenReview profile.\nView and edit your profile at https://openreview.net/profile\n\nSelect papers for your expertise by going to this cycle's console, clicking on the tasks tab and clicking \"Expertise Selection\"",
+    "title": "Registration for Volunteer Service at ARR",
+    "instructions": "Please check below points and verify that you provided the required pieces of information in your OpenReview profile. \nYou can view and edit your profile at https://openreview.net/profile\n\n You can curate the list of your past work indicative of your expertise by going to this cycle's console, clicking on the tasks tab and clicking \"Expertise Selection\"",
 }
 
 arr_registration_task = {
@@ -3175,7 +3175,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "description": "ARR now requires all authors to contribute to the review process if asked (see: https://aclrollingreview.org/incentives2026). Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are unable to serve please select the most appropriate option that starts with 'No'. **Note that for the last three options you must provide sufficient justification in the next question or your paper will be desk rejected.** If you are already a reviewer or AC in ARR, please select one of the first three options to confirm you are willing to serve in this cycle. Note: if you indicate you are unavailable in the unavailability form, we will overwrite your response based on your answers here.",
+        "description": "ARR requires all authors of submissions in a given cycle to contribute to the review process in that cycle if asked (see: https://aclrollingreview.org/incentives2026). Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are unable to serve please select the most appropriate option that starts with 'No'. **Note that for the last three options you must provide sufficient justification in the next question or your paper will be desk rejected.** If you are already a reviewer or AC in ARR, please select one of the first three options to confirm you are willing to serve in this cycle. \n\n We clarify that the service expectations for the submitting authors authors are different from the regular volunteer service. If you are a submitting author in this cycle, your answers in this form override any previously indicated unavailability or service load preferences as an ARR volunteer reviewer or chair for this cycle.",
         "order": 3
     },
     "details_of_reason_for_being_unable_to_serve_or_ARR_role": {
