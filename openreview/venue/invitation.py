@@ -5411,6 +5411,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
         ) 
 
+        ## Only collect and publicly release role participation tags if the PC opted in
+        if not self.venue.release_role_participation:
+            return
+
         self.client.post_invitation_edit(
             invitations=f'{super_id}/-/Reviewer_Role',
             signatures=[template_domain],
