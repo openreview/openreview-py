@@ -1843,7 +1843,7 @@ arr_reviewer_ac_recognition_task = {
 
 arr_max_load_task_forum = {
     "title": "Unavailability and Maximum Load Request for Volunteer Service",
-    "instructions": "Please complete this form to indicate your (un)availability for reviewing performed as volunteer ARR service. If you wish to change your maximum load, please delete your previous request using the trash can icon, refresh the page and submit a new request. Please note that this form only applies to *volunteer* service, and is overridden by applicable author service requirements for authors submitting in a given cycle."
+    "instructions": "Please complete this form to indicate your (un)availability for reviewing performed as volunteer ARR service. \n\nIf you wish to change your maximum load, please delete your previous request using the trash can icon, refresh the page and submit a new request. Please note that this form only applies to *volunteer* service, and is overridden by applicable author service requirements for authors submitting in a given cycle."
 }
 
 arr_max_load_task = {
@@ -3178,7 +3178,7 @@ arr_submitted_author_content = {
         "description": "ARR requires all authors of submissions in a given cycle to contribute to the review process in that cycle if asked (see: https://aclrollingreview.org/incentives2026). Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are unable to serve please select the most appropriate option that starts with 'No'. **Note that for the last three options you must provide sufficient justification in the next question or your paper will be desk rejected.** If you are already a reviewer or AC in ARR, please select one of the first three options to confirm you are willing to serve in this cycle. \n\n We clarify that the service expectations for the submitting authors authors are different from the regular volunteer service. If you are a submitting author in this cycle, your answers in this form override any previously indicated unavailability or service load preferences as an ARR volunteer reviewer or chair for this cycle.",
         "order": 3
     },
-    "details_of_reason_for_being_unable_to_serve_or_ARR_role": {
+    "reason_for_being_unable_to_serve_or_ARR_role": {
         "value": {
             "param": {
                 "optional": True,
@@ -3233,7 +3233,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "description": "The ARR requirements for reviewers are: (a) at least two papers in main ACL events or Findings, plus (b) at least one more paper in the ACL Anthology or a major AI venue. Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major AI venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches data online. Having your self-reported status helps us identify issues with available data.",
+        "description": "The ARR requirements for reviewers depend on both publications and career stage. Those who have obtained their PhDs and/or have senior academic positions (postdoc/faculty) automatically qualify if they have at least two papers in main ACL events or Findings or major ML venues. Doctoral students (but not bachelor and master students) automatically qualify if they have at least 2 ACL or ML conference publications and a total of >= 3 publications in total. Those who do not automatically qualify by these criteria can serve as secondary reviewers, mentored by a qualified primary reviewer (see https://aclrollingreview.org/reviewerguidelines#secondary-reviewer). \n\n Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major ML venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches online records. Having your self-reported status helps us identify issues with available data. ",
         "order": 7
     },
     "are_you_a_student": {
@@ -3340,70 +3340,58 @@ arr_submitted_author_content = {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers.",
-                    "No, the DBLP profile for my name contains other peoples' publications.",
-                    "No, I have no DBLP listed publications."
+                    "My OpenReview profile contains a link to my DBLP profile with just my papers.",
+                    "My OpenReview profile contains a link to my DBLP profile, but it also includes other peoples' publications.",
+                    "N/A: I have no publications listed in DBLP."
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
-        "description": "If there is a valid DBLP profile for you, your OpenReview profile must contain a link to it. If the profile is invalid, you must either import your papers to OpenReview or provide a valid ACL Anthology profile link.",
+        "description": "If you have DBLP listed publications, your OpenReview profile must contain a link to your profile. Since DBLP records are constructed automatically, we also ask you to check and specify whether this profile contains only your own papers.",
         "order": 16
     },
-    "provide_your_DBLP_URL": {
-        "description": "If there is a valid DBLP profile for you, please provide it here. If the profile is invalid, e.g., because it has other people's papers in it, please leave this blank.",
-        "value": {
-            "param": {
-                "optional": True,
-                "type": "string"
-            }
-        },
-        "order": 17
-    },
-    "confirm_your_openreview_profile_contains_a_semantic_scholar_link": {
+    "confirm_your_openreview_profile_contains_an_ACL_anthology_URL": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers.",
-                    "No, the Semantic Scholar profile for my name contains other peoples' publications.",
-                    "No, I have no Semantic Scholar listed publications."
+                    "My OpenReview profile contains a link to an ACL Anthology profile with just my papers.",
+                    "My OpenReview profile contains a link to an ACL Anthology profile, but it also contains other peoples' publications.",
+                    "N/A: I have no publications in ACL Anthology."
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
-        "description": "If there is a valid Semantic Scholar profile for you, your OpenReview profile must contain a link to it. If the profile is invalid, you must either import your papers to OpenReview or provide a valid ACL Anthology profile link.",
-        "order": 18
+        "description": "If you have publications listed on ACL Anthology, your OpenReview profile must contain a link to your profile. Since ACL Anthology records are constructed automatically, we also ask you to check and specify whether this profile contains only your own papers.",
+        "order": 17
     },
-    "provide_your_semantic_scholar_URL": {
-        "description": "If there is a valid Semantic Scholar profile for you, please provide it here. If the profile is invalid, e.g., because it has other people's papers in it, please leave this blank.",
-        "value": {
-            "param": {
-                "optional": True,
-                "type": "string"
-            }
-        },
-        "order": 19
-    },
-    "provide_your_ACL_anthology_URL": {
-        "description": "If there is a valid ACL Anthology profile for you, please provide it here. If the profile is invalid, e.g., because it has a other people's papers in it, please leave this blank.",
-        "value": {
-            "param": {
-                "optional": True,
-                "type": "string"
-            }
-        },
-        "order": 20
-    },
-    "provide_your_ORCID": {
-        "description": "If you have any publicly available publications (including preprints), please confirm that your OpenReview profile contains a valid ORCID ID.",
+    "confirm_your_openreview_profile_contains_your_ORCID_ID": {
+        "description": "If you have any publicly available publications (including preprints), your OpenReview profile must contain a valid ORCID ID. If you maintain a correct record of your publications at ORCID, you may also indicate that (currently only used to study what resources are used in the community).",
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "Yes, my OpenReview profile contains a valid ORCID ID.",
+                    "My OpenReview profile contains a valid ORCID ID.",
+                    "My OpenReview profile contains a valid ORCID ID and I maintain a correct record of my publications there.",
+                    "N/A: I do not have any publications or preprints."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 21,
+    },
+    "confirm_your_openreview_profile_contains_your_publication_record": {
+        "description": "If you have have any publications (including preprints), please indicate whether you maintain a collection of your work in the Openreview profile. This is optional if your DBLP or Anthology profile is accurate. Otherwise, you must ensure that the list in your OpenReview profile is up-to-date and representative of your expertise. You can import your publications from DBLP and remove those that aren't yours.",
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I maintain a full list of my publications in my OpenReview profile.",
+                    "Yes, I maintain a curated list of my publications in my OpenReview profile that is more representative of my expertise.",
+                    "No, the publication list in my OpenReview profile is empty or noisy.",
                     "N/A: I do not have any publications or preprints."
                 ],
                 "optional": False,
