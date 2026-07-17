@@ -160,7 +160,7 @@ arr_submission_content = {
                     "Surveys",
                     "Theory"
                 ],
-                "optional": True,
+                "optional": False,
                 "type": "string[]"
             }
         },
@@ -3221,21 +3221,6 @@ arr_submitted_author_content = {
         "description": "Please indicate how many papers you would be willing to do emergency reviews for if asked.",
         "order": 6
     },
-    "confirm_you_are_qualified_to_review": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes, I meet the ARR requirements to be a reviewer.",
-                    "No, I do not meet the ARR requirements to be a reviewer."
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "The ARR requirements for reviewers depend on both publications and career stage. Those who have obtained their PhDs and/or have senior academic positions (postdoc/faculty) automatically qualify if they have at least two papers in main ACL events or Findings or major ML venues. Doctoral students (but not bachelor and master students) automatically qualify if they have at least 2 ACL or ML conference publications and a total of >= 3 publications in total. Those who do not automatically qualify by these criteria can serve as secondary reviewers, mentored by a qualified primary reviewer (see https://aclrollingreview.org/reviewerguidelines#secondary-reviewer). \n\n Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major ML venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches online records. Having your self-reported status helps us identify issues with available data. ",
-        "order": 7
-    },
     "are_you_a_student": {
         "value": {
             "param": {
@@ -3251,7 +3236,7 @@ arr_submitted_author_content = {
             }
         },
         "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
-        "order": 8
+        "order": 7
     },
     "what_is_your_highest_level_of_completed_education": {
         "value": {
@@ -3267,6 +3252,21 @@ arr_submitted_author_content = {
             }
         },
         "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
+        "order": 8
+    },
+    "confirm_you_are_qualified_to_review": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I meet the ARR requirements to be a reviewer.",
+                    "No, I do not meet the ARR requirements to be a reviewer."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "The ARR requirements for reviewers depend on both publications and career stage. Those who have obtained their PhDs and/or have senior academic positions (postdoc/faculty) automatically qualify if they have at least two papers in main ACL events or Findings or major ML venues. Doctoral students (but not bachelor and master students) automatically qualify if they have at least 2 ACL or ML conference publications and a total of >= 3 publications in total. Those who do not automatically qualify by these criteria can serve as secondary reviewers, mentored by a qualified primary reviewer (see https://aclrollingreview.org/reviewerguidelines#secondary-reviewer). \n\n Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major ML venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches online records. Having your self-reported status helps us identify issues with available data. ",
         "order": 9
     },
     "confirm_your_profile_has_past_domains": {
@@ -3281,7 +3281,7 @@ arr_submitted_author_content = {
                 "optional": False
             }
         },
-        "order": 11
+        "order": 10
     },
     "confirm_your_profile_has_all_email_addresses": {
         "description": "I confirm that I have specified in my OpenReview profile all (professional) email addresses I now use and have used before.",
@@ -3295,7 +3295,7 @@ arr_submitted_author_content = {
                 "optional": False
             }
         },
-        "order": 12
+        "order": 11
     },
     "meta_data_donation": {
         "value": {
@@ -3309,7 +3309,7 @@ arr_submitted_author_content = {
             }
         },
         "description": "If selected as reviewer, do you agree for the anonymized metadata associated with your reviews produced in this cycle to be included in a publicly available dataset? This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as meta-review decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc.",
-        "order": 13
+        "order": 12
     },
     "indicate_your_research_areas": {
         "value": {
@@ -3320,7 +3320,31 @@ arr_submitted_author_content = {
                 "type": "string[]"
             }
         },
-        "description": "If you are selected as a reviewer, we will need to know the research areas / tracks you are qualified to review for. Please select the most relevant research areas / tracks for your expertise",
+        "description": "If you are selected as a reviewer, we will need to know the research areas / tracks you are qualified to review for. Please select the most relevant research areas / tracks for your expertise. Note: we will try to find optimal matches, given the available information, but we cannot guarantee that everyone's preferences would be satisfied. You will be able to provide feedback on paper-reviewer matching in the review form.",
+        "order": 13
+    },
+    "contribution_types": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "Model analysis & interpretability",
+                    "NLP engineering experiment",
+                    "Reproduction study",
+                    "Approaches to low-resource settings",
+                    "Approaches to low-compute settings (efficiency)",
+                    "Publicly available software and/or pre-trained models",
+                    "Data resources",
+                    "Data analysis",
+                    "Position papers",
+                    "Surveys",
+                    "Theory"
+                ],
+                "optional": False,
+                "type": "string[]"
+            }
+        },
+        "description": "Please indicate what types of contributions you are overall interested in reviewing.",
         "order": 14
     },
     "indicate_your_languages": {
@@ -3381,7 +3405,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "order": 21,
+        "order": 18,
     },
     "confirm_your_openreview_profile_contains_your_publication_record": {
         "description": "If you have have any publications (including preprints), please indicate whether you maintain a collection of your work in the Openreview profile. This is optional if your DBLP or Anthology profile is accurate. Otherwise, you must ensure that the list in your OpenReview profile is up-to-date and representative of your expertise. You can import your publications from DBLP and remove those that aren't yours.",
@@ -3398,7 +3422,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "order": 21,
+        "order": 19,
     },
     "attribution": {
         "description": "Please read and decide whether to transfer the license to your reviewing data for this iteration of ARR if you are selected as a reviewer.\n\n***DISCLAIMER***\n\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute the text of your review. In particular, we may include your review text and scores in research datasets without revealing the OpenReview identifier that produced the review. Keep in mind that as with any text, your identity might be approximated using author profiling techniques. Only reviews for accepted papers will be eventually made publicly available. The authors of the papers will have to agree to the release of the textual review data associated with their papers.\n\nName of the ACL Conference: previous ARR cycle\n\n**Introduction**\nThis Peer Reviewer Content License Agreement (\u201cAgreement\u201d) is entered into between the Association for Computational Linguistics (\u201cACL\u201d) and the Peer Reviewer listed above in connection with content developed and contributed by Peer Reviewer during the peer review process (referred as \u201cPeer Review Content\u201d). In exchange of adequate consideration, ACL and the Peer Reviewer agree as follows:\n\n**Section 1: Grant of License**\nPeer Reviewer grants ACL a worldwide, irrevocable, and royalty-free license to use the Peer Review Content developed and prepared by Peer Reviewer in connection with the peer review process for the ACL Conference listed above, including but not limited to text, review form scores and metadata, charts, graphics, spreadsheets, and any other materials according to the following terms: A. For Peer Review Content associated with papers accepted for publication, and subject to the Authors permission, ACL may reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Peer Review Content, and to sub-license the Peer Review Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. B. For Peer Review Content associated with papers not accepted for publication, ACL may use the Peer Review Content for internal research, program analysis, and record- keeping purposes. Notwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Peer Review Content, and that Peer Review retains respective ownership in and to the Peer Review Content.\n\n**Section 2: Attribution and Public Access License**\nA.The Parties agree that for purpose of administering the public access license, ACL will be identified as the licensor of the Content with the following copyright notice: Copyright \u00a9 2022 administered by the Association for Computational Linguistics (ACL) on behalf of ACL content contributors: ______________ (list names of peer reviewers who wish to be attributed), and other contributors who wish to remain anonymous. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. B.In the event Peer Reviewer intends to modify the attribution displayed in connection with the copyright notice above, ACL will use reasonable efforts to modify the copyright notice after receipt of Peer Reviewer\u2019s written request. Notwithstanding the foregoing, Peer Reviewer acknowledges and agrees that any modification in connection with attribution will not be retroactively applied. C.The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\n**Section 3: Warranty**\nPeer Reviewer represents and warrants that the Content is Peer Reviewer\u2019s original work and does not infringe on the proprietary rights of others. Peer Reviewer further warrants that he or she has obtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\n**Section 4: Legal Relationship**\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other.\n\nUnless the peer reviewer elects to be attributed according to Section 2, the peer reviewer\u2019s name will not be identified in connection with publication of the Peer Review Content. If you wish to be attributed, please check the box below. ATTENTION: this will allow you to get credit for your reviews, but it will also DEANONYMIZE your reviews. Please select after careful consideration.",
@@ -3413,7 +3437,7 @@ arr_submitted_author_content = {
                 "optional": True
             }
         },
-        "order": 22
+        "order": 20
     },
     "agreement": {
         "description": "By selecting 'I agree' below you confirm that you agree to this license agreement if you are selected to review.",
