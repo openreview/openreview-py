@@ -2143,77 +2143,195 @@ arr_registration_task_forum = {
 }
 
 arr_registration_task = {
-    "domains": {
-        "order": 1,
-        "description": "I confirm that I have specified the history of domains I am and previously was affiliated with.",
+    "are_you_a_student": {
         "value": {
             "param": {
-                "type": "string",
-                "enum": ["Yes"],
-                "input": "checkbox",
-                "optional": False
-            }
-        }
-    },
-    "emails": {
-        "order": 2,
-        "description": "I confirm that I have specified all (professional) email addresses I use and used beforehand.",
-        "value": {
-            "param": {
-                "type": "string",
-                "enum": ["Yes"],
-                "input": "checkbox",
-                "optional": False
-            }
-        }
-    },
-    "DBLP": {
-        "order": 3,
-        "description": "I confirm that I specified the URL to my DBLP profile (if existent).",
-        "value": {
-            "param": {
-                "type": "string",
-                "enum": ["Yes"],
-                "input": "checkbox",
-                "optional": False
-            }
-        }
-    },
-    "semantic_scholar": {
-        "order": 4,
-        "description": "I confirm that I specified the URL to my Semantic Scholar profile (if existent).",
-        "value": {
-            "param": {
-                "type": "string",
-                "enum": ["Yes"],
-                "input": "checkbox",
-                "optional": False
-            }
-        }
-    },
-    "research_area": {
-        "order": 5,
-        "description": "Research Areas / Tracks. Select all relevant research areas / tracks that are the best fit for your expertise. These will be used to inform the reviewer and area chair assignment",
-        "value": {
-            "param": {
-                "type": "string[]",
-                "enum": arr_tracks,
-                "input": "checkbox",
-                "optional": False
-            }
-        }
-    },
-    "languages_studied": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "optional": True,
+                "input": "radio",
+                "enum": [
+                    "Yes, I am a Bachelors student, or an earlier education stage.",
+                    "Yes, I am a Masters student.",
+                    "Yes, I am a Doctoral student.",
+                    "No, I am not a student."
+                ],
+                "optional": False,
                 "type": "string"
             }
         },
-        "description": "Please list the languages that fall under your expertise, separated by commas.",
-        "order": 6
+        "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
+        "order": 7
     },
+    "what_is_your_highest_level_of_completed_education": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Bachelors or earlier",
+                    "Masters",
+                    "Doctorate"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
+        "order": 8
+    },
+    "confirm_you_are_qualified_to_review": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I meet the ARR requirements to be a reviewer.",
+                    "No, I do not meet the ARR requirements to be a reviewer."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "The ARR requirements for reviewers depend on both publications and career stage. Those who have obtained their PhDs and/or have senior academic positions (postdoc/faculty) automatically qualify if they have at least two papers in main ACL events or Findings or major ML venues. Doctoral students (but not bachelor and master students) automatically qualify if they have at least 2 ACL or ML conference publications and a total of >= 3 publications in total. Those who do not automatically qualify by these criteria can serve as secondary reviewers, mentored by a qualified primary reviewer (see https://aclrollingreview.org/reviewerguidelines#secondary-reviewer). \n\n Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major ML venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches online records. Having your self-reported status helps us identify issues with available data. ",
+        "order": 9
+    },
+    "confirm_your_profile_has_past_domains": {
+        "description": "I confirm that I have specified in my OpenReview profile the full history of domains I am now and previously was affiliated with.",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": [
+                    "Yes"
+                ],
+                "input": "checkbox",
+                "optional": False
+            }
+        },
+        "order": 10
+    },
+    "confirm_your_profile_has_all_email_addresses": {
+        "description": "I confirm that I have specified in my OpenReview profile all (professional) email addresses I now use and have used before.",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": [
+                    "Yes"
+                ],
+                "input": "checkbox",
+                "optional": False
+            }
+        },
+        "order": 11
+    },
+    "indicate_your_research_areas": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": arr_tracks,
+                "optional": False,
+                "type": "string[]"
+            }
+        },
+        "description": "Please select the most relevant research areas / tracks for your expertise. Note: we will try to find optimal matches, given the available information, but we cannot guarantee that everyone's preferences would be satisfied. You will be able to provide feedback on paper-reviewer matching in the review form.",
+        "order": 13
+    },
+    "contribution_types": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "Model analysis & interpretability",
+                    "NLP engineering experiment",
+                    "Reproduction study",
+                    "Approaches to low-resource settings",
+                    "Approaches to low-compute settings (efficiency)",
+                    "Publicly available software and/or pre-trained models",
+                    "Data resources",
+                    "Data analysis",
+                    "Position papers",
+                    "Surveys",
+                    "Theory"
+                ],
+                "optional": False,
+                "type": "string[]"
+            }
+        },
+        "description": "Please indicate what types of contributions you are overall interested in reviewing.",
+        "order": 14
+    },
+    "indicate_your_languages": {
+        "value": {
+            "param": {
+                "optional": True,
+                "type": "string[]",
+                "input": "select",
+                "enum": iso_639_3_languages
+            }
+        },
+        "description": "If you have expertise in any natural languages apart from English, and could help to review resources or applications for those languages, please specify them here. This form supports the languages in ISO 639-3 standard (https://iso639-3.sil.org/)",
+        "order": 15
+    },
+    "confirm_your_openreview_profile_contains_a_DBLP_link": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "My OpenReview profile contains a link to my DBLP profile with just my papers.",
+                    "My OpenReview profile contains a link to my DBLP profile, but it also includes other peoples' publications.",
+                    "N/A: I have no publications listed in DBLP."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you have DBLP listed publications, your OpenReview profile must contain a link to your profile. Since DBLP records are constructed automatically, we also ask you to check and specify whether this profile contains only your own papers.",
+        "order": 16
+    },
+    "confirm_your_openreview_profile_contains_an_ACL_anthology_URL": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "My OpenReview profile contains a link to an ACL Anthology profile with just my papers.",
+                    "My OpenReview profile contains a link to an ACL Anthology profile, but it also contains other peoples' publications.",
+                    "N/A: I have no publications in ACL Anthology."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you have publications listed on ACL Anthology, your OpenReview profile must contain a link to your profile. Since ACL Anthology records are constructed automatically, we also ask you to check and specify whether this profile contains only your own papers.",
+        "order": 17
+    },
+    "confirm_your_openreview_profile_contains_your_ORCID_ID": {
+        "description": "If you have any publicly available publications (including preprints), your OpenReview profile must contain a valid ORCID ID. If you maintain a correct record of your publications at ORCID, you may also indicate that (currently only used to study what resources are used in the community).",
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "My OpenReview profile contains a valid ORCID ID.",
+                    "My OpenReview profile contains a valid ORCID ID and I maintain a correct record of my publications there.",
+                    "N/A: I do not have any publications or preprints."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 18,
+    },
+    "confirm_your_openreview_profile_contains_your_publication_record": {
+        "description": "If you have have any publications (including preprints), please indicate whether you maintain a collection of your work in the Openreview profile. This is optional if your DBLP or Anthology profile is accurate. Otherwise, you must ensure that the list in your OpenReview profile is up-to-date and representative of your expertise. You can import your publications from DBLP and remove those that aren't yours.",
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I maintain a full list of my publications in my OpenReview profile.",
+                    "Yes, I maintain a curated list of my publications in my OpenReview profile that is more representative of my expertise.",
+                    "No, the publication list in my OpenReview profile is empty or noisy.",
+                    "N/A: I do not have any publications or preprints."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 19,
+    }
 }
 
 arr_desk_reject_verification = {
