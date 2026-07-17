@@ -434,7 +434,31 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    
+    def post_invitation_edit_as_guest(self, token, edit):
+        """Post an invitation edit as a guest user using a guest token.
+
+        Submits an invitation edit without requiring a logged-in session. The guest
+        token is sent via the ``X-Guest-Token`` header instead of the standard
+        ``Authorization`` header.
+
+        :param token: Guest authentication token (e.g., provided via an invitation link).
+        :type token: str
+        :param edit: Dictionary representing the invitation edit to post, following the same schema as :meth:`post_invitation_edit`.
+        :type edit: dict
+
+        :return: Dictionary containing the posted edit, including the assigned edit ``id``.
+        :rtype: dict
+        """
+        headers = {
+            'User-Agent': self.user_agent,
+            'Accept': 'application/json',
+            'X-Guest-Token': token
+        }
+        response = self.session.post(self.invitation_edits_url, json = edit, headers = headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+
     def flush_members_cache(self, group_id=None):
         """
         Flushes the members cache for a group
