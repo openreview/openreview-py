@@ -1987,7 +1987,7 @@ class EditInvitationsBuilder(object):
                 'content': {
                   'enable_reviewers_reassignment': {
                         'order': 1,
-                        'description': 'Would you like to allow area chairs to reassign reviewers to submissions?',
+                        'description': 'Would you like to allow area chairs to reassign reviewers to submissions? Make sure there are deployed or proposed assignments created before enabling this option.',
                         'value': {
                             'param': {
                                 'type': 'boolean',

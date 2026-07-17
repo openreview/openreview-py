@@ -47,7 +47,7 @@ def process(client, edit, invitation):
                     'content': {
                         'reviewers_proposed_assignment_title': {
                             'order': 2,
-                            'description': 'If you would like area chairs to edit reviewer proposed assignments, select the title of the matching that you would like them to edit. If area chairs should edit deployed assignments, select "None".',
+                            'description': 'If you would like area chairs to edit reviewer proposed assignments, select the title of the matching that you would like them to edit. If area chairs should edit deployed assignments, leave empty.',
                             'value': {
                                 'param': {
                                     'type': 'string',
