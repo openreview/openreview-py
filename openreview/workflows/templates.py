@@ -1785,16 +1785,14 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step releases ${2/content/decision_option/value} submissions to the specified readers, as well as author identities if this option is selected.',
-                    'content': {
-                        'workflow_stage_name': {
-                            'value': 'camera_ready'
-                        }
-                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')
                     }],
                     'content': {
+                        'workflow_stage_name': {
+                            'value': 'camera_ready'
+                        },
                         'decision_option': {
                             'value': '${4/content/decision_option/value}'
                         }

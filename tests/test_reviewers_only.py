@@ -217,7 +217,8 @@ class TestReviewersOnly():
             'ABCD.cc/2025/Conference/-/Official_Comment': 'discussion',
             'ABCD.cc/2025/Conference/-/Decision': 'decision',
             'ABCD.cc/2025/Conference/-/Decision_Upload': 'decision',
-            'ABCD.cc/2025/Conference/-/Submission_Release': 'camera_ready',
+            'ABCD.cc/2025/Conference/-/Accepted_Submission_Release': 'camera_ready',
+            'ABCD.cc/2025/Conference/-/Rejected_Submission_Release': 'camera_ready',
         }
         for invitation_id, stage in expected_workflow_stage.items():
             invitation = openreview_client.get_invitation(invitation_id)
