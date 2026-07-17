@@ -1767,7 +1767,12 @@ arr_max_load_task_forum = {
 
 arr_voluntary_reviewing_task_forum = {
     "title": "Voluntary Unavailability and Maximum Load Request",
-    "instructions": "Please complete this form to indicate your maximum load for voluntary reviewing for this cycle, or your (un)availability for voluntary reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.\n\n**This will be overridden with the mandatory reviewing load if you submit at least one paper in this cycle and are qualified to review.**."
+    "instructions": "Please complete this form to indicate your maximum load for voluntary reviewing for this cycle, or your (un)availability for voluntary reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.\n\n**This will be overridden with the mandatory reviewing load if you submit at least one paper in this cycle and are qualified to review.**"
+}
+
+arr_voluntary_meta_reviewing_task_forum = {
+    "title": "Voluntary Unavailability and Maximum Load Request",
+    "instructions": "Please complete this form to indicate your maximum load for voluntary meta-reviewing for this cycle, or your (un)availability for voluntary meta-reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.\n\n**This will be overridden with the mandatory meta-reviewing load if you submit at least one paper in this cycle and are qualified to meta-review.**"
 }
 
 arr_max_load_task = {
