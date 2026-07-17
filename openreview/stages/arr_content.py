@@ -438,7 +438,7 @@ arr_submission_content = {
     },
    "checklist_separator": {
         "description": "---\n\n# The Responsible Research Checklist\n\nPlease see this [page](https://aclrollingreview.org/responsibleNLPresearch/) for advice on filling it in. Please note that inappropriate or missing answers to checklist questions can be grounds for DESK REJECTION. If your answer to a given question is 'yes' or 'no', rather than 'n/a', the 'elaboration' fields MUST be filled in.",
-        readers: ["everyone"],
+        "readers": ["everyone"],
         "order": 34
     },
     "A1_potential_risks": {
