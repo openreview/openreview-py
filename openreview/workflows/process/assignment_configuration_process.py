@@ -4,7 +4,7 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     committee_name = invitation.get_content_value('committee_name')
-    reviewers_roles = domain.get_content_value('reviewers_name')
+    reviewers_roles = domain.get_content_value('reviewers_roles')
     area_chairs_name = domain.get_content_value('area_chairs_name')
 
     assignment_title = edit.note.content['title']['value']
@@ -36,7 +36,7 @@ def process(client, edit, invitation):
         )
 
     # if reviewer assignment was created, add it to list of possible reviewer assignment titles that ACs could edit
-    if committee_name in reviewers_roles:
+    if committee_name in reviewers_roles and area_chairs_name:
         edit_invitation_id = f'{venue_id}/{area_chairs_name}/-/Reviewer_Reassignment'
         client.post_invitation_edit(
             invitations=meta_invitation_id,
@@ -68,9 +68,3 @@ def process(client, edit, invitation):
                 }
             )
         )
-
-
-
-
-
-
