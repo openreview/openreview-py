@@ -102,30 +102,6 @@ withdraw_v2 = {
     }
 }
 
-withdraw_v3 = {
-    'title': {
-        'value': 'Submission Withdrawn by the Authors',
-        'order': 1
-    },
-    'policy_confirmation': {
-        'description': 'I confirm that I actually need to withdraw the paper (e.g. because I plan to resubmit to another venue before the end of this cycle).\n\n In many cases authors request a withdrawal AFTER the release of meta-reviews. This is NOT needed, because the paper is NO LONGER UNDER REVIEW and can be resubmitted anywhere without withdrawal from ARR.',
-        'value-radio': [
-            'I confirm that I need to withdraw my submission, for which I have not yet received a meta-review.'
-        ],
-        'order': 2,
-        'required': True
-    },
-    'withdrawal confirmation': {
-        'description': 'I am aware of and accept the implications of withdrawing this submission from ARR. In particular, the submission will not be fully reviewed and ready for commitment in this cycle, and any earlier reviewed versions will also be ineligible for commitment. I will also not be able to resubmit it to ARR without restoring this submission, and if I have received even one review for it -- it would count as a resubmission, it would need to be disclosed and accompanied with an explanation of revisions. See https://aclrollingreview.org/cfp#withdrawal.',
-        'value-radio': [
-            'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-        ],
-        'order': 3,
-        'required': True
-    }
-}
-
-
 desk_reject = {
     'title': {
         'value': 'Submission Desk Rejected by Program Chairs',

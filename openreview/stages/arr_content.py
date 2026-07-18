@@ -3654,7 +3654,7 @@ arr_submitted_author_content = {
 
 arr_withdrawal_content = {
     "comment": {
-        "order": 3,
+        "order": 4,
         "description": "Any comments? (optional)",
         "value": {
             "param": {
@@ -3667,33 +3667,33 @@ arr_withdrawal_content = {
             }
         }
     },
-    "confirm_need_to_withdraw": {
+    "policy_confirmation": {
+        "description": "I confirm that I actually need to withdraw the paper (e.g. because I plan to resubmit to another venue before the end of this cycle).\n\n In many cases authors request a withdrawal AFTER the release of meta-reviews. This is NOT needed, because the paper is NO LONGER UNDER REVIEW and can be resubmitted anywhere without withdrawal from ARR.",
         "value": {
             "param": {
-                "input": "checkbox",
+                "type": "string",
                 "enum": [
                     "I confirm that I need to withdraw my submission, for which I have not yet received a meta-review."
                 ],
-                "optional": False,
-                "type": "string"
+                "input": "radio",
+                "optional": False
             }
         },
-        "description": "I confirm that I actually need to withdraw this submission (e.g. because I plan to resubmit it to another venue before the end of this cycle).\n\n We ask you to confirm this, because many authors request a withdrawal AFTER the release of meta-reviews. This is NOT needed, because the paper is NO LONGER UNDER REVIEW and can be resubmitted anywhere without withdrawal from ARR.",
-        "order": 1
+        "order": 2
     },
     "withdrawal_confirmation": {
+        "description": "I am aware of and accept the implications of withdrawing this submission from ARR. In particular, the submission will not be fully reviewed and ready for commitment in this cycle, and any earlier reviewed versions will also be ineligible for commitment. I will also not be able to resubmit it to ARR without restoring this submission, and if I have received even one review for it -- it would count as a resubmission, it would need to be disclosed and accompanied with an explanation of revisions. See https://aclrollingreview.org/cfp#withdrawal.",
         "value": {
             "param": {
-                "input": "radio",
+                "type": "string",
                 "enum": [
-                    "I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors."
+                    "I have read and agree with the venue's withdrawal policy on behalf of myself and my co-authors."
                 ],
-                "optional": False,
-                "type": "string"
+                "input": "radio",
+                "optional": False
             }
         },
-        "description": "I confirm that I am aware of and accept the implications of withdrawing this submission from ARR. In particular, the submission will not be fully reviewed and ready for commitment in this cycle, and any earlier reviewed versions will also be ineligible for commitment. I will also not be able to resubmit it to ARR without restoring this submission, and if I have received even one review for it -- it would count as a resubmission, it would need to be disclosed and accompanied with an explanation of revisions. See https://aclrollingreview.org/cfp#withdrawal and https://aclrollingreview.org/cfp#resubmissions",
-        "order": 2
+        "order": 3
     }
 }
 
