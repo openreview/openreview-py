@@ -105,7 +105,7 @@ def process(client, invitation):
             domain.content['area_chairs_id']['value'].replace(venue_id, previous_cycle_id),
             domain.content['senior_area_chairs_id']['value'].replace(venue_id, previous_cycle_id),
             domain.content['ethics_chairs_id']['value'].replace(venue_id, previous_cycle_id),
-            f"{previous_cycle_id}/{domain.content['ethics_reviewers_name']['value']}",
+            domain.content['ethics_reviewers_id']['value'].replace(venue_id, previous_cycle_id),
         ]
     ]
 

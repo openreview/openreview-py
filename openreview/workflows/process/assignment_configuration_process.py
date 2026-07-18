@@ -3,11 +3,11 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
-    reviewers_name = domain.get_content_value('reviewers_name')
+    committee_name = invitation.get_content_value('committee_name')
 
     assignment_title = edit.note.content['title']['value']
 
-    match_name_invitation = client.get_invitation(f'{venue_id}/-/{reviewers_name}_Assignment_Deployment/Match')
+    match_name_invitation = client.get_invitation(f'{venue_id}/-/{committee_name}_Assignment_Deployment/Match')
 
     all_assignment_titles = match_name_invitation.edit['content']['match_name']['value']['param'].get('enum', [])
     if assignment_title not in all_assignment_titles:

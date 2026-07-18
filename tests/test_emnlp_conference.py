@@ -208,7 +208,7 @@ class TestEMNLPConference():
             }
         ))
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Full_Submission-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Full_Submission-0-1', count=2)
 
         submission_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Submission')
         assert submission_invitation

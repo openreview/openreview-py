@@ -2,13 +2,7 @@ def process(client, edit, invitation):
 
     SUPPORT_USER_ID = ''
     REMOVAL_DECISION_INVITATION_ID = ''
-    baseurl_v1 = 'http://localhost:3000'
-
-    if 'https://devapi' in client.baseurl:
-        baseurl_v1 = 'https://devapi.openreview.net'
-    if 'https://api' in client.baseurl:
-        baseurl_v1 = 'https://api.openreview.net'                
-
+    baseurl_v1 = openreview.tools.get_base_urls(client)[0]
     client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
 
     print('Check if the name can be automatically accepted')
@@ -39,7 +33,7 @@ def process(client, edit, invitation):
     print("Check if the username appears in any publications")
     for username in usernames:
         api1_publications = [p for p in client_v1.get_all_notes(content={ 'authorids': username}) if username in p.content['authorids']]
-        api2_publications = [p for p in client.get_all_notes(content={ 'authorids': username}) if username in p.content.get('authorids', {}).get('value', [])]
+        api2_publications = [p for p in client.get_all_notes(content={ 'authorids': username}) if username in p.authorids]
 
         print(f'Publications for {username}: {len(api1_publications) + len(api2_publications)}')
         if api1_publications or api2_publications:

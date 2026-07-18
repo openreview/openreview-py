@@ -31,8 +31,3 @@ def process_update(client, edge, invitation, existing_edge):
             if review.signatures[0] == groups[0].id:
                 raise openreview.OpenReviewException(f'Can not remove assignment, the user {edge.tail} already posted a {review_name}')
 
-    else:
-        group = openreview.tools.get_group(client, f'{paper_group_id}/{reviewers_name}')
-        if not group:
-            raise openreview.OpenReviewException(f'Can not make assignment, submission reviewers group not found.')
-

@@ -139,6 +139,20 @@ class TestNeurIPSConference():
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
+        # set submission_human_verification on the domain group so Revision picks it up
+        openreview_client.post_group_edit(
+            invitation='NeurIPS.cc/2023/Conference/-/Edit',
+            signatures=['NeurIPS.cc/2023/Conference'],
+            group=openreview.api.Group(
+                id='NeurIPS.cc/2023/Conference',
+                content={
+                    'submission_human_verification': {
+                        'value': { 'limit': 15, 'windowMs': 3600000 }
+                    }
+                }
+            )
+        )
+
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
@@ -174,6 +188,9 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
             }
         ))
         helpers.await_queue()
+
+        submission_inv = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Submission')
+        assert submission_inv.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
         request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
@@ -784,7 +801,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Ethics_Reviewers/-/Recruitment', count=1)
 
-        group = client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
+        group = openreview_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
         assert group
         assert len(group.members) == 1
         assert 'reviewerethics@neurips.com' in group.members
@@ -1349,6 +1366,21 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         sac_group = pc_client_v2.get_group('NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs')
         assert ['~SeniorArea_NeurIPSChair1'] == sac_group.members
 
+    def test_compute_stats_before_review_stage(self, helpers, openreview_client, client):
+
+        pc_client=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
+
+        pc_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            signatures=['NeurIPS.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum',
+                cdate = openreview.tools.datetime_millis(datetime.datetime.now())
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum-0-1', count=2)
+
+    
     def test_review_stage(self, helpers, openreview_client, test_client, client):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)

@@ -12,79 +12,171 @@ parameters:
   python-version:
     type: string
     default: "3.13.1"
+  pytest-files:
+    type: string
+    default: ""
 
-jobs:
-  # test job
-  install-package:
-    parameters:
-      python-version:
-        type: string
-    docker:
-      - image: cimg/python:<<parameters.python-version>>-node
-    steps:
-      - checkout
-      - run:
-          name: Install Dependencies
-          command: |
-            pip install -e .
-      - run:
-          name: Verify Installation
-          command: python -c "import openreview"
-  build:
-    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+executors:
+  # Test jobs run on a VM (machine executor) rather than the Docker executor so we
+  # control the kernel. MongoDB 8.x refuses to start on Linux kernel >= 6.19
+  # (SERVER-121912), which is what CircleCI's shared Docker hosts now run. Ubuntu
+  # 22.04's kernel stays well below 6.19, so Mongo 8 boots here. The redis/mongo/
+  # elasticsearch "service containers" the Docker executor provided are started
+  # manually with --network host in the start-services command, which reproduces the
+  # same localhost-shared networking (so transport.host=localhost, the replica-set
+  # member host, etc. behave exactly as before).
+  mongo8-vm:
+    machine:
+      image: ubuntu-2204:current
     resource_class: large
-    parallelism: 10
     working_directory: ~/openreview-py-repo
+
+# Reusable commands to reduce duplication between jobs
+commands:
+  get-github-token:
+    description: "Generate a short-lived GitHub App installation token"
+    steps:
+      - run:
+          name: Generate GitHub App token
+          command: |
+            pip install PyJWT==2.12.1 cryptography==46.0.7 --quiet
+
+            cat > /tmp/get_token.py \<< 'PYEOF'
+            import jwt, time, json, os, urllib.request
+
+            private_key = os.environ["GITHUB_APP_PRIVATE_KEY"]
+            app_id = os.environ["GITHUB_APP_ID"]
+            install_id = os.environ["GITHUB_APP_INSTALLATION_ID"]
+            now = int(time.time())
+
+            app_jwt = jwt.encode(
+                {"iat": now - 60, "exp": now + (9 * 60), "iss": app_id},
+                private_key,
+                algorithm="RS256"
+            )
+
+            req = urllib.request.Request(
+                f"https://api.github.com/app/installations/{install_id}/access_tokens",
+                method="POST",
+                headers={
+                    "Authorization": f"Bearer {app_jwt}",
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28"
+                }
+            )
+            with urllib.request.urlopen(req) as resp:
+                print(json.load(resp)["token"])
+            PYEOF
+
+            TOKEN=$(python3 /tmp/get_token.py)
+
+            # Make token available to subsequent steps
+            echo "export GITHUB_TOKEN=$TOKEN" >> $BASH_ENV
+  setup-python:
+    description: "Select the requested Python version (latest patch) via pyenv on the VM"
     parameters:
       python-version:
         type: string
-    docker:
-      - image: cimg/python:<<parameters.python-version>>-node
-      - image: cimg/redis:7.2
-      - image: mongo:8.0
-        command: [ --replSet, rs0 ]
-      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
-        environment:
-          xpack.security.enabled: false
-          transport.host: localhost
     steps:
-      - checkout
       - run:
-          name: Initialize replica set
+          name: Select Python << parameters.python-version >>
           command: |
-            # Source the utility functions
-            source ~/openreview-py-repo/.circleci/ci-utils.sh
-            
-            retry sudo apt-get update
-            retry sudo apt-get install -y gnupg curl
+            REQUESTED="<< parameters.python-version >>"
+            # Machine images manage Python through pyenv. `pyenv install` needs a full
+            # version (e.g. 3.10.14). If a full X.Y.Z was requested, use it as-is;
+            # if only a minor (e.g. 3.10) was requested, resolve the latest installable
+            # patch (preferring one already present on the image).
+            if echo "$REQUESTED" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              PY_VERSION="$REQUESTED"
+              pyenv install -s "$PY_VERSION"
+            else
+              PY_VERSION=$(pyenv versions --bare | grep -E "^${REQUESTED}\.[0-9]+$" | sort -V | tail -1 || true)
+              if [ -z "$PY_VERSION" ]; then
+                PY_VERSION=$(pyenv install --list | tr -d ' ' | grep -E "^${REQUESTED}\.[0-9]+$" | sort -V | tail -1)
+                if [ -z "$PY_VERSION" ]; then
+                  echo "ERROR: could not resolve a ${REQUESTED}.x version from pyenv" >&2
+                  exit 1
+                fi
+                pyenv install -s "$PY_VERSION"
+              fi
+            fi
+            pyenv global "$PY_VERSION"
+            python --version
+            pip --version
 
-            curl -fsSL https://pgp.mongodb.com/server-8.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
-            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+  start-services:
+    description: "Start redis, MongoDB 8 (replica set) and elasticsearch as host-networked containers"
+    steps:
+      - run:
+          name: Start service containers
+          command: |
+            # --network host reproduces the localhost-shared networking the Docker
+            # executor's service containers had, so nothing downstream changes.
+            docker run -d --name redis --network host redis:7.2 redis-server --protected-mode no
+            docker run -d --name mongo --network host mongo:8.0 --replSet rs0
+            docker run -d --name elasticsearch --network host \
+              -e xpack.security.enabled=false \
+              -e transport.host=localhost \
+              -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+              docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+      - run:
+          name: Initialize MongoDB replica set
+          command: |
+            ready=false
+            for i in $(seq 1 30); do
+              if docker exec mongo mongosh --quiet --eval 'db.adminCommand("ping").ok' >/dev/null 2>&1; then
+                ready=true
+                break
+              fi
+              echo "waiting for mongod... ($i)"
+              sleep 2
+            done
+            if [ "$ready" != "true" ]; then
+              echo "ERROR: mongod did not become ready after 60s" >&2
+              docker logs mongo 2>&1 | tail -50 || true
+              exit 1
+            fi
+            docker exec mongo mongosh --quiet --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
+      - run:
+          name: Wait for Elasticsearch
+          command: |
+            for i in $(seq 1 30); do
+              if curl -s http://localhost:9200 >/dev/null 2>&1; then
+                echo "elasticsearch is up"
+                exit 0
+              fi
+              echo "waiting for elasticsearch... ($i)"
+              sleep 2
+            done
+            echo "ERROR: elasticsearch did not become ready after 60s" >&2
+            docker logs elasticsearch 2>&1 | tail -50 || true
+            exit 1
 
-            retry sudo apt-get update
-            retry sudo apt-get upgrade -y
-            retry sudo apt-get install -y mongodb-org=8.0.0
-
-            mongosh mongodb://localhost:27017 --eval "rs.initiate()"
-
+  clone-repos:
+    description: "Clone OpenReview API repositories"
+    steps:
       - run:
           name: Install openreview-py
           command: |
-            pip install ~/openreview-py-repo
+            pip install -c ~/openreview-py-repo/requirements.txt ~/openreview-py-repo
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
+            git clone https://x-access-token:$GITHUB_TOKEN@github.com/openreview/openreview-api-v1.git ~/openreview
             cd ~/openreview && git checkout << pipeline.parameters.openreview-api-v1-branch >>
       - run:
           name: Clone OpenReview API V2 branch << pipeline.parameters.openreview-api-v2-branch >>
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
+            git clone https://x-access-token:$GITHUB_TOKEN@github.com/openreview/openreview-api.git ~/openreview-v2
             cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
       - run:
           name: Clone openreview-web
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+            git clone https://github.com/openreview/openreview-web.git ~/openreview-web
+
+  create-directories:
+    description: "Create API directories"
+    steps:
       - run:
           name: Create API directories
           command: |
@@ -97,6 +189,21 @@ jobs:
             mkdir -p ~/openreview-v2/files/pdfs
             mkdir -p ~/openreview-v2/files/temp
             mkdir -p ~/openreview-py-repo/coverage
+
+  install-nodejs:
+    description: "Install Node.js 22 via NodeSource"
+    steps:
+      - run:
+          name: Install Node.js 22
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            node --version
+            npm --version
+
+  install-firefox:
+    description: "Install Firefox browser"
+    steps:
       - run:
           # source: https://support.mozilla.org/en-US/kb/install-firefox-linux#w_system-firefox-installation-for-advanced-users
           # source: https://ubuntu-mate.community/t/firefox-installation-guide-non-snap/25299
@@ -114,6 +221,10 @@ jobs:
             retry sudo apt-get install libdbus-glib-1-2
             echo export PATH="$PATH:/usr/local/bin/firefox" >> ~/.bashrc
             source ~/.bashrc
+
+  start-apis:
+    description: "Start and wait for API V1 and V2"
+    steps:
       - run:
           name: Start API V1
           command: |
@@ -130,7 +241,7 @@ jobs:
           name: Start API V2
           command: |
             cd ~/openreview-v2
-            npm run cleanStart
+            NODE_OPTIONS="--max-old-space-size=4096" npm run cleanStart
           background: true
       - run:
           name: Wait for API V2 to start
@@ -138,6 +249,10 @@ jobs:
           command: |
             wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3001
             :
+
+  setup-openreview-web:
+    description: "Install, build, and start openreview-web"
+    steps:
       - run:
           name: Install openreview-web
           command: |
@@ -152,6 +267,10 @@ jobs:
             export NEXT_PORT=3030
             NODE_ENV=production SUPER_USER=openreview.net npm run start
           background: true
+
+  install-geckodriver:
+    description: "Install Firefox geckodriver"
+    steps:
       - run:
           name: Install Firefox driver
           command: |
@@ -164,18 +283,164 @@ jobs:
             wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
             tar -xvzf geckodriver*
             chmod +x geckodriver
+
+  install-pytest:
+    description: "Install pytest and dependencies"
+    steps:
+      - run:
+          name: Install pytest dependencies
+          command: |
+            cd ~/openreview-py-repo
+            mkdir -p test-reports
+            pip install -c requirements-dev.txt -e '.[test]'
+
+  copy-logs-on-failure:
+    description: "Copy API logs to artifacts on failure"
+    steps:
+      - run:
+          name: Copy API logs to artifacts
+          when: on_fail
+          command: |
+            cp ~/openreview/logs/* ~/openreview-py-repo/test-reports/ 2>/dev/null || true
+            cp ~/openreview-v2/logs/* ~/openreview-py-repo/test-reports/ 2>/dev/null || true
+
+  store-test-artifacts:
+    description: "Store test results and artifacts"
+    steps:
+      - store_test_results:
+          path: test-reports
+      - store_artifacts:
+          when: always
+          path: test-reports
+
+jobs:
+  # test job
+  install-package:
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: cimg/python:<<parameters.python-version>>
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: |
+            pip install -e .
+      - run:
+          name: Verify Installation
+          command: python -c "import openreview"
+  build-pr-tests:
+    # Run only tests from files that were modified/added in the PR
+    executor: mongo8-vm
+    parameters:
+      # Passed to setup-python; selects the Python the VM test job runs on.
+      python-version:
+        type: string
+    steps:
+      - checkout
+      - run:
+          name: Detect modified test files
+          command: |
+            # Get the base branch for comparison
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              # Extract PR number from URL
+              PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | grep -oE '[0-9]+$')
+              # Fetch the base branch (usually main or master)
+              git fetch origin master:refs/remotes/origin/master 2>/dev/null || git fetch origin main:refs/remotes/origin/main 2>/dev/null || true
+
+              # Get modified/added test files compared to master/main
+              MODIFIED_TESTS=$(git diff --name-only --diff-filter=AM origin/master...HEAD -- 'tests/test_*.py' 2>/dev/null || \
+                               git diff --name-only --diff-filter=AM origin/main...HEAD -- 'tests/test_*.py' 2>/dev/null || \
+                               echo "")
+            else
+              # For non-PR builds (e.g., master branch), skip this job
+              MODIFIED_TESTS=""
+            fi
+
+            # Write the modified tests to a file for subsequent steps
+            echo "$MODIFIED_TESTS" > /tmp/modified_tests.txt
+
+            FILE_COUNT=$(echo "$MODIFIED_TESTS" | grep -c . || true)
+
+            if [ -z "$MODIFIED_TESTS" ]; then
+              echo "No test files were modified in this PR. Skipping PR-specific tests."
+              echo "skip" > /tmp/skip_pr_tests.txt
+            elif [ "$FILE_COUNT" -gt 3 ]; then
+              echo "Too many modified test files ($FILE_COUNT). Deferring to full build job."
+              echo "$MODIFIED_TESTS"
+              echo "skip" > /tmp/skip_pr_tests.txt
+            else
+              echo "Modified test files found:"
+              echo "$MODIFIED_TESTS"
+              echo "run" > /tmp/skip_pr_tests.txt
+            fi
+      - run:
+          name: Check if tests should run
+          command: |
+            if [ "$(cat /tmp/skip_pr_tests.txt)" = "skip" ]; then
+              echo "No modified test files - skipping test environment setup"
+              circleci-agent step halt
+            fi
+      - setup-python:
+          python-version: << parameters.python-version >>
+      - start-services
+      - get-github-token
+      - install-nodejs
+      - clone-repos
+      - create-directories
+      - install-firefox
+      - start-apis
+      - setup-openreview-web
+      - install-geckodriver
+      - install-pytest
+      - run:
+          name: Run PR-specific tests
+          environment:
+            PYTHONUNBUFFERED: "1"
+          command: |
+            cd ~/openreview-py-repo
+            
+            # Read the modified test files
+            MODIFIED_TESTS=$(cat /tmp/modified_tests.txt | tr '\n' ' ')
+            
+            if [ -n "$MODIFIED_TESTS" ]; then
+              echo "Running tests from modified files: $MODIFIED_TESTS"
+              pytest $MODIFIED_TESTS --durations=0 -v -o junit_family=legacy \
+                --junitxml=test-reports/junit-pr-tests.xml \
+                --driver Firefox --driver-path tests/drivers/geckodriver
+            else
+              echo "No test files to run"
+            fi
+      - copy-logs-on-failure
+      - store-test-artifacts
+  build:
+    executor: mongo8-vm
+    parallelism: 10
+    parameters:
+      # Passed to setup-python; selects the Python the VM test job runs on.
+      python-version:
+        type: string
+    steps:
+      - checkout
+      - setup-python:
+          python-version: << parameters.python-version >>
+      - start-services
+      - get-github-token
+      - install-nodejs
+      - clone-repos
+      - create-directories
+      - install-firefox
+      - start-apis
+      - setup-openreview-web
+      - install-geckodriver
+      - install-pytest
       - run:
           name: Run tests
           environment:
             PYTHONUNBUFFERED: "1"
           command: |
             cd ~/openreview-py-repo
-            mkdir test-reports
-            pip install -U pytest
-            pip install py
-            pip install selenium
-            pip install pytest-selenium
-            pip install -e .
             
             # Container 0: ONLY test_journal.py (~22 min)
             if [ "$CIRCLE_NODE_INDEX" -eq 0 ]; then
@@ -198,48 +463,82 @@ jobs:
                 --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" \
                 --verbose --split-by=timings
             fi
+      - copy-logs-on-failure
+      - store-test-artifacts
+  debug-tests:
+    # Run an explicit set of tests against custom openreview-api / openreview-api-v1
+    # branches. Triggered by passing a non-empty `pytest-files` pipeline parameter
+    # from the CircleCI UI; bypasses install-package + build-pr-tests + build.
+    executor: mongo8-vm
+    parameters:
+      # Passed to setup-python; selects the Python the VM test job runs on.
+      python-version:
+        type: string
+    steps:
+      - checkout
+      - setup-python:
+          python-version: << parameters.python-version >>
+      - start-services
+      - get-github-token
+      - install-nodejs
+      - clone-repos
+      - create-directories
+      - install-firefox
+      - start-apis
+      - setup-openreview-web
+      - install-geckodriver
+      - install-pytest
       - run:
-          name: Copy API logs to artifacts
-          when: on_fail
+          name: Run pytest-files
+          environment:
+            PYTHONUNBUFFERED: "1"
           command: |
-            cp ~/openreview/logs/* ~/openreview-py-repo/test-reports/
-            cp ~/openreview-v2/logs/* ~/openreview-py-repo/test-reports/
-      - store_test_results:
-          path: test-reports
-      - store_artifacts:
-          when: always
-          path: test-reports
-  deploy:
+            cd ~/openreview-py-repo
+            PYTEST_FILES="<< pipeline.parameters.pytest-files >>"
+            echo "Running tests from pytest-files parameter: $PYTEST_FILES"
+            pytest $PYTEST_FILES --durations=0 -v -o junit_family=legacy \
+              --junitxml=test-reports/junit-debug.xml \
+              --driver Firefox --driver-path tests/drivers/geckodriver
+      - copy-logs-on-failure
+      - store-test-artifacts
+  deploy-dev:
     working_directory: ~/openreview-py-repo
     docker:
       - image: cimg/python:3.11.0
     steps:
       - checkout
-      - run:
-          name: Deploy to pip
-          command: |
-            pip install build twine
-            python -m build --wheel
-            twine upload dist/* --skip-existing
+      - get-github-token
       - run:
           name: Deploy to dev instance
           command: |
-            curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $OPENREVIEW_GITHUB" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
+            curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
 workflows:
   version: 2
   build-deploy:
+    when:
+      equal: [ "", << pipeline.parameters.pytest-files >> ]
     jobs:
       - install-package:
           matrix:
             parameters:
               python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-      - build:
+      - build-pr-tests:
           requires:
             - install-package
           python-version: "3.10"
-      - deploy:
+      - build:
+          requires:
+            - build-pr-tests
+          python-version: "3.10"
+      - deploy-dev:
           requires:
             - build
           filters:
             branches:
               only: master
+  debug:
+    unless:
+      equal: [ "", << pipeline.parameters.pytest-files >> ]
+    jobs:
+      - debug-tests:
+          python-version: "3.10"

@@ -171,6 +171,8 @@ class TestJMLRJournal():
             weight=1
         ))
 
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
         # Assign reviewer 2
         paper_assignment_edge = celeste_client.post_edge(openreview.Edge(invitation='JMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Andrew_JMLR1'],
@@ -182,6 +184,8 @@ class TestJMLRJournal():
             weight=1
         ))
 
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
         # Assign reviewer 3
         paper_assignment_edge = celeste_client.post_edge(openreview.Edge(invitation='JMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Hugo_JMLR1'],
@@ -192,6 +196,8 @@ class TestJMLRJournal():
             tail='~Hugo_JMLR1',
             weight=1
         ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         # post reviews
         reviewer_one_client = OpenReviewClient(username='rachel@jmlr.com', password=helpers.strong_password)

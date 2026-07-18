@@ -4,8 +4,10 @@ def process(client, edit, invitation):
     venue_id = domain.id
     submission_name = domain.get_content_value('submission_name')
     ethics_reviewers_name = domain.get_content_value('ethics_reviewers_name')
+    ethics_reviewers_id = domain.get_content_value('ethics_reviewers_id')
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     review_name = domain.content.get('review_name', {}).get('value')
+    meta_review_name = domain.content.get('meta_review_name', {}).get('value')
     ethics_review_name = domain.content.get('ethics_review_name', {}).get('value')
     source_submissions_query_mapping = domain.content.get('source_submissions_query_mapping', {}).get('value')
     ae_checklist_name = invitation.get_content_value('ae_checklist_name')
@@ -42,7 +44,7 @@ def process(client, edit, invitation):
 
         # create ethics reviewers group
         client.post_group_edit(
-                invitation=f'{venue_id}/{ethics_reviewers_name}/-/{submission_name}_Group',
+                invitation=f'{ethics_reviewers_id}/-/{submission_name}_Group',
                 content={
                     'noteId': { 'value': submission.id },
                     'noteNumber': { 'value': submission.number },
@@ -51,7 +53,7 @@ def process(client, edit, invitation):
             )
         
         # edit review invitation and reviews if invitation exists
-        for invitation_name in [review_name, ae_checklist_name, reviewer_checklist_name]:
+        for invitation_name in [review_name, meta_review_name, ae_checklist_name, reviewer_checklist_name]:
             if invitation_name:
                 review_invitation = openreview.tools.get_invitation(client, f'{venue_id}/-/{invitation_name}')
                 if review_invitation:
@@ -62,11 +64,12 @@ def process(client, edit, invitation):
                     if '{signatures}' in final_readers:
                         final_readers.remove('{signatures}')
                     if 'everyone' not in final_readers:
-                        final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
+                        if invitation_name != meta_review_name:
+                            final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
                         if release_to_ethics_chairs:
                             final_readers.append(ethics_chairs_id)
 
-                    print('review_name:', review_name)
+                    print('invitation_name:', invitation_name)
                     paper_invitation_edit = client.post_invitation_edit(
                             invitations=review_invitation.id,
                             readers=[venue_id],

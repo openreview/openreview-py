@@ -1,0 +1,9 @@
+# Compose override for serve mode — exposes ports to the host for browser access.
+# Used via: docker compose -f docker-compose.yml -f docker-compose.serve.yml up
+
+services:
+  pod:
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "3030:3030"

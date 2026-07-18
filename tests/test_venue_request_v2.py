@@ -25,10 +25,6 @@ class TestVenueRequest():
 
         helpers.await_queue()
 
-        # Add support group user to the support group object
-        support_group = client.get_group(support_group_id)
-        client.add_members_to_group(group=support_group, members=['~Support_User1'])
-
         now = datetime.datetime.now()
         due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)
         withdraw_exp_date = due_date + datetime.timedelta(days=1)
@@ -128,9 +124,16 @@ class TestVenueRequest():
         assert 'V2.cc/2030/Conference' in client.get_group('venues').members
         assert 'V2.cc' in client.get_group('host').members
 
-        # assert preferred emails groups were set correctly
+        # assert preferred emails groups were set correctly - should include all venue participants
         venue_group = openreview_client.get_group('V2.cc/2030/Conference')
-        assert 'preferred_emails_groups' in venue_group.content and venue_group.content['preferred_emails_groups'] == { 'value': ['V2.cc/2030/Conference/Authors'] }
+        assert 'preferred_emails_groups' in venue_group.content
+        preferred_emails_groups = venue_group.content['preferred_emails_groups']['value']
+        # Should include authors, reviewers, area chairs, senior area chairs, and publication chairs
+        assert 'V2.cc/2030/Conference/Authors' in preferred_emails_groups
+        assert 'V2.cc/2030/Conference/Reviewers' in preferred_emails_groups
+        assert 'V2.cc/2030/Conference/Area_Chairs' in preferred_emails_groups
+        assert 'V2.cc/2030/Conference/Senior_Area_Chairs' in preferred_emails_groups
+        assert 'V2.cc/2030/Conference/Publication_Chairs' in preferred_emails_groups
         assert 'preferred_emails_id' in venue_group.content and venue_group.content['preferred_emails_id'] == { 'value': 'V2.cc/2030/Conference/-/Preferred_Emails' }
 
         # Return venue details as a dict
@@ -175,12 +178,6 @@ class TestVenueRequest():
 
         helpers.create_user('pc_venue_v2@mail.com', 'ProgramChair', 'User')
         pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc_venue_v2@mail.com', password=helpers.strong_password)
-
-        support_group = client.get_group(support_group_id)
-        client.add_members_to_group(group=support_group, members=['~Support_User1'])
-
-        support_members = client.get_group(support_group_id).members
-        assert support_members and len(support_members) == 1
 
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=3)
@@ -273,11 +270,9 @@ class TestVenueRequest():
         assert messages[0]['content']['text'] == f'Thank you for choosing OpenReview to host your upcoming venue. We are reviewing your request and will post a comment on the request forum when the venue is deployed. You can access the request forum here: https://openreview.net/forum?id={request_form_note.forum}'
 
         messages = client.get_messages(
-            to='support@openreview.net',
             subject='A request for service has been submitted by TestVenue@OR2022'
         )
-        assert messages and len(messages) == 1
-        assert messages[0]['content']['text'].startswith(f'A request for service has been submitted by TestVenue@OR2022. Check it here: https://openreview.net/forum?id={request_form_note.forum}')
+        assert len(messages) == 0
 
         comment_note = pc_client.post_note(openreview.Note(
             content={
@@ -299,10 +294,10 @@ class TestVenueRequest():
         helpers.await_queue()
 
         messages = client.get_messages(
-            to='support@openreview.net',
             subject='Comment posted to a service request: Test 2022 Venue'
         )
         assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'support@openreview.net'
         assert messages[0]['content']['text'] == f'''A comment was posted to a service request. 
 
 Comment title: Urgent\n\nComment: Please deploy ASAP.
@@ -354,10 +349,10 @@ Please note that with the exception of urgent issues, requests made on weekends 
         helpers.await_queue()
 
         messages = client.get_messages(
-            to='support@openreview.net',
             subject='Comment posted to a service request: Test 2022 Venue'
         )
         assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'support@openreview.net'
 
         messages = client.get_messages(
             to='pc_venue_v2@mail.com',
@@ -3612,6 +3607,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         message_text = f'''Your new revision of the submission to TestVenue@OR'2030V2 Modified has been posted.
 
 Title: revised test submission 3
+
+Authors: VenueFour Author, VenueThree Author
 
 Abstract revised abstract 3
 

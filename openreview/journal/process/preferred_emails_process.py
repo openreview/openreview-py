@@ -8,16 +8,20 @@ def process(client, invitation):
     print('Get profiles for all the action editors')
     action_editors = client.get_group(journal.get_action_editors_id()).members
 
-    print('Get profiles for all the assigned reviewers and action editors')
+    print('Get profiles for all the assigned reviewers, action editors and paper authors')
     groups = client.get_all_groups(prefix=journal.venue_id + '/Paper', domain=journal.venue_id)
+
+    authors = []
 
     for group in groups:
         if '/Reviewer_' in group.id:
             reviewers += group.members
         elif '/Action_Editor_' in group.id:
             action_editors += group.members
+        elif group.id.endswith('/Authors'):
+            authors += group.members
 
-    all_profiles = openreview.tools.get_profiles(client, ids_or_emails=list(set(reviewers + action_editors)))
+    all_profiles = openreview.tools.get_profiles(client, ids_or_emails=list(set(reviewers + action_editors + authors)))
 
     print('Create preferred email edges for all the profiles')
 
@@ -26,13 +30,14 @@ def process(client, invitation):
     new_edges = []
     for profile in all_profiles:
         if '~' in profile.id:
-            if not existing_edges.get(profile.id):
+            preferred_email = profile.get_preferred_email()
+            if preferred_email and not existing_edges.get(profile.id):
                 new_edges.append(openreview.api.Edge(
                     invitation=invitation.id,
                     head=profile.id,
-                    tail=profile.get_preferred_email(),
+                    tail=preferred_email,
                     signatures=[journal.venue_id],
-                    readers=[journal.venue_id, journal.get_action_editors_id(), profile.id],
+                    readers=[f'{journal.venue_id}/Preferred_Emails_Readers', profile.id],
                     writers=[journal.venue_id, profile.id]
                 ))
 

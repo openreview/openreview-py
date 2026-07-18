@@ -102,7 +102,7 @@ OpenReview Team'''
             return
 
         ## - Check conflicts
-        authorids = submission.content['authorids']['value']
+        authorids = submission.authorids
         author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True, with_relations=True)
         profiles=openreview.tools.get_profiles(client, [edge.tail], with_publications=True, with_relations=True)
         conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0], policy=conflict_policy, n_years=conflict_n_years)
@@ -167,26 +167,6 @@ OpenReview Team'''
             if external_paper_committee_id:
                 external_paper_committee_id=external_paper_committee_id.replace('{number}', str(submission.number))
                 client.add_members_to_group(external_paper_committee_id, edge.tail)
-
-            if assignment_title:
-                instructions=f'The {short_phrase} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.'
-            else:
-                instructions=f'Please go to the {short_phrase} Reviewers Console and check your pending tasks: https://openreview.net/group?id={committee_id}'
-
-            print('send confirmation email')
-            ## Send email to reviewer
-            subject=f'[{short_phrase}] {committee_name} Invitation accepted for paper {submission.number}'
-            message =f'''Hi {preferred_name},
-Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
-
-{instructions}
-
-{decline_instructions}
-
-OpenReview Team'''
-
-            ## - Send email
-            response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender)
 
             ## Send email to inviter
             subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted to review paper {submission.number}'

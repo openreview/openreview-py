@@ -1,0 +1,8 @@
+{
+  "api_v1": { "path": "../../openreview-api-v1", "branch": "" },
+  "api_v2": { "path": "../../openreview-api",    "branch": "" },
+  "web":    { "path": "../../openreview-web",     "branch": "" },
+  "mode": "test",
+  "auto_checkout": true,
+  "keep_infra": false
+}

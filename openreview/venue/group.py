@@ -126,10 +126,10 @@ class GroupBuilder(object):
             self.client.add_members_to_group('venues', venue_id)
             root_id = groups[0].id
             if root_id == root_id.lower():
-                root_id = groups[1].id        
+                root_id = groups[1].id
             self.client.add_members_to_group('host', root_id)
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
+            with open(self.venue.homepage_webfield_path) as f:
                 content = f.read()
                 self.post_group(openreview.api.Group(
                     id = venue_group.id,
@@ -164,6 +164,7 @@ class GroupBuilder(object):
             'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
             'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },
             'date': { 'value': self.venue.date if self.venue.date else '' },
+            'release_role_participation': { 'value': self.venue.release_role_participation },
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
@@ -308,6 +309,7 @@ class GroupBuilder(object):
             content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
 
         if self.venue.use_ethics_reviewers:
+            content['ethics_reviewers_id'] = { 'value': self.venue.get_ethics_reviewers_id() }
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
             content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
 
@@ -317,6 +319,9 @@ class GroupBuilder(object):
 
         if venue_group.content.get('enable_reviewers_reassignment'):
             content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')
+
+        if venue_group.content.get('reviewers_recommendation_id'):
+            content['reviewers_recommendation_id'] = venue_group.content.get('reviewers_recommendation_id')            
 
         if venue_group.content.get('reviewers_proposed_assignment_title'):
             content['reviewers_proposed_assignment_title'] = venue_group.content.get('reviewers_proposed_assignment_title')
@@ -347,24 +352,31 @@ class GroupBuilder(object):
 
         if self.venue.is_template_related_workflow():
             submission_name = self.venue.submission_stage.name
-            content['exclusion_workflow_invitations']  = {'value': [
-                f'{venue_id}/-/Edit',
-                f'/{venue_id}/{submission_name}[0-9]+/',
-                f'/{venue_id}/-/Venue.*/',
-                f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
-                f'/{venue_id}/{reviewers_name}/-/(?!{submission_name}_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment).*/', # matching invitations
-                f'{venue_id}/Authors/-/Message',
-                f'{venue_id}/Authors/Accepted/-/Message',
-                f'{venue_id}/-/Message',
-                f'{venue_id}/-/Withdrawn_{submission_name}',
-                f'{venue_id}/-/Desk_Rejected_{submission_name}'
+            content['exclusion_workflow_invitations']  = {
+                'value': [
+                    f'{venue_id}/-/Edit',
+                    f'/{venue_id}/Submission[0-9]+/',
+                    f'/{venue_id}/-/Venue.*/',
+                    f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
+                    f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment).*/', # matching invitations
+                    f'{venue_id}/Authors/-/Message',
+                    f'{venue_id}/Authors/Accepted/-/Message',
+                    f'{venue_id}/-/Message',
+                    f'{venue_id}/-/Withdrawn_Submission',
+                    f'{venue_id}/-/Desk_Rejected_Submission'
                 ]
             }
+            content['status_invitation_id'] = { 'value': f'{self.venue.support_user}/Venue_Request/Conference_Review_Workflow/-/Status' }
 
         update_content = self.get_update_content(venue_group.content, content)
         if self.venue.is_template_related_workflow() and venue_group.content:
             update_content = False # avoid updating the content on every deployment for template related workflows
         if update_content:
+
+            description = f'''Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria. [Learn more in the documentation](https://docs.openreview.net/new-venue-ui-beta/overview).
+
+For questions, assistance, or feedback, use the **Comment** or **Feedback** buttons in your [**venue configuration request**](https://openreview.net/forum?id={self.venue.request_form_id}) to reach the OpenReview team.''' if self.venue.is_template_related_workflow() else None
+
             self.client.post_group_edit(
                 invitation = self.venue.get_meta_invitation_id(),
                 readers = [self.venue.venue_id],
@@ -373,7 +385,7 @@ class GroupBuilder(object):
                 group = openreview.api.Group(
                     id = self.venue_id,
                     content = update_content,
-                    description = 'Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria. You can find more information [here](https://docs.openreview.net/new-venue-ui-beta/overview).'
+                    description = description
                 )
             )
 
@@ -383,7 +395,6 @@ class GroupBuilder(object):
                 signatures=[self.openreview_template],
                 content={
                     'venue_id': { 'value': venue_id },
-                    'message_reply_to': { 'value': self.venue.contact },
                     'venue_short_name': { 'value': self.venue.short_name },
                     'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
                 },
@@ -405,7 +416,7 @@ class GroupBuilder(object):
                             signatories=[pc_group_id, venue_id],
                             members=program_chair_ids
                             )
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
+            with open(self.venue.program_chairs_webfield_path) as f:
                 content = f.read()
                 pc_group.web = content
                 self.post_group(pc_group)
@@ -470,7 +481,6 @@ class GroupBuilder(object):
                 content={
                     'venue_id': { 'value': venue_id },
                     'group_id': { 'value': authors_id },
-                    'message_reply_to': { 'value': self.venue.contact  },
                     'venue_short_name': { 'value': self.venue.short_name },
                     'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
                 },
@@ -484,7 +494,6 @@ class GroupBuilder(object):
                 content={
                     'venue_id': { 'value': venue_id },
                     'group_id': { 'value': authors_accepted_id },
-                    'message_reply_to': { 'value': self.venue.contact  },
                     'venue_short_name': { 'value': self.venue.short_name },
                     'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
                 },
@@ -588,10 +597,10 @@ class GroupBuilder(object):
                                 members=[]
                             )
 
-                with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+                with open(self.venue.area_chairs_webfield_path) as f:
                     content = f.read()
                     area_chairs_group.web = content
-                    self.post_group(area_chairs_group)                  
+                    self.post_group(area_chairs_group)
 
     def create_senior_area_chairs_group(self):
 
@@ -625,10 +634,10 @@ class GroupBuilder(object):
                                 members=[]
                             )
 
-                with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
+                with open(self.venue.senior_area_chairs_webfield_path) as f:
                     content = f.read()
                     senior_area_chairs_group.web = content
-                    self.post_group(senior_area_chairs_group)                
+                    self.post_group(senior_area_chairs_group)
 
     def create_ethics_reviewers_group(self):
         venue_id = self.venue.id
@@ -662,7 +671,7 @@ class GroupBuilder(object):
                             members=[]
                         )
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
+            with open(self.venue.ethics_chairs_webfield_path) as f:
                 content = f.read()
                 ethics_chairs_group.web = content
                 self.post_group(ethics_chairs_group)
@@ -705,6 +714,10 @@ class GroupBuilder(object):
                 members.append(self.venue.get_area_chairs_id())
             if self.venue.use_senior_area_chairs:
                 members.append(self.venue.get_senior_area_chairs_id())
+            if self.venue.use_ethics_chairs:
+                members.append(self.venue.get_ethics_chairs_id())
+            if self.venue.use_publication_chairs:
+                members.append(self.venue.get_publication_chairs_id())
             preferred_emails_readers_group=Group(id=preferred_emails_readers_group_id,
                             readers=[venue_id, preferred_emails_readers_group_id],
                             writers=[venue_id],
@@ -713,7 +726,7 @@ class GroupBuilder(object):
                             members=members
                             )
             self.post_group(preferred_emails_readers_group)
-    
+
     def add_to_active_venues(self):
         active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
