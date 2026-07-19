@@ -302,8 +302,8 @@ class TestARRVenueV2():
 
         withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
         assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
-        assert 'confirm_need_to_withdraw' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
-        assert 'confirm_penalty_rules' in withdrawal_invitation.edit['invitation']['edit']['note']['content']        
+        assert 'policy_confirmation' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'withdrawal_confirmation' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Expertise_Selection')
 
@@ -424,7 +424,7 @@ class TestARRVenueV2():
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
         assert 'existing_preprints' in submission_invitation.edit['note']['content']
-        assert 'A1_limitations_section' in submission_invitation.edit['note']['content']
+        assert 'A1_potential_risks' in submission_invitation.edit['note']['content']
         assert 'paper_type' in submission_invitation.edit['note']['content']
         assert 'keywords' not in submission_invitation.edit['note']['content']
 
@@ -713,7 +713,8 @@ class TestARRVenueV2():
                 'paper_type': { 'value': 'Short' },
                 'research_area': { 'value': 'NLP and Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
-                'languages_studied': { 'value': 'A language' },
+                'contribution_types': { 'value': ['NLP engineering experiment'] },
+                'languages_studied': { 'value': ['English'] },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
                 'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
                 'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
@@ -722,21 +723,28 @@ class TestARRVenueV2():
                 'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
                 'existing_preprints': { 'value': 'existing_preprints' },
                 'preferred_venue': { 'value': 'ACL' },
+                'visa_needs': { 'value': 'no' },
                 'consent_to_share_data': { 'value': 'yes' },
                 'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-                "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
-                "A2_potential_risks": { 'value': 'Yes' },
+                "A1_potential_risks": { 'value': 'Yes' },
                 "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-                "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
+                "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
+                "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
+                "B3_data_contains_personally_identifying_info": { 'value': 'Yes' },
+                "B4_data_contains_offensive_content": { 'value': 'Yes' },
+                "B5_documentation_of_artifacts": { 'value': 'Yes' },
                 "B6_statistics_for_data": { 'value': 'Yes' },
                 "C_computational_experiments": { 'value': 'Yes' },
+                "C1_model_size_and_budget": { 'value': 'Yes' },
                 "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
                 "C3_descriptive_statistics": { 'value': 'Yes' },
+                "C4_parameters_for_packages": { 'value': 'Yes' },
                 "D_human_subjects_including_annotators": { 'value': 'Yes' },
                 "D1_instructions_given_to_participants": { 'value': 'Yes' },
                 "D2_recruitment_and_payment": { 'value': 'Yes' },
                 "D3_data_consent": { 'value': 'Yes' },
                 "D4_ethics_review_board_approval": { 'value': 'Yes' },
+                "D5_annotator_population": { 'value': 'Yes' },
                 "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
                 "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                 "author_submission_checklist": { 'value': 'yes' },
@@ -927,11 +935,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Information Extraction'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'Information Extraction'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -942,11 +956,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -959,11 +979,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -983,11 +1009,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'NLP Applications'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'NLP Applications'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -998,11 +1030,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -1013,11 +1051,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -1028,11 +1072,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -1397,7 +1447,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'paper_type': { 'value': 'Short' },
             'research_area': { 'value': 'NLP and Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
-            'languages_studied': { 'value': 'A language' },
+            'contribution_types': { 'value': ['NLP engineering experiment'] },
+            'languages_studied': { 'value': ['English'] },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
             'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
             'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
@@ -1406,21 +1457,28 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL' },
+            'visa_needs': { 'value': 'no' },
             'consent_to_share_data': { 'value': 'yes' },
             'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-            "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
-            "A2_potential_risks": { 'value': 'Yes' },
+            "A1_potential_risks": { 'value': 'Yes' },
             "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-            "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
+            "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
+            "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
+            "B3_data_contains_personally_identifying_info": { 'value': 'Yes' },
+            "B4_data_contains_offensive_content": { 'value': 'Yes' },
+            "B5_documentation_of_artifacts": { 'value': 'Yes' },
             "B6_statistics_for_data": { 'value': 'Yes' },
             "C_computational_experiments": { 'value': 'Yes' },
+            "C1_model_size_and_budget": { 'value': 'Yes' },
             "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
             "C3_descriptive_statistics": { 'value': 'Yes' },
+            "C4_parameters_for_packages": { 'value': 'Yes' },
             "D_human_subjects_including_annotators": { 'value': 'Yes' },
             "D1_instructions_given_to_participants": { 'value': 'Yes' },
             "D2_recruitment_and_payment": { 'value': 'Yes' },
             "D3_data_consent": { 'value': 'Yes' },
             "D4_ethics_review_board_approval": { 'value': 'Yes' },
+            "D5_annotator_population": { 'value': 'Yes' },
             "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
             "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
             "author_submission_checklist": { 'value': 'yes' },
@@ -1690,7 +1748,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'paper_type': { 'value': 'Short' },
             'research_area': { 'value': 'NLP and Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
-            'languages_studied': { 'value': 'A language' },
+            'contribution_types': { 'value': ['NLP engineering experiment'] },
+            'languages_studied': { 'value': ['English'] },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
             'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
             'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
@@ -1699,21 +1758,28 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL' },
+            'visa_needs': { 'value': 'no' },
             'consent_to_share_data': { 'value': 'yes' },
             'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-            "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
-            "A2_potential_risks": { 'value': 'Yes' },
+            "A1_potential_risks": { 'value': 'Yes' },
             "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-            "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
+            "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
+            "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
+            "B3_data_contains_personally_identifying_info": { 'value': 'Yes' },
+            "B4_data_contains_offensive_content": { 'value': 'Yes' },
+            "B5_documentation_of_artifacts": { 'value': 'Yes' },
             "B6_statistics_for_data": { 'value': 'Yes' },
             "C_computational_experiments": { 'value': 'Yes' },
+            "C1_model_size_and_budget": { 'value': 'Yes' },
             "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
             "C3_descriptive_statistics": { 'value': 'Yes' },
+            "C4_parameters_for_packages": { 'value': 'Yes' },
             "D_human_subjects_including_annotators": { 'value': 'Yes' },
             "D1_instructions_given_to_participants": { 'value': 'Yes' },
             "D2_recruitment_and_payment": { 'value': 'Yes' },
             "D3_data_consent": { 'value': 'Yes' },
             "D4_ethics_review_board_approval": { 'value': 'Yes' },
+            "D5_annotator_population": { 'value': 'Yes' },
             "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
             "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
             "author_submission_checklist": { 'value': 'yes' },
@@ -2368,7 +2434,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'paper_type': { 'value': 'Short' },
                 'research_area': { 'value': 'NLP and Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
-                'languages_studied': { 'value': 'A language' },
+                'contribution_types': { 'value': ['NLP engineering experiment'] },
+                'languages_studied': { 'value': ['English'] },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
                 'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
                 'previous_URL': { 'value': f'https://openreview.net/forum?id={submission.id}' },
@@ -2382,21 +2449,28 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
                 'existing_preprints': { 'value': 'existing_preprints' },
                 'preferred_venue': { 'value': 'ACL' },
+                'visa_needs': { 'value': 'no' },
                 'consent_to_share_data': { 'value': 'yes' },
                 'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-                "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
-                "A2_potential_risks": { 'value': 'Yes' },
+                "A1_potential_risks": { 'value': 'Yes' },
                 "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-                "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
+                "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
+                "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
+                "B3_data_contains_personally_identifying_info": { 'value': 'Yes' },
+                "B4_data_contains_offensive_content": { 'value': 'Yes' },
+                "B5_documentation_of_artifacts": { 'value': 'Yes' },
                 "B6_statistics_for_data": { 'value': 'Yes' },
                 "C_computational_experiments": { 'value': 'Yes' },
+                "C1_model_size_and_budget": { 'value': 'Yes' },
                 "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
                 "C3_descriptive_statistics": { 'value': 'Yes' },
+                "C4_parameters_for_packages": { 'value': 'Yes' },
                 "D_human_subjects_including_annotators": { 'value': 'Yes' },
                 "D1_instructions_given_to_participants": { 'value': 'Yes' },
                 "D2_recruitment_and_payment": { 'value': 'Yes' },
                 "D3_data_consent": { 'value': 'Yes' },
                 "D4_ethics_review_board_approval": { 'value': 'Yes' },
+                "D5_annotator_population": { 'value': 'Yes' },
                 "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
                 "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                 "author_submission_checklist": { 'value': 'yes' },
@@ -2569,7 +2643,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content={
                     'confirm_you_are_willing_to_serve_as_a_reviewer_or_AC': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
-                    'details_of_reason_for_being_unable_to_serve_or_ARR_role': {'value': ""},
                     'serving_as_a_regular_or_emergency_reviewer_or_AC': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
                     'indicate_emergency_reviewer_load': {'value': "3"},
                     'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
@@ -2579,12 +2652,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
                     'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
                     'indicate_your_research_areas': {'value': ["NLP and Code Models"]},
-                    'indicate_languages_you_study': {'value': "English"},
-                    'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
-                    'provide_your_DBLP_URL': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
-                    'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
-                    'provide_your_semantic_scholar_URL': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
-                    'provide_your_ACL_anthology_URL': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
+                    'contribution_types': {'value': ["NLP engineering experiment"]},
+                    'indicate_your_languages': {'value': ["English"]},
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "My OpenReview profile contains a link to my DBLP profile with just my papers."},
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': {'value': "My OpenReview profile contains a link to an ACL Anthology profile with just my papers."},
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': {'value': "My OpenReview profile contains a valid ORCID ID."},
+                    'confirm_your_openreview_profile_contains_your_publication_record': {'value': "Yes, I maintain a full list of my publications in my OpenReview profile."},
                     'attribution': {'value': "Yes, I wish to be attributed."},
                     'agreement': {'value': "I agree"},
                 }
@@ -2618,7 +2691,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                     content={
                         'confirm_you_are_willing_to_serve_as_a_reviewer_or_AC': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
-                        'details_of_reason_for_being_unable_to_serve_or_ARR_role': {'value': ""},
                         'serving_as_a_regular_or_emergency_reviewer_or_AC': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
                         'indicate_emergency_reviewer_load': {'value': '3'},
                         'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
@@ -2628,12 +2700,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
                         'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
                         'indicate_your_research_areas': {'value': ["Generation"]},
-                        'indicate_languages_you_study': {'value': "English"},
-                        'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
-                        'provide_your_DBLP_URL': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
-                        'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
-                        'provide_your_semantic_scholar_URL': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
-                        'provide_your_ACL_anthology_URL': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
+                        'contribution_types': {'value': ["NLP engineering experiment"]},
+                        'indicate_your_languages': {'value': ["English"]},
+                        'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "My OpenReview profile contains a link to my DBLP profile with just my papers."},
+                        'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': {'value': "My OpenReview profile contains a link to an ACL Anthology profile with just my papers."},
+                        'confirm_your_openreview_profile_contains_your_ORCID_ID': {'value': "My OpenReview profile contains a valid ORCID ID."},
+                        'confirm_your_openreview_profile_contains_your_publication_record': {'value': "Yes, I maintain a full list of my publications in my OpenReview profile."},
                         'attribution': {'value': "Yes, I wish to be attributed."},
                         'agreement': {'value': "I agree"},
                     }
@@ -2746,8 +2818,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
         assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
-        assert 'confirm_need_to_withdraw' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
-        assert 'confirm_penalty_rules' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'policy_confirmation' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'withdrawal_confirmation' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
 
 
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Withdrawal')) == 101
@@ -3090,7 +3162,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "paper_type": { "value": "Short" },
             "research_area": { "value": "NLP and Code Models" },
             "research_area_keywords": { "value": "A keyword" },
-            "languages_studied": { "value": "A language" },
+            "contribution_types": { "value": ["NLP engineering experiment"] },
+            "languages_studied": { "value": ["English"] },
             "reassignment_request_area_chair": { "value": "No, I want the same area chair from our previous submission (subject to their availability)." },
             "reassignment_request_reviewers": { "value": "Yes, I want a different set of reviewers" },
             "previous_URL": { "value": f"https://openreview.net/forum?id={june_submission.id}" },
@@ -3102,21 +3175,28 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "preprint_status": { "value": "There is no non-anonymous preprint and we do not intend to release one. (this option is binding)" },
             "existing_preprints": { "value": "existing_preprints" },
             "preferred_venue": { "value": "ACL" },
+            "visa_needs": { "value": "no" },
             "consent_to_share_data": { "value": "yes" },
             "consent_to_share_submission_details": { "value": "On behalf of all authors, we agree to the terms above to share our submission details." },
-            "A1_limitations_section": { "value": "This paper has a limitations section." },
-            "A2_potential_risks": { "value": "Yes" },
+            "A1_potential_risks": { "value": "Yes" },
             "B_use_or_create_scientific_artifacts": { "value": "Yes" },
-            "B4_data_contains_personally_identifying_info_or_offensive_content": { "value": "Yes" },
+            "B1_cite_creators_of_artifacts": { "value": "Yes" },
+            "B2_discuss_the_license_for_artifacts": { "value": "Yes" },
+            "B3_data_contains_personally_identifying_info": { "value": "Yes" },
+            "B4_data_contains_offensive_content": { "value": "Yes" },
+            "B5_documentation_of_artifacts": { "value": "Yes" },
             "B6_statistics_for_data": { "value": "Yes" },
             "C_computational_experiments": { "value": "Yes" },
+            "C1_model_size_and_budget": { "value": "Yes" },
             "C2_experimental_setup_and_hyperparameters": { "value": "Yes" },
             "C3_descriptive_statistics": { "value": "Yes" },
+            "C4_parameters_for_packages": { "value": "Yes" },
             "D_human_subjects_including_annotators": { "value": "Yes" },
             "D1_instructions_given_to_participants": { "value": "Yes" },
             "D2_recruitment_and_payment": { "value": "Yes" },
             "D3_data_consent": { "value": "Yes" },
             "D4_ethics_review_board_approval": { "value": "Yes" },
+            "D5_annotator_population": { "value": "Yes" },
             "E_ai_assistants_in_research_or_writing": { "value": "Yes" },
             "E1_information_about_use_of_ai_assistants": { "value": "Yes" },
             "author_submission_checklist": { "value": "yes" },
@@ -3604,11 +3684,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -3632,11 +3708,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -3667,11 +3739,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -3698,11 +3766,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -3761,7 +3825,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[1].id}'},
                     'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
-                    'reassignment_request_reviewers': { 'value': 'No, I want the same set of reviewers from our previous submission and understand that new reviewers may be assigned if any of the previous ones are unavailable' },
+                    'reassignment_request_reviewers': { 'value': 'No, I want the same set of reviewers from our previous submission (subject to their availability)' },
                 }
             )
         )
@@ -4615,6 +4679,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'anonymity_justification': {'value': 'N/A - this paper is properly anonymized.'},
             'limitations_justification': {'value': "N/A - this paper has the 'Limitations' section."},
             'overall_level_justification': {'value': 'N/A - this seems like a good-faith submission worthy of full review.'},
+            'potential_violation_justification': {'value': 'N/A - no potential responsible checklist violation was identified.'},
             'ethics_review_justification': {'value': 'N/A - this paper does not need an ethics review.'}
         }
         test_submission = submissions[1]
@@ -4695,17 +4760,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         }
         with pytest.raises(openreview.OpenReviewException, match=r'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging.'):
             post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', override_fields=force_justifications)
-        with pytest.raises(openreview.OpenReviewException, match=r'The property potential_violation_justification must NOT be present'):
-            post_checklist(
-                user_client,
-                checklist_inv,
-                user,
-                override_fields={
-                    'potential_violation_justification': {'value': 'This deprecated field should be rejected'}
-                }
-            )
-
-        # Post checklist with no ethics flag and no violation field - check that flags are not there
+        # Post checklist with no ethics flag or potential violation - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' not in test_submission.content
@@ -4943,11 +4998,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
                     "needs_ethics_review": {'value': 'No'},
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -4988,7 +5039,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             time.sleep(2) ## Wait for flag process functions
 
             review = pc_client_v2.get_note(id=rev_edit['note']['id'])
-            assert 'readers' not in review.content['reviewer_certification']
+            assert 'readers' not in review.content['publication_ethics_policy_compliance']
             assert 'readers' in review.content['secondary_reviewer']
             assert review.content['secondary_reviewer']['readers'] == [
                 'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
@@ -5165,6 +5216,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "anonymity" : { "value" : "Yes" },
             "anonymity_justification" : { "value" : "N/A - this paper is properly anonymized." },
             "responsible_checklist" : { "value" : "Yes" },
+            "potential_violation_justification" : { "value" : "N/A - no potential responsible checklist violation was identified." },
             "limitations" : { "value" : "Yes" },
             "limitations_justification" : { "value" : "N/A - this paper has the 'Limitations' section." },
             "overall_level" : { "value" : "Yes" },
@@ -5241,7 +5293,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
-        assert 'readers' not in review.content['reviewer_certification']
+        assert 'readers' not in review.content['publication_ethics_policy_compliance']
 
         ethics_review = openreview_client.get_note(ethics_review_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in ethics_review.readers
@@ -5812,11 +5864,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
                     "needs_ethics_review": {'value': 'Yes'},
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -6039,11 +6087,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "datasets": {"value": 1},
             "software": {"value": 1},
             "needs_ethics_review": {"value": 'No'},
-            "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-            "Knowledge_of_paper": {"value": "After the review process started"},
-            "Knowledge_of_paper_source": {"value": ["A research talk"]},
-            "impact_of_knowledge_of_paper": {"value": "A lot"},
-            "reviewer_certification": {"value": "Yes"},
+            "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
             "secondary_reviewer": {"value": ["~Reviewer_ARRFour1"]},
             "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
         }
@@ -6562,11 +6606,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         "datasets": {"value": 1},
                         "software": {"value": 1},
                         "needs_ethics_review": {'value': 'No'},
-                        "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                        "Knowledge_of_paper": {"value": "After the review process started"},
-                        "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                        "impact_of_knowledge_of_paper": {"value": "A lot"},
-                        "reviewer_certification": {"value": "Yes"},
+                        "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                         "secondary_reviewer": {"value": [reviewer]},
                         "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                     }
@@ -7087,6 +7127,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "anonymity" : { "value" : "Yes" },
                     "anonymity_justification" : { "value" : "N/A - this paper is properly anonymized." },
                     "responsible_checklist" : { "value" : "Yes" },
+                    "potential_violation_justification" : { "value" : "N/A - no potential responsible checklist violation was identified." },
                     "limitations" : { "value" : "Yes" },
                     "limitations_justification" : { "value" : "N/A - this paper has the 'Limitations' section." },
                     "overall_level" : { "value" : "Yes" },
