@@ -228,6 +228,116 @@ return {
             )
         )
 
+        self.client.post_invitation_edit(
+            invitations=f'{self.super_user}/-/Edit',
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Vouch_Request',
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=['~', '(guest)'],
+                guestPosting=True,
+                preprocess=self.get_process_content('process/vouch_request_pre_process.py'),
+                process=self.get_process_content('process/vouch_request_process.py'),
+                content={
+                    'lifetimeLimit': { 'value': 20 },
+                    'monthLimit': { 'value': 5 }
+                },
+                edit={
+                    'signatures': {
+                        'param': {
+                            ## Guest users sign with their email address (same pattern as Recruitment_Response)
+                            'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                        }
+                    },
+                    'readers': [self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'content': {
+                        'voucher_id': {
+                            'order': 1,
+                            'description': 'Profile id of the user who will vouch for you.',
+                            'value': { 'param': { 'type': 'string', 'regex': '^~.*$' } }
+                        },
+                        'vouchee_id': {
+                            'order': 2,
+                            'description': 'Profile id of the rejected profile to be vouched for.',
+                            'value': { 'param': { 'type': 'string', 'regex': '^~.*$' } }
+                        },
+                        'names': {
+                            'order': 3,
+                            'description': 'Full name(s) of the vouchee.',
+                            'value': { 'param': { 'type': 'string' } }
+                        },
+                        'institution': {
+                            'order': 4,
+                            'description': 'Institution of the vouchee.',
+                            'value': { 'param': { 'type': 'string' } }
+                        },
+                        'url': {
+                            'order': 5,
+                            'description': 'Homepage or public URL of the vouchee.',
+                            'value': { 'param': { 'type': 'string', 'optional': True } }
+                        },
+                        'email': {
+                            'order': 6,
+                            'description': 'Email address of the vouchee. Only visible to the support team.',
+                            'value': { 'param': { 'type': 'string', 'regex': r'^[^@\s]+@[^@\s]+\.[^@\s]+$' } }
+                        }
+                    },
+                    'replacement': True,
+                    'invitation': {
+                        'id': f'{self.support_group_id}/Vouchees/' + '${2/content/vouchee_id/value}' + '/-/Vouch',
+                        ## The poster (a guest signing with their email) must be a signatory of the
+                        ## created invitation, so it inherits the edit signatures.
+                        'signatures': ['${3/signatures}'],
+                        'readers': ['everyone'],
+                        'writers': [self.support_group_id],
+                        'invitees': ['${3/content/voucher_id/value}'],
+                        'preprocess': self.get_process_content('process/vouch_tag_pre_process.py'),
+                        'process': self.get_process_content('process/vouch_tag_process.py'),
+                        'content': {
+                            'voucher_id': { 'value': '${4/content/voucher_id/value}' },
+                            'vouchee_id': { 'value': '${4/content/vouchee_id/value}' },
+                            'names': { 'value': '${4/content/names/value}' },
+                            'institution': { 'value': '${4/content/institution/value}' },
+                            'url': { 'value': '${4/content/url/value}' },
+                            'email': { 'value': '${4/content/email/value}', 'readers': [self.support_group_id] },
+                            'lifetimeLimit': { 'value': 20 },
+                            'monthLimit': { 'value': 5 }
+                        },
+                        'tag': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': f'{self.support_group_id}/Vouchees/' + '${5/content/vouchee_id/value}' + '/-/Vouch',
+                                    'optional': True
+                                }
+                            },
+                            'readers': ['everyone'],
+                            'writers': [self.support_group_id],
+                            'signature': {
+                                'param': {
+                                    'regex': '^~.*'
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'profile': '${3/content/vouchee_id/value}',
+                            'label': {
+                                'param': {
+                                    'regex': '.*'
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
 
 
     def set_public_article_invitations(self):

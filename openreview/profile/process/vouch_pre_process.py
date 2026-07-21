@@ -70,11 +70,15 @@ def process(client, tag, invitation):
     lifetime_limit = invitation_content.get('lifetimeLimit', {}).get('value', 20)
 
     ## Fetch the voucher's existing vouches once (capped just above the lifetime limit) and
-    ## count against both quotas in memory. We count by tcdate (true creation date) rather
-    ## than tmdate so a vouch that is edited later — e.g. re-posted by a profile name-removal
-    ## cascade — still counts toward the month it was originally created in, not the month of
-    ## the edit.
+    ## count against both quotas in memory. Count both V1 vouches (this invitation) and V2
+    ## vouches (per-vouchee tags created under the Vouch_Request flow), so the two paths share
+    ## a single quota and one cannot be used to exceed the limits of the other. We count by
+    ## tcdate (true creation date) rather than tmdate so a vouch that is edited later — e.g.
+    ## re-posted by a profile name-removal cascade — still counts toward the month it was
+    ## originally created in, not the month of the edit.
+    support_group_id = invitation.id.rsplit('/-/', 1)[0]
     voucher_vouches = client.get_tags(invitation=invitation.id, signature=voucher_id, limit=lifetime_limit + 1)
+    voucher_vouches = voucher_vouches + client.get_tags(parent_invitations=f'{support_group_id}/-/Vouch_Request', signature=voucher_id, limit=lifetime_limit + 1)
 
     if len(voucher_vouches) >= lifetime_limit:
         raise openreview.OpenReviewException(f'You are not allowed to vouch for more than {lifetime_limit} users.')

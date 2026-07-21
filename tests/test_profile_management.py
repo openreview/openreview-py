@@ -4,6 +4,8 @@ import openreview
 import datetime
 import time
 import re
+import json
+import hashlib
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Note
@@ -4814,6 +4816,184 @@ The OpenReview Team.
 
             assert openreview_client.get_profile('~Voucheee_User1').state == 'Rejected'
 
+        finally:
+            ## Restore moderation to its disabled state so the rest of the suite keeps auto-activating users
+            config_note = openreview_client.get_notes(invitation='openreview.net/-/OpenReview_Config')[0]
+            support_client.post_note_edit(
+                invitation='openreview.net/-/OpenReview_Config',
+                signatures=['openreview.net/Support'],
+                note=openreview.api.Note(
+                    id=config_note.id,
+                    content={
+                        'moderate': { 'value': 'No' },
+                        'weekend_moderation': { 'value': 'Yes' }
+                    }
+                )
+            )
+
+    def test_vouch_request_for_profile(self, openreview_client, support_client, helpers):
+
+        def register_unmoderated_user(email, first, last):
+            ## Creates a profile without logging the user in (it may be pending moderation)
+            guest = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+            res = guest.register_user(email=email, fullname=f'{first} {last}', password=helpers.strong_password)
+            username = res.get('id')
+            profile_content = {
+                'names': [{ 'fullname': f'{first} {last}', 'username': username, 'preferred': True }],
+                'emails': [email],
+                'preferredEmail': email,
+                'homepage': f"https://{first}{last}{int(time.time())}.openreview.net",
+                'history': [{
+                    'position': 'PhD Student',
+                    'start': 2017,
+                    'end': None,
+                    'institution': { 'country': 'US', 'domain': email.split('@')[1] }
+                }]
+            }
+            guest.activate_user(email, profile_content)
+            ## register_user's response carries no profile id, so look up the minted id by email
+            return openreview_client.get_profile(email).id
+
+        ## The Vouch_Request invitation exposes the quotas for the UI, and is open to guests
+        request_invitation = openreview_client.get_invitation('openreview.net/Support/-/Vouch_Request')
+        assert request_invitation.content['lifetimeLimit']['value'] == 20
+        assert request_invitation.content['monthLimit']['value'] == 5
+        assert request_invitation.guestPosting
+
+        ## Voucher: established user with an institutional email -> activated automatically as institutional
+        voucher_client = helpers.create_user('voucher_two@umass.edu', 'VoucherTwo', 'User', institution='umass.edu')
+        assert openreview_client.get_profile('~VoucherTwo_User1').state == 'Active Institutional'
+
+        ## A non-institutional user is not eligible to vouch. Create them before enabling moderation
+        ## so they activate automatically (once moderation is on, activation would need moderating).
+        helpers.create_user('nonqualified_voucher@gmail.com', 'NonQualifiedVoucher', 'User')
+        assert openreview_client.get_profile('~NonQualifiedVoucher_User1').state == 'Active Automatic'
+
+        ## Enable moderation so newly created profiles without an institutional email need moderation
+        config_note = openreview_client.get_notes(invitation='openreview.net/-/OpenReview_Config')[0]
+        support_client.post_note_edit(
+            invitation='openreview.net/-/OpenReview_Config',
+            signatures=['openreview.net/Support'],
+            note=openreview.api.Note(
+                id=config_note.id,
+                content={
+                    'moderate': { 'value': 'Yes' },
+                    'weekend_moderation': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        try:
+            ## Vouchee: registered, then rejected by the moderation team for lack of an institutional
+            ## email. A profile must be rejected before a vouch request can be made for it.
+            vouchee_id = register_unmoderated_user('vouchee_two@mail.com', 'VoucheeTwo', 'User')
+            assert openreview_client.get_profile(vouchee_id).state == 'Needs Moderation'
+
+            support_client.moderate_profile(vouchee_id, 'reject', 'Missing institutional email')
+            assert openreview_client.get_profile(vouchee_id).state == 'Rejected'
+
+            ## Build the guest token from the invitation secret, like Recruitment_Response
+            secret = openreview_client.get_invitation('openreview.net/Support/-/Vouch_Request').secret
+            assert secret, 'guestPosting invitation must expose a secret to privileged clients'
+            token = openreview.tools.get_user_hash_key('vouchee_two@mail.com', secret, invitation='openreview.net/Support/-/Vouch_Request')
+
+            guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+
+            request_content = {
+                'voucher_id': { 'value': '~VoucherTwo_User1' },
+                'vouchee_id': { 'value': vouchee_id },
+                'names': { 'value': 'VoucheeTwo User' },
+                'institution': { 'value': 'University of Massachusetts' },
+                'url': { 'value': 'https://voucheetwouser.openreview.net' },
+                'email': { 'value': 'vouchee_two@mail.com' }
+            }
+
+            ## The email in the request must be one of the vouchee's confirmed emails
+            with pytest.raises(openreview.OpenReviewException, match=r'.*must be a confirmed email.*'):
+                guest_client.post_invitation_edit_as_guest(token=token, edit={
+                    'invitations': 'openreview.net/Support/-/Vouch_Request',
+                    'signatures': ['vouchee_two@mail.com'],
+                    'content': dict(request_content, email={ 'value': 'unconfirmed@mail.com' })
+                })
+
+            ## Request-time eligibility: a voucher without an institutional email is rejected, the
+            ## same requirement enforced at Vouch tag time, so quota abuse can't be attempted
+            ## through the request flow by naming an ineligible voucher.
+            bad_request = dict(request_content, voucher_id={ 'value': '~NonQualifiedVoucher_User1' })
+            with pytest.raises(openreview.OpenReviewException, match=r'.*must have an institutional email.*'):
+                guest_client.post_invitation_edit_as_guest(token=token, edit={
+                    'invitations': 'openreview.net/Support/-/Vouch_Request',
+                    'signatures': ['vouchee_two@mail.com'],
+                    'content': bad_request
+                })
+
+            ## Happy path: create the vouch request as a guest
+            edit = guest_client.post_invitation_edit_as_guest(token=token, edit={
+                'invitations': 'openreview.net/Support/-/Vouch_Request',
+                'signatures': ['vouchee_two@mail.com'],
+                'content': request_content
+            })
+            helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+            ## The per-vouchee tag invitation exists, with the voucher as sole invitee
+            vouch_invitation_id = f'openreview.net/Support/Vouchees/{vouchee_id}/-/Vouch'
+            vouch_invitation = openreview_client.get_invitation(vouch_invitation_id)
+            assert vouch_invitation.invitees == ['~VoucherTwo_User1']
+            assert vouch_invitation.content['email']['value'] == 'vouchee_two@mail.com'
+            assert vouch_invitation.content['email'].get('readers') == ['openreview.net/Support']
+
+            ## The email field is hidden from non-support readers
+            voucher_view = voucher_client.get_invitation(vouch_invitation_id)
+            assert 'email' not in (voucher_view.content or {}) or not voucher_view.content['email'].get('value')
+
+            ## The vouchee received the link
+            messages = openreview_client.get_messages(to='vouchee_two@mail.com', subject='OpenReview vouch request created')
+            assert len(messages) == 1
+            assert vouch_invitation_id in messages[0]['content']['text']
+
+            ## The label carries the information the voucher confirms, as stringified JSON. The
+            ## email is a hash (salted with the per-vouchee invitation id) computed client-side,
+            ## so the plaintext email never appears in the public label.
+            confirmed_info = {
+                'names': 'VoucheeTwo User',
+                'institution': 'University of Massachusetts',
+                'url': 'https://voucheetwouser.openreview.net'
+            }
+
+            def email_hash(email):
+                return hashlib.sha256((email.strip().lower() + vouch_invitation_id).encode('utf-8')).hexdigest()
+
+            ## Wrong email: uniform error, no tag created
+            with pytest.raises(openreview.OpenReviewException, match=r'.*does not match our records.*'):
+                voucher_client.post_tag(openreview.api.Tag(
+                    invitation=vouch_invitation_id,
+                    signature='~VoucherTwo_User1',
+                    profile=vouchee_id,
+                    label=json.dumps(dict(confirmed_info, email=email_hash('wrong_email@mail.com')))
+                ))
+            assert not openreview_client.get_tags(invitation=vouch_invitation_id)
+
+            ## Correct email hash: tag saved, profile activated, label rewritten with the masked email
+            vouch_tag = voucher_client.post_tag(openreview.api.Tag(
+                invitation=vouch_invitation_id,
+                signature='~VoucherTwo_User1',
+                profile=vouchee_id,
+                label=json.dumps(dict(confirmed_info, email=email_hash('vouchee_two@mail.com')))
+            ))
+            helpers.await_queue_edit(openreview_client, edit_id=vouch_tag.id)
+
+            profile = openreview_client.get_profile(vouchee_id)
+            assert profile.state == 'Active'
+
+            tags = openreview_client.get_tags(invitation=vouch_invitation_id)
+            assert len(tags) == 1
+            assert tags[0].signature == '~VoucherTwo_User1'
+            ## The persisted label carries the masked email (not the plaintext, not the hash)
+            assert json.loads(tags[0].label) == dict(confirmed_info, email='****@mail.com')
+
+            ## The quota query counts V2 vouches via the Vouch_Request parent linkage
+            counted = openreview_client.get_tags(parent_invitations='openreview.net/Support/-/Vouch_Request', signature='~VoucherTwo_User1')
+            assert len(counted) == 1
         finally:
             ## Restore moderation to its disabled state so the rest of the suite keeps auto-activating users
             config_note = openreview_client.get_notes(invitation='openreview.net/-/OpenReview_Config')[0]
