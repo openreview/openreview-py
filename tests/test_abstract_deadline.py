@@ -95,6 +95,9 @@ class TestAbstractDeadline():
         assert full_submission_inv.edit['invitation']['duedate'] == openreview.tools.datetime_millis(full_submission_due_date)
         assert full_submission_inv.edit['invitation']['expdate'] == full_submission_inv.edit['invitation']['duedate'] + (30*60*1000)
 
+        # assert authors can only reorder after the first deadline
+        assert full_submission_inv.edit['invitation']['edit']['note']['content']['authors']['value'] == ['${{4/id}/content/authors/value}']
+
         deletion_invitation = openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Deletion')
         assert deletion_invitation and deletion_invitation.edit['invitation']['cdate'] == submission_inv.expdate
         assert not 'duedate' in deletion_invitation.edit['invitation']
