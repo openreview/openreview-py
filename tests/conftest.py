@@ -47,15 +47,19 @@ class Helpers:
         }
         if dblp_url:
             profile_content['dblp'] = dblp_url
+        ## institution accepts a list when the profile needs more than one affiliation, e.g.
+        ## when the email domain is an institution on its own and must be declared in the
+        ## history for the profile to be saved
+        institutions = institution if isinstance(institution, list) else [institution if institution else email.split('@')[1]]
         profile_content['history'] = [{
             'position': 'PhD Student',
             'start': 2017,
             'end': None,
             'institution': {
                 'country': 'US',
-                'domain': institution if institution else email.split('@')[1],
+                'domain': domain,
             }
-        }]
+        } for domain in institutions]
         res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
