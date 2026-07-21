@@ -49,8 +49,9 @@ class Helpers:
             profile_content['dblp'] = dblp_url
         ## institution accepts a list when the profile needs more than one affiliation, e.g.
         ## when the email domain is an institution on its own and must be declared in the
-        ## history for the profile to be saved
-        institutions = institution if isinstance(institution, list) else [institution if institution else email.split('@')[1]]
+        ## history for the profile to be saved. An alternate email on a different
+        ## institutional domain has to be listed here too, otherwise the save is rejected
+        institutions = institution if isinstance(institution, list) and institution else [institution if institution else email.split('@')[1]]
         profile_content['history'] = [{
             'position': 'PhD Student',
             'start': 2017,
