@@ -24,6 +24,8 @@ from openreview.stages.arr_content import (
     arr_content_license_task_forum,
     arr_content_license_task,
     arr_max_load_task_forum,
+    arr_voluntary_reviewing_task_forum,
+    arr_voluntary_meta_reviewing_task_forum,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
     arr_sac_max_load_task
@@ -832,8 +834,8 @@ class TestARRVenueV2():
             name = max_load_name,
             start_date = None,
             due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
+            instructions = arr_voluntary_reviewing_task_forum['instructions'],
+            title = venue.get_reviewers_name() + ' ' + arr_voluntary_reviewing_task_forum['title'],
             additional_fields=arr_reviewer_max_load_task,
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
@@ -862,8 +864,8 @@ class TestARRVenueV2():
             name = max_load_name,
             start_date = None,
             due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
+            instructions = arr_voluntary_meta_reviewing_task_forum['instructions'],
+            title = venue.get_area_chairs_name() + ' ' + arr_voluntary_meta_reviewing_task_forum['title'],
             additional_fields=arr_ac_max_load_task,
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
@@ -888,6 +890,18 @@ class TestARRVenueV2():
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
         venue.create_registration_stages()
+
+        note = openreview_client.get_notes(invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}_Form')[0]
+        assert note.content['title']['value'] == 'Reviewer Voluntary Unavailability and Maximum Load Request'
+        assert note.content['instructions']['value'] == '''Please complete this form to indicate your maximum load for voluntary reviewing for this cycle, or your (un)availability for voluntary reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.
+
+**This will be overridden with the mandatory reviewing load if you submit at least one paper in this cycle and are qualified to review.**'''
+
+        note = openreview_client.get_notes(invitation=f'{venue.get_area_chairs_id()}/-/{max_load_name}_Form')[0]
+        assert note.content['title']['value'] == 'Area Chair Voluntary Unavailability and Maximum Load Request'
+        assert note.content['instructions']['value'] == '''Please complete this form to indicate your maximum load for voluntary meta-reviewing for this cycle, or your (un)availability for voluntary meta-reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.
+
+**This will be overridden with the mandatory meta-reviewing load if you submit at least one paper in this cycle and are qualified to meta-review.**'''
 
         # Add max load preprocess validation
         invitation_builder = openreview.arr.InvitationBuilder(venue)
