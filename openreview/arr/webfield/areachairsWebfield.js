@@ -52,6 +52,9 @@ browseProposedInvitations.push(`${reviewerGroup}/-/Seniority,head:ignore`)
 browseInvitations.push(`${reviewerGroup}/-/Status`)
 browseProposedInvitations.push(`${reviewerGroup}/-/Status`)
 
+browseInvitations.push(`${reviewerGroup}/-/Type`)
+browseProposedInvitations.push(`${reviewerGroup}/-/Type`)
+
 browseInvitations.push(`${reviewerGroup}/-/Emergency_Score`)
 browseProposedInvitations.push(`${reviewerGroup}/-/Emergency_Score`)
 
