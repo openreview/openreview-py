@@ -1112,6 +1112,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
 
+        if self.journal.get_min_profile_valid_state():
+            invitation.edit['note']['content']['authorids']['value']['param']['minValidState'] = self.journal.get_min_profile_valid_state()
+
         self.save_invitation(invitation)
 
     def set_ae_assignment(self, assignment_delay):
