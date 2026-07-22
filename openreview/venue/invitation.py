@@ -2622,6 +2622,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_dates_invitation(self.venue.get_invitation_id(submission_stage.withdrawal_name), process_file='../workflows/workflow_process/edit_withdrawal_cdate_process.py', include_activation_date=True, include_due_date=False)
             edit_invitations_builder.set_edit_readers_one_level_invitation(self.venue.get_withdrawn_id())
+            edit_invitations_builder.set_edit_reveal_authors(self.venue.get_withdrawn_id(), process_file='workflow_process/edit_reveal_authors_process.py')
 
     def set_desk_rejection_invitation(self):
         venue_id = self.venue_id
@@ -2903,6 +2904,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_dates_invitation(self.venue.get_invitation_id(submission_stage.desk_rejection_name), process_file='../workflows/workflow_process/edit_desk_rejection_cdate_process.py', include_activation_date=True, include_due_date=False)
             edit_invitations_builder.set_edit_readers_one_level_invitation(self.venue.get_desk_rejected_id())
+            edit_invitations_builder.set_edit_reveal_authors(self.venue.get_desk_rejected_id(), process_file='workflow_process/edit_reveal_authors_process.py')
 
     def set_submission_revision_invitation(self, submission_revision_stage=None):
 
