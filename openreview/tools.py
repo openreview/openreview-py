@@ -2074,7 +2074,13 @@ def get_invitation_source(invitation, domain):
     meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
     rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
 
-    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else {}
+    # `workflow_stage_name` is UI-only metadata used to group invitations in the timeline; it
+    # must not, by its mere presence, make an otherwise content-less invitation (e.g. the note
+    # release steps) look like it has a submission source and get matched by
+    # create_forum_invitations / create_replyto_invitations.
+    source_content = { key: value for key, value in invitation.content.items() if key != 'workflow_stage_name' } if invitation.content else {}
+
+    source = source_content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if source_content else {}
 
     ## Deprecated, user source as dictionary
     if isinstance(source, str):
