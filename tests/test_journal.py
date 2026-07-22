@@ -6306,3 +6306,45 @@ Link: https://openreview.net/forum?id={submission_id}
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
+
+    def test_check_pending_reviews(self, journal, openreview_client, helpers):
+
+        pending_review_invitation_id = 'TMLR/Reviewers/-/Pending_Reviews'
+
+        ## The venue should be consistent to start with: no reviewer's stored weight drifts
+        ## from the recomputed expected value.
+        discrepancies = openreview.journal.Journal.check_pending_reviews(openreview_client, support_group_id='openreview.net/Support')
+        assert discrepancies == []
+
+        ## Pick an official reviewer that is currently consistent and corrupt its Pending_Reviews edge
+        official_reviewers = openreview_client.get_group('TMLR/Reviewers').members
+        pending_edge = next(
+            openreview.api.Edge.from_json(group['values'][0])
+            for group in openreview_client.get_grouped_edges(invitation=pending_review_invitation_id, groupby='tail')
+            if group['id']['tail'] in official_reviewers
+        )
+        reviewer = pending_edge.tail
+        correct_weight = pending_edge.weight
+
+        pending_edge.weight = correct_weight + 3
+        openreview_client.post_edge(pending_edge)
+
+        assert openreview_client.get_edges(invitation=pending_review_invitation_id, tail=reviewer)[0].weight == correct_weight + 3
+
+        ## Dry run: the drift is reported but not fixed
+        discrepancies = openreview.journal.Journal.check_pending_reviews(openreview_client, support_group_id='openreview.net/Support')
+        reviewer_discrepancies = [d for d in discrepancies if d['reviewer'] == reviewer]
+        assert len(reviewer_discrepancies) == 1
+        assert reviewer_discrepancies[0]['stored'] == correct_weight + 3
+        assert reviewer_discrepancies[0]['expected'] == correct_weight
+        assert reviewer_discrepancies[0]['venue_id'] == 'TMLR'
+        assert openreview_client.get_edges(invitation=pending_review_invitation_id, tail=reviewer)[0].weight == correct_weight + 3
+
+        ## fix=True corrects the edge weight
+        discrepancies = openreview.journal.Journal.check_pending_reviews(openreview_client, support_group_id='openreview.net/Support', fix=True)
+        assert any(d['reviewer'] == reviewer for d in discrepancies)
+        assert openreview_client.get_edges(invitation=pending_review_invitation_id, tail=reviewer)[0].weight == correct_weight
+
+        ## The venue is consistent again
+        discrepancies = openreview.journal.Journal.check_pending_reviews(openreview_client, support_group_id='openreview.net/Support')
+        assert discrepancies == []

@@ -2251,3 +2251,123 @@ OpenReview Team'''
                     print(f'no profile active for {tail}')
 
         return True
+
+    @classmethod
+    def check_pending_reviews(Journal, client, support_group_id='OpenReview.net/Support', fix=False):
+        '''
+        Sanity check for the reviewer `Pending_Reviews` edges.
+
+        Every reviewer has a single `<Reviewers>/-/Pending_Reviews` edge whose weight is
+        meant to track how many reviews that reviewer currently owes. The weight is
+        maintained incrementally by process functions:
+            +1 when the reviewer is assigned to a submission,
+            -1 when the reviewer is unassigned,
+            -1 `get_assignment_delay_after_submitted_review()` weeks after the reviewer
+               submits the review (delayed `review_post_process`),
+            -1 when the submission leaves `Under_Review` and the reviewer never submitted a
+               review (discounted in `expire_paper_invitations`).
+
+        Because the weight is maintained incrementally it can drift out of sync. This method
+        recomputes the expected weight for every reviewer and compares it against the stored
+        edge. An active assignment still counts as pending when either the reviewer submitted
+        their review less than `delay` weeks ago (the delayed post-process has not fired yet)
+        or the reviewer has not submitted and the submission is still `Under_Review`. When
+        `fix=True` the mismatched edges are corrected.
+
+        Iterates over every journal request, the same way as `check_new_profiles`, so it can
+        be run from a single cron job for all the journals.
+        '''
+
+        journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
+
+        discrepancies = []
+
+        for journal_request in tqdm(journal_requests):
+
+            journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
+            print('Check venue', journal.venue_id)
+
+            now = openreview.tools.datetime_millis(datetime.datetime.now())
+            delay = datetime.timedelta(weeks=journal.get_assignment_delay_after_submitted_review())
+            delay_millis = int(delay.total_seconds() * 1000)
+
+            ## Active (non-deleted) reviewer assignments grouped by submission
+            grouped_assignments = client.get_grouped_edges(invitation=journal.get_reviewer_assignment_id(), groupby='head', domain=journal.venue_id)
+            assigned_reviewers_by_submission = { group['id']['head']: [edge['tail'] for edge in group['values']] for group in grouped_assignments }
+
+            submissions_by_id = { s.id: s for s in client.get_all_notes(invitation=journal.get_author_submission_id(), details='replies', domain=journal.venue_id) }
+
+            ## Recompute the expected pending review count per reviewer
+            expected_pending = {}
+
+            for submission_id, assigned_reviewers in assigned_reviewers_by_submission.items():
+
+                submission = submissions_by_id.get(submission_id)
+                if submission is None:
+                    continue
+
+                under_review = submission.content['venueid']['value'] == journal.under_review_venue_id
+
+                review_invitation_id = journal.get_review_id(number=submission.number)
+                review_replies = [r for r in submission.details['replies'] if r['invitations'][0] == review_invitation_id]
+
+                ## Map each submitted review to the reviewer that signed it
+                review_cdate_by_reviewer = {}
+                if review_replies:
+                    anon_groups = client.get_groups(prefix=journal.get_reviewers_id(number=submission.number, anon=True))
+                    reviewer_by_anon_group = { g.id: g.members[0] for g in anon_groups if g.members }
+                    for reply in review_replies:
+                        for signature in reply['signatures']:
+                            reviewer = reviewer_by_anon_group.get(signature)
+                            if reviewer:
+                                review_cdate_by_reviewer[reviewer] = reply['tcdate']
+
+                for reviewer in assigned_reviewers:
+                    review_cdate = review_cdate_by_reviewer.get(reviewer)
+                    if review_cdate is not None:
+                        ## Still pending until the delayed post-process discounts it
+                        if now - review_cdate < delay_millis:
+                            expected_pending[reviewer] = expected_pending.get(reviewer, 0) + 1
+                    elif under_review:
+                        expected_pending[reviewer] = expected_pending.get(reviewer, 0) + 1
+
+            ## Compare the expected count against the stored Pending_Reviews edges
+            pending_edge_by_reviewer = {
+                group['id']['tail']: openreview.api.Edge.from_json(group['values'][0])
+                for group in client.get_grouped_edges(invitation=journal.get_reviewer_pending_review_id(), groupby='tail', domain=journal.venue_id)
+            }
+
+            ## Only check official reviewers, that is, members of the Reviewers group
+            official_reviewers = set(client.get_group(journal.get_reviewers_id()).members)
+
+            for reviewer in (set(expected_pending) | set(pending_edge_by_reviewer)) & official_reviewers:
+
+                expected_weight = expected_pending.get(reviewer, 0)
+                pending_edge = pending_edge_by_reviewer.get(reviewer)
+                stored_weight = pending_edge.weight if pending_edge else None
+
+                if stored_weight == expected_weight:
+                    continue
+
+                print(f'Pending reviews mismatch for {reviewer}: stored={stored_weight}, expected={expected_weight}')
+                discrepancies.append({
+                    'venue_id': journal.venue_id,
+                    'reviewer': reviewer,
+                    'stored': stored_weight,
+                    'expected': expected_weight
+                })
+
+                if fix:
+                    if pending_edge:
+                        pending_edge.weight = expected_weight
+                        client.post_edge(pending_edge)
+                    elif expected_weight > 0:
+                        client.post_edge(openreview.api.Edge(
+                            invitation=journal.get_reviewer_pending_review_id(),
+                            signatures=[journal.venue_id],
+                            head=journal.get_reviewers_id(),
+                            tail=reviewer,
+                            weight=expected_weight
+                        ))
+
+        return discrepancies
