@@ -25,7 +25,9 @@ def process(client, edit, invitation):
     )
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
+    edit_invitations_builder.set_edit_submission_release_source_invitation(invitation_id)
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+    edit_invitations_builder.set_edit_content_invitation(invitation_id)
     content = {
         'reveal_author_identities': {
             'description': 'Select whether you want to reveal the author identities to the readers of the submissions. If you select False, author identities will remain visible only to the program chairs and the paper authors.',
