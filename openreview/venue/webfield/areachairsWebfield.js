@@ -6,7 +6,7 @@ const replaceAreaChairName = (invitationId) => invitationId?.replace(domain.cont
 const replaceReviewerName = (invitationId) => invitationId?.replace(domain.content.reviewers_name?.value, committee_reviewer_name)
 const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 
-const reviewerAssignmentTitle = domain.content.reviewers_proposed_assignment_title?.value
+const reviewerAssignmentTitle = entity?.content?.reviewers_proposed_assignment_title?.value || domain.content.reviewers_proposed_assignment_title?.value
 const reviewerGroup = replaceReviewerName(domain.content.reviewers_id?.value)
 const startParam = `${replaceAreaChairName(domain.content.area_chairs_assignment_id?.value)},tail:${user.profile.id}`
 const traverseProposedParam = `${replaceReviewerName(domain.content.reviewers_proposed_assignment_id?.value)},label:${reviewerAssignmentTitle}`
@@ -41,7 +41,7 @@ return {
     },
     venueId: domain.id,
     reviewerAssignment: {
-      showEdgeBrowserUrl: domain.content.enable_reviewers_reassignment?.value,
+      showEdgeBrowserUrl: entity?.content?.enable_reviewers_reassignment?.value || domain.content.enable_reviewers_reassignment?.value,
       proposedAssignmentTitle: reviewerAssignmentTitle,
       edgeBrowserProposedUrl: `/edges/browse?start=${startParam}&traverse=${traverseProposedParam}&edit=${replaceReviewerName(domain.content.reviewers_proposed_assignment_id?.value)},label:${reviewerAssignmentTitle};${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseProposedInvitations.join(';')}${otherParams}`,
       edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseInvitations.join(';')}${otherParams}`,

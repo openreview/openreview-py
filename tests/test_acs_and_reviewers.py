@@ -152,6 +152,7 @@ class TestSimpleDualAnonymous():
             'EFGH.cc/2025/Conference/Action_Editors'
         ]
         assert group.domain == 'EFGH.cc/2025/Conference'
+        assert 'enable_reviewers_assignment' not in group.content
 
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Invited')
         assert group.readers == [
@@ -582,6 +583,7 @@ For more details, please check the following links:
 
         conflicts_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict')
         assert conflicts_invitation
+        assert conflicts_invitation.readers == ['EFGH.cc/2025/Conference']
         domain_content = openreview_client.get_group('EFGH.cc/2025/Conference').content
         assert domain_content['area_chairs_conflict_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Conflict'
         assert domain_content['area_chairs_affinity_score_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score'
@@ -590,6 +592,12 @@ For more details, please check the following links:
         assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict/Policy')
         assert 'area_chairs_conflict_policy' not in domain_content
         assert 'area_chairs_conflict_n_years' not in domain_content
+        assert conflicts_invitation.edit['readers'] == ['EFGH.cc/2025/Conference', '${2/tail}']
+
+        conflicts_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Reviewers/-/Conflict')
+        assert conflicts_invitation
+        assert conflicts_invitation.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
+        assert conflicts_invitation.edit['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission${{2/head}/number}/Action_Editors', '${2/tail}']
 
         # select conflict policy
         pc_client.post_invitation_edit(
@@ -786,6 +794,165 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=2)
 
+    def test_reviewers_reassignment(self, openreview_client, helpers, request_page, selenium):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+
+        config_note = openreview_client.post_note_edit(
+            invitation='EFGH.cc/2025/Conference/Reviewers/-/Assignment_Configuration',
+            readers=['EFGH.cc/2025/Conference'],
+            writers=['EFGH.cc/2025/Conference'],
+            signatures=['EFGH.cc/2025/Conference'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'rev-matching-1'},
+                    'user_demand': { 'value': '1'},
+                    'max_papers': { 'value': '3'},
+                    'min_papers': { 'value': '0'},
+                    'alternates': { 'value': '2'},
+                    'paper_invitation': { 'value': 'EFGH.cc/2025/Conference/-/Submission&content.venueid=EFGH.cc/2025/Conference/Submission'},
+                    'match_group': { 'value': 'EFGH.cc/2025/Conference/Reviewers'},
+                    'scores_specification': {
+                        'value': {
+                            'EFGH.cc/2025/Conference/Reviewers/-/Affinity_Score': {
+                                'weight': 1,
+                                'default': 0
+                            },
+                            'EFGH.cc/2025/Conference/Reviewers/-/Bid': {
+                                'weight': 1,
+                                'default': 0,
+                                'translate_map': {
+                                    'Very High': 1.0,
+                                    'High': 0.5,
+                                    'Neutral': 0.0,
+                                    'Low': -0.5,
+                                    'Very Low': -1.0
+                                }
+                            }
+                        }
+                    },
+                    'aggregate_score_invitation': { 'value': 'EFGH.cc/2025/Conference/Reviewers/-/Aggregate_Score'},
+                    'conflicts_invitation': { 'value': 'EFGH.cc/2025/Conference/Reviewers/-/Conflict'},
+                    'solver': { 'value': 'FairFlow'},
+                    'status': { 'value': 'Initialized'},
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, invitation=f'EFGH.cc/2025/Conference/Reviewers/-/Assignment_Configuration')
+
+        match_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reviewers_Assignment_Deployment/Match')
+        assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['rev-matching-1']
+
+        reviewer_reassignment_inv = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Reviewer_Reassignment')
+        assert reviewer_reassignment_inv.edit['content']['reviewers_proposed_assignment_title']['value']['param']['enum'] == ['rev-matching-1']
+
+        # post proposed assignments to test deployment process
+        submissions = pc_client.get_all_notes(content={'venueid': 'EFGH.cc/2025/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 10
+
+        revs = ['~ReviewerOne_EFGH1', '~ReviewerTwo_EFGH1', '~ReviewerThree_EFGH1']
+        for rev in revs:
+            openreview_client.post_edge(openreview.api.Edge(
+                    invitation = 'EFGH.cc/2025/Conference/Reviewers/-/Proposed_Assignment',
+                    head =  submissions[0].id,
+                    tail = rev,
+                    signatures = ['EFGH.cc/2025/Conference/Program_Chairs'],
+                    weight = 1,
+                    label = 'rev-matching-1'
+                ))
+
+        assert len(openreview_client.get_grouped_edges(
+            invitation='EFGH.cc/2025/Conference/Reviewers/-/Proposed_Assignment',
+            groupby='id'
+        )) == 3
+
+        assert len(openreview_client.get_grouped_edges(
+            invitation='EFGH.cc/2025/Conference/Reviewers/-/Assignment',
+            groupby='id'
+        )) == 0
+
+        #change status of configuration to complete
+        openreview_client.post_note_edit(
+            invitation='EFGH.cc/2025/Conference/-/Edit',
+            signatures=['EFGH.cc/2025/Conference'],
+            note=openreview.api.Note(
+                id=config_note['note']['id'],
+                content = {
+                    'status': {
+                        'value': 'Complete'
+                    }
+                }
+            )
+        )
+
+        # check ACs can see link to proposed assignments
+        pc_client.post_group_edit(
+            invitation='EFGH.cc/2025/Conference/Action_Editors/-/Reviewer_Reassignment',
+            content = {
+                'enable_reviewers_reassignment': { 'value': True },
+                'reviewers_proposed_assignment_title': { 'value': 'rev-matching-1' }
+            }
+        )
+
+        ac_client = openreview.api.OpenReviewClient(username='areachair_one@efgh.cc', password=helpers.strong_password)
+        request_page(selenium, "http://localhost:3030/group?id=EFGH.cc/2025/Conference/Action_Editors", ac_client, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Reviewer Assignment Browser:' in header.text
+
+        url = header.find_element(By.ID, 'edge_browser_url')
+        assert url
+        assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=EFGH.cc/2025/Conference/Action_Editors/-/Assignment,tail:~ACOne_EFGH1&traverse=EFGH.cc/2025/Conference/Reviewers/-/Proposed_Assignment,label:rev-matching-1&edit=EFGH.cc/2025/Conference/Reviewers/-/Proposed_Assignment,label:rev-matching-1;EFGH.cc/2025/Conference/Reviewers/-/Invite_Assignment&browse=EFGH.cc/2025/Conference/Reviewers/-/Aggregate_Score,label:rev-matching-1;EFGH.cc/2025/Conference/Reviewers/-/Affinity_Score;EFGH.cc/2025/Conference/Reviewers/-/Bid;EFGH.cc/2025/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=EFGH.cc/2025/Conference/Reviewers/-/Conflict&maxColumns=2&preferredEmailInvitationId=EFGH.cc/2025/Conference/-/Preferred_Emails&version=2&referrer=[Action%20Editors%20Console](/group?id=EFGH.cc/2025/Conference/Action_Editors)'
+
+        # deploy assignments
+        openreview_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Reviewers_Assignment_Deployment/Match',
+            content = {
+                'match_name': { 'value': 'rev-matching-1' }
+            }
+        )
+        helpers.await_queue_edit(openreview_client,  edit_id=f'EFGH.cc/2025/Conference/-/Reviewers_Assignment_Deployment-0-1', count=2)
+
+        now = datetime.datetime.now()
+        now = openreview.tools.datetime_millis(now)
+
+        openreview_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Reviewers_Assignment_Deployment/Dates',
+            content = {
+                'activation_date': { 'value': now },
+            }
+        )
+        helpers.await_queue_edit(openreview_client,  edit_id=f'EFGH.cc/2025/Conference/-/Reviewers_Assignment_Deployment-0-1', count=3)
+
+        # check deploying the assignments removes reviewers_proposed_assignment_title from the AC group content
+        ac_group = openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors')
+        assert 'reviewers_proposed_assignment_title' not in ac_group.content
+        assert 'enable_reviewers_reassignment' in ac_group.content and ac_group.content['enable_reviewers_reassignment']['value'] == True
+
+        grouped_edges = openreview_client.get_grouped_edges(invitation='EFGH.cc/2025/Conference/Reviewers/-/Assignment', groupby='id')
+        assert len(grouped_edges) == 3
+
+        # check Action Editors can edit deployed reviewers assignments
+        ac_client = openreview.api.OpenReviewClient(username='areachair_one@efgh.cc', password=helpers.strong_password)
+
+        request_page(selenium, "http://localhost:3030/group?id=EFGH.cc/2025/Conference/Action_Editors", ac_client, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Reviewer Assignment Browser:' in header.text
+
+        url = header.find_element(By.ID, 'edge_browser_url')
+        assert url
+        assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=EFGH.cc/2025/Conference/Action_Editors/-/Assignment,tail:~ACOne_EFGH1&traverse=EFGH.cc/2025/Conference/Reviewers/-/Assignment&edit=EFGH.cc/2025/Conference/Reviewers/-/Invite_Assignment&browse=EFGH.cc/2025/Conference/Reviewers/-/Affinity_Score;EFGH.cc/2025/Conference/Reviewers/-/Bid;EFGH.cc/2025/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=EFGH.cc/2025/Conference/Reviewers/-/Conflict&maxColumns=2&preferredEmailInvitationId=EFGH.cc/2025/Conference/-/Preferred_Emails&version=2&referrer=[Action%20Editors%20Console](/group?id=EFGH.cc/2025/Conference/Action_Editors)'
+
+        # disable ACs from editing deployed reviewers assignments, check optional field is ignored
+        pc_client.post_group_edit(
+            invitation='EFGH.cc/2025/Conference/Action_Editors/-/Reviewer_Reassignment',
+            content = {
+                'enable_reviewers_reassignment': { 'value': False }
+            }
+        )
+
+        ac_group = openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors')
+        assert 'reviewers_proposed_assignment_title' not in ac_group.content
+        assert 'enable_reviewers_reassignment' in ac_group.content and ac_group.content['enable_reviewers_reassignment']['value'] == False
 
     def test_review_stage(self, openreview_client, helpers):
 

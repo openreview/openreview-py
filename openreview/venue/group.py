@@ -559,6 +559,7 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
     def create_area_chairs_group(self):
 
         if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue.id)
             for index, role in enumerate(self.venue.area_chair_roles):
                 
                 additional_readers = []
@@ -568,7 +569,7 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
                     additional_readers.append(senior_area_chairs_id)
 
-                self.client.post_group_edit(
+                edit = self.client.post_group_edit(
                     invitation=f'{self.openreview_template}/-/Committee_Group',
                     signatures=[self.openreview_template],
                     content={
@@ -581,6 +582,11 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     },
                     await_process=True
                 )
+
+                area_chairs_group_id = edit['group']['id']
+                # create invitation to edit area chairs group to add enable_reviewers_reassignment
+                edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id)
+
             return
 
         venue_id = self.venue.id

@@ -1968,6 +1968,45 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
+    def set_edit_reviewer_reassignment_invitation(self, group_id):
+
+        venue_id = self.venue_id
+
+        invitation_id = f'{group_id}/-/Reviewer_Reassignment'
+        
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                  'enable_reviewers_reassignment': {
+                        'order': 1,
+                        'description': 'Would you like to allow area chairs to reassign reviewers to submissions? Make sure there are deployed or proposed assignments created before enabling this option.',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False]
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': group_id,
+                    'content': {
+                        'enable_reviewers_reassignment': { 'value': '${4/content/enable_reviewers_reassignment/value}'}
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+
     def set_edit_reveal_authors(self, super_invitation_id):
 
         venue_id = self.venue_id
