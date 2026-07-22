@@ -16,17 +16,17 @@ idna==3.15
     # via requests
 pycryptodome==3.23.0
     # via openreview-py (pyproject.toml)
-pyjwt==2.12.1
+pyjwt==2.13.0
     # via openreview-py (pyproject.toml)
 pylatexenc==2.10
     # via openreview-py (pyproject.toml)
-requests==2.32.5
+requests==2.33.0
     # via openreview-py (pyproject.toml)
 tld==0.13.2
     # via openreview-py (pyproject.toml)
 tqdm==4.67.3
     # via openreview-py (pyproject.toml)
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
 wrapt==2.1.2
     # via deprecated

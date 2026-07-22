@@ -354,8 +354,25 @@ class Workflows():
                                 }
                             }
                         },
-                        'venue_organizer_agreement': {
+                        'release_role_participation': {
                             'order': 22,
+                            'description': 'Should role participation be collected for all participants—including reviewers, area chairs, senior area chairs, program chairs, publication chairs, workflow chairs, and any other role—and made publicly available in the OpenReview profile of each participant? Select "No" if you do not want this information to become public.',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [
+                                        { 'value': True, 'description': 'Yes, collect role participation and make it publicly available in each participant\'s OpenReview profile.' },
+                                        { 'value': False, 'description': 'No, do not make role participation publicly available.' }
+                                    ],
+                                    'input': 'radio',
+                                    'default': True,
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'venue_organizer_agreement': {
+                            'order': 23,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {
@@ -367,9 +384,7 @@ class Workflows():
                                         { 'value': 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'description': 'We acknowledge that, if our venue’s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'optional': True},
                                         { 'value': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'description': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'optional': True},
                                         { 'value': 'We will treat the OpenReview staff with kindness and consideration.', 'description': 'We will treat the OpenReview staff with kindness and consideration.', 'optional': True},
-                                        { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True},
-                                        { 'value': 'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.', 'description': 'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.', 'optional': True},
-                                        { 'value': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'description': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'optional': True}
+                                        { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True}
                                     ],
                                     'input': 'checkbox'
                                 }

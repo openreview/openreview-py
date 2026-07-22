@@ -11,6 +11,20 @@ from openreview.stages import SubmissionStage
 
 class TestClient():
 
+    def test_retry_strategy(self, client, openreview_client):
+        ## Transient 5xx errors and rate limiting (429) should be retried with a
+        ## capped, jittered backoff so brief server overloads or throttling don't
+        ## abort long-running jobs.
+        for api_client in [client, openreview_client]:
+            retry = api_client.session.get_adapter(api_client.baseurl).max_retries
+            assert retry.total == 8
+            assert retry.connect == 1
+            assert retry.backoff_factor == 1
+            assert retry.backoff_max == 120
+            assert retry.backoff_jitter == 1
+            assert set(retry.status_forcelist) == {429, 500, 502, 503, 504}
+            assert retry.respect_retry_after_header is True
+
     def test_get_groups(self, client):
         groups = client.get_groups(ids=[
             '(anonymous)',
@@ -422,10 +436,59 @@ class TestClient():
 
     def test_get_notes_by_ids(self, openreview_client):
         notes = openreview_client.get_notes(invitation='Test.ws/2019/Conference/-/Submission', content = { 'title': 'Paper title'})
-        assert len(notes) == 1        
-       
+        assert len(notes) == 1
+
         notes = openreview_client.get_notes_by_ids(ids = [notes[0].id])
         assert len(notes) == 1, 'notes is not empty'
+
+    def test_delete_invitation(self, openreview_client):
+        invitation_id = 'openreview.net/-/To_Delete'
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id=invitation_id,
+                readers=['everyone'],
+                writers=['openreview.net'],
+                signatures=['~Super_User1'],
+                invitees=['everyone'],
+                edit={
+                    'readers': { 'param': { 'regex': '.+' } },
+                    'signatures': { 'param': { 'regex': '.+' } },
+                    'writers': { 'param': { 'regex': '.+' } },
+                    'note': {
+                        'readers': { 'param': { 'regex': '.+' } },
+                        'signatures': { 'param': { 'regex': '.+' } },
+                        'writers': { 'param': { 'regex': '.+' } },
+                        'content': {
+                        'title': { 'value': { 'param': { 'type': 'string', 'regex': '.*' } } },
+                        }
+                    }
+                }
+            )
+        )
+
+        ## Invitation and its edits exist before deletion
+        invitation = openreview_client.get_invitation(invitation_id)
+        assert invitation.id == invitation_id
+
+        edits = openreview_client.get_invitation_edits(invitation_id=invitation_id)
+        assert len(edits) == 1
+
+        ## Delete the invitation
+        response = openreview_client.delete_invitation(invitation_id)
+        assert response['status'] == 'ok'
+
+        ## Invitation no longer exists after deletion
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation openreview.net/-/To_Delete was not found'):
+            openreview_client.get_invitation(invitation_id)
+
+        ## Its edits no longer exist after deletion
+        edits = openreview_client.get_invitation_edits(invitation_id=invitation_id)
+        assert len(edits) == 0
 
     # def test_infer_notes(self, client):
     #     notes = client.get_notes(signature='openreview.net/Support')
