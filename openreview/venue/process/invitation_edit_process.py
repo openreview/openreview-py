@@ -73,9 +73,12 @@ def process(client, invitation):
 
         return filter_by_source(source)
     
-    def update_note_readers(submission, paper_invitation):
-        ## Update readers of current notes
-        notes = client.get_notes(invitation=paper_invitation.id)
+    def update_note_readers(note, paper_invitation):
+        submission, forum_note = note
+        ## Update readers of current notes, they are available in the forum replies
+        notes = [openreview.api.Note.from_json(reply) for reply in forum_note.details['replies'] if paper_invitation.id in reply['invitations']]
+        if paper_invitation.id in forum_note.invitations:
+            notes.append(forum_note)
         invitation_readers = paper_invitation.edit['note'].get('readers', [])
 
         ## if invitation has param in readers, we ignore the update
@@ -130,7 +133,7 @@ def process(client, invitation):
 
     def post_invitation(note):
 
-        note, forumNote = note
+        childNote, forumNote = note
 
         def find_note_from_details(note_id):
             if note_id == forumNote.id:
@@ -146,19 +149,19 @@ def process(client, invitation):
         }
 
         if 'replyto' in invitation.edit['content']:
-            content['replyto'] = { 'value': note.id }
+            content['replyto'] = { 'value': childNote.id }
 
         if 'replytoSignatures' in invitation.edit['content']:
-            content['replytoSignatures'] = { 'value': note.signatures[0] }
+            content['replytoSignatures'] = { 'value': childNote.signatures[0] }
 
         if 'replyNumber' in invitation.edit['content']:
-            content['replyNumber'] = { 'value': note.number }
+            content['replyNumber'] = { 'value': childNote.number }
 
         if 'invitationPrefix' in invitation.edit['content']:
-            content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
+            content['invitationPrefix'] = { 'value': childNote.invitations[0].replace('/-/', '/') + str(childNote.number) }
 
         if 'replytoReplytoSignatures' in invitation.edit['content']:
-            replyto_note = find_note_from_details(note.replyto)
+            replyto_note = find_note_from_details(childNote.replyto)
             if replyto_note:
                 content['replytoReplytoSignatures'] = { 'value': replyto_note.signatures[0] }             
 
@@ -166,13 +169,13 @@ def process(client, invitation):
             paper_readers = invitation.content.get('review_readers',{}).get('value') or invitation.content.get('comment_readers',{}).get('value')
             final_readers = []
             final_readers.extend(paper_readers)
-            final_readers = [reader.replace('{number}', str(note.number)) for reader in final_readers]
+            final_readers = [reader.replace('{number}', str(childNote.number)) for reader in final_readers]
             if '{signatures}' in final_readers:
                 final_readers.remove('{signatures}')
-            if note.content.get('flagged_for_ethics_review', {}).get('value', False):
+            if childNote.content.get('flagged_for_ethics_review', {}).get('value', False):
                 if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
                     if not is_meta_review_invitation:
-                        final_readers.append(f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}')
+                        final_readers.append(f'{venue_id}/{submission_name}{childNote.number}/{ethics_reviewers_name}')
                     if release_to_ethics_chairs:
                         final_readers.append(ethics_chairs_id)
             content['noteReaders'] = { 'value': final_readers }
@@ -184,22 +187,23 @@ def process(client, invitation):
             content=content,
             invitation=openreview.api.Invitation()
         )
-        paper_invitation = client.get_invitation(paper_invitation_edit['invitation']['id'])
+
+        ## The edit response contains the values of the saved invitation, no need to fetch it with get_invitation
+        paper_invitation = openreview.api.Invitation.from_json(paper_invitation_edit['invitation'])
         if paper_invitation.edit and paper_invitation.edit.get('note'):
             update_note_readers(note, paper_invitation)
 
-        return paper_invitation
+        return paper_invitation.id
 
     notes = get_children_notes()
 
     current_child_invitations = client.get_all_invitations(invitation=invitation.id, domain=venue_id)
 
     print(f'create or update {len(notes)} child invitations')
-    posted_invitations = openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')
-    posted_invitations_by_id = { i.id: i for i in posted_invitations}
+    posted_invitation_ids = set(openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process'))
 
     print(f'{len(notes)} {invitation_name} invitations created or updated successfully')
 
     for current_invitation in current_child_invitations:
-        if current_invitation.id not in posted_invitations_by_id:
+        if current_invitation.id not in posted_invitation_ids:
             delete_invitation(current_invitation, now)
