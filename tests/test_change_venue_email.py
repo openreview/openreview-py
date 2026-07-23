@@ -102,8 +102,11 @@ class TestChangeVenueEmail():
         review_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Reviews_Notification')
         assert review_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
-        decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Decision_Notification')
-        assert decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+        accept_decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+        assert accept_decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+
+        reject_decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Reject_Decision_Notification')
+        assert reject_decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
     def test_change_venue_email(self, openreview_client, helpers):
 
@@ -133,8 +136,11 @@ class TestChangeVenueEmail():
         review_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Reviews_Notification')
         assert review_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
-        decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Decision_Notification')
-        assert decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+        accept_decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+        assert accept_decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+
+        reject_decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Reject_Decision_Notification')
+        assert reject_decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
     def test_recruitment_invitations(self, openreview_client, helpers):
 

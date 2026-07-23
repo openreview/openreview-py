@@ -320,7 +320,8 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Settings')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification')
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
         assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference']
@@ -2070,10 +2071,17 @@ For more details, please check the following links:
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
+        assert invitation
+        assert 'subject' in invitation.content
+        assert 'message' in invitation.content
+        assert 'accept_message' not in invitation.content
+        assert 'reject_message' not in invitation.content
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Fields_to_Include')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Message')
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Templates')
+        assert 'email_subject' in invitation.edit['content'] and 'email_content' in invitation.edit['content']
+        assert 'accept_email_content' not in invitation.edit['content'] and 'reject_email_content' not in invitation.edit['content']
 
         # trigger notification date process with no fields to include
         now = datetime.datetime.now()
@@ -2247,7 +2255,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
 
-        assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
+        assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept']
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
@@ -2267,18 +2275,30 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         edit = pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Decision/Decision_Options',
             content={
-                'decision_options': { 'value': ['Accept', 'Revision Needed', 'Reject'] },
-                'accept_decision_options': { 'value': ['Accept'] }
+                'decision_options': { 'value': ['Accept', 'Poster', 'Revision Needed', 'Reject'] },
+                'accept_decision_options': { 'value': ['Accept', 'Poster'] }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=3)
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
-        assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept']
+        assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept', 'Poster']
 
         venue_group = openreview_client.get_group('ABCD.cc/2025/Conference')
-        assert 'accept_decision_options' in venue_group.content and venue_group.content['accept_decision_options']['value'] == ['Accept']
+        assert 'accept_decision_options' in venue_group.content and venue_group.content['accept_decision_options']['value'] == ['Accept', 'Poster']
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+        assert invitation and not invitation.ddate
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification')
+        assert invitation and not invitation.ddate
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification')
+        assert invitation and not invitation.ddate
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification')
+        assert invitation and not invitation.ddate
 
         now = datetime.datetime.now()
         now = openreview.tools.datetime_millis(now)
@@ -2434,22 +2454,110 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Fields_to_Include')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Message')
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+        assert invitation
+        assert 'subject' in invitation.content
+        assert 'message' in invitation.content and invitation.content['message']['value'] == '''Hi {{{{fullname}}}},
+
+We are delighted to inform you that your submission has been accepted. Congratulations!
+
+{formatted_decision}
+To view this paper, please go to https://openreview.net/forum?id={submission_forum}
+
+Best,
+ABCD 2025 Program Chairs'''
+
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification')
+        assert invitation
+        assert 'subject' in invitation.content
+        assert 'message' in invitation.content and invitation.content['message']['value'] == '''Hi {{{{fullname}}}},
+
+We are delighted to inform you that your submission has been accepted. Congratulations!
+
+{formatted_decision}
+To view this paper, please go to https://openreview.net/forum?id={submission_forum}
+
+Best,
+ABCD 2025 Program Chairs'''
+
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification')
+        assert invitation
+        assert 'subject' in invitation.content
+        assert 'message' in invitation.content and invitation.content['message']['value'] == '''Hi {{{{fullname}}}},
+
+We regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.
+
+{formatted_decision}
+To view this paper, please go to https://openreview.net/forum?id={submission_forum}
+
+Best,
+ABCD 2025 Program Chairs'''
+
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification')
+        assert invitation
+        assert 'subject' in invitation.content
+        assert 'message' in invitation.content and invitation.content['message']['value'] == '''Hi {{{{fullname}}}},
+
+We regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.
+
+{formatted_decision}
+To view this paper, please go to https://openreview.net/forum?id={submission_forum}
+
+Best,
+ABCD 2025 Program Chairs'''
+
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Fields_to_Include')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Fields_to_Include')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification/Fields_to_Include')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification/Fields_to_Include')
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Templates')
+        assert invitation
+        assert all(key in invitation.edit['content'] for key in ['email_subject', 'email_content'])
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Templates')
+        assert invitation
+        assert all(key in invitation.edit['content'] for key in ['email_subject', 'email_content'])
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification/Templates')
+        assert invitation
+        assert all(key in invitation.edit['content'] for key in ['email_subject', 'email_content'])
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Revision_Needed_Decision_Notification/Templates')
+        assert invitation
+        assert all(key in invitation.edit['content'] for key in ['email_subject', 'email_content'])
+
+        # change accept and reject email templates
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Templates',
+            content={
+                'email_subject': { 'value': '[ABCD 2025] The decision for your submission #{submission_number}, titled "{submission_title}" is now available' },
+                'email_content': { 'value': 'Hi {{{{fullname}}}},\n\nWe are happy to inform you that, based on the evaluation of the reviewers, your submission has been accepted. Congratulations!\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\nABCD 2025 Program Chairs' },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification-0-1', count=2)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Templates',
+            content={
+                'email_subject': { 'value': '[ABCD 2025] The decision for your submission #{submission_number}, titled "{submission_title}" is now available' },
+                'email_content': { 'value': 'Hi {{{{fullname}}}},\n\nWe are sorry to inform you that, after consideration by reviewers, your submission has not been accepted.\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\nABCD 2025 Program Chairs' }
+
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification-0-1', count=2)
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
         # trigger notification date process with no fields to include
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Author_Decision_Notification/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Decision_Notification-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification-0-1', count=3)
 
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', count=6)
 
@@ -2457,32 +2565,123 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
         assert len(notes) == 6
-        assert notes[-1].content['title']['value'] == 'Author Decision Notification Failed'
+        assert notes[-1].content['title']['value'] == 'Author Accept Decision Notification Failed'
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Author_Decision_Notification/Fields_to_Include',
+            invitations='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Fields_to_Include',
             content={
                 'fields': { 'value': ['decision', 'comment'] }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Decision_Notification-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification-0-1', count=4)
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #1, titled \"Paper title 1\" is now available')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-This is to inform you that the decision for your submission #1, "Paper title 1", to ABCD 2025 is now available.
+We are happy to inform you that, based on the evaluation of the reviewers, your submission has been accepted. Congratulations!
 
 **decision**: Accept
 **comment**: Congratulations on your acceptance.
 
-
 To view this paper, please go to https://openreview.net/forum?id={submissions[0].id}
+
+Best,
+ABCD 2025 Program Chairs
 
 Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
 '''
+
+        # rejected papers and papers with no decision should not receive an email if the decision notification is sent to accepted papers only
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #3, titled \"Paper title 3\" is now available')
+        assert not messages
+
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #10, titled \"Paper title 10\" is now available')
         assert not messages
+
+        # for rejected papers, do not include the comment field in the email notification
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Fields_to_Include',
+            content={
+                'fields': { 'value': ['decision'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification-0-1', count=3)
+
+        # send emails 
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        # trigger notification date process with no fields to include
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification-0-1', count=4)
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #3, titled \"Paper title 3\" is now available')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+We are sorry to inform you that, after consideration by reviewers, your submission has not been accepted.
+
+**decision**: Reject
+
+To view this paper, please go to https://openreview.net/forum?id={submissions[2].id}
+
+Best,
+ABCD 2025 Program Chairs
+
+Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
+'''
+
+        # papers with no decisions should not receive an email
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #10, titled \"Paper title 10\" is now available')
+        assert not messages
+
+    def test_retrigger_accept_decision_notification_with_same_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # accepted paper #1 already received an accept decision notification earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #1, titled \"Paper title 1\" is now available')
+        assert messages and len(messages) == 1
+
+        # retrigger the accept decision notification
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification-0-1', count=5)
+
+        # emails should not be sent again since the subject matches the subject of the email sent earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #1, titled \"Paper title 1\" is now available')
+        assert messages and len(messages) == 1
+
+    def test_retrigger_accept_decision_notification_new_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # change the accept email subject
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Templates',
+            content={
+                'email_subject': { 'value': '[ABCD 2025] Update on your submission #{submission_number}, titled "{submission_title}"' },
+                'email_content': { 'value': 'Hi {{{{fullname}}}},\n\nWe are happy to inform you that, based on the evaluation of the reviewers, your submission has been accepted. Congratulations!\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\nABCD 2025 Program Chairs' },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification-0-1', count=6)
+
+        # the email now gets sent since the subject no longer matches a previously sent email
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] Update on your submission #1, titled \"Paper title 1\"')
+        assert messages and len(messages) == 1
 
     def test_camera_ready_revisions(self, openreview_client, helpers):
 

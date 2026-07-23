@@ -2,12 +2,32 @@ def process(client, edit, invitation):
 
     domain = client.get_group(edit.domain)
     meta_invitation_id = domain.content.get('meta_invitation_id', {}).get('value')
+    short_name = domain.content['subtitle']['value']
 
     stage_name = edit.content['name']['value']
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     invitation_id = f'{domain.id}/-/{stage_name}'
-    edit_invitations_builder.set_edit_email_template_invitation(invitation_id)
     is_review_invitation = True if 'Reviews' in stage_name else False
+    edit_invitations_builder.set_edit_email_template_invitation(invitation_id)
     edit_invitations_builder.set_edit_fields_email_template_invitation(invitation_id, is_review_invitation=is_review_invitation)
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+
+    if not is_review_invitation:
+        decision = edit.content['decision']['value']
+        accept_decision_options = domain.content.get('accept_decision_options', {}).get('value')
+        if decision in accept_decision_options:
+            decision_option = 'accept'
+        else:
+            decision_option = 'reject'
+        message = invitation.content[f'{decision_option}_message']['value'].replace('{short_name}', short_name)
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[domain.id],
+            invitation=openreview.api.Invitation(
+                id=edit.invitation.id,
+                content={
+                    'message': { 'value': message }
+                }
+            )
+        )

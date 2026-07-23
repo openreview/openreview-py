@@ -1422,10 +1422,32 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_email_template_invitation(self, super_invitation_id):
+    def set_edit_email_template_invitation(self, super_invitation_id, is_review_invitation=False):
 
         venue_id = self.venue_id
-        invitation_id = super_invitation_id + '/Message'
+        invitation_id = super_invitation_id + '/Templates'
+
+        edit_content = {
+            'email_subject': {
+                'description': 'The subject of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '.+',
+                    }
+                }
+            },
+            'email_content': {
+                'description': 'The content of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 100000,
+                        'input': 'textarea'
+                    }
+                }
+            }
+        }
 
         invitation = Invitation(
             id = invitation_id,
@@ -1434,27 +1456,7 @@ class EditInvitationsBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             edit = {
-                'content': {
-                    'email_subject': {
-                        'description': 'The subject of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'regex': '.+',
-                            }
-                        }
-                    },
-                    'email_content': {
-                        'description': 'The content of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100000,
-                                'input': 'textarea'
-                            }
-                        }
-                    }
-                },
+                'content': edit_content,
                 'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
                 'readers': [venue_id],
                 'writers': [venue_id],
