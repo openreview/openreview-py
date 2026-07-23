@@ -2144,7 +2144,32 @@ OpenReview Team'''
             edge.readers = None
             edge.writers = None
             edge.cdate = None
-            client.post_edge(edge)
+
+            try:
+                client.post_edge(edge)
+            except Exception as e:
+                print(f"Error posting edge: {e}")
+                error_str = str(e)
+
+                if f'is member of {journal.venue_id}/Reviewers' in error_str:
+                    print('User is already a member of the reviewers group, ignoring edge.')
+
+                    # send email to reviewer
+                    error_subject = f'[{journal.short_name}] Error accepting invitation for paper number {submission.number}'
+                    error_message = f'''Hi {{{{fullname}}}},
+
+There was an error accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}, because you have been added as an official reviewer for {journal.venue_id}.
+
+If you would like to be assigned to this submission, you have not reached your reviewing quota and have no pending reviews, please contact the paper's action editor and ask them to directly assign you.
+If you have reached your reviewing quota, you can use the "Volunteer to Review" button on the submission's forum.
+
+Thank you,
+
+OpenReview Team'''
+                    client.post_message(error_subject, [user_profile.id], error_message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
+                    return
+
+                return
 
             short_phrase = journal.short_name
             reviewer_name = 'Reviewer'  # add this to the invitation?
