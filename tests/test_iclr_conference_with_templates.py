@@ -4,6 +4,7 @@ import openreview
 import os
 import csv
 import random
+import re
 from selenium.webdriver.common.by import By
 
 class TestSimpleDualAnonymous():
@@ -766,6 +767,117 @@ def test_sac_deployment(client, openreview_client, helpers):
         invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Conflict',
         groupby='id'
     )) == 12
+
+def test_registration_stages(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    # registration forms are not part of the deployed timeline, create them for reviewers and area chairs
+    venue = openreview.venue.helpers.get_venue(pc_client, 'ICLR.cc/2026/Conference', support_user='openreview.net/Support')
+
+    now = datetime.datetime.now()
+    due_date = now + datetime.timedelta(days=3)
+    venue.registration_stages = [
+        openreview.stages.RegistrationStage(
+            committee_id='ICLR.cc/2026/Conference/Reviewers',
+            name='Registration',
+            due_date=due_date,
+            instructions='Please confirm your profile is up to date and complete the registration form.',
+            title='ICLR 2026 Conference - Reviewer registration'
+        ),
+        openreview.stages.RegistrationStage(
+            committee_id='ICLR.cc/2026/Conference/Area_Chairs',
+            name='Registration',
+            due_date=due_date,
+            instructions='Please confirm your profile is up to date and complete the registration form.',
+            title='ICLR 2026 Conference - Area Chair registration'
+        )
+    ]
+    venue.create_registration_stages()
+
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Registration_Form')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Registration')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Registration/Dates')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Registration/Form_Fields')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Registration_Form')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Registration')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Registration/Dates')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Registration/Form_Fields')
+
+    # add a custom question to the reviewer registration form
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/Reviewers/-/Registration/Form_Fields',
+        content={
+            'content': {
+                'value': {
+                    'statement': {
+                        'order': 3,
+                        'description': 'Please write a short (1-2 sentence) statement about why you think peer review is important to the advancement of science.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea',
+                                'maxLength': 200000
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+
+    registration_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Registration')
+    assert 'profile_confirmed' in registration_inv.edit['note']['content']
+    assert 'expertise_confirmed' in registration_inv.edit['note']['content']
+    assert 'statement' in registration_inv.edit['note']['content']
+
+    # update the registration deadline
+    new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=5))
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/Reviewers/-/Registration/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+            'due_date': { 'value': new_duedate },
+            'expiration_date': { 'value': new_duedate }
+        }
+    )
+    registration_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Registration')
+    assert registration_inv.duedate == new_duedate
+
+    # a reviewer completes the registration form
+    reviewer_client = openreview.api.OpenReviewClient(username='reviewer_one@iclr.cc', password=helpers.strong_password)
+    reviewer_client.post_note_edit(invitation='ICLR.cc/2026/Conference/Reviewers/-/Registration',
+        signatures=['~Reviewer_ICLROne1'],
+        note=openreview.api.Note(
+            content={
+                'profile_confirmed': { 'value': 'Yes' },
+                'expertise_confirmed': { 'value': 'Yes' },
+                'statement': { 'value': 'Peer review is important to the advancement of science.' }
+            }
+        ))
+
+    # an area chair completes the registration form
+    ac_client = openreview.api.OpenReviewClient(username='areachair_one@iclr.cc', password=helpers.strong_password)
+    ac_client.post_note_edit(invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Registration',
+        signatures=['~AC_ICLROne1'],
+        note=openreview.api.Note(
+            content={
+                'profile_confirmed': { 'value': 'Yes' },
+                'expertise_confirmed': { 'value': 'Yes' }
+            }
+        ))
+
+    assert len(openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Reviewers/-/Registration')) == 1
+    assert len(openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Registration')) == 1
+
+    # the registration invitations are not filtered out of the workflow timeline
+    domain = openreview_client.get_group('ICLR.cc/2026/Conference')
+    for invitation_id in ['ICLR.cc/2026/Conference/Reviewers/-/Registration', 'ICLR.cc/2026/Conference/Area_Chairs/-/Registration']:
+        for pattern in domain.content['exclusion_workflow_invitations']['value']:
+            if pattern.startswith('/') and pattern.endswith('/'):
+                assert not re.search(pattern[1:-1], invitation_id), f'{invitation_id} is excluded from the timeline by {pattern}'
+            else:
+                assert pattern != invitation_id
 
 def test_review_stage(client, openreview_client, helpers):
 
