@@ -2464,6 +2464,20 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_invitation(self, invitation_id):
+        """
+        Deletes the invitation
+
+        :param invitation_id: ID of Invitation to be deleted
+        :type invitation_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.invitations_url, json = {'id': invitation_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=None):
         """
         Posts a message to the recipients and consequently sends them emails
