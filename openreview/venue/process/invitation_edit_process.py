@@ -204,6 +204,7 @@ def process(client, invitation):
 
     print(f'{len(notes)} {invitation_name} invitations created or updated successfully')
 
-    for current_invitation in current_child_invitations:
-        if current_invitation.id not in posted_invitation_ids:
-            delete_invitation(current_invitation, now)
+    invitations_to_delete = [current_invitation for current_invitation in current_child_invitations if current_invitation.id not in posted_invitation_ids]
+    if invitations_to_delete:
+        print(f'delete {len(invitations_to_delete)} child invitations')
+        openreview.tools.concurrent_requests(lambda child_invitation: delete_invitation(child_invitation, now), invitations_to_delete, desc='delete_child_invitations')
