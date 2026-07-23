@@ -264,7 +264,7 @@ Please note that responding to this email will direct your reply to celeste@jmlr
 
 There was an error accepting the invitation to review the paper number: {note.number}, title: Paper title, because you have been added as an official reviewer for JMLR.
 
-If you would like to be assigned to this submission, you have not reached your reviewing quota and have no pending reviews, please contact the paper's AC and ask them to directly assign you.
+If you would like to be assigned to this submission, you have not reached your reviewing quota and have no pending reviews, please contact the paper's action editor and ask them to directly assign you.
 If you have reached your reviewing quota, you can use the "Volunteer to Review" button on the submission's forum.
 
 Thank you,
