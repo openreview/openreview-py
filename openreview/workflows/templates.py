@@ -1462,7 +1462,7 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Decision_Notification.',
+                        'description': 'Name for this step, use underscores to represent spaces.',
                         'value': {
                             'param': {
                                 'type': 'string',

@@ -21,8 +21,6 @@ def process(client, invitation):
 
     email_subject = invitation.get_content_value('subject')
     email_content = invitation.get_content_value('message')
-    decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
-    accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     fields_to_include = invitation.get_content_value('fields_to_include')
     contact_email = domain.get_content_value('contact')

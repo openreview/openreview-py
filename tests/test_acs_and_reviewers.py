@@ -1250,7 +1250,7 @@ note={under review}
         ]
         assert decisions[0].nonreaders == []
 
-    def test_decion_notification_stage(self, openreview_client, helpers):
+    def test_decison_notification_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
 
