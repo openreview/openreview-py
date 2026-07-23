@@ -386,21 +386,8 @@ For more details, please check the following links:
         ]
         assert not submissions[0].odate
         assert not submissions[0].pdate
-        assert '_bibtex' in submission.content
-        assert 'author={Anonymous}' in submission.content['_bibtex']['value']
-        year = datetime.datetime.now().year
-        valid_bibtex = '''@inproceedings{
-anonymous'''+str(year)+'''paper,
-title={Paper title 1},
-author={Anonymous},
-booktitle={Submitted to International Conference on Learning Representations},
-year={'''+str(year)+'''},
-url={https://openreview.net/forum?id='''
-
-        valid_bibtex = valid_bibtex + submission.forum + '''},
-note={under review}
-}'''
-        assert submission.content['_bibtex']['value'] == valid_bibtex
+        # the bibtex is not generated while the submissions are only visible to the committee
+        assert '_bibtex' not in submission.content
 
         full_submission_inv = openreview_client.get_invitation(id='ICLR.cc/2026/Conference/-/Full_Submission')
         content = full_submission_inv.edit['invitation']['edit']['note']['content']
@@ -466,20 +453,6 @@ note={under review}
         assert 'readers' in submission.content['pdf'] and submission.content['pdf']['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
         assert 'readers' in submission.content['authors'] and submission.content['authors']['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
         assert 'authorids' not in submission.content
-        assert '_bibtex' in submission.content
-        assert 'author={Anonymous}' in submission.content['_bibtex']['value']
-        valid_bibtex = '''@inproceedings{
-anonymous'''+str(year)+'''paper,
-title={Paper title 1 license revision},
-author={Anonymous},
-booktitle={Submitted to International Conference on Learning Representations},
-year={'''+str(year)+'''},
-url={https://openreview.net/forum?id='''
-
-        valid_bibtex = valid_bibtex + submission.forum + '''},
-note={under review}
-}'''
-        assert submission.content['_bibtex']['value'] == valid_bibtex
 
         # the reciprocal reviewing field is visible only to the venue and the authors
         assert 'readers' in submission.content['reciprocal_reviewing'] and submission.content['reciprocal_reviewing']['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
@@ -918,6 +891,23 @@ def test_review_stage(client, openreview_client, helpers):
     assert 'readers' in submission.content['reciprocal_reviewing'] and submission.content['reciprocal_reviewing']['readers'] == ['ICLR.cc/2026/Conference', f'ICLR.cc/2026/Conference/Submission{submission.number}/Authors']
     assert 'authorids' not in submission.content
 
+    # the bibtex is generated once the submissions become public
+    assert '_bibtex' in submission.content
+    assert 'author={Anonymous}' in submission.content['_bibtex']['value']
+    year = datetime.datetime.now().year
+    valid_bibtex = '''@inproceedings{
+anonymous'''+str(year)+'''paper,
+title={Paper title 1 license revision},
+author={Anonymous},
+booktitle={Submitted to International Conference on Learning Representations},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+    valid_bibtex = valid_bibtex + submission.forum + '''},
+note={under review}
+}'''
+    assert submission.content['_bibtex']['value'] == valid_bibtex
+
     # create child invitations
     now = datetime.datetime.now()
     new_cdate = openreview.tools.datetime_millis(now)
@@ -1324,7 +1314,7 @@ def test_author_reviews_notification(client, openreview_client, helpers):
     pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Author_Reviews_Notification/Fields_to_Include',
         content={
-            'fields_to_include': { 'value': ['title', 'review', 'rating', 'confidence'] }
+            'fields': { 'value': ['review', 'rating', 'confidence'] }
         }
     )
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Reviews_Notification-0-1', count=2)
@@ -1376,8 +1366,8 @@ def test_rebuttal_revision_stage(client, openreview_client, helpers, test_client
     assert 'pdf' in invitation.edit['note']['content']
     assert 'title' not in invitation.edit['note']['content']
     assert 'authors' not in invitation.edit['note']['content']
-    # the revision history is visible to the readers of the submission
-    assert invitation.edit['readers'] == ['${{2/note/id}/readers}']
+    # the revision history is visible to the readers of the submission, the papers are public
+    assert invitation.edit['readers'] == ['everyone']
 
     # author uploads a new PDF
     revision_edit = test_client.post_note_edit(
@@ -1765,7 +1755,7 @@ def test_author_decision_notification(client, openreview_client, helpers):
     pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Author_Decision_Notification/Fields_to_Include',
         content={
-            'fields_to_include': { 'value': ['decision', 'comment'] }
+            'fields': { 'value': ['decision', 'comment'] }
         }
     )
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Decision_Notification-0-1', count=2)
