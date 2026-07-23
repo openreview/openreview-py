@@ -2144,7 +2144,16 @@ OpenReview Team'''
             edge.readers = None
             edge.writers = None
             edge.cdate = None
-            client.post_edge(edge)
+
+            try:
+                client.post_edge(edge)
+            except Exception as e:
+                print(f"Error posting edge: {e}")
+                error_str = str(e)
+
+                if f'is member of {journal.venue_id}/Reviewers' in error_str:
+                    print('User is already a member of the reviewers group, ignoring edge.')
+                    return
 
             short_phrase = journal.short_name
             reviewer_name = 'Reviewer'  # add this to the invitation?

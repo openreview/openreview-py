@@ -6,6 +6,7 @@ import datetime
 import random
 import os
 import re
+from urllib.parse import urlparse, parse_qs
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
@@ -73,7 +74,7 @@ class TestJMLRJournal():
         openreview_client.add_members_to_group('JMLR/Action_Editors', ['~Xukun_JMLR1', '~Melisa_JMLR1', '~Celeste_JMLR1'])
         openreview_client.add_members_to_group('JMLR/Reviewers', ['~Carlos_JMLR1', '~Andrew_JMLR1', '~Hugo_JMLR1', '~Rachel_JMLR1'])
 
-    def test_submission(self, journal, openreview_client, test_client, helpers):
+    def test_submission(self, journal, openreview_client, test_client, helpers, selenium, request_page):
 
         venue_id = journal.venue_id
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
@@ -198,6 +199,63 @@ class TestJMLRJournal():
         ))
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        # invite reviewers to paper
+        paper_assignment_edge = celeste_client.post_edge(openreview.api.Edge(invitation='JMLR/Reviewers/-/Invite_Assignment',
+            signatures=[celeste_paper1_anon_group.id],
+            head=note_id_1,
+            tail='outside_reviewer@gmail.com',
+            weight=1,
+            label='Invitation Sent'
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        # accept invitation
+        messages = openreview_client.get_messages(to = 'outside_reviewer@gmail.com', subject = '[JMLR] Invitation to review paper titled "Paper title"')
+        assert len(messages) == 1
+        url_match = re.search(r'https://openreview\.net/invitation\?[^\s]+', messages[0]['content']['text'])
+
+        if url_match:
+            url = url_match.group(0)
+            parsed_url = urlparse(url)
+            params = parse_qs(parsed_url.query)
+            key_value = params['key'][0]
+        assert messages[0]['content']['text'] == f'''Hi outside_reviewer@gmail.com,
+
+You were invited to review the paper number: {note.number}, title: "Paper title".
+
+Abstract: Paper abstract
+
+Please respond the invitation clicking the following link:
+
+https://openreview.net/invitation?id=JMLR/Reviewers/-/Assignment_Recruitment&user=outside_reviewer@gmail.com&key={key_value}&submission_id={note_id_1}&inviter=~Celeste_JMLR1
+
+Thanks,
+
+JMLR Paper{note.number} Action Editor {celeste_paper1_anon_group.id.split('_')[-1]}
+Celeste JMLR
+
+Please note that responding to this email will direct your reply to celeste@jmlr.com.
+'''
+
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='JMLR/Reviewers/-/Assignment_Recruitment', count=1)
+
+        # edge is labeled as 'Pending Signup'
+        invite_edges=openreview_client.get_edges(invitation='JMLR/Reviewers/-/Invite_Assignment', head=note_id_1, tail='outside_reviewer@gmail.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Pending Sign Up'
+
+        helpers.create_user('outside_reviewer@gmail.com', 'Outside', 'Reviewer')
+
+        # add user to reviewers group
+        openreview_client.add_members_to_group('JMLR/Reviewers', ['~Outside_Reviewer1'])
+
+        ## Run Job
+        openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')
 
         # post reviews
         reviewer_one_client = OpenReviewClient(username='rachel@jmlr.com', password=helpers.strong_password)
