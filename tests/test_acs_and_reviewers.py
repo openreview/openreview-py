@@ -1079,6 +1079,15 @@ note={under review}
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision_Upload')
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
 
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+        assert invitation and not invitation.ddate
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Dates')
+        assert invitation and not invitation.ddate
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Fields_to_Include')
+        assert invitation and not invitation.ddate
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Templates')
+        assert invitation and not invitation.ddate
+
         # edit decision options
         edit = pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Decision/Decision_Options',
@@ -1090,14 +1099,11 @@ note={under review}
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision-0-1', count=2)
 
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification')
-        assert invitation and invitation.ddate
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Dates')
-        assert invitation and invitation.ddate
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Fields_to_Include')
-        assert invitation and invitation.ddate
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Templates')
-        assert invitation and invitation.ddate
+        deleted_invitations = openreview_client.get_invitations(prefix='EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+
+        for invitation in deleted_invitations:
+            with pytest.raises(openreview.OpenReviewException, match=rf'The Invitation {invitation.id} was not found'):
+                openreview_client.get_invitation(invitation.id)
 
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Poster_Decision_Notification')
         assert invitation and not invitation.ddate
@@ -1248,7 +1254,7 @@ note={under review}
         ]
         assert decisions[0].nonreaders == []
 
-    def test_decison_notification_stage(self, openreview_client, helpers):
+    def test_decision_notification_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
 

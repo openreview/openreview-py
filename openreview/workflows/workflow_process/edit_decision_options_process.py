@@ -27,10 +27,12 @@ def process(client, edit, invitation):
 
     if len(invitation_edits) > 1:
         # delete the previous edit's decision notification invitations
+        print('Deleting previous decision notification invitations for the old decision options.')
         previous_edit = invitation_edits[-2]
         previous_decision_options = previous_edit.content['decision_options']['value']
     else:
         #delete the default decision notification invitations
+        print('Deleting default decision notification invitations for the old decision options.')
         previous_decision_options = ['Accept', 'Reject']
 
     new_decision_options = edit.content['decision_options']['value']
@@ -48,16 +50,9 @@ def process(client, edit, invitation):
         invitations_to_delete = client.get_invitations(prefix=invitation_id)
 
         for inv in invitations_to_delete:
-            client.post_invitation_edit(
-                invitations=meta_invitation_id,
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=openreview.api.Invitation(
-                    id=inv.id,
-                    ddate=now
-                )
-            )
+            print(f'Deleting invitation: {inv.id}')
+            client.delete_invitation(inv.id)
+        cdate = inv.tcdate
 
     # post new decision notification invitations for the added decision options
     request_form_inv = domain.get_content_value('request_form_invitation')
@@ -73,7 +68,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': f'Author_{formatted_decision_option}_Decision_Notification' },
-            'activation_date': { 'value': now + (60*60*1000*24*7) },
+            'activation_date': { 'value': cdate },
             'short_name': { 'value': short_name },
             'from_email': { 'value': from_email },
             'decision': { 'value': decision_option }
