@@ -82,7 +82,7 @@ class SubmissionStage(object):
             email_pcs_on_desk_reject=False,
             author_names_revealed=False,
             papers_released=False,
-            author_reorder_after_first_deadline=AuthorReorder.ALLOW_EDIT,
+            author_reorder_after_first_deadline=AuthorReorder.ALLOW_REORDER,
             submission_email=None,
             force_profiles=False,
             second_deadline_additional_fields={},
