@@ -64,7 +64,10 @@ class TestSubmissionLimits():
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        assert openreview_client.get_invitation('HVTest.cc/2025/Conference/-/Submission')
+        submission_inv = openreview_client.get_invitation('HVTest.cc/2025/Conference/-/Submission')
+        assert submission_inv
+        # submission form has a pdf field, so the default attachment rate limit must be set
+        assert submission_inv.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
         assert openreview_client.get_invitation('HVTest.cc/2025/Conference/-/Edit')
 
     def test_human_verification_on_submission(self, openreview_client, helpers):

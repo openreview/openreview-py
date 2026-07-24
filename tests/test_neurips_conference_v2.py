@@ -139,20 +139,6 @@ class TestNeurIPSConference():
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        # set submission_human_verification on the domain group so Revision picks it up
-        openreview_client.post_group_edit(
-            invitation='NeurIPS.cc/2023/Conference/-/Edit',
-            signatures=['NeurIPS.cc/2023/Conference'],
-            group=openreview.api.Group(
-                id='NeurIPS.cc/2023/Conference',
-                content={
-                    'submission_human_verification': {
-                        'value': { 'limit': 15, 'windowMs': 3600000 }
-                    }
-                }
-            )
-        )
-
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)

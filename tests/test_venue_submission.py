@@ -181,7 +181,10 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     
     def test_submission_stage(self, venue, openreview_client, helpers):
 
-        assert openreview_client.get_invitation('TestVenue.cc/-/提交')
+        submission_invitation = openreview_client.get_invitation('TestVenue.cc/-/提交')
+        assert submission_invitation
+        # submission form has a pdf field, so the default attachment rate limit must be set
+        assert submission_invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
         helpers.create_user('celeste@maileleven.com', 'Celeste', 'MartinezEleven')
         helpers.create_user('celeste@mailetwelve.com', 'Celeste', 'MartinezTwelve')
@@ -887,7 +890,10 @@ Please note that responding to this email will direct your reply to testvenue@co
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Camera_Ready_Revision-0-1', count=2)
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Revision')
-        assert openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/提交1/-/Camera_Ready_Revision')
+        revision_invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/提交1/-/Camera_Ready_Revision')
+        assert revision_invitation
+        # revision form has a pdf field, so the default attachment rate limit must be set
+        assert revision_invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
         assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/提交2/-/Camera_Ready_Revision')
 
         author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)

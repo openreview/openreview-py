@@ -41,6 +41,30 @@ LOCAL_SITE   = os.environ.get('OPENREVIEW_WEB_URL', 'http://localhost:3030')
 V1_REMOTE_URLS = [PROD_API_V1, DEV_API_V1]
 V2_REMOTE_URLS = [PROD_API_V2, DEV_API_V2]
 
+# Default rate limit applied to invitations that allow file uploads
+DEFAULT_HUMAN_VERIFICATION = { 'limit': 15, 'windowMs': 3600000 }
+
+def content_has_attachments(content):
+    """
+    Returns True if any field in an invitation content definition accepts a file upload
+
+    :param content: content definition of an invitation (note content or edit content)
+    :type content: dict
+
+    :return: True if at least one field has a file type param
+    :rtype: bool
+    """
+    for field in (content or {}).values():
+        if not isinstance(field, dict):
+            continue
+        value = field.get('value')
+        if not isinstance(value, dict):
+            continue
+        param = value.get('param')
+        if isinstance(param, dict) and str(param.get('type', '')).startswith('file'):
+            return True
+    return False
+
 def _identify_environment(baseurl):
     """Return 'dev', 'prod', or 'local' based on baseurl."""
     if any(url in baseurl for url in [DEV_API_V1, DEV_API_V2]):

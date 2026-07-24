@@ -1720,6 +1720,7 @@ return {
                 writers=[self.support_group_id],
                 signatures=[archive_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
@@ -2013,6 +2014,7 @@ return {
                 writers=[anonymous_group_id],
                 signatures=[anonymous_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 edit={
                     'readers': [ anonymous_group_id, author_anonymous_group_id],
                     'signatures': { 
@@ -2452,6 +2454,7 @@ return {
                 writers=[news_article_group_id],
                 signatures=[news_article_group_id],
                 invitees=[news_article_group_id],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 edit={
                     'readers': [news_article_group_id, '${2/signatures}'],
                     'signatures': { 

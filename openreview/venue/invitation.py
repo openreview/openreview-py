@@ -115,6 +115,11 @@ class InvitationBuilder(object):
             process = f.read()
             return process
 
+    def get_human_verification(self, content):
+        if tools.content_has_attachments(content):
+            return tools.DEFAULT_HUMAN_VERIFICATION
+        return None
+
     def set_meta_invitation(self):
         venue_id=self.venue_id
         meta_invitation = openreview.tools.get_invitation(self.client, self.venue.get_meta_invitation_id())
@@ -175,7 +180,7 @@ class InvitationBuilder(object):
             cdate = submission_cdate,
             duedate = submission_duedate,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
-            humanVerificationRequired = self.venue.submission_human_verification,
+            humanVerificationRequired = self.get_human_verification(content),
             content = {
                 'submission_email_template': {
                     'value': f'''Your submission to {self.venue.short_name} has been {{{{action}}}}.
@@ -513,6 +518,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             readers = [venue_id],
             writers = [venue_id],
             cdate = cdate,
+            humanVerificationRequired = self.get_human_verification(content),
             edit = {
                 'signatures': [self.venue.get_program_chairs_id()],
                 'readers': [self.venue.get_program_chairs_id(), self.venue.get_authors_id('${2/note/number}')],
@@ -688,6 +694,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 '''
+
+        human_verification = self.get_human_verification(content)
+        if human_verification:
+            invitation.edit['invitation']['humanVerificationRequired'] = human_verification
 
         if review_duedate:
             invitation.edit['invitation']['duedate'] = review_duedate
@@ -1014,6 +1024,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if not review_rebuttal_stage.unlimited_rebuttals:
             invitation.edit['invitation']['maxReplies'] = 1
 
+        human_verification = self.get_human_verification(content)
+        if human_verification:
+            invitation.edit['invitation']['humanVerificationRequired'] = human_verification
+
         if review_rebuttal_duedate:
             invitation.edit['invitation']['duedate'] = review_rebuttal_duedate
 
@@ -1187,6 +1201,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 '''
+
+        human_verification = self.get_human_verification(content)
+        if human_verification:
+            invitation.edit['invitation']['humanVerificationRequired'] = human_verification
 
         if meta_review_duedate:
             invitation.edit['invitation']['duedate'] = meta_review_duedate
@@ -2288,6 +2306,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
         )
 
+        human_verification = self.get_human_verification(content)
+        if human_verification:
+            invitation.edit['invitation']['humanVerificationRequired'] = human_verification
+
         if decision_due_date:
             invitation.edit['invitation']['duedate'] = decision_due_date
 
@@ -3003,6 +3025,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
         )
 
+        human_verification = self.get_human_verification(content)
+        if human_verification:
+            invitation.edit['invitation']['humanVerificationRequired'] = human_verification
+
         if revision_duedate:
             invitation.edit['invitation']['duedate'] = revision_duedate
 
@@ -3287,6 +3313,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         if note_writers:
             invitation.edit['invitation']['edit']['note']['writers'] = note_writers
+
+        human_verification = self.get_human_verification(content)
+        if human_verification:
+            invitation.edit['invitation']['humanVerificationRequired'] = human_verification
 
         if custom_stage_duedate:
             invitation.edit['invitation']['duedate'] = custom_stage_duedate
@@ -3709,6 +3739,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 expdate = tools.datetime_millis(expdate) if expdate else None,
                 maxReplies = 1,
                 minReplies = 1,
+                humanVerificationRequired = self.get_human_verification(registration_content),
                 description = f'Configure the content of the {committee_name} registration form, set the date/time when the registration is available, when it is due, and when it is no longer available. Change the registration form title and instructions [here]({tools.get_site_url(self.client)}/forum?id={forum_note_id}).',
                 edit={
                     'signatures': { 'param': { 'regex': '~.*' }},
@@ -4168,6 +4199,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
     funcs['process'](client, edit, invitation)
 '''
 
+        human_verification = self.get_human_verification(content)
+        if human_verification:
+            invitation.edit['invitation']['humanVerificationRequired'] = human_verification
+
         if ethics_review_duedate:
             invitation.edit['invitation']['duedate'] = ethics_review_duedate
 
@@ -4593,6 +4628,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
+            humanVerificationRequired=tools.DEFAULT_HUMAN_VERIFICATION,
             process=self.get_process_content('process/group_matching_setup_process.py'),
             edit={
                 'signatures': [venue_id],

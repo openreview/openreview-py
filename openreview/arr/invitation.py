@@ -499,6 +499,10 @@ class InvitationBuilder(object):
             }
         )
 
+        human_verification = self.venue_invitation_builder.get_human_verification(content)
+        if human_verification:
+            invitation.edit['invitation']['humanVerificationRequired'] = human_verification
+
         if revision_duedate:
             invitation.edit['invitation']['duedate'] = revision_duedate
 

@@ -1749,6 +1749,10 @@ computation and memory.
                 )
             )
                     
+        ## Direct Upload form has a pdf field, so the default attachment rate limit must be set
+        direct_upload_invitation = john_client.get_invitation('openreview.net/Archive/-/Direct_Upload')
+        assert direct_upload_invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
+
         ## Add publications
         edit = john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
