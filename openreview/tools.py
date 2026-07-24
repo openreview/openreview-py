@@ -2146,23 +2146,30 @@ def should_match_invitation_source(client, invitation, submission, note=None, do
             if value != submission.content.get(key, {}).get('value'):
                 return False
 
-    if 'with_decision_accept' in source:
-        with_decision_accept = source.get('with_decision_accept')
-        print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
+    if 'with_decision_accept' in source or 'decision_options' in source:
         decision_invitation_id = f'{domain.id}/{domain.content["submission_name"]["value"]}{submission.number}/-/{domain.content.get("decision_name", {}).get("value", "Decision")}'
         replies = submission.details.get('replies', submission.details.get('directReplies'))
         if replies is None:
             decision_notes = client.get_notes(forum=submission.id, invitation=decision_invitation_id)
         else:
             decision_notes = [openreview.api.Note.from_json(note) for note in replies if note['invitations'][0] == decision_invitation_id]
-        
+
         if not decision_notes:
             return False
 
-        accept_options = domain.content.get('accept_decision_options', {}).get('value')
         decision_value = decision_notes[0].content[domain.content.get('decision_field_name', {}).get('value', 'decision')]['value']
-        if is_accept_decision(decision_value, accept_options) != with_decision_accept:
-            return False
+
+        if 'with_decision_accept' in source:
+            with_decision_accept = source.get('with_decision_accept')
+            print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
+            accept_options = domain.content.get('accept_decision_options', {}).get('value')
+            if is_accept_decision(decision_value, accept_options) != with_decision_accept:
+                return False
+
+        if 'decision_options' in source:
+            decision_options = source.get('decision_options')
+            if decision_value not in decision_options:
+                return False
 
     content_keys = invitation.edit.get('content', {}).keys()
     
