@@ -879,6 +879,327 @@ def test_registration_stages(client, openreview_client, helpers):
             else:
                 assert pattern != invitation_id
 
+def test_reviewers_conflicts(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/Reviewers/-/Conflict/Policy',
+        content={
+            'conflict_policy': { 'value': 'NeurIPS' },
+            'conflict_n_years': { 'value': 3 }
+        }
+    )
+
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Reviewers/-/Conflict-0-1', count=2)
+
+    # trigger the conflicts date process
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/Reviewers/-/Conflict/Dates',
+        content={
+            'activation_date': { 'value': now }
+        }
+    )
+
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Reviewers/-/Conflict-0-1', count=3)
+
+    # all the reviewers have an iclr.cc profile so they conflict with the papers authored by SAE ICLROne
+    assert len(openreview_client.get_grouped_edges(
+        invitation='ICLR.cc/2026/Conference/Reviewers/-/Conflict',
+        groupby='id'
+    )) == 6
+
+def test_bidding_stages(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    # open bidding for reviewers and area chairs
+    now = datetime.datetime.now()
+    new_cdate = openreview.tools.datetime_millis(now)
+    new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=5))
+
+    for role in ['Reviewers', 'Area_Chairs']:
+        pc_client.post_invitation_edit(
+            invitations=f'ICLR.cc/2026/Conference/{role}/-/Bid/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+
+    bid_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Bid')
+    assert bid_invitation.duedate == new_duedate
+    bid_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Bid')
+    assert bid_invitation.duedate == new_duedate
+
+    submissions = openreview_client.get_notes(content={'venueid': 'ICLR.cc/2026/Conference/Submission'}, sort='number:asc')
+    assert len(submissions) == 10
+
+    # a reviewer and an area chair place their bids
+    reviewer_client = openreview.api.OpenReviewClient(username='reviewer_one@iclr.cc', password=helpers.strong_password)
+    reviewer_client.post_edge(openreview.api.Edge(
+        invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid',
+        head=submissions[1].id,
+        tail='~Reviewer_ICLROne1',
+        label='Very High',
+        readers=['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Senior_Area_Chairs', 'ICLR.cc/2026/Conference/Area_Chairs', '~Reviewer_ICLROne1'],
+        writers=['ICLR.cc/2026/Conference', '~Reviewer_ICLROne1'],
+        signatures=['~Reviewer_ICLROne1']
+    ))
+
+    ac_client = openreview.api.OpenReviewClient(username='areachair_one@iclr.cc', password=helpers.strong_password)
+    ac_client.post_edge(openreview.api.Edge(
+        invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Bid',
+        head=submissions[1].id,
+        tail='~AC_ICLROne1',
+        label='Very High',
+        readers=['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Senior_Area_Chairs', '~AC_ICLROne1'],
+        writers=['ICLR.cc/2026/Conference', '~AC_ICLROne1'],
+        signatures=['~AC_ICLROne1']
+    ))
+
+    assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid', groupby='id')) == 1
+    assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Bid', groupby='id')) == 1
+
+def test_paper_committee_groups(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    # create the per paper committee groups before deploying the assignments
+    now = datetime.datetime.now()
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/Reviewers/-/Submission_Group/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+        }
+    )
+
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Reviewers/-/Submission_Group-0-1', count=2)
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/Area_Chairs/-/Submission_Group/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+        }
+    )
+
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Area_Chairs/-/Submission_Group-0-1', count=2)
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+        }
+    )
+
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=2)
+
+    submission_groups = openreview_client.get_all_groups(prefix='ICLR.cc/2026/Conference/Submission')
+    reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
+    assert len(reviewer_groups) == 10
+    area_chair_groups = [group for group in submission_groups if group.id.endswith('/Area_Chairs')]
+    assert len(area_chair_groups) == 10
+    senior_area_chair_groups = [group for group in submission_groups if group.id.endswith('/Senior_Area_Chairs')]
+    assert len(senior_area_chair_groups) == 10
+
+def test_ac_assignments(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    submissions = pc_client.get_notes(content={'venueid': 'ICLR.cc/2026/Conference/Submission'}, sort='number:asc')
+    assert len(submissions) == 10
+
+    config_note = openreview_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Assignment_Configuration',
+        readers=['ICLR.cc/2026/Conference'],
+        writers=['ICLR.cc/2026/Conference'],
+        signatures=['ICLR.cc/2026/Conference'],
+        note=openreview.api.Note(
+            content={
+                'title': { 'value': 'ac-matching-1'},
+                'user_demand': { 'value': '1'},
+                'max_papers': { 'value': '10'},
+                'min_papers': { 'value': '0'},
+                'alternates': { 'value': '2'},
+                'paper_invitation': { 'value': 'ICLR.cc/2026/Conference/-/Submission&content.venueid=ICLR.cc/2026/Conference/Submission'},
+                'match_group': { 'value': 'ICLR.cc/2026/Conference/Area_Chairs'},
+                'scores_specification': {
+                    'value': {
+                        'ICLR.cc/2026/Conference/Area_Chairs/-/Bid': {
+                            'weight': 1,
+                            'default': 0,
+                            'translate_map': {
+                                'Very High': 1.0,
+                                'High': 0.5,
+                                'Neutral': 0.0,
+                                'Low': -0.5,
+                                'Very Low': -1.0
+                            }
+                        }
+                    }
+                },
+                'aggregate_score_invitation': { 'value': 'ICLR.cc/2026/Conference/Area_Chairs/-/Aggregate_Score'},
+                'conflicts_invitation': { 'value': 'ICLR.cc/2026/Conference/Area_Chairs/-/Conflict'},
+                'solver': { 'value': 'FairFlow'},
+                'status': { 'value': 'Initialized'},
+            }
+        )
+    )
+    helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Assignment_Configuration')
+
+    # propose assignments avoiding the conflicted papers 1 and 10
+    area_chairs = ['~AC_ICLROne1', '~AC_ICLRTwo1']
+    for idx, submission in enumerate(submissions[1:9]):
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Proposed_Assignment',
+            head=submission.id,
+            tail=area_chairs[idx % 2],
+            signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+            weight=1,
+            label='ac-matching-1'
+        ))
+
+    # mark the configuration as complete and deploy the assignments
+    openreview_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/-/Edit',
+        signatures=['ICLR.cc/2026/Conference'],
+        note=openreview.api.Note(
+            id=config_note['note']['id'],
+            content={ 'status': { 'value': 'Complete' } }
+        )
+    )
+
+    openreview_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Area_Chairs_Assignment_Deployment/Match',
+        content={
+            'match_name': { 'value': 'ac-matching-1' }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Area_Chairs_Assignment_Deployment-0-1', count=2)
+
+    # activate the deployment
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
+    openreview_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Area_Chairs_Assignment_Deployment/Dates',
+        content={
+            'activation_date': { 'value': now }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Area_Chairs_Assignment_Deployment-0-1', count=3)
+
+    grouped_edges = openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Assignment', groupby='id')
+    assert len(grouped_edges) == 8
+
+    # the paper area chair and senior area chair groups are populated with the deployed assignments
+    group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Area_Chairs')
+    assert group.members == ['~AC_ICLROne1']
+    group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs')
+    assert group.members == ['~SAE_ICLROne1']
+
+def test_reviewer_assignments(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    submissions = pc_client.get_notes(content={'venueid': 'ICLR.cc/2026/Conference/Submission'}, sort='number:asc')
+
+    config_note = openreview_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/Reviewers/-/Assignment_Configuration',
+        readers=['ICLR.cc/2026/Conference'],
+        writers=['ICLR.cc/2026/Conference'],
+        signatures=['ICLR.cc/2026/Conference'],
+        note=openreview.api.Note(
+            content={
+                'title': { 'value': 'reviewer-matching-1'},
+                'user_demand': { 'value': '3'},
+                'max_papers': { 'value': '10'},
+                'min_papers': { 'value': '0'},
+                'alternates': { 'value': '2'},
+                'paper_invitation': { 'value': 'ICLR.cc/2026/Conference/-/Submission&content.venueid=ICLR.cc/2026/Conference/Submission'},
+                'match_group': { 'value': 'ICLR.cc/2026/Conference/Reviewers'},
+                'scores_specification': {
+                    'value': {
+                        'ICLR.cc/2026/Conference/Reviewers/-/Bid': {
+                            'weight': 1,
+                            'default': 0,
+                            'translate_map': {
+                                'Very High': 1.0,
+                                'High': 0.5,
+                                'Neutral': 0.0,
+                                'Low': -0.5,
+                                'Very Low': -1.0
+                            }
+                        }
+                    }
+                },
+                'aggregate_score_invitation': { 'value': 'ICLR.cc/2026/Conference/Reviewers/-/Aggregate_Score'},
+                'conflicts_invitation': { 'value': 'ICLR.cc/2026/Conference/Reviewers/-/Conflict'},
+                'solver': { 'value': 'FairFlow'},
+                'status': { 'value': 'Initialized'},
+            }
+        )
+    )
+    helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2026/Conference/Reviewers/-/Assignment_Configuration')
+
+    # assign the three reviewers to Submission2 and spread them over the other non-conflicted papers
+    reviewers = ['~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1']
+    for reviewer in reviewers:
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Proposed_Assignment',
+            head=submissions[1].id,
+            tail=reviewer,
+            signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+            weight=1,
+            label='reviewer-matching-1'
+        ))
+
+    for idx, submission in enumerate(submissions[2:9]):
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Proposed_Assignment',
+            head=submission.id,
+            tail=reviewers[idx % 3],
+            signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+            weight=1,
+            label='reviewer-matching-1'
+        ))
+
+    # mark the configuration as complete and deploy the assignments
+    openreview_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/-/Edit',
+        signatures=['ICLR.cc/2026/Conference'],
+        note=openreview.api.Note(
+            id=config_note['note']['id'],
+            content={ 'status': { 'value': 'Complete' } }
+        )
+    )
+
+    openreview_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Reviewers_Assignment_Deployment/Match',
+        content={
+            'match_name': { 'value': 'reviewer-matching-1' }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reviewers_Assignment_Deployment-0-1', count=2)
+
+    # activate the deployment
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
+    openreview_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Reviewers_Assignment_Deployment/Dates',
+        content={
+            'activation_date': { 'value': now }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reviewers_Assignment_Deployment-0-1', count=3)
+
+    grouped_edges = openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Reviewers/-/Assignment', groupby='id')
+    assert len(grouped_edges) == 10
+
+    # the paper reviewer groups are populated with the assigned reviewers
+    group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Reviewers')
+    assert set(group.members) == {'~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'}
+
 def test_review_stage(client, openreview_client, helpers):
 
     pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -920,40 +1241,9 @@ def test_review_stage(client, openreview_client, helpers):
     helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Desk_Rejection-0-1', count=2)
 
-    pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/Reviewers/-/Submission_Group/Dates',
-        content={
-            'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
-        }
-    )
-
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Reviewers/-/Submission_Group-0-1', count=2)
-
-    pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/Area_Chairs/-/Submission_Group/Dates',
-        content={
-            'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
-        }
-    )
-
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Area_Chairs/-/Submission_Group-0-1', count=2)
-
-    pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group/Dates',
-        content={
-            'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
-        }
-    )
-
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=2)
-
-    submission_groups = openreview_client.get_all_groups(prefix='ICLR.cc/2026/Conference/Submission')
-    reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
-    assert len(reviewer_groups) == 10
-    action_editor_groups = [group for group in submission_groups if group.id.endswith('/Area_Chairs')]
-    assert len(action_editor_groups) == 10
-    senior_action_editor_groups = [group for group in submission_groups if group.id.endswith('/Senior_Area_Chairs')]
-    assert len(senior_action_editor_groups) == 10
+    # the paper groups keep the members deployed from the assignments
+    assert set(openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Reviewers').members) == {'~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'}
+    assert openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Area_Chairs').members == ['~AC_ICLROne1']
 
     withdrawal_invitations = openreview_client.get_all_invitations(invitation='ICLR.cc/2026/Conference/-/Withdrawal')
     assert len(withdrawal_invitations) == 10
@@ -980,7 +1270,8 @@ def test_review_stage(client, openreview_client, helpers):
             }
         )
 
-    helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Submission_Change_Before_Reviewing-0-1', count=3)
+    ## count=4: the invitation ran at creation and once per assignment deployment
+    helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Submission_Change_Before_Reviewing-0-1', count=4)
 
     now = datetime.datetime.now()
     pc_client.post_invitation_edit(
@@ -990,7 +1281,7 @@ def test_review_stage(client, openreview_client, helpers):
             }
         )
 
-    helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Submission_Change_Before_Reviewing-0-1', count=4)
+    helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Submission_Change_Before_Reviewing-0-1', count=5)
 
     submissions = pc_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
     submission = submissions[0]
@@ -1059,16 +1350,14 @@ note={under review}
         'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Authors'
     ]
 
-    # assign reviewers to Submission1 and post an official review
-    openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Submission1/Reviewers', ['~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'])
-
+    # an assigned reviewer posts an official review
     reviewer_client = openreview.api.OpenReviewClient(username='reviewer_one@iclr.cc', password=helpers.strong_password)
 
-    anon_groups = reviewer_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICLROne1')
+    anon_groups = reviewer_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission2/Reviewer_', signatory='~Reviewer_ICLROne1')
     anon_group_id = anon_groups[0].id
 
     review_edit = reviewer_client.post_note_edit(
-        invitation='ICLR.cc/2026/Conference/Submission1/-/Official_Review',
+        invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review',
         signatures=[anon_group_id],
         note=openreview.api.Note(
             content={
@@ -1082,12 +1371,12 @@ note={under review}
 
     helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
-    reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission1/-/Official_Review')
+    reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
     assert len(reviews) == 1
     assert reviews[0].readers == [
         'ICLR.cc/2026/Conference/Program_Chairs',
-        'ICLR.cc/2026/Conference/Submission1/Senior_Area_Chairs',
-        'ICLR.cc/2026/Conference/Submission1/Area_Chairs',
+        'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+        'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
         anon_group_id
     ]
 
@@ -1349,11 +1638,60 @@ def test_desk_rejection_and_custom_stage(client, openreview_client, helpers, tes
     assert len(invitations) == 1
     assert invitations[0].id == 'ICLR.cc/2026/Conference/Submission10/-/Desk_Rejection_Challenge'
 
+    # the custom stage can be configured from the timeline with its edit invitations
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Desk_Rejection_Challenge/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Desk_Rejection_Challenge/Form_Fields')
+
+    # add a field to the challenge form
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Desk_Rejection_Challenge/Form_Fields',
+        content={
+            'content': {
+                'value': {
+                    'supporting_evidence': {
+                        'order': 2,
+                        'description': 'Optionally add links or references supporting your challenge.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Desk_Rejection_Challenge-0-1', count=2)
+
+    invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission10/-/Desk_Rejection_Challenge')
+    assert 'desk_reject_challenge' in invitation.edit['note']['content']
+    assert 'supporting_evidence' in invitation.edit['note']['content']
+
+    # extend the challenge deadline
+    new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=5))
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Desk_Rejection_Challenge/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+            'due_date': { 'value': new_duedate },
+            'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=6)) }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Desk_Rejection_Challenge-0-1', count=3)
+
+    invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission10/-/Desk_Rejection_Challenge')
+    assert invitation.duedate == new_duedate
+
     edit = test_client.post_note_edit(invitation='ICLR.cc/2026/Conference/Submission10/-/Desk_Rejection_Challenge',
                                 signatures=['ICLR.cc/2026/Conference/Submission10/Authors'],
                                 note=openreview.api.Note(
                                     content={
                                         'desk_reject_challenge': { 'value': 'We missed our checklist, please let us upload it during the rebuttal stage.' },
+                                        'supporting_evidence': { 'value': 'https://iclr.cc/checklist' },
                                     }
                                 ))
     helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
@@ -1409,7 +1747,7 @@ def test_review_release_stage(client, openreview_client, helpers):
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review_Release-0-1', count=3)
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=3)
 
-    reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission1/-/Official_Review')
+    reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
     assert len(reviews) == 1
     assert reviews[0].readers == ['everyone']
 
@@ -1441,10 +1779,10 @@ def test_author_reviews_notification(client, openreview_client, helpers):
     )
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Reviews_Notification-0-1', count=3)
 
-    # only Submission1 has a review, so only its authors are notified
+    # only Submission2 has a review, so only its authors are notified
     messages = openreview_client.get_messages(subject='[ICLR 2026] The reviews for your submission.*')
     assert messages
-    assert all('Paper title 1 license revision' in message['content']['subject'] for message in messages)
+    assert all('Paper title 2' in message['content']['subject'] for message in messages)
     recipients = [message['content']['to'] for message in messages]
     assert 'test@mail.com' in recipients
 
@@ -1726,6 +2064,98 @@ def test_metareview_stage(client, openreview_client, helpers):
         'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Reviewers',
         'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Authors'
     ]
+
+    # the assigned area chair posts a meta review using the custom form
+    ac_client = openreview.api.OpenReviewClient(username='areachair_one@iclr.cc', password=helpers.strong_password)
+
+    anon_groups = ac_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission2/Area_Chair_', signatory='~AC_ICLROne1')
+    anon_group_id = anon_groups[0].id
+
+    meta_review_edit = ac_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/Submission2/-/Meta_Review',
+        signatures=[anon_group_id],
+        note=openreview.api.Note(
+            content={
+                'final_metareview': { 'value': 'This is a good paper, accept as poster.' },
+                'final_recommendation': { 'value': 'Accept (Poster)' },
+                'final_confidence': { 'value': 5 }
+            }
+        )
+    )
+    helpers.await_queue_edit(openreview_client, edit_id=meta_review_edit['id'])
+
+    meta_reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Meta_Review')
+    assert len(meta_reviews) == 1
+    assert meta_reviews[0].content['final_recommendation']['value'] == 'Accept (Poster)'
+
+def test_metareview_release_stage(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    # release the meta reviews to the committee and the authors
+    now = datetime.datetime.now()
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Meta_Review_Release/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now) }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Meta_Review_Release-0-1', count=2)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Meta_Review-0-1', count=4)
+
+    meta_reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Meta_Review')
+    assert len(meta_reviews) == 1
+    assert meta_reviews[0].readers == [
+        'ICLR.cc/2026/Conference/Program_Chairs',
+        'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+        'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+        'ICLR.cc/2026/Conference/Submission2/Reviewers',
+        'ICLR.cc/2026/Conference/Submission2/Authors'
+    ]
+
+def test_metareview_sac_revision_stage(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    # create the per paper SAC revision invitations
+    now = datetime.datetime.now()
+    new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=4))
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Meta_Review_SAC_Revision/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+            'due_date': { 'value': new_duedate },
+            'expiration_date': { 'value': new_duedate }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Meta_Review_SAC_Revision-0-1', count=4)
+
+    invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission2/-/Meta_Review_SAC_Revision')
+    assert all(field in invitation.edit['note']['content'] for field in ['final_metareview', 'final_recommendation', 'final_confidence', 'private_comment_to_PCs'])
+
+    meta_review = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Meta_Review')[0]
+
+    # the senior area chair revises the meta review of their assigned area chair
+    sac_client = openreview.api.OpenReviewClient(username='senioractioneditor_one@iclr.cc', password=helpers.strong_password)
+    revision_edit = sac_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/Submission2/-/Meta_Review_SAC_Revision',
+        signatures=['ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs'],
+        note=openreview.api.Note(
+            id=meta_review.id,
+            content={
+                'final_metareview': { 'value': 'Good paper, accept as poster. Verified by the SAC.' },
+                'final_recommendation': { 'value': 'Accept (Poster)' },
+                'final_confidence': { 'value': 4 },
+                'private_comment_to_PCs': { 'value': 'The meta review is consistent with the reviews.' }
+            }
+        )
+    )
+    helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
+
+    meta_review = openreview_client.get_note(meta_review.id)
+    assert meta_review.content['final_metareview']['value'] == 'Good paper, accept as poster. Verified by the SAC.'
+    assert meta_review.content['final_confidence']['value'] == 4
+    assert meta_review.content['private_comment_to_PCs']['value'] == 'The meta review is consistent with the reviews.'
 
 def test_decision_stage(client, openreview_client, helpers):
 
