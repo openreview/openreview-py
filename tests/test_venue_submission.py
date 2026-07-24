@@ -83,7 +83,9 @@ class TestVenueSubmission():
 
         venue.custom_stage = openreview.stages.CustomStage(
             name='Camera_Ready_Verification',
-            source=openreview.stages.CustomStage.Source.ACCEPTED_SUBMISSIONS,
+            source={
+                'venueid': ['TestVenue.cc/Submission', 'TestVenue.cc', 'TestVenue.cc/Rejected_Submission'], 
+                'decision_options': ['Accept (Oral)'] },
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
             start_date=now + datetime.timedelta(minutes = 10),
             due_date=now + datetime.timedelta(minutes = 40),
