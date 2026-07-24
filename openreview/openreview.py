@@ -2257,9 +2257,23 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_expertise_results(self, job_id, baseurl=None, format='json'):
+    def get_expertise_results(self, job_id, baseurl=None, format='json', full=False, sparse=False, output_filename=None):
 
         base_url = baseurl if baseurl else self.baseurl
+        if full or sparse:
+            if output_filename is None:
+                output_filename = f"{job_id}_scores.pt" if full else f"{job_id}_scores_sparse.csv"
+            params = {'jobId': job_id}
+            if sparse:
+                params['sparse'] = 'true'
+            response = self.session.get(base_url + '/expertise/results/all', params=params, headers=self.headers, stream=True)
+            response = self.__handle_response(response)
+            with response:
+                with open(output_filename, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+            return output_filename
+
         if format == 'csv':
             response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
             response = self.__handle_response(response)
