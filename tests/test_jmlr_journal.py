@@ -258,17 +258,15 @@ Please note that responding to this email will direct your reply to celeste@jmlr
         openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')
 
         # error email is sent to the reviewer because they are already an official reviewer
-        error_messages = openreview_client.get_messages(to = 'outside_reviewer@gmail.com', subject = f'[JMLR] Error accepting invitation for paper number {note.number}')
+        error_messages = openreview_client.get_messages(to = 'outside_reviewer@gmail.com', subject = f'[JMLR] Invitation to review paper number {note.number} cannot be accepted')
         assert len(error_messages) == 1
         assert error_messages[0]['content']['text'] == f'''Hi Outside Reviewer,
 
-There was an error accepting the invitation to review the paper number: {note.number}, title: Paper title, because you have been added as an official reviewer for JMLR.
+The invitation to review the paper number: {note.number}, title: "Paper title" cannot be accepted. Only external reviewers can be invited to review papers, and you have been added as an official reviewer for JMLR.
 
-If you would like to be assigned to this submission, you have not reached your reviewing quota and have no pending reviews, please contact the paper's action editor and ask them to directly assign you.
-If you have reached your reviewing quota, you can use the "Volunteer to Review" button on the submission's forum.
+Please contact the person who invited you if you have any questions.
 
 Thank you,
-
 OpenReview Team
 
 Please note that responding to this email will direct your reply to editor@jmlr.org.

@@ -2155,16 +2155,14 @@ OpenReview Team'''
                     print('User is already a member of the reviewers group, ignoring edge.')
 
                     # send email to reviewer
-                    error_subject = f'[{journal.short_name}] Error accepting invitation for paper number {submission.number}'
+                    error_subject = f'[{journal.short_name}] Invitation to review paper number {submission.number} cannot be accepted'
                     error_message = f'''Hi {{{{fullname}}}},
 
-There was an error accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}, because you have been added as an official reviewer for {journal.venue_id}.
+The invitation to review the paper number: {submission.number}, title: "{submission.content['title']['value']}" cannot be accepted. Only external reviewers can be invited to review papers, and you have been added as an official reviewer for {journal.venue_id}.
 
-If you would like to be assigned to this submission, you have not reached your reviewing quota and have no pending reviews, please contact the paper's action editor and ask them to directly assign you.
-If you have reached your reviewing quota, you can use the "Volunteer to Review" button on the submission's forum.
+Please contact the person who invited you if you have any questions.
 
 Thank you,
-
 OpenReview Team'''
                     client.post_message(error_subject, [user_profile.id], error_message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
                     return
