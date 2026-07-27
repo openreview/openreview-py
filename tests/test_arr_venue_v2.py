@@ -2485,7 +2485,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note.content['reassignment_request_area_chair']['value'] = 'This is not a resubmission'
                 del note.content['justification_for_not_keeping_action_editor_or_reviewers']
 
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+            openreview_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
