@@ -2167,7 +2167,8 @@ OpenReview Team'''
                     client.post_message(error_subject, [user_profile.id], error_message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
                     return
 
-                return
+                else:
+                    raise openreview.OpenReviewException(error_str)
 
             short_phrase = journal.short_name
             reviewer_name = 'Reviewer'  # add this to the invitation?
