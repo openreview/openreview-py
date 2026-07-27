@@ -3479,7 +3479,7 @@ class OpenReviewClient(object):
         print('get expertise metadata', response_json)
         return response_json
 
-    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json', full=False, sparse=False, output_filename=None):
+    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json', full=False, output_filename=None):
 
         print('get expertise results', baseurl, job_id)
         base_url = baseurl if baseurl else self.baseurl
@@ -3487,11 +3487,6 @@ class OpenReviewClient(object):
 
         if base_url.startswith('http://localhost'):
             print('return expertise results localhost, return []')
-            if full or sparse:
-                if output_filename is None:
-                    output_filename = f"{job_id}_scores.pt" if full else f"{job_id}_scores_sparse.csv"
-                open(output_filename, 'wb').close()
-                return output_filename
             return iter([]) if format == 'csv' else { 'results': [] }
 
         if wait_for_complete:
@@ -3507,20 +3502,17 @@ class OpenReviewClient(object):
                 call_count += 1
 
             if 'Completed' == status_text:
-                return self.get_expertise_results(job_id, baseurl=base_url, format=format, full=full, sparse=sparse, output_filename=output_filename)
+                return self.get_expertise_results(job_id, baseurl=base_url, format=format, full=full, output_filename=output_filename)
             if 'Error' in status_text:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
-            if full or sparse:
+            if full:
                 if output_filename is None:
-                    output_filename = f"{job_id}_scores.pt" if full else f"{job_id}_scores_sparse.csv"
-                params = {'jobId': job_id}
-                if sparse:
-                    params['sparse'] = 'true'
-                response = self.session.get(base_url + '/expertise/results/all', params=params, headers=self.headers, stream=True)
+                    output_filename = f"{job_id}_scores.pt"
+                response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
                 response = self.__handle_response(response)
                 with response:
                     with open(output_filename, 'wb') as f:
