@@ -2150,7 +2150,6 @@ def test_metareview_sac_revision_stage(client, openreview_client, helpers):
             }
         )
     )
-    helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
 
     meta_review = openreview_client.get_note(meta_review.id)
     assert meta_review.content['final_metareview']['value'] == 'Good paper, accept as poster. Verified by the SAC.'
