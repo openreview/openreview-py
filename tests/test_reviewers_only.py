@@ -2530,11 +2530,10 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
         assert '_bibtex' not in submissions[0].content
 
-        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release')
-        assert inv and not inv.content
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Which_Submissions')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Form_Fields')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Which_Submissions')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Form_Fields')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Which_Submissions')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Form_Fields')
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release')
         assert inv and inv.content 
         assert 'reveal_author_identities' not in inv.content
@@ -2559,45 +2558,46 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Readers')
 
+        # select the submission readers
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Readers',
+            content={
+                'readers': {
+                    'value': ['everyone']
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=2)
+
+        # release the author identities to the submission readers by deleting the
+        # authors readers through the content schema
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Form_Fields',
+            content={
+                'content': {
+                    'value': {
+                        'authors': {
+                            'readers': { 'const': { 'delete': True } }
+                        }
+                    }
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=3)
+
+        release_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release')
+        assert release_invitation.edit['note']['content']['authors']['readers'] == { 'const': { 'delete': True } }
+
+        # trigger the accepted submission release
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
-
-        # trigger submission release without selecting whether to release author names or not
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=2)
-
-        # trigger submission release without selecting whether to release author names or not
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Dates',
-            content={
-                'activation_date': { 'value': new_cdate }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=2)
-
-        # assert status comment posted to request form
-        venue = openreview_client.get_group('ABCD.cc/2025/Conference')
-        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 8
-        assert notes[-1].content['title']['value'] == 'Rejected Submission Release Failed'
-        assert notes[-2].content['title']['value'] == 'Accepted Submission Release Failed'
-
-        # select reveal_authors value to re-run submission release
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Readers',
-            content={
-                'readers': {
-                    'value': ['everyone']
-                },
-                'reveal_author_identities': { 'value': True }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -2625,12 +2625,33 @@ url={https://openreview.net/forum?id='''+submissions[0].id+'''}
             content={
                 'readers': {
                     'value': ['everyone']
-                },
-                'reveal_author_identities': { 'value': True }
+                }
             }
         )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=2)
 
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Form_Fields',
+            content={
+                'content': {
+                    'value': {
+                        'authors': {
+                            'readers': { 'const': { 'delete': True } }
+                        }
+                    }
+                }
+            }
+        )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=3)
+
+        # trigger the rejected submission release
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -2648,7 +2669,8 @@ year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[1].id+'''}
 }'''
 
-        # re-run to hide rejected submissions and hide author names
+        # re-run to hide rejected submissions and hide author names: once the activation date
+        # has passed, every invitation edit re-runs the release with the updated schema
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Readers',
             content={
@@ -2658,12 +2680,34 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
                         'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Program_Committee',
                         'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Authors'
                     ]
-                },
-                'reveal_author_identities': { 'value': False }
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=5)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Form_Fields',
+            content={
+                'content': {
+                    'value': {
+                        'authors': {
+                            'readers': [
+                                'ABCD.cc/2025/Conference',
+                                'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        }
+                    }
+                }
             }
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=4)
+        release_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release')
+        assert release_invitation.edit['note']['content']['authors']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+        ]
+
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=6)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -2712,35 +2756,14 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
         # PDF is initially public after release
         assert 'readers' not in submissions[0].content['pdf']
 
-        # Hide PDF: edit Submission_Release content schema to restrict pdf readers to PCs and authors
+        # Hide PDF: edit Accepted_Submission_Release content schema to restrict pdf readers to PCs
+        # and authors. Fields not included in the edit keep their current schema. The edit
+        # re-runs the release so the updated schema is applied to the released notes.
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission_Release/Form_Fields',
+            invitations='ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Form_Fields',
             content={
                 'content': {
                     'value': {
-                        'authors': {
-                            'readers': { 'param': { 'regex': '.*', 'deletable': True } }
-                        },
-                        'authorids': {
-                            'readers': { 'param': { 'regex': '.*', 'deletable': True } }
-                        },
-                        'venue': {
-                            'value': { 'param': { 'type': 'string', 'regex': '.*' } }
-                        },
-                        'venueid': {
-                            'value': { 'param': { 'type': 'string', 'regex': '.*' } }
-                        },
-                        '_bibtex': {
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 200000,
-                                    'input': 'textarea',
-                                    'optional': True,
-                                    'deletable': True
-                                }
-                            }
-                        },
                         'pdf': {
                             'readers': [
                                 'ABCD.cc/2025/Conference',
@@ -2751,17 +2774,7 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
                 }
             }
         )
-
-        # Re-trigger Submission_Release so the updated schema is applied to the released notes
-        now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission_Release/Dates',
-            content={
-                'activation_date': { 'value': new_cdate }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=5)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert submissions[0].content['pdf']['readers'] == [
@@ -2769,55 +2782,61 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
             f'ABCD.cc/2025/Conference/Submission{submissions[0].number}/Authors'
         ]
 
-        # Unhide PDF: edit Submission_Release content schema to delete the pdf readers field from the note
+        # Unhide PDF: use the escaped delete literal so the invitation stores { const: { delete: True } }
+        # in the pdf readers schema and the release note edits delete the pdf readers from the notes
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission_Release/Form_Fields',
+            invitations='ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Form_Fields',
             content={
                 'content': {
                     'value': {
-                        'authors': {
-                            'readers': { 'param': { 'regex': '.*', 'deletable': True } }
-                        },
-                        'authorids': {
-                            'readers': { 'param': { 'regex': '.*', 'deletable': True } }
-                        },
-                        'venue': {
-                            'value': { 'param': { 'type': 'string', 'regex': '.*' } }
-                        },
-                        'venueid': {
-                            'value': { 'param': { 'type': 'string', 'regex': '.*' } }
-                        },
-                        '_bibtex': {
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 200000,
-                                    'input': 'textarea',
-                                    'optional': True,
-                                    'deletable': True
-                                }
-                            }
-                        },
                         'pdf': {
-                            'readers': { 'param': { 'const': { 'delete': True } } }
+                            'readers': { 'const': { 'delete': True } }
                         }
                     }
                 }
             }
         )
 
-        now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        release_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release')
+        assert release_invitation.edit['note']['content']['pdf']['readers'] == { 'const': { 'delete': True } }
+
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=6)
+
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert 'readers' not in submissions[0].content['pdf']
+
+        # Release the author identities of rejected submissions by deleting the authors
+        # readers through the content schema. The note readers are unchanged: the fields become
+        # visible to whoever can read the note, without knowing who the note readers are.
+        assert submissions[1].content['authors']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission2/Authors'
+        ]
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission_Release/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Form_Fields',
             content={
-                'activation_date': { 'value': new_cdate }
+                'content': {
+                    'value': {
+                        'authors': {
+                            'readers': { 'const': { 'delete': True } }
+                        }
+                    }
+                }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=5)
 
-        release_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release')
-        assert release_invitation.edit['note']['content']['pdf'] == { 'delete': True }
+        release_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release')
+        assert release_invitation.edit['note']['content']['authors']['readers'] == { 'const': { 'delete': True } }
+
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=7)
+
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert submissions[1].readers == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission2/Program_Committee',
+            'ABCD.cc/2025/Conference/Submission2/Authors'
+        ]
+        assert 'readers' not in submissions[1].content['authors']
 
     def test_reviewer_stats_computation(self, openreview_client, helpers):
 

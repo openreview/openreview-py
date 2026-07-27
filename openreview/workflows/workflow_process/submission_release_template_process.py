@@ -28,15 +28,5 @@ def process(client, edit, invitation):
     edit_invitations_builder.set_edit_submission_release_source_invitation(invitation_id)
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
     edit_invitations_builder.set_edit_content_invitation(invitation_id)
-    content = {
-        'reveal_author_identities': {
-            'description': 'Select whether you want to reveal the author identities to the readers of the submissions. If you select False, author identities will remain visible only to the program chairs and the paper authors.',
-            'value': {
-                'param': {
-                    'type': 'boolean'
-                }
-            }
-        }
-    }
-    edit_invitations_builder.set_edit_submission_readers_invitation(invitation_id, True, content)
+    edit_invitations_builder.set_edit_submission_readers_invitation(invitation_id, True)
     # edit_invitations_builder.set_edit_reveal_authors(invitation_id)
