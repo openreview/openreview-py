@@ -7656,7 +7656,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         for submission in august_submissions:
-            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission',
+            openreview_client.post_note_edit(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
                     content = {
