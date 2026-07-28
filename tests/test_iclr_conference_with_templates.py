@@ -1751,6 +1751,168 @@ def test_review_release_stage(client, openreview_client, helpers):
     assert len(reviews) == 1
     assert reviews[0].readers == ['everyone']
 
+def test_public_comment_stage(client, openreview_client, helpers, test_client):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+    test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+    # the reviews are public, allow the participants to make their comments public too.
+    # "everyone" is not one of the reader options of the comment stage, add it to the
+    # options of the Writers_and_Readers invitation. TODO: enable this automatically.
+    writers_and_readers_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Comment/Writers_and_Readers')
+    reader_options = writers_and_readers_inv.edit['content']['readers']['value']['param']['items']
+    assert { 'value': 'everyone', 'optional': True } not in [option['value'] for option in reader_options]
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Edit',
+        signatures=['ICLR.cc/2026/Conference'],
+        invitation=openreview.api.Invitation(
+            id='ICLR.cc/2026/Conference/-/Official_Comment/Writers_and_Readers',
+            signatures=['ICLR.cc/2026/Conference'],
+            edit={
+                'content': {
+                    'readers': {
+                        'value': {
+                            'param': {
+                                'type': 'object[]',
+                                'input': 'select',
+                                'items': [{ 'value': { 'value': 'everyone', 'optional': True }, 'optional': True, 'description': 'Public' }] + reader_options
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    )
+
+    writers_and_readers_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Comment/Writers_and_Readers')
+    assert writers_and_readers_inv.edit['content']['readers']['value']['param']['items'][0]['value'] == { 'value': 'everyone', 'optional': True }
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Official_Comment/Writers_and_Readers',
+        content={
+            'writers': {
+                'value': [
+                    'ICLR.cc/2026/Conference/Program_Chairs',
+                    'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+                    'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs',
+                    'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Reviewers',
+                    'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Authors'
+                ]
+            },
+            'readers': {
+                'value': [
+                    { 'value': 'everyone', 'optional': True },
+                    { 'value': 'ICLR.cc/2026/Conference/Program_Chairs', 'optional': False },
+                    { 'value': 'ICLR.cc/2026/Conference/Submission${8/content/noteNumber/value}/Senior_Area_Chairs', 'optional': False },
+                    { 'value': 'ICLR.cc/2026/Conference/Submission${8/content/noteNumber/value}/Area_Chairs', 'optional': True },
+                    { 'value': 'ICLR.cc/2026/Conference/Submission${8/content/noteNumber/value}/Reviewers', 'optional': True },
+                    { 'value': 'ICLR.cc/2026/Conference/Submission${8/content/noteNumber/value}/Authors', 'optional': True }
+                ]
+            }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Comment-0-1', count=3)
+
+    invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission2/-/Official_Comment')
+    assert invitation.edit['note']['readers']['param']['items'][0] == { 'value': 'everyone', 'optional': True }
+    assert invitation.invitees == [
+        'ICLR.cc/2026/Conference/Program_Chairs',
+        'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+        'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+        'ICLR.cc/2026/Conference/Submission2/Reviewers',
+        'ICLR.cc/2026/Conference/Submission2/Authors'
+    ]
+
+    submission = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')[1]
+
+    # the authors post a public comment
+    comment_edit = test_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Comment',
+        signatures=['ICLR.cc/2026/Conference/Submission2/Authors'],
+        note=openreview.api.Note(
+            replyto=submission.id,
+            content={
+                'comment': { 'value': 'We thank the reviewers for their feedback.' }
+            },
+            readers=['everyone']
+        )
+    )
+    helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+    # the comment is visible to the public
+    guest_client = openreview.api.OpenReviewClient()
+    comments = guest_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Comment')
+    assert len(comments) == 1
+    assert comments[0].readers == ['everyone']
+    assert comments[0].signatures == ['ICLR.cc/2026/Conference/Submission2/Authors']
+    assert comments[0].content['comment']['value'] == 'We thank the reviewers for their feedback.'
+
+    # create the public comment invitation so anybody can comment on the submissions.
+    # TODO: enable this automatically.
+    venue = openreview.venue.helpers.get_venue(pc_client, 'ICLR.cc/2026/Conference', support_user='openreview.net/Support')
+
+    now = datetime.datetime.now()
+    venue.comment_stage = openreview.stages.CommentStage(
+        allow_public_comments=True,
+        start_date=now,
+        end_date=now + datetime.timedelta(days=5)
+    )
+    venue.invitation_builder.set_public_comment_invitation()
+
+    helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Public_Comment-0-1', count=1)
+
+    invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Public_Comment')
+    assert len(invitations) == 10
+
+    invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission2/-/Public_Comment')
+    assert invitation.invitees == ['everyone']
+    # the venue participants use the official comment invitation instead
+    assert invitation.noninvitees == [
+        'ICLR.cc/2026/Conference/Submission2/Authors',
+        'ICLR.cc/2026/Conference/Submission2/Reviewers',
+        'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+        'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+        'ICLR.cc/2026/Conference/Program_Chairs'
+    ]
+    assert invitation.edit['note']['readers'] == ['everyone']
+
+    # the public comment dates can be edited from the timeline
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Public_Comment/Dates')
+
+    new_expdate = openreview.tools.datetime_millis(now + datetime.timedelta(days=10))
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Public_Comment/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+            'expiration_date': { 'value': new_expdate }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Public_Comment-0-1', count=2)
+
+    invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission2/-/Public_Comment')
+    assert invitation.expdate == new_expdate
+
+    # a user that is not part of the venue posts a public comment
+    helpers.create_user('reader@mail.com', 'Public', 'Reader')
+    public_reader_client = openreview.api.OpenReviewClient(username='reader@mail.com', password=helpers.strong_password)
+    public_comment_edit = public_reader_client.post_note_edit(
+        invitation='ICLR.cc/2026/Conference/Submission2/-/Public_Comment',
+        signatures=['~Public_Reader1'],
+        note=openreview.api.Note(
+            replyto=submission.id,
+            content={
+                'comment': { 'value': 'Have the authors considered a larger benchmark?' }
+            }
+        )
+    )
+    helpers.await_queue_edit(openreview_client, edit_id=public_comment_edit['id'])
+
+    public_comments = guest_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Public_Comment')
+    assert len(public_comments) == 1
+    assert public_comments[0].readers == ['everyone']
+    assert public_comments[0].signatures == ['~Public_Reader1']
+
 def test_author_reviews_notification(client, openreview_client, helpers):
 
     pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)

@@ -1891,7 +1891,15 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if comment_expdate:
             invitation.edit['invitation']['expdate'] = comment_expdate
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'Set the date/time when the public comment form is available to the public and when it is no longer available.'
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_dates_invitation(public_comment_invitation, include_due_date=False)
+
         return invitation
 
     def set_chat_invitation(self):
