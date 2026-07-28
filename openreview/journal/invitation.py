@@ -4641,7 +4641,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'readers': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
-            'humanVerificationRequired': openreview.tools.DEFAULT_HUMAN_VERIFICATION,
             'edit': {
                 'ddate': {
                     'param': {
@@ -5761,7 +5760,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
-            'humanVerificationRequired': openreview.tools.DEFAULT_HUMAN_VERIFICATION,
             'duedate': '${2/content/duedate/value}',
             'dateprocesses': [self.author_reminder_process],
             'edit': {
@@ -6065,7 +6063,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
-            'humanVerificationRequired': openreview.tools.DEFAULT_HUMAN_VERIFICATION,
             'edit': {
                 'signatures': [self.journal.get_editors_in_chief_id()],
                 'readers': self.journal.get_under_review_submission_readers('${4/content/noteNumber/value}'),

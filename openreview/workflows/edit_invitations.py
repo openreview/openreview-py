@@ -1126,7 +1126,6 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            humanVerificationRequired = tools.DEFAULT_HUMAN_VERIFICATION,
             edit = {
                 'content': {
                     'upload_affinity_scores': {
@@ -1240,7 +1239,6 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            humanVerificationRequired = tools.DEFAULT_HUMAN_VERIFICATION,
             edit = {
                 'content': {
                     'decision_CSV': {

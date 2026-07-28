@@ -953,6 +953,7 @@ return {
                 writers=[self.dblp_group_id],
                 signatures=[self.dblp_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 post_processes=[
                     {
                         'script': self.get_process_content('process/dblp_record_process.js'),
@@ -1129,6 +1130,7 @@ return {
                 writers=[self.arxiv_group_id],
                 signatures=[self.arxiv_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 process=self.get_process_content('process/arxiv_record_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -1312,6 +1314,7 @@ return {
                 writers=[self.orcid_group_id],
                 signatures=[self.orcid_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 post_processes=[
                     {
                         'script': self.get_process_content('process/orcid_record_process.js'),
@@ -2014,7 +2017,6 @@ return {
                 writers=[anonymous_group_id],
                 signatures=[anonymous_group_id],
                 invitees=['~'],
-                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 edit={
                     'readers': [ anonymous_group_id, author_anonymous_group_id],
                     'signatures': { 
@@ -2454,7 +2456,6 @@ return {
                 writers=[news_article_group_id],
                 signatures=[news_article_group_id],
                 invitees=[news_article_group_id],
-                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 edit={
                     'readers': [news_article_group_id, '${2/signatures}'],
                     'signatures': { 
