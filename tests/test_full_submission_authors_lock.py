@@ -73,6 +73,27 @@ class TestFullSubmissionAuthorsLock():
         assert openreview_client.get_invitation('flock.cc/2026/Conference/-/Full_Submission')
         assert openreview_client.get_invitation('flock.cc/2026/Conference/-/Full_Submission/Form_Fields')
 
+        # add minValidstate to the authorids field of the submission invitation
+        submission_inv = pc_client.get_invitation('flock.cc/2026/Conference/-/Submission')
+        content = submission_inv.edit['note']['content']
+
+        # Replace the authors field schema with a $ reference to the current submission's authors.
+        content['authors']['value']['param']['minValidState'] = 'Active'
+
+        pc_client.post_invitation_edit(
+            invitations='flock.cc/2026/Conference/-/Submission/Form_Fields',
+            content={
+                'content': {
+                    'value': content
+                },
+                'license': {
+                    'value': [
+                        {'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}
+                    ]
+                }
+            }
+        )
+
     def test_post_abstract_submission(self, openreview_client, test_client, helpers):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
@@ -116,6 +137,40 @@ class TestFullSubmissionAuthorsLock():
         submissions = openreview_client.get_notes(invitation='flock.cc/2026/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 1
         assert submissions[0].authorids == ['~SomeFirstName_User1', '~AuthorOne_FLOCK1', '~AuthorTwo_FLOCK1']
+
+        helpers.create_user('rejected@flock.cc', 'Rejected', 'Author')
+        openreview_client.moderate_profile('~Rejected_Author1', 'reject')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'username ~Rejected_Author1 has "Rejected" state which does not meet the minimum required state of Active'):
+            ## Post submission 3
+            edit = test_client.post_note_edit(
+                invitation='flock.cc/2026/Conference/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                    license='CC BY 4.0',
+                    content={
+                        'title': { 'value': 'Rejected Author Submission' },
+                        'abstract': { 'value': 'Abstract for the rejected-author test.' },
+                        'authors': {
+                            'value': [
+                                {
+                                    'fullname': 'SomeFirstName User',
+                                    'username': '~SomeFirstName_User1',
+                                    'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                                },
+                                {
+                                    'fullname': 'Rejected Author',
+                                    'username': '~Rejected_Author1',
+                                    'institutions': [{ 'domain': 'flock.cc', 'country': 'US' }]
+                                },
+                            ]
+                        },
+                        'keywords': { 'value': ['locking', 'authors'] },
+                        'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                        'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                    }
+                )
+            )
 
     def test_close_abstract_deadline(self, openreview_client, helpers):
         '''Close the abstract deadline so the per-paper Full_Submission invitations
