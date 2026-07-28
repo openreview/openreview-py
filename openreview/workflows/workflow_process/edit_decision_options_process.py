@@ -23,7 +23,7 @@ def process(client, edit, invitation):
     # delete the old decision notification invitations and create new ones with the updated decision options
     invitation_edits = client.get_invitation_edits(invitation_id=decision_invitation_id, invitation=invitation.id, sort='tcdate:asc')
 
-    now = openreview.tools.datetime_millis(datetime.datetime.now())
+    now = datetime.datetime.now()
 
     if len(invitation_edits) > 1:
         # delete the previous edit's decision notification invitations
@@ -43,6 +43,8 @@ def process(client, edit, invitation):
     removed_decision_options = previous_set - new_set
     added_decision_options = new_set - previous_set
 
+    cdate = now + datetime.timedelta(weeks=1)
+
     # delete the decision notification invitations for the removed decision options
     for decision_option in removed_decision_options:
         formatted_decision_option = decision_option.replace(' ', '_').replace('(', '').replace(')', '')
@@ -52,7 +54,6 @@ def process(client, edit, invitation):
         for inv in invitations_to_delete:
             print(f'Deleting invitation: {inv.id}')
             client.delete_invitation(inv.id)
-        cdate = inv.tcdate
 
     # post new decision notification invitations for the added decision options
     request_form_inv = domain.get_content_value('request_form_invitation')
@@ -68,7 +69,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': f'Author_{formatted_decision_option}_Decision_Notification' },
-            'activation_date': { 'value': cdate },
+            'activation_date': { 'value': openreview.tools.datetime_millis(cdate) },
             'short_name': { 'value': short_name },
             'from_email': { 'value': from_email },
             'decision': { 'value': decision_option }
