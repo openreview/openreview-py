@@ -953,7 +953,6 @@ return {
                 writers=[self.dblp_group_id],
                 signatures=[self.dblp_group_id],
                 invitees=['~'],
-                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 post_processes=[
                     {
                         'script': self.get_process_content('process/dblp_record_process.js'),
@@ -1314,7 +1313,6 @@ return {
                 writers=[self.orcid_group_id],
                 signatures=[self.orcid_group_id],
                 invitees=['~'],
-                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 post_processes=[
                     {
                         'script': self.get_process_content('process/orcid_record_process.js'),
