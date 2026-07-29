@@ -261,7 +261,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False):
+    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False, content={}):
 
         venue_id = self.venue_id
         submission_name = self.get_content_value('submission_name', 'Submission')
@@ -276,8 +276,7 @@ class EditInvitationsBuilder(object):
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
             readers_items.append(
-                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
-                
+                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'}
             )
             if include_assigned_committee:
                 readers_items.append(
@@ -307,6 +306,21 @@ class EditInvitationsBuilder(object):
             {'value': 'everyone', 'optional': True, 'description': 'Public'}
         ])
 
+        edit_content = {
+            'readers': {
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'input': 'select',
+                        'items':  readers_items
+                    }
+                }
+            }
+        }
+
+        if content:
+            edit_content.update(content)
+
         invitation = Invitation(
             id = sub_invitation_id,
             invitees = [venue_id],
@@ -318,17 +332,7 @@ class EditInvitationsBuilder(object):
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
-                'content' :{
-                    'readers': {
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'input': 'select',
-                                'items':  readers_items
-                            }
-                        }
-                    }
-                },
+                'content' : edit_content,
                 'invitation': {
                     'id': f'{invitation_id}',
                     'signatures': [venue_id],
@@ -340,6 +344,14 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        invitation_content = {}
+        if content:
+            for key in content.keys():
+                invitation_content[key] = {
+                    'value': '${4/content/' + key + '/value}'
+                }
+            invitation.edit['invitation']['content'] = invitation_content
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -899,7 +911,7 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
 
         readers_items = [
-            {'value': f'{venue_id}/Program_Chairs', 'optional': False, 'description': 'Program Chairs'}
+            {'value': f'{venue_id}/Program_Chairs', 'optional': True, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
@@ -919,7 +931,8 @@ class EditInvitationsBuilder(object):
         readers_items.extend([
                 {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
                 {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'}
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
+                {'value': 'everyone', 'optional': True, 'description': 'Public'}
             ])
 
         invitation = Invitation(
@@ -1953,4 +1966,44 @@ class EditInvitationsBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_reveal_authors(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = f'{super_invitation_id}/Reveal_Authors'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'reveal_author_identities': {
+                        'description': 'Select whether you want to reveal the author identities to the readers of the submissions. If you select False, author identities will remain visible only to the program chairs and the paper authors.',
+                        'value': {
+                            'param': {
+                                'type': 'boolean'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'reveal_author_identities': {
+                            'value': '${4/content/reveal_author_identities/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
         return invitation

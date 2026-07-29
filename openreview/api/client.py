@@ -125,10 +125,11 @@ class OpenReviewClient(object):
 
         retry_strategy = LogRetry(
             total=8,
+            connect=1,
             backoff_factor=1,
             backoff_max=120,
             backoff_jitter=1,
-            status_forcelist=[ 500, 502, 503, 504 ],
+            status_forcelist=[ 429, 500, 502, 503, 504 ],
             respect_retry_after_header=True
         )
         self.session = requests.Session()
@@ -2460,6 +2461,20 @@ class OpenReviewClient(object):
         :rtype: dict
         """
         response = self.session.delete(self.institutions_url + '/' + institution_id, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def delete_invitation(self, invitation_id):
+        """
+        Deletes the invitation
+
+        :param invitation_id: ID of Invitation to be deleted
+        :type invitation_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.invitations_url, json = {'id': invitation_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
