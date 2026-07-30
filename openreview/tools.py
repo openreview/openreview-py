@@ -3,8 +3,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import inspect
 
+import io
 import json
 import os
+import zipfile
 
 import openreview
 import re
@@ -2270,6 +2272,88 @@ def singularize(word):
     elif word.endswith('s'):
         return word[:-1]
     return word
+
+def get_attachment_file_name(note, field_name):
+    """
+    Builds the name the API gives to the attachment of a note, so files downloaded
+    one by one are named like the ones extracted from a zip file.
+
+    :param note: Note that contains the attachment
+    :type note: openreview.api.Note
+    :param field_name: Name of the content field that contains the attachment
+    :type field_name: str
+
+    :return: Name of the file, like ``12_Attention_Is_All_You_Need_Latex Source Zip.zip``
+    :rtype: str
+    """
+    name = f"{note.number}_{note.content.get('title', {}).get('value', note.id)}"
+    ## Mirror the sanitization done by the API: keep alphanumeric runs only, join them with underscores
+    sanitized_name = re.sub(r'\s', '_', re.sub(r'[^a-zA-Z0-9]+', ' ', name.strip()))[:30]
+    suffix = '' if field_name == 'pdf' else '_' + ' '.join([w[:1].upper() + w[1:] for w in field_name.split('_')])
+    extension = note.content[field_name]['value'].split('.')[-1]
+    return f'{sanitized_name}{suffix}.{extension}'
+
+def get_all_attachments(client, venueid, field_name, output_dir=None):
+    """
+    Downloads the attachments of all the notes with the given ``venueid`` and extracts them into a directory.
+
+    The files are requested in batches of 50 ids, the max number of ids supported by the API,
+    and each batch is returned as a zip file that gets extracted into ``output_dir``.
+    Notes that don't have a file in ``field_name`` are skipped.
+
+    :param client: Client used to get the submissions and the attachments
+    :type client: openreview.api.OpenReviewClient
+    :param venueid: Value of the ``venueid`` content field, like ``auai.org/UAI/2026/Conference``
+    :type venueid: str
+    :param field_name: Name of the content field that contains the attachment, like ``pdf`` or ``latex_source_zip``
+    :type field_name: str
+    :param output_dir: Directory where the files are extracted, it gets created if it doesn't exist.
+        Defaults to a directory named after ``field_name``
+    :type output_dir: str, optional
+
+    :return: Paths of the downloaded files
+    :rtype: list[str]
+
+    Example:
+
+    >>> files = openreview.tools.get_all_attachments(client, venueid='auai.org/UAI/2026/Conference', field_name='latex_source_zip')
+
+    """
+    output_dir = output_dir or field_name
+
+    submissions = client.get_all_notes(content={ 'venueid': venueid }, sort='number:asc')
+    notes = [s for s in submissions if s.content.get(field_name, {}).get('value')]
+
+    print(f'{len(notes)} submissions out of {len(submissions)} have a file in {field_name}')
+
+    if not notes:
+        return []
+
+    batch_size = 50
+    batches = [notes[i:i + batch_size] for i in range(0, len(notes), batch_size)]
+
+    ## The API returns the file itself instead of a zip file when only one id is requested,
+    ## so avoid leaving a single note in the last batch
+    if len(batches) > 1 and len(batches[-1]) == 1:
+        batches[-1].insert(0, batches[-2].pop())
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    file_paths = []
+    for batch in tqdm(batches, desc='Downloading attachments'):
+        if len(batch) == 1:
+            note = batch[0]
+            file_path = os.path.join(output_dir, get_attachment_file_name(note, field_name))
+            with open(file_path, 'wb') as f:
+                f.write(client.get_attachment(field_name, id=note.id))
+            file_paths.append(file_path)
+        else:
+            archive_content = client.get_attachments([note.id for note in batch], field_name)
+            with zipfile.ZipFile(io.BytesIO(archive_content)) as archive:
+                archive.extractall(output_dir)
+                file_paths.extend([os.path.join(output_dir, name) for name in archive.namelist()])
+
+    return file_paths
 
 def percentile(data, percent):
     """Return the percentile value from *data* using linear interpolation,
