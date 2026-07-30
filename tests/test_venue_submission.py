@@ -632,7 +632,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         ## the API does not accept an empty list of recipients
         with pytest.raises(openreview.OpenReviewException):
             openreview_client.post_message(
-                invitation='TestVenue.cc/-/Edit',
+                invitation='TestVenue.cc/提交1/-/Message',
                 recipients=[],
                 subject='[TV 22] Message with no recipients',
                 message='Message with no recipients',
