@@ -662,7 +662,8 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -709,7 +710,8 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -756,7 +758,8 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -883,7 +886,8 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
                 due_date=self.configuration_note.content.get('reviewer_nomination_end_date'),
-                exp_date=self.configuration_note.content.get('reviewer_nomination_end_date')
+                exp_date=self.configuration_note.content.get('reviewer_nomination_end_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
@@ -1448,6 +1452,11 @@ class ARRStage(object):
             'content_name': 'additional_review_form_options',
             'fields': {
                 'secondary_reviewer': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.SIGNATURE
+                ],
+                'paper_matching_feedback': [
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                     Participants.AREA_CHAIRS_ASSIGNED,
                     Participants.SIGNATURE
