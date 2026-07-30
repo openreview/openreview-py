@@ -120,8 +120,8 @@ class InvitationBuilder(object):
         self.set_reviewers_archived_invitation()
         if not self.journal.should_skip_official_recommendation():
             self.set_official_recommendation_enabling_invitation()
-        if self.journal.should_enable_llm_review():
-            self.set_llm_review_invitation()
+        if self.journal.should_enable_ai_review():
+            self.set_ai_review_invitation()
             self.set_survey_invitation()
     
     def get_super_process_content(self, field_name):
@@ -3977,10 +3977,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures=[self.journal.venue_id]
         )
 
-    def set_note_release_llm_review_invitation(self, note):
+    def set_note_release_ai_review_invitation(self, note):
 
         ## Change AI review invitation readers
-        invitation = self.post_invitation_edit(invitation=openreview.api.Invitation(id=self.journal.get_llm_review_id(number=note.number),
+        invitation = self.post_invitation_edit(invitation=openreview.api.Invitation(id=self.journal.get_ai_review_id(number=note.number),
                 signatures=[self.journal.venue_id],
                 edit={
                     'note': {
@@ -3990,7 +3990,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
         ))
 
-        return self.client.post_invitation_edit(invitations=self.journal.get_release_llm_review_id(),
+        return self.client.post_invitation_edit(invitations=self.journal.get_release_ai_review_id(),
             content={ 'noteNumber': { 'value': note.number } },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
@@ -6892,11 +6892,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         self.save_invitation(invitation)                
 
-    def set_llm_review_invitation(self):
+    def set_ai_review_invitation(self):
 
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        llm_review_invitation_id = self.journal.get_llm_review_id()
+        ai_review_invitation_id = self.journal.get_ai_review_id()
 
         edit_content = {
             'noteId': {
@@ -6916,25 +6916,17 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         }
 
         invitation = {
-            'id': self.journal.get_llm_review_id(number='${2/content/noteNumber/value}'),
+            'id': self.journal.get_ai_review_id(number='${2/content/noteNumber/value}'),
             'signatures': [ venue_id ],
             'readers': [venue_id],
             'writers': [venue_id],
             'invitees': [venue_id],
             'maxReplies': 1,
-            # 'process': self.process_script,
-            # 'dateprocesses': [self.reviewer_reminder_process_with_EIC, self.review_reminder_process_with_no_ACK],
-            # 'postprocesses': [
-            #     {
-            #         'script': self.get_super_process_content('post_process_script'),
-            #         'delay': milliseconds
-            #     }
-            # ],
             'edit': {
                 'signatures': {
                     'param': {
                         'items': [
-                            { 'prefix': self.journal.get_llm_reviewer_id(), 'optional': False }
+                            { 'prefix': self.journal.get_ai_reviewer_id(), 'optional': False }
                         ]
                     }
                 },
@@ -6944,7 +6936,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': self.journal.get_llm_review_id(number='${6/content/noteNumber/value}'),
+                            'withInvitation': self.journal.get_ai_review_id(number='${6/content/noteNumber/value}'),
                             'optional': True
                         }
                     },
@@ -6962,11 +6954,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, '${3/signatures}'],
                     'content': {
-                        'llm_review': {
+                        'ai_review': {
                             'order': 1,
-                            'description': 'Brief description, in the reviewer\'s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'param': {
+                                    'fieldName': 'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'type': 'string',
@@ -6979,10 +6971,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }
         }
 
-        self.save_super_invitation(llm_review_invitation_id, {}, edit_content, invitation)
+        self.save_super_invitation(ai_review_invitation_id, {}, edit_content, invitation)
 
         invitation = {
-            'id': self.journal.get_release_llm_review_id(number='${2/content/noteNumber/value}'),
+            'id': self.journal.get_release_ai_review_id(number='${2/content/noteNumber/value}'),
             'bulk': True,
             'invitees': [venue_id],
             'readers': [venue_id],
@@ -6995,7 +6987,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': self.journal.get_llm_review_id(number='${6/content/noteNumber/value}')
+                            'withInvitation': self.journal.get_ai_review_id(number='${6/content/noteNumber/value}')
                         }
                     },
                     'readers': self.journal.get_release_review_readers(number='${5/content/noteNumber/value}'),
@@ -7014,11 +7006,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }
         }
 
-        self.save_super_invitation(self.journal.get_release_llm_review_id(), {}, edit_content, invitation)
+        self.save_super_invitation(self.journal.get_release_ai_review_id(), {}, edit_content, invitation)
 
-    def set_note_llm_review_invitation(self, note):
+    def set_note_ai_review_invitation(self, note):
 
-        return self.client.post_invitation_edit(invitations=self.journal.get_llm_review_id(),
+        return self.client.post_invitation_edit(invitations=self.journal.get_ai_review_id(),
             content={
                 'noteId': { 'value': note.id },
                 'noteNumber': { 'value': note.number }
@@ -7046,6 +7038,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'value': {
                     'param': {
                         'type': 'integer'
+                    }
+                }
+            },
+            'replytoId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
                     }
                 }
             },
@@ -7109,7 +7108,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         }
                     },
                     'forum': '${4/content/noteId/value}',
-                    'replyto': '${4/content/noteId/value}',
+                    'replyto': '${4/content/replytoId/value}',
                     'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
@@ -7127,7 +7126,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         self.save_super_invitation(survey_invitation_id, {}, edit_content, invitation)
 
-    def set_note_survey_invitation(self, note, cdate, duedate):
+    def set_note_survey_invitation(self, note, ai_review, cdate, duedate):
 
         result = random.choice(["Heads", "Tails"])
         print(f"Randomizing survey option order for note {note.id}: {result}")
@@ -7245,6 +7244,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             content={
                 'noteId': { 'value': note.id },
                 'noteNumber': { 'value': note.number },
+                'replytoId': { 'value': ai_review.id },
                 'cdate': { 'value': openreview.tools.datetime_millis(cdate) },
                 'duedate': { 'value': openreview.tools.datetime_millis(duedate) },
                 'content': { 'value': content }

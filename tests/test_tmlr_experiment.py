@@ -244,7 +244,7 @@ class TestTMLRExperiment():
                             'assignment_delay_after_submitted_review': 0.0001,
                             'max_solicit_review_per_month': 3,
                             'enable_blocked_authors': True,
-                            'enable_llm_review': True
+                            'enable_ai_review': True
                         }
                     }
                 }
@@ -256,9 +256,9 @@ class TestTMLRExperiment():
         assert tmlre
         assert tmlre.members == ['~Percy_Liang1', 'TMLRE/Editors_In_Chief']
 
-        assert openreview_client.get_invitation('TMLRE/-/LLM_Review')
-        assert openreview_client.get_group('TMLRE/LLM_Reviewer')
-        assert openreview_client.get_invitation('TMLRE/-/LLM_Review_Release')
+        assert openreview_client.get_invitation('TMLRE/-/AI_Review')
+        assert openreview_client.get_group('TMLRE/AI_Reviewer')
+        assert openreview_client.get_invitation('TMLRE/-/AI_Review_Release')
 
     def test_invite_action_editors(self, journal, openreview_client, helpers):
         openreview_client.add_members_to_group('TMLRE/Action_Editors', ['~Alice_Johnson1'])
@@ -301,22 +301,22 @@ class TestTMLRExperiment():
         author_group = openreview_client.get_group(f'{venue_id}/Paper1/Authors')
         assert author_group.members == ['~SomeFirstName_User1', '~Eve_Garcia1']
 
-        assert openreview_client.get_invitation(f'{venue_id}/Paper1/-/LLM_Review')
+        assert openreview_client.get_invitation(f'{venue_id}/Paper1/-/AI_Review')
 
         # post LLM Review before AE is assigned
         edit = openreview_client.post_note_edit(
-            invitation=f'{venue_id}/Paper1/-/LLM_Review',
-            signatures=[f'{venue_id}/LLM_Reviewer'],
+            invitation=f'{venue_id}/Paper1/-/AI_Review',
+            signatures=[f'{venue_id}/AI_Reviewer'],
             note=Note(
                 content={
-                    'llm_review': {'value': 'This is a LLM review.'}
+                    'ai_review': {'value': 'This is a LLM review.'}
                 }
             )
         )
 
-        llm_review = openreview_client.get_note(edit['note']['id'])
-        assert llm_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper1/Action_Editors', 'TMLRE/LLM_Reviewer']
-        assert llm_review.nonreaders == ['TMLRE/Paper1/Authors']
+        ai_review = openreview_client.get_note(edit['note']['id'])
+        assert ai_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper1/Action_Editors', 'TMLRE/AI_Reviewer']
+        assert ai_review.nonreaders == ['TMLRE/Paper1/Authors']
 
         # Author recommends AE
         test_client.post_edge(openreview.api.Edge(
@@ -394,17 +394,17 @@ class TestTMLRExperiment():
 
         # post LLM Review before AE is assigned
         edit = openreview_client.post_note_edit(
-            invitation=f'{venue_id}/Paper2/-/LLM_Review',
-            signatures=[f'{venue_id}/LLM_Reviewer'],
+            invitation=f'{venue_id}/Paper2/-/AI_Review',
+            signatures=[f'{venue_id}/AI_Reviewer'],
             note=Note(
                 content={
-                    'llm_review': {'value': 'This is another LLM review.'}
+                    'ai_review': {'value': 'This is another LLM review.'}
                 }
             )
         )
 
-        llm_review = openreview_client.get_note(edit['note']['id'])
-        assert llm_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper2/Action_Editors', 'TMLRE/LLM_Reviewer']
+        ai_review = openreview_client.get_note(edit['note']['id'])
+        assert ai_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper2/Action_Editors', 'TMLRE/AI_Reviewer']
 
         # EIC assigns AE to Paper 2
         editor_in_chief_group_id = f'{venue_id}/Editors_In_Chief'
@@ -452,9 +452,9 @@ class TestTMLRExperiment():
         assert len(messages) == 1
 
         # assert LLM review does not become visible to authors after desk rejection
-        llm_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper2/-/LLM_Review')[0]
-        assert llm_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper2/Action_Editors', 'TMLRE/LLM_Reviewer']
-        assert llm_review.nonreaders == ['TMLRE/Paper2/Authors']
+        ai_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper2/-/AI_Review')[0]
+        assert ai_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper2/Action_Editors', 'TMLRE/AI_Reviewer']
+        assert ai_review.nonreaders == ['TMLRE/Paper2/Authors']
 
     def test_review_process(self, journal, openreview_client, test_client, helpers):
         venue_id = journal.venue_id
@@ -515,9 +515,9 @@ class TestTMLRExperiment():
             assert review.readers == ['everyone']
 
         # LLM Review should be released to authors after all human reviews are posted
-        llm_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper1/-/LLM_Review')[0]
-        assert llm_review.readers == ['everyone']
-        assert llm_review.nonreaders == []
+        ai_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper1/-/AI_Review')[0]
+        assert ai_review.readers == ['everyone']
+        assert ai_review.nonreaders == []
 
         # assert Survey invitation has been created
         survey_invitation = openreview.tools.get_invitation(openreview_client, f'{venue_id}/Paper1/-/Survey')
@@ -531,7 +531,7 @@ class TestTMLRExperiment():
             invitation=f'{venue_id}/Paper1/-/Official_Comment',
             signatures=[f'{venue_id}/Paper1/Authors'],
             note=Note(
-                replyto=llm_review.id,
+                replyto=ai_review.id,
                 readers=['everyone'],
                 content={
                     'comment': {'value': 'Thank you for the LLM review.'}
@@ -541,7 +541,7 @@ class TestTMLRExperiment():
 
         comment = openreview_client.get_note(comment_edit['note']['id'])
         assert comment.readers == ['everyone']
-        assert comment.replyto == llm_review.id
+        assert comment.replyto == ai_review.id
         assert comment.signatures == [f'{venue_id}/Paper1/Authors']
 
         # Move recommendation cdate to now since the discussion period hasn't elapsed
@@ -600,8 +600,8 @@ class TestTMLRExperiment():
             helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
 
         # LLM review is not rated
-        llm_review_signature = llm_review.signatures[0]
-        assert not openreview.tools.get_invitation(openreview_client, f'{llm_review_signature}/-/Rating')
+        ai_review_signature = ai_review.signatures[0]
+        assert not openreview.tools.get_invitation(openreview_client, f'{ai_review_signature}/-/Rating')
 
         # AE posts decision
         decision_note = alice_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
@@ -638,6 +638,96 @@ class TestTMLRExperiment():
         assert len(messages) == 1
 
         assert openreview_client.get_invitation(f'{venue_id}/Paper1/-/Camera_Ready_Revision')
+
+    def test_survey(self, journal, openreview_client, test_client, helpers):
+        venue_id = journal.venue_id
+        sarah_client = OpenReviewClient(username='sarah@expmail.com', password=helpers.strong_password)
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        alice_client = OpenReviewClient(username='alice@expmailseven.com', password=helpers.strong_password)
+        bob_client = OpenReviewClient(username='bob@expmailone.com', password=helpers.strong_password)
+
+        ai_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper1/-/AI_Review')[0]
+
+        alice_paper1_anon_groups = alice_client.get_groups(
+            prefix=f'{venue_id}/Paper1/Action_Editor_.*', signatory='~Alice_Johnson1')
+        alice_paper1_anon_group = alice_paper1_anon_groups[0]
+
+        bob_paper1_anon_groups = bob_client.get_groups(
+            prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Bob_Williams1')
+        bob_paper1_anon_group = bob_paper1_anon_groups[0]
+
+        # Move the Survey invitation cdate to now since the discussion period hasn't elapsed
+        sarah_client.post_invitation_edit(
+            invitations='TMLRE/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/Paper1/-/Survey',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()),
+                signatures=['TMLRE/Editors_In_Chief']
+            )
+        )
+
+        # Authors post a survey response
+        author_survey_edit = test_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/Survey',
+            signatures=[f'{venue_id}/Paper1/Authors'],
+            note=Note(content={
+                'share_of_valid_issues': {'value': 'About 50%'},
+                'false_claims': {'value': 'None'},
+                'addressing_suggestions': {'value': 'Agree'},
+                'actionable_suggestions': {'value': 'Agree'},
+                'clear_feedback': {'value': 'Agree'},
+                'comments': {'value': 'Thanks for the LLM review.'}
+            }))
+
+        author_survey = openreview_client.get_note(author_survey_edit['note']['id'])
+        assert author_survey.signatures == [f'{venue_id}/Paper1/Authors']
+        assert author_survey.content['share_of_valid_issues']['value'] == 'About 50%'
+        assert author_survey.readers == [venue_id, f'{venue_id}/Paper1/Authors']
+
+        # AE posts a survey response
+        ae_survey_edit = alice_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/Survey',
+            signatures=[alice_paper1_anon_group.id],
+            note=Note(content={
+                'share_of_valid_issues': {'value': 'More than 75%'},
+                'missed_technical_issues': {'value': 'No'},
+                'false_claims': {'value': 'One minor'},
+                'addressing_suggestions': {'value': 'Strongly agree'},
+                'actionable_suggestions': {'value': 'Strongly agree'},
+                'clear_feedback': {'value': 'Strongly agree'},
+                'added_value': {'value': 'Agree'},
+                'comments': {'value': 'The LLM review was helpful.'}
+            }))
+
+        ae_survey = openreview_client.get_note(ae_survey_edit['note']['id'])
+        assert ae_survey.signatures == [alice_paper1_anon_group.id]
+        assert ae_survey.content['added_value']['value'] == 'Agree'
+        assert ae_survey.readers == [venue_id, alice_paper1_anon_group.id]
+
+        # Reviewer posts a survey response
+        reviewer_survey_edit = bob_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/Survey',
+            signatures=[bob_paper1_anon_group.id],
+            note=Note(content={
+                'share_of_valid_issues': {'value': 'All'},
+                'missed_technical_issues': {'value': 'Unsure'},
+                'false_claims': {'value': 'Unsure'},
+                'addressing_suggestions': {'value': 'Neutral'},
+                'actionable_suggestions': {'value': 'Neutral'},
+                'clear_feedback': {'value': 'Neutral'},
+                'added_value': {'value': 'Neutral'},
+                'comments': {'value': 'Reasonable review overall.'}
+            }))
+
+        reviewer_survey = openreview_client.get_note(reviewer_survey_edit['note']['id'])
+        assert reviewer_survey.signatures == [bob_paper1_anon_group.id]
+        assert reviewer_survey.readers == [venue_id, bob_paper1_anon_group.id]
+
+        surveys = openreview_client.get_notes(invitation=f'{venue_id}/Paper1/-/Survey')
+        assert len(surveys) == 3
 
     def test_camera_ready(self, journal, openreview_client, test_client, helpers):
         venue_id = journal.venue_id

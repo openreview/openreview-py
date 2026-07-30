@@ -458,12 +458,12 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             )
             self.post_group(preferred_emails_readers_group)
 
-        if self.journal.should_enable_llm_review():
-            llm_reviewer_group = openreview.tools.get_group(self.client, f'{venue_id}/LLM_Reviewer')
-            if not llm_reviewer_group:
-                llm_reviewer_group=self.post_group(
+        if self.journal.should_enable_ai_review():
+            ai_reviewer_group = openreview.tools.get_group(self.client, f'{venue_id}/AI_Reviewer')
+            if not ai_reviewer_group:
+                ai_reviewer_group=self.post_group(
                     Group(
-                        id=f'{venue_id}/LLM_Reviewer',
+                        id=f'{venue_id}/AI_Reviewer',
                         readers=[venue_id],
                         writers=[venue_id],
                         signatures=[venue_id],
