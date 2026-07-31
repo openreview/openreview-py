@@ -51,10 +51,17 @@ def process(client, invitation):
             if not source_submissions:
                 source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='replies', domain=venue_id)
             
-            if 'with_decision_accept' in source:
-                source_submissions = [s for s in source_submissions 
-                                      if len([r for r in s.details['replies'] 
-                                        if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] 
+            # decision_options has precedence over with_decision_accept
+            if 'decision_options' in source:
+                decision_options = source.get('decision_options')
+                source_submissions = [s for s in source_submissions
+                                      if any(f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations']
+                                        and r['content'][decision_field_name]['value'] in decision_options
+                                        for r in s.details['replies'])]
+            elif 'with_decision_accept' in source:
+                source_submissions = [s for s in source_submissions
+                                      if len([r for r in s.details['replies']
+                                        if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations']
                                         and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) == source.get('with_decision_accept')]) > 0]
 
             if 'readers' in source:
