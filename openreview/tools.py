@@ -6,6 +6,7 @@ import inspect
 import io
 import json
 import os
+import shutil
 import zipfile
 
 import openreview
@@ -2273,31 +2274,11 @@ def singularize(word):
         return word[:-1]
     return word
 
-def get_attachment_file_name(note, field_name):
-    """
-    Builds the name the API gives to the attachment of a note, so files downloaded
-    one by one are named like the ones extracted from a zip file.
-
-    :param note: Note that contains the attachment
-    :type note: openreview.api.Note
-    :param field_name: Name of the content field that contains the attachment
-    :type field_name: str
-
-    :return: Name of the file, like ``12_Attention_Is_All_You_Need_Latex Source Zip.zip``
-    :rtype: str
-    """
-    name = f"{note.number}_{note.content.get('title', {}).get('value', note.id)}"
-    ## Mirror the sanitization done by the API: keep alphanumeric runs only, join them with underscores
-    sanitized_name = re.sub(r'\s', '_', re.sub(r'[^a-zA-Z0-9]+', ' ', name.strip()))[:30]
-    suffix = '' if field_name == 'pdf' else '_' + ' '.join([w[:1].upper() + w[1:] for w in field_name.split('_')])
-    extension = note.content[field_name]['value'].split('.')[-1]
-    return f'{sanitized_name}{suffix}.{extension}'
-
 def get_all_attachments(client, venueid, field_name, output_dir=None):
     """
     Downloads the attachments of all the notes with the given ``venueid`` and extracts them into a directory.
 
-    The files are requested in batches of 50 ids, the max number of ids supported by the API,
+    The files are requested sequentially in batches of 50 ids, the max number of ids supported by the API,
     and each batch is returned as a zip file that gets extracted into ``output_dir``.
     Notes that don't have a file in ``field_name`` are skipped.
 
@@ -2341,17 +2322,14 @@ def get_all_attachments(client, venueid, field_name, output_dir=None):
 
     file_paths = []
     for batch in tqdm(batches, desc='Downloading attachments'):
-        if len(batch) == 1:
-            note = batch[0]
-            file_path = os.path.join(output_dir, get_attachment_file_name(note, field_name))
-            with open(file_path, 'wb') as f:
-                f.write(client.get_attachment(field_name, id=note.id))
-            file_paths.append(file_path)
-        else:
-            archive_content = client.get_attachments([note.id for note in batch], field_name)
-            with zipfile.ZipFile(io.BytesIO(archive_content)) as archive:
-                archive.extractall(output_dir)
-                file_paths.extend([os.path.join(output_dir, name) for name in archive.namelist()])
+        archive_content = client.get_attachments([note.id for note in batch], field_name)
+        with zipfile.ZipFile(io.BytesIO(archive_content)) as archive:
+            for member in archive.infolist():
+                file_path = os.path.join(output_dir, member.filename)
+                with archive.open(member) as source, open(file_path, 'wb') as target:
+                    shutil.copyfileobj(source, target)
+
+                file_paths.append(file_path)
 
     return file_paths
 

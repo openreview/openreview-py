@@ -836,7 +836,7 @@ class OpenReviewClient(object):
         Note that when only one of the ids resolves to a note the server streams that
         file directly instead of a zip.
 
-        :param ids: List of Note ids or Reference ids. The max number of ids is 50
+        :param ids: List of Note ids or Reference ids. The max number of ids is limited by the API
         :type ids: list[str]
         :param field_name: name of the field associated with the attachment files
         :type field_name: str
@@ -850,12 +850,6 @@ class OpenReviewClient(object):
         >>> with open('attachments.zip','wb') as op: op.write(f)
 
         """
-
-        if not ids:
-            raise OpenReviewException('Provide a non empty list of ids')
-
-        if len(set(ids)) > 50:
-            raise OpenReviewException('The max number of ids is 50')
 
         params = {
             'name': field_name,
