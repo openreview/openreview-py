@@ -730,8 +730,8 @@ class TestMfaLogin():
             assert client.token
             assert client.profile
 
-class TestExpertiseResultsDownload():
-    """Tests for get_expertise_results(full=True) downloading result files."""
+class TestExpertiseAllResultsDownload():
+    """Tests for get_expertise_all_results downloading result files."""
 
     def _make_binary_response(self, content):
         response = MagicMock()
@@ -757,11 +757,11 @@ class TestExpertiseResultsDownload():
                 mock_get.assert_called_once()
                 assert mock_get.call_args[1]['params']['jobId'] == 'job-123'
 
-    def test_full_downloads_default_filename(self, client, openreview_client, tmp_path):
+    def test_all_results_downloads_default_filename(self, client, openreview_client, tmp_path):
         expected_content = b'full scores matrix bytes'
         for api_client in [client, openreview_client]:
             with patch.object(api_client.session, 'get', return_value=self._make_binary_response(expected_content)) as mock_get:
-                result = api_client.get_expertise_results('job-123', baseurl='https://api.openreview.net', full=True)
+                result = api_client.get_expertise_all_results('job-123', baseurl='https://api.openreview.net')
                 assert result == 'job-123_scores.pt'
                 mock_get.assert_called_once()
                 assert mock_get.call_args[0][0].endswith('/expertise/results/all')
@@ -771,24 +771,13 @@ class TestExpertiseResultsDownload():
                     assert f.read() == expected_content
                 os.remove(result)
 
-    def test_full_downloads_custom_filename(self, client, openreview_client, tmp_path):
+    def test_all_results_downloads_custom_filename(self, client, openreview_client, tmp_path):
         expected_content = b'custom file bytes'
         custom_file = str(tmp_path / 'custom_scores.pt')
         for api_client in [client, openreview_client]:
             with patch.object(api_client.session, 'get', return_value=self._make_binary_response(expected_content)) as mock_get:
-                result = api_client.get_expertise_results('job-123', baseurl='https://api.openreview.net', full=True, output_filename=custom_file)
+                result = api_client.get_expertise_all_results('job-123', baseurl='https://api.openreview.net', output_filename=custom_file)
                 assert result == custom_file
                 with open(custom_file, 'rb') as f:
                     assert f.read() == expected_content
-
-    def test_wait_for_complete_then_download(self, openreview_client):
-        expected_content = b'full scores after wait'
-        with patch.object(openreview_client, 'get_expertise_status', return_value={'status': 'Completed'}), \
-             patch.object(openreview_client.session, 'get', return_value=self._make_binary_response(expected_content)) as mock_get:
-            result = openreview_client.get_expertise_results('job-123', baseurl='https://api.openreview.net', wait_for_complete=True, full=True)
-            assert result == 'job-123_scores.pt'
-            assert os.path.exists(result)
-            with open(result, 'rb') as f:
-                assert f.read() == expected_content
-            os.remove(result)
 
