@@ -2257,20 +2257,9 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_expertise_results(self, job_id, baseurl=None, format='json', full=False, output_filename=None):
+    def get_expertise_results(self, job_id, baseurl=None, format='json'):
 
         base_url = baseurl if baseurl else self.baseurl
-        if full:
-            if output_filename is None:
-                output_filename = f"{job_id}_scores.pt"
-            response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
-            response = self.__handle_response(response)
-            with response:
-                with open(output_filename, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-            return output_filename
-
         if format == 'csv':
             response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
             response = self.__handle_response(response)
@@ -2279,6 +2268,19 @@ class Client(object):
         response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
+
+    def get_expertise_all_results(self, job_id, baseurl=None, output_filename=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if output_filename is None:
+            output_filename = f"{job_id}_scores.pt"
+        response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
+        response = self.__handle_response(response)
+        with response:
+            with open(output_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        return output_filename
 
 class Group(object):
     """

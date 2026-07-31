@@ -3479,7 +3479,7 @@ class OpenReviewClient(object):
         print('get expertise metadata', response_json)
         return response_json
 
-    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json', full=False, output_filename=None):
+    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json'):
 
         print('get expertise results', baseurl, job_id)
         base_url = baseurl if baseurl else self.baseurl
@@ -3502,25 +3502,13 @@ class OpenReviewClient(object):
                 call_count += 1
 
             if 'Completed' == status_text:
-                return self.get_expertise_results(job_id, baseurl=base_url, format=format, full=full, output_filename=output_filename)
+                return self.get_expertise_results(job_id, baseurl=base_url, format=format)
             if 'Error' in status_text:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
-            if full:
-                if output_filename is None:
-                    output_filename = f"{job_id}_scores.pt"
-                response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
-                response = self.__handle_response(response)
-                with response:
-                    with open(output_filename, 'wb') as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            f.write(chunk)
-                print('return expertise results', baseurl, job_id)
-                return output_filename
-
             if format == 'csv':
                 response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
                 response = self.__handle_response(response)
@@ -3536,6 +3524,29 @@ class OpenReviewClient(object):
             response = self.__handle_response(response)
             print('return expertise results', baseurl, job_id)
             return response.json()
+
+    def get_expertise_all_results(self, job_id, baseurl=None, output_filename=None):
+
+        print('get expertise all results', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+
+        if base_url.startswith('http://localhost'):
+            print('return expertise all results localhost, return empty file')
+            if output_filename is None:
+                output_filename = f"{job_id}_scores.pt"
+            open(output_filename, 'wb').close()
+            return output_filename
+
+        if output_filename is None:
+            output_filename = f"{job_id}_scores.pt"
+        response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
+        response = self.__handle_response(response)
+        with response:
+            with open(output_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        print('return expertise all results', baseurl, job_id)
+        return output_filename
 
 
 class Edit(object):
