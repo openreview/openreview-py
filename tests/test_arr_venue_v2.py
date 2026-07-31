@@ -626,6 +626,99 @@ class TestARRVenueV2():
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Ethics_Reviewers')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Authors')
 
+        # Re-running setup for an older cycle should not make it one of the two
+        # active ARR venues. October and June are the two most recently created.
+        october_venue_id = 'aclweb.org/ACL/ARR/2023/October'
+        client.post_group(openreview.Group(
+            id=october_venue_id,
+            readers=['everyone'],
+            writers=[october_venue_id],
+            signatures=['~Super_User1'],
+            signatories=[october_venue_id],
+            members=[]
+        ))
+        openreview_client.add_members_to_group('active_venues', october_venue_id)
+
+        request_forms = pc_client.get_notes(
+            invitation='openreview.net/Support/-/Request_Form',
+            sort='number:asc'
+        )
+        august_request_form = request_forms[0]
+        august_venue = openreview.helpers.get_conference(
+            client,
+            august_request_form.id,
+            'openreview.net/Support'
+        )
+
+        # Calling the pruning function for an older cycle still keeps the two
+        # most recently created ARR venues.
+        august_venue.prune_active_arr_venues()
+
+        active_venues = openreview_client.get_group('active_venues')
+        arr_active_venues = {
+            venue_id for venue_id in active_venues.members
+            if venue_id.startswith('aclweb.org/ACL/ARR')
+        }
+        assert arr_active_venues == {
+            'aclweb.org/ACL/ARR/2023/October',
+            'aclweb.org/ACL/ARR/2023/June'
+        }
+
+        # A no-op Revision also runs setup and pruning for the older August
+        # cycle, but should still keep October and June active.
+        openreview_client.add_members_to_group(
+            'active_venues',
+            'aclweb.org/ACL/ARR/2023/August'
+        )
+        august_revision_invitation = (
+            f'openreview.net/Support/-/Request{august_request_form.number}/Revision'
+        )
+        august_revisions = pc_client.get_references(
+            referent=august_request_form.id,
+            invitation=august_revision_invitation
+        )
+        revision_process_count = len(openreview_client.get_process_logs(
+            invitation=august_revision_invitation
+        ))
+        pc_client.post_note(openreview.Note(
+            invitation=august_revision_invitation,
+            forum=august_request_form.id,
+            readers=[
+                'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                'openreview.net/Support'
+            ],
+            referent=august_request_form.id,
+            replyto=august_request_form.id,
+            signatures=['~Program_ARRChair1'],
+            writers=[],
+            content=deepcopy(august_revisions[0].content)
+        ))
+        helpers.await_queue_edit(
+            client,
+            invitation=august_revision_invitation,
+            count=revision_process_count + 1
+        )
+
+        active_venues = openreview_client.get_group('active_venues')
+        arr_active_venues = {
+            venue_id for venue_id in active_venues.members
+            if venue_id.startswith('aclweb.org/ACL/ARR')
+        }
+        assert arr_active_venues == {
+            'aclweb.org/ACL/ARR/2023/October',
+            'aclweb.org/ACL/ARR/2023/June'
+        }
+
+        # Restore the active cycles used by the remaining tests in this class.
+        openreview_client.add_members_to_group(
+            'active_venues',
+            'aclweb.org/ACL/ARR/2023/August'
+        )
+        openreview_client.remove_members_from_group(
+            'active_venues',
+            october_venue_id
+        )
+
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
 
         # Populate past groups
