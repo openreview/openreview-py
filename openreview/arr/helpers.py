@@ -1856,6 +1856,7 @@ def flag_submission(
 ):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
+    submission_name = domain.get_content_value('submission_name')
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     contact = domain.content['contact']['value']
     sender = domain.get_content_value('message_sender')
@@ -1891,6 +1892,36 @@ def flag_submission(
             ),
             signatures=[venue_id]
         )
+
+    def delete_flag(invitation_name):
+        print(f"deleting {invitation_name} flag")
+        return client.post_note_edit(
+            invitation=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=edit.note.forum,
+                content={f'flagged_for_{invitation_name.lower()}': {'delete': True}}
+            )
+        )
+
+    def expire_desk_reject_verification():
+        invitation_id = f'{venue_id}/{submission_name}{forum.number}/-/Desk_Reject_Verification'
+        verification_invitation = openreview.tools.get_invitation(client, invitation_id)
+        if verification_invitation:
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                replacement=False,
+                invitation=openreview.api.Invitation(
+                    id=verification_invitation.id,
+                    expdate=openreview.tools.datetime_millis(datetime.now()),
+                    signatures=[venue_id]
+                )
+            )
 
     def check_field_violated(note, field, default_value):
         print(f"checking {field} should be {default_value}")
@@ -2014,15 +2045,13 @@ def flag_submission(
             'Desk_Reject_Verification',
             value=True
         )
-    ## True -> False
-    if dsv_flagged and all([
+    ## Present -> removed
+    if 'flagged_for_desk_reject_verification' in forum.content and all([
         not dsv_flag_from_checklists,
         not dsv_flag_from_metareviews]):
-        print('setting dsv flag true -> false')
-        post_flag(
-            'Desk_Reject_Verification',
-            value=False
-        )
+        print('removing dsv flag')
+        delete_flag('Desk_Reject_Verification')
+        expire_desk_reject_verification()
 
 def get_resubmissions(submissions, previous_url_field):
     return list(filter(
