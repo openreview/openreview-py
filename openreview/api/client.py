@@ -829,37 +829,6 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.content
 
-    def get_attachments(self, ids, field_name):
-        """
-        Gets a zip file with the attachments of the notes with the provided ids.
-
-        Note that when only one of the ids resolves to a note the server streams that
-        file directly instead of a zip.
-
-        :param ids: List of Note ids or Reference ids. The max number of ids is limited by the API
-        :type ids: list[str]
-        :param field_name: name of the field associated with the attachment files
-        :type field_name: str
-
-        :return: The binary content of a zip file containing one file per note
-        :rtype: bytes
-
-        Example:
-
-        >>> f = client.get_attachments(ids=['Place Note-ID here', 'Place Note-ID here'], field_name='pdf')
-        >>> with open('attachments.zip','wb') as op: op.write(f)
-
-        """
-
-        params = {
-            'name': field_name,
-            'ids': ','.join(ids)
-        }
-
-        response = self.session.get(self.baseurl + '/attachment', params=tools.format_params(params), headers = self.headers)
-        response = self.__handle_response(response)
-        return response.content
-
     def get_venues(self, id=None, ids=None, invitations=None):
         """Get a list of Venue objects based on the filters provided.
 

@@ -2322,7 +2322,7 @@ def get_all_attachments(client, venueid, field_name, output_dir=None):
 
     file_paths = []
     for batch in tqdm(batches, desc='Downloading attachments'):
-        archive_content = client.get_attachments([note.id for note in batch], field_name)
+        archive_content = client.get_attachment(ids=[note.id for note in batch], field_name=field_name)
         with zipfile.ZipFile(io.BytesIO(archive_content)) as archive:
             for member in archive.infolist():
                 file_path = os.path.join(output_dir, member.filename)
