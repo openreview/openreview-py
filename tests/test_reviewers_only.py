@@ -2065,6 +2065,29 @@ For more details, please check the following links:
             anon_group_id
         ]
 
+        # Release a review field to the note readers by deleting its field-level readers through
+        # the content schema, using the escaped delete literal { const: { delete: True } }. The
+        # invitation stores it verbatim and the field readers are removed from the existing review
+        # notes (regression: the propagation used to store the dict keys, e.g. ['const']).
+        review_content = review_inv.edit['invitation']['edit']['note']['content']
+        review_content['first_time_reviewer']['readers'] = { 'const': { 'delete': True } }
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+            content={
+                'content': { 'value': review_content },
+                'rating_field_name': { 'value': 'review_rating' },
+                'confidence_field_name': { 'value': 'review_confidence' }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=7)
+        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
+
+        review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
+        assert review_inv.edit['invitation']['edit']['note']['content']['first_time_reviewer']['readers'] == { 'const': { 'delete': True } }
+
+        reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Official_Review', sort='number:asc')
+        assert 'readers' not in reviews[0].content['first_time_reviewer']
+
     def test_email_reviews(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
