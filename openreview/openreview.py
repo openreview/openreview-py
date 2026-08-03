@@ -134,7 +134,9 @@ class Client(object):
             respect_retry_after_header=True
         )
         self.session = requests.Session()
-        adapter = HTTPAdapter(max_retries=retry_strategy)
+        # pool_maxsize must be >= the max_workers used with tools.concurrent_requests,
+        # otherwise urllib3 discards connections and re-does the TLS handshake per request
+        adapter = HTTPAdapter(max_retries=retry_strategy, pool_maxsize=128)
         self.session.mount('https://', adapter)
         self.session.mount('http://', adapter)
 

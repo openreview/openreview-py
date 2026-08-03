@@ -133,7 +133,7 @@ class OpenReviewClient(object):
             respect_retry_after_header=True
         )
         self.session = requests.Session()
-        adapter = HTTPAdapter(max_retries=retry_strategy)
+        adapter = HTTPAdapter(max_retries=retry_strategy, pool_maxsize=128)
         self.session.mount('https://', adapter)
         self.session.mount('http://', adapter)
 
