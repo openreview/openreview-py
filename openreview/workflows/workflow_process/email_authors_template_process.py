@@ -15,19 +15,35 @@ def process(client, edit, invitation):
 
     if not is_review_invitation:
         decision = edit.content['decision']['value']
+
+        content = {
+            'source': {
+                'value': {
+                    'venueid': [
+                        f'{domain.get_content_value("submission_venue_id")}',
+                        domain.id,
+                        f'{domain.get_content_value("rejected_venue_id")}'
+                    ],
+                    'decision_options': [decision]
+                }
+            }
+        }
+
         accept_decision_options = domain.content.get('accept_decision_options', {}).get('value')
         if decision in accept_decision_options:
             decision_option = 'accept'
         else:
             decision_option = 'reject'
         message = invitation.content[f'{decision_option}_message']['value'].replace('{short_name}', short_name)
+
+        content['message'] = {
+            'value': message
+        }
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             signatures=[domain.id],
             invitation=openreview.api.Invitation(
                 id=edit.invitation.id,
-                content={
-                    'message': { 'value': message }
-                }
+                content=content
             )
         )

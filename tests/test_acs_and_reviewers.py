@@ -1107,12 +1107,36 @@ note={under review}
 
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Poster_Decision_Notification')
         assert invitation and not invitation.ddate
+        assert invitation.content['source']['value'] == {
+            'venueid': [
+                'EFGH.cc/2025/Conference/Submission',
+                'EFGH.cc/2025/Conference',
+                'EFGH.cc/2025/Conference/Rejected_Submission'
+            ],
+            'decision_options': ['Accept (Poster)']
+        }
 
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Oral_Decision_Notification')
         assert invitation and not invitation.ddate
+        assert invitation.content['source']['value'] == {
+            'venueid': [
+                'EFGH.cc/2025/Conference/Submission',
+                'EFGH.cc/2025/Conference',
+                'EFGH.cc/2025/Conference/Rejected_Submission'
+            ],
+            'decision_options': ['Accept (Oral)']
+        }
 
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Reject_Decision_Notification')
         assert invitation and not invitation.ddate
+        assert invitation.content['source']['value'] == {
+            'venueid': [
+                'EFGH.cc/2025/Conference/Submission',
+                'EFGH.cc/2025/Conference',
+                'EFGH.cc/2025/Conference/Rejected_Submission'
+            ],
+            'decision_options': ['Reject']
+        }
 
         # create child invitations
         now = datetime.datetime.now()

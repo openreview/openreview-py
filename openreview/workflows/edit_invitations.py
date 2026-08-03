@@ -1429,7 +1429,7 @@ class EditInvitationsBuilder(object):
 
         edit_content = {
             'email_subject': {
-                'description': 'The subject of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                'description': 'The subject of the email to be sent to authors. Make sure not to remove the parenthesized tokens. If an email with this subject has already been sent, it will be skipped — to re-send emails for this decision option, change the subject.',
                 'value': {
                     'param': {
                         'type': 'string',

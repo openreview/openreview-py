@@ -13,7 +13,7 @@ def process(client, invitation):
     
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    submission_venue_id = domain.get_content_value('submission_venue_id')
+    submission_id = domain.get_content_value('submission_id')
     decision_name = domain.get_content_value('decision_name')
     submission_name = domain.get_content_value('submission_name')
     authors_name  = domain.get_content_value('authors_name')
@@ -21,7 +21,6 @@ def process(client, invitation):
 
     email_subject = invitation.get_content_value('subject')
     email_content = invitation.get_content_value('message')
-    decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     fields_to_include = invitation.get_content_value('fields_to_include')
     contact_email = domain.get_content_value('contact')
     decision_option = invitation.get_content_value('decision_option')
@@ -46,10 +45,9 @@ def process(client, invitation):
         )
         return
 
-    active_submissions = client.get_notes(content={'venueid': submission_venue_id}, details='directReplies')
-    print('# active submissions:', len(active_submissions))
+    def send_decision_email(submission_tuple):
+        submission, decisions = submission_tuple
 
-    def send_decision_email(submission):
         subject = email_subject.format(
             submission_number=submission.number,
             submission_title=submission.content['title']['value']
@@ -57,7 +55,6 @@ def process(client, invitation):
 
         # if email with this subject has already been sent, skip sending email
         if not client.get_messages(subject=subject):
-            decisions = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]
             if decisions:
                 formatted_decision = ''
                 decision = decisions[0]
@@ -66,25 +63,35 @@ def process(client, invitation):
                     if value:
                         formatted_decision+=f'''**{key}**: {value}\n'''
 
-                decision_value = decision.content.get(decision_field_name, {}).get('value')
+                message = email_content.format(
+                    submission_number=submission.number,
+                    submission_title=submission.content['title']['value'],
+                    formatted_decision=formatted_decision,
+                    submission_forum=submission.id
+                )
 
-                # if the decision matches, send email. ## To-do: support this in the submission source instead
-                if decision_value == decision_option:
-                    message = email_content.format(
-                        submission_number=submission.number,
-                        submission_title=submission.content['title']['value'],
-                        formatted_decision=formatted_decision,
-                        submission_forum=submission.id
-                    )
+                client.post_message(
+                    subject=subject,
+                    recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
+                    message=message,
+                    invitation=invitation.id,
+                    replyTo=contact_email
+                )
 
-                    client.post_message(
-                        subject=subject,
-                        recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
-                        message=message,
-                        invitation=invitation.id,
-                        replyTo=contact_email
-                    )
+    all_submissions = client.get_all_notes(invitation=submission_id, sort='number:asc', details='directReplies', domain=venue_id)
+    print(f'Total submissions retrieved: {len(all_submissions)}')
 
-    openreview.tools.concurrent_requests(send_decision_email, active_submissions)
+    filtered_submissions = []
+    for submission in all_submissions:
+        if openreview.tools.should_match_invitation_source(client, invitation, submission, domain=domain):
+            filtered_submissions.append((submission, [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]))
 
-    print(f'{decision_option} decision emails sent to authors')
+    print(f'{len(filtered_submissions)} out of {len(all_submissions)} submissions matched the source criteria')
+
+    if not filtered_submissions:
+        print(f'No emails were sent since there are no {decision_option.lower()} submissions')
+        return
+
+    openreview.tools.concurrent_requests(send_decision_email, filtered_submissions)
+
+    print(f'{len(filtered_submissions)} {decision_option} decision emails sent to authors')
