@@ -2316,15 +2316,23 @@ def get_all_attachments(client, venueid, field_name, output_dir=None):
     if not notes:
         return []
 
+    os.makedirs(output_dir, exist_ok=True)
+
+    ## The API returns the file itself instead of a zip file when only one id is requested
+    if len(notes) == 1:
+        note = notes[0]
+        extension = note.content[field_name]['value'].split('.')[-1]
+        file_path = os.path.join(output_dir, f'{note.number}_{field_name}.{extension}')
+        with open(file_path, 'wb') as f:
+            f.write(client.get_attachment(id=note.id, field_name=field_name))
+        return [file_path]
+
     batch_size = 50
     batches = [notes[i:i + batch_size] for i in range(0, len(notes), batch_size)]
 
-    ## The API returns the file itself instead of a zip file when only one id is requested,
-    ## so avoid leaving a single note in the last batch
-    if len(batches) > 1 and len(batches[-1]) == 1:
+    ## Avoid leaving a single note in the last batch, it would not return a zip file either
+    if len(batches[-1]) == 1:
         batches[-1].insert(0, batches[-2].pop())
-
-    os.makedirs(output_dir, exist_ok=True)
 
     file_paths = []
     for batch in tqdm(batches, desc='Downloading attachments'):
