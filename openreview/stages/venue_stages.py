@@ -633,7 +633,7 @@ class SubmissionRevisionStage():
                 if field not in content:
                     content[field] = { 'delete': True }
 
-            only_accepted = self.only_accepted
+            only_accepted = self.only_accepted or self.only_accepted_decision_options(conference)
 
             hidden_field_names = conference.submission_stage.get_hidden_field_names()
             
@@ -646,6 +646,18 @@ class SubmissionRevisionStage():
                     content[field]['readers'] = { 'delete': True }                        
 
         return content
+
+    def only_accepted_decision_options(self, venue):
+        # True when the source's decision_options exactly match the venue's accept
+        # options, so the stage targets only accepted papers and authors/authorids
+        # should be hidden like the only_accepted / with_decision_accept path.
+        decision_options = self.source.get('decision_options')
+        if not decision_options:
+            return False
+        accept_options = venue.client.get_group(venue.venue_id).content.get('accept_decision_options', {}).get('value')
+        if not accept_options:
+            return False
+        return set(decision_options) == set(accept_options)
 
     def get_source_submissions(self, venue):
 
