@@ -17,6 +17,7 @@ import pprint
 import os
 import re
 import jwt
+import csv
 import traceback
 
 
@@ -41,8 +42,15 @@ class LogRetry(Retry):
         super().__init__(*args, **kwargs)   
 
     def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
-        # Log retry information before calling the parent class method
-        print(f"Retrying request: {method} {url}, response: {response}, error: {error}")
+        # Log retry information before calling the parent class method.
+        # A retry triggered by a response status (e.g. 429) arrives via `response`
+        # with `error` set to None, so surface the status/reason as the real cause;
+        # connection-level failures arrive via `error`.
+        if response is not None:
+            cause = f"status {response.status} {getattr(response, 'reason', '') or ''}".strip()
+        else:
+            cause = f"error {error}"
+        print(f"Retrying request: {method} {url}, {cause}")
 
         # Call the parent class method to perform the actual retry increment
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
@@ -116,7 +124,15 @@ class Client(object):
             'Accept': 'application/json',
         }
 
-        retry_strategy = LogRetry(total=3, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=True)
+        retry_strategy = LogRetry(
+            total=8,
+            connect=1,
+            backoff_factor=1,
+            backoff_max=120,
+            backoff_jitter=1,
+            status_forcelist=[ 429, 500, 502, 503, 504 ],
+            respect_retry_after_header=True
+        )
         self.session = requests.Session()
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount('https://', adapter)
@@ -2234,13 +2250,37 @@ class Client(object):
 
         return response.json()
 
-    def get_expertise_results(self, job_id, baseurl=None):
+    def get_expertise_metadata(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
+        response = self.session.get(base_url + '/expertise/metadata', params = {'jobId': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_expertise_results(self, job_id, baseurl=None, format='json'):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if format == 'csv':
+            response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
+            response = self.__handle_response(response)
+            return csv.DictReader(response.iter_lines(decode_unicode=True))
+
         response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
-
         return response.json()
+
+    def get_expertise_all_results(self, job_id, baseurl=None, output_filename=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if output_filename is None:
+            output_filename = f"{job_id}_scores.pt"
+        response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
+        response = self.__handle_response(response)
+        with response:
+            with open(output_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        return output_filename
 
 class Group(object):
     """
@@ -2746,6 +2786,16 @@ class Note(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+
+    @property
+    def authors(self):
+        """Returns the list of author display names."""
+        return list((self.content or {}).get('authors') or [])
+
+    @property
+    def authorids(self):
+        """Returns the list of author profile IDs / emails."""
+        return list((self.content or {}).get('authorids') or [])
 
     def to_json(self):
         """

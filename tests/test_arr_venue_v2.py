@@ -24,6 +24,8 @@ from openreview.stages.arr_content import (
     arr_content_license_task_forum,
     arr_content_license_task,
     arr_max_load_task_forum,
+    arr_voluntary_reviewing_task_forum,
+    arr_voluntary_meta_reviewing_task_forum,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
     arr_sac_max_load_task
@@ -832,8 +834,8 @@ class TestARRVenueV2():
             name = max_load_name,
             start_date = None,
             due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
+            instructions = arr_voluntary_reviewing_task_forum['instructions'],
+            title = venue.get_reviewers_name() + ' ' + arr_voluntary_reviewing_task_forum['title'],
             additional_fields=arr_reviewer_max_load_task,
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
@@ -862,8 +864,8 @@ class TestARRVenueV2():
             name = max_load_name,
             start_date = None,
             due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
+            instructions = arr_voluntary_meta_reviewing_task_forum['instructions'],
+            title = venue.get_area_chairs_name() + ' ' + arr_voluntary_meta_reviewing_task_forum['title'],
             additional_fields=arr_ac_max_load_task,
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
@@ -888,6 +890,18 @@ class TestARRVenueV2():
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
         venue.create_registration_stages()
+
+        note = openreview_client.get_notes(invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}_Form')[0]
+        assert note.content['title']['value'] == 'Reviewer Voluntary Unavailability and Maximum Load Request'
+        assert note.content['instructions']['value'] == '''Please complete this form to indicate your maximum load for voluntary reviewing for this cycle, or your (un)availability for voluntary reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.
+
+**This will be overridden with the mandatory reviewing load if you submit at least one paper in this cycle and are qualified to review.**'''
+
+        note = openreview_client.get_notes(invitation=f'{venue.get_area_chairs_id()}/-/{max_load_name}_Form')[0]
+        assert note.content['title']['value'] == 'Area Chair Voluntary Unavailability and Maximum Load Request'
+        assert note.content['instructions']['value'] == '''Please complete this form to indicate your maximum load for voluntary meta-reviewing for this cycle, or your (un)availability for voluntary meta-reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.
+
+**This will be overridden with the mandatory meta-reviewing load if you submit at least one paper in this cycle and are qualified to meta-review.**'''
 
         # Add max load preprocess validation
         invitation_builder = openreview.arr.InvitationBuilder(venue)
@@ -2471,7 +2485,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note.content['reassignment_request_area_chair']['value'] = 'This is not a resubmission'
                 del note.content['justification_for_not_keeping_action_editor_or_reviewers']
 
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+            openreview_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
@@ -3724,6 +3738,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "needs_ethics_review": {'value': 'No'},
                     "reported_issues": {'value': ['No']},
                     "note_to_authors": {'value': 'No'},
+                    "note_to_chairs": {'value': 'No'},
                     "great_reviews": {'value': 'ABCD'},
                     "poor_reviews": {'value': 'EFGH'},
                     "best_paper_ae_justification": {'value': 'Great and poor reviews'},
@@ -3739,6 +3754,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert meta_review['content']['reported_issues']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
         assert meta_review['content']['note_to_authors']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
+        assert meta_review['content']['note_to_chairs']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['best_paper_ae_justification']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['ethical_concerns']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['needs_ethics_review']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
@@ -5643,6 +5659,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "author_identity_guess": { "value": 1 },
                     "needs_ethics_review": {'value': 'No'},
                     "reported_issues": {'value': ['No']},
+                    "note_to_chairs": {'value': 'No'},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
@@ -5834,6 +5851,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert test_submission.content['flagged_for_ethics_review']['value']
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
+        assert meta_review.content['note_to_chairs']['readers'] == ['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/August/Submission4/Area_Chairs']
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in meta_review.readers
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' not in meta_review.readers
         request_page(
@@ -7638,7 +7656,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         for submission in august_submissions:
-            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission',
+            openreview_client.post_note_edit(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
                     content = {

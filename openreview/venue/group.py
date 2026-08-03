@@ -164,6 +164,7 @@ class GroupBuilder(object):
             'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
             'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },
             'date': { 'value': self.venue.date if self.venue.date else '' },
+            'release_role_participation': { 'value': self.venue.release_role_participation },
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
@@ -357,7 +358,7 @@ class GroupBuilder(object):
                     f'/{venue_id}/Submission[0-9]+/',
                     f'/{venue_id}/-/Venue.*/',
                     f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
-                    f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment).*/', # matching invitations
+                    f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration).*/', # matching invitations
                     f'{venue_id}/Authors/-/Message',
                     f'{venue_id}/Authors/Accepted/-/Message',
                     f'{venue_id}/-/Message',

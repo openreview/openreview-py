@@ -149,7 +149,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
     if email_authors and (paper_authors_id in comment.readers or 'everyone' in comment.readers):
         client.post_message(
             invitation=meta_invitation_id,
-            recipients=submission.content['authorids']['value'],
+            recipients=[paper_authors_id],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] {pretty_signature} commented on your submission. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on your submission.{content}''',

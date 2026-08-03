@@ -223,13 +223,13 @@ class TestLLMChatInteraction():
         assert anon_groups_2, 'No anon group found for reviewer2'
         anon_group_id_2 = anon_groups_2[0].id
 
-        # Create the NeurIPS.cc/2026/Conference/LLM group
+        # Create the NeurIPS.cc/2026/Conference/AI_Review_Assistant group
         openreview_client.post_group_edit(
             invitation='NeurIPS.cc/2026/Conference/-/Edit',
             signatures=['NeurIPS.cc/2026/Conference'],
             group=openreview.api.Group(
-                id='NeurIPS.cc/2026/Conference/LLM',
-                readers=['NeurIPS.cc/2026/Conference', 'NeurIPS.cc/2026/Conference/LLM'],
+                id='NeurIPS.cc/2026/Conference/AI_Review_Assistant',
+                readers=['NeurIPS.cc/2026/Conference', 'NeurIPS.cc/2026/Conference/AI_Review_Assistant'],
                 writers=['NeurIPS.cc/2026/Conference'],
                 signatures=['NeurIPS.cc/2026/Conference'],
                 signatories=['NeurIPS.cc/2026/Conference'],
@@ -237,9 +237,9 @@ class TestLLMChatInteraction():
             )
         )
 
-        llm_group = openreview_client.get_group('NeurIPS.cc/2026/Conference/LLM')
+        llm_group = openreview_client.get_group('NeurIPS.cc/2026/Conference/AI_Review_Assistant')
         assert llm_group
-        assert llm_group.id == 'NeurIPS.cc/2026/Conference/LLM'
+        assert llm_group.id == 'NeurIPS.cc/2026/Conference/AI_Review_Assistant'
 
         # Create the NeurIPS.cc/2026/Conference/Submission1/LLM_Interactive_Reviewers group
         # with the anon IDs of reviewer1 and reviewer2 as members
@@ -250,7 +250,7 @@ class TestLLMChatInteraction():
                 id='NeurIPS.cc/2026/Conference/Submission1/LLM_Interactive_Reviewers',
                 readers=[
                     'NeurIPS.cc/2026/Conference',
-                    'NeurIPS.cc/2026/Conference/LLM',
+                    'NeurIPS.cc/2026/Conference/AI_Review_Assistant',
                     'NeurIPS.cc/2026/Conference/Submission1/LLM_Interactive_Reviewers'
                 ],
                 writers=['NeurIPS.cc/2026/Conference'],
@@ -290,13 +290,13 @@ class TestLLMChatInteraction():
 
     domain = client.get_group(edit.domain)
 
-    if edit.signatures[0] == domain.id + '/LLM' or edit.signatures[0] == domain.id:
+    if edit.signatures[0] == domain.id + '/AI_Review_Assistant' or edit.signatures[0] == domain.id:
         return
 
     ## post a reply
     replied_edit = client.post_note_edit(
         invitation=invitation.id,
-        signatures=[domain.id + '/LLM'],
+        signatures=[domain.id + '/AI_Review_Assistant'],
         note=openreview.api.Note(
             replyto=edit.note.id,
             content={
@@ -364,12 +364,12 @@ class TestLLMChatInteraction():
     funcs['process'](client, edit, invitation)
 ''',
                         'invitees': [
-                            'NeurIPS.cc/2026/Conference/LLM',
+                            'NeurIPS.cc/2026/Conference/AI_Review_Assistant',
                             '${3/content/anon_group_id/value}'
                         ],
                         'readers': [
                             'NeurIPS.cc/2026/Conference',
-                            'NeurIPS.cc/2026/Conference/LLM',
+                            'NeurIPS.cc/2026/Conference/AI_Review_Assistant',
                             '${3/content/anon_group_id/value}'
                         ],
                         'writers': ['NeurIPS.cc/2026/Conference'],
@@ -379,13 +379,13 @@ class TestLLMChatInteraction():
                                 'param': {
                                     'items': [
                                         {'value': '${7/content/anon_group_id/value}', 'optional': True},
-                                        {'value': 'NeurIPS.cc/2026/Conference/LLM', 'optional': True}
+                                        {'value': 'NeurIPS.cc/2026/Conference/AI_Review_Assistant', 'optional': True}
                                     ]
                                 }
                             },
                             'readers': [
                                 'NeurIPS.cc/2026/Conference',
-                                'NeurIPS.cc/2026/Conference/LLM',
+                                'NeurIPS.cc/2026/Conference/AI_Review_Assistant',
                                 '${4/content/anon_group_id/value}'
                             ],
                             'writers': ['NeurIPS.cc/2026/Conference'],
@@ -399,7 +399,7 @@ class TestLLMChatInteraction():
                                 'signatures': ['${3/signatures}'],
                                 'readers': [
                                     'NeurIPS.cc/2026/Conference',
-                                    'NeurIPS.cc/2026/Conference/LLM',
+                                    'NeurIPS.cc/2026/Conference/AI_Review_Assistant',
                                     '${5/content/anon_group_id/value}'
                                 ],
                                 'writers': ['NeurIPS.cc/2026/Conference'],

@@ -83,7 +83,9 @@ class TestVenueSubmission():
 
         venue.custom_stage = openreview.stages.CustomStage(
             name='Camera_Ready_Verification',
-            source=openreview.stages.CustomStage.Source.ACCEPTED_SUBMISSIONS,
+            source={
+                'venueid': ['TestVenue.cc/Submission', 'TestVenue.cc', 'TestVenue.cc/Rejected_Submission'], 
+                'decision_options': ['Accept (Oral)'] },
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
             start_date=now + datetime.timedelta(minutes = 10),
             due_date=now + datetime.timedelta(minutes = 40),
@@ -181,7 +183,10 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     
     def test_submission_stage(self, venue, openreview_client, helpers):
 
-        assert openreview_client.get_invitation('TestVenue.cc/-/提交')
+        submission_invitation = openreview_client.get_invitation('TestVenue.cc/-/提交')
+        assert submission_invitation
+        # submission invitations get the default human verification rate limit
+        assert submission_invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
         helpers.create_user('celeste@maileleven.com', 'Celeste', 'MartinezEleven')
         helpers.create_user('celeste@mailetwelve.com', 'Celeste', 'MartinezTwelve')

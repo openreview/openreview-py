@@ -26,6 +26,8 @@ cd docker
 
 Tests use pytest with pytest-selenium (Firefox/geckodriver). Docker handles all dependencies including geckodriver.
 
+**Always run tests at the file level, never a single test method.** These are large integration tests that share server state across a run: the database is clean-started once at the start, then tests execute sequentially and accumulate data. Many tests depend on profiles/groups/notes created by earlier tests in the same file. Running one test in isolation produces misleading failures (e.g. "Profile Not Found" for an id an earlier test was meant to create) that look like real bugs but are test-isolation artifacts.
+
 ### Documentation
 ```bash
 pip install -e ".[docs]"

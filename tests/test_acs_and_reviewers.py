@@ -47,10 +47,8 @@ class TestSimpleDualAnonymous():
                     'contact_email': { 'value': 'efgh2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewer_groups_names': { 'value': ['Reviewers'] },
                     'area_chairs_support': { 'value': True },
                     'area_chair_groups_names': { 'value': ['Action_Editors'] },
-                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'expected_submissions': { 'value': 500 },
                     'venue_organizer_agreement': { 
                         'value': [
@@ -61,8 +59,6 @@ class TestSimpleDualAnonymous():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
-                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                     }
                 }
@@ -334,13 +330,27 @@ For more details, please check the following links:
             helpers.create_user(f'leonardo@{domain}', 'Leonardo', f'{domain.split(".")[0].capitalize()}')
 
         for i in range(1,11):
+            leonardo_domain = domains[i % 7]
+            domain_name = leonardo_domain.split('.')[0].capitalize()
             note = openreview.api.Note(
                 license = 'CC BY 4.0',
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Leonardo_' + domains[i % 7].split('.')[0].capitalize() + '1'] },
-                    'authors': { 'value': ['SomeFirstName User', 'Leonardo ' + domains[i % 7].split('.')[0].capitalize()] },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': f'Leonardo {domain_name}',
+                                'username': f'~Leonardo_{domain_name}1',
+                                'institutions': [{ 'domain': leonardo_domain, 'country': 'US' }]
+                            }
+                        ]
+                    },
                     'keywords': { 'value': ['computer vision'] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -349,12 +359,18 @@ For more details, please check the following links:
             )
 
             if i == 5:
-                note.content['authors']['value'].append('ReviewerOne EFGH')
-                note.content['authorids']['value'].append('~ReviewerOne_EFGH1')
+                note.content['authors']['value'].append({
+                    'fullname': 'ReviewerOne EFGH',
+                    'username': '~ReviewerOne_EFGH1',
+                    'institutions': [{ 'domain': 'efgh.cc', 'country': 'US' }]
+                })
 
             if i == 7:
-                note.content['authors']['value'].append('ACOne EFGH')
-                note.content['authorids']['value'].append('~ACOne_EFGH1')
+                note.content['authors']['value'].append({
+                    'fullname': 'ACOne EFGH',
+                    'username': '~ACOne_EFGH1',
+                    'institutions': [{ 'domain': 'efgh.cc', 'country': 'US' }]
+                })
 
             test_client.post_note_edit(invitation='EFGH.cc/2025/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
@@ -390,12 +406,6 @@ For more details, please check the following links:
                 'content_readers': {
                     'value': {
                         'authors': {
-                            'readers': [
-                                'EFGH.cc/2025/Conference',
-                                'EFGH.cc/2025/Conference/Submission${{4/id}/number}/Authors'
-                            ]
-                        },
-                        'authorids': {
                             'readers': [
                                 'EFGH.cc/2025/Conference',
                                 'EFGH.cc/2025/Conference/Submission${{4/id}/number}/Authors'
@@ -493,7 +503,7 @@ For more details, please check the following links:
         assert len(submissions) == 10
         assert submissions[0].readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors', 'EFGH.cc/2025/Conference/Reviewers', 'EFGH.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['authors']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
-        assert submissions[0].content['authorids']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
+        assert 'authorids' not in submissions[0].content
         assert submissions[0].content['email_sharing']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['data_release']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['pdf']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
@@ -1219,33 +1229,59 @@ note={under review}
         ]
         assert submissions[0].content['venueid']['value'] == 'EFGH.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'EFGH 2025 Conference Submission'
-        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release')
-        assert inv and not inv.content
-        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Dates')
-        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Which_Submissions')
+        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accepted_Submission_Release')
+        assert 'reveal_author_identities' not in inv.content
+        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Rejected_Submission_Release')
+        assert 'reveal_author_identities' not in inv.content
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accepted_Submission_Release/Dates')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Rejected_Submission_Release/Dates')
 
-        # add source submissions to submission release
+        # add reveal_author_identities to submission release invitations
         pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Submission_Release/Which_Submissions',
+            invitations='EFGH.cc/2025/Conference/-/Accepted_Submission_Release/Readers',
             content={
-                'source_submissions': {
-                    'value': 'accepted_submissions'
+                'readers': {
+                    'value': ['everyone']
+                },
+                'reveal_author_identities': {
+                    'value': True
                 }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=2)
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Rejected_Submission_Release/Readers',
+            content={
+                'readers': {
+                    'value': ['everyone']
+                },
+                'reveal_author_identities': {
+                    'value': False
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=2)
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
         # trigger submission release process
         pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Submission_Release/Dates',
+            invitations='EFGH.cc/2025/Conference/-/Accepted_Submission_Release/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=3)
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Rejected_Submission_Release/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
 

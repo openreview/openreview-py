@@ -332,7 +332,7 @@ class Matching(object):
         # Get profile info from all the authors
         all_authorids = []
         for submission in submissions:
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
             all_authorids = all_authorids + authorids
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True)
@@ -358,7 +358,7 @@ class Matching(object):
 
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
             # Get author profiles
-            authorids = submission.content['authorids']['value']
+            authorids = submission.authorids
 
             # Extract domains from each authorprofile
             author_ids = set()
@@ -618,15 +618,18 @@ class Matching(object):
                 desc = status_response.get('description')
                 call_count += 1
             if 'Completed' in status:
-                result = client.get_expertise_results(job_id['jobId'])
-                matching_status['no_profiles'] = result['metadata']['no_profile']
-                matching_status['no_publications'] = result['metadata']['no_publications']
+                result = client.get_expertise_results(job_id['jobId'], format='csv')
+
+                # CSV columns: entityA, entityB, score; downstream builders expect [entityB, entityA, score]
+                scores = [[row['entityB'], row['entityA'], row['score']] for row in result]
+
+                metadata = client.get_expertise_metadata(job_id['jobId'])
+                matching_status['no_profiles'] = metadata.get('no_profile', [])
+                matching_status['no_publications'] = metadata.get('no_publications', [])
 
                 if self.alternate_matching_group:
-                    scores = [[entry.get('entityB', entry.get('submission_member')), entry.get('entityA', entry.get('match_member')), entry['score']] for entry in result['results']]
                     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
 
-                scores = [[entry.get('entityB', entry.get('submission')), entry.get('entityA', entry.get('user')), entry['score']] for entry in result['results']]
                 return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
             if 'Error' in status:
                 raise openreview.OpenReviewException('There was an error computing scores, description: ' + desc)

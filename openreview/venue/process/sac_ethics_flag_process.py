@@ -16,7 +16,7 @@ def process(client, edit, invitation):
     if flag_note.content['ethics_review_flag']['value'] == 'Yes':
 
         # compute conflicts with ethics chairs
-        authorids = submission.content['authorids']['value']
+        authorids = submission.authorids
         author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True, with_relations=True)
         members_without_conflict = []
         ethics_chairs = client.get_group(ethics_chairs_id).members

@@ -47,15 +47,20 @@ class Helpers:
         }
         if dblp_url:
             profile_content['dblp'] = dblp_url
+        ## institution accepts a list when the profile needs more than one affiliation, e.g.
+        ## when the email domain is an institution on its own and must be declared in the
+        ## history for the profile to be saved. An alternate email on a different
+        ## institutional domain has to be listed here too, otherwise the save is rejected
+        institutions = institution if isinstance(institution, list) and institution else [institution if institution else email.split('@')[1]]
         profile_content['history'] = [{
             'position': 'PhD Student',
             'start': 2017,
             'end': None,
             'institution': {
                 'country': 'US',
-                'domain': institution if institution else email.split('@')[1],
+                'domain': domain,
             }
-        }]
+        } for domain in institutions]
         res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
@@ -92,6 +97,19 @@ class Helpers:
             counter += 1
 
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
+
+    @staticmethod
+    def await_venue_processes(super_client, venue_id, timeout=300):
+        # Wait until no process function for this specific venue is running, so renaming the venue
+        # is not rejected with a 409. Filtering by the venue prefix means we only wait on this
+        # venue's jobs and ignore active/scheduled jobs belonging to other venues from previous tests.
+        wait_time = 0.5
+        max_iterations = int(timeout / wait_time)
+        for _ in range(max_iterations):
+            running = super_client.get_process_logs(invitation=f'{venue_id}/.*', status='running')
+            if not running:
+                break
+            time.sleep(wait_time)
 
     @staticmethod
     def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0, timeout=300):
