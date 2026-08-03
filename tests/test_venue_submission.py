@@ -183,7 +183,10 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     
     def test_submission_stage(self, venue, openreview_client, helpers):
 
-        assert openreview_client.get_invitation('TestVenue.cc/-/提交')
+        submission_invitation = openreview_client.get_invitation('TestVenue.cc/-/提交')
+        assert submission_invitation
+        # submission invitations get the default human verification rate limit
+        assert submission_invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
         helpers.create_user('celeste@maileleven.com', 'Celeste', 'MartinezEleven')
         helpers.create_user('celeste@mailetwelve.com', 'Celeste', 'MartinezTwelve')
