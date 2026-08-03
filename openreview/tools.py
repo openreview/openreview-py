@@ -90,6 +90,16 @@ def is_accept_decision(decision, accept_options=None):
         return True
     return False
 
+def decision_option_to_id(decision_option):
+    """
+    Slugifies a decision option into an id-safe token for use in invitation ids
+    (i.e. "Accept (Oral)" -> "Accept_Oral")
+
+    :param decision_option: paper decision (i.e., Accept (Oral), Reject)
+    :type decision_option: string
+    """
+    return re.sub(r'[^A-Za-z0-9]+', '_', decision_option).strip('_')
+
 def run_once(f):
     """
     Decorator to run a function only once and return its output for any subsequent call to the function without running

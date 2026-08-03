@@ -98,7 +98,8 @@ def process(client, edit, invitation):
     venue.decision_stage = openreview.stages.DecisionStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=6),
         due_date=submission_deadline_datetime + datetime.timedelta(weeks=7),
-        accept_options=['Accept (Oral)', 'Accept (Poster)']
+        options=['Accept', 'Reject'],
+        accept_options=['Accept']
     )
 
     venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
@@ -259,7 +260,8 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': additional_readers },
-            'decision_option': { 'value': 'Accepted' },
+            'decision_option': { 'value': 'Accept' },
+            'decision_option_id': { 'value': openreview.tools.decision_option_to_id('Accept') },
             'decision_venue_id': { 'value': venue_id }
         }
     )
@@ -274,7 +276,8 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': additional_readers },
-            'decision_option': { 'value': 'Rejected' },
+            'decision_option': { 'value': 'Reject' },
+            'decision_option_id': { 'value': openreview.tools.decision_option_to_id('Reject') },
             'decision_venue_id': { 'value': venue.get_rejected_submission_venue_id() }
         }
     )

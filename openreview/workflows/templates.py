@@ -1734,7 +1734,17 @@ If you would like to change your decision, please follow the link in the previou
                         'value': {
                             'param': {
                                 'type': "string",
-                                'enum': ['Accepted', 'Rejected']
+                                'regex': '.*'
+                            }
+                        }
+                    },
+                    'decision_option_id': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
                             }
                         }
                     },
@@ -1750,7 +1760,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option/value}_${2/content/submission_name/value}_Release',
+                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option_id/value}_${2/content/submission_name/value}_Release',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],

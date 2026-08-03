@@ -6,7 +6,7 @@ def process(client, edit, invitation):
     rejected_venue_id = domain.content.get('rejected_venue_id', {}).get('value')
     submission_venue_id = domain.content.get('submission_venue_id', {}).get('value')
 
-    with_decision_accept = edit.content['decision_option']['value'] == 'Accepted'
+    decision_option = edit.content['decision_option']['value']
 
     client.post_invitation_edit(
         invitations=meta_invitation_id,
@@ -17,7 +17,7 @@ def process(client, edit, invitation):
                 'source': {
                     'value': {
                         'venueid': [submission_venue_id, domain.id, rejected_venue_id],
-                        'with_decision_accept': with_decision_accept
+                        'decision_options': [decision_option]
                     }
                 }
             }
@@ -37,4 +37,3 @@ def process(client, edit, invitation):
         }
     }
     edit_invitations_builder.set_edit_submission_readers_invitation(invitation_id, True, content)
-    # edit_invitations_builder.set_edit_reveal_authors(invitation_id)

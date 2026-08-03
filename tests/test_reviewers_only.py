@@ -2530,7 +2530,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
         assert '_bibtex' not in submissions[0].content
 
-        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release')
+        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release')
         assert inv and inv.content 
         assert 'reveal_author_identities' not in inv.content
         assert inv.content['decision_option']['value'] == 'Accepted'
@@ -2539,8 +2539,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'with_decision_accept': True
         }
         assert inv.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference'
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Readers')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release/Readers')
 
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release')
         assert inv and inv.content 
@@ -2559,12 +2559,12 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         # trigger submission release without selecting whether to release author names or not
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Accept_Submission_Release/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accept_Submission_Release-0-1', count=2)
 
         # trigger submission release without selecting whether to release author names or not
         pc_client.post_invitation_edit(
@@ -2584,7 +2584,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         # select reveal_authors value to re-run submission release
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Readers',
+            invitations='ABCD.cc/2025/Conference/-/Accept_Submission_Release/Readers',
             content={
                 'readers': {
                     'value': ['everyone']
@@ -2592,7 +2592,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
                 'reveal_author_identities': { 'value': True }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accept_Submission_Release-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 

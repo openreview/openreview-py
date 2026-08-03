@@ -2362,17 +2362,16 @@ def test_decision_stage(client, openreview_client, helpers):
     # upload decisions using a CSV file
     submissions = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
 
-    decisions = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
+    decisions = ['Accept', 'Reject']
     comment = {
-        'Accept (Oral)': 'Congratulations on your oral acceptance.',
-        'Accept (Poster)': 'Congratulations on your poster acceptance.',
+        'Accept': 'Congratulations on your acceptance.',
         'Reject': 'We regret to inform you...'
     }
 
     with open(os.path.join(os.path.dirname(__file__), 'data/ICLR_2026_decisions.csv'), 'w') as file_handle:
         writer = csv.writer(file_handle)
-        writer.writerow([submissions[0].number, 'Accept (Oral)', comment['Accept (Oral)']])
-        writer.writerow([submissions[1].number, 'Accept (Poster)', comment['Accept (Poster)']])
+        writer.writerow([submissions[0].number, 'Accept', comment['Accept']])
+        writer.writerow([submissions[1].number, 'Accept', comment['Accept']])
         writer.writerow([submissions[2].number, 'Reject', comment['Reject']])
         for submission in submissions[3:]:
             decision = random.choice(decisions)
@@ -2402,7 +2401,7 @@ def test_decision_stage(client, openreview_client, helpers):
     helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2026/Conference/Submission1/-/Decision')
 
     decision_note = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission1/-/Decision')[0]
-    assert decision_note and decision_note.content['decision']['value'] == 'Accept (Oral)'
+    assert decision_note and decision_note.content['decision']['value'] == 'Accept'
     assert decision_note.readers == ['ICLR.cc/2026/Conference/Program_Chairs']
     assert decision_note.nonreaders == ['ICLR.cc/2026/Conference/Submission1/Authors']
 
@@ -2550,14 +2549,14 @@ def test_release_submissions(client, openreview_client, helpers):
     ]
     assert submissions[0].content['venueid']['value'] == 'ICLR.cc/2026/Conference/Submission'
 
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accepted_Submission_Release')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Rejected_Submission_Release')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accepted_Submission_Release/Dates')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Rejected_Submission_Release/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Submission_Release')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Reject_Submission_Release')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Submission_Release/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Reject_Submission_Release/Dates')
 
     # release accepted submissions to the public revealing the author identities
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Accepted_Submission_Release/Readers',
+        invitations='ICLR.cc/2026/Conference/-/Accept_Submission_Release/Readers',
         content={
             'readers': {
                 'value': ['everyone']
@@ -2567,11 +2566,11 @@ def test_release_submissions(client, openreview_client, helpers):
             }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accepted_Submission_Release-0-1', count=2)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Submission_Release-0-1', count=2)
 
     # release rejected submissions to the public keeping the authors anonymous
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Rejected_Submission_Release/Readers',
+        invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Release/Readers',
         content={
             'readers': {
                 'value': ['everyone']
@@ -2581,27 +2580,27 @@ def test_release_submissions(client, openreview_client, helpers):
             }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Rejected_Submission_Release-0-1', count=2)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Release-0-1', count=2)
 
     now = datetime.datetime.now()
     new_cdate = openreview.tools.datetime_millis(now)
 
     # trigger the submission release processes
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Accepted_Submission_Release/Dates',
+        invitations='ICLR.cc/2026/Conference/-/Accept_Submission_Release/Dates',
         content={
             'activation_date': { 'value': new_cdate }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accepted_Submission_Release-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Submission_Release-0-1', count=3)
 
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Rejected_Submission_Release/Dates',
+        invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Release/Dates',
         content={
             'activation_date': { 'value': new_cdate }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Rejected_Submission_Release-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Release-0-1', count=3)
 
     submissions = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
 
@@ -2610,7 +2609,7 @@ def test_release_submissions(client, openreview_client, helpers):
     assert submissions[0].pdate
     assert 'readers' not in submissions[0].content['authors']
     assert submissions[0].content['venueid']['value'] == 'ICLR.cc/2026/Conference'
-    assert submissions[0].content['venue']['value'] == 'ICLR 2026 Oral'
+    assert submissions[0].content['venue']['value'] == 'ICLR 2026'
     year = datetime.datetime.now().year
     valid_bibtex = '''@inproceedings{
 user'''+str(year)+'''paper,
@@ -2628,7 +2627,7 @@ url={https://openreview.net/forum?id='''
     assert submissions[1].pdate
     assert 'readers' not in submissions[1].content['authors']
     assert submissions[1].content['venueid']['value'] == 'ICLR.cc/2026/Conference'
-    assert submissions[1].content['venue']['value'] == 'ICLR 2026 Poster'
+    assert submissions[1].content['venue']['value'] == 'ICLR 2026'
 
     # rejected submission: authors stay anonymous
     assert submissions[2].readers == ['everyone']
