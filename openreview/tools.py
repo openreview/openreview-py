@@ -44,6 +44,10 @@ LOCAL_SITE   = os.environ.get('OPENREVIEW_WEB_URL', 'http://localhost:3030')
 V1_REMOTE_URLS = [PROD_API_V1, DEV_API_V1]
 V2_REMOTE_URLS = [PROD_API_V2, DEV_API_V2]
 
+# Default rate limit applied to submission (and publication import) invitations
+# to prevent a user from posting too many edits/notes in a short window
+DEFAULT_HUMAN_VERIFICATION = { 'limit': 15, 'windowMs': 3600000 }
+
 def _identify_environment(baseurl):
     """Return 'dev', 'prod', or 'local' based on baseurl."""
     if any(url in baseurl for url in [DEV_API_V1, DEV_API_V2]):
