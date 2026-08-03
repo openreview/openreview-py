@@ -3,8 +3,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import inspect
 
+import io
 import json
 import os
+import shutil
+import zipfile
 
 import openreview
 import re
@@ -2280,6 +2283,73 @@ def singularize(word):
     elif word.endswith('s'):
         return word[:-1]
     return word
+
+def get_all_attachments(client, venueid, field_name, output_dir=None):
+    """
+    Downloads the attachments of all the notes with the given ``venueid`` and extracts them into a directory.
+
+    The files are requested sequentially in batches of 50 ids, the max number of ids supported by the API,
+    and each batch is returned as a zip file that gets extracted into ``output_dir``.
+    Notes that don't have a file in ``field_name`` are skipped.
+
+    :param client: Client used to get the submissions and the attachments
+    :type client: openreview.api.OpenReviewClient
+    :param venueid: Value of the ``venueid`` content field, like ``auai.org/UAI/2026/Conference``
+    :type venueid: str
+    :param field_name: Name of the content field that contains the attachment, like ``pdf`` or ``latex_source_zip``
+    :type field_name: str
+    :param output_dir: Directory where the files are extracted, it gets created if it doesn't exist.
+        Defaults to a directory named after ``field_name``
+    :type output_dir: str, optional
+
+    :return: Paths of the downloaded files
+    :rtype: list[str]
+
+    Example:
+
+    >>> files = openreview.tools.get_all_attachments(client, venueid='auai.org/UAI/2026/Conference', field_name='latex_source_zip')
+
+    """
+    output_dir = output_dir or field_name
+
+    submissions = client.get_all_notes(content={ 'venueid': venueid }, sort='number:asc')
+    notes = [s for s in submissions if s.content.get(field_name, {}).get('value')]
+
+    print(f'{len(notes)} submissions out of {len(submissions)} have a file in {field_name}')
+
+    if not notes:
+        return []
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    ## The API returns the file itself instead of a zip file when only one id is requested
+    if len(notes) == 1:
+        note = notes[0]
+        extension = note.content[field_name]['value'].split('.')[-1]
+        file_path = os.path.join(output_dir, f'{note.number}_{field_name}.{extension}')
+        with open(file_path, 'wb') as f:
+            f.write(client.get_attachment(id=note.id, field_name=field_name))
+        return [file_path]
+
+    batch_size = 50
+    batches = [notes[i:i + batch_size] for i in range(0, len(notes), batch_size)]
+
+    ## Avoid leaving a single note in the last batch, it would not return a zip file either
+    if len(batches[-1]) == 1:
+        batches[-1].insert(0, batches[-2].pop())
+
+    file_paths = []
+    for batch in tqdm(batches, desc='Downloading attachments'):
+        archive_content = client.get_attachment(ids=[note.id for note in batch], field_name=field_name)
+        with zipfile.ZipFile(io.BytesIO(archive_content)) as archive:
+            for member in archive.infolist():
+                file_path = os.path.join(output_dir, member.filename)
+                with archive.open(member) as source, open(file_path, 'wb') as target:
+                    shutil.copyfileobj(source, target)
+
+                file_paths.append(file_path)
+
+    return file_paths
 
 def percentile(data, percent):
     """Return the percentile value from *data* using linear interpolation,
