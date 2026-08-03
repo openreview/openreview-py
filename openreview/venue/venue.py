@@ -82,6 +82,7 @@ class Venue(object):
         self.submission_license = ['CC BY 4.0']
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
+        self.release_role_participation = True
         self.sac_paper_assignments = False
         self.submission_assignment_max_reviewers = None
         self.preferred_emails_groups = []
@@ -158,6 +159,8 @@ class Venue(object):
                 self.senior_area_chairs_name = self.senior_area_chair_roles[0]
             self.use_senior_area_chairs = True
             preferred_email_groups.append(self.get_senior_area_chairs_id())
+
+        self.release_role_participation = request_note.content.get('release_role_participation', {}).get('value', True)
 
         self.preferred_emails_groups = preferred_email_groups
         self.automatic_reviewer_assignment = True
