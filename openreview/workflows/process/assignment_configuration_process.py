@@ -38,34 +38,38 @@ def process(client, edit, invitation):
     # if reviewer assignment was created, add it to list of possible reviewer assignment titles that ACs could edit
     if committee_name in reviewer_roles and area_chairs_name:
         ac_name = area_chairs_name.replace('_', ' ')
+        committee_pretty_name = committee_name.replace('_', ' ')
         edit_invitation_id = f'{venue_id}/{area_chairs_name}/-/Reviewer_Reassignment'
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=edit_invitation_id,
-                edit={
-                    'content': {
-                        'reviewers_proposed_assignment_title': {
-                            'order': 2,
-                            'description': 'If you would like area chairs to edit reviewer proposed assignments, select the title of the matching that you would like them to edit. If area chairs should edit deployed assignments, leave empty.',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': all_assignment_titles,
-                                    'optional': True,
-                                    'deletable': True
+        edit_invitation = openreview.tools.get_invitation(client, edit_invitation_id)
+
+        if edit_invitation:
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=edit_invitation_id,
+                    edit={
+                        'content': {
+                            'reviewers_proposed_assignment_title': {
+                                'order': 2,
+                                'description': f'If you would like {ac_name} to edit {committee_pretty_name} proposed assignments, select the title of the matching that you would like them to edit. If {ac_name} should edit deployed assignments, leave empty.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'enum': all_assignment_titles,
+                                        'optional': True,
+                                        'deletable': True
+                                    }
+                                }
+                            }
+                        },
+                        'group': {
+                            'content': {
+                                'reviewers_proposed_assignment_title': {
+                                    'value': '${4/content/reviewers_proposed_assignment_title/value?}'
                                 }
                             }
                         }
-                    },
-                    'group': {
-                        'content': {
-                            'reviewers_proposed_assignment_title': {
-                                'value': '${4/content/reviewers_proposed_assignment_title/value?}'
-                            }
-                        }
                     }
-                }
+                )
             )
-        )
