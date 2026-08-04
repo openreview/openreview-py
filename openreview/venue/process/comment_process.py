@@ -134,22 +134,27 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
                 )
 
     #send email to author of comment
-    client.post_message(
-        invitation=meta_invitation_id,
-        recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else [],
-        subject=f'''[{short_name}] Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-        message=f'''Your comment was received on a submission to {short_name}.{content}''',
-        replyTo=contact,
-        signature=venue_id,
-        sender=sender
-    )
+    comment_author_recipients = [edit.tauthor] if edit.tauthor.lower() != 'openreview.net' else []
+    if program_chairs_id in comment.signatures and not email_pcs:
+        comment_author_recipients = []
+
+    if comment_author_recipients:
+        client.post_message(
+            invitation=meta_invitation_id,
+            recipients=comment_author_recipients,
+            subject=f'''[{short_name}] Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''Your comment was received on a submission to {short_name}.{content}''',
+            replyTo=contact,
+            signature=venue_id,
+            sender=sender
+        )
 
     #send email to paper authors
     paper_authors_id = f'{paper_group_id}/{authors_name}'
     if email_authors and (paper_authors_id in comment.readers or 'everyone' in comment.readers):
         client.post_message(
             invitation=meta_invitation_id,
-            recipients=submission.content['authorids']['value'],
+            recipients=[paper_authors_id],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] {pretty_signature} commented on your submission. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on your submission.{content}''',

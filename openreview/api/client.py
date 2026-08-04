@@ -19,6 +19,7 @@ import re
 import time
 import jwt
 import json
+import csv
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from ..openreview import MfaRequiredException
@@ -122,7 +123,15 @@ class OpenReviewClient(object):
             'Accept': 'application/json'
         }
 
-        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=True)
+        retry_strategy = LogRetry(
+            total=8,
+            connect=1,
+            backoff_factor=1,
+            backoff_max=120,
+            backoff_jitter=1,
+            status_forcelist=[ 429, 500, 502, 503, 504 ],
+            respect_retry_after_header=True
+        )
         self.session = requests.Session()
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount('https://', adapter)
@@ -255,6 +264,11 @@ class OpenReviewClient(object):
         response = self.session.post(self.baseurl + '/invitations/dateprocesses', json = { 'ids': [invitation_id]}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
+
+    def delete_invitation_date_process_scheduler(self, job_id):
+        response = self.session.delete(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/schedulers/' + job_id.replace('/', '%2F'), headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
     
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
@@ -357,7 +371,9 @@ class OpenReviewClient(object):
         response = self.session.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
-        self.__handle_authorization(json_response)
+        ## A profile pending moderation is activated without an authentication token
+        if json_response.get('token'):
+            self.__handle_authorization(json_response)
 
         return json_response
 
@@ -865,7 +881,69 @@ class OpenReviewClient(object):
 
 
         response = self.__handle_response(response)
-        return response.json()    
+        result = response.json()
+
+        ## The rename is processed asynchronously. Wait for the specific rename job to finish
+        ## (its id is returned in the response) before doing any post-processing, so we don't
+        ## race with the server-side rename (which would leave the venue half-renamed).
+        job_id = result.get('jobId')
+        if job_id:
+            wait_time = 0.5
+            max_iterations = int(600 / wait_time)
+            for _ in range(max_iterations):
+                try:
+                    job = self.get_job('internalQueueMQ', job_id)
+                except OpenReviewException as e:
+                    error = e.args[0] if e.args else {}
+                    message = error.get('message', '') if isinstance(error, dict) else str(error)
+                    ## the job finished and was removed from the queue
+                    if error.get('name') == 'NotFoundError' or 'not found' in message.lower():
+                        break
+                    raise
+                if not job or job.get('finishedOn'):
+                    break
+                time.sleep(wait_time)
+
+        ## Make sure the parent groups for the new venue id exist (e.g. ICML.org and
+        ## ICML.org/2023 for ICML.org/2023/Conference), creating any that are missing the
+        ## same way the venue group builder does.
+        path_components = new_venue_id.split('/')
+        paths = ['/'.join(path_components[0:index + 1]) for index in range(len(path_components))]
+        for path in paths:
+            if tools.get_group(self, path) is None:
+                self.post_group_edit(
+                    invitation = 'openreview.net/-/Edit',
+                    readers = ['everyone'],
+                    writers = ['~Super_User1'],
+                    signatures = ['~Super_User1'],
+                    group = Group(
+                        id = path,
+                        readers = ['everyone'],
+                        nonreaders = [],
+                        writers = [path],
+                        signatories = [path],
+                        signatures = ['~Super_User1'],
+                        members = [],
+                        details = { 'writable': True }
+                    )
+                )
+
+        ## The old venue id no longer exists after the rename. Replace it with the new venue
+        ## id in the active_venues/venues groups so the renamed venue stays registered and no
+        ## stale member is left behind (which would break jobs that iterate these groups).
+        for group_id in ['active_venues', 'venues']:
+            try:
+                group = self.get_group(group_id)
+            except OpenReviewException as e:
+                error = e.args[0]
+                if error.get('name') == 'NotFoundError' or error.get('message', '').startswith('Group Not Found'):
+                    continue
+                raise e
+            if old_venue_id in (group.members or []):
+                self.remove_members_from_group(group_id, old_venue_id)
+                self.add_members_to_group(group_id, new_venue_id)
+
+        return response.json()
 
     def put_attachment(self, file_path, invitation, name):
         """Upload a file attachment to the OpenReview server.
@@ -1670,34 +1748,6 @@ class OpenReviewClient(object):
         if domain is not None:
             params['domain'] = domain
 
-        if 'details' not in params:
-            params['stream'] = True
-            # Handle sort param for local sorting
-            sort_key = None
-            reverse = False
-            if 'sort' in params:
-                # Accept format like "number:asc", "tcdate:desc", etc.
-                valid_fields = {
-                    'number': lambda n: n.number,
-                    'tcdate': lambda n: n.tcdate,
-                    'tmdate': lambda n: n.tmdate,
-                    'cdate': lambda n: n.cdate,
-                    'mdate': lambda n: n.mdate
-                }
-                if ':' in sort:
-                    field, direction = sort.split(':', 1)
-                else:
-                    field, direction = sort, 'desc'
-                if field in valid_fields:
-                    sort_key = valid_fields[field]
-                    reverse = direction == 'desc'
-                    params['sort'] = None  # Remove for API call, sort locally            
-            
-            results = self.get_notes(**params)
-            if sort_key:
-                return sorted(results, key=sort_key, reverse=reverse)
-            return results
-        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):
@@ -2386,6 +2436,20 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_invitation(self, invitation_id):
+        """
+        Deletes the invitation
+
+        :param invitation_id: ID of Invitation to be deleted
+        :type invitation_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.invitations_url, json = {'id': invitation_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=None):
         """
         Posts a message to the recipients and consequently sends them emails
@@ -2953,6 +3017,41 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def get_job(self, queue_name, job_id):
+        """
+        **Only for Super User**. Retrieves a single job from a queue by id.
+
+        :param queue_name: Name of the queue (e.g. ``internalQueueMQ``)
+        :type queue_name: str
+        :param job_id: Id of the job
+        :type job_id: str
+
+        :return: Job object
+        :rtype: dict
+        """
+        response = self.session.get(f'{self.baseurl}/jobs/queues/{queue_name}/{job_id}', headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def request_raw_expertise(self, expertise_request, baseurl=None):
+        """
+        Calls the Expertise API with a raw expertise request.
+
+        :param expertise_request: Dictionary containing the expertise request to be sent to the Expertise API
+        :type expertise_request: dict
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the response from the Expertise API
+        :rtype: dict
+        """
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
     def request_expertise(self, 
                         name, 
                         group_id, 
@@ -3338,7 +3437,21 @@ class OpenReviewClient(object):
         print('get expertise jobs', response_json)
         return response_json
     
-    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
+    def get_expertise_metadata(self, job_id, baseurl=None):
+
+        print('get expertise metadata', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            print('get expertise metadata localhost, return {}')
+            return {}
+
+        response = self.session.get(base_url + '/expertise/metadata', params = {'jobId': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        response_json = response.json()
+        print('get expertise metadata', response_json)
+        return response_json
+
+    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json'):
 
         print('get expertise results', baseurl, job_id)
         base_url = baseurl if baseurl else self.baseurl
@@ -3346,7 +3459,7 @@ class OpenReviewClient(object):
 
         if base_url.startswith('http://localhost'):
             print('return expertise results localhost, return []')
-            return { 'results': [] }
+            return iter([]) if format == 'csv' else { 'results': [] }
 
         if wait_for_complete:
             call_count = 0
@@ -3361,17 +3474,51 @@ class OpenReviewClient(object):
                 call_count += 1
 
             if 'Completed' == status_text:
-                return self.get_expertise_results(job_id, baseurl=base_url)
+                return self.get_expertise_results(job_id, baseurl=base_url, format=format)
             if 'Error' in status_text:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
+            if format == 'csv':
+                response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
+                response = self.__handle_response(response)
+                print('return expertise results', baseurl, job_id)
+                def _iter_csv_results(response):
+                    try:
+                        yield from csv.DictReader(response.iter_lines(decode_unicode=True))
+                    finally:
+                        response.close()
+                return _iter_csv_results(response)
+
             response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
             response = self.__handle_response(response)
             print('return expertise results', baseurl, job_id)
             return response.json()
+
+    def get_expertise_all_results(self, job_id, baseurl=None, output_filename=None):
+
+        print('get expertise all results', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+
+        if base_url.startswith('http://localhost'):
+            print('return expertise all results localhost, return empty file')
+            if output_filename is None:
+                output_filename = f"{job_id}_scores.pt"
+            open(output_filename, 'wb').close()
+            return output_filename
+
+        if output_filename is None:
+            output_filename = f"{job_id}_scores.pt"
+        response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
+        response = self.__handle_response(response)
+        with response:
+            with open(output_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        print('return expertise all results', baseurl, job_id)
+        return output_filename
 
 
 class Edit(object):
@@ -3577,23 +3724,28 @@ class Note(object):
     @property
     def authors(self):
         """
-        Returns the authors as a canonical list of ``{'fullname', 'username'}`` dicts,
-        regardless of whether the underlying content stores them as a list of objects
-        (current schema) or as parallel ``authors``/``authorids`` arrays (legacy schema).
+        Returns the list of author display names, working for both the unified
+        ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
         """
         if not self.content:
             return []
         authors_value = self.content.get('authors', {}).get('value') or []
         if authors_value and isinstance(authors_value[0], dict):
-            return [{'fullname': a.get('fullname', ''), 'username': a.get('username', '')} for a in authors_value]
-        authorids_value = self.content.get('authorids', {}).get('value') or []
-        return [
-            {
-                'fullname': authors_value[i] if i < len(authors_value) else '',
-                'username': authorids_value[i] if i < len(authorids_value) else ''
-            }
-            for i in range(max(len(authors_value), len(authorids_value)))
-        ]
+            return [author.get('fullname', '') for author in authors_value]
+        return list(authors_value)
+
+    @property
+    def authorids(self):
+        """
+        Returns the list of author profile IDs / emails, working for both the
+        unified ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
+        """
+        if not self.content:
+            return []
+        authors_value = self.content.get('authors', {}).get('value') or []
+        if authors_value and isinstance(authors_value[0], dict):
+            return [author['username'] for author in authors_value if author.get('username')]
+        return list(self.content.get('authorids', {}).get('value') or [])
 
     def to_json(self):
         """

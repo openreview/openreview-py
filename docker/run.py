@@ -22,8 +22,23 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 COMPOSE_FILE = SCRIPT_DIR / "docker-compose.yml"
 COMPOSE_SERVE_FILE = SCRIPT_DIR / "docker-compose.serve.yml"
+COMPOSE_WORKTREE_FILE = SCRIPT_DIR / ".docker-compose.worktree.yml"
 CONFIG_FILE = SCRIPT_DIR / "config.json"
 CONFIG_EXAMPLE = SCRIPT_DIR / "config.example.json"
+
+# Each service's `.git` tmpfs masks, and which host repo each one shadows:
+#   "src"           -> the repo mounted at /mnt/src for that service
+#   "openreview-py" -> the openreview-py repo mounted via `../`
+# A tmpfs only mounts over a *directory*; a git worktree's `.git` is a *file*
+# (a gitdir pointer), so an entry must be stripped when its host `.git` is not
+# a directory. This covers both a worktree dependency repo and running run.py
+# from inside an openreview-py worktree.
+SERVICE_GIT_TMPFS = {
+    "api-v1": [("/mnt/src/.git", "src"), ("/mnt/openreview-py/.git", "openreview-py")],
+    "api-v2": [("/mnt/src/.git", "src"), ("/mnt/openreview-py/.git", "openreview-py")],
+    "web": [("/mnt/src/.git", "src")],
+    "test": [("/mnt/src/.git", "openreview-py")],
+}
 
 
 DEFAULTS = {
@@ -85,13 +100,64 @@ def check_dirty(repo_path, name):
     return result.returncode != 0
 
 
+def find_worktree_for_branch(repo_path, branch):
+    """Return the worktree path where `branch` is checked out, or None.
+
+    Skips the main worktree (repo_path itself) — only returns sibling worktrees.
+    """
+    result = subprocess.run(
+        ["git", "-C", str(repo_path), "worktree", "list", "--porcelain"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    main_worktree = repo_path.resolve()
+    target_ref = f"refs/heads/{branch}"
+    current_path = None
+    for line in result.stdout.splitlines():
+        if line.startswith("worktree "):
+            current_path = Path(line[len("worktree "):])
+        elif line.startswith("branch ") and line[len("branch "):] == target_ref:
+            if current_path and current_path.resolve() != main_worktree:
+                return current_path
+    return None
+
+
+def current_branch(repo_path):
+    """Return the repo's current branch name, or None (e.g. detached HEAD errors)."""
+    result = subprocess.run(
+        ["git", "-C", str(repo_path), "rev-parse", "--abbrev-ref", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
 def checkout_branch(repo_path, branch, name):
-    """Checkout a branch in a sibling repo."""
+    """Ensure `branch` is checked out for `name`, returning (path, used_worktree).
+
+    If the branch is already checked out in a sibling worktree, returns that
+    worktree's path with used_worktree=True (no checkout performed). Otherwise
+    checks out the branch in `repo_path` and returns (repo_path, False).
+    """
     if not branch:
-        return
+        return repo_path, False
     if not repo_path.exists():
         print(f"Error: {name} repo not found at {repo_path}", file=sys.stderr)
         sys.exit(1)
+
+    worktree_path = find_worktree_for_branch(repo_path, branch)
+    if worktree_path is not None:
+        print(f"Using worktree at {worktree_path} for {name} branch '{branch}'")
+        return worktree_path, True
+
+    if current_branch(repo_path) == branch:
+        # Already on the requested branch — no checkout needed, so local
+        # uncommitted changes are harmless (git lets you stay put while dirty).
+        print(f"{name} already on '{branch}', skipping checkout")
+        return repo_path, False
+
     if check_dirty(repo_path, name):
         print(
             f"Error: {name} has uncommitted changes at {repo_path}. "
@@ -108,6 +174,51 @@ def checkout_branch(repo_path, branch, name):
     if result.returncode != 0:
         print(f"Error: git checkout failed in {name}:\n{result.stderr}", file=sys.stderr)
         sys.exit(1)
+    return repo_path, False
+
+
+def write_worktree_override(service_src_paths, openreview_py_path):
+    """Write a compose override stripping `.git` tmpfs masks that can't mount.
+
+    For each service, keep a `.git` tmpfs entry only when the host repo it
+    shadows has a real `.git` *directory*; drop it when `.git` is a file (a
+    worktree gitdir pointer) or missing. `service_src_paths` maps a service to
+    the host path mounted at its /mnt/src; `openreview_py_path` is the repo
+    mounted via `../`.
+
+    Returns the override file path, or None if no override is needed (in which
+    case any stale override file is removed). Requires Docker Compose >= v2.24
+    for the `!override` YAML tag.
+    """
+    def git_is_dir(host_path):
+        return host_path is not None and (Path(host_path) / ".git").is_dir()
+
+    overrides = {}  # service -> list of tmpfs entries to keep
+    for svc, entries in SERVICE_GIT_TMPFS.items():
+        kept = [
+            container_path
+            for container_path, which in entries
+            if git_is_dir(openreview_py_path if which == "openreview-py"
+                          else service_src_paths.get(svc))
+        ]
+        if len(kept) != len(entries):  # at least one entry needs stripping
+            overrides[svc] = kept
+
+    if not overrides:
+        if COMPOSE_WORKTREE_FILE.exists():
+            COMPOSE_WORKTREE_FILE.unlink()
+        return None
+    lines = ["# Auto-generated by run.py — do not edit.", "services:"]
+    for svc, kept in overrides.items():
+        lines.append(f"  {svc}:")
+        if kept:
+            lines.append("    tmpfs: !override")
+            for entry in kept:
+                lines.append(f"      - {entry}")
+        else:
+            lines.append("    tmpfs: !override []")
+    COMPOSE_WORKTREE_FILE.write_text("\n".join(lines) + "\n")
+    return COMPOSE_WORKTREE_FILE
 
 
 def check_port_conflicts(ports):
@@ -130,11 +241,16 @@ def check_port_conflicts(ports):
         sys.exit(1)
 
 
+_extra_compose_files = []
+
+
 def compose_cmd(serve_mode=False):
     """Build the base docker compose command list."""
     cmd = ["docker", "compose", "-f", str(COMPOSE_FILE)]
     if serve_mode:
         cmd.extend(["-f", str(COMPOSE_SERVE_FILE)])
+    for f in _extra_compose_files:
+        cmd.extend(["-f", str(f)])
     return cmd
 
 
@@ -400,12 +516,22 @@ def main():
     api_v2_branch = args.branch_api_v2 or config["api_v2"]["branch"]
     web_branch = args.branch_web or config["web"]["branch"]
 
-    # Auto-checkout branches
+    # Auto-checkout branches; may redirect a path to an existing worktree
     auto_checkout = config.get("auto_checkout", True) and not args.no_checkout
     if auto_checkout:
-        checkout_branch(api_v1_path, api_v1_branch, "api-v1")
-        checkout_branch(api_v2_path, api_v2_branch, "api-v2")
-        checkout_branch(web_path, web_branch, "web")
+        api_v1_path, _ = checkout_branch(api_v1_path, api_v1_branch, "api-v1")
+        api_v2_path, _ = checkout_branch(api_v2_path, api_v2_branch, "api-v2")
+        web_path, _ = checkout_branch(web_path, web_branch, "web")
+
+    # Strip `.git` tmpfs masks for any mounted repo that's a worktree (`.git` is
+    # a file, not a directory) — including openreview-py itself when run.py is
+    # invoked from inside a worktree.
+    override = write_worktree_override(
+        {"api-v1": api_v1_path, "api-v2": api_v2_path, "web": web_path},
+        SCRIPT_DIR.parent,
+    )
+    if override is not None:
+        _extra_compose_files.append(override)
 
     # Resolve keep_infra: CLI > config > default
     keep_infra = args.keep_infra if args.keep_infra is not None else config.get("keep_infra", False)

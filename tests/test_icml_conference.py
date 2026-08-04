@@ -741,7 +741,8 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 note.content['authors']['value'].append('SAC ICMLOne')
                 note.content['authorids']['value'].append('~SAC_ICMLOne1')
 
-            test_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
+            # post with the super user to bypass the default attachment rate limit
+            openreview_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
@@ -6559,9 +6560,10 @@ url={https://openreview.net/forum?id='''
 
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
+        # the server rejects the rename while a process job for the venue is active, so wait for
+        # this venue's running processes to finish first (jobs from other venues are ignored)
+        helpers.await_venue_processes(openreview_client, 'ICML.cc/2023/Conference')
         openreview_client.rename_venue('ICML.cc/2023/Conference', 'ICML.org/2023/Conference', request_form.id)
-
-        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
 
         assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference')
         assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Authors')
@@ -6597,13 +6599,13 @@ url={https://openreview.net/forum?id='''
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review')
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review')
 
-        assert 'ICML.cc/2023/Conference' in openreview_client.get_group('venues').members        
-        assert 'ICML.cc/2023/Conference' in openreview_client.get_group('active_venues').members
+        ## the parent groups for the new venue id must exist
+        assert openreview.tools.get_group(openreview_client, 'ICML.org')
+        assert openreview.tools.get_group(openreview_client, 'ICML.org/2023')
 
-        openreview_client.remove_members_from_group('venues', 'ICML.cc/2023/Conference')
-        openreview_client.remove_members_from_group('active_venues', 'ICML.cc/2023/Conference')
-        openreview_client.add_members_to_group('venues', 'ICML.org/2023/Conference')
-        openreview_client.add_members_to_group('active_venues', 'ICML.org/2023/Conference')
-        
+        ## the rename replaces the old venue id with the new one in the venues/active_venues groups
+        assert 'ICML.cc/2023/Conference' not in openreview_client.get_group('venues').members
+        assert 'ICML.cc/2023/Conference' not in openreview_client.get_group('active_venues').members
+
         assert 'ICML.org/2023/Conference' in openreview_client.get_group('venues').members
-        assert 'ICML.org/2023/Conference' in openreview_client.get_group('active_venues').members        
+        assert 'ICML.org/2023/Conference' in openreview_client.get_group('active_venues').members

@@ -904,6 +904,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures=[venue_id],
             cdate=self.journal.get_submission_start_date(),
             expdate=self.journal.get_submission_deadline(),
+            humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
             edit={
                 'signatures': { 
                     'param': { 
@@ -1111,6 +1112,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         "enum": [ { "value": license, "description": license } for license in submission_license ]
                     }
                 }
+
+        if self.journal.get_min_profile_valid_state():
+            invitation.edit['note']['content']['authorids']['value']['param']['minValidState'] = self.journal.get_min_profile_valid_state()
 
         self.save_invitation(invitation)
 

@@ -148,8 +148,15 @@ class InvitationBuilder(object):
 
         content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
-        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/note/content/authorids/value}']
-        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']
+        if submission_stage.unified_authors:
+            edit_authors_ref = '${2/note/content/authors/value/*/username}'
+            note_authors_ref = '${2/content/authors/value/*/username}'
+        else:
+            edit_authors_ref = '${2/note/content/authorids/value}'
+            note_authors_ref = '${2/content/authorids/value}'
+
+        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, edit_authors_ref]
+        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, note_authors_ref]
 
         submission_id = submission_stage.get_submission_id(self.venue)
         submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.now())
@@ -168,7 +175,7 @@ class InvitationBuilder(object):
             cdate = submission_cdate,
             duedate = submission_duedate,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
-            humanVerificationRequired = self.venue.submission_human_verification,
+            humanVerificationRequired = tools.DEFAULT_HUMAN_VERIFICATION,
             content = {
                 'submission_email_template': {
                     'value': f'''Your submission to {self.venue.short_name} has been {{{{action}}}}.
@@ -190,7 +197,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 },
                 'readers': edit_readers,
-                'writers': [venue_id, '${2/note/content/authorids/value}'],
+                'writers': [venue_id, edit_authors_ref],
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -214,7 +221,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     },
                     'signatures': [ '${3/signatures}' ],
                     'readers': note_readers,
-                    'writers': [venue_id, '${2/content/authorids/value}'],
+                    'writers': [venue_id, note_authors_ref],
                     'content': content
                 }
             },
@@ -399,7 +406,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         self.save_invitation(expire_invitation, replacement=True)
         return invitation
 
-    def set_post_submission_invitation(self):
+    def set_post_submission_invitation(self, source=None):
 
         if self.venue.is_template_related_workflow():
             return
@@ -464,6 +471,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             }
         )
+
+        if source:
+            submission_invitation.content = {
+                'source': {
+                    'value': source
+                }
+            }
 
         note_content['_bibtex'] = {
             'value': {
@@ -1877,7 +1891,15 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if comment_expdate:
             invitation.edit['invitation']['expdate'] = comment_expdate
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'Set the date/time when the public comment form is available to the public and when it is no longer available.'
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_dates_invitation(public_comment_invitation, include_due_date=False)
+
         return invitation
 
     def set_chat_invitation(self):
@@ -2193,7 +2215,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'value': decision_stage.options
                 },
                 'accept_decision_options': {
-                    'value': ['Accept (Oral)', 'Accept (Poster)']
+                    'value': decision_stage.accept_options
                 },
                 'source': {
                     'value': {
@@ -2401,9 +2423,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             'authors': {
                 'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
             },
-            'authorids': {
-                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
-            },
             'venue': {
                 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
             },
@@ -2422,13 +2441,18 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             }
         }
+        if not submission_stage.unified_authors:
+            content['authorids'] = {
+                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            }
         if submission_stage.withdrawn_submission_reveal_authors:
             content['authors'] = {
                 'readers': { 'param': { 'const': { 'delete': True } } }
             }
-            content['authorids'] = {
-                'readers': { 'param': { 'const': { 'delete': True } } }
-            }
+            if not submission_stage.unified_authors:
+                content['authorids'] = {
+                    'readers': { 'param': { 'const': { 'delete': True } } }
+                }
 
         withdrawn_invitation = Invitation (
             id=self.venue.get_withdrawn_id(),
@@ -2606,6 +2630,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_dates_invitation(self.venue.get_invitation_id(submission_stage.withdrawal_name), process_file='../workflows/workflow_process/edit_withdrawal_cdate_process.py', include_activation_date=True, include_due_date=False)
             edit_invitations_builder.set_edit_readers_one_level_invitation(self.venue.get_withdrawn_id())
+            edit_invitations_builder.set_edit_reveal_authors(self.venue.get_withdrawn_id(), process_file='workflow_process/edit_reveal_authors_process.py')
 
     def set_desk_rejection_invitation(self):
         venue_id = self.venue_id
@@ -2707,9 +2732,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             'authors': {
                 'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
             },
-            'authorids': {
-                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
-            },
             'venue': {
                 'value': tools.pretty_id(self.venue.get_desk_rejected_submission_venue_id())
             },
@@ -2728,13 +2750,18 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             }
         }
+        if not submission_stage.unified_authors:
+            content['authorids'] = {
+                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            }
         if submission_stage.desk_rejected_submission_reveal_authors:
             content['authors'] = {
                 'readers': { 'param': { 'const': { 'delete': True } } }
             }
-            content['authorids'] = {
-                'readers': { 'param': { 'const': { 'delete': True } } }
-            }
+            if not submission_stage.unified_authors:
+                content['authorids'] = {
+                    'readers': { 'param': { 'const': { 'delete': True } } }
+                }
 
         desk_rejected_invitation = Invitation (
             id=self.venue.get_desk_rejected_id(),
@@ -2885,6 +2912,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_dates_invitation(self.venue.get_invitation_id(submission_stage.desk_rejection_name), process_file='../workflows/workflow_process/edit_desk_rejection_cdate_process.py', include_activation_date=True, include_due_date=False)
             edit_invitations_builder.set_edit_readers_one_level_invitation(self.venue.get_desk_rejected_id())
+            edit_invitations_builder.set_edit_reveal_authors(self.venue.get_desk_rejected_id(), process_file='workflow_process/edit_reveal_authors_process.py')
 
     def set_submission_revision_invitation(self, submission_revision_stage=None):
 
@@ -3284,7 +3312,17 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         else:
             invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
+        if self.venue.is_template_related_workflow():
+            invitation_name = custom_stage.name.lower().replace('_', ' ')
+            invitation.description = f'Configure the contents of the {invitation_name} form and set the date/time when the form is available to the participants, when replies are due, and when the form is no longer available.'
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_content_invitation(custom_stage_invitation_id)
+            edit_invitations_builder.set_edit_dates_invitation(custom_stage_invitation_id)
+
         return invitation
 
     def set_assignment_invitation(self, committee_id, submission_content=None, cdate=None):
@@ -5252,11 +5290,12 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         content = {
             'authors': {
                 'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
-            },
-            'authorids': {
-                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
             }
         }
+        if not submission_stage.unified_authors:
+            content['authorids'] = {
+                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+            }
 
         include_assigned_committee = False
         if 'Change_Before_Bidding' in name:
@@ -5391,6 +5430,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'submission_name': {'value': self.venue.submission_stage.name  },
             }
         ) 
+
+        ## Only collect and publicly release role participation tags if the PC opted in
+        if not self.venue.release_role_participation:
+            return
 
         self.client.post_invitation_edit(
             invitations=f'{super_id}/-/Reviewer_Role',

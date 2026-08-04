@@ -82,14 +82,15 @@ class SubmissionStage(object):
             email_pcs_on_desk_reject=False,
             author_names_revealed=False,
             papers_released=False,
-            author_reorder_after_first_deadline=AuthorReorder.ALLOW_EDIT,
+            author_reorder_after_first_deadline=AuthorReorder.ALLOW_REORDER,
             submission_email=None,
             force_profiles=False,
             second_deadline_additional_fields={},
             second_deadline_remove_fields=[],
             commitments_venue=False,
             description=None,
-            withdraw_additional_fields={}
+            withdraw_additional_fields={},
+            unified_authors=False
         ):
 
         self.start_date = start_date
@@ -127,6 +128,7 @@ class SubmissionStage(object):
         self.commitments_venue = commitments_venue
         self.description = description
         self.withdraw_additional_fields = withdraw_additional_fields
+        self.unified_authors = unified_authors
 
     def get_readers(self, conference, number, decision=None, accept_options=None):
 
@@ -274,6 +276,11 @@ class SubmissionStage(object):
         elif api_version == '2':
             content = deepcopy(default_content.submission_v2)
 
+            if self.unified_authors:
+                del content['authors']
+                del content['authorids']
+                content['authors'] = deepcopy(default_content.submission_v2_unified_authors)
+
             if self.subject_areas:
                 content['subject_areas'] = {
                     'order' : 5,
@@ -301,7 +308,7 @@ class SubmissionStage(object):
             for key, value in self.additional_fields.items():
                 content[key] = value
 
-            if self.force_profiles:
+            if self.force_profiles and not self.unified_authors:
                 content['authorids'] = {
                     'order': 3,
                     'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
@@ -384,7 +391,11 @@ class SubmissionStage(object):
         return content
     
     def get_hidden_field_names(self):
-        return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
+        if self.double_blind and not self.author_names_revealed:
+            default_hidden = ['authors'] if self.unified_authors else ['authors', 'authorids']
+        else:
+            default_hidden = []
+        return default_hidden + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.now() < self.due_date
@@ -588,20 +599,26 @@ class SubmissionRevisionStage():
             content[key] = value
 
         if self.allow_author_reorder == AuthorReorder.ALLOW_REORDER:
-            content['authors'] = {
-                'value': {
-                    'param': {
-                        'type': 'string[]',
-                        'const': ['${{6/id}/content/authors/value}'],
-                        'hidden': True,
-                    }
-                },
-                'order': 3
-            }
-            content['authorids'] = {
-                'value': ['${{4/id}/content/authorids/value}'],
-                'order':4
-            }
+            if conference and conference.submission_stage.unified_authors:
+                content['authors'] = {
+                    'value': ['${{4/id}/content/authors/value}'],
+                    'order': 3
+                }
+            else:
+                content['authors'] = {
+                    'value': {
+                        'param': {
+                            'type': 'string[]',
+                            'const': ['${{6/id}/content/authors/value}'],
+                            'hidden': True,
+                        }
+                    },
+                    'order': 3
+                }
+                content['authorids'] = {
+                    'value': ['${{4/id}/content/authorids/value}'],
+                    'order':4
+                }
         elif self.allow_author_reorder == AuthorReorder.DISALLOW_EDIT:
             if 'authors' in content:
                 del content['authors']
@@ -616,7 +633,7 @@ class SubmissionRevisionStage():
                 if field not in content:
                     content[field] = { 'delete': True }
 
-            only_accepted = self.only_accepted
+            only_accepted = self.only_accepted or self.only_accepted_decision_options(conference)
 
             hidden_field_names = conference.submission_stage.get_hidden_field_names()
             
@@ -629,6 +646,18 @@ class SubmissionRevisionStage():
                     content[field]['readers'] = { 'delete': True }                        
 
         return content
+
+    def only_accepted_decision_options(self, venue):
+        # True when the source's decision_options exactly match the venue's accept
+        # options, so the stage targets only accepted papers and authors/authorids
+        # should be hidden like the only_accepted / with_decision_accept path.
+        decision_options = self.source.get('decision_options')
+        if not decision_options:
+            return False
+        accept_options = venue.client.get_group(venue.venue_id).content.get('accept_decision_options', {}).get('value')
+        if not accept_options:
+            return False
+        return set(decision_options) == set(accept_options)
 
     def get_source_submissions(self, venue):
 
@@ -1437,6 +1466,8 @@ class DecisionStage(object):
     def __init__(self, name = 'Decision', options = None, accept_options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None, content=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
+        if not accept_options:
+            accept_options = [option for option in options if 'accept' in option.lower()]
         self.options = options
         self.accept_options = accept_options
         self.start_date = start_date
