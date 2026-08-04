@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import openreview
 import datetime
 import os
+import shutil
 import time
 import re
 from selenium.webdriver.common.by import By
@@ -4935,3 +4936,31 @@ The OpenReview Team.
         tags = support_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Rita_Identity1')
         assert len(tags) == 1
         assert tags[0].label == 'ID Check'
+
+    def test_profile_identity_documents_kept_for_review(self, openreview_client, support_client, helpers, tmp_path):
+
+        ## Same flow as above, but the documents are intentionally left in place and the
+        ## profile is left rejected, so the pending review can be inspected in the UI
+        ## (moderation queue -> profile preview modal -> identity documents section).
+        pdf_path = os.path.join(os.path.dirname(__file__), 'data/paper.pdf')
+
+        helpers.create_user('diego@idcheck.org', 'Diego', 'Identity', alternates=[], institution='google.com')
+
+        link = support_client.create_profile_document_upload_link('~Diego_Identity1', 'identity')
+        support_client.moderate_profile('~Diego_Identity1', 'reject', f"Please upload a copy of your ID document using this link: {link['url']}")
+        assert openreview_client.get_profile('~Diego_Identity1').state == 'Rejected'
+
+        front_path = tmp_path / 'id_front.pdf'
+        back_path = tmp_path / 'id_back.pdf'
+        shutil.copyfile(pdf_path, front_path)
+        shutil.copyfile(pdf_path, back_path)
+
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+        guest_client.post_profile_document(str(front_path), link['token'])
+        guest_client.post_profile_document(str(back_path), link['token'])
+
+        documents = support_client.get_profile_documents('~Diego_Identity1')
+        assert sorted(d['filename'] for d in documents) == ['id_back.pdf', 'id_front.pdf']
+
+        worklist = support_client.get_profiles_with_identity_documents()
+        assert { 'profileId': '~Diego_Identity1', 'documentCount': 2 } in worklist['profiles']
