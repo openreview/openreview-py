@@ -2007,7 +2007,7 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
-    def set_edit_reveal_authors(self, super_invitation_id):
+    def set_edit_reveal_authors(self, super_invitation_id, process_file=None):
 
         venue_id = self.venue_id
         invitation_id = f'{super_invitation_id}/Reveal_Authors'
@@ -2043,6 +2043,9 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        if process_file:
+            invitation.process = self.get_process_content(process_file)
 
         self.save_invitation(invitation, replacement=False)
         return invitation
