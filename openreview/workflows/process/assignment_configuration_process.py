@@ -37,6 +37,7 @@ def process(client, edit, invitation):
 
     # if reviewer assignment was created, add it to list of possible reviewer assignment titles that ACs could edit
     if committee_name in reviewer_roles and area_chairs_name:
+        ac_name = area_chairs_name.replace('_', ' ')
         edit_invitation_id = f'{venue_id}/{area_chairs_name}/-/Reviewer_Reassignment'
         client.post_invitation_edit(
             invitations=meta_invitation_id,

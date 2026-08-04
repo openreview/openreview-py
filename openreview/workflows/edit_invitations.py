@@ -1973,6 +1973,10 @@ class EditInvitationsBuilder(object):
         venue_id = self.venue_id
 
         invitation_id = f'{group_id}/-/Reviewer_Reassignment'
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        pretty_ac_name = area_chairs_name.replace('_', ' ')
+        reviewers_name = self.get_content_value('reviewers_name')
+        pretty_reviewers_name = reviewers_name.replace('_', ' ')
         
         invitation = Invitation(
             id = invitation_id,
@@ -1987,7 +1991,7 @@ class EditInvitationsBuilder(object):
                 'content': {
                   'enable_reviewers_reassignment': {
                         'order': 1,
-                        'description': 'Would you like to allow area chairs to reassign reviewers to submissions? Make sure there are deployed or proposed assignments created before enabling this option.',
+                        'description': f'Would you like to allow {pretty_ac_name} to reassign {pretty_reviewers_name} to submissions? Make sure there are deployed or proposed assignments created before enabling this option.',
                         'value': {
                             'param': {
                                 'type': 'boolean',

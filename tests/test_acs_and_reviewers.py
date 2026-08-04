@@ -152,7 +152,7 @@ class TestSimpleDualAnonymous():
             'EFGH.cc/2025/Conference/Action_Editors'
         ]
         assert group.domain == 'EFGH.cc/2025/Conference'
-        assert 'enable_reviewers_assignment' not in group.content
+        assert 'enable_reviewers_reassignment' not in group.content
 
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Invited')
         assert group.readers == [
