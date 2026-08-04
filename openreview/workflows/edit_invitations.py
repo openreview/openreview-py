@@ -1422,7 +1422,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_email_template_invitation(self, super_invitation_id, is_review_invitation=False):
+    def set_edit_email_template_invitation(self, super_invitation_id):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Templates'

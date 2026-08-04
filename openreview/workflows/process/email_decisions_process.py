@@ -70,13 +70,16 @@ def process(client, invitation):
                     submission_forum=submission.id
                 )
 
-                client.post_message(
+                request = client.post_message(
                     subject=subject,
                     recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
                     message=message,
                     invitation=invitation.id,
                     replyTo=contact_email
                 )
+                return request
+
+        return None
 
     all_submissions = client.get_all_notes(invitation=submission_id, sort='number:asc', details='directReplies', domain=venue_id)
     print(f'Total submissions retrieved: {len(all_submissions)}')
@@ -92,6 +95,10 @@ def process(client, invitation):
         print(f'No emails were sent since there are no {decision_option.lower()} submissions')
         return
 
-    openreview.tools.concurrent_requests(send_decision_email, filtered_submissions)
+    messages = openreview.tools.concurrent_requests(send_decision_email, filtered_submissions)
+    len_messages = len([m for m in messages if m is not None])
 
-    print(f'{len(filtered_submissions)} {decision_option} decision emails sent to authors')
+    if len_messages:
+        print(f'{len_messages} {decision_option} decision emails sent to authors')
+    else:
+        print(f'No new {decision_option} decision emails sent to authors')
