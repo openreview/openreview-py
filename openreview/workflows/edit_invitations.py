@@ -1171,11 +1171,12 @@ class EditInvitationsBuilder(object):
             edit = {
                 'content': {
                     'decision_options': {
-                        'description': 'List all decision options. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive, Reject". Default options are: "Accept (Oral)", "Accept (Poster)", "Reject"',
+                        'description': 'List all decision options. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive, Reject". Default options are: "Accept", "Reject"',
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': '.+',
+                                'regex': '^[^,;:\/]{1,250}$',
+                                'mismatchError': 'can not contain the following characters: ; : / or ,'
                             }
                         }
                     },
@@ -1184,7 +1185,8 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': '.+',
+                                'regex': '^[^,;:\/]{1,250}$',
+                                'mismatchError': 'can not contain the following characters: ; : / or ,'
                             }
                         }
                     }
