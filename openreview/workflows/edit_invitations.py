@@ -1972,6 +1972,49 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
+    def set_edit_reviewer_reassignment_invitation(self, group_id):
+
+        venue_id = self.venue_id
+
+        invitation_id = f'{group_id}/-/Reviewer_Reassignment'
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        pretty_ac_name = area_chairs_name.replace('_', ' ')
+        reviewers_name = self.get_content_value('reviewers_name')
+        pretty_reviewers_name = reviewers_name.replace('_', ' ')
+        
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                  'enable_reviewers_reassignment': {
+                        'order': 1,
+                        'description': f'Would you like to allow {pretty_ac_name} to reassign {pretty_reviewers_name} to submissions? Make sure there are deployed or proposed assignments created before enabling this option.',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False]
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': group_id,
+                    'content': {
+                        'enable_reviewers_reassignment': { 'value': '${4/content/enable_reviewers_reassignment/value}'}
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+
     def set_edit_reveal_authors(self, super_invitation_id, process_file=None):
 
         venue_id = self.venue_id

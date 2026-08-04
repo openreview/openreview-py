@@ -519,7 +519,7 @@ class Templates():
             }
         )
 
-        self.post_invitation_edit(invitation)
+        return self.post_invitation_edit(invitation)
 
     def setup_committee_group_recruitment_template_invitation(self):
 
