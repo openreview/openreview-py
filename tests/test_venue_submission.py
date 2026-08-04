@@ -630,7 +630,76 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         invitation = openreview_client.get_invitation(venue.id + '/提交1/-/Public_Comment')
         assert not invitation.expdate
         invitation = openreview_client.get_invitation(venue.id + '/提交1/-/Official_Comment')
-        assert not invitation.expdate        
+        assert not invitation.expdate
+
+    def test_post_message_with_empty_recipients(self, venue, openreview_client, helpers):
+
+        ## the API does not accept an empty list of recipients
+        with pytest.raises(openreview.OpenReviewException):
+            openreview_client.post_message(
+                invitation='TestVenue.cc/提交1/-/Message',
+                recipients=[],
+                subject='[TV 22] Message with no recipients',
+                message='Message with no recipients',
+                signature='TestVenue.cc'
+            )
+
+    def test_comment_posted_by_super_user(self, venue, openreview_client, helpers):
+
+        submissions = venue.get_submissions(sort='number:asc')
+
+        comment_edit = openreview_client.post_note_edit(
+            invitation='TestVenue.cc/提交1/-/Official_Comment',
+            signatures=['TestVenue.cc/Program_Chairs'],
+            note=Note(
+                replyto=submissions[0].id,
+                readers=['TestVenue.cc/Program_Chairs'],
+                content={
+                    'comment': { 'value': 'Comment posted by the super user' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        ## no confirmation email should be sent to the super user
+        messages = [m for m in openreview_client.get_messages() if m['content']['subject'].startswith('[TV 22] Your comment was received') and 'Comment posted by the super user' in m['content']['text']]
+        assert len(messages) == 0, [(m['content']['to'], m['content']['subject']) for m in messages]
+
+    def test_comment_posted_by_program_chairs(self, venue, openreview_client, helpers):
+
+        ## disable the email to the program chairs
+        venue.comment_stage = openreview.CommentStage(
+            allow_public_comments=True,
+            reader_selection=True,
+            email_pcs=False,
+            check_mandatory_readers=True,
+            readers=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS,openreview.CommentStage.Readers.EVERYONE],
+            invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
+        venue.create_comment_stage()
+
+        assert openreview_client.get_invitation('TestVenue.cc/-/Official_Comment').content['email_program_chairs']['value'] == False
+
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
+
+        submissions = venue.get_submissions(sort='number:asc')
+
+        comment_edit = pc_client.post_note_edit(
+            invitation='TestVenue.cc/提交3/-/Official_Comment',
+            signatures=['TestVenue.cc/Program_Chairs'],
+            note=Note(
+                replyto=submissions[2].id,
+                readers=['TestVenue.cc/Program_Chairs'],
+                content={
+                    'comment': { 'value': 'Comment posted by the program chairs' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        messages = [m for m in openreview_client.get_messages(to='venue_pc@mail.com') if 'Comment posted by the program chairs' in m['content']['text']]
+        assert len(messages) == 0, [m['content']['subject'] for m in messages]
 
     def test_withdraw_submission(self, venue, openreview_client, helpers):
 
