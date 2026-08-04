@@ -1428,11 +1428,19 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/email_authors_template_process.py'),
+            content={
+                'accept_message': {
+                    'value': 'Hi {{{{fullname}}}},\n\nWe are delighted to inform you that your submission has been accepted. Congratulations!\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n{short_name} Program Chairs'
+                },
+                'reject_message': {
+                    'value': 'Hi {{{{fullname}}}},\n\nWe regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n{short_name} Program Chairs'
+                }
+            },
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
-                            { 'prefix': '~.*', 'optional': True },
+                            { 'prefix': '.*', 'optional': True },
                             { 'value': self.template_domain, 'optional': True }
                         ]
                     }
@@ -1454,13 +1462,12 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Decision_Notification.',
+                        'description': 'Name for this step, use underscores to represent spaces.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Author_Decision_Notification'
+                                'regex': '^[a-zA-Z0-9_]*$'
                             }
                         }
                     },
@@ -1491,6 +1498,14 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
+                    },
+                    'decision': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.*'
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1510,8 +1525,8 @@ If you would like to change your decision, please follow the link in the previou
                         'subject': {
                             'value': '[${4/content/short_name/value}] The decision for your submission #{submission_number}, titled "{submission_title}" is now available'
                         },
-                        'message': {
-                            'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the decision for your submission #{submission_number}, "{submission_title}", to ${4/content/short_name/value} is now available.\n\n{formatted_decision}\n\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}'
+                        'decision_option': {
+                            'value': '${4/content/decision/value}'
                         }
                     },
                     'message': {
