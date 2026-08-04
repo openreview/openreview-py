@@ -2271,7 +2271,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=2)
 
-        with pytest.raises(openreview.OpenReviewException, match=r'can not contain the following characters: ; : / or ,'):
+        with pytest.raises(openreview.OpenReviewException, match=r'can only contain letters, numbers, spaces, underscores and parentheses'):
             edit = pc_client.post_invitation_edit(
                 invitations='ABCD.cc/2025/Conference/-/Decision/Decision_Options',
                 content={

@@ -1175,8 +1175,8 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': '^[^,;:\/]{1,250}$',
-                                'mismatchError': 'can not contain the following characters: ; : / or ,'
+                                'regex': '^[\w ()]+$',
+                                'mismatchError': 'can only contain letters, numbers, spaces, underscores and parentheses'
                             }
                         }
                     },
@@ -1185,8 +1185,8 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': '^[^,;:\/]{1,250}$',
-                                'mismatchError': 'can not contain the following characters: ; : / or ,'
+                                'regex': '^[\w ()]+$',
+                                'mismatchError': 'can only contain letters, numbers, spaces, underscores and parentheses'
                             }
                         }
                     }
