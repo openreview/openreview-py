@@ -4876,11 +4876,14 @@ The OpenReview Team.
         with pytest.raises(openreview.OpenReviewException, match=r'Invalid or expired upload link'):
             guest_client.post_profile_document(pdf_path, 'invalid.token.value')
 
-        ## Both the profile owner and support can list the documents
+        ## Support can list the documents. The owner cannot: rejecting the profile
+        ## invalidated her session and a rejected profile cannot log back in, so the
+        ## tokenized link is her only way to interact with her documents.
         documents = support_client.get_profile_documents('~Rita_Identity1')
         assert len(documents) == 1
         assert documents[0]['id'] == document['id']
-        assert [d['id'] for d in rita_client.get_profile_documents('~Rita_Identity1', document_type='identity')] == [document['id']]
+        with pytest.raises(openreview.OpenReviewException, match=r'TokenExpiredError'):
+            rita_client.get_profile_documents('~Rita_Identity1', document_type='identity')
 
         ## The profile shows up in the support review worklist
         worklist = support_client.get_profiles_with_identity_documents()
@@ -4915,6 +4918,10 @@ The OpenReview Team.
         ## Support approves the profile and records the ID check with a moderation label
         support_client.moderate_profile('~Rita_Identity1', 'accept')
         assert openreview_client.get_profile('~Rita_Identity1').state == 'Active'
+
+        ## Once reactivated, the owner can log in again and list her own documents
+        rita_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='rita@idcheck.org', password=helpers.strong_password)
+        assert rita_client.get_profile_documents('~Rita_Identity1') == []
 
         support_client.post_tag(
             openreview.api.Tag(
