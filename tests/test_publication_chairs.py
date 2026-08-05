@@ -48,7 +48,7 @@ class TestPublicationChairs():
                     'reviewer_groups_names': { 'value': ['Program_Committee'] },
                     'area_chair_groups_names': { 'value': ['Area_Chairs'] },
                     'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
-                    'publication_chairs_support': { 'value': True },
+                    'publication_chairs_emails': { 'value': ['pubchair2@pubchairs.cc'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'PubChairs.cc/2024/Conference' },
                     'expected_submissions': { 'value': 1000 },
@@ -62,8 +62,6 @@ class TestPublicationChairs():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
-                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                     }
                 }
@@ -136,26 +134,29 @@ class TestPublicationChairs():
         assert group.readers == ['everyone']
         assert group.writers == ['PubChairs.cc/2025/Conference', 'PubChairs.cc/2025/Conference/Publication_Chairs']
         assert group.signatories == ['PubChairs.cc/2025/Conference/Publication_Chairs', 'PubChairs.cc/2025/Conference']
-        assert not group.members
+        assert group.members == ['pubchair2@pubchairs.cc']
         assert group.web
 
         openreview_client.add_members_to_group('PubChairs.cc/2025/Conference/Publication_Chairs', '~PublicationChair_PubChairs1')
-
-        group = openreview.tools.get_group(openreview_client, 'PubChairs.cc/2025/Conference/Automated_Administrator')
-        assert not group.members
-        assert group.domain == 'PubChairs.cc/2025/Conference'
-
-        group = openreview.tools.get_group(openreview_client, 'PubChairs.cc/2025/Conference/Program_Committee')
-        assert group.domain == 'PubChairs.cc/2025/Conference'
-        assert group.readers == ['PubChairs.cc/2025/Conference', 'PubChairs.cc/2025/Conference/Program_Committee']
-
-        group = openreview.tools.get_group(openreview_client, 'PubChairs.cc/2025/Conference/Authors')
-        assert group.domain == 'PubChairs.cc/2025/Conference'
 
         group = openreview.tools.get_group(openreview_client, 'PubChairs.cc/2025/Conference/Authors/Accepted')
         assert group.domain == 'PubChairs.cc/2025/Conference'
         # accepted authors group is readable by the publication chairs
         assert 'PubChairs.cc/2025/Conference/Publication_Chairs' in group.readers
+
+        invitation = openreview_client.get_invitation('PubChairs.cc/2025/Conference/Publication_Chairs/-/Members')
+        assert invitation
+
+        openreview_client.post_group_edit(
+            invitation=invitation.id,
+            signatures=['PubChairs.cc/2025/Conference'],
+            group=openreview.api.Group(
+                members={ 'append': ['~PublicationChair_PubChairs1'] }
+            )
+        )
+
+        group = openreview.tools.get_group(openreview_client, 'PubChairs.cc/2025/Conference/Publication_Chairs')
+        assert group.members == ['pubchair2@pubchairs.cc', '~PublicationChair_PubChairs1']
 
         # the publication chair role invitation is created during deployment
         role_invitation = openreview_client.get_invitation('PubChairs.cc/2025/Conference/-/Publication_Chair')
@@ -175,8 +176,13 @@ class TestPublicationChairs():
                     content={
                         'title': { 'value': f'Test Submission {i}' },
                         'abstract': { 'value': f'This is an abstract for submission {i}' },
-                        'authors': { 'value': ['AuthorOne PubChairs'] },
-                        'authorids': { 'value': ['~AuthorOne_PubChairs1'] },
+                        'authors': { 'value': [
+                            {
+                                'fullname': 'AuthorOne PubChairs',
+                                'username': '~AuthorOne_PubChairs1',
+                                'institutions': [{ 'domain': 'pubchairs.cc', 'country': 'US' }]
+                            }
+                        ]},
                         'keywords': { 'value': ['machine learning', 'artificial intelligence'] },
                         'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
                         'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
@@ -222,7 +228,7 @@ class TestPublicationChairs():
 
         # accept odd numbered submissions, reject even numbered submissions
         for submission in submissions:
-            decision = 'Accept (Oral)' if submission.number % 2 == 1 else 'Reject'
+            decision = 'Accept' if submission.number % 2 == 1 else 'Reject'
             decision_edit = pc_client.post_note_edit(
                 invitation=f'PubChairs.cc/2025/Conference/Submission{submission.number}/-/Decision',
                 signatures=['PubChairs.cc/2025/Conference/Program_Chairs'],
@@ -237,5 +243,5 @@ class TestPublicationChairs():
         for submission in submissions:
             decision_notes = openreview_client.get_notes(invitation=f'PubChairs.cc/2025/Conference/Submission{submission.number}/-/Decision')
             assert len(decision_notes) == 1
-            expected_decision = 'Accept (Oral)' if submission.number % 2 == 1 else 'Reject'
+            expected_decision = 'Accept' if submission.number % 2 == 1 else 'Reject'
             assert decision_notes[0].content['decision']['value'] == expected_decision

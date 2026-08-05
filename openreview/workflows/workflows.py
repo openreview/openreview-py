@@ -294,14 +294,13 @@ class Workflows():
                                 }
                             }
                         },
-                        'publication_chairs_support': {
+                        'publication_chairs_emails': {
                             'order': 17,
-                            'description': "Does your venue have publication chairs? Leave unchecked if your venue does not have publication chairs.",
+                            'description': "Please provide a comma-separated list of the *lower-cased* email addresses of the Publication Chairs. Leave empty if none.",
                             'value': {
                                 'param': {
-                                    'type': "boolean",
-                                    'enum': [{ 'value': True, 'description': 'Yes, my venue does have Publication Chairs.'}],
-                                    'input': 'checkbox',
+                                    'type': 'string[]',
+                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                     'optional': True,
                                     'deletable': True
                                 }
