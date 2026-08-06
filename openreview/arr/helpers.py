@@ -1762,7 +1762,7 @@ class ARRStage(object):
             latest_reference = latest_references[0]
             stage_dates = self._get_stage_note_dates(format_type='strftime')
             latest_reference.content.update(stage_dates)
-            if latest_reference.content.get('submission_revision_remove_options'):
+            if latest_reference.content.get('submission_revision_remove_options') and latest_reference.content.get('submission_revision_name', '') == 'Blind_Submission_License_Agreement':
                 latest_reference.content['submission_revision_remove_options'] = list(set(venue.submission_stage.get_content(api_version='2').keys()) -
                 {
                     'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement',
