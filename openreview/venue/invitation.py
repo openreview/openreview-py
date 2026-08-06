@@ -175,7 +175,7 @@ class InvitationBuilder(object):
             cdate = submission_cdate,
             duedate = submission_duedate,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
-            humanVerificationRequired = self.venue.submission_human_verification,
+            humanVerificationRequired = tools.DEFAULT_HUMAN_VERIFICATION,
             content = {
                 'submission_email_template': {
                     'value': f'''Your submission to {self.venue.short_name} has been {{{{action}}}}.
@@ -2215,7 +2215,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'value': decision_stage.options
                 },
                 'accept_decision_options': {
-                    'value': ['Accept (Oral)', 'Accept (Poster)']
+                    'value': decision_stage.accept_options
                 },
                 'source': {
                     'value': {

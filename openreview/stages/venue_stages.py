@@ -1466,6 +1466,8 @@ class DecisionStage(object):
     def __init__(self, name = 'Decision', options = None, accept_options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None, content=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
+        if not accept_options:
+            accept_options = [option for option in options if 'accept' in option.lower()]
         self.options = options
         self.accept_options = accept_options
         self.start_date = start_date
