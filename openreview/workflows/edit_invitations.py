@@ -1175,7 +1175,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': '^[\w ()]+$',
+                                'regex': r'^[\w ()]+$',
                                 'mismatchError': 'can only contain letters, numbers, spaces, underscores and parentheses'
                             }
                         }
@@ -1185,7 +1185,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': '^[\w ()]+$',
+                                'regex': r'^[\w ()]+$',
                                 'mismatchError': 'can only contain letters, numbers, spaces, underscores and parentheses'
                             }
                         }
