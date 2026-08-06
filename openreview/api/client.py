@@ -1147,15 +1147,17 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_profile_documents(self, profile_id, document_type=None):
+    def get_profile_documents(self, profile_id, document_type=None, trash=None):
         """
-        Gets the list of documents uploaded for a profile. Only the profile owner
-        and privileged users can list them.
+        Gets the list of documents uploaded for a profile. This is a support method:
+        users can upload documents but cannot retrieve them.
 
         :param profile_id: Profile id to list documents for
         :type profile_id: str
         :param document_type: Filter by document type ('identity' or 'parentalConsent')
         :type document_type: str, optional
+        :param trash: If True, include soft-deleted documents (returned with a ``ddate``)
+        :type trash: bool, optional
 
         :return: List of dictionaries with the document metadata
         :rtype: list[dict]
@@ -1163,6 +1165,8 @@ class OpenReviewClient(object):
         params = { 'profileId': profile_id }
         if document_type is not None:
             params['type'] = document_type
+        if trash is not None:
+            params['trash'] = trash
 
         response = self.session.get(self.profile_documents_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -1170,8 +1174,8 @@ class OpenReviewClient(object):
 
     def get_profile_document(self, id):
         """
-        Downloads a profile document. Only the profile owner and privileged users
-        can download it.
+        Downloads a profile document. This is a support method: users can upload
+        documents but cannot retrieve them.
 
         :param id: Id of the document to download
         :type id: str
@@ -1198,17 +1202,16 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_profiles_with_identity_documents(self, after=None, limit=None):
+    def get_identity_documents(self, after=None, limit=None):
         """
-        Gets the profiles that have identity documents pending review, with their
-        document counts. This is a support method.
+        Gets the identity documents pending review, oldest first. This is a support method.
 
-        :param after: Profile id to start from, for pagination
+        :param after: Document id to start after, for keyset pagination
         :type after: str, optional
-        :param limit: Maximum number of profiles to return
+        :param limit: Maximum number of documents to return
         :type limit: int, optional
 
-        :return: Dictionary with the keys ``count`` and ``profiles``, where each profile has ``profileId`` and ``documentCount``
+        :return: Dictionary with the keys ``count`` and ``documents``, where each document includes its ``profileId``
         :rtype: dict
         """
         params = {}
@@ -1217,7 +1220,7 @@ class OpenReviewClient(object):
         if limit is not None:
             params['limit'] = limit
 
-        response = self.session.get(self.profile_documents_url + '/identity/profiles', params=tools.format_params(params), headers=self.headers)
+        response = self.session.get(self.profile_documents_url + '/identity', params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 

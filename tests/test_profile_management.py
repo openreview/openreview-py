@@ -4886,21 +4886,28 @@ The OpenReview Team.
         with pytest.raises(openreview.OpenReviewException, match=r'TokenExpiredError'):
             rita_client.get_profile_documents('~Rita_Identity1', document_type='identity')
 
-        ## The profile shows up in the support review worklist
-        worklist = support_client.get_profiles_with_identity_documents()
+        ## The document shows up in the support review queue
+        worklist = support_client.get_identity_documents()
         assert worklist['count'] >= 1
-        assert { 'profileId': '~Rita_Identity1', 'documentCount': 1 } in worklist['profiles']
+        assert document['id'] in [d['id'] for d in worklist['documents']]
+        assert '~Rita_Identity1' in [d['profileId'] for d in worklist['documents']]
 
         ## Support downloads the document and verifies its content
         content = support_client.get_profile_document(document['id'])
         with open(pdf_path, 'rb') as f:
             assert content == f.read()
 
-        ## Support deletes the document after reviewing it; the owner is notified
+        ## Support deletes the document after reviewing it; the owner is notified.
+        ## The deletion is soft: the file is gone but the metadata is kept in the
+        ## trash for an audit trail.
         support_client.delete_profile_document(document['id'])
         assert support_client.get_profile_documents('~Rita_Identity1') == []
         with pytest.raises(openreview.OpenReviewException, match=r'was not found'):
             support_client.get_profile_document(document['id'])
+
+        trashed = support_client.get_profile_documents('~Rita_Identity1', trash=True)
+        assert [d['id'] for d in trashed] == [document['id']]
+        assert trashed[0]['ddate']
 
         messages = openreview_client.get_messages(to='rita@idcheck.org', subject='Documents removed from your OpenReview profile')
         assert len(messages) == 1
@@ -4920,9 +4927,11 @@ The OpenReview Team.
         support_client.moderate_profile('~Rita_Identity1', 'accept')
         assert openreview_client.get_profile('~Rita_Identity1').state == 'Active'
 
-        ## Once reactivated, the owner can log in again and list her own documents
+        ## Document reads are support-only, even for the profile owner: once
+        ## reactivated she can log in again but still cannot list her documents
         rita_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='rita@idcheck.org', password=helpers.strong_password)
-        assert rita_client.get_profile_documents('~Rita_Identity1') == []
+        with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+            rita_client.get_profile_documents('~Rita_Identity1')
 
         support_client.post_tag(
             openreview.api.Tag(
@@ -4962,5 +4971,21 @@ The OpenReview Team.
         documents = support_client.get_profile_documents('~Diego_Identity1')
         assert sorted(d['filename'] for d in documents) == ['id_back.pdf', 'id_front.pdf']
 
-        worklist = support_client.get_profiles_with_identity_documents()
-        assert { 'profileId': '~Diego_Identity1', 'documentCount': 2 } in worklist['profiles']
+        worklist = support_client.get_identity_documents()
+        assert sorted(d['filename'] for d in worklist['documents'] if d['profileId'] == '~Diego_Identity1') == ['id_back.pdf', 'id_front.pdf']
+
+    def test_profile_owner_cannot_see_deleted_documents(self, openreview_client, support_client, helpers):
+
+        ## Rita was re-activated at the end of the identity verification test and has two
+        ## soft-deleted identity documents. Document reads are support-only: the profile
+        ## owner cannot list documents at all, deleted or not.
+        trashed = support_client.get_profile_documents('~Rita_Identity1', trash=True)
+        assert len(trashed) == 2
+        assert all(d['ddate'] for d in trashed)
+
+        rita_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='rita@idcheck.org', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+            rita_client.get_profile_documents('~Rita_Identity1')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+            rita_client.get_profile_documents('~Rita_Identity1', trash=True)
