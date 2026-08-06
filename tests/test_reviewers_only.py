@@ -236,7 +236,8 @@ class TestReviewersOnly():
 
         assert 'preferred_emails_groups' in group.content and group.content['preferred_emails_groups']['value'] == [
             'ABCD.cc/2025/Conference/Program_Committee',
-            'ABCD.cc/2025/Conference/Authors'
+            'ABCD.cc/2025/Conference/Authors',
+            'ABCD.cc/2025/Conference/Publication_Chairs'
         ]
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Preferred_Emails')
         assert invitation
