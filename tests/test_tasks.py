@@ -111,7 +111,8 @@ class TestTasks():
 
         assert 'preferred_emails_groups' in group.content and group.content['preferred_emails_groups']['value'] == [
             'Tasks.cc/2025/Conference/Program_Committee',
-            'Tasks.cc/2025/Conference/Authors'
+            'Tasks.cc/2025/Conference/Authors',
+            'Tasks.cc/2025/Conference/Publication_Chairs'
         ]
 
         group = openreview.tools.get_group(openreview_client, 'Tasks.cc/2025/Conference/Program_Chairs')
