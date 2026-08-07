@@ -17,6 +17,8 @@ from openreview.stages.arr_content import (
     arr_reviewer_ac_recognition_task_forum,
     arr_reviewer_ac_recognition_task,
     arr_max_load_task_forum,
+    arr_voluntary_reviewing_task_forum,
+    arr_voluntary_meta_reviewing_task_forum,
     arr_ethics_max_load_task,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
@@ -784,8 +786,8 @@ class ARRWorkflow(object):
                 stage_arguments={
                     'committee_id': venue.get_reviewers_id(),
                     'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
-                    'instructions': arr_max_load_task_forum['instructions'],
-                    'title': venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
+                    'instructions': arr_voluntary_reviewing_task_forum['instructions'],
+                    'title': venue.get_reviewers_name() + ' ' + arr_voluntary_reviewing_task_forum['title'],
                     'additional_fields': arr_reviewer_max_load_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
@@ -802,8 +804,8 @@ class ARRWorkflow(object):
                 stage_arguments={
                     'committee_id': venue.get_area_chairs_id(),
                     'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
-                    'instructions': arr_max_load_task_forum['instructions'],
-                    'title': venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
+                    'instructions': arr_voluntary_meta_reviewing_task_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_voluntary_meta_reviewing_task_forum['title'],
                     'additional_fields': arr_ac_max_load_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
@@ -1760,6 +1762,11 @@ class ARRStage(object):
             latest_reference = latest_references[0]
             stage_dates = self._get_stage_note_dates(format_type='strftime')
             latest_reference.content.update(stage_dates)
+            if latest_reference.content.get('submission_revision_remove_options') and latest_reference.content.get('submission_revision_name', '') == 'Blind_Submission_License_Agreement':
+                latest_reference.content['submission_revision_remove_options'] = list(set(venue.submission_stage.get_content(api_version='2').keys()) -
+                {
+                    'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement',
+                })
 
             stage_note = openreview.Note(
                 content = latest_reference.content,

@@ -20,7 +20,7 @@ pyjwt==2.13.0
     # via openreview-py (pyproject.toml)
 pylatexenc==2.10
     # via openreview-py (pyproject.toml)
-requests==2.32.5
+requests==2.33.0
     # via openreview-py (pyproject.toml)
 tld==0.13.2
     # via openreview-py (pyproject.toml)

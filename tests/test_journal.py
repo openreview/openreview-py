@@ -427,6 +427,8 @@ class TestJournal():
 
         invitation = openreview_client.get_invitation('TMLR/-/Submission')
         assert not invitation.preprocess
+        # submission invitations get the default human verification rate limit
+        assert invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
         with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/tmlr_submission_pre_process.py')) as f:
             preprocess = f.read()

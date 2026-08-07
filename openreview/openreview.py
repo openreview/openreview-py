@@ -42,8 +42,15 @@ class LogRetry(Retry):
         super().__init__(*args, **kwargs)   
 
     def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
-        # Log retry information before calling the parent class method
-        print(f"Retrying request: {method} {url}, response: {response}, error: {error}")
+        # Log retry information before calling the parent class method.
+        # A retry triggered by a response status (e.g. 429) arrives via `response`
+        # with `error` set to None, so surface the status/reason as the real cause;
+        # connection-level failures arrive via `error`.
+        if response is not None:
+            cause = f"status {response.status} {getattr(response, 'reason', '') or ''}".strip()
+        else:
+            cause = f"error {error}"
+        print(f"Retrying request: {method} {url}, {cause}")
 
         # Call the parent class method to perform the actual retry increment
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
@@ -123,7 +130,7 @@ class Client(object):
             backoff_factor=1,
             backoff_max=120,
             backoff_jitter=1,
-            status_forcelist=[ 500, 502, 503, 504 ],
+            status_forcelist=[ 429, 500, 502, 503, 504 ],
             respect_retry_after_header=True
         )
         self.session = requests.Session()
@@ -2261,6 +2268,19 @@ class Client(object):
         response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
+
+    def get_expertise_all_results(self, job_id, baseurl=None, output_filename=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if output_filename is None:
+            output_filename = f"{job_id}_scores.pt"
+        response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
+        response = self.__handle_response(response)
+        with response:
+            with open(output_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        return output_filename
 
 class Group(object):
     """
