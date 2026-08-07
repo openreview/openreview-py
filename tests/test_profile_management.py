@@ -4909,8 +4909,9 @@ The OpenReview Team.
         assert [d['id'] for d in trashed] == [document['id']]
         assert trashed[0]['ddate']
 
-        messages = openreview_client.get_messages(to='rita@idcheck.org', subject='Documents removed from your OpenReview profile')
+        messages = openreview_client.get_messages(to='rita@idcheck.org', subject='Documents removed from the OpenReview system')
         assert len(messages) == 1
+        assert 'permanently removed from the OpenReview system' in messages[0]['content']['text']
         assert 'paper.pdf' in messages[0]['content']['text']
 
         ## The link can be reused while it is valid; support can also bulk delete
@@ -4920,7 +4921,7 @@ The OpenReview Team.
         assert result['deletedCount'] == 1
         assert support_client.get_profile_documents('~Rita_Identity1') == []
 
-        messages = openreview_client.get_messages(to='rita@idcheck.org', subject='Documents removed from your OpenReview profile')
+        messages = openreview_client.get_messages(to='rita@idcheck.org', subject='Documents removed from the OpenReview system')
         assert len(messages) == 2
 
         ## Support approves the profile and records the ID check with a moderation label
