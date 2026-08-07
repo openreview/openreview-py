@@ -191,6 +191,21 @@ class TestFullSubmissionAuthorsLock():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        # Full_Submission's activation date is no longer synced automatically from the Submission
+        # deadline, so the PC needs to move it into the past explicitly to materialize per-paper
+        # Full_Submission invitations for already-submitted papers.
+        submission_inv = pc_client.get_invitation('flock.cc/2026/Conference/-/Submission')
+        full_submission_inv = pc_client.get_invitation('flock.cc/2026/Conference/-/Full_Submission')
+        edit = pc_client.post_invitation_edit(
+            invitations='flock.cc/2026/Conference/-/Full_Submission/Dates',
+            content={
+                'activation_date': { 'value': submission_inv.expdate },
+                'due_date': { 'value': full_submission_inv.edit['invitation']['duedate'] },
+                'expiration_date': { 'value': full_submission_inv.edit['invitation']['expdate'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         # Wait for Full_Submission to activate and materialize per-paper invitations
         helpers.await_queue_edit(openreview_client, 'flock.cc/2026/Conference/-/Full_Submission-0-1', count=2)
 
