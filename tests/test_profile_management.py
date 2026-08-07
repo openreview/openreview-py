@@ -404,6 +404,11 @@ class TestProfileManagement():
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
+        # the arXiv record invitation gets the default human verification rate limit
+        # (DBLP and ORCID are excluded because they support bulk upload)
+        record_invitation = openreview_client.get_invitation('openreview.net/Public_Article/arXiv.org/-/Record')
+        assert record_invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
+
         edit = test_client_v2.post_note_edit(
             invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
             signatures = ['~SomeFirstName_User1'],
@@ -1749,6 +1754,10 @@ computation and memory.
                 )
             )
                     
+        ## Archive Direct_Upload gets the default human verification rate limit
+        direct_upload_invitation = john_client.get_invitation('openreview.net/Archive/-/Direct_Upload')
+        assert direct_upload_invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
+
         ## Add publications
         edit = john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',

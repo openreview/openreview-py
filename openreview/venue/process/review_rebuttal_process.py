@@ -40,15 +40,18 @@ Title: {submission.content['title']['value']}
 {content}'''
 
     #send email to author of comment
-    client.post_message(
-        invitation=meta_invitation_id,
-        recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else [],
-        subject=f'''[{short_name}] Your author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
-        message=author_message,
-        replyTo=contact,
-        signature=venue_id,
-        sender=sender
-    )
+    rebuttal_author_recipients = [edit.tauthor] if edit.tauthor.lower() != 'openreview.net' else []
+
+    if rebuttal_author_recipients:
+        client.post_message(
+            invitation=meta_invitation_id,
+            recipients=rebuttal_author_recipients,
+            subject=f'''[{short_name}] Your author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
+            message=author_message,
+            replyTo=contact,
+            signature=venue_id,
+            sender=sender
+        )
 
     #send email to paper authors
     if email_authors:

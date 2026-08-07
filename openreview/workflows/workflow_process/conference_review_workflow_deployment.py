@@ -98,7 +98,8 @@ def process(client, edit, invitation):
     venue.decision_stage = openreview.stages.DecisionStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=6),
         due_date=submission_deadline_datetime + datetime.timedelta(weeks=7),
-        accept_options=['Accept (Oral)', 'Accept (Poster)']
+        options=['Accept', 'Reject'],
+        accept_options=['Accept']
     )
 
     venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
@@ -235,10 +236,24 @@ def process(client, edit, invitation):
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Author_Decision_Notification' },
+            'name': { 'value': 'Author_Accept_Decision_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'from_email': { 'value': from_email }
+            'from_email': { 'value': from_email },
+            'decision': { 'value': 'Accept' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
+        signatures=[invitation_prefix],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Author_Reject_Decision_Notification' },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
+            'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'from_email': { 'value': from_email },
+            'decision': { 'value': 'Reject' }
         }
     )
 

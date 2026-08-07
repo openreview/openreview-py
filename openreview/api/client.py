@@ -1748,34 +1748,6 @@ class OpenReviewClient(object):
         if domain is not None:
             params['domain'] = domain
 
-        if 'details' not in params:
-            params['stream'] = True
-            # Handle sort param for local sorting
-            sort_key = None
-            reverse = False
-            if 'sort' in params:
-                # Accept format like "number:asc", "tcdate:desc", etc.
-                valid_fields = {
-                    'number': lambda n: n.number,
-                    'tcdate': lambda n: n.tcdate,
-                    'tmdate': lambda n: n.tmdate,
-                    'cdate': lambda n: n.cdate,
-                    'mdate': lambda n: n.mdate
-                }
-                if ':' in sort:
-                    field, direction = sort.split(':', 1)
-                else:
-                    field, direction = sort, 'desc'
-                if field in valid_fields:
-                    sort_key = valid_fields[field]
-                    reverse = direction == 'desc'
-                    params['sort'] = None  # Remove for API call, sort locally            
-            
-            results = self.get_notes(**params)
-            if sort_key:
-                return sorted(results, key=sort_key, reverse=reverse)
-            return results
-        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):
@@ -3524,6 +3496,29 @@ class OpenReviewClient(object):
             response = self.__handle_response(response)
             print('return expertise results', baseurl, job_id)
             return response.json()
+
+    def get_expertise_all_results(self, job_id, baseurl=None, output_filename=None):
+
+        print('get expertise all results', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+
+        if base_url.startswith('http://localhost'):
+            print('return expertise all results localhost, return empty file')
+            if output_filename is None:
+                output_filename = f"{job_id}_scores.pt"
+            open(output_filename, 'wb').close()
+            return output_filename
+
+        if output_filename is None:
+            output_filename = f"{job_id}_scores.pt"
+        response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
+        response = self.__handle_response(response)
+        with response:
+            with open(output_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        print('return expertise all results', baseurl, job_id)
+        return output_filename
 
 
 class Edit(object):
