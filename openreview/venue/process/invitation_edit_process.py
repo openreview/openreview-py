@@ -207,11 +207,14 @@ def process(client, invitation):
     current_child_invitations = client.get_all_invitations(invitation=invitation.id, domain=venue_id)
 
     print(f'create or update {len(notes)} child invitations')
-    posted_invitation_ids = set(openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process', max_workers=128))
+    ## retries=1 re-runs only the failed posts; if any still fail the call raises, which must
+    ## happen before the delete phase: children whose post failed would be missing from
+    ## posted_invitation_ids and would be wrongly deleted below
+    posted_invitation_ids = set(openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process', max_workers=128, retries=1))
 
     print(f'{len(notes)} {invitation_name} invitations created or updated successfully')
 
     invitations_to_delete = [current_invitation for current_invitation in current_child_invitations if current_invitation.id not in posted_invitation_ids]
     if invitations_to_delete:
         print(f'delete {len(invitations_to_delete)} child invitations')
-        openreview.tools.concurrent_requests(lambda child_invitation: delete_invitation(child_invitation, now), invitations_to_delete, desc='delete_child_invitations', max_workers=128)
+        openreview.tools.concurrent_requests(lambda child_invitation: delete_invitation(child_invitation, now), invitations_to_delete, desc='delete_child_invitations', max_workers=128, retries=1)
