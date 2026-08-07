@@ -1171,11 +1171,12 @@ class EditInvitationsBuilder(object):
             edit = {
                 'content': {
                     'decision_options': {
-                        'description': 'List all decision options. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive, Reject". Default options are: "Accept (Oral)", "Accept (Poster)", "Reject"',
+                        'description': 'List all decision options. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive, Reject". Default options are: "Accept", "Reject"',
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': '.+',
+                                'regex': r'^[\w ()]+$',
+                                'mismatchError': 'can only contain letters, numbers, spaces, underscores and parentheses'
                             }
                         }
                     },
@@ -1184,7 +1185,8 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': '.+',
+                                'regex': r'^[\w ()]+$',
+                                'mismatchError': 'can only contain letters, numbers, spaces, underscores and parentheses'
                             }
                         }
                     }
@@ -1425,7 +1427,29 @@ class EditInvitationsBuilder(object):
     def set_edit_email_template_invitation(self, super_invitation_id):
 
         venue_id = self.venue_id
-        invitation_id = super_invitation_id + '/Message'
+        invitation_id = super_invitation_id + '/Templates'
+
+        edit_content = {
+            'email_subject': {
+                'description': 'The subject of the email to be sent to authors. Make sure not to remove the parenthesized tokens. If an email with this subject has already been sent, it will be skipped — to re-send emails for this decision option, change the subject.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '.+',
+                    }
+                }
+            },
+            'email_content': {
+                'description': 'The content of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 100000,
+                        'input': 'textarea'
+                    }
+                }
+            }
+        }
 
         invitation = Invitation(
             id = invitation_id,
@@ -1434,27 +1458,7 @@ class EditInvitationsBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             edit = {
-                'content': {
-                    'email_subject': {
-                        'description': 'The subject of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'regex': '.+',
-                            }
-                        }
-                    },
-                    'email_content': {
-                        'description': 'The content of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100000,
-                                'input': 'textarea'
-                            }
-                        }
-                    }
-                },
+                'content': edit_content,
                 'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
                 'readers': [venue_id],
                 'writers': [venue_id],
@@ -1968,7 +1972,50 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_reveal_authors(self, super_invitation_id):
+    def set_edit_reviewer_reassignment_invitation(self, group_id):
+
+        venue_id = self.venue_id
+
+        invitation_id = f'{group_id}/-/Reviewer_Reassignment'
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        pretty_ac_name = area_chairs_name.replace('_', ' ')
+        reviewers_name = self.get_content_value('reviewers_name')
+        pretty_reviewers_name = reviewers_name.replace('_', ' ')
+        
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                  'enable_reviewers_reassignment': {
+                        'order': 1,
+                        'description': f'Would you like to allow {pretty_ac_name} to reassign {pretty_reviewers_name} to submissions? Make sure there are deployed or proposed assignments created before enabling this option.',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False]
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': group_id,
+                    'content': {
+                        'enable_reviewers_reassignment': { 'value': '${4/content/enable_reviewers_reassignment/value}'}
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+
+    def set_edit_reveal_authors(self, super_invitation_id, process_file=None):
 
         venue_id = self.venue_id
         invitation_id = f'{super_invitation_id}/Reveal_Authors'
@@ -2004,6 +2051,9 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        if process_file:
+            invitation.process = self.get_process_content(process_file)
 
         self.save_invitation(invitation, replacement=False)
         return invitation
