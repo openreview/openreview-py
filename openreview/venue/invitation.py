@@ -2215,7 +2215,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'value': decision_stage.options
                 },
                 'accept_decision_options': {
-                    'value': ['Accept (Oral)', 'Accept (Poster)']
+                    'value': decision_stage.accept_options
                 },
                 'source': {
                     'value': {
