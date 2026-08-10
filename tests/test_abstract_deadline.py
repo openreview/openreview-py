@@ -148,7 +148,7 @@ class TestAbstractDeadline():
         # extending the Submission deadline so its expiration date moves past the Full_Submission
         # activation date should be rejected by edit_submission_dates_preprocess.py
         new_duedate = submission_inv.duedate + (24*60*60*1000)  # push due date forward by 1 day
-        with pytest.raises(openreview.OpenReviewException, match=r'Submission expiration date must be less than or equal to the Full Submission activation date'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Submission expiration date must be less than or equal to the Full Submission activation date or select an earlier date'):
             pc_client.post_invitation_edit(
                 invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission/Dates',
                 content={
@@ -160,7 +160,7 @@ class TestAbstractDeadline():
         # moving the Full_Submission activation date earlier than the current Submission expiration date
         # should be rejected by edit_full_submission_dates_preprocess.py
         earlier_cdate = submission_inv.expdate - (60*60*1000)  # 1 hour before the current expiration date
-        with pytest.raises(openreview.OpenReviewException, match=r'Full Submission activation date must be later than or equal to the Submission expiration date'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Full Submission activation date must be later than or equal to the Submission expiration date or select a later date'):
             pc_client.post_invitation_edit(
                 invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission/Dates',
                 content={
