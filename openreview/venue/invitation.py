@@ -3062,12 +3062,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'source': {
                     'value': {
                         'param': {
-                            'type': 'string',
-                            'enum': [
-                                'all_submissions',
-                                'accepted_submissions'
-                            ],
-                            'input': 'select'
+                            'type': 'json'
                         }
                     }
                 }

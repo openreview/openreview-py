@@ -2331,10 +2331,11 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
-        decisions = ['Accept', 'Revision Needed', 'Reject']
+        decisions = ['Accept', 'Poster', 'Revision Needed', 'Reject']
         comment = {
             'Accept': 'Congratulations on your acceptance.',
             'Revision Needed': 'Your paper must be revised.',
+            'Poster': 'Your paper has been accepted as a poster.',
             'Reject': 'We regret to inform you...'
         }
 
@@ -2343,7 +2344,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             writer.writerow([submissions[0].number, 'Accept', comment['Accept']])
             writer.writerow([submissions[1].number, 'Revision Needed', comment['Revision Needed']])
             writer.writerow([submissions[2].number, 'Reject', comment['Reject']])
-            for submission in submissions[3:-1]:
+            writer.writerow([submissions[3].number, 'Poster', comment['Poster']])
+            for submission in submissions[4:-1]:
                 decision = random.choice(decisions)
                 writer.writerow([submission.number, decision, comment[decision]])
 
@@ -2697,9 +2699,37 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc', details='directReplies')
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
+        assert invitation and invitation.content['source']['value'] == {
+            'venueid': [
+                'ABCD.cc/2025/Conference',
+                'ABCD.cc/2025/Conference/Submission',
+                'ABCD.cc/2025/Conference/Rejected_Submission'
+            ],
+            'with_decision_accept': True
+        }
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Form_Fields')
+
+        # enable Camera Ready Revisions only for "Accept" decision
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Form_Fields',
+            content = {
+                'content': {
+                    'value': invitation.edit['invitation']['edit']['note']['content']
+                },
+                'source': {
+                    'value': {
+                        'venueid': [
+                            'ABCD.cc/2025/Conference',
+                            'ABCD.cc/2025/Conference/Submission',
+                            'ABCD.cc/2025/Conference/Rejected_Submission'
+                        ],
+                        'decision_options': ['Accept']
+                    }
+                }
+            }
+        )
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
