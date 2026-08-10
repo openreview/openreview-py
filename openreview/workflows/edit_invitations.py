@@ -86,13 +86,14 @@ class EditInvitationsBuilder(object):
             writers = [venue_id],
             edit = {
                 'content': {
-                    'activation_date': { 
+                    'activation_date': {
                         'value': {
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ]
                             }
-                        }
+                        },
+                        'description': 'Date and time when the submission form opens and authors can start submitting.'
                     },
                     'due_date': {
                         'value': {
@@ -100,7 +101,8 @@ class EditInvitationsBuilder(object):
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ]
                             }
-                        }
+                        },
+                        'description': 'Submission deadline shown to authors. The submission form stays open for 30 more minutes after this date, giving authors a grace period to finish submissions started before the deadline.'
                     }
                 },
                 'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
