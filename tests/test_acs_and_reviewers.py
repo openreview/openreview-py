@@ -1595,6 +1595,13 @@ Please note that responding to this email will direct your reply to efgh2025.pro
         assert submissions[0].content['venue']['value'] == 'EFGH 2025 Conference Submission'
         inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accepted_Submission_Release')
         assert 'reveal_author_identities' not in inv.content
+        # default readers before any customization: PCs, assigned ACs, assigned reviewers and paper authors
+        assert inv.edit['note']['readers'] == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Submission${{2/id}/number}/Action_Editors',
+            'EFGH.cc/2025/Conference/Submission${{2/id}/number}/Reviewers',
+            'EFGH.cc/2025/Conference/Submission${{2/id}/number}/Authors'
+        ]
         inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Rejected_Submission_Release')
         assert 'reveal_author_identities' not in inv.content
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accepted_Submission_Release/Dates')
