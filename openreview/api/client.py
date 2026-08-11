@@ -1090,7 +1090,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
-    def create_profile_document_upload_link(self, profile_id, document_type='identity'):
+    def create_profile_document_upload_link(self, profile_id, document_type):
         """
         Creates a short-lived upload link scoped to one profile and document type.
         The link can be shared with the profile owner (e.g. in a moderation rejection message)
@@ -1099,7 +1099,7 @@ class OpenReviewClient(object):
         :param profile_id: Profile id the uploaded document will be attached to
         :type profile_id: str
         :param document_type: Type of document the link accepts ('identity' or 'parentalConsent')
-        :type document_type: str, optional
+        :type document_type: str
 
         :return: Dictionary with the keys ``url``, ``token`` and ``expiresAt``
         :rtype: dict
@@ -1115,7 +1115,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_profile_document(self, file_path, token, document_type='identity'):
+    def post_profile_document(self, file_path, token, document_type):
         """
         Uploads a profile document using an upload link token. No login is required:
         the token, minted with :meth:`create_profile_document_upload_link`, authorizes
@@ -1126,7 +1126,7 @@ class OpenReviewClient(object):
         :param token: Upload link token
         :type token: str
         :param document_type: Type of document being uploaded ('identity' or 'parentalConsent')
-        :type document_type: str, optional
+        :type document_type: str
 
         :return: Dictionary with the uploaded document metadata (``id``, ``type``, ``filename``, ``size``, ``tcdate``)
         :rtype: dict

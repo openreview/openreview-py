@@ -4867,7 +4867,7 @@ The OpenReview Team.
 
         ## The user uploads the document as a guest: the tokenized link is the only credential
         guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
-        document = guest_client.post_profile_document(pdf_path, link['token'])
+        document = guest_client.post_profile_document(pdf_path, link['token'], 'identity')
         assert document['id']
         assert document['type'] == 'identity'
         assert document['filename'] == 'paper.pdf'
@@ -4875,7 +4875,7 @@ The OpenReview Team.
 
         ## An invalid token is rejected
         with pytest.raises(openreview.OpenReviewException, match=r'Invalid or expired upload link'):
-            guest_client.post_profile_document(pdf_path, 'invalid.token.value')
+            guest_client.post_profile_document(pdf_path, 'invalid.token.value', 'identity')
 
         ## Support can list the documents. The owner cannot: rejecting the profile
         ## invalidated her session and a rejected profile cannot log back in, so the
@@ -4916,7 +4916,7 @@ The OpenReview Team.
 
         ## The link can be reused while it is valid; support can also bulk delete
         ## every identity document of a profile
-        guest_client.post_profile_document(pdf_path, link['token'])
+        guest_client.post_profile_document(pdf_path, link['token'], 'identity')
         result = support_client.delete_identity_documents('~Rita_Identity1')
         assert result['deletedCount'] == 1
         assert support_client.get_profile_documents('~Rita_Identity1') == []
@@ -4966,8 +4966,8 @@ The OpenReview Team.
         shutil.copyfile(pdf_path, back_path)
 
         guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
-        guest_client.post_profile_document(str(front_path), link['token'])
-        guest_client.post_profile_document(str(back_path), link['token'])
+        guest_client.post_profile_document(str(front_path), link['token'], 'identity')
+        guest_client.post_profile_document(str(back_path), link['token'], 'identity')
 
         documents = support_client.get_profile_documents('~Diego_Identity1')
         assert sorted(d['filename'] for d in documents) == ['id_back.pdf', 'id_front.pdf']
