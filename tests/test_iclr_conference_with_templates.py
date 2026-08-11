@@ -355,9 +355,24 @@ For more details, please check the following links:
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Full_Submission-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/Reviewers/-/Submission_Message-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/Area_Chairs/-/Submission_Message-0-1', count=2)
+
+        # Full_Submission's activation date is no longer synced automatically from the Submission
+        # deadline, so the PC needs to move it into the past explicitly to materialize per-paper
+        # Full_Submission invitations for the already-submitted papers.
+        submission_inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Submission')
+        full_submission_inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Full_Submission')
+        edit = pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Full_Submission/Dates',
+            content={
+                'activation_date': { 'value': submission_inv.expdate },
+                'due_date': { 'value': full_submission_inv.edit['invitation']['duedate'] },
+                'expiration_date': { 'value': full_submission_inv.edit['invitation']['expdate'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Full_Submission-0-1', count=2)
 
         full_submission_inv = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Full_Submission')
         assert len(full_submission_inv) == 10
@@ -1208,9 +1223,12 @@ def test_review_stage(client, openreview_client, helpers):
     # close submission deadline
     now = datetime.datetime.now()
 
+    full_submission_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Full_Submission')
+
     edit = pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Full_Submission/Dates',
         content={
+            'activation_date': { 'value': full_submission_inv.edit['invitation']['cdate'] },
             'due_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=2)) },
             'expiration_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=1.5)) }
         }
