@@ -3060,6 +3060,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if self.venue.is_template_related_workflow():
             content = {
                 'source': {
+                    'description': 'Specify which submissions can be revised. By default, only authors of accepted submissions can submit a Camera-Ready revision.',
                     'value': {
                         'param': {
                             'type': 'json'

@@ -2936,8 +2936,9 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags
-        assert endorsement_tags[0].label is None
-        assert len(openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement', forum=submissions[0].id))== 1
+        tag = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement', forum=submissions[0].id)
+        assert tag and len(tag) == 1
+        assert tag[0].label is None
 
         endorsement_tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Article_Endorsement', stream=True)
         assert endorsement_tags
