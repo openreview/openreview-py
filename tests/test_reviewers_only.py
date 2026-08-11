@@ -2711,26 +2711,6 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Form_Fields')
 
-        # enable Camera Ready Revisions only for "Accept" decision
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Form_Fields',
-            content = {
-                'content': {
-                    'value': invitation.edit['invitation']['edit']['note']['content']
-                },
-                'source': {
-                    'value': {
-                        'venueid': [
-                            'ABCD.cc/2025/Conference',
-                            'ABCD.cc/2025/Conference/Submission',
-                            'ABCD.cc/2025/Conference/Rejected_Submission'
-                        ],
-                        'decision_options': ['Accept']
-                    }
-                }
-            }
-        )
-
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
@@ -2745,7 +2725,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Camera_Ready_Revision-0-1', count=2)
 
         decisions = [openreview.Note.from_json(reply) for note in submissions for reply in note.details['directReplies'] if '/-/Decision' in reply['invitations'][0]]
-        accept_decisions = [note for note in decisions if 'Accept' in note.content['decision']['value']]
+        accept_decisions = [note for note in decisions if 'Accept' in note.content['decision']['value'] or 'Poster' in note.content['decision']['value']]
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
         assert len(invitations) == len(accept_decisions)
