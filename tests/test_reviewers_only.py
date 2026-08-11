@@ -2761,10 +2761,10 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
         assert '_bibtex' not in submissions[0].content
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Which_Submissions')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Form_Fields')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Which_Submissions')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Form_Fields')
+        assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Which_Submissions') is None
+        assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Which_Submissions') is None
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release')
         assert inv and inv.content 
         assert 'reveal_author_identities' not in inv.content
