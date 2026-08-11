@@ -72,7 +72,7 @@ class EditInvitationsBuilder(object):
             return self.domain_group.content.get(field_name, {}).get('value', default_value)
         return default_value
 
-    def set_edit_submission_dates_invitation(self, process_file=None, due_date=None):
+    def set_edit_submission_dates_invitation(self, process_file=None, preprocess_file=None, due_date=None):
 
         venue_id = self.venue_id
         submission_id = self.get_content_value('submission_id', f'{venue_id}/-/Submission')
@@ -86,13 +86,14 @@ class EditInvitationsBuilder(object):
             writers = [venue_id],
             edit = {
                 'content': {
-                    'activation_date': { 
+                    'activation_date': {
                         'value': {
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ]
                             }
-                        }
+                        },
+                        'description': 'Date and time when the submission form opens and authors can start submitting.'
                     },
                     'due_date': {
                         'value': {
@@ -100,7 +101,8 @@ class EditInvitationsBuilder(object):
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ]
                             }
-                        }
+                        },
+                        'description': 'Submission deadline shown to authors. The submission form stays open for 30 more minutes after this date, giving authors a grace period to finish submissions started before the deadline.'
                     }
                 },
                 'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
@@ -118,6 +120,9 @@ class EditInvitationsBuilder(object):
 
         if process_file:
             invitation.process = self.get_process_content(process_file)
+
+        if preprocess_file:
+            invitation.preprocess = self.get_process_content(preprocess_file)
 
         # add due_date only if it is in the future
         if due_date and due_date > tools.datetime_millis(datetime.datetime.now()):
@@ -398,7 +403,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_activation_date=True, include_due_date=True, include_expiration_date=True, due_date=None):
+    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, preprocess_file=None, include_activation_date=True, include_due_date=True, include_expiration_date=True, due_date=None):
 
         venue_id = self.venue_id
         invitation_id = f'{super_invitation_id}/Dates'
@@ -466,12 +471,15 @@ class EditInvitationsBuilder(object):
             if process_file:
                 invitation.process = self.get_process_content(f'{process_file}')
 
+            if preprocess_file:
+                invitation.preprocess = self.get_process_content(f'{preprocess_file}')
+
             if due_date:
                 invitation.duedate = due_date
 
             self.save_invitation(invitation, replacement=True)
             return invitation
-    
+
     def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, preprocess_file=None, due_date=None, allow_license_edition=False):
 
         venue_id = self.venue_id

@@ -255,7 +255,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             submission_invitation.content['users_to_notify'] = {
                 'value': ['submission_authors'] # by default only authors are notified
             }
-            submission_invitation.instructions = 'Configure the contents of the article submission form, the email notification sent for when a new submission is posted, and the time when the article submission will open (activation) and the article submission due date.'
+            submission_invitation.instructions = 'Configure the contents of the article submission form, the email notification sent for when a new submission is posted, and the time when the article submission will open (activation) and the article submission due date. By default, the expiration date is set to 30 minutes after the due date.'
         else:
             submission_invitation.content['email_authors'] = { 'value': True }
             submission_invitation.content['email_program_chairs'] = { 'value': self.venue.submission_stage.email_pcs }
@@ -268,7 +268,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             edit_invitations_builder = EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_submission_content_invitation('../workflows/workflow_process/edit_submission_content_process.py', due_date=cdate)
             edit_invitations_builder.set_edit_submission_notification_invitation(due_date=cdate)
-            edit_invitations_builder.set_edit_submission_dates_invitation('../workflows/workflow_process/edit_submission_deadline_process.py',due_date=cdate)
+            edit_invitations_builder.set_edit_submission_dates_invitation('../workflows/workflow_process/edit_submission_deadline_process.py', preprocess_file='../workflows/workflow_process/edit_submission_dates_preprocess.py', due_date=cdate)
 
     def set_submission_deletion_invitation(self, submission_revision_stage):
 
@@ -3058,27 +3058,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         self.save_invitation(invitation, replacement=False)
 
         if self.venue.is_template_related_workflow():
-            content = {
-                'source': {
-                    'value': {
-                        'param': {
-                            'type': 'string',
-                            'enum': [
-                                'all_submissions',
-                                'accepted_submissions'
-                            ],
-                            'input': 'select'
-                        }
-                    }
-                }
-            }
             domain_group = self.client.get_group(self.venue_id)
             is_full_submission_revision = revision_invitation_id == domain_group.content.get('full_submission_invitation_id', {}).get('value', '')
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
-            edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, content if not is_full_submission_revision else {}, allow_license_edition=revision_stage.allow_license_edition)
-            allow_cdate_edit = False if is_full_submission_revision else True
+            edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, allow_license_edition=revision_stage.allow_license_edition)
             process_file = '../workflows/workflow_process/edit_full_submission_deadline_process.py' if is_full_submission_revision else None
-            edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id, process_file=process_file, include_activation_date=allow_cdate_edit)
+            preprocess_file = '../workflows/workflow_process/edit_full_submission_dates_preprocess.py' if is_full_submission_revision else None
+            edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id, process_file=process_file, preprocess_file=preprocess_file)
 
         return invitation
 

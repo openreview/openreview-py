@@ -2331,10 +2331,11 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
-        decisions = ['Accept', 'Revision Needed', 'Reject']
+        decisions = ['Accept', 'Poster', 'Revision Needed', 'Reject']
         comment = {
             'Accept': 'Congratulations on your acceptance.',
             'Revision Needed': 'Your paper must be revised.',
+            'Poster': 'Your paper has been accepted as a poster.',
             'Reject': 'We regret to inform you...'
         }
 
@@ -2343,7 +2344,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             writer.writerow([submissions[0].number, 'Accept', comment['Accept']])
             writer.writerow([submissions[1].number, 'Revision Needed', comment['Revision Needed']])
             writer.writerow([submissions[2].number, 'Reject', comment['Reject']])
-            for submission in submissions[3:-1]:
+            writer.writerow([submissions[3].number, 'Poster', comment['Poster']])
+            for submission in submissions[4:-1]:
                 decision = random.choice(decisions)
                 writer.writerow([submission.number, decision, comment[decision]])
 
@@ -2697,7 +2699,15 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc', details='directReplies')
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
+        assert invitation and invitation.content['source']['value'] == {
+            'venueid': [
+                'ABCD.cc/2025/Conference',
+                'ABCD.cc/2025/Conference/Submission',
+                'ABCD.cc/2025/Conference/Rejected_Submission'
+            ],
+            'with_decision_accept': True
+        }
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Form_Fields')
 
@@ -2715,7 +2725,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Camera_Ready_Revision-0-1', count=2)
 
         decisions = [openreview.Note.from_json(reply) for note in submissions for reply in note.details['directReplies'] if '/-/Decision' in reply['invitations'][0]]
-        accept_decisions = [note for note in decisions if 'Accept' in note.content['decision']['value']]
+        accept_decisions = [note for note in decisions if 'Accept' in note.content['decision']['value'] or 'Poster' in note.content['decision']['value']]
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
         assert len(invitations) == len(accept_decisions)
@@ -2906,8 +2916,9 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags
-        assert endorsement_tags[0].label is None
-        assert len(openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement', forum=submissions[0].id))== 1
+        tag = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement', forum=submissions[0].id)
+        assert tag and len(tag) == 1
+        assert tag[0].label is None
 
         endorsement_tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Article_Endorsement', stream=True)
         assert endorsement_tags
