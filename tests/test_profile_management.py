@@ -2,6 +2,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import openreview
 import datetime
+import os
+import shutil
 import time
 import re
 from selenium.webdriver.common.by import By
@@ -4837,3 +4839,154 @@ The OpenReview Team.
                     }
                 )
             )
+
+    def test_profile_identity_document_verification(self, openreview_client, support_client, helpers):
+
+        pdf_path = os.path.join(os.path.dirname(__file__), 'data/paper.pdf')
+
+        helpers.create_user('rita@idcheck.org', 'Rita', 'Identity', alternates=[], institution='google.com')
+        rita_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='rita@idcheck.org', password=helpers.strong_password)
+
+        ## Only support members can mint upload links
+        with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+            rita_client.create_profile_document_upload_link('~Rita_Identity1', 'identity')
+
+        link = support_client.create_profile_document_upload_link('~Rita_Identity1', 'identity')
+        assert link['token']
+        assert link['expiresAt'] > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert f"/profile-documents/identity/{link['token']}" in link['url']
+
+        ## Reject the profile asking for an identity document; the reason, including the
+        ## upload link, is emailed to the user
+        support_client.moderate_profile('~Rita_Identity1', 'reject', f"Please upload a copy of your ID document using this link: {link['url']}")
+        assert openreview_client.get_profile('~Rita_Identity1').state == 'Rejected'
+
+        messages = openreview_client.get_messages(to='rita@idcheck.org', subject='OpenReview profile activation status')
+        assert len(messages) == 1
+        assert link['url'] in messages[0]['content']['text']
+
+        ## The user uploads the document as a guest: the tokenized link is the only credential
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+        document = guest_client.post_profile_document(pdf_path, link['token'], 'identity')
+        assert document['id']
+        assert document['type'] == 'identity'
+        assert document['filename'] == 'paper.pdf'
+        assert document['size'] > 0
+
+        ## An invalid token is rejected
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid or expired upload link'):
+            guest_client.post_profile_document(pdf_path, 'invalid.token.value', 'identity')
+
+        ## Support can list the documents. The owner cannot: rejecting the profile
+        ## invalidated her session and a rejected profile cannot log back in, so the
+        ## tokenized link is her only way to interact with her documents.
+        documents = support_client.get_profile_documents('~Rita_Identity1')
+        assert len(documents) == 1
+        assert documents[0]['id'] == document['id']
+        with pytest.raises(openreview.OpenReviewException, match=r'TokenExpiredError'):
+            rita_client.get_profile_documents('~Rita_Identity1', document_type='identity')
+
+        ## The document shows up in the support review queue
+        worklist = support_client.get_identity_documents()
+        assert worklist['count'] >= 1
+        assert document['id'] in [d['id'] for d in worklist['documents']]
+        assert '~Rita_Identity1' in [d['profileId'] for d in worklist['documents']]
+
+        ## Support downloads the document and verifies its content
+        content = support_client.get_profile_document(document['id'])
+        with open(pdf_path, 'rb') as f:
+            assert content == f.read()
+
+        ## Support deletes the document after reviewing it; the owner is notified.
+        ## The deletion is soft: the file is gone but the metadata is kept in the
+        ## trash for an audit trail.
+        support_client.delete_profile_document(document['id'])
+        assert support_client.get_profile_documents('~Rita_Identity1') == []
+        with pytest.raises(openreview.OpenReviewException, match=r'was not found'):
+            support_client.get_profile_document(document['id'])
+
+        trashed = support_client.get_profile_documents('~Rita_Identity1', trash=True)
+        assert [d['id'] for d in trashed] == [document['id']]
+        assert trashed[0]['ddate']
+
+        messages = openreview_client.get_messages(to='rita@idcheck.org', subject='Documents removed from the OpenReview system')
+        assert len(messages) == 1
+        assert 'permanently removed from the OpenReview system' in messages[0]['content']['text']
+        assert 'paper.pdf' in messages[0]['content']['text']
+
+        ## The link can be reused while it is valid; support can also bulk delete
+        ## every identity document of a profile
+        guest_client.post_profile_document(pdf_path, link['token'], 'identity')
+        result = support_client.delete_identity_documents('~Rita_Identity1')
+        assert result['deletedCount'] == 1
+        assert support_client.get_profile_documents('~Rita_Identity1') == []
+
+        messages = openreview_client.get_messages(to='rita@idcheck.org', subject='Documents removed from the OpenReview system')
+        assert len(messages) == 2
+
+        ## Support approves the profile and records the ID check with a moderation label
+        support_client.moderate_profile('~Rita_Identity1', 'accept')
+        assert openreview_client.get_profile('~Rita_Identity1').state == 'Active'
+
+        ## Document reads are support-only, even for the profile owner: once
+        ## reactivated she can log in again but still cannot list her documents
+        rita_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='rita@idcheck.org', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+            rita_client.get_profile_documents('~Rita_Identity1')
+
+        support_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Rita_Identity1',
+                label='ID Check'
+            )
+        )
+
+        tags = support_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Rita_Identity1')
+        assert len(tags) == 1
+        assert tags[0].label == 'ID Check'
+
+    def test_profile_identity_documents_kept_for_review(self, openreview_client, support_client, helpers, tmp_path):
+
+        ## Same flow as above, but the documents are intentionally left in place and the
+        ## profile is left rejected, so the pending review can be inspected in the UI
+        ## (moderation queue -> profile preview modal -> identity documents section).
+        pdf_path = os.path.join(os.path.dirname(__file__), 'data/paper.pdf')
+
+        helpers.create_user('diego@idcheck.org', 'Diego', 'Identity', alternates=[], institution='google.com')
+
+        link = support_client.create_profile_document_upload_link('~Diego_Identity1', 'identity')
+        support_client.moderate_profile('~Diego_Identity1', 'reject', f"Please upload a copy of your ID document using this link: {link['url']}")
+        assert openreview_client.get_profile('~Diego_Identity1').state == 'Rejected'
+
+        front_path = tmp_path / 'id_front.pdf'
+        back_path = tmp_path / 'id_back.pdf'
+        shutil.copyfile(pdf_path, front_path)
+        shutil.copyfile(pdf_path, back_path)
+
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+        guest_client.post_profile_document(str(front_path), link['token'], 'identity')
+        guest_client.post_profile_document(str(back_path), link['token'], 'identity')
+
+        documents = support_client.get_profile_documents('~Diego_Identity1')
+        assert sorted(d['filename'] for d in documents) == ['id_back.pdf', 'id_front.pdf']
+
+        worklist = support_client.get_identity_documents()
+        assert sorted(d['filename'] for d in worklist['documents'] if d['profileId'] == '~Diego_Identity1') == ['id_back.pdf', 'id_front.pdf']
+
+    def test_profile_owner_cannot_see_deleted_documents(self, openreview_client, support_client, helpers):
+
+        ## Rita was re-activated at the end of the identity verification test and has two
+        ## soft-deleted identity documents. Document reads are support-only: the profile
+        ## owner cannot list documents at all, deleted or not.
+        trashed = support_client.get_profile_documents('~Rita_Identity1', trash=True)
+        assert len(trashed) == 2
+        assert all(d['ddate'] for d in trashed)
+
+        rita_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='rita@idcheck.org', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+            rita_client.get_profile_documents('~Rita_Identity1')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+            rita_client.get_profile_documents('~Rita_Identity1', trash=True)
