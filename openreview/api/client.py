@@ -149,7 +149,7 @@ class OpenReviewClient(object):
         # requests picks the longest matching prefix, so only the edits endpoints
         # get the POST-retrying adapter
         for edits_url in [self.note_edits_url, self.invitation_edits_url, self.group_edits_url]:
-            self.session.mount(edits_url, why)
+            self.session.mount(edits_url, edits_adapter)
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
