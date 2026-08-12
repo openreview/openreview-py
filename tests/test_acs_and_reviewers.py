@@ -1676,19 +1676,31 @@ Please note that responding to this email will direct your reply to efgh2025.pro
             'EFGH.cc/2025/Conference/Submission${{2/id}/number}/Authors'
         ]
 
-        # add reveal_author_identities to submission release invitations
+        # select the submission readers
         pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Release/Readers',
             content={
                 'readers': {
                     'value': ['everyone']
-                },
-                'reveal_author_identities': {
-                    'value': True
                 }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Release-0-1', count=2)
+
+        # release the author identities of accepted submissions through the content schema
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Accepted_Submission_Release/Form_Fields',
+            content={
+                'content': {
+                    'value': {
+                        'authors': {
+                            'readers': { 'const': { 'delete': True } }
+                        }
+                    }
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accepted_Submission_Release-0-1', count=3)
 
         pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Release/Readers',
@@ -1708,13 +1720,28 @@ Please note that responding to this email will direct your reply to efgh2025.pro
             content={
                 'readers': {
                     'value': ['everyone']
-                },
-                'reveal_author_identities': {
-                    'value': False
                 }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Reject_Submission_Release-0-1', count=2)
+
+        # keep the author identities of rejected submissions hidden through the content schema
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Rejected_Submission_Release/Form_Fields',
+            content={
+                'content': {
+                    'value': {
+                        'authors': {
+                            'readers': [
+                                'EFGH.cc/2025/Conference',
+                                'EFGH.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        }
+                    }
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=3)
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
@@ -1742,7 +1769,7 @@ Please note that responding to this email will direct your reply to efgh2025.pro
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Reject_Submission_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Reject_Submission_Release-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
 

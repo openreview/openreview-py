@@ -17,7 +17,6 @@ def process(client, invitation):
     submission_id = domain.content['submission_id']['value']
     article_endorsement_id = domain.content['article_endorsement_id']['value']
     submission_name = domain.content['submission_name']['value']
-    authors_name = domain.content['authors_name']['value']
     decision_name = domain.content.get('decision_name', {}).get('value', 'Decision')
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
@@ -25,28 +24,13 @@ def process(client, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     decision_option = invitation.get_content_value('decision_option')
     release_accepted = openreview.tools.is_accept_decision(decision_option, accept_options)
-    status_invitation_id = domain.get_content_value('status_invitation_id')
-    request_form_id = domain.get_content_value('request_form_id')
 
-    support_user = invitation.invitations[0].split('Template')[0] + 'Support'
-
-    reveal_authors = invitation.get_content_value('reveal_author_identities')
-    if reveal_authors is None:
-        # post status to request form
-        client.post_note_edit(
-            invitation=status_invitation_id,
-            signatures=[venue_id],
-            readers=[venue_id, support_user],
-            note=openreview.api.Note(
-                forum=request_form_id,
-                signatures=[venue_id],
-                content={
-                    'title': { 'value': f'{decision_option} Submission Release Failed' },
-                    'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid selection for whether or not to release author names. Please re-schedule this process to run at a later time and then select whether author names should be released.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split("/-/")[-1].replace("_", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Readers" invitation, select whether or not to release author names to the submission readers (and update submission readers if needed) and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and simply select whether or not to release author names. Once you have made your selection, click "Submit" and the process will automatically be scheduled to run shortly.' }
-                }
-            )
-        )
-        return
+    # The authors/authorids readers are defined in the invitation content schema: a readers
+    # constant, or the escaped delete { 'const': { 'delete': True } } that the API stamps as
+    # { 'delete': True } on every note edit. The process only uses the schema to build the
+    # bibtex accordingly.
+    authors_readers_schema = invitation.edit.get('note', {}).get('content', {}).get('authors', {}).get('readers')
+    reveal_authors = authors_readers_schema == { 'const': { 'delete': True } }
 
     def edit_submission(submission_tuple):
         submission, decision = submission_tuple
@@ -55,13 +39,10 @@ def process(client, invitation):
 
         venue = openreview.tools.decision_to_venue(short_name, decision_value, accept_options)
 
+        # The authors/authorids readers are not posted here: they are stamped by the API
+        # from the constants defined in the invitation content schema. The process only
+        # posts the values that cannot be defined as invitation constants.
         updated_content = {
-            'authors': {
-                'readers': { 'delete': True } if reveal_authors else [venue_id, f'{venue_id}/{submission_name}{submission.number}/{authors_name}']
-            },
-            'authorids': {
-                'readers': { 'delete': True } if reveal_authors else [venue_id, f'{venue_id}/{submission_name}{submission.number}/{authors_name}']
-            },
             'venue': {
                 'value': venue
             },
@@ -76,11 +57,6 @@ def process(client, invitation):
                 )
             }
         }
-
-        if 'authorids' in submission.content:
-            updated_content['authorids'] = {
-                'readers': { 'delete': True } if reveal_authors else [venue_id, f'{venue_id}/{submission_name}{submission.number}/{authors_name}']
-            }
 
         public = invitation.edit['note']['readers'] == ['everyone']
 
