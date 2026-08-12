@@ -6,6 +6,12 @@ def process(client, edit, invitation):
     accept_decision_options = edit.content['accept_decision_options']['value']
     decision_name = domain.get_content_value('decision_name', 'Decision')
     decision_invitation_id = f'{venue_id}/-/{decision_name}'
+    submission_name = domain.get_content_value('submission_name')
+    reviewers_name = domain.get_content_value('reviewers_name')
+    authors_name = domain.get_content_value('authors_name')
+    rejected_venue_id = domain.get_content_value('rejected_venue_id')
+    area_chairs_name = domain.get_content_value('area_chairs_name')
+    senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
 
     client.post_group_edit(
         invitation = meta_invitation_id,
@@ -27,12 +33,10 @@ def process(client, edit, invitation):
 
     if len(invitation_edits) > 1:
         # delete the previous edit's decision notification invitations
-        print('Deleting previous decision notification invitations for the old decision options.')
         previous_edit = invitation_edits[-2]
         previous_decision_options = previous_edit.content['decision_options']['value']
     else:
         #delete the default decision notification invitations
-        print('Deleting default decision notification invitations for the old decision options.')
         previous_decision_options = ['Accept', 'Reject']
 
     new_decision_options = edit.content['decision_options']['value']
@@ -47,12 +51,22 @@ def process(client, edit, invitation):
 
     # delete the decision notification invitations for the removed decision options
     for decision_option in removed_decision_options:
-        formatted_decision_option = decision_option.replace(' ', '_').replace('(', '').replace(')', '')
-        invitation_id = f'{venue_id}/-/Author_{formatted_decision_option}_Decision_Notification'
-        invitations_to_delete = client.get_invitations(prefix=invitation_id)
+        formatted_decision_option = openreview.tools.decision_option_to_id(decision_option)
 
-        for inv in invitations_to_delete:
-            print(f'Deleting invitation: {inv.id}')
+        # notification invitations
+        notification_invitation_id = f'{venue_id}/-/Author_{formatted_decision_option}_Decision_Notification'
+        notification_invitations_to_delete = client.get_invitations(prefix=notification_invitation_id)
+
+        for inv in notification_invitations_to_delete:
+            print(f'Deleting Notification invitation: {inv.id}')
+            client.delete_invitation(inv.id)
+
+        # submission release invitaations
+        release_invitation_id = f'{venue_id}/-/{formatted_decision_option}_Submission_Release'
+        release_invitations_to_delete = client.get_invitations(prefix=release_invitation_id)
+
+        for inv in release_invitations_to_delete:
+            print(f'Deleting Submission Release invitation: {inv.id}')
             client.delete_invitation(inv.id)
 
     # post new decision notification invitations for the added decision options
@@ -62,16 +76,42 @@ def process(client, edit, invitation):
     from_email = domain.content['message_sender']['value']['fromEmail']
 
     for decision_option in added_decision_options:
-        formatted_decision_option = decision_option.replace(' ', '_').replace('(', '').replace(')', '')
+        formatted_decision_option = openreview.tools.decision_option_to_id(decision_option)
+
+        # post new decision notification invitations
         client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
-        signatures=[venue_id],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': f'Author_{formatted_decision_option}_Decision_Notification' },
-            'activation_date': { 'value': openreview.tools.datetime_millis(cdate) },
-            'short_name': { 'value': short_name },
-            'from_email': { 'value': from_email },
-            'decision': { 'value': decision_option }
-        }
-    )
+            invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
+            signatures=[venue_id],
+            content={
+                'venue_id': { 'value': venue_id },
+                'name': { 'value': f'Author_{formatted_decision_option}_Decision_Notification' },
+                'activation_date': { 'value': openreview.tools.datetime_millis(cdate) },
+                'short_name': { 'value': short_name },
+                'from_email': { 'value': from_email },
+                'decision': { 'value': decision_option }
+            }
+        )
+
+        is_accepted_option = openreview.tools.is_accept_decision(decision_option, accept_decision_options)
+        additional_readers = []
+        if area_chairs_name:
+            if senior_area_chairs_name:
+                additional_readers.append(f'{venue_id}/{submission_name}' + '${{2/id}/number}/' + senior_area_chairs_name)
+            additional_readers.append(f'{venue_id}/{submission_name}' + '${{2/id}/number}/' + area_chairs_name)
+
+        # post new submission release invitations
+        client.post_invitation_edit(
+            invitations=f'{invitation_prefix}/-/Submission_Release',
+            signatures=[venue_id],
+            content={
+                'venue_id': { 'value': venue_id },
+                'activation_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=2)) },
+                'submission_name': { 'value': submission_name },
+                'reviewers_name': { 'value': reviewers_name },
+                'authors_name': { 'value': authors_name },
+                'additional_readers': { 'value': additional_readers },
+                'decision_option': { 'value': decision_option },
+                'decision_option_id': { 'value': openreview.tools.decision_option_to_id(decision_option) },
+                'decision_venue_id': { 'value': venue_id if is_accepted_option else rejected_venue_id }
+            }
+        )

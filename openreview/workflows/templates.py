@@ -1670,7 +1670,7 @@ If you would like to change your decision, please follow the link in the previou
                 'signatures' : {
                     'param': {
                         'items': [
-                            { 'prefix': '~.*', 'optional': True },
+                            { 'prefix': '.*', 'optional': True },
                             { 'value': self.template_domain, 'optional': True }
                         ]
                     }

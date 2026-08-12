@@ -25,9 +25,6 @@ def process(client, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     decision_option = invitation.get_content_value('decision_option')
     release_accepted = openreview.tools.is_accept_decision(decision_option, accept_options)
-    print('release accepted:', release_accepted)
-    print('decision option:', decision_option)
-    print('accept options:', accept_options)
     status_invitation_id = domain.get_content_value('status_invitation_id')
     request_form_id = domain.get_content_value('request_form_id')
 

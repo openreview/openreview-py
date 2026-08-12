@@ -2751,26 +2751,50 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release')
         assert inv and inv.content 
         assert 'reveal_author_identities' not in inv.content
-        assert inv.content['decision_option']['value'] == 'Accepted'
+        assert inv.content['decision_option']['value'] == 'Accept'
         assert inv.content['source']['value'] == {
             'venueid': ['ABCD.cc/2025/Conference/Submission', 'ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Rejected_Submission'],
-            'with_decision_accept': True
+            'decision_options': ['Accept']
         }
         assert inv.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference'
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release/Readers')
 
-        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release')
-        assert inv and inv.content 
+        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reject_Submission_Release')
+        assert inv and inv.content
         assert 'reveal_author_identities' not in inv.content
-        assert inv.content['decision_option']['value'] == 'Rejected'
+        assert inv.content['decision_option']['value'] == 'Reject'
         assert inv.content['source']['value'] == {
             'venueid': ['ABCD.cc/2025/Conference/Submission', 'ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Rejected_Submission'],
-            'with_decision_accept': False
+            'decision_options': ['Reject']
         }
         assert inv.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Readers')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reject_Submission_Release/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reject_Submission_Release/Readers')
+
+        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Release')
+        assert inv and inv.content
+        assert 'reveal_author_identities' not in inv.content
+        assert inv.content['decision_option']['value'] == 'Poster'
+        assert inv.content['source']['value'] == {
+            'venueid': ['ABCD.cc/2025/Conference/Submission', 'ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Rejected_Submission'],
+            'decision_options': ['Poster']
+        }
+        assert inv.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference'
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Release/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Release/Readers')
+
+        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release')
+        assert inv and inv.content
+        assert 'reveal_author_identities' not in inv.content
+        assert inv.content['decision_option']['value'] == 'Revision Needed'
+        assert inv.content['source']['value'] == {
+            'venueid': ['ABCD.cc/2025/Conference/Submission', 'ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Rejected_Submission'],
+            'decision_options': ['Revision Needed']
+        }
+        assert inv.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release/Readers')
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
@@ -2786,19 +2810,19 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         # trigger submission release without selecting whether to release author names or not
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release-0-1', count=2)
 
         # assert status comment posted to request form
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
         assert len(notes) == 8
-        assert notes[-1].content['title']['value'] == 'Rejected Submission Release Failed'
-        assert notes[-2].content['title']['value'] == 'Accepted Submission Release Failed'
+        assert notes[-1].content['title']['value'] == 'Revision Needed Submission Release Failed'
+        assert notes[-2].content['title']['value'] == 'Accept Submission Release Failed'
 
         # select reveal_authors value to re-run submission release
         pc_client.post_invitation_edit(
@@ -2830,11 +2854,13 @@ year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[0].id+'''}
 }'''
 
-        # rejected submission hasn't been updated
+        # other submissions haven't been updated yet
         assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
+        assert submissions[2].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
+        assert submissions[3].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Readers',
+            invitations='ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release/Readers',
             content={
                 'readers': {
                     'value': ['everyone']
@@ -2843,7 +2869,7 @@ url={https://openreview.net/forum?id='''+submissions[0].id+'''}
             }
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -2863,7 +2889,7 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
 
         # re-run to hide rejected submissions and hide author names
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Readers',
+            invitations='ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release/Readers',
             content={
                 'readers': {
                     'value': [
@@ -2876,7 +2902,7 @@ url={https://openreview.net/forum?id='''+submissions[1].id+'''}
             }
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Rejected_Submission_Release-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -2900,6 +2926,86 @@ author={Anonymous},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[1].id+'''}
 }'''
+
+        # release the rejected submission, keeping the authors anonymous
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Reject_Submission_Release/Readers',
+            content={
+                'readers': {
+                    'value': ['everyone']
+                },
+                'reveal_author_identities': { 'value': False }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Reject_Submission_Release-0-1', count=2)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Reject_Submission_Release/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Reject_Submission_Release-0-1', count=3)
+
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        assert submissions[2].readers == ['everyone']
+        assert not submissions[2].pdate
+        assert submissions[2].odate
+        assert submissions[2].content['authors']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission3/Authors'
+        ]
+        assert submissions[2].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
+        assert submissions[2].content['venue']['value'] == 'Submitted to ABCD 2025'
+        assert submissions[2].content['_bibtex']['value'] == '''@misc{
+anonymous'''+str(year)+'''paper,
+title={Paper title 3},
+author={Anonymous},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''+submissions[2].id+'''}
+}'''
+
+        # release the poster submission, revealing the author identities
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Poster_Submission_Release/Readers',
+            content={
+                'readers': {
+                    'value': ['everyone']
+                },
+                'reveal_author_identities': { 'value': True }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Poster_Submission_Release-0-1', count=2)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Poster_Submission_Release/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Poster_Submission_Release-0-1', count=3)
+
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        # 'Poster' is an accept decision option, so the submission is treated as accepted
+        assert submissions[3].readers == ['everyone']
+        assert submissions[3].pdate
+        assert submissions[3].odate
+        assert 'readers' not in submissions[3].content['authors']
+        assert submissions[3].content['venueid']['value'] == 'ABCD.cc/2025/Conference'
+        assert submissions[3].content['venue']['value'] == 'ABCD 2025 Poster'
+        assert submissions[3].content['_bibtex']['value'] == '''@inproceedings{
+user'''+str(year)+'''paper,
+title={Paper title 4},
+author={SomeFirstName User and Andrea Google},
+booktitle={The ABCD Conference},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''+submissions[3].id+'''}
+}'''
+
+        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement', forum=submissions[3].id)
+        assert len(tags) == 1
 
         # submission #10 is ignored by Submission Release because it has no decision
         assert submissions[-1].readers == [
