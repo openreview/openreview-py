@@ -2187,40 +2187,43 @@ def should_match_invitation_source(client, invitation, submission, note=None, do
             if is_accept_decision(decision_value, accept_options) != with_decision_accept:
                 return False
 
-    content_keys = invitation.edit.get('content', {}).keys()
-    
-    if 'withdrawalId' in content_keys:
-        return False
-    
-    if 'deskRejectionId' in content_keys:
-        return False
-    
-    if 'noteReaders' in content_keys:
-        return False
-    
-    if content_keys and 'noteId' not in content_keys:
-        return False
-    
-    if content_keys and 'noteNumber' not in content_keys:
-        return False
+    if invitation.edit:
+        content_keys = invitation.edit.get('content', {}).keys()
 
-    if note and 'replyto' not in content_keys:
-        return False
+        if 'withdrawalId' in content_keys:
+            return False
+
+        if 'deskRejectionId' in content_keys:
+            return False
+
+        if 'noteReaders' in content_keys:
+            return False
+
+        if content_keys and 'noteId' not in content_keys:
+            return False
+
+        if content_keys and 'noteNumber' not in content_keys:
+            return False
+
+        if note and 'replyto' not in content_keys:
+            return False
     
     return True
 
 def is_forum_invitation(invitation):
 
-    content_keys = invitation.edit.get('content', {}).keys()
-    
-    if 'noteId' not in content_keys:
-        return False
-    
-    if 'noteNumber' not in content_keys:
-        return False
-    
-    if 'replyto' in content_keys:
-        return False
+    if invitation.edit:
+
+        content_keys = invitation.edit.get('content', {}).keys()
+
+        if 'noteId' not in content_keys:
+            return False
+
+        if 'noteNumber' not in content_keys:
+            return False
+
+        if 'replyto' in content_keys:
+            return False
 
     return True    
 

@@ -145,10 +145,13 @@ def process(client, edit, invitation):
     venue.create_comment_stage()
 
     additional_readers = []
+    submission_release_additional_readers = []
     if venue.use_senior_area_chairs:
         additional_readers.append(venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}'))
+        submission_release_additional_readers.append(venue.get_senior_area_chairs_id(number='${{2/id}/number}'))
     if venue.use_area_chairs:
         additional_readers.append(venue.get_area_chairs_id(number='${5/content/noteNumber/value}'))
+        submission_release_additional_readers.append(venue.get_area_chairs_id(number='${{2/id}/number}'))
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Note_Release',
@@ -236,10 +239,24 @@ def process(client, edit, invitation):
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Author_Decision_Notification' },
+            'name': { 'value': 'Author_Accept_Decision_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'from_email': { 'value': from_email }
+            'from_email': { 'value': from_email },
+            'decision': { 'value': 'Accept' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
+        signatures=[invitation_prefix],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Author_Reject_Decision_Notification' },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
+            'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'from_email': { 'value': from_email },
+            'decision': { 'value': 'Reject' }
         }
     )
 
@@ -259,7 +276,7 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': additional_readers },
+            'additional_readers': { 'value': submission_release_additional_readers },
             'decision_option': { 'value': 'Accept' },
             'decision_option_id': { 'value': openreview.tools.decision_option_to_id('Accept') },
             'decision_venue_id': { 'value': venue_id }
@@ -275,7 +292,7 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': additional_readers },
+            'additional_readers': { 'value': submission_release_additional_readers },
             'decision_option': { 'value': 'Reject' },
             'decision_option_id': { 'value': openreview.tools.decision_option_to_id('Reject') },
             'decision_venue_id': { 'value': venue.get_rejected_submission_venue_id() }

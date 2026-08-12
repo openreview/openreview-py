@@ -86,6 +86,7 @@ class OpenReviewClient(object):
         self.profiles_rename = self.baseurl + '/profiles/rename'
         self.relation_readers_url = self.baseurl + '/settings/relationReaders'
         self.profiles_moderate = self.baseurl + '/profile/moderate'
+        self.profile_documents_url = self.baseurl + '/profile-documents'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -1089,6 +1090,155 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
+    def create_profile_document_upload_link(self, profile_id, document_type):
+        """
+        Creates a short-lived upload link scoped to one profile and document type.
+        The link can be shared with the profile owner (e.g. in a moderation rejection message)
+        so they can upload the requested document without logging in. This is a support method.
+
+        :param profile_id: Profile id the uploaded document will be attached to
+        :type profile_id: str
+        :param document_type: Type of document the link accepts ('identity' or 'parentalConsent')
+        :type document_type: str
+
+        :return: Dictionary with the keys ``url``, ``token`` and ``expiresAt``
+        :rtype: dict
+        """
+        response = self.session.post(
+            self.profile_documents_url + '/upload-link',
+            json = {
+                'profileId': profile_id,
+                'type': document_type
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return response.json()
+
+    def post_profile_document(self, file_path, token, document_type):
+        """
+        Uploads a profile document using an upload link token. No login is required:
+        the token, minted with :meth:`create_profile_document_upload_link`, authorizes
+        the upload and fixes the target profile and document type.
+
+        :param file_path: Path to the local file to upload
+        :type file_path: str
+        :param token: Upload link token
+        :type token: str
+        :param document_type: Type of document being uploaded ('identity' or 'parentalConsent')
+        :type document_type: str
+
+        :return: Dictionary with the uploaded document metadata (``id``, ``type``, ``filename``, ``size``, ``tcdate``)
+        :rtype: dict
+        """
+        type_url_paths = {
+            'identity': 'identity',
+            'parentalConsent': 'parental-consent'
+        }
+        if document_type not in type_url_paths:
+            raise OpenReviewException(f'Invalid document type: {document_type}')
+
+        with open(file_path, 'rb') as f:
+            response = self.session.post(
+                f'{self.profile_documents_url}/{type_url_paths[document_type]}/{token}',
+                files = { 'file': (os.path.basename(file_path), f) },
+                headers = self.headers)
+
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_profile_documents(self, profile_id, document_type=None, trash=None):
+        """
+        Gets the list of documents uploaded for a profile. This is a support method:
+        users can upload documents but cannot retrieve them.
+
+        :param profile_id: Profile id to list documents for
+        :type profile_id: str
+        :param document_type: Filter by document type ('identity' or 'parentalConsent')
+        :type document_type: str, optional
+        :param trash: If True, include soft-deleted documents (returned with a ``ddate``)
+        :type trash: bool, optional
+
+        :return: List of dictionaries with the document metadata
+        :rtype: list[dict]
+        """
+        params = { 'profileId': profile_id }
+        if document_type is not None:
+            params['type'] = document_type
+        if trash is not None:
+            params['trash'] = trash
+
+        response = self.session.get(self.profile_documents_url, params=tools.format_params(params), headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()['profileDocuments']
+
+    def get_profile_document(self, id):
+        """
+        Downloads a profile document. This is a support method: users can upload
+        documents but cannot retrieve them.
+
+        :param id: Id of the document to download
+        :type id: str
+
+        :return: The binary content of the document
+        :rtype: bytes
+        """
+        response = self.session.get(self.profile_documents_url + '/' + id, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.content
+
+    def delete_profile_document(self, id):
+        """
+        Deletes a profile document. The stored file is removed and the profile owner
+        is notified by email. This is a support method.
+
+        :param id: Id of the document to delete
+        :type id: str
+
+        :return: Status of the request
+        :rtype: dict
+        """
+        response = self.session.delete(self.profile_documents_url + '/' + id, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_identity_documents(self, after=None, limit=None):
+        """
+        Gets the identity documents pending review, oldest first. This is a support method.
+
+        :param after: Document id to start after, for keyset pagination
+        :type after: str, optional
+        :param limit: Maximum number of documents to return
+        :type limit: int, optional
+
+        :return: Dictionary with the keys ``count`` and ``documents``, where each document includes its ``profileId``
+        :rtype: dict
+        """
+        params = {}
+        if after is not None:
+            params['after'] = after
+        if limit is not None:
+            params['limit'] = limit
+
+        response = self.session.get(self.profile_documents_url + '/identity', params=tools.format_params(params), headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def delete_identity_documents(self, profile_id):
+        """
+        Deletes all the identity documents of a profile. The stored files are removed
+        and the profile owner is notified by email. This is a support method.
+
+        :param profile_id: Profile id to delete identity documents for
+        :type profile_id: str
+
+        :return: Dictionary with the key ``deletedCount``
+        :rtype: dict
+        """
+        response = self.session.delete(self.profile_documents_url + '/identity/profiles/' + profile_id, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def update_relation_readers(self, update):
         """
         Updates the relation readers available in the profile. This is an admin method.
@@ -1748,34 +1898,6 @@ class OpenReviewClient(object):
         if domain is not None:
             params['domain'] = domain
 
-        if 'details' not in params:
-            params['stream'] = True
-            # Handle sort param for local sorting
-            sort_key = None
-            reverse = False
-            if 'sort' in params:
-                # Accept format like "number:asc", "tcdate:desc", etc.
-                valid_fields = {
-                    'number': lambda n: n.number,
-                    'tcdate': lambda n: n.tcdate,
-                    'tmdate': lambda n: n.tmdate,
-                    'cdate': lambda n: n.cdate,
-                    'mdate': lambda n: n.mdate
-                }
-                if ':' in sort:
-                    field, direction = sort.split(':', 1)
-                else:
-                    field, direction = sort, 'desc'
-                if field in valid_fields:
-                    sort_key = valid_fields[field]
-                    reverse = direction == 'desc'
-                    params['sort'] = None  # Remove for API call, sort locally            
-            
-            results = self.get_notes(**params)
-            if sort_key:
-                return sorted(results, key=sort_key, reverse=reverse)
-            return results
-        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):

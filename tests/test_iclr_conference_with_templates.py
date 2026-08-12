@@ -355,9 +355,24 @@ For more details, please check the following links:
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Full_Submission-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/Reviewers/-/Submission_Message-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/Area_Chairs/-/Submission_Message-0-1', count=2)
+
+        # Full_Submission's activation date is no longer synced automatically from the Submission
+        # deadline, so the PC needs to move it into the past explicitly to materialize per-paper
+        # Full_Submission invitations for the already-submitted papers.
+        submission_inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Submission')
+        full_submission_inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Full_Submission')
+        edit = pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Full_Submission/Dates',
+            content={
+                'activation_date': { 'value': submission_inv.expdate },
+                'due_date': { 'value': full_submission_inv.edit['invitation']['duedate'] },
+                'expiration_date': { 'value': full_submission_inv.edit['invitation']['expdate'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Full_Submission-0-1', count=2)
 
         full_submission_inv = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Full_Submission')
         assert len(full_submission_inv) == 10
@@ -678,6 +693,7 @@ def test_sac_deployment(client, openreview_client, helpers):
     notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
     assert len(notes) == 2
     assert notes[-1].content['title']['value'] == 'Senior Area Chairs Assignment Deployment Failed'
+    assert 'To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?id=ICLR.cc/2026/Conference)' in notes[-1].content['comment']['value']
 
     # try to deploy initialized configuration and get an error
     with pytest.raises(openreview.OpenReviewException, match=r'The matching configuration with title "sac-matching-1" does not have status "Complete".'):
@@ -1207,9 +1223,12 @@ def test_review_stage(client, openreview_client, helpers):
     # close submission deadline
     now = datetime.datetime.now()
 
+    full_submission_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Full_Submission')
+
     edit = pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Full_Submission/Dates',
         content={
+            'activation_date': { 'value': full_submission_inv.edit['invitation']['cdate'] },
             'due_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=2)) },
             'expiration_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=1.5)) }
         }
@@ -1920,7 +1939,7 @@ def test_author_reviews_notification(client, openreview_client, helpers):
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Reviews_Notification')
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Reviews_Notification/Dates')
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Reviews_Notification/Fields_to_Include')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Reviews_Notification/Message')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Reviews_Notification/Templates')
 
     # select the review fields to include in the email
     pc_client.post_invitation_edit(
@@ -2330,6 +2349,17 @@ def test_decision_stage(client, openreview_client, helpers):
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision_Upload')
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Decision_Upload/Decision_CSV')
 
+    # edit decision options
+    edit = pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Decision/Decision_Options',
+        content={
+            'decision_options': { 'value': ['Accept (Oral)', 'Accept (Poster)', 'Reject'] },
+            'accept_decision_options': { 'value': ['Accept (Oral)', 'Accept (Poster)'] }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Decision-0-1', count=2)
+
     # create child invitations
     now = datetime.datetime.now()
     new_cdate = openreview.tools.datetime_millis(now)
@@ -2343,7 +2373,7 @@ def test_decision_stage(client, openreview_client, helpers):
             'expiration_date': { 'value': new_duedate }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Decision-0-1', count=2)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Decision-0-1', count=3)
 
     invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Decision')
     assert len(invitations) == 10
@@ -2431,7 +2461,7 @@ def test_decision_release_stage(client, openreview_client, helpers):
         }
     )
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Decision_Release-0-1', count=2)
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Decision-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Decision-0-1', count=4)
 
     decisions = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission1/-/Decision')
     assert len(decisions) == 1
@@ -2448,29 +2478,68 @@ def test_author_decision_notification(client, openreview_client, helpers):
 
     pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
 
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Decision_Notification')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Decision_Notification/Dates')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Decision_Notification/Fields_to_Include')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Decision_Notification/Message')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Accept_Oral_Decision_Notification')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Accept_Oral_Decision_Notification/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Accept_Oral_Decision_Notification/Fields_to_Include')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Accept_Oral_Decision_Notification/Templates')
+
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Accept_Poster_Decision_Notification')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Accept_Poster_Decision_Notification/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Accept_Poster_Decision_Notification/Fields_to_Include')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Author_Accept_Poster_Decision_Notification/Templates')
 
     # select the decision fields to include in the email
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Author_Decision_Notification/Fields_to_Include',
+        invitations='ICLR.cc/2026/Conference/-/Author_Accept_Oral_Decision_Notification/Fields_to_Include',
         content={
             'fields': { 'value': ['decision', 'comment'] }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Decision_Notification-0-1', count=2)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Accept_Oral_Decision_Notification-0-1', count=2)
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Author_Accept_Poster_Decision_Notification/Fields_to_Include',
+        content={
+            'fields': { 'value': ['decision', 'comment'] }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Accept_Poster_Decision_Notification-0-1', count=2)
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Author_Reject_Decision_Notification/Fields_to_Include',
+        content={
+            'fields': { 'value': ['decision', 'comment'] }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Reject_Decision_Notification-0-1', count=2)
 
     # trigger the notification process
     now = datetime.datetime.now()
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Author_Decision_Notification/Dates',
+        invitations='ICLR.cc/2026/Conference/-/Author_Accept_Oral_Decision_Notification/Dates',
         content={
             'activation_date': { 'value': openreview.tools.datetime_millis(now) }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Decision_Notification-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Accept_Oral_Decision_Notification-0-1', count=3)
+
+    now = datetime.datetime.now()
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Author_Accept_Poster_Decision_Notification/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now) }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Accept_Poster_Decision_Notification-0-1', count=3)
+
+    now = datetime.datetime.now()
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Author_Reject_Decision_Notification/Dates',
+        content={
+            'activation_date': { 'value': openreview.tools.datetime_millis(now) }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Reject_Decision_Notification-0-1', count=3)
 
     # all the submissions have a decision, the authors of each submission are notified
     messages = openreview_client.get_messages(to='test@mail.com', subject='[ICLR 2026] The decision for your submission.*')
