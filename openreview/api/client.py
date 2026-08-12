@@ -134,9 +134,12 @@ class OpenReviewClient(object):
             respect_retry_after_header=True
         )
         retry_strategy = LogRetry(**retry_params)
-        # Edit posts are safe to retry: re-posting the same edit converges to the same
-        # entity. Other POSTs (e.g. messages) are not idempotent and keep urllib3's
-        # default allowed_methods, which exclude POST.
+        # Same retry policy, differing only in allowed_methods: POST is added so edit
+        # posts are retried on 429/5xx. Edit posts are safe to retry (re-posting the
+        # same edit converges to the same entity) and the API reserves 5xx for server
+        # faults — deliberate rejections such as process function validation return
+        # 400, which is never retried. Other POSTs (e.g. messages) are not idempotent
+        # and keep urllib3's default allowed_methods, which exclude POST.
         edits_retry_strategy = LogRetry(
             allowed_methods=frozenset(['HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST']),
             **retry_params
