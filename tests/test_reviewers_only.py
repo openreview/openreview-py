@@ -2776,8 +2776,10 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Which_Submissions') is None
         assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Rejected_Submission_Release/Which_Submissions') is None
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release')
-        assert inv and inv.content 
+        assert inv and inv.content
         assert 'reveal_author_identities' not in inv.content
+        assert 'authors' in inv.edit['note']['content']
+        assert 'authorids' not in inv.edit['note']['content']
         assert inv.content['decision_option']['value'] == 'Accepted'
         assert inv.content['source']['value'] == {
             'venueid': ['ABCD.cc/2025/Conference/Submission', 'ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Rejected_Submission'],
@@ -2788,8 +2790,10 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accepted_Submission_Release/Readers')
 
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Rejected_Submission_Release')
-        assert inv and inv.content 
+        assert inv and inv.content
         assert 'reveal_author_identities' not in inv.content
+        assert 'authors' in inv.edit['note']['content']
+        assert 'authorids' not in inv.edit['note']['content']
         assert inv.content['decision_option']['value'] == 'Rejected'
         assert inv.content['source']['value'] == {
             'venueid': ['ABCD.cc/2025/Conference/Submission', 'ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Rejected_Submission'],
