@@ -215,6 +215,37 @@ class TestSimpleDualAnonymous():
         assert submission_invitation.edit['note']['content']['pdf']['readers'] == field_readers
         assert submission_invitation.edit['note']['content']['reciprocal_reviewing']['readers'] == field_readers
 
+        # create subinvitation to edit submission preprocess
+        edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(openreview_client, 'ICLR.cc/2026/Conference')
+        edit_invitations_builder.set_edit_preprocess_one_level_invitation('ICLR.cc/2026/Conference/-/Submission')
+
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Submission/Preprocess')
+
+        # add preprocess to submission invitation
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Submission/Preprocess',
+            content={
+                'preprocess_script': {
+                    'value': '''def process(client, edit, invitation):
+    domain = client.get_group(invitation.domain)
+
+    note = edit.note
+
+    if note.ddate:
+        return'''
+                }
+            }
+        )
+
+        submission_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Submission')
+        assert submission_invitation.preprocess == '''def process(client, edit, invitation):
+    domain = client.get_group(invitation.domain)
+
+    note = edit.note
+
+    if note.ddate:
+        return'''
+
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
         # use invitation to recruit reviewers
