@@ -2626,21 +2626,18 @@ def test_release_submissions(client, openreview_client, helpers):
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Dates')
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Reject_Submission_Release/Dates')
 
-    # release accepted oral submissions to the public revealing the author identities
+    # release accepted oral submissions to the public
     pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release/Readers',
         content={
             'readers': {
                 'value': ['everyone']
-            },
-            'reveal_author_identities': {
-                'value': True
             }
         }
     )
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release-0-1', count=2)
 
-    # release accepted poster submissions to the public revealing the author identities
+    # release accepted poster submissions to the public
     pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Readers',
         content={
@@ -2651,10 +2648,9 @@ def test_release_submissions(client, openreview_client, helpers):
     )
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release-0-1', count=2)
 
-    # reveal the author identities of accepted submissions by deleting the authors
-    # readers through the content schema
+    # reveal the author identities of accepted submissions by deleting the authors readers through the content schema
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Accepted_Submission_Release/Form_Fields',
+        invitations='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release/Form_Fields',
         content={
             'content': {
                 'value': {
@@ -2665,7 +2661,21 @@ def test_release_submissions(client, openreview_client, helpers):
             }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accepted_Submission_Release-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release-0-1', count=3)
+    
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Form_Fields',
+        content={
+            'content': {
+                'value': {
+                    'authors': {
+                        'readers': { 'const': { 'delete': True } }
+                    }
+                }
+            }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release-0-1', count=3)
 
     # release rejected submissions to the public keeping the authors anonymous
     pc_client.post_invitation_edit(
