@@ -403,6 +403,41 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
+    def set_edit_preprocess_one_level_invitation(self, invitation_id):
+
+        venue_id = self.venue_id
+        sub_invitation_id = f'{invitation_id}/Preprocess'
+
+        invitation = Invitation(
+            id = sub_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'preprocess_script': {
+                        'value': {
+                            'param': {
+                                'type': 'script'
+                            }
+                        }
+                    },
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'preprocess': '${2/content/preprocess_script/value}',
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
     def set_edit_dates_invitation(self, super_invitation_id, process_file=None, preprocess_file=None, include_activation_date=True, include_due_date=True, include_expiration_date=True, due_date=None):
 
         venue_id = self.venue_id
