@@ -43,9 +43,6 @@ def process(client, invitation):
         # from the constants defined in the invitation content schema. The process only
         # posts the values that cannot be defined as invitation constants.
         updated_content = {
-            'venue': {
-                'value': venue
-            },
             '_bibtex': {
                 'value': openreview.tools.generate_bibtex(
                     note=submission,

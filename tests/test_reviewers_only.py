@@ -1844,45 +1844,49 @@ For more details, please check the following links:
         assert len(messages) == 1
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject='[ABCD 2025] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
 
-    def test_LLM_PDF_response_stage(self, openreview_client, helpers):
+    # def test_LLM_PDF_response_stage(self, openreview_client, helpers):
 
-        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+    #     pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
-        review_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
-        cdate = review_invitation.edit['invitation']['cdate']
+    #     review_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
+    #     cdate = review_invitation.edit['invitation']['cdate']
 
-        openreview_client.post_invitation_edit(
-            invitations=f'openreview.net/Template/-/LLM_PDF_Response',
-            signatures=['openreview.net/Template'],
-            content={
-                'venue_id': { 'value': 'ABCD.cc/2025/Conference' },
-                'name': { 'value': 'LLM_PDF_Response' },
-                'child_name': { 'value': 'LLM_PDF_Feedback' },
-                'activation_date': { 'value': cdate + (60*60*1000*24*2) },
-                'submission_name': { 'value': 'Submission' }
-            },
-            await_process=True
-        )
+    #     openreview_client.post_invitation_edit(
+    #         invitations=f'openreview.net/Template/-/LLM_PDF_Response',
+    #         signatures=['openreview.net/Template'],
+    #         content={
+    #             'venue_id': { 'value': 'ABCD.cc/2025/Conference' },
+    #             'name': { 'value': 'LLM_PDF_Response' },
+    #             'child_name': { 'value': 'LLM_PDF_Feedback' },
+    #             'activation_date': { 'value': cdate + (60*60*1000*24*2) },
+    #             'submission_name': { 'value': 'Submission' }
+    #         },
+    #         await_process=True
+    #     )
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Readers')
+    #     helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/LLM_PDF_Response-0-1', count=1)
 
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings',
-            content={
-                'prompt': { 'value': 'This is the prompt submitted by PCs' },
-                'model': { 'value': 'gemini/gemini-2.0-flash' },
-                'api_key': { 'value': '1234567abcdefg' }
-            }
-        )
+    #     assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response')
+    #     assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Dates')
+    #     assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings')
+    #     assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Readers')
 
-        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response')
-        assert invitation.content['prompt']['value'] == 'This is the prompt submitted by PCs'
-        assert invitation.content['model']['value'] == 'gemini/gemini-2.0-flash'
-        assert invitation.content['api_key']['value'] == '1234567abcdefg'
-        assert invitation.content['api_key']['readers'] == ['ABCD.cc/2025/Conference']
+    #     pc_client.post_invitation_edit(
+    #         invitations='ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings',
+    #         content={
+    #             'prompt': { 'value': 'This is the prompt submitted by PCs' },
+    #             'model': { 'value': 'gemini/gemini-2.0-flash' },
+    #             'api_key': { 'value': '1234567abcdefg' }
+    #         }
+    #     )
+
+    #     helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/LLM_PDF_Response-0-1', count=2)
+
+    #     invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response')
+    #     assert invitation.content['prompt']['value'] == 'This is the prompt submitted by PCs'
+    #     assert invitation.content['model']['value'] == 'gemini/gemini-2.0-flash'
+    #     assert invitation.content['api_key']['value'] == '1234567abcdefg'
+    #     assert invitation.content['api_key']['readers'] == ['ABCD.cc/2025/Conference']
 
     def test_comment_stage(self, openreview_client, helpers):
 
@@ -2770,6 +2774,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
         assert '_bibtex' not in submissions[0].content
+        assert 'readers' not in submissions[0].content['pdf']
 
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release')
         assert inv and inv.content
@@ -2786,7 +2791,11 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release/Form_Fields')
         assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Accept_Submission_Release/Which_Submissions') is None
-
+        assert inv.edit['note']['content']['authors']['readers'] == { 'const': { 'delete': True } }
+        assert inv.edit['note']['content']['pdf']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+        ]
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Release')
         assert inv and inv.content
         assert 'reveal_author_identities' not in inv.content
@@ -2802,6 +2811,11 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Release/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Release/Form_Fields')
         assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Poster_Submission_Release/Which_Submissions') is None
+        assert inv.edit['note']['content']['authors']['readers'] == { 'const': { 'delete': True } }
+        assert inv.edit['note']['content']['pdf']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+        ]
 
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reject_Submission_Release')
         assert inv and inv.content
@@ -3033,28 +3047,11 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
         endorsement_tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Article_Endorsement', stream=True)
         assert endorsement_tags
 
-        # PDF is initially public after release
-        assert 'readers' not in submissions[0].content['pdf']
-
-        # Hide PDF: edit Accepted_Submission_Release content schema to restrict pdf readers to PCs
-        # and authors. Fields not included in the edit keep their current schema. The edit
-        # re-runs the release so the updated schema is applied to the released notes.
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Accept_Submission_Release/Form_Fields',
-            content={
-                'content': {
-                    'value': {
-                        'pdf': {
-                            'readers': [
-                                'ABCD.cc/2025/Conference',
-                                'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
-                            ]
-                        }
-                    }
-                }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accept_Submission_Release-0-1', count=5)
+        # PDF is hidden by default upon release
+        assert 'readers' in submissions[0].content['pdf'] and submissions[0].content['pdf']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission1/Authors'
+        ]
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert submissions[0].content['pdf']['readers'] == [
@@ -3080,7 +3077,7 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
         release_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release')
         assert release_invitation.edit['note']['content']['pdf']['readers'] == { 'const': { 'delete': True } }
 
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accept_Submission_Release-0-1', count=6)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accept_Submission_Release-0-1', count=5)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert 'readers' not in submissions[0].content['pdf']

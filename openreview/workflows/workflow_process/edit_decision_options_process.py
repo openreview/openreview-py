@@ -12,6 +12,7 @@ def process(client, edit, invitation):
     rejected_venue_id = domain.get_content_value('rejected_venue_id')
     area_chairs_name = domain.get_content_value('area_chairs_name')
     senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
+    short_name = domain.get_content_value('subtitle')
 
     client.post_group_edit(
         invitation = meta_invitation_id,
@@ -100,18 +101,37 @@ def process(client, edit, invitation):
             additional_readers.append(f'{venue_id}/{submission_name}' + '${{2/id}/number}/' + area_chairs_name)
 
         # post new submission release invitations
-        client.post_invitation_edit(
-            invitations=f'{invitation_prefix}/-/Submission_Release',
-            signatures=[venue_id],
-            content={
-                'venue_id': { 'value': venue_id },
-                'activation_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=2)) },
-                'submission_name': { 'value': submission_name },
-                'reviewers_name': { 'value': reviewers_name },
-                'authors_name': { 'value': authors_name },
-                'additional_readers': { 'value': additional_readers },
-                'decision_option': { 'value': decision_option },
-                'decision_option_id': { 'value': openreview.tools.decision_option_to_id(decision_option) },
-                'decision_venue_id': { 'value': venue_id if is_accepted_option else rejected_venue_id }
-            }
-        )
+        if is_accepted_option:
+            client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Accept_Submission_Release',
+                signatures=[venue_id],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'activation_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=2)) },
+                    'submission_name': { 'value': submission_name },
+                    'reviewers_name': { 'value': reviewers_name },
+                    'authors_name': { 'value': authors_name },
+                    'additional_readers': { 'value': additional_readers },
+                    'decision_option': { 'value': decision_option },
+                    'decision_option_id': { 'value': openreview.tools.decision_option_to_id(decision_option) },
+                    'decision_venue_id': { 'value': venue_id },
+                    'decision_venue': { 'value': openreview.tools.decision_to_venue(short_name, decision_option, accept_decision_options)}
+                }
+            )
+        else:
+            client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reject_Submission_Release',
+                signatures=[venue_id],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'activation_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=2)) },
+                    'submission_name': { 'value': submission_name },
+                    'reviewers_name': { 'value': reviewers_name },
+                    'authors_name': { 'value': authors_name },
+                    'additional_readers': { 'value': additional_readers },
+                    'decision_option': { 'value': decision_option },
+                    'decision_option_id': { 'value': openreview.tools.decision_option_to_id(decision_option) },
+                    'decision_venue_id': { 'value': rejected_venue_id },
+                    'decision_venue': { 'value': openreview.tools.decision_to_venue(short_name, decision_option, accept_decision_options) }
+                }
+            )
