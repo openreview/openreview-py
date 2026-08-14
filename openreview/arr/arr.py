@@ -87,6 +87,7 @@ class ARR(object):
         self.submission_license = None
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
+        self.release_role_participation = True
         self.sac_paper_assignments = False
         self.submission_assignment_max_reviewers = None
         self.comment_notification_threshold = None
@@ -136,6 +137,7 @@ class ARR(object):
         self.venue.senior_area_chair_identity_readers = self.senior_area_chair_identity_readers
         self.venue.decision_heading_map = self.decision_heading_map
         self.venue.source_submissions_query_mapping = self.source_submissions_query_mapping
+        self.venue.release_role_participation = self.release_role_participation
         self.venue.sac_paper_assignments = self.sac_paper_assignments
         self.venue.submission_assignment_max_reviewers = self.submission_assignment_max_reviewers
         self.venue.comment_notification_threshold = self.comment_notification_threshold

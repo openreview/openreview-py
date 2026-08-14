@@ -1197,7 +1197,53 @@ Best,
         assert 'PRL/2023/ICAPS/Submission6/-/Opt_In_Public_Release' in ids
         assert 'PRL/2023/ICAPS/Submission9/-/Opt_In_Public_Release' in ids
 
-    
+    def test_filter_by_decision_option(self, client, openreview_client, helpers, selenium, request_page):
+
+        ## filter submissions by a specific decision option, not just accept/reject.
+        ## 'Invite to Venue' is an accept option, so it cannot be isolated with the
+        ## boolean with_decision_accept; decision_options targets it exactly.
+        pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        venue = openreview.helpers.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
+        venue.custom_stage = openreview.stages.CustomStage(name='Invited_Submission_Confirmation',
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            source={ 'venueid': ['PRL/2023/ICAPS', 'PRL/2023/ICAPS/Submission', 'PRL/2023/ICAPS/Rejected_Submission'], 'decision_options': ['Invite to Venue'] },
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.AUTHORS],
+            readers=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS, openreview.stages.CustomStage.Participants.SIGNATURES],
+            content={
+                'confirm_invitation': {
+                    'order': 1,
+                    'description': 'Confirm you will submit to the venue.',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'input': 'checkbox',
+                            'enum': ['I confirm my submission to the venue.']
+                        }
+                    }
+                }
+            },
+            notify_readers=False,
+            email_sacs=False)
+
+        venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2023/ICAPS/-/Invited_Submission_Confirmation-0-1', count=1)
+
+        invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Invited_Submission_Confirmation')
+        assert len(invitations) == 3
+
+        ids = [invitation.id for invitation in invitations]
+        assert 'PRL/2023/ICAPS/Submission2/-/Invited_Submission_Confirmation' in ids
+        assert 'PRL/2023/ICAPS/Submission5/-/Invited_Submission_Confirmation' in ids
+        assert 'PRL/2023/ICAPS/Submission8/-/Invited_Submission_Confirmation' in ids
+
     def test_post_decision_for_new_submission(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
