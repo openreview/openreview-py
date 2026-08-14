@@ -73,10 +73,10 @@ return {
     filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`,
     preferredEmailInvitationId: preferredEmailInvitationId,
     ithenticateInvitationId: (domain.content.iThenticate_plagiarism_check_committee_readers?.value || []).includes(domain.content.senior_area_chairs_name?.value) ? domain.content.iThenticate_plagiarism_check_invitation_id?.value : null,
-    acEmailFuncs:[
+    acEmailFuncs: [
       {
-        "label": "All selected ACs",
-        "filterFunc": "return row"
+        label: 'All selected ACs',
+        filterFunc: 'return true;'
       }
     ]
   }
