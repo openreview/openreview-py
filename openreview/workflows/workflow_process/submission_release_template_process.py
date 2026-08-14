@@ -7,6 +7,7 @@ def process(client, edit, invitation):
     submission_venue_id = domain.content.get('submission_venue_id', {}).get('value')
 
     decision_option = edit.content['decision_option']['value']
+    is_accepted = edit.content['decision_venue_id']['value'] == domain.id
 
     client.post_invitation_edit(
         invitations=meta_invitation_id,
@@ -25,6 +26,6 @@ def process(client, edit, invitation):
     )
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
-    edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+    edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id, include_pdate=is_accepted)
     edit_invitations_builder.set_edit_content_invitation(invitation_id)
     edit_invitations_builder.set_edit_submission_readers_invitation(invitation_id, True)

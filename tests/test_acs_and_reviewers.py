@@ -1713,7 +1713,8 @@ Please note that responding to this email will direct your reply to efgh2025.pro
         pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Release/Dates',
             content={
-                'activation_date': { 'value': new_cdate }
+                'activation_date': { 'value': new_cdate },
+                'publication_date': { 'value': new_cdate }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Release-0-1', count=2)
@@ -1721,7 +1722,8 @@ Please note that responding to this email will direct your reply to efgh2025.pro
         pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Release/Dates',
             content={
-                'activation_date': { 'value': new_cdate }
+                'activation_date': { 'value': new_cdate },
+                'publication_date': { 'value': new_cdate }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Release-0-1', count=2)

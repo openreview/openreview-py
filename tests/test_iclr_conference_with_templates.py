@@ -2747,7 +2747,8 @@ def test_release_submissions(client, openreview_client, helpers):
     pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release/Dates',
         content={
-            'activation_date': { 'value': new_cdate }
+            'activation_date': { 'value': new_cdate },
+            'publication_date': { 'value': new_cdate }
         }
     )
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release-0-1', count=3)
@@ -2755,7 +2756,8 @@ def test_release_submissions(client, openreview_client, helpers):
     pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Dates',
         content={
-            'activation_date': { 'value': new_cdate }
+            'activation_date': { 'value': new_cdate },
+            'publication_date': { 'value': new_cdate }
         }
     )
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release-0-1', count=3)

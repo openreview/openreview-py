@@ -1820,13 +1820,7 @@ If you would like to change your decision, please follow the link in the previou
                                     'deletable': True
                                 }
                             },
-                            'pdate': {
-                                'param': {
-                                    'range': [ 0, 9999999999999 ],
-                                    'optional': True,
-                                    'deletable': True
-                                }
-                            },
+                            'pdate': '${4/content/activation_date/value}',
                             'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
                             'readers': [ 'everyone' ],
                             'writers': [
@@ -2049,13 +2043,6 @@ If you would like to change your decision, please follow the link in the previou
                                     }
                                 },
                                 'odate': {
-                                    'param': {
-                                        'range': [ 0, 9999999999999 ],
-                                        'optional': True,
-                                        'deletable': True
-                                    }
-                                },
-                                'pdate': {
                                     'param': {
                                         'range': [ 0, 9999999999999 ],
                                         'optional': True,

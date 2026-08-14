@@ -37,8 +37,6 @@ def process(client, invitation):
         decision_value = decision[0].content[decision_field_name]['value']
         note_accepted = release_accepted
 
-        venue = openreview.tools.decision_to_venue(short_name, decision_value, accept_options)
-
         # The authors/authorids readers are not posted here: they are stamped by the API
         # from the constants defined in the invitation content schema. The process only
         # posts the values that cannot be defined as invitation constants.
@@ -63,8 +61,7 @@ def process(client, invitation):
             note=openreview.api.Note(
                 id=submission.id,
                 content=updated_content,
-                odate=now if (public and submission.odate is None) else None,
-                pdate=now if (note_accepted and submission.pdate is None) else None
+                odate=now if (public and submission.odate is None) else None
             )
         )
 
@@ -88,12 +85,12 @@ def process(client, invitation):
     print(f'{len(filtered_submissions)} out of {len(all_submissions)} submissions matched the source criteria and will be released')
 
     if not filtered_submissions:
-        print(f'No submissions were updated since there are no {decision_option.lower()} submissions')
+        print(f'No submissions were updated since there are no "{decision_option}" submissions')
         return
     
     openreview.tools.concurrent_requests(edit_submission, filtered_submissions, desc='post_submission_edit')
 
-    print(f'{len(filtered_submissions)} submissions updated successfully')
+    print(f'{len(filtered_submissions)} "{decision_option}" submissions updated successfully')
 
     # update the decision heading map
     decision_options = decision_invitation.content.get('decision_options', {}).get('value')

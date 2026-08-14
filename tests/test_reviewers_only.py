@@ -2796,6 +2796,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
         ]
+        assert inv.edit['note']['pdate'] == inv.cdate
+
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Release')
         assert inv and inv.content
         assert 'reveal_author_identities' not in inv.content
@@ -2816,6 +2818,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
         ]
+        assert inv.edit['note']['pdate'] == inv.cdate
 
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reject_Submission_Release')
         assert inv and inv.content
@@ -2832,6 +2835,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reject_Submission_Release/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reject_Submission_Release/Form_Fields')
         assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Reject_Submission_Release/Which_Submissions') is None
+        assert 'pdate' not in inv.edit['note']
 
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release')
         assert inv and inv.content
@@ -2848,6 +2852,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release/Form_Fields')
         assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Release/Which_Submissions') is None
+        assert 'pdate' not in inv.edit['note']
 
         # select the submission readers
         pc_client.post_invitation_edit(
@@ -2882,18 +2887,23 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         # trigger the accepted submission release
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
+        new_pdate = openreview.tools.datetime_millis(now + datetime.timedelta(days=1))
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Accept_Submission_Release/Dates',
             content={
-                'activation_date': { 'value': new_cdate }
+                'activation_date': { 'value': new_cdate },
+                'publication_date': { 'value': new_pdate }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Accept_Submission_Release-0-1', count=4)
+        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Release')
+        assert inv.edit['note']['pdate'] == new_pdate
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
         assert submissions[0].readers == ['everyone']
         assert submissions[0].pdate
+        assert submissions[0].pdate == new_pdate
         assert submissions[0].odate
         assert 'readers' not in submissions[0].content['authors']
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference'
