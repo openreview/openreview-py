@@ -30,7 +30,7 @@ class TestNeurIPSTrackConference():
         helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
         helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair', institution='fb.com')
-        helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution='ibm.com')
+        helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution=['ibm.com', 'mit.edu'])
         helpers.create_user('ac2@gmail.com', 'Area', 'GoogleChair', institution='google.com')
         helpers.create_user('ac3@umass.edu', 'Area', 'UMassChair', institution='umass.edu')
         helpers.create_user('reviewer1@umass.edu', 'Reviewer', 'UMass', institution='umass.edu')
