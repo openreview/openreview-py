@@ -62,7 +62,7 @@ def process(client, edit, invitation):
             print(f'Deleting Notification invitation: {inv.id}')
             client.delete_invitation(inv.id)
 
-        # submission release invitaations
+        # submission release invitations
         release_invitation_id = f'{venue_id}/-/{formatted_decision_option}_Submission_Release'
         release_invitations_to_delete = client.get_invitations(prefix=release_invitation_id)
 
@@ -73,7 +73,6 @@ def process(client, edit, invitation):
     # post new decision notification invitations for the added decision options
     request_form_inv = domain.get_content_value('request_form_invitation')
     invitation_prefix =request_form_inv.split('Support')[0] + 'Template'
-    short_name = domain.get_content_value('subtitle')
     from_email = domain.content['message_sender']['value']['fromEmail']
 
     for decision_option in added_decision_options:
