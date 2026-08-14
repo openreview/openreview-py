@@ -1792,7 +1792,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'This step releases ${2/content/decision_option/value} submissions, author identities to the public and marks the submissions as accepted. By default, PDFs remain hidden.',
+                    'description': 'This step releases ${2/content/decision_option/value} submissions and author identities to the public and marks the submissions as accepted. By default, PDFs remain hidden.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')
@@ -2027,7 +2027,7 @@ If you would like to change your decision, please follow the link in the previou
                         'readers': ['${3/content/venue_id/value}'],
                         'writers': ['${3/content/venue_id/value}'],
                         'cdate': '${2/content/activation_date/value}',
-                        'description': 'This step releases ${2/content/decision_option/value} submissions to the specified readers and marks the submissions as rejected.',
+                        'description': 'This step releases ${2/content/decision_option/value} submissions to the specified readers and marks the submissions as rejected. By default, author names and PDFs are hidden.',
                         'dateprocesses': [{
                             'dates': ["#{4/cdate}", self.update_date_string],
                             'script': self.get_process_content('process/submission_release.py')
@@ -2075,12 +2075,16 @@ If you would like to change your decision, please follow the link in the previou
                                 ],
                                 'content': {
                                     'authors': {
-                                        'readers': {
-                                            'param': {
-                                                'regex': '.*',
-                                                'deletable': True
-                                            }
-                                        }
+                                        'readers': [
+                                            '${7/content/venue_id/value}',
+                                            '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
+                                        ]
+                                    },
+                                    'pdf': {
+                                        'readers': [
+                                            '${7/content/venue_id/value}',
+                                            '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
+                                        ]
                                     },
                                     'venue': {
                                         'value': {

@@ -2657,58 +2657,61 @@ def test_release_submissions(client, openreview_client, helpers):
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Dates')
     assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Reject_Submission_Release/Dates')
 
-    # release accepted oral submissions to the public
-    pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release/Readers',
-        content={
-            'readers': {
-                'value': ['everyone']
-            }
-        }
-    )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release-0-1', count=2)
+    # accepted papers are released to the public by default along with author identities, pdfs are hidden
+    inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release')
+    assert inv.edit['note']['readers'] == ['everyone']
+    assert inv.edit['note']['content']['authors']['readers'] == { 'const': { 'delete': True } }
+    assert inv.edit['note']['content']['pdf']['readers'] == [
+        'ICLR.cc/2026/Conference',
+        'ICLR.cc/2026/Conference/Submission${{4/id}/number}/Authors'
+    ]
 
-    # release accepted poster submissions to the public
-    pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Readers',
-        content={
-            'readers': {
-                'value': ['everyone']
-            }
-        }
-    )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release-0-1', count=2)
+    inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release')
+    assert inv.edit['note']['readers'] == ['everyone']
+    assert inv.edit['note']['content']['authors']['readers'] == { 'const': { 'delete': True } }
+    assert inv.edit['note']['content']['pdf']['readers'] == [
+        'ICLR.cc/2026/Conference',
+        'ICLR.cc/2026/Conference/Submission${{4/id}/number}/Authors'
+    ]
 
-    # reveal the author identities of accepted submissions by deleting the authors readers through the content schema
+    # release pdfs of accepted papers to the public
     pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release/Form_Fields',
         content={
             'content': {
                 'value': {
-                    'authors': {
-                        'readers': { 'const': { 'delete': True } }
+                    'pdf': {
+                        'readers': {
+                            'const': {
+                                'delete': True
+                            }
+                        }
                     }
                 }
             }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release-0-1', count=3)
-    
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release-0-1', count=2)
+
     pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Form_Fields',
         content={
             'content': {
                 'value': {
-                    'authors': {
-                        'readers': { 'const': { 'delete': True } }
+                    'pdf': {
+                        'readers': {
+                            'const': {
+                                'delete': True
+                            }
+                        }
                     }
                 }
             }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release-0-1', count=2)
 
-    # release rejected submissions to the public keeping the authors anonymous
+    # release rejected submissions to the public but release pdfs
     pc_client.post_invitation_edit(
         invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Release/Readers',
         content={
@@ -2718,6 +2721,24 @@ def test_release_submissions(client, openreview_client, helpers):
         }
     )
     helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Release-0-1', count=2)
+
+    pc_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Release/Form_Fields',
+        content={
+            'content': {
+                'value': {
+                    'pdf': {
+                        'readers': {
+                            'const': {
+                                'delete': True
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Release-0-1', count=3)
 
     now = datetime.datetime.now()
     new_cdate = openreview.tools.datetime_millis(now)
@@ -2745,7 +2766,7 @@ def test_release_submissions(client, openreview_client, helpers):
             'activation_date': { 'value': new_cdate }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Release-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Release-0-1', count=4)
 
     submissions = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
 
@@ -2753,6 +2774,7 @@ def test_release_submissions(client, openreview_client, helpers):
     assert submissions[0].readers == ['everyone']
     assert submissions[0].pdate
     assert 'readers' not in submissions[0].content['authors']
+    assert 'readers' not in submissions[0].content['pdf']
     assert submissions[0].content['venueid']['value'] == 'ICLR.cc/2026/Conference'
     assert submissions[0].content['venue']['value'] == 'ICLR 2026 Oral'
     year = datetime.datetime.now().year
@@ -2772,10 +2794,11 @@ url={https://openreview.net/forum?id='''
     assert submissions[1].readers == ['everyone']
     assert submissions[1].pdate
     assert 'readers' not in submissions[1].content['authors']
+    assert 'readers' not in submissions[1].content['pdf']
     assert submissions[1].content['venueid']['value'] == 'ICLR.cc/2026/Conference'
     assert submissions[1].content['venue']['value'] == 'ICLR 2026 Poster'
 
-    # rejected submission: authors stay anonymous
+    # rejected submission: authors stay anonymous but pdfs are release
     assert submissions[2].readers == ['everyone']
     assert submissions[2].odate
     assert not submissions[2].pdate
@@ -2783,6 +2806,7 @@ url={https://openreview.net/forum?id='''
         'ICLR.cc/2026/Conference',
         'ICLR.cc/2026/Conference/Submission3/Authors'
     ]
+    assert 'readers' not in submissions[2].content['pdf']
     assert submissions[2].content['venueid']['value'] == 'ICLR.cc/2026/Conference/Rejected_Submission'
     assert submissions[2].content['venue']['value'] == 'Submitted to ICLR 2026'
     valid_bibtex = '''@misc{
