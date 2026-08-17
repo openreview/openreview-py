@@ -92,6 +92,11 @@ class GroupBuilder(object):
             content['videos_url'] = { 'value': self.journal.get_website_url('videos') }
         if self.journal.request_form_id:
             content['journal_request_id'] = { 'value': self.journal.request_form_id }
+        if self.journal.secret_key:
+            content['secret_key'] = {
+                'value': self.journal.secret_key,
+                'readers': [venue_id]
+            }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:

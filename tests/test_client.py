@@ -4,6 +4,7 @@ import datetime
 import openreview
 import pytest
 import time
+from unittest.mock import patch, MagicMock
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.venue import Venue
@@ -728,4 +729,55 @@ class TestMfaLogin():
             )
             assert client.token
             assert client.profile
+
+class TestExpertiseAllResultsDownload():
+    """Tests for get_expertise_all_results downloading result files."""
+
+    def _make_binary_response(self, content):
+        response = MagicMock()
+        response.headers = {}
+        response.raise_for_status.return_value = None
+        response.iter_content.return_value = [content]
+        response.__enter__ = MagicMock(return_value=response)
+        response.__exit__ = MagicMock(return_value=False)
+        return response
+
+    def _make_json_response(self, data):
+        response = MagicMock()
+        response.headers = {'Content-Type': 'application/json'}
+        response.raise_for_status.return_value = None
+        response.json.return_value = data
+        return response
+
+    def test_default_returns_json(self, client, openreview_client):
+        for api_client in [client, openreview_client]:
+            with patch.object(api_client.session, 'get', return_value=self._make_json_response({'results': []})) as mock_get:
+                result = api_client.get_expertise_results('job-123', baseurl='https://api.openreview.net')
+                assert result == {'results': []}
+                mock_get.assert_called_once()
+                assert mock_get.call_args[1]['params']['jobId'] == 'job-123'
+
+    def test_all_results_downloads_default_filename(self, client, openreview_client, tmp_path):
+        expected_content = b'full scores matrix bytes'
+        for api_client in [client, openreview_client]:
+            with patch.object(api_client.session, 'get', return_value=self._make_binary_response(expected_content)) as mock_get:
+                result = api_client.get_expertise_all_results('job-123', baseurl='https://api.openreview.net')
+                assert result == 'job-123_scores.pt'
+                mock_get.assert_called_once()
+                assert mock_get.call_args[0][0].endswith('/expertise/results/all')
+                assert mock_get.call_args[1]['params']['jobId'] == 'job-123'
+                assert os.path.exists(result)
+                with open(result, 'rb') as f:
+                    assert f.read() == expected_content
+                os.remove(result)
+
+    def test_all_results_downloads_custom_filename(self, client, openreview_client, tmp_path):
+        expected_content = b'custom file bytes'
+        custom_file = str(tmp_path / 'custom_scores.pt')
+        for api_client in [client, openreview_client]:
+            with patch.object(api_client.session, 'get', return_value=self._make_binary_response(expected_content)) as mock_get:
+                result = api_client.get_expertise_all_results('job-123', baseurl='https://api.openreview.net', output_filename=custom_file)
+                assert result == custom_file
+                with open(custom_file, 'rb') as f:
+                    assert f.read() == expected_content
 

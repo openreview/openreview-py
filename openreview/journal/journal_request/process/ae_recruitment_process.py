@@ -3,16 +3,7 @@ def process(client, edit, invitation):
     SUPPORT_GROUP = ''
     forum = client.get_note(edit.note.forum)
 
-    venue_id = forum.content['venue_id']['value']
-    secret_key = forum.content['secret_key']['value']
-    contact_info = forum.content['contact_info']['value']
-    full_name = forum.content['official_venue_name']['value']
-    short_name = forum.content['abbreviated_venue_name']['value']
-    support_role = forum.content['support_role']['value']
-    editors = forum.content['editors']['value']
-    website = forum.content['website']['value']
-
-    journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name, website)
+    journal = openreview.journal.JournalRequest.get_journal(client, forum.id)
 
     recruitment_note = client.get_note(edit.note.id)
 
@@ -44,7 +35,7 @@ def process(client, edit, invitation):
 
 {already_member_status}
 
-Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/Reviewers/Invited
+Please check the invitee group to see more details: https://openreview.net/group?id={journal.venue_id}/Reviewers/Invited
 '''
     if status['errors']:
         error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n

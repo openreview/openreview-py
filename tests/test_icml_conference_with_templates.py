@@ -705,7 +705,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                     'institutions': [{ 'domain': 'gmail.com', 'country': 'US' }]
                 })
 
-            test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
+            openreview_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 

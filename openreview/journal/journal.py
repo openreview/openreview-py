@@ -456,6 +456,12 @@ class Journal(object):
         :param assignment_delay: Number of minutes to delay before assignment process functions run.
         :type assignment_delay: int, optional
         """
+        if not self.secret_key:
+            ## create the secret key the first time the journal is set up; it is stored
+            ## in the venue group content by the group builder, never edited and only
+            ## visible to the venue
+            self.secret_key = openreview.tools.create_hash_seed()
+
         self.invitation_builder.set_meta_invitation()
         self.group_builder.set_groups(support_role, editors)
         self.invitation_builder.set_invitations(assignment_delay)
@@ -1502,6 +1508,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
         for journal_request in tqdm(journal_requests):
 
             journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
+            if not journal:
+                continue
             print('Check venue', journal.venue_id)
 
             author_group = client.get_group(journal.get_authors_id())
@@ -2244,6 +2252,8 @@ OpenReview Team'''
         for journal_request in tqdm(journal_requests):
 
             journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
+            if not journal:
+                continue
             print('Check venue', journal.venue_id)
 
             invite_assignment_invitation_id = journal.get_reviewer_invite_assignment_id()

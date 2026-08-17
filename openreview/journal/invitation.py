@@ -907,6 +907,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures=[venue_id],
             cdate=self.journal.get_submission_start_date(),
             expdate=self.journal.get_submission_deadline(),
+            humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
             edit={
                 'signatures': { 
                     'param': { 

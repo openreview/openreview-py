@@ -72,9 +72,7 @@ class TestJournal():
                 content = {
                     'official_venue_name': {'value': 'Transactions on Machine Learning Research'},
                     'abbreviated_venue_name' : {'value': 'TMLR'},
-                    'venue_id': {'value': 'TMLR'},
                     'contact_info': {'value': 'tmlr@jmlr.org'},
-                    'secret_key': {'value': openreview.tools.create_hash_seed()},
                     'support_role': {'value': '~Fabian_Pedregosa1' },
                     'editors': {'value': ['~Raia_Hadsell1', '~Kyunghyun_Cho1'] },
                     'website': {'value': 'jmlr.org/tmlr' },
@@ -387,6 +385,17 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'TMLR'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
+
         openreview_client.add_members_to_group('TMLR/Expert_Reviewers', ['~Andrew_McCallumm1'])
 
         tmlr =  openreview_client.get_group('TMLR')
@@ -427,6 +436,8 @@ class TestJournal():
 
         invitation = openreview_client.get_invitation('TMLR/-/Submission')
         assert not invitation.preprocess
+        # submission invitations get the default human verification rate limit
+        assert invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
         with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/tmlr_submission_pre_process.py')) as f:
             preprocess = f.read()
@@ -481,7 +492,7 @@ class TestJournal():
         settings['ae_max_active_submissions'] = 3
 
         # edit journal request to check preprocess are not overwritten
-        request_form = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request',
+        request_form = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Journal_Request{journal_request.number}/-/Revision',
             signatures = ['openreview.net/Support'],
             note = Note(
                 id=journal_request.id,
@@ -489,9 +500,7 @@ class TestJournal():
                 content = {
                     'official_venue_name': journal_request.content['official_venue_name'],
                     'abbreviated_venue_name' : journal_request.content['abbreviated_venue_name'],
-                    'venue_id': journal_request.content['venue_id'],
                     'contact_info': journal_request.content['contact_info'],
-                    'secret_key': journal_request.content['secret_key'],
                     'support_role': journal_request.content['support_role'],
                     'editors': journal_request.content['editors'],
                     'website': journal_request.content['website'],
