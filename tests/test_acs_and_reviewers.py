@@ -1255,17 +1255,17 @@ note={under review}
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Accept_Decision_Notification/Templates')
         assert invitation and not invitation.ddate
 
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Submission_Release')
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Submission_Change_After_Decision')
         assert invitation and not invitation.ddate
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Submission_Release/Dates')
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Submission_Change_After_Decision/Dates')
         assert invitation and not invitation.ddate
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Submission_Release/Readers')
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Submission_Change_After_Decision/Readers')
         assert invitation and not invitation.ddate
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Release')
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision')
         assert invitation and not invitation.ddate
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Release/Dates')
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision/Dates')
         assert invitation and not invitation.ddate
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Release/Readers')
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision/Readers')
         assert invitation and not invitation.ddate
 
         # edit decision options
@@ -1285,7 +1285,7 @@ note={under review}
             with pytest.raises(openreview.OpenReviewException, match=rf'The Invitation {invitation.id} was not found'):
                 openreview_client.get_invitation(invitation.id)
 
-        deleted_invitations = openreview_client.get_invitations(prefix='EFGH.cc/2025/Conference/-/Accept_Submission_Release')
+        deleted_invitations = openreview_client.get_invitations(prefix='EFGH.cc/2025/Conference/-/Accept_Submission_Change_After_Decision')
 
         for invitation in deleted_invitations:
             with pytest.raises(openreview.OpenReviewException, match=rf'The Invitation {invitation.id} was not found'):
@@ -1302,7 +1302,7 @@ note={under review}
             'decision_options': ['Accept (Poster)']
         }
 
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Release')
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Change_After_Decision')
         assert invitation and not invitation.ddate
         assert invitation.content['source']['value'] == {
             'venueid': [
@@ -1324,7 +1324,7 @@ note={under review}
             'decision_options': ['Accept (Oral)']
         }
 
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Release')
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Change_After_Decision')
         assert invitation and not invitation.ddate
         assert invitation.content['source']['value'] == {
             'venueid': [
@@ -1346,7 +1346,7 @@ note={under review}
             'decision_options': ['Reject']
         }
 
-        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Release')
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision')
         assert invitation and not invitation.ddate
         assert invitation.content['source']['value'] == {
             'venueid': [
@@ -1646,21 +1646,21 @@ Please note that responding to this email will direct your reply to efgh2025.pro
         assert submissions[0].content['venueid']['value'] == 'EFGH.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'EFGH 2025 Conference Submission'
 
-        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Release')
+        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Change_After_Decision')
         assert 'reveal_author_identities' not in inv.content
         # default readers before any customization: everyone for accepted papers
         assert inv.edit['note']['readers'] == [
             'everyone'
         ]
 
-        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Release')
+        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Change_After_Decision')
         assert 'reveal_author_identities' not in inv.content
         # default readers before any customization: everyone for accepted papers
         assert inv.edit['note']['readers'] == [
             'everyone'
         ]
 
-        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Release')
+        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision')
         assert 'reveal_author_identities' not in inv.content
         # default readers before any customization: PCs, assigned ACs, assigned reviewers and paper authors
         assert inv.edit['note']['readers'] == [
@@ -1672,7 +1672,7 @@ Please note that responding to this email will direct your reply to efgh2025.pro
 
         # hide rejected papers pdf
         pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Reject_Submission_Release/Form_Fields',
+            invitations='EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision/Form_Fields',
             content={
                 'content': {
                     'value': {
@@ -1686,20 +1686,20 @@ Please note that responding to this email will direct your reply to efgh2025.pro
                 }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Reject_Submission_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision-0-1', count=2)
 
         # release rejected papers to the public
         pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Reject_Submission_Release/Readers',
+            invitations='EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision/Readers',
             content={
                 'readers': {
                     'value': ['everyone']
                 }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Reject_Submission_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision-0-1', count=3)
 
-        invitation = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Release')
+        invitation = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision')
         # author names are hidden by default for rejected papers
         assert 'readers' in invitation.edit['note']['content']['authors'] and invitation.edit['note']['content']['authors']['readers'] == [
             'EFGH.cc/2025/Conference',
@@ -1711,30 +1711,30 @@ Please note that responding to this email will direct your reply to efgh2025.pro
 
         # trigger submission release process
         pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Release/Dates',
+            invitations='EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Change_After_Decision/Dates',
             content={
                 'activation_date': { 'value': new_cdate },
                 'publication_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accept_Poster_Submission_Change_After_Decision-0-1', count=2)
 
         pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Release/Dates',
+            invitations='EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Change_After_Decision/Dates',
             content={
                 'activation_date': { 'value': new_cdate },
                 'publication_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Change_After_Decision-0-1', count=2)
 
         pc_client.post_invitation_edit(
-            invitations='EFGH.cc/2025/Conference/-/Reject_Submission_Release/Dates',
+            invitations='EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Reject_Submission_Release-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
 

@@ -63,7 +63,7 @@ def process(client, edit, invitation):
             client.delete_invitation(inv.id)
 
         # submission release invitations
-        release_invitation_id = f'{venue_id}/-/{formatted_decision_option}_Submission_Release'
+        release_invitation_id = f'{venue_id}/-/{formatted_decision_option}_{submission_name}_Change_After_Decision'
         release_invitations_to_delete = client.get_invitations(prefix=release_invitation_id)
 
         for inv in release_invitations_to_delete:

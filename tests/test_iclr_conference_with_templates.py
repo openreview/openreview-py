@@ -2650,15 +2650,15 @@ def test_release_submissions(client, openreview_client, helpers):
     ]
     assert submissions[0].content['venueid']['value'] == 'ICLR.cc/2026/Conference/Submission'
 
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Reject_Submission_Release')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release/Dates')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Dates')
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Reject_Submission_Release/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Change_After_Decision')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Change_After_Decision')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Reject_Submission_Change_After_Decision')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Change_After_Decision/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Change_After_Decision/Dates')
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Reject_Submission_Change_After_Decision/Dates')
 
     # accepted papers are released to the public by default along with author identities, pdfs are hidden
-    inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release')
+    inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Change_After_Decision')
     assert inv.edit['note']['readers'] == ['everyone']
     assert inv.edit['note']['content']['authors']['readers'] == { 'const': { 'delete': True } }
     assert inv.edit['note']['content']['pdf']['readers'] == [
@@ -2666,7 +2666,7 @@ def test_release_submissions(client, openreview_client, helpers):
         'ICLR.cc/2026/Conference/Submission${{4/id}/number}/Authors'
     ]
 
-    inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release')
+    inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Change_After_Decision')
     assert inv.edit['note']['readers'] == ['everyone']
     assert inv.edit['note']['content']['authors']['readers'] == { 'const': { 'delete': True } }
     assert inv.edit['note']['content']['pdf']['readers'] == [
@@ -2676,7 +2676,7 @@ def test_release_submissions(client, openreview_client, helpers):
 
     # release pdfs of accepted papers to the public
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release/Form_Fields',
+        invitations='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Change_After_Decision/Form_Fields',
         content={
             'content': {
                 'value': {
@@ -2691,10 +2691,10 @@ def test_release_submissions(client, openreview_client, helpers):
             }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release-0-1', count=2)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Change_After_Decision-0-1', count=2)
 
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Form_Fields',
+        invitations='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Change_After_Decision/Form_Fields',
         content={
             'content': {
                 'value': {
@@ -2709,21 +2709,21 @@ def test_release_submissions(client, openreview_client, helpers):
             }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release-0-1', count=2)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Change_After_Decision-0-1', count=2)
 
     # release rejected submissions to the public but release pdfs
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Release/Readers',
+        invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Change_After_Decision/Readers',
         content={
             'readers': {
                 'value': ['everyone']
             }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Release-0-1', count=2)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Change_After_Decision-0-1', count=2)
 
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Release/Form_Fields',
+        invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Change_After_Decision/Form_Fields',
         content={
             'content': {
                 'value': {
@@ -2738,37 +2738,37 @@ def test_release_submissions(client, openreview_client, helpers):
             }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Release-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Change_After_Decision-0-1', count=3)
 
     now = datetime.datetime.now()
     new_cdate = openreview.tools.datetime_millis(now)
 
     # trigger the submission release processes
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release/Dates',
+        invitations='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Change_After_Decision/Dates',
         content={
             'activation_date': { 'value': new_cdate },
             'publication_date': { 'value': new_cdate }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Release-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Oral_Submission_Change_After_Decision-0-1', count=3)
 
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release/Dates',
+        invitations='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Change_After_Decision/Dates',
         content={
             'activation_date': { 'value': new_cdate },
             'publication_date': { 'value': new_cdate }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Release-0-1', count=3)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Accept_Poster_Submission_Change_After_Decision-0-1', count=3)
 
     pc_client.post_invitation_edit(
-        invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Release/Dates',
+        invitations='ICLR.cc/2026/Conference/-/Reject_Submission_Change_After_Decision/Dates',
         content={
             'activation_date': { 'value': new_cdate }
         }
     )
-    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Release-0-1', count=4)
+    helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reject_Submission_Change_After_Decision-0-1', count=4)
 
     submissions = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
 

@@ -1786,7 +1786,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option_id/value}_${2/content/submission_name/value}_Release',
+                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option_id/value}_${2/content/submission_name/value}_Change_After_Decision',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
@@ -2015,7 +2015,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option_id/value}_${2/content/submission_name/value}_Release',
+                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option_id/value}_${2/content/submission_name/value}_Change_After_Decision',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
