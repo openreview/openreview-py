@@ -75,7 +75,7 @@ return {
     ithenticateInvitationId: (domain.content.iThenticate_plagiarism_check_committee_readers?.value || []).includes(domain.content.senior_area_chairs_name?.value) ? domain.content.iThenticate_plagiarism_check_invitation_id?.value : null,
     acEmailFuncs: [
       {
-        label: 'All selected ACs',
+        label: `All ${committee_ac_name.replaceAll('_', ' ')}`,
         filterFunc: 'return true;'
       }
     ]
