@@ -71,9 +71,7 @@ class TestJournalActiveProfiles():
                 content = {
                     'official_venue_name': {'value': 'Journal of Active Profiles Research'},
                     'abbreviated_venue_name' : {'value': 'JAPR'},
-                    'venue_id': {'value': 'JAPR'},
                     'contact_info': {'value': 'tmlr@jmlr.org'},
-                    'secret_key': {'value': openreview.tools.create_hash_seed()},
                     'support_role': {'value': '~Marco_Support1' },
                     'editors': {'value': ['~Lucia_EIC1', '~Tomoko_EIC1'] },
                     'website': {'value': 'jmlr.org/tmlr' },
@@ -138,6 +136,17 @@ class TestJournalActiveProfiles():
             ))
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'JAPR'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
         openreview_client.add_members_to_group('JAPR/Expert_Reviewers', ['~Sofia_Reviewer1'])
 
@@ -265,7 +274,7 @@ class TestJournalActiveProfiles():
         pc_client = OpenReviewClient(username='lucia@mail.com', password=helpers.strong_password)
         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'JAPR' })[0]
 
-        request_form = openreview_client.post_note_edit(invitation= 'openreview.net/Support/-/Journal_Request',
+        request_form = openreview_client.post_note_edit(invitation= f'openreview.net/Support/Journal_Request{request_form.number}/-/Revision',
             signatures = ['openreview.net/Support'],
             note = Note(
                 signatures = ['openreview.net/Support'],
@@ -273,9 +282,7 @@ class TestJournalActiveProfiles():
                 content = {
                     'official_venue_name': {'value': 'Journal of Active Profiles Research'},
                     'abbreviated_venue_name' : {'value': 'JAPR'},
-                    'venue_id': {'value': 'JAPR'},
                     'contact_info': {'value': 'tmlr@jmlr.org'},
-                    'secret_key': {'value': openreview.tools.create_hash_seed()},
                     'support_role': {'value': '~Marco_Support1' },
                     'editors': {'value': ['~Lucia_EIC1', '~Tomoko_EIC1'] },
                     'website': {'value': 'jmlr.org/tmlr' },

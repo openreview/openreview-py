@@ -12,6 +12,15 @@ const tabs = [
     }
   },
   {
+    name: 'Journal Requests',
+    query: {
+      'invitation': `${supportGroup}/-/Journal_Request`
+    },
+    options: {
+      enableSearch: true
+    }
+  },
+  {
     name: 'Venue Configuration Requests',
     query: {
       'invitation': `${supportGroup}/-/Request_Form`
@@ -41,6 +50,8 @@ If you would like to use OpenReview for your upcoming venue such as a Journal, C
 #### **Which form is right for your venue?**
 + **Conference Review Workflow:** use this form if your venue uses reviewers, area chairs and/or senior area chairs and follows a standard workflow.
 
++ **Journal Request:** use this form if you are hosting a journal with Editors-in-Chief, Action Editors and Reviewers, following a [TMLR](https://jmlr.org/tmlr/)-style workflow with rolling submissions.
+
 + **Request Form (legacy):** use this form if your venue needs an ethics review stage or publication chairs, or if it has an unconventional workflow.
 
 #### **What does the Conference Review Workflow support?**
@@ -58,6 +69,7 @@ Please contact the OpenReview support team using the [feedback form](https://ope
     },
     submissionId: [
       {'value': `${supportGroup}/Venue_Request/-/Conference_Review_Workflow`, 'version': 2},
+      {'value': `${supportGroup}/-/Journal_Request`, 'version': 2},
       {'value': `${supportGroup}/-/Request_Form`,'version': 1}
     ],
     submissionConfirmationMessage: 'Your request for OpenReview service has been received.',
