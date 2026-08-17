@@ -128,6 +128,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.senior_area_chairs_name = venue.senior_area_chair_roles[0]
         venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
         venue.area_chairs_name = venue.area_chair_roles[0]
+        venue.secondary_area_chairs_name = f'Secondary_{venue.area_chairs_name}'
         venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
         venue.reviewers_name = venue.reviewer_roles[0]
         venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
