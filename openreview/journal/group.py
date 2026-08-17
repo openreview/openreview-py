@@ -464,11 +464,12 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             self.post_group(preferred_emails_readers_group)
 
         if self.journal.should_enable_ai_review():
-            ai_reviewer_group = openreview.tools.get_group(self.client, f'{venue_id}/AI_Reviewer')
+            ai_reviewer_group_id = self.journal.get_ai_reviewer_id()
+            ai_reviewer_group = openreview.tools.get_group(self.client, ai_reviewer_group_id)
             if not ai_reviewer_group:
                 ai_reviewer_group=self.post_group(
                     Group(
-                        id=f'{venue_id}/AI_Reviewer',
+                        id=ai_reviewer_group_id,
                         readers=[venue_id],
                         writers=[venue_id],
                         signatures=[venue_id],

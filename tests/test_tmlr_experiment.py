@@ -43,9 +43,7 @@ class TestTMLRExperiment():
                 content={
                     'official_venue_name': {'value': 'Transactions on Machine Learning Research Experiment'},
                     'abbreviated_venue_name': {'value': 'TMLRE'},
-                    'venue_id': {'value': 'TMLRE'},
                     'contact_info': {'value': 'tmlre@jmlr.org'},
-                    'secret_key': {'value': openreview.tools.create_hash_seed()},
                     'support_role': {'value': '~Percy_Liang1'},
                     'editors': {'value': ['~Sarah_Miller1', '~Thomas_Brown1']},
                     'website': {'value': 'jmlr.org/tmlre'},
@@ -252,6 +250,17 @@ class TestTMLRExperiment():
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'TMLRE'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
+
         tmlre = openreview_client.get_group('TMLRE')
         assert tmlre
         assert tmlre.members == ['~Percy_Liang1', 'TMLRE/Editors_In_Chief']
@@ -293,7 +302,7 @@ class TestTMLRExperiment():
         note_id = submission_note['note']['id']
 
         note = openreview_client.get_note(note_id)
-        assert note.readers == ['TMLRE', 'TMLRE/Paper1/Action_Editors', 'TMLRE/Paper1/Authors']
+        assert note.readers == ['TMLRE', 'TMLRE/Paper1/Action_Editors', 'TMLRE/Paper1/Authors', 'TMLRE/AI_Reviewer']
         assert note.content['venue']['value'] == 'Submitted to TMLRE'
         assert note.content['venueid']['value'] == 'TMLRE/Submitted'
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Eve_Garcia1']

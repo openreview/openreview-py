@@ -897,6 +897,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         reviewers_value=self.journal.get_reviewers_id(number='${4/number}')
         authors_value=self.journal.get_authors_id(number='${4/number}')
 
+        submission_readers = [venue_id, self.journal.get_action_editors_id(number='${2/number}'), self.journal.get_authors_id(number='${2/number}')]
+        if self.journal.should_enable_ai_review():
+            submission_readers.append(self.journal.get_ai_reviewer_id())
 
         ## Submission invitation
         submission_invitation_id = self.journal.get_author_submission_id()
@@ -914,11 +917,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'items': [{ 'prefix': '~.*' }]
                     }
                 },
-                'readers': [ venue_id, self.journal.get_action_editors_id(number='${2/note/number}'), self.journal.get_authors_id(number='${2/note/number}')],
+                'readers': [ '${2/note/readers}' ],
                 'writers': [ venue_id ],
                 'note': {
                     'signatures': [self.journal.get_authors_id(number='${2/number}')],
-                    'readers': [ venue_id, self.journal.get_action_editors_id(number='${2/number}'), self.journal.get_authors_id(number='${2/number}')],
+                    'readers': submission_readers,
                     'writers': [ venue_id, self.journal.get_authors_id(number='${2/number}')],
                     'content': {
                         'title': {
