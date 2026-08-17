@@ -38,9 +38,7 @@ class TestDMLRJournal():
                 content = {
                     'official_venue_name': {'value': 'Journal of Data-centric Machine Learning Research'},
                     'abbreviated_venue_name' : {'value': 'DMLR'},
-                    'venue_id': {'value': 'DMLR'},
                     'contact_info': {'value': 'dmlr@jmlr.org'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': '~Merve_Gürel1' },
                     'editors': {'value': ['dmlr@jmlr.org', '~Ce_Zhang1'] },
                     'website': {'value': 'data.mlr.press' },
@@ -224,6 +222,17 @@ class TestDMLRJournal():
             ))
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'DMLR'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
 
         ## Action Editors

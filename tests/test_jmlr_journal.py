@@ -38,9 +38,7 @@ class TestJMLRJournal():
                 content = {
                     'official_venue_name': {'value': 'Journal of Machine Learning Research'},
                     'abbreviated_venue_name' : {'value': 'JMLR'},
-                    'venue_id': {'value': 'JMLR'},
                     'contact_info': {'value': 'editor@jmlr.org'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': '~Rajarshi_Das1' },
                     'editors': {'value': ['editor@jmlr.org', '~Rajarshi_Das1'] },
                     'website': {'value': 'jmlr.org' },
@@ -56,6 +54,17 @@ class TestJMLRJournal():
             ))
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'JMLR'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
         ## Authors
         helpers.create_user('celeste@jmlrone.com', 'Celeste', 'Azul')
