@@ -1113,7 +1113,7 @@ note={Under review}
         # check authors can now see AE identity
         ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
         assert ae_group.members == ['~Joelle_Pineau1']
-        # assert authors cannot see AE name
+        # assert authors can see AE name
         assert ae_group.readers == ['everyone']
         ae_anon_group_id = ae_group.anon_members[0]
         assert openreview_client.get_group(ae_anon_group_id).readers == ['everyone', ae_anon_group_id]
