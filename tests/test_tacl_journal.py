@@ -37,9 +37,7 @@ class TestTACLJournal():
                 content = {
                     'official_venue_name': {'value': 'Transactions of the Association for Computational Linguistics'},
                     'abbreviated_venue_name' : {'value': 'TACL'},
-                    'venue_id': {'value': 'TACL'},
                     'contact_info': {'value': 'tacl@venue.org'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': '~Brian_Roark1' },
                     'editors': {'value': ['tacl@editor.org', '~Brian_Roark1'] },
                     'website': {'value': 'transacl.org' },
@@ -61,6 +59,17 @@ class TestTACLJournal():
             ))
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'TACL'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
         ## Action Editors
         helpers.create_user('graham@mailseven.com', 'Graham', 'Neubig')

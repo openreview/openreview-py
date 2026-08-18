@@ -39,9 +39,7 @@ class TestSLADSJournal():
                 content = {
                     'official_venue_name': {'value': 'Statistical Learning and Data Science'},
                     'abbreviated_venue_name' : {'value': 'SLADS'},
-                    'venue_id': {'value': 'SLADS'},
                     'contact_info': {'value': 'slads@scichina.com'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': '~Ruiyan_Zhang1' },
                     'editors': {'value': ['~Ruiyan_Zhang1', '~Ce_Zhang1'] },
                     'website': {'value': 'data.mlr.press' },
@@ -103,6 +101,17 @@ class TestSLADSJournal():
             ))
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'SLADS'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
 
         ## Action Editors

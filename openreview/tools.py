@@ -121,7 +121,7 @@ def format_params(params):
 
     return params
 
-def concurrent_requests(request_func, params, desc='Gathering Responses', max_workers=None):
+def concurrent_requests(request_func, params, desc='Gathering Responses', max_workers=None, return_exceptions=False, retries=0, retry_max_workers=None):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -133,28 +133,59 @@ def concurrent_requests(request_func, params, desc='Gathering Responses', max_wo
     :type desc: str
     :param max_workers: number of workers to use in the ThreadPoolExecutor, default value is min(16, cpu_count() * 5).
     :type max_workers: int
+    :param return_exceptions: when True, an execution that still fails after all retries contributes its exception object to the results instead of raising.
+    :type return_exceptions: bool
+    :param retries: number of extra passes over the executions that raised, running only the failed values again. Executions that keep failing after all passes raise (or are returned when return_exceptions is True).
+    :type retries: int
+    :param retry_max_workers: number of workers for the retry passes, default value is max(1, max_workers // 4) to give a struggling server room to recover.
+    :type retry_max_workers: int
 
-    :return: A list of results given for each func value execution
+    :return: A list of results for each params value, in the same order as params
     :rtype: list
     """
     if max_workers is None:
         max_workers = min(16, (cpu_count() or 1) * 5)
+    if retry_max_workers is None:
+        retry_max_workers = max(1, max_workers // 4)
 
-    futures = []
-    gathering_responses = tqdm(total=len(params), desc=desc)
-    results = []
+    params = list(params)
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for param in params:
-            futures.append(executor.submit(request_func, param))
+    def run_batch(batch_params, workers, batch_desc):
+        futures = []
+        gathering_responses = tqdm(total=len(batch_params), desc=batch_desc)
+        batch_results = []
 
-        for future in futures:
-            gathering_responses.update(1)
-            results.append(future.result())
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            for param in batch_params:
+                futures.append(executor.submit(request_func, param))
 
-        gathering_responses.close()
+            for future in futures:
+                gathering_responses.update(1)
+                try:
+                    batch_results.append(future.result())
+                except Exception as e:
+                    batch_results.append(e)
 
-        return results
+            gathering_responses.close()
+
+        return batch_results
+
+    results = run_batch(params, max_workers, desc)
+
+    for attempt in range(retries):
+        failed_indexes = [index for index, result in enumerate(results) if isinstance(result, Exception)]
+        if not failed_indexes:
+            break
+        retry_results = run_batch([params[index] for index in failed_indexes], retry_max_workers, f'{desc} (retry {attempt + 1})')
+        for index, result in zip(failed_indexes, retry_results):
+            results[index] = result
+
+    if not return_exceptions:
+        for result in results:
+            if isinstance(result, Exception):
+                raise result
+
+    return results
 
 def get_profile(client, value, with_publications=False):
     """
