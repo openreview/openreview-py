@@ -131,6 +131,7 @@ class OpenReviewClient(object):
             backoff_max=120,
             backoff_jitter=1,
             status_forcelist=[ 429, 500, 502, 503, 504 ],
+            raise_on_status=False,
             respect_retry_after_header=True
         )
         retry_strategy = LogRetry(**retry_params)
