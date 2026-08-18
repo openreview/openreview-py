@@ -396,6 +396,18 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
+        under_review_invitation = openreview_client.get_invitation('TMLR/-/Under_Review')
+        assert 'assigned_action_editor' in under_review_invitation.edit['note']['content']
+        assert under_review_invitation.edit['note']['content']['assigned_action_editor'] == {
+            'readers': {
+                'param': {
+                    'const': {
+                        'delete': True
+                    }
+                }
+            }
+        }
+
         openreview_client.add_members_to_group('TMLR/Expert_Reviewers', ['~Andrew_McCallumm1'])
 
         tmlr =  openreview_client.get_group('TMLR')
@@ -950,7 +962,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
 
-        # Assign Action Editor and immediately remove  assignment
+        # Assign Action Editor and immediately remove assignment
         paper_assignment_edge = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
@@ -980,10 +992,15 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
         assert ae_group.members == ['~Joelle_Pineau1']
+        # assert authors cannot see AE name
+        assert ae_group.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Reviewers']
+        ae_anon_group_id = ae_group.anon_members[0]
+        assert openreview_client.get_group(ae_anon_group_id).readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Reviewers', ae_anon_group_id]
 
         note = joelle_client.get_note(note_id_1)
         assert note
-        assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'        
+        assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+        assert note.content['assigned_action_editor']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Reviewers']
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
@@ -1072,6 +1089,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+        assert 'readers' not in note.content['assigned_action_editor']
         assert note.content['_bibtex']['value'] == '''@article{
 anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {UPDATED}},
@@ -1091,6 +1109,14 @@ note={Under review}
         assert edits
         for edit in edits:
             assert 'everyone' in edit.readers
+
+        # check authors can now see AE identity
+        ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
+        assert ae_group.members == ['~Joelle_Pineau1']
+        # assert authors cannot see AE name
+        assert ae_group.readers == ['everyone']
+        ae_anon_group_id = ae_group.anon_members[0]
+        assert openreview_client.get_group(ae_anon_group_id).readers == ['everyone', ae_anon_group_id]
 
         ## Remove assertion, the process function may run faster in the new machines
         ## try to make an assignment before the scores were computed
@@ -1188,6 +1214,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         # assert new AE is still assigned
         submission_two = raia_client.get_note(note_id_2)
         assert 'assigned_action_editor' in submission_two.content and submission_two.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+        assert 'readers' in submission_two.content['assigned_action_editor'] and submission_two.content['assigned_action_editor']['readers'] == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Reviewers']
 
         joelle_paper2_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper2/Action_Editor_.*', signatory='~Joelle_Pineau1')
         assert len(joelle_paper2_anon_groups) == 1
@@ -1284,6 +1311,14 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Desk_Rejected'
 
+        # assert AE stays anonymous after desk-rejection
+        assert 'readers' in note.content['assigned_action_editor'] and note.content['assigned_action_editor']['readers'] == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Reviewers']
+        ae_group = openreview_client.get_group(f'{venue_id}/Paper2/Action_Editors')
+        assert ae_group.members == ['~Joelle_Pineau1']
+        assert ae_group.readers == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Reviewers']
+        ae_anon_group_id = ae_group.anon_members[0]
+        assert openreview_client.get_group(ae_anon_group_id).readers == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Reviewers', ae_anon_group_id]
+
         ## Check invitations as an author
         invitations = test_client.get_invitations(replyForum=note_id_2)
         assert len(invitations) == 1
@@ -1345,6 +1380,10 @@ year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_3 + '''},
 note={Withdrawn}
 }'''
+
+        assert 'assigned_action_editor' not in note.content
+        ae_group = openreview_client.get_group(f'{venue_id}/Paper3/Action_Editors')
+        assert ae_group.readers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Reviewers']
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)

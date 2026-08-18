@@ -113,6 +113,8 @@ class TestSLADSJournal():
 
         helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
+        under_review_invitation = openreview_client.get_invitation('SLADS/-/Under_Review')
+        assert 'assigned_action_editor' not in under_review_invitation.edit['note']['content']
 
         ## Action Editors
         helpers.create_user('andrew@sladszero.com', 'Jiashun', 'Jin')
@@ -221,7 +223,6 @@ Thanks,
         assert note.content['venue']['value'] == 'Submitted to SLADS'
         assert note.content['venueid']['value'] == 'SLADS/Submitted'
 
-
     def test_review_approval(self, journal, openreview_client, helpers):
 
         ce_client = OpenReviewClient(username='ce@mailseven.com', password=helpers.strong_password)
@@ -240,8 +241,13 @@ Thanks,
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        note = openreview_client.get_note(note_id_1)
+        assert note.content['assigned_action_editor']['value'] == '~Jiashun_Jin1'
+        assert note.content['assigned_action_editor']['readers'] == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+
         ae_group = ce_client.get_group('SLADS/Paper1/Action_Editors')
         assert ae_group.members == ['~Jiashun_Jin1']
+        assert ae_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
 
         messages = journal.client.get_messages(to = 'andrew@sladszero.com', subject = '[SLADS] Assignment to new SLADS submission 1: Paper title')
         assert len(messages) == 1
@@ -267,7 +273,8 @@ Please note that responding to this email will direct your reply to slads@scichi
 
         andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'SLADS/Paper1/Action_Editor_.*', signatory='~Jiashun_Jin1')
         assert len(andrew_paper1_anon_groups) == 1
-        graham_paper1_anon_group = andrew_paper1_anon_groups[0]         
+        graham_paper1_anon_group = andrew_paper1_anon_groups[0]
+        assert graham_paper1_anon_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers', graham_paper1_anon_group.id]
 
         ## Accept the submission 1
         under_review_note = andrew_client.post_note_edit(invitation= 'SLADS/Paper1/-/Review_Approval',
@@ -298,6 +305,20 @@ year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
+
+        # after approval, AE is still anonymous to authors
+        note = openreview_client.get_note(note_id_1)
+        assert note.content['assigned_action_editor']['value'] == '~Jiashun_Jin1'
+        assert note.content['assigned_action_editor']['readers'] == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+
+        ae_group = ce_client.get_group('SLADS/Paper1/Action_Editors')
+        assert ae_group.members == ['~Jiashun_Jin1']
+        assert ae_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+
+        andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'SLADS/Paper1/Action_Editor_.*', signatory='~Jiashun_Jin1')
+        assert len(andrew_paper1_anon_groups) == 1
+        graham_paper1_anon_group = andrew_paper1_anon_groups[0]
+        assert graham_paper1_anon_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers', graham_paper1_anon_group.id]
 
         edits = openreview_client.get_note_edits(note.id, invitation='SLADS/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
