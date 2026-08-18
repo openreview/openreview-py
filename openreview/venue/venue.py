@@ -47,7 +47,7 @@ class Venue(object):
         self.submission_area_chair_roles = [self.area_chairs_name]
         self.senior_area_chair_roles = ['Senior_Area_Chairs']        
         self.senior_area_chairs_name = self.senior_area_chair_roles[0]
-        self.secondary_area_chairs_name = 'Secondary_Area_Chairs'
+        self.secondary_area_chairs_name = f'Secondary_{self.area_chairs_name}'
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
@@ -440,7 +440,7 @@ class Venue(object):
     
     def get_secondary_area_chairs_id(self, number = None, anon=False):
         ac_name = self.get_anon_committee_name(self.secondary_area_chairs_name)
-        return self.get_committee_id(f'{ac_name}.*' if anon else self.secondary_area_chairs_name, number)    
+        return self.get_committee_id(f'{ac_name}.*' if anon else self.secondary_area_chairs_name, number)
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
     def get_anon_area_chair_id(self, number, anon_id):

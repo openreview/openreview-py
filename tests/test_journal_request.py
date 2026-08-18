@@ -40,16 +40,25 @@ class TestJournalRequest():
                 content = {
                     'official_venue_name': {'value': 'Test Journal 2022'},
                     'abbreviated_venue_name' : {'value': 'TJ22'},
-                    'venue_id': {'value': 'TJ22'},
                     'contact_info': {'value': 'test@venue.org'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
                     'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
                     'website': {'value': 'testjournal.org' }
                 }
             ))
 
-        helpers.await_queue_edit(openreview_client, request_form['id'])        
+        helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation = support_group_id + '/-/Journal_Request_Deployment',
+            signatures = [support_group_id],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'TJ22'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
     def test_journal_deployment(self, openreview_client, test_client, selenium, request_page, helpers):
 
@@ -65,9 +74,7 @@ class TestJournalRequest():
                 content = {
                     'official_venue_name': {'value': 'Test Journal 2040'},
                     'abbreviated_venue_name' : {'value': 'TJ40'},
-                    'venue_id': {'value': 'TJ40'},
                     'contact_info': {'value': 'test@journal.org'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
                     'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
                     'website': {'value': 'testjournal.org' },
@@ -80,6 +87,17 @@ class TestJournalRequest():
             ))
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation = support_group_id + '/-/Journal_Request_Deployment',
+            signatures = [support_group_id],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'TJ40'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
         request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client)
 
         helpers.create_user('support_role@mail.com', 'Support', 'Role')
@@ -93,7 +111,7 @@ class TestJournalRequest():
         assert [btn for btn in buttons if btn.text == 'Comment']
 
         #check request form id is added to AE console
-        AE_group = openreview_client.get_group('{}/Action_Editors'.format(request_form['note']['content']['venue_id']['value']))
+        AE_group = openreview_client.get_group('TJ40/Action_Editors')
         assert "var JOURNAL_REQUEST_ID = '{}';".format(request_form['note']['id']) in AE_group.web
 
         journal = JournalRequest.get_journal(openreview_client, request_form['note']['id'])
@@ -105,7 +123,7 @@ class TestJournalRequest():
 
         cdate = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days = 5))
 
-        request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
+        request_form = openreview_client.post_note_edit(invitation= support_group_id + '/Journal_Request' + str(request_form['note']['number']) + '/-/Revision',
             signatures = [support_group_id],
             note = Note(
                 id = request_form['note']['id'],
@@ -113,9 +131,7 @@ class TestJournalRequest():
                 content = {
                     'official_venue_name': {'value': 'Test Journal 2040'},
                     'abbreviated_venue_name' : {'value': 'TJ40'},
-                    'venue_id': {'value': 'TJ40'},
                     'contact_info': {'value': 'test@journal.org'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
                     'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
                     'website': {'value': 'testjournal.org' },
@@ -217,7 +233,7 @@ TJ22 Editors-in-Chief
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
     
-        request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
+        request_form = openreview_client.post_note_edit(invitation= support_group_id + '/Journal_Request' + str(requests[0].number) + '/-/Revision',
             signatures = [support_group_id],
             note = Note(
                 id = requests[0].id,
@@ -225,9 +241,7 @@ TJ22 Editors-in-Chief
                 content = {
                     'official_venue_name': {'value': 'Test Journal 2022'},
                     'abbreviated_venue_name' : {'value': 'TJ22'},
-                    'venue_id': {'value': 'TJ22'},
                     'contact_info': {'value': 'test@venue.org'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
                     'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
                     'website': {'value': 'www.testjournal.org' }
@@ -397,7 +411,8 @@ TJ22 Editors-in-Chief
         recruitment_note = openreview_client.get_note(recruitment_note['note']['id'])
         assert recruitment_note.readers == ['openreview.net/Support', 'TJ22', '~Second_AE1']
 
-        messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
+        ## the API does not guarantee the order of the messages, sort them by creation date
+        messages = sorted(openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22'), key = lambda message: message['cdate'])
         assert len(messages) == 2
         assert messages[1]['content']['text'].startswith('Dear New Reviewer,\n\nYou have been nominated to serve as reviewer for TJ22 by Second AE.')
         assert messages[1]['content']['replyTo'] == 'ae_journal2@mail.com'
@@ -448,7 +463,7 @@ TJ22 Editors-in-Chief
         helpers.await_queue_edit(openreview_client, recruitment_note['id'])
 
         #check reviewer received another invitation even after declining
-        messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
+        messages = sorted(openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22'), key = lambda message: message['cdate'])
         assert len(messages) == 3
         assert messages[2]['content']['text'].startswith('Dear New Reviewer,\n\nYou have been nominated to serve as reviewer for TJ22 by Second AE.')
         assert messages[2]['content']['replyTo'] == 'ae_journal2@mail.com'
@@ -469,7 +484,7 @@ TJ22 Editors-in-Chief
         assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
 
         #check AC was notified
-        ae_messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
+        ae_messages = sorted(openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022'), key = lambda message: message['cdate'])
         assert len(ae_messages) == 2
         assert ae_messages[1]['content']['to'] == 'ae_journal2@mail.com'
         assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in ae_messages[1]['content']['text']

@@ -124,19 +124,36 @@ class OpenReviewClient(object):
             'Accept': 'application/json'
         }
 
-        retry_strategy = LogRetry(
+        retry_params = dict(
             total=8,
             connect=1,
             backoff_factor=1,
             backoff_max=120,
             backoff_jitter=1,
             status_forcelist=[ 429, 500, 502, 503, 504 ],
+            raise_on_status=False,
             respect_retry_after_header=True
         )
+        retry_strategy = LogRetry(**retry_params)
+        # Same retry policy, differing only in allowed_methods: POST is added so edit
+        # posts are retried on 429/5xx. Edit posts are safe to retry (re-posting the
+        # same edit converges to the same entity) and the API reserves 5xx for server
+        # faults — deliberate rejections such as process function validation return
+        # 400, which is never retried. Other POSTs (e.g. messages) are not idempotent
+        # and keep urllib3's default allowed_methods, which exclude POST.
+        edits_retry_strategy = LogRetry(
+            allowed_methods=frozenset(['HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST']),
+            **retry_params
+        )
         self.session = requests.Session()
-        adapter = HTTPAdapter(max_retries=retry_strategy)
+        adapter = HTTPAdapter(max_retries=retry_strategy, pool_maxsize=128)
+        edits_adapter = HTTPAdapter(max_retries=edits_retry_strategy, pool_maxsize=128)
         self.session.mount('https://', adapter)
         self.session.mount('http://', adapter)
+        # requests picks the longest matching prefix, so only the edits endpoints
+        # get the POST-retrying adapter
+        for edits_url in [self.note_edits_url, self.invitation_edits_url, self.group_edits_url]:
+            self.session.mount(edits_url, edits_adapter)
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
