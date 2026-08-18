@@ -46,6 +46,6 @@ def process(client, invitation):
     ## Release the submissions to specified readers if venueid is still submission
     submissions = get_children_notes()
     print(f'update {len(submissions)} submissions')
-    openreview.tools.concurrent_requests(post_group_edit, submissions, desc='post_group_edit')
+    openreview.tools.concurrent_requests(post_group_edit, submissions, desc='post_group_edit', max_workers=128)
 
     print(f'{len(submissions)} submission groups updated successfully')
