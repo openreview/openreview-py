@@ -7,10 +7,7 @@ def is_reviewer_assignment_edge(journal, edge, include_archived=False):
     }
     if include_archived:
         allowed_ids.add(journal.get_reviewer_assignment_id(archived=True))
-    return (
-        invitation_id in allowed_ids
-        or invitation_id.endswith('/Reviewers/-/Assignment')
-    )
+    return invitation_id in allowed_ids
 
 
 def active_reviewer_assignment_tail(edge, journal):
@@ -22,13 +19,12 @@ def active_reviewer_assignment_tail(edge, journal):
     return tail
 
 
-def reviewer_assignment_invitation_ids_for_submission(journal, submission, include_archived=False):
-    invitation_ids = [
-        journal.get_reviewer_assignment_id(number=submission.number),
-        journal.get_reviewer_assignment_id(),
-    ]
+def reviewer_assignment_invitation_ids_for_submission(journal, submission, include_archived=False, include_task_edges=False):
+    invitation_ids = [journal.get_reviewer_assignment_id()]
     if include_archived:
         invitation_ids.append(journal.get_reviewer_assignment_id(archived=True))
+    if include_task_edges:
+        invitation_ids.append(journal.get_reviewer_assignment_id(number=submission.number))
     return list(dict.fromkeys(invitation_ids))
 
 
@@ -36,7 +32,13 @@ def reviewer_assignment_edges_for_submission(client, journal, submission, tail=N
     assignments = []
     seen_ids = set()
     seen_keys = set()
-    for invitation_id in reviewer_assignment_invitation_ids_for_submission(journal, submission, include_archived=include_archived):
+    for invitation_id in reviewer_assignment_invitation_ids_for_submission(
+        journal, submission, include_archived=include_archived,
+        include_task_edges=include_task_edges,
+    ):
+        is_task_invitation = invitation_id == journal.get_reviewer_assignment_id(
+            number=submission.number
+        )
         kwargs = {
             'invitation': invitation_id,
             'head': submission.id,
@@ -55,6 +57,8 @@ def reviewer_assignment_edges_for_submission(client, journal, submission, tail=N
             if active_only and getattr(edge, 'ddate', None):
                 continue
             if not include_task_edges and getattr(edge, 'tail', None) == journal.get_reviewers_id():
+                continue
+            if is_task_invitation and getattr(edge, 'tail', None) != journal.get_reviewers_id():
                 continue
             edge_id = getattr(edge, 'id', None)
             edge_key = (

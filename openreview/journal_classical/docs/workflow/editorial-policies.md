@@ -11,9 +11,19 @@ changes should preserve.
 
 ## Assignment
 
-- Editors-in-Chief create assignment pages before assigning an Action Editor.
+- Editors-in-Chief use `Edit AE` from the compatibility landing or the standard
+  Action Editor Edge Browser; JMLR does not create a second assignment page.
 - Assignment controls should be visible only to roles that can use them for the current paper stage.
-- OSS Action Editor handling is part of assignment routing and should not change ordinary Action Editor responsibilities unless a visible rule says so.
+- Ordinary Action Editor assignment requires current base membership, current availability, and eligibility for the paper's immutable Regular or managed track.
+- Track-eligibility changes affect future ordinary assignments. Validated
+  previous-AE continuity first requires an active submission, a non-author
+  authorized actor accepted by the native assignment surface, and no authoritative
+  conflict; it may then proceed even when the previous AE is currently
+  unavailable or not eligible for the current track.
+  JMLR does not add a second Action Editor quota gate at final assignment.
+- Prior-reviewer continuity is narrower: after its authoritative actor,
+  paper-state, duplicate, conflict, membership, and availability gates pass,
+  it may bypass only the ordinary active-reviewer load limit.
 
 ## Review And Identity
 
@@ -27,6 +37,13 @@ changes should preserve.
 
 ## Camera Ready And Publication
 
-- Camera-ready revision, verification, and publication controls are stage-specific.
-- Production Editor controls should expose publication handling without changing earlier editorial decisions.
-- Publication download and retract surfaces are permission-sensitive Production Editor actions.
+- Camera-ready verification creates the final public OpenReview record.
+- OpenReview has no later publication gate for the external jmlr.org handoff.
+  Its accepted-paper `Retraction` and `Retraction Approval` controls can retract
+  the OpenReview accepted record; see
+  [Accepted-paper retraction](actions/retraction.md).
+- Production Editors receive a private worklist and download handoff by email,
+  publish on the JMLR website manually, and privately record the external URLs
+  and completion.
+- OpenReview cannot edit or retract an already published external jmlr.org page;
+  that follow-up remains manual.

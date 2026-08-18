@@ -1,0 +1,4 @@
+{
+  "signatures": ["JMLR/Editors_In_Chief"], "readers": ["JMLR/Editors_In_Chief"], "writers": ["JMLR/Editors_In_Chief"],
+  "group": {"id": "JMLR/Action_Editors", "members": {"param": {"regex": "~.*", "change": "add"}}}
+}

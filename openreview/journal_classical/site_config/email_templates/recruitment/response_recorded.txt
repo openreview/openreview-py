@@ -1,6 +1,0 @@
-Hi {recipient_name},
-{response_summary}
-
-{next_steps}
-
-JMLR

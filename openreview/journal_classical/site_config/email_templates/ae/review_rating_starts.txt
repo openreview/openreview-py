@@ -1,0 +1,9 @@
+Hi {{{{fullname}}}},
+
+All reviews for {short_name} submission {submission_number}, "{submission_title}", are now available. Please rate the reviews and submit your decision within {decision_period_length} weeks, by {decision_duedate}.
+
+Open the paper and its Action Editor tasks here: {invitation_url}
+
+Decision guidance is available at {website}. If you need assistance, contact {contact_info}.
+
+Thank you for serving as an Action Editor for {short_name}.

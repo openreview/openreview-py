@@ -1,0 +1,1 @@
+[{short_name}] Camera-ready revision reminder for submission {submission_number}: {submission_title}

@@ -11,10 +11,8 @@ changes.
 
    ```bash
    python3 -m pip install -e ".[test]"
-   python3 scripts/build/site_config.py
    python3 scripts/check_source_assembly.py
-   python3 scripts/check_tree.py
-   python3 -m pytest
+   python3 -m pytest -c source_pyproject.toml
    ```
 
 ## Review Expectations

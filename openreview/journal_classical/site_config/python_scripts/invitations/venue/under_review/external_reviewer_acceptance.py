@@ -13,6 +13,6 @@ def is_external_reviewer_acceptance_assignment(client, journal, edge):
     )
     return any(
         not active_external_invite.ddate
-        and active_external_invite.label in ['Accepted', 'Accepted - Action Failed']
+        and active_external_invite.label == 'Accepted'
         for active_external_invite in active_external_invites
     )

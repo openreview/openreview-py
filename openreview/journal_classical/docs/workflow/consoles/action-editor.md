@@ -22,8 +22,11 @@ they do not change the current handling AE for a paper.
   reviewer management.
 - Reviewer removal is part of reviewer management and is available only for
   assigned reviewers who have not submitted a review.
-- The AE console must not expose EIC setup controls, AE reassignment controls,
-  role-administration controls, raw role editing, or unchecked assignment
-  pages.
+- Assigned-paper reviewer rows may show reviewer identity, review progress, and
+  the `Send Reminder` workflow control. They must not show `Copy Email` or
+  otherwise expose a reviewer email address from the console.
+- The AE console must not expose the EIC compatibility landing's `Edit AE`
+  action, role-administration controls, raw role editing, or unchecked
+  assignment tools.
 - AE self-service controls may update future availability or expertise, but
   they must not alter current paper assignments.

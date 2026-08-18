@@ -1,13 +1,13 @@
 # Console Entry Points
 
-JMLR OpenReview consoles should expose only the actions that are valid for the
-current role and paper state. Assignment work is intentionally staged: EICs
-prepare paper-specific assignment pages before assigning an Action Editor.
+JMLR OpenReview consoles should expose only the actions valid for the current
+role and paper state. JMLR's EIC group uses a compact compatibility landing;
+The linked assignment and paper workflow pages remain standard OpenReview surfaces.
 
 ## Venue Landing
 
-The JMLR venue landing page is the entry point for new submissions, reviewer
-volunteering, and role-console routing. It is not a paper workflow console and
+The JMLR venue landing page is the entry point for new submissions and
+role-console routing. It is not a paper workflow console and
 should not show paper lists, paper assignment controls, decision controls,
 review controls, camera-ready controls, or publication controls.
 
@@ -16,36 +16,34 @@ The venue landing page should show:
 | Area | Shows | Expected Action |
 | --- | --- | --- |
 | New Submission | Venue submission entry point. | Open the JMLR submission form. Current `JMLR/Authors` membership is not required. |
-| Reviewer volunteer | Reviewer-pool self-service entry, when available. | Record willingness to review and run reviewer-pool eligibility processing. This does not assign the user to any paper. |
 | Your Consoles | Role consoles available to the signed-in user. | Open the selected role console and preserve that role context. |
 
-The venue page also has an EIC-only People Management route for role
-administration and recruitment. It is separate from the default venue landing
-view. It may include role membership controls, role assignment-availability
-controls, and bulk invitations for reviewer or Action Editor recruitment. It
-must not be shown to authors, reviewers, Action Editors, Production Editors,
-guests, or signed-in users without EIC authority.
+The venue page also has an EIC-only Role Management route. It is separate from
+the default venue landing view and links to standard role group editors,
+OpenReview recruitment, the Action Editor availability browser, and
+JMLR's combined Action Editor membership and track-eligibility manager. It must
+not be shown to authors, reviewers, Action Editors, Production Editors, guests,
+or signed-in users without EIC authority.
 
 Venue role routing should show only the consoles and actions for roles the
 signed-in user currently holds. A user with no JMLR role should not see role
-consoles. Role management and bulk recruitment remain EIC-only operational
-surfaces.
+consoles. Role Management remains EIC-only; recruitment mutations occur on the
+OpenReview recruitment forum.
 
-## EIC Console
+## EIC Landing
 
 | Area | Shows | Expected Action |
 | --- | --- | --- |
-| Pending Tasks, submitted paper with no AE | `Create assignment pages` | Prepare the paper-specific AE and reviewer assignment pages. This is setup only and must not assign anyone. |
-| Pending Tasks, setup-ready ordinary submission | Paper-page link and `Assign Action Editor` | Open the paper-specific assignment page and choose a handling AE. |
-| Pending Tasks, setup-ready eligible resubmission | Paper-page link and `Auto-assign previous AE/reviewers` | Reuse eligible previous participants through checked assignment paths. |
-| Active Papers and status views | Monitoring links and status information | Inspect papers already in progress. These views should not bypass the setup-first assignment flow. |
+| Pending Tasks | Recognized active EIC actions. An AE desk-rejection recommendation appears as `Review desk rejection` when automatic desk-rejection approval is disabled; final Decision Approval normally appears only as an abnormal recovery task while its independent automation is enabled. | Open the exact action page, then approve or decline through its rendered form. |
+| All Submissions | One searchable, stage-filtered table of non-authored submissions with deployed AE and reviewer assignments. | Use `Open paper`, `Edit AE`, or, for under-review papers, `Edit reviewers`. |
+| Assignments | Direct links to the Action Editor and reviewer assignment browsers. | Use the standard assignment surface. |
+| Recruitment | Direct links to OpenReview recruitment and Reviewer Report. | Use the owning forum. |
+| Role Management | Direct links to standard role editors, AE availability, focused AE eligibility, and managed tracks. | Use the owning management surface. |
 
-EIC console assignment controls must preserve paper-specific permission checks.
-An EIC who is an author or has a hard paper conflict may inspect only content
-allowed by their other role context; they must not see setup, AE assignment,
-reviewer assignment, decision, or publication controls for that paper. Active
-Papers and status views may link to the paper page for inspection, but they
-must not expose a second assignment path that skips setup readiness.
+The landing performs no invitation-prefix discovery and no mutation. It does
+not expose proposed-AE review or Action Editor camera-ready verification as EIC
+tasks. Permission, availability, eligibility, and lifecycle checks remain owned
+by the linked OpenReview pages.
 
 ## Action Editor Console
 
@@ -55,7 +53,7 @@ must not expose a second assignment path that skips setup readiness.
 | Assigned Papers | Papers currently handled by the AE. | Manage reviewers, deadlines, decisions, and camera-ready review when available. |
 
 AE console reviewer-management links must open the paper-specific reviewer
-assignment page in AE role context. They must not expose EIC setup controls,
+launcher and native Edge Browser in AE role context. They must not expose EIC controls,
 raw role-administration surfaces, unchecked assignment tools, or reviewer
 candidate lists for papers not handled by that AE.
 
@@ -83,4 +81,5 @@ metadata for other reviewers, or reviewer-management submit controls.
 
 ## Validation
 
-Run `python3 scripts/check_tree.py` after changing console workflow docs.
+Run `python3 scripts/check_source_assembly.py` and the focused console pytest
+checks after changing console workflow docs.

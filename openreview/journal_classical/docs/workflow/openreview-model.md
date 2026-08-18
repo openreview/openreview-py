@@ -63,16 +63,13 @@ scripts, or generated source paths to follow the workflow.
 
 ## Public Visibility Rule
 
-Before publication, JMLR does not use the OpenReview paper page as the public
-publication surface. Public or unrelated signed-in users should not gain access
-to restricted paper records, workflow actions, reviewer identities, assignment
-state, or unreleased editorial material through OpenReview links.
+Before acceptance and camera-ready verification, public or unrelated signed-in
+users must not gain access to restricted paper records, workflow actions,
+reviewer identities, assignment state, or unreleased editorial material.
 
-When OpenReview publication is enabled, Mark as Published is the explicit
-terminal exception. It makes the OpenReview paper record readable by everyone
-and lets the main PDF and optional supplementary material inherit that public
-paper visibility. Operational metadata, reviews, decisions, ratings, and
-production-control records remain restricted to their designed workflow readers.
+Camera-ready verification creates the final public OpenReview record through
+the normal release behavior. There is no later Mark as Published action.
+OpenReview does not add a link to the separately managed JMLR website record.
 
 ## Source Review
 

@@ -1,17 +1,23 @@
 Dear {{{{fullname}}}},
 
-We are writing to inform you that, based on the editorial evaluation of your {short_name} submission "{submission_number}: {submission_title}", the paper has received a decision of accept after minor revision.
+We are happy to inform you that, based on the editorial evaluation of your {short_name} submission "{submission_number}: {submission_title}", the paper has been accepted with minor revision.
 
-To read the decision, please follow this link: {paper_url}
+Please open the paper forum and use the Camera Ready Revision action:
 
-This decision requires a revised JMLR submission rather than a camera-ready upload. If you submit the revised manuscript to {short_name}, open the paper forum using the link above and use the Start Resubmission button. The resubmission form will carry forward this paper as the previous JMLR submission.
+{{SITE_URL}}/forum?id={submission_id}
 
-Only author ordering changes are allowed for resubmissions. Adding, removing, replacing, renaming, or otherwise changing authors is not allowed. Impermissible author changes may cause desk rejection or later rejection at editorial discretion. The resubmission must also include a PDF response to the reviewers.
+Submit the revised camera-ready material by {camera_ready_duedate}. The requested changes are described in the Action Editor's decision comments. The Action Editor alone will verify these changes; the paper will not return to reviewers for re-review.
 
-The Action Editor responsible for your submission will have provided a description of the required revisions.
+Upload the revised final PDF and, if applicable, one supplementary PDF or ZIP file.
 
-For more details and guidelines on the {short_name} review process, visit {website}.
+After uploading, post a restricted Official Comment titled "Camera-ready revision summary" explaining how you addressed the Action Editor's requested changes. Select the paper Authors and Action Editors as readers. Editors-in-Chief are always readers; do not select Reviewers or public readers.
 
-We thank you for your contribution to {short_name}.
+Use the official JMLR Author Guidelines as the general formatting reference:
 
-The {short_name} Editors-in-Chief
+{{CAMERA_READY_AUTHOR_GUIDELINES_URL}}
+
+The Camera Ready Revision form contains the exact paper-specific formatting instructions, dates, publication identifier, footer URL, and generated LaTeX metadata block. Follow those instructions wherever they differ from the general guide. Do not write a manual JMLR heading or Editor line.
+
+Thank you for your contribution to {short_name}, and congratulations on your accepted paper.
+
+The JMLR Editors-in-Chief

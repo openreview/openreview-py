@@ -1,0 +1,11 @@
+Dear {{{{fullname}}}},
+
+The final public OpenReview record for JMLR submission {submission_number}, “{submission_title}”, is ready for manual JMLR publication processing.
+
+Production Editor worklist: {console_url}
+OpenReview record: {paper_url}
+Download final publication files and publication.json: {bundle_url}
+
+Use the worklist to open the public paper and private bundle, record the JMLR page and PDF URLs, and mark the manual publication work complete. This does not change the public OpenReview final record.
+
+The JMLR Editors-in-Chief

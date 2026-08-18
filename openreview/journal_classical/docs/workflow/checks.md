@@ -13,10 +13,8 @@ python3 -m pip install -e ".[test]"
 
 | Command | Checks |
 | --- | --- |
-| `python3 scripts/build/site_config.py` | Renders local `build/local/dev` and `build/local/prod` output from checked-in source only. |
-| `python3 scripts/check_source_assembly.py` | Required `site_config/` source areas, build entrypoints, and build-time template references. |
-| `python3 scripts/check_tree.py` | Markdown links, concrete JSON files, complete Python files, complete JavaScript files, source assembly references, and the local build. |
-| `python3 -m pytest` | Source-only pytest checks under `tests/source/`; these do not require venue credentials or dev OpenReview state. |
+| `python3 scripts/check_source_assembly.py` | Required `site_config/` source areas and build-time template references. |
+| `python3 -m pytest -c source_pyproject.toml` | Source-only pytest checks under `tests/source/`; these do not require venue credentials or DEV OpenReview state. |
 
 ## Source Assembly Scope
 
@@ -25,6 +23,7 @@ The source tree uses build-time placeholders such as:
 | Placeholder | Expected Target |
 | --- | --- |
 | `{{MESSAGE_TEMPLATE_JSON:path}}` | `site_config/message_templates/path` |
+| `{{WEB_FRAGMENT_JSON:path}}` | `site_config/web_fragments/path` |
 | `{{EMAIL_TEMPLATE_JSON:path}}` | `site_config/email_templates/path` |
 | `{{PYTHON_SCRIPT_JSON:path}}` | `site_config/python_scripts/path` |
 | `{{PYTHON_SCRIPT_FILE:path}}` | `site_config/python_scripts/path` |
@@ -33,11 +32,27 @@ The source tree uses build-time placeholders such as:
 | `{{GLOBAL_SETTING_JS_FILE:path}}` | `site_config/global_settings/path` |
 
 The source assembly check verifies that these referenced files exist and that
-the build entrypoints referenced by source comments are present. It does not
-apply configuration to an OpenReview venue.
+their referenced targets are present. It does not apply configuration to an
+OpenReview venue.
+
+## Notification Content Ownership
+
+JMLR-authored notification subjects and bodies belong in
+`site_config/email_templates/`. Executable callbacks retain scheduling,
+recipient selection, state handling, and API calls, and embed the content with
+`EMAIL_TEMPLATE_JSON` during assembly. Standalone UI copy may use
+`site_config/message_templates/` when extraction does not add runtime behavior.
+Executable browser behavior belongs in `site_config/web_fragments/` and uses
+`WEB_FRAGMENT_JSON`; it is not classified or counted as message text.
+
+`tests/source/test_message_content_extraction.py` inventories public
+`client.post_message` owners, checks exact template rendering, and compiles the
+assembled callbacks. Mixed UI launchers keep intertwined labels and state
+feedback in their owning JavaScript when separating them would add behavior.
 
 ## Review Rule
 
-Before opening a pull request, run the build, tree/source checks, and pytest.
+Before review, run the source assembly check and pytest. The private integration
+repository separately owns environment rendering and apply-plan validation.
 Update docs when a source change affects visible role behavior, form fields,
 buttons, status text, or permissions.

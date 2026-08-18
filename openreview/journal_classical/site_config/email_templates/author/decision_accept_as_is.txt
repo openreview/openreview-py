@@ -1,19 +1,21 @@
 Dear {{{{fullname}}}},
 
-We are happy to inform you that, based on the editorial evaluation of your {short_name} submission "{submission_number}: {submission_title}", the paper is accepted as is.
+We are happy to inform you that, based on the editorial evaluation of your {short_name} submission "{submission_number}: {submission_title}", the paper has been accepted as is.
 
-The camera-ready upload task is now available in OpenReview. Please submit the final version of your manuscript within {camera_ready_period_length} weeks ({camera_ready_duedate}):
+Please open the paper forum and use the Camera Ready Revision action:
 
-{paper_url}
+{{SITE_URL}}/forum?id={submission_id}
 
-In your LaTeX source, use this generated OpenReview metadata block exactly as shown:
+Submit the final camera-ready material by {camera_ready_duedate}. The Action Editor will verify the camera-ready material before it is handed to the Production Editor.
 
-{openreview_dates_block}
+Upload the final PDF and, if applicable, one supplementary PDF or ZIP file.
 
-For the Final Publication Author List field, enter OpenReview profile IDs only, separated by commas. Line breaks are not allowed. The list may reorder the submitted authors, but it must contain exactly the same author profile IDs as the submitted paper; adding, removing, replacing, or duplicating authors is not allowed.
+Use the official JMLR Author Guidelines as the general formatting reference:
 
-For more details and guidelines on the {short_name} review process, visit {website}.
+{{CAMERA_READY_AUTHOR_GUIDELINES_URL}}
 
-We thank you for your contribution to {short_name} and congratulate you for your successful submission!
+The Camera Ready Revision form contains the exact paper-specific formatting instructions, dates, publication identifier, footer URL, and generated LaTeX metadata block. Follow those instructions wherever they differ from the general guide. Do not write a manual JMLR heading or Editor line.
 
-The {short_name} Editors-in-Chief
+Thank you for your contribution to {short_name}, and congratulations on your accepted paper.
+
+The JMLR Editors-in-Chief

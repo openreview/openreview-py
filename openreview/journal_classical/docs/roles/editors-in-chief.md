@@ -2,52 +2,54 @@
 
 ## Your Work
 
-- Oversee journal-wide OpenReview operations.
-- Move submitted papers into the checked assignment workflow.
-- Assign or change handling Action Editors and inspect paper status.
-- Manage reviewer, Action Editor, OSS AE, EIC, and production-editor roles.
+- Oversee venue-wide OpenReview operations.
+- Use the compatibility landing and standard OpenReview Edge Browsers to inspect or change assignments.
+- Manage venue roles and Action Editor track eligibility.
 - Intervene in paper workflows when needed.
 - Review recruitment and operational changes before they affect the venue.
 
 ## Where To Go
 
-Use the Editors-in-Chief Console for pending assignment setup, AE assignment, status views, role management, bulk invitations, and paper oversight.
+Use the tabbed Editors-in-Chief console to open the venue, assignment browsers,
+OpenReview recruitment, reviewer reports, and role-management pages. It is
+navigation, not a lifecycle dashboard. Normal weekly AE matcher proposals are
+automatically deployed and do not appear as an EIC console task.
 
-The venue page also has an EIC-only People Management route for role membership
-updates, role assignment-availability administration, and reviewer or Action
-Editor recruitment. People Management must not be used as a paper assignment
-path.
-Recruitment and volunteer response behavior is described in
-[Role Recruitment And Volunteer Responses](../workflow/role-recruitment.md).
-
-Pending Tasks is the main queue for submitted papers with no handling AE. A new paper first shows `Create assignment pages`; after setup is ready, ordinary submissions show `Assign Action Editor`, while resubmissions may show `Auto-assign previous AE/reviewers` until previous-AE continuity is assigned.
+The EIC-only Role Management page links the standard group editors, OpenReview
+recruitment, the Action Editor availability browser, and the
+JMLR Action Editor membership and track-eligibility manager. Role Management
+must not be used as a paper assignment path. See
+[Action Editor Membership And Track Eligibility](../workflow/action-editor-eligibility.md).
+Recruitment behavior is described in
+[Role Recruitment](../workflow/role-recruitment.md).
 
 ## Main Actions
 
 | Action | When to use it |
 |---|---|
-| Create assignment pages | Prepare the paper-specific AE and reviewer assignment pages for a submitted paper before assignment controls appear. |
-| Assign Action Editor | Assign a handling AE, or use `Remove current Action Editor` before assigning a different one, through the checked paper-specific assignment page. |
-| Auto-assign previous AE/reviewers | For eligible resubmissions, retry or accelerate the shared previous-continuity action. AE assignment is the success criterion; selected previous-reviewer carry-forward is best-effort. |
-| Status views | Inspect papers, AEs, reviewers, and Top Reviewer recognition status. |
-| Assign Roles | Update role membership and assignment availability. |
-| Bulk Invite | Recruit reviewers or AEs after reviewing recipients and copy. |
+| Submissions | Open the JMLR venue or a paper forum for paper-specific work. |
+| Pending Tasks | Read the normal automation guidance and handle exceptional paper-specific work from its forum. |
+| Assignment browsers | Open the standard Action Editor or reviewer Edge Browser. |
+| Recruitment | Recruit Action Editors or reviewers from the OpenReview recruitment forum. |
+| Reviewer Report | Open the reviewer-report forum. |
+| Role Management | Open the appropriate standard role editor, availability browser, or Action Editor eligibility manager. |
 | Paper actions | Intervene with assignment, reviewer management, decision, or camera-ready actions when appropriate. |
 
 ## Notes
 
-Assignment setup is not an assignment. `Create assignment pages` prepares the paper-specific assignment surfaces and setup status.
-
-While assignment setup is running, assignment controls stay hidden. If setup
-fails or becomes stale, use `Retry setup` before assigning an AE.
-
-For ordinary new submissions, use `Assign Action Editor` after assignment pages are ready. For resubmissions, the system also runs a two-hour previous-AE continuity check after submission once assignment pages are ready. Use `Auto-assign previous AE/reviewers` when it is offered to retry or accelerate the same backend continuity action; otherwise use the paper-specific assignment launcher.
+Regular submissions normally enter the periodic matching workflow.
+Exceptional reassignment may be performed in the standard Edge Browser.
+Regular resubmission continuity is automatic when its base-membership and
+conflict checks pass.
 
 Normal paper changes should use checked workflow actions. Broad paper-correction controls should not appear in normal production UI.
 
+Editors-in-Chief use the standard EIC group editor for EIC membership. The last
+remaining EIC cannot be removed.
+
 If you are an author or otherwise conflicted on a paper, you should not see operational controls or reviewer identities for that paper.
 
-If you also hold another role, enter papers and assignment pages from the
+If you also hold another role, enter papers and assignment browsers from the
 Editors-in-Chief Console when acting as EIC. EIC assignment actions require the
 editor-in-chief role context.
 

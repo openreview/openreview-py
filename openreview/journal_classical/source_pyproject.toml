@@ -21,4 +21,4 @@ packages = []
 [tool.pytest.ini_options]
 testpaths = ["tests/source"]
 python_files = ["test_*.py"]
-addopts = "-q"
+addopts = "-q --import-mode=importlib"

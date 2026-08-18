@@ -2,12 +2,12 @@ Dear {{{{fullname}}}},
 
 We are sorry to inform you that your {short_name} submission "{submission_number}: {submission_title}" has been rejected, with encouragement to resubmit a substantially revised version to {short_name}.
 
-To read the decision, please follow this link: {paper_url}
+You can read the decision and resubmit from the paper forum below:
 
-If you resubmit this manuscript to {short_name}, open the paper forum using the link above and use the Start Resubmission button. The resubmission form will carry forward paper number {submission_number} as the previous JMLR submission.
+{paper_url}
 
-Only author ordering changes are allowed for resubmissions. Adding, removing, replacing, renaming, or otherwise changing authors is not allowed. Impermissible author changes may cause desk rejection or later rejection at editorial discretion. The resubmission must also include a PDF response to the reviewers.
+Use the Start Resubmission action on that page. It creates a new linked Regular-track submission and carries this paper forward as the previous JMLR submission. Please address the requested changes described in the Action Editor's decision comments.
 
 For more details and guidelines on the {short_name} review process, visit {website}.
 
-The {short_name} Editors-in-Chief
+The JMLR Editors-in-Chief

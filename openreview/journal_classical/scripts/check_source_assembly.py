@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check `site_config/` template references and build entrypoints."""
+"""Check public `site_config/` source roots and template references."""
 
 from __future__ import annotations
 
@@ -21,6 +21,8 @@ def text_files() -> list[Path]:
 def check_reference(kind: str, value: str, path: Path) -> str | None:
     if kind == "MESSAGE_TEMPLATE_JSON":
         targets = [SITE_CONFIG / "message_templates" / value]
+    elif kind == "WEB_FRAGMENT_JSON":
+        targets = [SITE_CONFIG / "web_fragments" / value]
     elif kind == "EMAIL_TEMPLATE_JSON":
         targets = [SITE_CONFIG / "email_templates" / value]
     elif kind == "PYTHON_SCRIPT_JSON":
@@ -53,36 +55,31 @@ def check_template_references() -> list[str]:
 
 
 def check_required_source_roots() -> list[str]:
+    """Source areas JMLR must always own.
+
+    JMLR runs on openreview.journal, so most of a venue has no JMLR source at
+    all. Global settings, invitations, Python callbacks, and UI helpers are not
+    universally required; they belong only when a documented JMLR policy cannot
+    be expressed as a Journal setting. Requiring every area would encourage a
+    copy of Journal rather than validate the public delta.
+
+    What remains required is what journal cannot supply: the venue settings, and
+    JMLR's own wording.
+    """
     failures: list[str] = []
     for relative in [
         "openreview.json",
-        "global_settings",
-        "invitations",
-        "python_scripts",
         "message_templates",
         "email_templates",
-        "ui_helpers",
     ]:
         if not (SITE_CONFIG / relative).exists():
             failures.append(f"missing required source area: site_config/{relative}")
     return failures
 
 
-def check_build_entrypoints() -> list[str]:
-    failures: list[str] = []
-    for relative in [
-        "scripts/build/site_config.py",
-        "scripts/build/site_config_public.py",
-    ]:
-        if not (ROOT / relative).exists():
-            failures.append(f"missing source build entrypoint: {relative}")
-    return failures
-
-
 def main() -> int:
     failures = []
     failures.extend(check_required_source_roots())
-    failures.extend(check_build_entrypoints())
     failures.extend(check_template_references())
     if failures:
         for failure in failures:

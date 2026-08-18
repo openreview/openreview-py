@@ -45,7 +45,6 @@ test = [
 
 [tool.setuptools.package-data]
 "openreview" = ["*"]
-"openreview.journal_classical" = ["**/*"]
 
 [tool.setuptools.packages.find]
 include = [
@@ -56,7 +55,6 @@ include = [
     "openreview.venue",
     "openreview.venue_request",
     "openreview.journal",
-    "openreview.journal_classical",
     "openreview.journal.journal_request",
     "openreview.stages",
     "openreview.arr",

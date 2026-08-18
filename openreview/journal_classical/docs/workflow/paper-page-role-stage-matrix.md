@@ -6,43 +6,66 @@ summarizes the behavior expected by reviewers and maintainers.
 | Role | Stage | Expected Visible Actions | Must Hide |
 | --- | --- | --- | --- |
 | Author | Submitted before AE assignment | Submission status and allowed author communication. | EIC assignment controls, reviewer identities, reviewer-only content. |
-| EIC | Submitted with no AE and no setup readiness | Assignment setup belongs in EIC Pending Tasks; the paper page should not yet expose `Assign Action Editor`. | Paper-page assignment launcher before setup readiness. |
-| EIC | Setup-ready submitted paper | `Assign Action Editor` paper-specific launcher and allowed decision/intervention actions. | Assignment controls for authored or conflicted papers. |
-| Action Editor | Assigned paper under review | Review monitoring, contact/comment, reviewer-specific rating actions for submitted reviews, and decision actions when available. Reviewer assignment and removal happen on the paper-specific assignment page. | Paper-level reviewer-rating launcher before decision approval, EIC-only setup, reviewer-assignment launchers, and role-management controls. |
-| Reviewer | Assigned paper under review | Submit or read/edit own review when allowed, contact AE, and paper material needed for review. | Other reviewer identities, AE/EIC operational controls, author-only actions. |
-| Production Editor | Camera-ready approved or publication stage | Download publication files, publication handling, and published-state controls when available. | Earlier editorial assignment/review controls. |
-| Unrelated signed-in or signed-out user | Any pre-publication OpenReview paper-page stage | No OpenReview paper-page actions or restricted paper content. When OpenReview publication is enabled, a paper becomes publicly readable only after Mark as Published. | Paper content before OpenReview publication, released decisions/reviews, unreleased reviews, reviewer identities, assignment controls, and restricted paper records. |
+| EIC | Submitted with no AE | Native `Desk Rejection` on the paper and `Open paper`/`Edit AE` navigation on the EIC compatibility landing. | Assignment writes on authored papers or writes rejected by the standard assignment invitation and backend checks. |
+| EIC | Submitted with an AE | Paper inspection, allowed intervention actions, and the standard assignment readback. | Assignment writes rejected by the standard invitation and backend checks. |
+| Action Editor | Assigned paper under review | Review monitoring, Official Comment, reviewer-specific rating actions for submitted reviews, and decision actions when available. Reviewer assignment and removal use the paper launcher and native Edge Browser. | Paper-level reviewer-rating launcher before decision approval, EIC-only role management, and assignment controls for unrelated papers. |
+| Reviewer | Assigned paper under review | Submit or read/edit own review when allowed, post a restricted Official Comment, and read paper material needed for review. | Other reviewer identities, AE/EIC operational controls, author-only actions. |
+| Production Editor | Accepted and `Ready` for publication | The compact publication worklist, public final record, private publication bundle, publication URL field, and `Mark published`. | Editorial assignment, reviewer identity, Decision, camera-ready, and retraction controls. |
+| EIC | Accepted and `Ready` for publication | The same publication worklist, private bundle downloads, public record, publication URL field, and `Mark published` as a Production Editor. | None of these publication controls are PE-exclusive. Ordinary conflict and paper-role restrictions still apply to editorial actions. |
+| Unrelated signed-in or signed-out user | Before final-record release | No OpenReview paper-page actions or restricted paper content. | Restricted paper content, reviewer identities, assignment controls, and workflow records. |
+| Unrelated signed-in or signed-out user | After final-record release | The public final OpenReview record and its publicly released material. | Restricted operational records and controls. |
 
 Role-specific behavior should stay consistent across direct paper links, console
 links, and paper-page action buttons.
 
+## Browser Evidence Contract
+
+Permission claims require a settled normal-Chrome page, deterministic
+accessibility/DOM assertions, and refresh persistence where state changes.
+Read-only API calls may corroborate the viewer's membership and paper state only
+after the rendered journey.
+
+Current publication-boundary evidence covers these exact cases:
+
+- an EIC entered the Production Editors worklist, clicked the public paper and
+  private bundle links, downloaded and validated the final PDF, supplement, and
+  `publication.json`, then clicked `Mark published`; the row and count remained
+  absent after refresh and the private status read back `Published`;
+- a Production Editor opened an accepted paper and saw no Decision, camera-ready,
+  retraction, AE/reviewer-management, or reviewer-assignment controls, while the
+  private `Publication Status` record remained visible; and
+- an unrelated signed-in reviewer and a signed-out guest reached the protected
+  worklist error with no pending rows or publication controls.
+
+The complete source/control evidence mapping is maintained in the private live
+control matrix. A role/stage combination not named there is not inferred from a
+neighboring role.
+
 ## Assignment And Reviewer-Management Visibility
 
-- Assignment setup is not a paper-page action before readiness. The only
-  visible setup entry is the EIC Pending Tasks `Create assignment pages` row for
-  a non-conflicted EIC.
-- After setup readiness, the paper page may expose the paper-specific AE
-  assignment launcher when allowed. Reviewer assignment launchers should not be
-  shown on the paper forum; handling AEs and non-conflicted EICs use the
-  reviewer assignment page from their role console or assignment-page link.
+- The EIC compatibility landing uses `Open paper` for forum inspection,
+  `Edit AE` for the paper-filtered Action Editor Edge Browser, and
+  `Edit reviewers` for an under-review paper's reviewer launcher.
+- Reviewer assignment controls should not be shown inline on the paper forum;
+  handling AEs and allowed EICs use the reviewer launcher and native Edge
+  Browser from their role console.
 - Authors, ordinary reviewers, Production Editors, unrelated signed-in users,
-  signed-out users, and authored or hard-conflicted operational roles must not
+  signed-out users, and operational roles blocked by the authoritative
+  OpenReview conflict result must not
   see assignment candidate lists, selected-candidate state, reviewer-management
   submit controls, or hidden setup notes.
-- Direct paper links must enforce the same visibility as console links. A user
-  who cannot reach an assignment page from the console must not gain assignment
-  controls by opening the paper page or assignment page URL directly.
+- Direct paper and Edge Browser links must enforce the same invitation and
+  backend permissions as console links.
 
 ## Public And Non-Participant Visibility
 
-- Before Mark as Published, JMLR does not use the OpenReview paper page as the
-  public publication surface.
-- Public users and unrelated signed-in users should not see OpenReview
-  restricted paper content, released review records, released decision records,
-  paper files, assignment state, or workflow actions.
-- When OpenReview publication is enabled, Mark as Published makes the
-  OpenReview paper record and public files readable by everyone.
-- Journal website/export handling remains a separate workflow.
+- Before final-record release, public users and unrelated signed-in users do not
+  see restricted paper content, paper files, assignment state, or workflow
+  actions.
+- Camera-ready verification releases the final OpenReview record according to
+  the public-record rules.
+- JMLR website publication remains a separate manual workflow and OpenReview
+  does not publish an external link to it.
 
 See [OpenReview Model](openreview-model.md) for the platform terms behind paper
 pages, records, roles, and visibility.

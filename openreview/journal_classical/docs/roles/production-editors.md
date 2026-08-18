@@ -2,22 +2,25 @@
 
 ## Your Work
 
-- Handle publication processing after a paper is accepted and camera-ready material is approved.
-- Download final files and metadata when the publication export workflow is enabled.
-- Mark a camera-ready approved paper as published when the OpenReview publication workflow is enabled.
+- Receive an email linking directly to the Production Editor worklist after the
+  final OpenReview record is public and its bundle is ready.
+- Download the final PDF, optional supplement, and `publication.json`.
+- Publish the paper on the JMLR website through the existing manual process.
+- Enter one JMLR publication URL in the `/papers/v<volume>/` form and mark the
+  external publication work complete.
 
 ## Where To Go
 
-Use the Production Editor Console for pending publication and published-paper views.
+Use the handoff link in the notification email or open the JMLR Production
+Editors group. The compact console shows only pending publication work.
 
 ## Main Actions
 
 | Action | When to use it |
 |---|---|
-| Pending Publication | Find camera-ready approved papers awaiting publication. |
-| Download files/metadata | Prepare material for the JMLR website publication workflow when publication export is enabled. |
-| Mark as Published | Record that the OpenReview publication step is complete when OpenReview publication is enabled. |
-| Published | Inspect papers already marked as published. |
+| Download files and metadata | Click each available bundle download. Files go to the browser's configured download folder; the managed DEV Chrome profile uses `/home/tozhang/Downloads`. |
+| Publish on jmlr.org | Complete publication outside OpenReview. |
+| Mark published | Record one JMLR publication URL and close the external-publication work item. A successful action removes the paper from the pending worklist. |
 
 ## Notes
 
@@ -25,13 +28,10 @@ Production Editors are not editorial operators for submitted, under-review, reje
 
 You should not see AE assignment, reviewer assignment, reviewer rating, decision, or camera-ready scientific verification controls.
 
-If you are an author or otherwise conflicted on a paper, operational publication controls should be hidden for that paper.
-
-Before camera-ready approval opens publication processing, Production Editors
-should not see restricted paper content, editorial identities, assignment
-controls, review-stage controls, decision controls, reviewer identities, or
-publication controls.
-
-At camera-ready approved and published stages, Production Editors may see only
-the publication surfaces needed for file download, publication handling,
-published-row inspection, and approved retraction handling.
+The Production Editor role does not grant review-stage controls, reviewer
+identities, assignment controls, decision controls, camera-ready verification,
+or invoke OpenReview retraction controls. An approved accepted-paper retraction
+sends one follow-up notice so the external jmlr.org page can be reconciled
+manually. Worklist status is private to Production Editors and Editors-in-Chief,
+is retained as historical handoff state after retraction, and does not change
+OpenReview publication state.

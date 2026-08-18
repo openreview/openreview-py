@@ -1,9 +1,12 @@
 Dear {{{{fullname}}}},
 
-{receipt_intro}
+Your submission to {short_name} has been received.
 
 Submission Number: {submission_number}
 
 Title: {submission_title}
 
-To view the submission, click here: {paper_url}
+To view the submission, follow this link:
+{{SITE_URL}}/forum?id={submission_id}
+
+The {short_name} Editors-in-Chief

@@ -8,8 +8,9 @@ JMLR OpenReview configuration changes.
 - [Lifecycle](workflow/lifecycle.md)
 - [Editorial policies](workflow/editorial-policies.md)
 - [Assignment pages and buttons](workflow/assignment-pages.md)
+- [Action Editor membership and track eligibility](workflow/action-editor-eligibility.md)
 - [Console entry points](workflow/consoles.md)
-- [Role recruitment and volunteer responses](workflow/role-recruitment.md)
+- [Role recruitment](workflow/role-recruitment.md)
 - [OpenReview model](workflow/openreview-model.md)
 - [Contributing](workflow/contributing.md)
 - [Checks](workflow/checks.md)
@@ -19,17 +20,18 @@ JMLR OpenReview configuration changes.
 ## site_config
 
 - [Source guide](site_config/overview.md)
+- [Architecture and ownership map](site_config/architecture.md)
 
 ## Detailed Actions
 
 - [Review](workflow/actions/review.md)
 - [Reviewer assignment](workflow/actions/reviewer-assignment.md)
 - [Decision](workflow/actions/decision.md)
-- [Contact Action Editor](workflow/actions/contact-action-editor.md)
+- [Official Comment](workflow/actions/official-comment.md)
 - [Reviewer rating](workflow/actions/reviewer-rating.md)
 - [Camera-ready revision](workflow/actions/camera-ready-revision.md)
 - [Publication](workflow/actions/publication.md)
-- [Publication download and retraction](workflow/actions/publication-controls.md)
+- [Publication download bundle](workflow/actions/publication-controls.md)
 
 ## Console Details
 
@@ -44,7 +46,7 @@ JMLR OpenReview configuration changes.
 - [Authors](roles/authors.md)
 - [Reviewers](roles/reviewers.md)
 - [Action Editors](roles/action-editors.md)
-- [OSS Action Editors](roles/oss-action-editors.md)
+- [Managed-track Action Editors](roles/managed-track-action-editors.md)
 - [Editors-in-Chief](roles/editors-in-chief.md)
 - [Production Editors](roles/production-editors.md)
 
