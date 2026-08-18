@@ -1,6 +1,7 @@
 import datetime
 import openreview
 import openreview.venue
+from selenium.webdriver.common.by import By
 
 
 class TestTwoSubmissionCommitteeRoles():
@@ -52,9 +53,7 @@ class TestTwoSubmissionCommitteeRoles():
                             'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
-                            'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that role participation will be collected for all participants—reviewers, area chairs, and senior area chairs—and made publicly available in the OpenReview profile of each participant.',
-                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
+                            'We acknowledge that authors and reviewers will be required to share their preferred email.'
                         ]
                     }
                 }
@@ -249,14 +248,99 @@ class TestTwoSubmissionCommitteeRoles():
                     label=label
                 ))
 
+    def test_reviewer_reassignment_titles_per_area_chair_role(self, openreview_client, helpers):
+        """Each area chair role only offers the proposed assignment titles of the
+        reviewer role it is paired with by index."""
+
+        helpers.await_queue_edit(openreview_client, invitation='XYZW.cc/2025/Conference/Expert_Reviewers/-/Assignment_Configuration')
+        helpers.await_queue_edit(openreview_client, invitation='XYZW.cc/2025/Conference/Technical_Reviewers/-/Assignment_Configuration')
+
+        ac_reassignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Area_Chairs/-/Reviewer_Reassignment')
+        assert ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']['enum'] == ['expert_reviewers-matching-1']
+        assert 'Expert Reviewers' in ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['description']
+        assert ac_reassignment.edit['content']['enable_reviewers_reassignment']['description'] == 'Would you like to allow Area Chairs to reassign Expert Reviewers to submissions? Make sure there are deployed or proposed assignments created before enabling this option.'
+
+        technical_ac_reassignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Reviewer_Reassignment')
+        assert technical_ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']['enum'] == ['technical_reviewers-matching-1']
+        assert 'Technical Reviewers' in technical_ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['description']
+        assert technical_ac_reassignment.edit['content']['enable_reviewers_reassignment']['description'] == 'Would you like to allow Technical Area Chairs to reassign Technical Reviewers to submissions? Make sure there are deployed or proposed assignments created before enabling this option.'
+
+    def test_area_chair_console_reassignment_links_per_role(self, openreview_client, helpers, selenium, request_page):
+        """Each area chair console links to the edge browser of its own paired
+        reviewer role, not to a name built by replacing the primary role name."""
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@xyzw.cc', password=helpers.strong_password)
+
+        pc_client.post_group_edit(
+            invitation='XYZW.cc/2025/Conference/Area_Chairs/-/Reviewer_Reassignment',
+            content={
+                'enable_reviewers_reassignment': { 'value': True },
+                'reviewers_proposed_assignment_title': { 'value': 'expert_reviewers-matching-1' }
+            }
+        )
+        pc_client.post_group_edit(
+            invitation='XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Reviewer_Reassignment',
+            content={
+                'enable_reviewers_reassignment': { 'value': True },
+                'reviewers_proposed_assignment_title': { 'value': 'technical_reviewers-matching-1' }
+            }
+        )
+
+        ac_client = openreview.api.OpenReviewClient(username='expert_ac@xyzw.cc', password=helpers.strong_password)
+        request_page(selenium, "http://localhost:3030/group?id=XYZW.cc/2025/Conference/Area_Chairs", ac_client, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Reviewer Assignment Browser:' in header.text
+        href = header.find_element(By.ID, 'edge_browser_url').get_attribute('href')
+        assert 'start=XYZW.cc/2025/Conference/Area_Chairs/-/Assignment,tail:~ExpertAC_XYZW1' in href
+        assert 'traverse=XYZW.cc/2025/Conference/Expert_Reviewers/-/Proposed_Assignment,label:expert_reviewers-matching-1' in href
+        assert 'XYZW.cc/2025/Conference/Technical_Reviewers' not in href
+
+        technical_ac_client = openreview.api.OpenReviewClient(username='technical_ac@xyzw.cc', password=helpers.strong_password)
+        request_page(selenium, "http://localhost:3030/group?id=XYZW.cc/2025/Conference/Technical_Area_Chairs", technical_ac_client, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Reviewer Assignment Browser:' in header.text
+        href = header.find_element(By.ID, 'edge_browser_url').get_attribute('href')
+        assert 'start=XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Assignment,tail:~TechnicalAC_XYZW1' in href
+        assert 'traverse=XYZW.cc/2025/Conference/Technical_Reviewers/-/Proposed_Assignment,label:technical_reviewers-matching-1' in href
+        assert 'XYZW.cc/2025/Conference/Expert_Reviewers' not in href
+        assert 'Technical_Expert_Reviewers' not in href
+
     def test_deploy_assignments_for_both_roles(self, openreview_client, helpers):
         """Deploy assignments for both reviewer roles and verify each role's
-        per-submission group has only the reviewers from its own matching."""
+        per-submission group has only the reviewers from its own matching.
+        Deploying a reviewer role also clears the proposed assignment title only
+        from the area chair role paired with it."""
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@xyzw.cc', password=helpers.strong_password)
+
+        # set the proposed title on both area chair roles so the clearing below is observable
+        for role, title in [
+            ('Area_Chairs', 'expert_reviewers-matching-1'),
+            ('Technical_Area_Chairs', 'technical_reviewers-matching-1')
+        ]:
+            pc_client.post_group_edit(
+                invitation=f'XYZW.cc/2025/Conference/{role}/-/Reviewer_Reassignment',
+                content={
+                    'enable_reviewers_reassignment': { 'value': True },
+                    'reviewers_proposed_assignment_title': { 'value': title }
+                }
+            )
+            group = openreview_client.get_group(f'XYZW.cc/2025/Conference/{role}')
+            assert group.content['reviewers_proposed_assignment_title']['value'] == title
 
         venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
 
         venue.set_assignments(assignment_title='expert_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Expert_Reviewers')
+
+        ac_group = openreview_client.get_group('XYZW.cc/2025/Conference/Area_Chairs')
+        assert 'reviewers_proposed_assignment_title' not in ac_group.content
+        technical_ac_group = openreview_client.get_group('XYZW.cc/2025/Conference/Technical_Area_Chairs')
+        assert technical_ac_group.content['reviewers_proposed_assignment_title']['value'] == 'technical_reviewers-matching-1'
+
         venue.set_assignments(assignment_title='technical_reviewers-matching-1', committee_id='XYZW.cc/2025/Conference/Technical_Reviewers')
+
+        technical_ac_group = openreview_client.get_group('XYZW.cc/2025/Conference/Technical_Area_Chairs')
+        assert 'reviewers_proposed_assignment_title' not in technical_ac_group.content
 
         submissions = openreview_client.get_notes(invitation='XYZW.cc/2025/Conference/-/Submission', sort='number:asc')
 

@@ -355,20 +355,26 @@ class GroupBuilder(object):
 
         if self.venue.is_template_related_workflow():
             submission_name = self.venue.submission_stage.name
-            content['exclusion_workflow_invitations']  = {
-                'value': [
-                    f'{venue_id}/-/Edit',
-                    f'/{venue_id}/Submission[0-9]+/',
-                    f'/{venue_id}/-/Venue.*/',
-                    f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
-                    f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration).*/', # matching invitations
-                    f'{venue_id}/Authors/-/Message',
-                    f'{venue_id}/Authors/Accepted/-/Message',
-                    f'{venue_id}/-/Message',
-                    f'{venue_id}/-/Withdrawn_Submission',
-                    f'{venue_id}/-/Desk_Rejected_Submission'
-                ]
-            }
+            exclusion_workflow_invitations = [
+                f'{venue_id}/-/Edit',
+                f'/{venue_id}/Submission[0-9]+/',
+                f'/{venue_id}/-/Venue.*/'
+            ]
+
+            # every reviewer role has its own message and matching invitations
+            for role in self.venue.reviewer_roles:
+                exclusion_workflow_invitations.append(f'{venue_id}/{role}/-/Message') # TODO: parametrize invitation names
+                exclusion_workflow_invitations.append(f'/{venue_id}/{role}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration).*/') # matching invitations
+
+            exclusion_workflow_invitations.extend([
+                f'{venue_id}/Authors/-/Message',
+                f'{venue_id}/Authors/Accepted/-/Message',
+                f'{venue_id}/-/Message',
+                f'{venue_id}/-/Withdrawn_Submission',
+                f'{venue_id}/-/Desk_Rejected_Submission'
+            ])
+
+            content['exclusion_workflow_invitations']  = { 'value': exclusion_workflow_invitations }
             content['status_invitation_id'] = { 'value': f'{self.venue.support_user}/Venue_Request/Conference_Review_Workflow/-/Status' }
 
         update_content = self.get_update_content(venue_group.content, content)
@@ -602,8 +608,11 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 )
                 
                 area_chairs_group_id = edit['group']['id']
-                # create invitation to edit area chairs group to add enable_reviewers_reassignment
-                edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id)                
+                # create invitation to enable reviewer reassignment, where the program chairs
+                # also pick which reviewers group these area chairs may edit assignments for.
+                # The role in the same position is offered as the default.
+                paired_reviewers_name = self.venue.reviewer_roles[index] if index < len(self.venue.reviewer_roles) else self.venue.reviewers_name
+                edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id, area_chairs_name=role, reviewers_name=paired_reviewers_name, reviewer_roles=self.venue.reviewer_roles)
 
             # If there are multiple area chair roles and the category name is not
             # itself one of the roles, create an umbrella group containing all
