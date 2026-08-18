@@ -36,9 +36,11 @@ def process(client, edit, invitation):
         # delete the previous edit's decision notification invitations
         previous_edit = invitation_edits[-2]
         previous_decision_options = previous_edit.content['decision_options']['value']
+        previous_accept_decision_options = previous_edit.content['accept_decision_options']['value']
     else:
         #delete the default decision notification invitations
         previous_decision_options = ['Accept', 'Reject']
+        previous_accept_decision_options = ['Accept']
 
     new_decision_options = edit.content['decision_options']['value']
 
@@ -47,6 +49,14 @@ def process(client, edit, invitation):
 
     removed_decision_options = previous_set - new_set
     added_decision_options = new_set - previous_set
+
+    # decision options that stayed but moved between the accept/reject bucket: their release
+    # invitation needs to be reposted through the other template so its decision_venue_id/decision_venue
+    # get corrected (the generated invitation id is the same either way, so this updates it in place)
+    rebucketed_decision_options = {
+        decision_option for decision_option in (previous_set & new_set)
+        if openreview.tools.is_accept_decision(decision_option, previous_accept_decision_options) != openreview.tools.is_accept_decision(decision_option, accept_decision_options)
+    }
 
     cdate = now + datetime.timedelta(weeks=1)
 
@@ -92,6 +102,7 @@ def process(client, edit, invitation):
             }
         )
 
+    for decision_option in added_decision_options | rebucketed_decision_options:
         is_accepted_option = openreview.tools.is_accept_decision(decision_option, accept_decision_options)
         additional_readers = []
         if area_chairs_name:

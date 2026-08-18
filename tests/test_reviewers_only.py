@@ -3162,3 +3162,50 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
 
         tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Program_Committee')
         assert len(tags) == 2
+
+    def test_rebucket_decision_option(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        venue_group = openreview_client.get_group('ABCD.cc/2025/Conference')
+        assert venue_group.content['accept_decision_options']['value'] == ['Accept', 'Poster']
+
+        # 'Reject' is currently a reject-bucket option: its release invitation targets the
+        # rejected venue, and it has already fired (its activation date is in the past)
+        reject_invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reject_Submission_Change_After_Decision')
+        assert reject_invitation.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
+        assert reject_invitation.edit['note']['content']['venue']['value']['param']['const'] == 'Submitted to ABCD 2025'
+        previous_cdate = reject_invitation.cdate
+        assert previous_cdate < openreview.tools.datetime_millis(datetime.datetime.now())
+
+        # move 'Reject' into the accept bucket without changing the decision_options list itself:
+        # this is a rebucket, not an addition or removal
+        edit = pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Decision/Decision_Options',
+            content={
+                'decision_options': { 'value': ['Accept', 'Poster', 'Revision Needed', 'Reject'] },
+                'accept_decision_options': { 'value': ['Accept', 'Poster', 'Reject'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        venue_group = openreview_client.get_group('ABCD.cc/2025/Conference')
+        assert venue_group.content['accept_decision_options']['value'] == ['Accept', 'Poster', 'Reject']
+
+        # the same invitation is updated in place: its target venue reflects the new bucket,
+        # activation date is reset
+        reject_invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reject_Submission_Change_After_Decision')
+        assert reject_invitation.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference'
+        assert reject_invitation.edit['note']['content']['venue']['value']['param']['const'] == openreview.tools.decision_to_venue('ABCD 2025', 'Reject', ['Accept', 'Poster', 'Reject'])
+        assert 'readers' in reject_invitation.edit['note']['content']['pdf'] and reject_invitation.edit['note']['content']['pdf']['readers'] == [
+          "ABCD.cc/2025/Conference",
+          "ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors"
+        ]
+
+        # decision options that weren't rebucketed are untouched
+        accept_invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Change_After_Decision')
+        assert accept_invitation.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference'
+        assert accept_invitation.edit['note']['content']['pdf']['readers'] == { 'const': { 'delete': True } }
+
+        revision_needed_invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Revision_Needed_Submission_Change_After_Decision')
+        assert revision_needed_invitation.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
