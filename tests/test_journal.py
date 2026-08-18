@@ -3444,7 +3444,8 @@ note={Retracted after acceptance}
 
         joelle_paper4_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper4/Action_Editor_.*', signatory='~Joelle_Pineau1')
         assert len(joelle_paper4_anon_groups) == 1
-        joelle_paper4_anon_group = joelle_paper4_anon_groups[0]         
+        joelle_paper4_anon_group = joelle_paper4_anon_groups[0]
+        assert joelle_paper4_anon_group.readers == ['everyone', joelle_paper4_anon_group.id]
 
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -5384,7 +5385,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert len(joelle_paper11_anon_groups) == 1
         joelle_paper11_anon_group = joelle_paper11_anon_groups[0]         
 
-        ## Accept the submission 8
+        ## Accept the submission 11
         under_review_note = joelle_client.post_note_edit(invitation= f'TMLR/Paper{note.number}/-/Review_Approval',
                                     signatures=[joelle_paper11_anon_group.id],
                                     note=Note(content={
@@ -5597,7 +5598,7 @@ note={Under review}
             )
         )
         
-        ## Accept the submission 1
+        ## Accept the submission 13
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper13/-/Review_Approval',
                                     signatures=[joelle_paper13_anon_group.id],
                                     note=Note(content={
@@ -6033,7 +6034,7 @@ note={Expert Certification}
 
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
 
-        # Assign Action Editor and immediately remove  assignment
+        # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
             writers=[venue_id, editor_in_chief_group_id],
@@ -6045,16 +6046,22 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        note = openreview_client.get_note(note_id_14)
+        assert 'readers' in note.content['assigned_action_editor']
+        assert note.content['assigned_action_editor']['readers'] == [venue_id, f'{venue_id}/Paper{submission.number}/Action_Editors', f'{venue_id}/Paper{submission.number}/Reviewers']
+
         ae_group = raia_client.get_group(f'{venue_id}/Paper{submission.number}/Action_Editors')
         assert ae_group.members == ['~Samy_Bengio1']
+        assert ae_group.readers == [venue_id, f'{venue_id}/Paper{submission.number}/Action_Editors', f'{venue_id}/Paper{submission.number}/Reviewers']
 
-        joelle_paper13_anon_groups = samy_client.get_groups(prefix=f'{venue_id}/Paper{submission.number}/Action_Editor_.*', signatory='~Samy_Bengio1')
-        assert len(joelle_paper13_anon_groups) == 1
-        joelle_paper13_anon_group = joelle_paper13_anon_groups[0]         
+        sammy_paper14_anon_groups = samy_client.get_groups(prefix=f'{venue_id}/Paper{submission.number}/Action_Editor_.*', signatory='~Samy_Bengio1')
+        assert len(sammy_paper14_anon_groups) == 1
+        sammy_paper14_anon_group = sammy_paper14_anon_groups[0]
+        assert sammy_paper14_anon_group.readers == [venue_id, f'{venue_id}/Paper{submission.number}/Action_Editors', f'{venue_id}/Paper{submission.number}/Reviewers', sammy_paper14_anon_group.id]     
 
-        ## Accept the submission 1
+        ## Accept the submission 14
         under_review_note = samy_client.post_note_edit(invitation= f'TMLR/Paper{submission.number}/-/Review_Approval',
-                                    signatures=[joelle_paper13_anon_group.id],
+                                    signatures=[sammy_paper14_anon_group.id],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
@@ -6066,9 +6073,56 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
 
+        note = openreview_client.get_note(note_id_14)
+        assert 'readers' not in note.content['assigned_action_editor']
+        assert note.content['assigned_action_editor']['value'] == '~Samy_Bengio1'
+
+        ae_group = raia_client.get_group(f'{venue_id}/Paper{submission.number}/Action_Editors')
+        assert ae_group.members == ['~Samy_Bengio1']
+        assert ae_group.readers == ['everyone']
+
+        sammy_paper14_anon_groups = samy_client.get_groups(prefix=f'{venue_id}/Paper{submission.number}/Action_Editor_.*', signatory='~Samy_Bengio1')
+        assert len(sammy_paper14_anon_groups) == 1
+        sammy_paper14_anon_group = sammy_paper14_anon_groups[0]
+        assert sammy_paper14_anon_group.readers == ['everyone', sammy_paper14_anon_group.id]
+
+        #re-assign AE after paper was marked appropriate for review
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        paper_assignment_edge = raia_client.post_edge(paper_assignment_edge)
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/Action_Editors/-/Assignment', count=19)
+
+        note = openreview_client.get_note(note_id_14)
+        assert 'assigned_action_editor' not in note.content
+        assert note.content['venueid']['value'] == 'TMLR/Assigned_AE'
+
+        paper_assignment_edge = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_14,
+            tail='~Samy_Bengio1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        note = openreview_client.get_note(note_id_14)
+        assert 'readers' not in note.content['assigned_action_editor']
+        assert note.content['assigned_action_editor']['value'] == '~Samy_Bengio1'
+
+        ae_group = raia_client.get_group(f'{venue_id}/Paper{submission.number}/Action_Editors')
+        assert ae_group.members == ['~Samy_Bengio1']
+        assert ae_group.readers == ['everyone']
+
+        sammy_paper14_anon_groups = samy_client.get_groups(prefix=f'{venue_id}/Paper{submission.number}/Action_Editor_.*', signatory='~Samy_Bengio1')
+        assert len(sammy_paper14_anon_groups) == 1
+        sammy_paper14_anon_group = sammy_paper14_anon_groups[0]
+        assert sammy_paper14_anon_group.readers == ['everyone', sammy_paper14_anon_group.id]
+
         ## Invite external reviewer with profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
-            signatures=[joelle_paper13_anon_group.id],
+            signatures=[sammy_paper14_anon_group.id],
             head=note_id_14,
             tail='melisa@mailten.com',
             weight=1,

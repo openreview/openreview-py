@@ -74,8 +74,9 @@ def process_update(client, edge, invitation, existing_edge):
             'assigned_action_editor': { 'value': edge.tail }
         }
 
-        # when AC is assigned, keep hidden until paper is approved for review
-        content['assigned_action_editor']['readers'] = [journal.venue_id, journal.get_action_editors_id(number=note.number), journal.get_reviewers_id(number=note.number)]
+        # when AC is assigned, keep hidden if AE should be anonymous or if paper is not yet approved for review
+        if journal.is_action_editor_anonymous() or note.content.get('venueid', {}).get('value') in [journal.submitted_venue_id, journal.assigning_AE_venue_id, journal.assigned_AE_venue_id]:
+            content['assigned_action_editor']['readers'] = [journal.venue_id, journal.get_action_editors_id(number=note.number), journal.get_reviewers_id(number=note.number)]
 
         if journal.assigning_AE_venue_id == note.content['venueid']['value']:
             content['venueid'] = { 'value': journal.assigned_AE_venue_id }
