@@ -94,7 +94,7 @@ def process(client, invitation):
 
     # update the decision heading map
     decision_options = decision_invitation.content.get('decision_options', {}).get('value')
-    decision_heading_map = { openreview.tools.decision_to_venue(short_name, o):o for o in decision_options}
+    decision_heading_map = { openreview.tools.decision_to_venue(short_name, o, accept_options):o for o in decision_options}
 
     client.post_group_edit(
         invitation=meta_invitation_id,
