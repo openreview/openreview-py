@@ -3337,18 +3337,12 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if is_reviewer:
             area_chairs_id = committee_id.replace(committee_name, self.venue.area_chairs_name)
             senior_area_chairs_id = committee_id.replace(committee_name, self.venue.senior_area_chairs_name)
-            if len(venue.reviewer_roles) == len(venue.submission_reviewer_roles):
-                default_submission_name = venue.submission_reviewer_roles[venue.reviewer_roles.index(committee_name)]
-            else:
-                default_submission_name = venue.submission_reviewer_roles[0]
+            default_submission_name = venue.get_submission_committee_name(committee_name)
 
         if is_area_chair:
             area_chairs_id = committee_id
             senior_area_chairs_id = committee_id.replace(committee_name, self.venue.senior_area_chairs_name)
-            if len(venue.area_chair_roles) == len(venue.submission_area_chair_roles):
-                default_submission_name = venue.submission_area_chair_roles[venue.area_chair_roles.index(committee_name)]
-            else:
-                default_submission_name = venue.submission_area_chair_roles[0]
+            default_submission_name = venue.get_submission_committee_name(committee_name)
 
         content = {
             'review_name': {

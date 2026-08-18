@@ -145,7 +145,7 @@ def process(client, edit, invitation):
     venue.create_review_stage()
     venue.create_comment_stage()
 
-    # When reviewer groups are configured per-role, create one additional review
+    # When reviewers are split into several per-submission groups, create one additional review
     # invitation per secondary reviewer role so each role gets its own form.
     for additional_role in venue.submission_reviewer_roles[1:]:
         review_name = f'{additional_role}_Review'
@@ -328,9 +328,11 @@ def process(client, edit, invitation):
                 'full_submission_deadline': { 'readers': [support_user] },
                 'reviewers_name': { 'readers': [support_user] },
                 'reviewer_groups_names': { 'readers': [support_user] },
+                'submission_reviewer_group_names': { 'readers': [support_user] },
                 'area_chairs_support': { 'readers': [support_user] },
                 'area_chairs_name': { 'readers': [support_user] },
                 'area_chair_groups_names': { 'readers': [support_user] },
+                'submission_area_chair_group_names': { 'readers': [support_user] },
                 'senior_area_chairs_support': { 'readers': [support_user] },
                 'senior_area_chair_groups_names': { 'readers': [support_user] },
                 'release_role_participation': { 'readers': [support_user] },

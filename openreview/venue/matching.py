@@ -1210,12 +1210,11 @@ class Matching(object):
         deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
         paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')
         if not paper_committee_name:
-            if self.is_area_chair:
-                paper_committee_name = venue.submission_area_chair_roles[0]
-            elif self.is_senior_area_chair:
+            if self.is_senior_area_chair:
                 paper_committee_name = venue.senior_area_chairs_name
             else:
-                paper_committee_name = venue.submission_reviewer_roles[0]
+                ## pair the role being deployed with its per-submission group by position
+                paper_committee_name = venue.get_submission_committee_name(venue.get_committee_name(self.match_group.id))
 
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), domain=venue.id,
@@ -1395,12 +1394,11 @@ class Matching(object):
         deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
         paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')
         if not paper_committee_name:
-            if self.is_area_chair:
-                paper_committee_name = venue.submission_area_chair_roles[0]
-            elif self.is_senior_area_chair:
+            if self.is_senior_area_chair:
                 paper_committee_name = venue.senior_area_chairs_name
             else:
-                paper_committee_name = venue.submission_reviewer_roles[0]
+                ## pair the role being deployed with its per-submission group by position
+                paper_committee_name = venue.get_submission_committee_name(venue.get_committee_name(self.match_group.id))
 
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),

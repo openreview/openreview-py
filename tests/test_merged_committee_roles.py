@@ -6,10 +6,11 @@ import openreview.venue
 class TestMergedCommitteeRoles():
 
     def test_setup_venue(self, openreview_client, helpers):
-        """Setup a venue with two reviewer roles and two area chair roles
-        configured in the 'shared' (merged) layout. With this layout, all
-        roles share a single per-submission group named after the primary
-        role."""
+        """Setup a venue with two reviewer roles and two area chair roles that
+        share a single per-submission group. submission_reviewer_group_names is a
+        name that is not one of the reviewer roles, so a Reviewers group is created
+        to own the shared per-submission group. submission_area_chair_group_names
+        reuses one of the area chair roles instead, so no extra group is needed."""
 
         support_group_id = 'openreview.net/Support'
 
@@ -41,10 +42,10 @@ class TestMergedCommitteeRoles():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewer_groups_names': { 'value': ['Expert_Reviewers', 'Technical_Reviewers'] },
-                    'reviewer_group_layout': { 'value': 'shared' },
+                    'submission_reviewer_group_names': { 'value': ['Reviewers'] },
                     'area_chairs_support': { 'value': True },
                     'area_chair_groups_names': { 'value': ['Area_Chairs', 'Technical_Area_Chairs'] },
-                    'area_chair_group_layout': { 'value': 'shared' },
+                    'submission_area_chair_group_names': { 'value': ['Area_Chairs'] },
                     'expected_submissions': { 'value': 100 },
                     'venue_organizer_agreement': {
                         'value': [
@@ -79,22 +80,22 @@ class TestMergedCommitteeRoles():
         assert venue_group
         assert venue_group.content['reviewers_name']['value'] == 'Expert_Reviewers'
 
-        # Both reviewer role top-level groups exist so each role can have its
-        # own matching, but the shared layout means both assignment invitations
-        # point to the same per-submission group name (the primary).
+        # Both reviewer role top-level groups exist so each role can have its own
+        # matching, but the single submission group name means both assignment
+        # invitations point to the same per-submission group.
         assert openreview_client.get_group('MRG.cc/2025/Conference/Expert_Reviewers')
         assert openreview_client.get_group('MRG.cc/2025/Conference/Technical_Reviewers')
 
         expert_assignment = openreview_client.get_invitation('MRG.cc/2025/Conference/Expert_Reviewers/-/Assignment')
-        assert expert_assignment.content['reviewers_name']['value'] == 'Expert_Reviewers'
-        assert expert_assignment.content['submission_committee_name']['value'] == 'Expert_Reviewers'
+        assert expert_assignment.content['reviewers_name']['value'] == 'Reviewers'
+        assert expert_assignment.content['submission_committee_name']['value'] == 'Reviewers'
 
         technical_assignment = openreview_client.get_invitation('MRG.cc/2025/Conference/Technical_Reviewers/-/Assignment')
-        # Shared layout: technical role reuses the primary submission group name
-        assert technical_assignment.content['reviewers_name']['value'] == 'Expert_Reviewers'
-        assert technical_assignment.content['submission_committee_name']['value'] == 'Expert_Reviewers'
+        # A single submission group name: technical role reuses it too
+        assert technical_assignment.content['reviewers_name']['value'] == 'Reviewers'
+        assert technical_assignment.content['submission_committee_name']['value'] == 'Reviewers'
 
-        # AC Assignment invitations - also share the primary AC submission name
+        # AC Assignment invitations - both AC roles share the Area_Chairs submission group
         ac_assignment = openreview_client.get_invitation('MRG.cc/2025/Conference/Area_Chairs/-/Assignment')
         assert ac_assignment.content['submission_committee_name']['value'] == 'Area_Chairs'
         technical_ac_assignment = openreview_client.get_invitation('MRG.cc/2025/Conference/Technical_Area_Chairs/-/Assignment')
@@ -102,11 +103,11 @@ class TestMergedCommitteeRoles():
 
         # Domain has both reviewer roles but a single shared submission role
         assert venue_group.content['reviewer_roles']['value'] == ['Expert_Reviewers', 'Technical_Reviewers']
-        assert venue_group.content['submission_reviewer_roles']['value'] == ['Expert_Reviewers']
+        assert venue_group.content['submission_reviewer_roles']['value'] == ['Reviewers']
         assert venue_group.content['area_chair_roles']['value'] == ['Area_Chairs', 'Technical_Area_Chairs']
         assert venue_group.content['submission_area_chair_roles']['value'] == ['Area_Chairs']
 
-        # Only the primary Official_Review invitation is auto-created for shared layout
+        # Only one Official_Review invitation is auto-created for a single submission group
         assert venue_group.content['review_names']['value'] == ['Official_Review']
         assert openreview_client.get_invitation('MRG.cc/2025/Conference/-/Official_Review')
 
@@ -171,25 +172,25 @@ class TestMergedCommitteeRoles():
     def test_close_submissions_and_create_groups(self, openreview_client, helpers):
         """Close the submission deadline and verify that only the primary
         reviewer role's Submission_Group invitation creates per-submission
-        groups (the secondary role shares the primary's group in this layout)."""
+        groups (both roles share one submission group here)."""
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@mrg.cc', password=helpers.strong_password)
         now = datetime.datetime.now()
 
         pc_client.post_invitation_edit(
-            invitations='MRG.cc/2025/Conference/Expert_Reviewers/-/Submission_Group/Dates',
+            invitations='MRG.cc/2025/Conference/Reviewers/-/Submission_Group/Dates',
             content={
                 'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='MRG.cc/2025/Conference/Expert_Reviewers/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='MRG.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
 
         submissions = openreview_client.get_notes(invitation='MRG.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 3
 
         for submission in submissions:
             # Only the primary per-submission reviewers group exists
-            assert openreview_client.get_group(f'MRG.cc/2025/Conference/Submission{submission.number}/Expert_Reviewers')
+            assert openreview_client.get_group(f'MRG.cc/2025/Conference/Submission{submission.number}/Reviewers')
             technical_group = openreview.tools.get_group(openreview_client, f'MRG.cc/2025/Conference/Submission{submission.number}/Technical_Reviewers')
             assert technical_group is None
 
@@ -250,7 +251,7 @@ class TestMergedCommitteeRoles():
 
         merged_members = set()
         for submission in submissions:
-            reviewers_group = openreview_client.get_group(f'MRG.cc/2025/Conference/Submission{submission.number}/Expert_Reviewers')
+            reviewers_group = openreview_client.get_group(f'MRG.cc/2025/Conference/Submission{submission.number}/Reviewers')
 
             # The shared per-submission group holds reviewers from BOTH roles
             expert_from_group = set(reviewers_group.members) & all_expert_members
@@ -263,7 +264,8 @@ class TestMergedCommitteeRoles():
                 assert member in all_expert_members | all_technical_members
             merged_members |= set(reviewers_group.members)
 
-            # No separate Technical_Reviewers per-submission group is created
+            # No per-role per-submission group is created, both roles land in Reviewers
+            assert openreview.tools.get_group(openreview_client, f'MRG.cc/2025/Conference/Submission{submission.number}/Expert_Reviewers') is None
             assert openreview.tools.get_group(openreview_client, f'MRG.cc/2025/Conference/Submission{submission.number}/Technical_Reviewers') is None
 
         # Sanity: at least one member from each role was assigned somewhere

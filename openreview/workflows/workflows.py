@@ -244,16 +244,15 @@ class Workflows():
                                 }
                             }
                         },
-                        'reviewer_group_layout': {
+                        'submission_reviewer_group_names': {
                             'order': 13,
-                            'description': 'How are reviewers grouped per submission? "shared" means all reviewer roles are assigned into a single per-submission group (using the primary reviewer name). "per_role" means each reviewer role gets its own per-submission group.',
+                            'description': 'Please provide the name(s) of the reviewer groups to be created for each submission. Provide one name to put every reviewer role into the same group per submission, or one name per reviewer role, in the same order, to give each role its own group. Leave empty to use the first reviewer role name.',
                             'value': {
                                 'param': {
-                                    'type': 'string',
-                                    'enum': ['shared', 'per_role'],
-                                    'default': 'shared',
-                                    'input': 'radio',
-                                    'optional': True
+                                    'type': 'string[]',
+                                    'regex': '^[a-zA-Z_]+$',
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
@@ -282,16 +281,15 @@ class Workflows():
                                 }
                             }
                         },
-                        'area_chair_group_layout': {
+                        'submission_area_chair_group_names': {
                             'order': 16,
-                            'description': 'How are area chairs grouped per submission? "shared" means all area chair roles are assigned into a single per-submission group (using the primary area chair name). "per_role" means each area chair role gets its own per-submission group.',
+                            'description': 'Please provide the name(s) of the area chair groups to be created for each submission. Provide one name to put every area chair role into the same group per submission, or one name per area chair role, in the same order, to give each role its own group. Leave empty to use the first area chair role name. Ignore if your venue does not have area chairs.',
                             'value': {
                                 'param': {
-                                    'type': 'string',
-                                    'enum': ['shared', 'per_role'],
-                                    'default': 'shared',
-                                    'input': 'radio',
-                                    'optional': True
+                                    'type': 'string[]',
+                                    'regex': '^[a-zA-Z_]+$',
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },

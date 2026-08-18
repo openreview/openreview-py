@@ -142,11 +142,7 @@ class Venue(object):
         elif 'reviewers_name' in request_note.content:
             self.reviewers_name = request_note.content['reviewers_name']['value']
             self.reviewer_roles = [self.reviewers_name]
-        reviewer_group_layout = request_note.content.get('reviewer_group_layout', {}).get('value', 'shared')
-        if reviewer_group_layout == 'per_role':
-            self.submission_reviewer_roles = list(self.reviewer_roles)
-        else:
-            self.submission_reviewer_roles = [self.reviewers_name]
+        self.submission_reviewer_roles = request_note.content.get('submission_reviewer_group_names', {}).get('value') or [self.reviewers_name]
         preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
 
         if request_note.content.get('area_chairs_support',{}).get('value'):
@@ -156,11 +152,7 @@ class Venue(object):
             elif 'area_chairs_name' in request_note.content:
                 self.area_chairs_name = request_note.content['area_chairs_name']['value']
                 self.area_chair_roles = [self.area_chairs_name]
-            area_chair_group_layout = request_note.content.get('area_chair_group_layout', {}).get('value', 'shared')
-            if area_chair_group_layout == 'per_role':
-                self.submission_area_chair_roles = list(self.area_chair_roles)
-            else:
-                self.submission_area_chair_roles = [self.area_chairs_name]
+            self.submission_area_chair_roles = request_note.content.get('submission_area_chair_group_names', {}).get('value') or [self.area_chairs_name]
             self.use_area_chairs = True
             preferred_email_groups.append(self.get_area_chairs_id())
 
@@ -226,6 +218,30 @@ class Venue(object):
             if name.endswith('s'):
                 return name[:-1]
         return name
+
+    def get_submission_committee_name(self, role):
+        """Return the name of the per-submission group that a committee role is assigned into.
+
+        Roles are paired with the per-submission group names by position. When a
+        single per-submission group name is configured, every role of that kind is
+        assigned into it.
+
+        :param role: The name of a reviewer or area chair role, e.g. "Technical_Reviewers".
+        :type role: str
+
+        :return: The per-submission group name to use for that role.
+        :rtype: str
+        """
+        if role in self.reviewer_roles:
+            roles, submission_roles = self.reviewer_roles, self.submission_reviewer_roles
+        elif role in self.area_chair_roles:
+            roles, submission_roles = self.area_chair_roles, self.submission_area_chair_roles
+        else:
+            return role
+
+        if len(submission_roles) == len(roles):
+            return submission_roles[roles.index(role)]
+        return submission_roles[0]
 
     def get_committee_names(self):
         committee=[self.reviewers_name]

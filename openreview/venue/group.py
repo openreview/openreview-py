@@ -542,20 +542,6 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     await_process=True
                 )
 
-            # If there are multiple reviewer roles and the category name is not
-            # itself one of the roles, create an umbrella group containing all
-            # role groups as members.
-            if len(self.venue.reviewer_roles) > 1 and self.venue.reviewers_name not in self.venue.reviewer_roles:
-                umbrella_id = self.venue.get_reviewers_id()
-                role_group_ids = [self.venue.get_committee_id(role) for role in self.venue.reviewer_roles]
-                self.post_group(Group(
-                    id=umbrella_id,
-                    readers=[venue_id, umbrella_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    signatories=[venue_id],
-                    members=role_group_ids
-                ))
             return            
 
         for index, role in enumerate(self.venue.reviewer_roles):
@@ -614,21 +600,6 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 paired_reviewers_name = self.venue.reviewer_roles[index] if index < len(self.venue.reviewer_roles) else self.venue.reviewers_name
                 edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id, area_chairs_name=role, reviewers_name=paired_reviewers_name, reviewer_roles=self.venue.reviewer_roles)
 
-            # If there are multiple area chair roles and the category name is not
-            # itself one of the roles, create an umbrella group containing all
-            # role groups as members.
-            if len(self.venue.area_chair_roles) > 1 and self.venue.area_chairs_name not in self.venue.area_chair_roles:
-                venue_id = self.venue.id
-                umbrella_id = self.venue.get_area_chairs_id()
-                role_group_ids = [self.venue.get_committee_id(role) for role in self.venue.area_chair_roles]
-                self.post_group(Group(
-                    id=umbrella_id,
-                    readers=[venue_id, umbrella_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    signatories=[venue_id],
-                    members=role_group_ids
-                ))
             return
 
         venue_id = self.venue.id

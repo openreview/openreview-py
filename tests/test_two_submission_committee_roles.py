@@ -40,10 +40,10 @@ class TestTwoSubmissionCommitteeRoles():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewer_groups_names': { 'value': ['Expert_Reviewers', 'Technical_Reviewers'] },
-                    'reviewer_group_layout': { 'value': 'per_role' },
+                    'submission_reviewer_group_names': { 'value': ['Expert_Reviewers', 'Technical_Reviewers'] },
                     'area_chairs_support': { 'value': True },
                     'area_chair_groups_names': { 'value': ['Area_Chairs', 'Technical_Area_Chairs'] },
-                    'area_chair_group_layout': { 'value': 'per_role' },
+                    'submission_area_chair_group_names': { 'value': ['Area_Chairs', 'Technical_Area_Chairs'] },
                     'expected_submissions': { 'value': 100 },
                     'venue_organizer_agreement': {
                         'value': [
@@ -109,7 +109,7 @@ class TestTwoSubmissionCommitteeRoles():
         technical_ac_assignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Assignment')
         assert technical_ac_assignment.content['submission_committee_name']['value'] == 'Technical_Area_Chairs'
 
-        # Domain has both reviewer roles + submission_reviewer_roles configured per_role
+        # Domain has both reviewer roles + one submission group name per role
         assert venue_group.content['reviewer_roles']['value'] == ['Expert_Reviewers', 'Technical_Reviewers']
         assert venue_group.content['submission_reviewer_roles']['value'] == ['Expert_Reviewers', 'Technical_Reviewers']
 
@@ -249,20 +249,25 @@ class TestTwoSubmissionCommitteeRoles():
                 ))
 
     def test_reviewer_reassignment_titles_per_area_chair_role(self, openreview_client, helpers):
-        """Each area chair role only offers the proposed assignment titles of the
-        reviewer role it is paired with by index."""
+        """Each area chair role defaults to the reviewer role it is paired with by
+        index, while still being able to pick any of the reviewer roles. The
+        proposed assignment title is typed in, it is not an enum synchronized from
+        the assignment configurations."""
 
         helpers.await_queue_edit(openreview_client, invitation='XYZW.cc/2025/Conference/Expert_Reviewers/-/Assignment_Configuration')
         helpers.await_queue_edit(openreview_client, invitation='XYZW.cc/2025/Conference/Technical_Reviewers/-/Assignment_Configuration')
 
         ac_reassignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Area_Chairs/-/Reviewer_Reassignment')
-        assert ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']['enum'] == ['expert_reviewers-matching-1']
-        assert 'Expert Reviewers' in ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['description']
+        assert ac_reassignment.edit['content']['reviewers_name']['value']['param']['enum'] == ['Expert_Reviewers', 'Technical_Reviewers']
+        assert ac_reassignment.edit['content']['reviewers_name']['value']['param']['default'] == 'Expert_Reviewers'
+        assert 'enum' not in ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']
+        assert ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']['type'] == 'string'
         assert ac_reassignment.edit['content']['enable_reviewers_reassignment']['description'] == 'Would you like to allow Area Chairs to reassign Expert Reviewers to submissions? Make sure there are deployed or proposed assignments created before enabling this option.'
 
         technical_ac_reassignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Reviewer_Reassignment')
-        assert technical_ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']['enum'] == ['technical_reviewers-matching-1']
-        assert 'Technical Reviewers' in technical_ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['description']
+        assert technical_ac_reassignment.edit['content']['reviewers_name']['value']['param']['enum'] == ['Expert_Reviewers', 'Technical_Reviewers']
+        assert technical_ac_reassignment.edit['content']['reviewers_name']['value']['param']['default'] == 'Technical_Reviewers'
+        assert 'enum' not in technical_ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']
         assert technical_ac_reassignment.edit['content']['enable_reviewers_reassignment']['description'] == 'Would you like to allow Technical Area Chairs to reassign Technical Reviewers to submissions? Make sure there are deployed or proposed assignments created before enabling this option.'
 
     def test_area_chair_console_reassignment_links_per_role(self, openreview_client, helpers, selenium, request_page):
@@ -501,7 +506,7 @@ class TestTwoSubmissionCommitteeRoles():
             assert not any('Technical_Reviewer_' in item.get('prefix', '') for item in signatures_items)
 
         # The second review form for Technical_Reviewers is auto-created by the
-        # venue deployment when the reviewer group layout is per-role. Trigger
+        # venue deployment when each reviewer role has its own submission group. Trigger
         # its /Dates to activate it now and verify the per-paper children.
         pc_client.post_invitation_edit(
             invitations='XYZW.cc/2025/Conference/-/Technical_Reviewers_Review/Dates',
