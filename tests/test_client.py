@@ -491,6 +491,58 @@ class TestClient():
         edits = openreview_client.get_invitation_edits(invitation_id=invitation_id)
         assert len(edits) == 0
 
+    def test_preprocess_error_status(self, openreview_client):
+        ## A preprocess rejection must surface as a client error (400) with its message.
+        ## If the API returned it as a 500, the client would retry it on the edits
+        ## endpoints and replace the validation message with a RetryError after
+        ## several minutes of backoff.
+        invitation_id = 'openreview.net/-/Preprocess_Test'
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id=invitation_id,
+                readers=['everyone'],
+                writers=['openreview.net'],
+                signatures=['~Super_User1'],
+                invitees=['everyone'],
+                preprocess='''def process(client, edit, invitation):
+    raise openreview.OpenReviewException('This submission is not valid')''',
+                edit={
+                    'readers': { 'param': { 'regex': '.+' } },
+                    'signatures': { 'param': { 'regex': '.+' } },
+                    'writers': { 'param': { 'regex': '.+' } },
+                    'note': {
+                        'readers': { 'param': { 'regex': '.+' } },
+                        'signatures': { 'param': { 'regex': '.+' } },
+                        'writers': { 'param': { 'regex': '.+' } },
+                        'content': {
+                            'title': { 'value': { 'param': { 'type': 'string', 'regex': '.*' } } },
+                        }
+                    }
+                }
+            )
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'This submission is not valid') as excinfo:
+            openreview_client.post_note_edit(
+                invitation=invitation_id,
+                signatures=['~Super_User1'],
+                readers=['everyone'],
+                writers=['openreview.net'],
+                note=openreview.api.Note(
+                    readers=['everyone'],
+                    writers=['openreview.net'],
+                    signatures=['~Super_User1'],
+                    content={ 'title': { 'value': 'Test preprocess' } }
+                )
+            )
+
+        assert excinfo.value.args[0].get('status') == 400
+
     # def test_infer_notes(self, client):
     #     notes = client.get_notes(signature='openreview.net/Support')
     #     assert notes
