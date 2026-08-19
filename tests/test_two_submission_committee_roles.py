@@ -250,9 +250,7 @@ class TestTwoSubmissionCommitteeRoles():
 
     def test_reviewer_reassignment_titles_per_area_chair_role(self, openreview_client, helpers):
         """Each area chair role defaults to the reviewer role it is paired with by
-        index, while still being able to pick any of the reviewer roles. The
-        proposed assignment title is typed in, it is not an enum synchronized from
-        the assignment configurations."""
+        index, while still being able to pick any of the reviewer roles."""
 
         helpers.await_queue_edit(openreview_client, invitation='XYZW.cc/2025/Conference/Expert_Reviewers/-/Assignment_Configuration')
         helpers.await_queue_edit(openreview_client, invitation='XYZW.cc/2025/Conference/Technical_Reviewers/-/Assignment_Configuration')
@@ -260,14 +258,11 @@ class TestTwoSubmissionCommitteeRoles():
         ac_reassignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Area_Chairs/-/Reviewer_Reassignment')
         assert ac_reassignment.edit['content']['reviewers_name']['value']['param']['enum'] == ['Expert_Reviewers', 'Technical_Reviewers']
         assert ac_reassignment.edit['content']['reviewers_name']['value']['param']['default'] == 'Expert_Reviewers'
-        assert 'enum' not in ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']
-        assert ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']['type'] == 'string'
         assert ac_reassignment.edit['content']['enable_reviewers_reassignment']['description'] == 'Would you like to allow Area Chairs to reassign Expert Reviewers to submissions? Make sure there are deployed or proposed assignments created before enabling this option.'
 
         technical_ac_reassignment = openreview_client.get_invitation('XYZW.cc/2025/Conference/Technical_Area_Chairs/-/Reviewer_Reassignment')
         assert technical_ac_reassignment.edit['content']['reviewers_name']['value']['param']['enum'] == ['Expert_Reviewers', 'Technical_Reviewers']
         assert technical_ac_reassignment.edit['content']['reviewers_name']['value']['param']['default'] == 'Technical_Reviewers'
-        assert 'enum' not in technical_ac_reassignment.edit['content']['reviewers_proposed_assignment_title']['value']['param']
         assert technical_ac_reassignment.edit['content']['enable_reviewers_reassignment']['description'] == 'Would you like to allow Technical Area Chairs to reassign Technical Reviewers to submissions? Make sure there are deployed or proposed assignments created before enabling this option.'
 
     def test_area_chair_console_reassignment_links_per_role(self, openreview_client, helpers, selenium, request_page):

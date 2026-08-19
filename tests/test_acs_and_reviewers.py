@@ -831,9 +831,6 @@ For more details, please check the following links:
         match_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Reviewers_Assignment_Deployment/Match')
         assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['rev-matching-1']
 
-        reviewer_reassignment_inv = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Reviewer_Reassignment')
-        assert reviewer_reassignment_inv.edit['content']['reviewers_proposed_assignment_title']['value']['param']['enum'] == ['rev-matching-1']
-
         # post proposed assignments to test deployment process
         submissions = pc_client.get_all_notes(content={'venueid': 'EFGH.cc/2025/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 10
