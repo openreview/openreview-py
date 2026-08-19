@@ -45,7 +45,7 @@ class Venue(object):
         self.area_chairs_name = self.area_chair_roles[0]
         self.senior_area_chair_roles = ['Senior_Area_Chairs']        
         self.senior_area_chairs_name = self.senior_area_chair_roles[0]
-        self.secondary_area_chairs_name = 'Secondary_Area_Chairs'
+        self.secondary_area_chairs_name = f'Secondary_{self.area_chairs_name}'
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
@@ -82,6 +82,7 @@ class Venue(object):
         self.submission_license = ['CC BY 4.0']
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
+        self.release_role_participation = True
         self.sac_paper_assignments = False
         self.submission_assignment_max_reviewers = None
         self.preferred_emails_groups = []
@@ -102,7 +103,6 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_custom_sections = False
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
-        self.submission_human_verification = None
         venue_webfield_dir = os.path.join(os.path.dirname(__file__), 'webfield')
         self.homepage_webfield_path = os.path.join(venue_webfield_dir, 'homepageWebfield.js')
         self.program_chairs_webfield_path = os.path.join(venue_webfield_dir, 'programChairsWebfield.js')
@@ -158,6 +158,8 @@ class Venue(object):
                 self.senior_area_chairs_name = self.senior_area_chair_roles[0]
             self.use_senior_area_chairs = True
             preferred_email_groups.append(self.get_senior_area_chairs_id())
+
+        self.release_role_participation = request_note.content.get('release_role_participation', {}).get('value', True)
 
         self.preferred_emails_groups = preferred_email_groups
         self.automatic_reviewer_assignment = True
@@ -424,7 +426,7 @@ class Venue(object):
     
     def get_secondary_area_chairs_id(self, number = None, anon=False):
         ac_name = self.get_anon_committee_name(self.secondary_area_chairs_name)
-        return self.get_committee_id(f'{ac_name}.*' if anon else self.secondary_area_chairs_name, number)    
+        return self.get_committee_id(f'{ac_name}.*' if anon else self.secondary_area_chairs_name, number)
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
     def get_anon_area_chair_id(self, number, anon_id):

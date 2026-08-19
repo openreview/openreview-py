@@ -444,6 +444,12 @@ class Journal(object):
         :param assignment_delay: Number of minutes to delay before assignment process functions run.
         :type assignment_delay: int, optional
         """
+        if not self.secret_key:
+            ## create the secret key the first time the journal is set up; it is stored
+            ## in the venue group content by the group builder, never edited and only
+            ## visible to the venue
+            self.secret_key = openreview.tools.create_hash_seed()
+
         self.invitation_builder.set_meta_invitation()
         self.group_builder.set_groups(support_role, editors)
         self.invitation_builder.set_invitations(assignment_delay)
@@ -707,6 +713,9 @@ class Journal(object):
 
     def get_submission_length(self):
         return self.settings.get('submission_length', [])
+    
+    def get_min_profile_valid_state(self):
+        return self.settings.get('min_profile_valid_state', None)
 
     def get_website_url(self, key):
         return self.settings.get('website_urls', {}).get(key)
@@ -1475,6 +1484,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
         for journal_request in tqdm(journal_requests):
 
             journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
+            if not journal:
+                continue
             print('Check venue', journal.venue_id)
 
             author_group = client.get_group(journal.get_authors_id())
@@ -2144,7 +2155,31 @@ OpenReview Team'''
             edge.readers = None
             edge.writers = None
             edge.cdate = None
-            client.post_edge(edge)
+
+            try:
+                client.post_edge(edge)
+            except Exception as e:
+                print(f"Error posting edge: {e}")
+                error_str = str(e)
+
+                if f'is member of {journal.venue_id}/Reviewers' in error_str:
+                    print('User is already a member of the reviewers group, ignoring edge.')
+
+                    # send email to reviewer
+                    error_subject = f'[{journal.short_name}] Invitation to review paper number {submission.number} cannot be accepted'
+                    error_message = f'''Hi {{{{fullname}}}},
+
+The invitation to review the paper number: {submission.number}, title: "{submission.content['title']['value']}" cannot be accepted. Only external reviewers can be invited to review papers, and you have been added as an official reviewer for {journal.venue_id}.
+
+Please contact the person who invited you if you have any questions.
+
+Thank you,
+OpenReview Team'''
+                    client.post_message(error_subject, [user_profile.id], error_message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
+                    return
+
+                else:
+                    raise openreview.OpenReviewException(error_str)
 
             short_phrase = journal.short_name
             reviewer_name = 'Reviewer'  # add this to the invitation?
@@ -2193,6 +2228,8 @@ OpenReview Team'''
         for journal_request in tqdm(journal_requests):
 
             journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
+            if not journal:
+                continue
             print('Check venue', journal.venue_id)
 
             invite_assignment_invitation_id = journal.get_reviewer_invite_assignment_id()

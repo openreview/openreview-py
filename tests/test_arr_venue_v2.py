@@ -24,6 +24,8 @@ from openreview.stages.arr_content import (
     arr_content_license_task_forum,
     arr_content_license_task,
     arr_max_load_task_forum,
+    arr_voluntary_reviewing_task_forum,
+    arr_voluntary_meta_reviewing_task_forum,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
     arr_sac_max_load_task
@@ -832,8 +834,8 @@ class TestARRVenueV2():
             name = max_load_name,
             start_date = None,
             due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
+            instructions = arr_voluntary_reviewing_task_forum['instructions'],
+            title = venue.get_reviewers_name() + ' ' + arr_voluntary_reviewing_task_forum['title'],
             additional_fields=arr_reviewer_max_load_task,
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
@@ -862,8 +864,8 @@ class TestARRVenueV2():
             name = max_load_name,
             start_date = None,
             due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
+            instructions = arr_voluntary_meta_reviewing_task_forum['instructions'],
+            title = venue.get_area_chairs_name() + ' ' + arr_voluntary_meta_reviewing_task_forum['title'],
             additional_fields=arr_ac_max_load_task,
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
@@ -888,6 +890,18 @@ class TestARRVenueV2():
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
         venue.create_registration_stages()
+
+        note = openreview_client.get_notes(invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}_Form')[0]
+        assert note.content['title']['value'] == 'Reviewer Voluntary Unavailability and Maximum Load Request'
+        assert note.content['instructions']['value'] == '''Please complete this form to indicate your maximum load for voluntary reviewing for this cycle, or your (un)availability for voluntary reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.
+
+**This will be overridden with the mandatory reviewing load if you submit at least one paper in this cycle and are qualified to review.**'''
+
+        note = openreview_client.get_notes(invitation=f'{venue.get_area_chairs_id()}/-/{max_load_name}_Form')[0]
+        assert note.content['title']['value'] == 'Area Chair Voluntary Unavailability and Maximum Load Request'
+        assert note.content['instructions']['value'] == '''Please complete this form to indicate your maximum load for voluntary meta-reviewing for this cycle, or your (un)availability for voluntary meta-reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.
+
+**This will be overridden with the mandatory meta-reviewing load if you submit at least one paper in this cycle and are qualified to meta-review.**'''
 
         # Add max load preprocess validation
         invitation_builder = openreview.arr.InvitationBuilder(venue)
@@ -2471,7 +2485,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note.content['reassignment_request_area_chair']['value'] = 'This is not a resubmission'
                 del note.content['justification_for_not_keeping_action_editor_or_reviewers']
 
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+            openreview_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
@@ -3187,7 +3201,38 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content=current_cycle_link_content
                 )
             )
-        
+
+        # A revision on an already public submission regenerates its BibTeX, which is the
+        # only branch of the revision process that uses datetime. The process globals built
+        # by the metadata revision invitation must provide it.
+        public_submission = submissions[5]
+        assert public_submission.readers == ['everyone']
+        assert '_bibtex' in public_submission.content
+
+        public_metadata_invitation = openreview_client.get_invitation(
+            f"aclweb.org/ACL/ARR/2023/August/Submission{public_submission.number}/-/Submission_Metadata_Revision"
+        )
+        public_revision_content = {
+            field: {'value': value['value']}
+            for field, value in public_submission.content.items()
+            if field in public_metadata_invitation.edit['note']['content'] and 'value' in value
+        }
+        public_revision_content['title'] = {'value': 'public metadata edit title'}
+
+        public_revision_edit = pc_client_v2.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{public_submission.number}/-/Submission_Metadata_Revision",
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                content=public_revision_content
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=public_revision_edit['id'])
+
+        updated_public_submission = openreview_client.get_note(public_submission.id)
+        assert updated_public_submission.content['title']['value'] == 'public metadata edit title'
+        assert 'public metadata edit title' in updated_public_submission.content['_bibtex']['value']
+
         # Change dates
         past_start = now - datetime.timedelta(days=2)
         past_end = now - datetime.timedelta(days=1)
@@ -7632,7 +7677,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         for submission in august_submissions:
-            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission',
+            openreview_client.post_note_edit(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
                     content = {

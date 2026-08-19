@@ -4,6 +4,7 @@ import datetime
 import openreview
 import pytest
 import time
+from unittest.mock import patch, MagicMock
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.venue import Venue
@@ -436,10 +437,111 @@ class TestClient():
 
     def test_get_notes_by_ids(self, openreview_client):
         notes = openreview_client.get_notes(invitation='Test.ws/2019/Conference/-/Submission', content = { 'title': 'Paper title'})
-        assert len(notes) == 1        
-       
+        assert len(notes) == 1
+
         notes = openreview_client.get_notes_by_ids(ids = [notes[0].id])
         assert len(notes) == 1, 'notes is not empty'
+
+    def test_delete_invitation(self, openreview_client):
+        invitation_id = 'openreview.net/-/To_Delete'
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id=invitation_id,
+                readers=['everyone'],
+                writers=['openreview.net'],
+                signatures=['~Super_User1'],
+                invitees=['everyone'],
+                edit={
+                    'readers': { 'param': { 'regex': '.+' } },
+                    'signatures': { 'param': { 'regex': '.+' } },
+                    'writers': { 'param': { 'regex': '.+' } },
+                    'note': {
+                        'readers': { 'param': { 'regex': '.+' } },
+                        'signatures': { 'param': { 'regex': '.+' } },
+                        'writers': { 'param': { 'regex': '.+' } },
+                        'content': {
+                        'title': { 'value': { 'param': { 'type': 'string', 'regex': '.*' } } },
+                        }
+                    }
+                }
+            )
+        )
+
+        ## Invitation and its edits exist before deletion
+        invitation = openreview_client.get_invitation(invitation_id)
+        assert invitation.id == invitation_id
+
+        edits = openreview_client.get_invitation_edits(invitation_id=invitation_id)
+        assert len(edits) == 1
+
+        ## Delete the invitation
+        response = openreview_client.delete_invitation(invitation_id)
+        assert response['status'] == 'ok'
+
+        ## Invitation no longer exists after deletion
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation openreview.net/-/To_Delete was not found'):
+            openreview_client.get_invitation(invitation_id)
+
+        ## Its edits no longer exist after deletion
+        edits = openreview_client.get_invitation_edits(invitation_id=invitation_id)
+        assert len(edits) == 0
+
+    def test_preprocess_error_status(self, openreview_client):
+        ## A preprocess rejection must surface as a client error (400) with its message.
+        ## If the API returned it as a 500, the client would retry it on the edits
+        ## endpoints and replace the validation message with a RetryError after
+        ## several minutes of backoff.
+        invitation_id = 'openreview.net/-/Preprocess_Test'
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id=invitation_id,
+                readers=['everyone'],
+                writers=['openreview.net'],
+                signatures=['~Super_User1'],
+                invitees=['everyone'],
+                preprocess='''def process(client, edit, invitation):
+    raise openreview.OpenReviewException('This submission is not valid')''',
+                edit={
+                    'readers': { 'param': { 'regex': '.+' } },
+                    'signatures': { 'param': { 'regex': '.+' } },
+                    'writers': { 'param': { 'regex': '.+' } },
+                    'note': {
+                        'readers': { 'param': { 'regex': '.+' } },
+                        'signatures': { 'param': { 'regex': '.+' } },
+                        'writers': { 'param': { 'regex': '.+' } },
+                        'content': {
+                            'title': { 'value': { 'param': { 'type': 'string', 'regex': '.*' } } },
+                        }
+                    }
+                }
+            )
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'This submission is not valid') as excinfo:
+            openreview_client.post_note_edit(
+                invitation=invitation_id,
+                signatures=['~Super_User1'],
+                readers=['everyone'],
+                writers=['openreview.net'],
+                note=openreview.api.Note(
+                    readers=['everyone'],
+                    writers=['openreview.net'],
+                    signatures=['~Super_User1'],
+                    content={ 'title': { 'value': 'Test preprocess' } }
+                )
+            )
+
+        assert excinfo.value.args[0].get('status') == 400
 
     # def test_infer_notes(self, client):
     #     notes = client.get_notes(signature='openreview.net/Support')
@@ -679,4 +781,55 @@ class TestMfaLogin():
             )
             assert client.token
             assert client.profile
+
+class TestExpertiseAllResultsDownload():
+    """Tests for get_expertise_all_results downloading result files."""
+
+    def _make_binary_response(self, content):
+        response = MagicMock()
+        response.headers = {}
+        response.raise_for_status.return_value = None
+        response.iter_content.return_value = [content]
+        response.__enter__ = MagicMock(return_value=response)
+        response.__exit__ = MagicMock(return_value=False)
+        return response
+
+    def _make_json_response(self, data):
+        response = MagicMock()
+        response.headers = {'Content-Type': 'application/json'}
+        response.raise_for_status.return_value = None
+        response.json.return_value = data
+        return response
+
+    def test_default_returns_json(self, client, openreview_client):
+        for api_client in [client, openreview_client]:
+            with patch.object(api_client.session, 'get', return_value=self._make_json_response({'results': []})) as mock_get:
+                result = api_client.get_expertise_results('job-123', baseurl='https://api.openreview.net')
+                assert result == {'results': []}
+                mock_get.assert_called_once()
+                assert mock_get.call_args[1]['params']['jobId'] == 'job-123'
+
+    def test_all_results_downloads_default_filename(self, client, openreview_client, tmp_path):
+        expected_content = b'full scores matrix bytes'
+        for api_client in [client, openreview_client]:
+            with patch.object(api_client.session, 'get', return_value=self._make_binary_response(expected_content)) as mock_get:
+                result = api_client.get_expertise_all_results('job-123', baseurl='https://api.openreview.net')
+                assert result == 'job-123_scores.pt'
+                mock_get.assert_called_once()
+                assert mock_get.call_args[0][0].endswith('/expertise/results/all')
+                assert mock_get.call_args[1]['params']['jobId'] == 'job-123'
+                assert os.path.exists(result)
+                with open(result, 'rb') as f:
+                    assert f.read() == expected_content
+                os.remove(result)
+
+    def test_all_results_downloads_custom_filename(self, client, openreview_client, tmp_path):
+        expected_content = b'custom file bytes'
+        custom_file = str(tmp_path / 'custom_scores.pt')
+        for api_client in [client, openreview_client]:
+            with patch.object(api_client.session, 'get', return_value=self._make_binary_response(expected_content)) as mock_get:
+                result = api_client.get_expertise_all_results('job-123', baseurl='https://api.openreview.net', output_filename=custom_file)
+                assert result == custom_file
+                with open(custom_file, 'rb') as f:
+                    assert f.read() == expected_content
 
