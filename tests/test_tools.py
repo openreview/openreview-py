@@ -437,24 +437,24 @@ class TestTools():
         assert info['publications'] == set([])        
 
     
-    def test_get_conflicts(self, client, openreview_client, helpers):
+    def test_get_conflicts(self, openreview_client, helpers):
 
         helpers.create_user('user@gmail.com', 'First', 'Last')
-        user_profile = client.get_profile(email_or_id='user@gmail.com')
+        user_profile = openreview_client.get_profile(email_or_id='user@gmail.com')
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
         assert conflicts[0] == '~First_Last1'
 
         helpers.create_user('user@qq.com', 'First', 'Last')
-        user_profile = client.get_profile(email_or_id='user@qq.com')
+        user_profile = openreview_client.get_profile(email_or_id='user@qq.com')
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
         assert conflicts[0] == '~First_Last2'
 
         helpers.create_user('user2@qq.com', 'First', 'Last')
-        user2_profile = client.get_profile(email_or_id='user2@qq.com')
+        user2_profile = openreview_client.get_profile(email_or_id='user2@qq.com')
 
         conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
         assert len(conflicts) == 0
@@ -482,7 +482,7 @@ class TestTools():
             'start': 2015,
             'end': None
         }]
-        user2_profile = client.post_profile(user2_profile)
+        user2_profile = openreview_client.post_profile(user2_profile)
 
         conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
         
@@ -494,8 +494,8 @@ class TestTools():
         assert len(conflicts) == 1
         assert conflicts[0] == '~First_Last2'
 
-        test_profile = openreview.tools.get_profiles(client, ['test@mail.com'], with_relations=True)[0]
-        user_profiles = openreview.tools.get_profiles(client, ['user2@qq.com'], with_relations=True)
+        test_profile = openreview.tools.get_profiles(openreview_client, ['test@mail.com'], with_relations=True)[0]
+        user_profiles = openreview.tools.get_profiles(openreview_client, ['user2@qq.com'], with_relations=True)
         conflicts = openreview.tools.get_conflicts(user_profiles, test_profile, policy='NeurIPS', n_years=5)
 
         assert len(conflicts) == 1
