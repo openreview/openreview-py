@@ -6630,6 +6630,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         def build_expertise_selection(committee_id, expertise_selection_id):
             invitation = Invitation(
                 id= expertise_selection_id,
+                humanVerificationRequired = openreview.tools.DEFAULT_EDGE_TAG_HUMAN_VERIFICATION,
                 invitees = [committee_id],
                 signatures = [venue_id],
                 readers = [venue_id, committee_id],
