@@ -4297,7 +4297,7 @@ The OpenReview Team.
         assert profile.content['relations'][0]['email'] == 'zoey@mail.com'
         
         client = openreview.Client(baseurl = 'http://localhost:3001')
-        client.register_user(email = 'zoey@mail.com', fullname = 'Zoey User', password = helpers.strong_password)
+        client.register_user(email = 'zoey@mail.com', fullname = 'Zoey User', password = helpers.strong_password, dob = helpers.default_dob())
 
         profile = carlos_client.get_profile(email_or_id='~Carlos_Last1')
         assert len(profile.content['names']) == 1
@@ -4316,6 +4316,7 @@ The OpenReview Team.
             'emails': ['zoey@mail.com'],
             'preferredEmail': 'zoey@mail.com',
             'homepage': f"https://zoeyuser{int(time.time())}.openreview.net",
+            'dob': helpers.default_dob(),
             'history': [
                 {
                     'position': 'PhD Student',
@@ -4500,7 +4501,7 @@ The OpenReview Team.
     def test_confirm_email_for_inactive_profile(self, openreview_client, helpers, request_page, selenium):
         
         guest = openreview.api.OpenReviewClient()
-        res = guest.register_user(email = 'confirm_alternate@mail.com', fullname= 'Lionel Messi', password = helpers.strong_password)
+        res = guest.register_user(email = 'confirm_alternate@mail.com', fullname= 'Lionel Messi', password = helpers.strong_password, dob = helpers.default_dob())
 
         guest.confirm_alternate_email(profile_id='~Lionel_Messi1', alternate_email='messi@mail.com', activation_token='confirm_alternate@mail.com')
 
@@ -4524,6 +4525,7 @@ The OpenReview Team.
             'emails': ['confirm_alternate@mail.com', 'messi@mail.com'],
             'preferredEmail': 'messi@mail.com',
             'homepage': f"https://lionelmessi{int(time.time())}.openreview.net",
+            'dob': helpers.default_dob(),
         }
         profile_content['history'] = [{
             'position': 'PhD Student',
@@ -4616,13 +4618,14 @@ The OpenReview Team.
         def register_unmoderated_user(email, first, last):
             ## Creates a profile without logging the user in (it may be pending moderation)
             guest = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
-            res = guest.register_user(email=email, fullname=f'{first} {last}', password=helpers.strong_password)
+            res = guest.register_user(email=email, fullname=f'{first} {last}', password=helpers.strong_password, dob = helpers.default_dob())
             username = res.get('id')
             profile_content = {
                 'names': [{ 'fullname': f'{first} {last}', 'username': username, 'preferred': True }],
                 'emails': [email],
                 'preferredEmail': email,
                 'homepage': f"https://{first}{last}{int(time.time())}.openreview.net",
+                'dob': helpers.default_dob(),
                 'history': [{
                     'position': 'PhD Student',
                     'start': 2017,

@@ -62,7 +62,7 @@ class TestARRVenueV2():
 
         # Manually create Reviewer ARROne as having more than 5 *CL main publications and full professor
         fullname = f'Reviewer ARROne'
-        res = openreview_client.register_user(email = 'reviewer1@aclrollingreview.com', fullname = fullname, password = helpers.strong_password)
+        res = openreview_client.register_user(email = 'reviewer1@aclrollingreview.com', fullname = fullname, password = helpers.strong_password, dob = helpers.default_dob())
         username = res.get('id')
         profile_content={
             'names': [
@@ -79,6 +79,7 @@ class TestARRVenueV2():
             'emails': ['reviewer1@aclrollingreview.com'],
             'preferredEmail': 'reviewer1@aclrollingreview.com',
             'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
+            'dob': helpers.default_dob(),
         }
         profile_content['history'] = [{
             'position': 'Full Professor',
@@ -126,7 +127,7 @@ class TestARRVenueV2():
 
         # Manually create Reviewer ARRTwo as having more than 5 non-*CL main publications
         fullname = f'Reviewer ARRTwo'
-        res = openreview_client.register_user(email = 'reviewer2@aclrollingreview.com', fullname = fullname, password = helpers.strong_password)
+        res = openreview_client.register_user(email = 'reviewer2@aclrollingreview.com', fullname = fullname, password = helpers.strong_password, dob = helpers.default_dob())
         username = res.get('id')
         profile_content={
             'names': [
@@ -143,6 +144,7 @@ class TestARRVenueV2():
             'emails': ['reviewer2@aclrollingreview.com'],
             'preferredEmail': 'reviewer2@aclrollingreview.com',
             'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
+            'dob': helpers.default_dob(),
         }
         profile_content['history'] = [{
             'position': 'Full Professor',
