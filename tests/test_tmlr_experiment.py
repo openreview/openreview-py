@@ -35,6 +35,9 @@ class TestTMLRExperiment():
         ## Author
         helpers.create_user('eve@expmaileight.com', 'Eve', 'Garcia')
 
+        ## AI Reviewer
+        helpers.create_user('lele@mail.com', 'Lele', 'Cao')
+
         request_form = openreview_client.post_note_edit(
             invitation='openreview.net/Support/-/Journal_Request',
             signatures=['openreview.net/Support'],
@@ -269,6 +272,8 @@ class TestTMLRExperiment():
         assert openreview_client.get_group('TMLRE/AI_Reviewer')
         assert openreview_client.get_invitation('TMLRE/-/AI_Review_Release')
 
+        openreview_client.add_members_to_group('TMLRE/AI_Reviewer', ['~Lele_Cao1'])
+
     def test_invite_action_editors(self, journal, openreview_client, helpers):
         openreview_client.add_members_to_group('TMLRE/Action_Editors', ['~Alice_Johnson1'])
         group = openreview_client.get_group('TMLRE/Action_Editors')
@@ -312,8 +317,10 @@ class TestTMLRExperiment():
 
         assert openreview_client.get_invitation(f'{venue_id}/Paper1/-/AI_Review')
 
+        lele_client = OpenReviewClient(username='lele@mail.com', password=helpers.strong_password)
+
         # post LLM Review before AE is assigned
-        edit = openreview_client.post_note_edit(
+        edit = lele_client.post_note_edit(
             invitation=f'{venue_id}/Paper1/-/AI_Review',
             signatures=[f'{venue_id}/AI_Reviewer'],
             note=Note(

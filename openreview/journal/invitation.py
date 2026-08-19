@@ -6922,9 +6922,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_ai_review_id(number='${2/content/noteNumber/value}'),
             'signatures': [ venue_id ],
-            'readers': [venue_id],
+            'readers': [venue_id, self.journal.get_ai_reviewer_id()],
             'writers': [venue_id],
-            'invitees': [venue_id],
+            'invitees': [venue_id, self.journal.get_ai_reviewer_id()],
             'maxReplies': 1,
             'edit': {
                 'signatures': {

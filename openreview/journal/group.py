@@ -470,10 +470,10 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                 ai_reviewer_group=self.post_group(
                     Group(
                         id=ai_reviewer_group_id,
-                        readers=[venue_id],
-                        writers=[venue_id],
+                        readers=[venue_id, ai_reviewer_group_id],
+                        writers=[venue_id, ai_reviewer_group_id],
                         signatures=[venue_id],
-                        signatories=[venue_id],
+                        signatories=[venue_id, ai_reviewer_group_id],
                         members=[]
                     )
                 )
