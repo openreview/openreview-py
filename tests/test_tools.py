@@ -477,6 +477,7 @@ class TestTools():
         user2_profile.content['history'] = [{
             'position': 'Professor',
             'institution': {
+                'country': 'US',
                 'domain': 'cmu.edu'
             },
             'start': 2015,
