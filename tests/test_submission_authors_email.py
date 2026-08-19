@@ -82,6 +82,7 @@ class TestSubmissionAuthorsEmail():
         authors_field = submission_inv.edit['note']['content']['authors']
         assert authors_field['value']['param']['type'] == 'author{}'
         assert authors_field['value']['param']['properties']['username']['param']['regex'] == r'^~\S+$'
+        assert 'readers' in authors_field and authors_field['readers'] == ['eauth.cc/2026/Conference', 'eauth.cc/2026/Conference/Submission${{4/id}/number}/Authors']
 
     def test_email_author_rejected_by_default(self, openreview_client, test_client, helpers):
         '''Out of the box the unified schema only accepts profile IDs, so entering an
@@ -233,7 +234,15 @@ class TestSubmissionAuthorsEmail():
 
         # authorids are derived from each author's username, so emails flow through verbatim
         assert submissions[0].authorids == ['~SomeFirstName_User1', 'author_one@eauth.cc']
+        assert submissions[0].content['authors']['readers'] == [
+            'eauth.cc/2026/Conference',
+            f'eauth.cc/2026/Conference/Submission{submissions[0].number}/Authors'
+        ]
         assert submissions[1].authorids == ['~SomeFirstName_User1', '~AuthorTwo_EAUTH1', 'unregistered_author@eauth.cc']
+        assert submissions[1].content['authors']['readers'] == [
+            'eauth.cc/2026/Conference',
+            f'eauth.cc/2026/Conference/Submission{submissions[1].number}/Authors'
+        ]
 
         # the authors group is populated with the email-based authorids as members
         authors_group = openreview_client.get_group(f'eauth.cc/2026/Conference/Submission{submissions[0].number}/Authors')

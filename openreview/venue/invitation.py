@@ -151,6 +151,10 @@ class InvitationBuilder(object):
         if submission_stage.unified_authors:
             edit_authors_ref = '${2/note/content/authors/value/*/username}'
             note_authors_ref = '${2/content/authors/value/*/username}'
+            content['authors']['readers'] = [
+                venue_id,
+                self.venue.get_authors_id('${{4/id}/number}')
+            ]
         else:
             edit_authors_ref = '${2/note/content/authorids/value}'
             note_authors_ref = '${2/content/authorids/value}'
