@@ -917,14 +917,32 @@ def test_registration_stages(client, openreview_client, helpers):
     assert len(openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Reviewers/-/Registration')) == 1
     assert len(openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Registration')) == 1
 
-    # the registration invitations are not filtered out of the workflow timeline
+    # the registration invitations are stamped so the workflow timeline shows them
     domain = openreview_client.get_group('ICLR.cc/2026/Conference')
     for invitation_id in ['ICLR.cc/2026/Conference/Reviewers/-/Registration', 'ICLR.cc/2026/Conference/Area_Chairs/-/Registration']:
+        invitation = openreview_client.get_invitation(invitation_id)
+        assert invitation.get_content_value('workflow_stage_name') == 'recruitment'
+
+        # and they are not filtered out by the exclusion list
         for pattern in domain.content['exclusion_workflow_invitations']['value']:
             if pattern.startswith('/') and pattern.endswith('/'):
                 assert not re.search(pattern[1:-1], invitation_id), f'{invitation_id} is excluded from the timeline by {pattern}'
             else:
                 assert pattern != invitation_id
+
+    # the domain group defines the order of the workflow stages in the timeline
+    assert domain.content['workflow_stages']['value'] == [
+        'recruitment',
+        'submission',
+        'bidding',
+        'matching',
+        'reviewing',
+        'discussion',
+        'decision',
+        'post_decision',
+        'camera_ready',
+        'statistics',
+    ]
 
 def test_reviewers_conflicts(client, openreview_client, helpers):
 

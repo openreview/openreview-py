@@ -205,8 +205,20 @@ class TestReviewersOnly():
         assert venue_group.content['status_invitation_id']['value'] == f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status'
 
         # workflow invitations declare which timeline stage they belong to so the UI can
-        # group them; new stages can be added later through custom stages, so no catalog
-        # is stored on the group.
+        # group them; the venue group stores the order of the stages.
+        assert venue_group.content['workflow_stages']['value'] == [
+            'recruitment',
+            'submission',
+            'bidding',
+            'matching',
+            'reviewing',
+            'discussion',
+            'decision',
+            'post_decision',
+            'camera_ready',
+            'statistics',
+        ]
+
         expected_workflow_stage = {
             'ABCD.cc/2025/Conference/-/Submission': 'submission',
             'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding': 'bidding',
@@ -624,12 +636,29 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
             readers=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS, openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
             content=custom_stage_content,
-            workflow_stage_name='ethics_review'
+            workflow_stage_name='ethics_review',
+            workflow_stage_insert_after='reviewing'
         )
         venue.create_custom_stage()
 
         ethics_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Ethics_Review')
         assert ethics_invitation.content['workflow_stage_name']['value'] == 'ethics_review'
+
+        # the new stage is inserted into the timeline order right after 'reviewing'
+        domain = openreview_client.get_group('ABCD.cc/2025/Conference')
+        assert domain.content['workflow_stages']['value'] == [
+            'recruitment',
+            'submission',
+            'bidding',
+            'matching',
+            'reviewing',
+            'ethics_review',
+            'discussion',
+            'decision',
+            'post_decision',
+            'camera_ready',
+            'statistics',
+        ]
 
         # Custom stage that reuses an existing timeline stage ('reviewing')
         venue.custom_stage = openreview.stages.CustomStage(
@@ -647,6 +676,22 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 
         checklist_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Checklist')
         assert checklist_invitation.content['workflow_stage_name']['value'] == 'reviewing'
+
+        # reusing an existing stage does not change the timeline order
+        domain = openreview_client.get_group('ABCD.cc/2025/Conference')
+        assert domain.content['workflow_stages']['value'] == [
+            'recruitment',
+            'submission',
+            'bidding',
+            'matching',
+            'reviewing',
+            'ethics_review',
+            'discussion',
+            'decision',
+            'post_decision',
+            'camera_ready',
+            'statistics',
+        ]
 
     def test_deployment_with_same_venue_id(self, openreview_client, helpers):
 
@@ -2359,6 +2404,11 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
+
+        # the statistics invitations are grouped under the 'statistics' timeline stage
+        for statistics_invitation_name in ['Review_Count', 'Review_Assignment_Count', 'Review_Days_Late_Sum']:
+            statistics_invitation = pc_client.get_invitation(f'ABCD.cc/2025/Conference/Program_Committee/-/{statistics_invitation_name}')
+            assert statistics_invitation.get_content_value('workflow_stage_name') == 'statistics'
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept']
 

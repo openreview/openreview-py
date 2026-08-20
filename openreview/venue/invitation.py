@@ -18,11 +18,27 @@ LONG_BUFFER_DAYS = 10
 # Each visible workflow invitation declares which timeline stage it belongs to through the
 # `workflow_stage_name` content field. The UI groups all invitations that share the same
 # value and renders each group as a stage in the timeline (the stage name is pretty-printed
-# for display, the groups are ordered by the dates of their invitations). The default
-# stages used below are: recruitment, submission, matching, bidding, reviewing, discussion,
-# decision, post_decision and camera_ready. Venue organizers can add a new stage simply by
-# passing a new `workflow_stage_name` to `venue.create_custom_stage`.
-#
+# for display). The groups are sorted by the position of their stage name in the
+# `workflow_stages` array stored in the venue group content; stage names missing from the
+# array are placed at the end. Venue organizers can add a new stage by passing a new
+# `workflow_stage_name` to `venue.create_custom_stage`, optionally choosing its position
+# in the timeline with `workflow_stage_insert_after`.
+
+# Default timeline order of the workflow stages, seeded into the venue group content as
+# `workflow_stages` when the venue is deployed.
+DEFAULT_WORKFLOW_STAGE_ORDER = [
+    'recruitment',
+    'submission',
+    'bidding',
+    'matching',
+    'reviewing',
+    'discussion',
+    'decision',
+    'post_decision',
+    'camera_ready',
+    'statistics',
+]
+
 # Stage assignment for invitations whose name is fixed regardless of stage configuration.
 # Stage objects with configurable names (review, comment, decision, ...) are resolved
 # dynamically in `InvitationBuilder.get_workflow_stage_map`.
@@ -36,9 +52,14 @@ STATIC_WORKFLOW_STAGE_BY_NAME = {
     'Assignment': 'matching',
     'Submission_Group': 'matching',
     'Bid': 'bidding',
-    'Review_Count': 'post_decision',
-    'Review_Assignment_Count': 'post_decision',
-    'Review_Days_Late_Count': 'post_decision',
+    'Review_Count': 'statistics',
+    'Review_Assignment_Count': 'statistics',
+    'Review_Days_Late_Sum': 'statistics',
+    'Review_Days_Late_Count': 'statistics',
+    'Discussion_Reply_Count': 'statistics',
+    'Meta_Review_Count': 'statistics',
+    'Meta_Review_Assignment_Count': 'statistics',
+    'Meta_Review_Days_Late_Count': 'statistics',
 }
 
 class InvitationBuilder(object):
@@ -94,6 +115,8 @@ class InvitationBuilder(object):
 
         for bid_stage in (venue.bid_stages or []):
             stage_map[bid_stage.name] = 'bidding'
+        for registration_stage in (venue.registration_stages or []):
+            stage_map[registration_stage.name] = 'recruitment'
         if venue.review_stage:
             stage_map[venue.review_stage.name] = 'reviewing'
         if venue.comment_stage:
@@ -117,6 +140,34 @@ class InvitationBuilder(object):
             return None
         invitation_name = invitation_id.split('/-/')[-1]
         return self.get_workflow_stage_map().get(invitation_name)
+
+    def update_domain_workflow_stages(self, workflow_stage_name, insert_after=None):
+        '''Insert a stage name into the `workflow_stages` array of the venue group, which
+        defines the order in which the timeline UI renders the stage groups.
+
+        No-op if the venue group has no `workflow_stages` content or the stage is already
+        listed. The stage is placed right after `insert_after` when that stage is present,
+        appended at the end otherwise.'''
+        domain_group = self.client.get_group(self.venue_id)
+        workflow_stages = domain_group.get_content_value('workflow_stages')
+        if workflow_stages is None or workflow_stage_name in workflow_stages:
+            return
+
+        if insert_after in workflow_stages:
+            workflow_stages.insert(workflow_stages.index(insert_after) + 1, workflow_stage_name)
+        else:
+            workflow_stages.append(workflow_stage_name)
+
+        self.client.post_group_edit(
+            invitation=self.venue.get_meta_invitation_id(),
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id],
+            group=openreview.api.Group(
+                id=self.venue_id,
+                content={ 'workflow_stages': { 'value': workflow_stages } }
+            )
+        )
 
     def save_invitation(self, invitation, replacement=None):
         # Stamp the workflow stage so the timeline UI can group invitations by stage.
@@ -3377,6 +3428,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.description = f'Configure the contents of the {invitation_name} form and set the date/time when the form is available to the participants, when replies are due, and when the form is no longer available.'
 
         self.save_invitation(invitation, replacement=False)
+
+        if custom_stage.workflow_stage_name:
+            self.update_domain_workflow_stages(custom_stage.workflow_stage_name, insert_after=custom_stage.workflow_stage_insert_after)
 
         if self.venue.is_template_related_workflow():
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)

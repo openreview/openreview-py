@@ -2054,6 +2054,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step runs automatically at its "activation date", and computes the review counts for all reviewers.',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': 'statistics'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': '''def process(client, invitation):
@@ -2172,6 +2177,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step runs automatically at its "activation date", and computes the review assignment counts for all reviewers.',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': 'statistics'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': '''def process(client, invitation):
@@ -2291,6 +2301,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step runs automatically at its "activation date", and computes the total number of days a reviewer was late submitting their reviews.',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': 'statistics'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': '''def process(client, invitation):

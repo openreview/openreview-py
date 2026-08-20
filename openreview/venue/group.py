@@ -1,6 +1,7 @@
 from .. import openreview
 from openreview.api import Group
 from openreview import tools
+from .invitation import DEFAULT_WORKFLOW_STAGE_ORDER
 
 import os
 import json
@@ -351,7 +352,13 @@ class GroupBuilder(object):
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
 
         if self.venue.is_template_related_workflow():
-            submission_name = self.venue.submission_stage.name
+            # Order of the workflow stages in the timeline UI. Invitations stamped with a
+            # `workflow_stage_name` are grouped by that value and the groups are sorted by
+            # its position in this array; stage names missing from the array are placed at
+            # the end. Custom stages insert their name into the array when created.
+            content['workflow_stages'] = { 'value': list(DEFAULT_WORKFLOW_STAGE_ORDER) }
+            # Invitations the timeline UI must not show even though they live under the
+            # venue or role group prefixes it loads from.
             content['exclusion_workflow_invitations']  = {
                 'value': [
                     f'{venue_id}/-/Edit',
