@@ -3179,18 +3179,18 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
         assert previous_cdate < openreview.tools.datetime_millis(datetime.datetime.now())
 
         # move 'Reject' into the accept bucket without changing the decision_options list itself:
-        # this is a rebucket, not an addition or removal
+        # this is a rebucket, not an addition or removal (also move 'Poster' to reject bucket)
         edit = pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Decision/Decision_Options',
             content={
                 'decision_options': { 'value': ['Accept', 'Poster', 'Revision Needed', 'Reject'] },
-                'accept_decision_options': { 'value': ['Accept', 'Poster', 'Reject'] }
+                'accept_decision_options': { 'value': ['Accept', 'Reject'] }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         venue_group = openreview_client.get_group('ABCD.cc/2025/Conference')
-        assert venue_group.content['accept_decision_options']['value'] == ['Accept', 'Poster', 'Reject']
+        assert venue_group.content['accept_decision_options']['value'] == ['Accept', 'Reject']
 
         # the same invitation is updated in place: its target venue reflects the new bucket,
         # activation date is reset
@@ -3201,6 +3201,58 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
           "ABCD.cc/2025/Conference",
           "ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors"
         ]
+
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification')
+        assert invitation
+        assert 'subject' in invitation.content
+        assert 'message' in invitation.content and invitation.content['message']['value'] == '''Hi {{{{fullname}}}},
+
+We are delighted to inform you that your submission has been accepted. Congratulations!
+
+{formatted_decision}
+To view this paper, please go to https://openreview.net/forum?id={submission_forum}
+
+Best,
+ABCD 2025 Program Chairs'''
+
+        poster_invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Change_After_Decision')
+        assert poster_invitation and poster_invitation.content
+        assert 'reveal_author_identities' not in poster_invitation.content
+        assert 'authors' in poster_invitation.edit['note']['content']
+        assert poster_invitation.edit['note']['content']['authors']['readers'] == [
+            "ABCD.cc/2025/Conference",
+            "ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors"
+        ]
+        assert poster_invitation.edit['note']['content']['pdf']['readers'] == [
+            "ABCD.cc/2025/Conference",
+            "ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors"
+        ]
+        assert 'authorids' not in poster_invitation.edit['note']['content']
+        assert poster_invitation.content['decision_option']['value'] == 'Poster'
+        assert poster_invitation.content['source']['value'] == {
+            'venueid': ['ABCD.cc/2025/Conference/Submission', 'ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Rejected_Submission'],
+            'decision_options': ['Poster']
+        }
+        assert poster_invitation.edit['note']['content']['venueid']['value']['param']['const'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Change_After_Decision/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Change_After_Decision/Readers')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Change_After_Decision/Form_Fields')
+        assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Poster_Submission_Change_After_Decision/Which_Submissions') is None
+        assert 'pdate' not in poster_invitation.edit['note']
+        assert 'abstract' not in poster_invitation.edit['note']['content']
+
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification')
+        assert invitation
+        assert 'subject' in invitation.content
+        assert 'message' in invitation.content and invitation.content['message']['value'] == '''Hi {{{{fullname}}}},
+
+We regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.
+
+{formatted_decision}
+To view this paper, please go to https://openreview.net/forum?id={submission_forum}
+
+Best,
+ABCD 2025 Program Chairs'''
 
         # decision options that weren't rebucketed are untouched
         accept_invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Accept_Submission_Change_After_Decision')

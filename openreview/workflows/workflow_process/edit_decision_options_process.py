@@ -80,15 +80,15 @@ def process(client, edit, invitation):
             print(f'Deleting Submission Release invitation: {inv.id}')
             client.delete_invitation(inv.id)
 
-    # post new decision notification invitations for the added decision options
     request_form_inv = domain.get_content_value('request_form_invitation')
     invitation_prefix =request_form_inv.split('Support')[0] + 'Template'
     from_email = domain.content['message_sender']['value']['fromEmail']
 
-    for decision_option in added_decision_options:
+    for decision_option in added_decision_options | rebucketed_decision_options:
+
         formatted_decision_option = openreview.tools.decision_option_to_id(decision_option)
 
-        # post new decision notification invitations
+        # post new decision notification invitations for added and rebucketed decision options
         client.post_invitation_edit(
             invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
             signatures=[venue_id],
@@ -102,7 +102,6 @@ def process(client, edit, invitation):
             }
         )
 
-    for decision_option in added_decision_options | rebucketed_decision_options:
         is_accepted_option = openreview.tools.is_accept_decision(decision_option, accept_decision_options)
         additional_readers = []
         if area_chairs_name:
