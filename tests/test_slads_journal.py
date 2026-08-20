@@ -113,6 +113,37 @@ class TestSLADSJournal():
 
         helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
+        ## a comment with the journal links is posted to the request form after deployment
+        request_note = openreview_client.get_note(request_form['note']['id'])
+        comment_invitation_id = f'openreview.net/Support/Journal_Request{request_note.number}/-/Comment'
+
+        helpers.await_queue_edit(openreview_client, invitation=comment_invitation_id)
+
+        comments = openreview_client.get_notes(invitation=comment_invitation_id, forum=request_note.id)
+        assert len(comments) == 1
+        assert comments[0].replyto == request_note.id
+        assert comments[0].signatures == ['openreview.net/Support']
+        assert comments[0].readers == ['SLADS', 'openreview.net/Support']
+        assert comments[0].content['title']['value'] == 'Your journal is available in OpenReview'
+        comment_text = comments[0].content['comment']['value']
+        assert 'Thank you for choosing OpenReview to host your journal.' in comment_text
+        assert f'We have set up the journal based on the information that you provided here: http://localhost:3030/forum?id={request_note.id}' in comment_text
+        assert '- **Journal home page:** http://localhost:3030/group?id=SLADS\n' in comment_text
+        assert '- **Journal Editors-in-Chief Console:** http://localhost:3030/group?id=SLADS/Editors_In_Chief\n' in comment_text
+        assert f'- **Journal Request Form:** http://localhost:3030/forum?id={request_note.id}\n' in comment_text
+        assert comment_text.endswith('The OpenReview Team')
+
+        ## the EICs get an email about the comment, support does not
+        comment_subject = 'Comment posted to your journal request: Statistical Learning and Data Science'
+
+        for eic_email in ['ruiyan@mail.com', 'ce@mailseven.com']:
+            messages = openreview_client.get_messages(to=eic_email, subject=comment_subject)
+            assert len(messages) == 1
+            assert 'Comment title: Your journal is available in OpenReview' in messages[0]['content']['text']
+            assert f'To view the comment, click here: https://openreview.net/forum?id={request_note.id}&noteId={comments[0].id}' in messages[0]['content']['text']
+
+        messages = openreview_client.get_messages(to='support@openreview.net', subject=comment_subject)
+        assert len(messages) == 0
 
         ## Action Editors
         helpers.create_user('andrew@sladszero.com', 'Jiashun', 'Jin')
