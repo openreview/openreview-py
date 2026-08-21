@@ -4,6 +4,28 @@ import re
 import time
 
 
+## The 13-to-17 mail is the same whichever path rejected the profile and does not name it. It carries
+## two generated credentials -- the consent upload JWT and a fresh activation token -- so the wording
+## is pinned exactly and only those two are matched by shape.
+PARENTAL_CONSENT_MESSAGE = re.compile(
+    r'OpenReview welcomes younger researchers, aged 13 and above, to participate in scholarly peer review\.\n'
+    r'\n'
+    r'If you are at least 13 and under 18 years of age, you must submit a consent form to activate your '
+    r'profile\. More information can be found here: '
+    r'https://docs\.openreview\.net/getting-started/creating-an-openreview-profile/information-for-high-school-students\n'
+    r'\n'
+    r'Please upload the completed consent form using the following link:\n'
+    r'\n'
+    r'http://localhost:3030/profile-documents/parental-consent/[\w-]+\.[\w-]+\.[\w-]+\n'
+    r'\n'
+    r'Once you have uploaded the consent form, use the link below to resubmit your profile for review:\n'
+    r'\n'
+    r'http://localhost:3030/profile/activate\?token=[0-9a-f]+\n'
+    r'\n'
+    r'This link expires in \d+ days\.'
+)
+
+
 class TestProfileDob():
 
     @pytest.fixture(scope="class")
@@ -68,7 +90,7 @@ class TestProfileDob():
 
         assert openreview_client.get_profile('~Dobthirteen_User1')
 
-    def test_minor_with_institutional_email_is_not_activated(self, openreview_client, support_client, helpers):
+    def test_minor_with_institutional_email_is_rejected(self, openreview_client, support_client, helpers):
 
         ## An institutional email activates a profile automatically even with moderation on. A minor
         ## must lose that exemption, so moderation has to be on for the rule to be observable.
@@ -117,18 +139,17 @@ class TestProfileDob():
 
             ## Same institutional domain as the adult above, so the only difference is the age
             assert profile.state not in ['Active', 'Active Institutional', 'Active Automatic']
-            assert profile.state == 'Needs Moderation'
+            assert profile.state == 'Rejected'
 
-            ## The date of birth is kept: it is what the moderation is based on
+            ## The date of birth is kept: it is what the rejection is based on
             assert profile.content['dob'] == dob
 
-            ## Signing up as a minor is queued for a human moderator rather than rejected outright,
-            ## so no parental consent mail is sent here. Rejection is reserved for a dob written onto
-            ## an existing profile, which test_minor_dob_on_existing_profile_is_rejected covers.
+            ## Signing up as a minor is rejected outright rather than queued for a moderator, and is
+            ## given the same parental consent route as a dob written onto an existing profile.
             messages = openreview_client.get_messages(to='dobteen@umass.edu')
-            subjects = [m['content']['subject'] for m in messages]
-            assert 'OpenReview profile activation pending' in subjects
-            assert not [s for s in subjects if 'parental consent' in s]
+            consent = [m for m in messages if m['content']['subject'] == 'OpenReview profile requires parental consent']
+            assert consent, 'no parental consent message was sent'
+            assert PARENTAL_CONSENT_MESSAGE.fullmatch(consent[0]['content']['text']), consent[0]['content']['text']
 
         finally:
             self.set_moderation(openreview_client, support_client, 'No')
@@ -155,19 +176,9 @@ class TestProfileDob():
         consent = [m for m in messages if m['content']['subject'] == 'OpenReview profile requires parental consent']
         assert consent, 'no parental consent message was sent'
 
-        ## A 13-to-17 gets a different message from an under-13: the reason names being under 18 and
-        ## a parental consent upload link is offered. The token in that link is generated per mail,
-        ## so it is matched as a JWT shape rather than a fixed value.
-        assert re.fullmatch(
-            r'Your OpenReview profile ~Dobreject_User1 has been rejected because the date of birth on it '
-            r'shows you are under 18 years old\.\n'
-            r'\n'
-            r'To continue, a parent or guardian must provide their consent\. Please upload the signed '
-            r'consent form using the link below:\n'
-            r'\n'
-            r'http://localhost:3030/profile-documents/parental-consent/[\w-]+\.[\w-]+\.[\w-]+',
-            consent[0]['content']['text']
-        ), consent[0]['content']['text']
+        ## A 13-to-17 gets a different message from an under-13: a consent form is offered as a way
+        ## back, where an under-13 has none.
+        assert PARENTAL_CONSENT_MESSAGE.fullmatch(consent[0]['content']['text']), consent[0]['content']['text']
 
     def test_owner_can_not_change_dob_but_super_user_can(self, openreview_client, helpers):
 
@@ -228,7 +239,7 @@ class TestProfileDob():
         ## the mail states the reason and offers no parental consent upload link.
         assert rejection[0]['content']['text'] == '''Your OpenReview profile ~Dobchildedit_User1 has been rejected because OpenReview accounts are not available to anyone under 13 years old.
 
-If you believe this is a mistake, please contact us at info@openreview.net.'''
+If you believe this is a mistake, please contact us using the Feedback Form. Otherwise, your profile will be deleted.'''
 
     def test_profile_without_dob_can_not_be_edited_without_supplying_one(self, openreview_client, helpers):
 
