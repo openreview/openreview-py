@@ -1507,6 +1507,22 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
+                    },
+                    'message': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100000,
+                                'input': 'textarea'
+                            }
+                        }
+                    },
+                    'source': {
+                        'value': {
+                            'param': {
+                                'type': 'json'
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1529,6 +1545,12 @@ If you would like to change your decision, please follow the link in the previou
                         },
                         'decision_option': {
                             'value': '${4/content/decision/value}'
+                        },
+                        'message': {
+                            'value': '${4/content/message/value}'
+                        },
+                        'source': {
+                            'value': '${4/content/source/value}'
                         }
                     },
                     'message': {

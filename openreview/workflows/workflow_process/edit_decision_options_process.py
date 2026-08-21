@@ -83,10 +83,16 @@ def process(client, edit, invitation):
     request_form_inv = domain.get_content_value('request_form_invitation')
     invitation_prefix =request_form_inv.split('Support')[0] + 'Template'
     from_email = domain.content['message_sender']['value']['fromEmail']
+    submission_venue_id = domain.get_content_value('submission_venue_id')
+
+    decision_notification_template = client.get_invitation(f'{invitation_prefix}/-/Author_Decision_Notification')
+    notification_venue_ids = [submission_venue_id, venue_id, rejected_venue_id]
 
     for decision_option in added_decision_options | rebucketed_decision_options:
 
         formatted_decision_option = openreview.tools.decision_option_to_id(decision_option)
+        is_accepted_option = openreview.tools.is_accept_decision(decision_option, accept_decision_options)
+        message_field = 'accept_message' if is_accepted_option else 'reject_message'
 
         # post new decision notification invitations for added and rebucketed decision options
         client.post_invitation_edit(
@@ -98,11 +104,12 @@ def process(client, edit, invitation):
                 'activation_date': { 'value': openreview.tools.datetime_millis(cdate) },
                 'short_name': { 'value': short_name },
                 'from_email': { 'value': from_email },
-                'decision': { 'value': decision_option }
+                'decision': { 'value': decision_option },
+                'message': { 'value': decision_notification_template.content[message_field]['value'].replace('{short_name}', short_name) },
+                'source': { 'value': { 'venueid': notification_venue_ids, 'decision_options': [decision_option] } }
             }
         )
 
-        is_accepted_option = openreview.tools.is_accept_decision(decision_option, accept_decision_options)
         additional_readers = []
         if area_chairs_name:
             if senior_area_chairs_name:

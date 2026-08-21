@@ -235,6 +235,9 @@ def process(client, edit, invitation):
         await_process=True
     )
 
+    decision_notification_template = client.get_invitation(f'{invitation_prefix}/-/Author_Decision_Notification')
+    notification_venue_ids = [venue.get_submission_venue_id(), venue_id, venue.get_rejected_submission_venue_id()]
+
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
         signatures=[invitation_prefix],
@@ -244,7 +247,9 @@ def process(client, edit, invitation):
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': short_name },
             'from_email': { 'value': from_email },
-            'decision': { 'value': 'Accept' }
+            'decision': { 'value': 'Accept' },
+            'message': { 'value': decision_notification_template.content['accept_message']['value'].replace('{short_name}', short_name) },
+            'source': { 'value': { 'venueid': notification_venue_ids, 'decision_options': ['Accept'] } }
         }
     )
 
@@ -257,7 +262,9 @@ def process(client, edit, invitation):
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': short_name },
             'from_email': { 'value': from_email },
-            'decision': { 'value': 'Reject' }
+            'decision': { 'value': 'Reject' },
+            'message': { 'value': decision_notification_template.content['reject_message']['value'].replace('{short_name}', short_name) },
+            'source': { 'value': { 'venueid': notification_venue_ids, 'decision_options': ['Reject'] } }
         }
     )
 
