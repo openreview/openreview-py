@@ -86,7 +86,7 @@ def process(client, edit, invitation):
     submission_venue_id = domain.get_content_value('submission_venue_id')
 
     decision_notification_template = client.get_invitation(f'{invitation_prefix}/-/Author_Decision_Notification')
-    notification_venue_ids = [submission_venue_id, venue_id, rejected_venue_id]
+    source_venue_ids = [submission_venue_id, venue_id, rejected_venue_id]
 
     for decision_option in added_decision_options | rebucketed_decision_options:
 
@@ -106,7 +106,7 @@ def process(client, edit, invitation):
                 'from_email': { 'value': from_email },
                 'decision': { 'value': decision_option },
                 'message': { 'value': decision_notification_template.content[message_field]['value'].replace('{short_name}', short_name) },
-                'source': { 'value': { 'venueid': notification_venue_ids, 'decision_options': [decision_option] } }
+                'source': { 'value': { 'venueid': source_venue_ids, 'decision_options': [decision_option] } }
             }
         )
 
@@ -131,7 +131,8 @@ def process(client, edit, invitation):
                     'decision_option': { 'value': decision_option },
                     'decision_option_id': { 'value': openreview.tools.decision_option_to_id(decision_option) },
                     'decision_venue_id': { 'value': venue_id },
-                    'decision_venue': { 'value': openreview.tools.decision_to_venue(short_name, decision_option, accept_decision_options)}
+                    'decision_venue': { 'value': openreview.tools.decision_to_venue(short_name, decision_option, accept_decision_options)},
+                    'source': { 'value': { 'venueid': source_venue_ids, 'decision_options': [decision_option] } }
                 }
             )
         else:
@@ -148,6 +149,7 @@ def process(client, edit, invitation):
                     'decision_option': { 'value': decision_option },
                     'decision_option_id': { 'value': openreview.tools.decision_option_to_id(decision_option) },
                     'decision_venue_id': { 'value': rejected_venue_id },
-                    'decision_venue': { 'value': openreview.tools.decision_to_venue(short_name, decision_option, accept_decision_options) }
+                    'decision_venue': { 'value': openreview.tools.decision_to_venue(short_name, decision_option, accept_decision_options) },
+                    'source': { 'value': { 'venueid': source_venue_ids, 'decision_options': [decision_option] } }
                 }
             )

@@ -1805,7 +1805,13 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-
+                    'source': {
+                        'value': {
+                            'param': {
+                                'type': 'json'
+                            }
+                        }
+                    }
                 },
                 'domain': '${1/content/venue_id/value}',
                 'replacement': True,
@@ -1824,6 +1830,9 @@ If you would like to change your decision, please follow the link in the previou
                     'content': {
                         'decision_option': {
                             'value': '${4/content/decision_option/value}'
+                        },
+                        'source': {
+                            'value': '${4/content/source/value}'
                         }
                     },
                     'edit': {
@@ -2035,6 +2044,13 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
+                    },
+                    'source': {
+                        'value': {
+                            'param': {
+                                'type': 'json'
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -2054,6 +2070,9 @@ If you would like to change your decision, please follow the link in the previou
                     'content': {
                         'decision_option': {
                             'value': '${4/content/decision_option/value}'
+                        },
+                        'source': {
+                            'value': '${4/content/source/value}'
                         }
                     },
                     'edit': {
