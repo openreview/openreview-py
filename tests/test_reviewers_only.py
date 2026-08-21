@@ -3189,6 +3189,8 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Author_Decision_Notification', count=8)
+
         venue_group = openreview_client.get_group('ABCD.cc/2025/Conference')
         assert venue_group.content['accept_decision_options']['value'] == ['Accept', 'Reject']
 
