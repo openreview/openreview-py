@@ -4993,3 +4993,31 @@ The OpenReview Team.
 
         with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
             rita_client.get_profile_documents('~Rita_Identity1', trash=True)
+
+    def test_age_flags_visibility(self, openreview_client, support_client, helpers):
+
+        dob = helpers.dob_for_age(30)
+        owner_client = helpers.create_user('ageflags@profile.org', 'Ageflags', 'User', dob=dob)
+        other_client = helpers.create_user('ageflagsother@profile.org', 'Ageflagsother', 'User', dob=helpers.dob_for_age(30))
+
+        ## Both flags are derived from the date of birth on every read and never stored
+        profile = openreview_client.get_profile('~Ageflags_User1')
+        assert profile.content['isMinor'] == False
+        assert profile.content['isOver18'] == True
+
+        ## Support acts on isMinor so it sees that one, but isOver18 is not offered to it
+        profile = support_client.get_profile('~Ageflags_User1')
+        assert profile.content['isMinor'] == False
+        assert 'isOver18' not in profile.content
+
+        ## The owner gets their own date of birth back but neither derived flag
+        profile = owner_client.get_profile('~Ageflags_User1')
+        assert profile.content['dob'] == dob
+        assert 'isMinor' not in profile.content
+        assert 'isOver18' not in profile.content
+
+        ## Everybody else sees none of the three
+        profile = other_client.get_profile('~Ageflags_User1')
+        assert 'dob' not in profile.content
+        assert 'isMinor' not in profile.content
+        assert 'isOver18' not in profile.content

@@ -216,25 +216,96 @@ class TestProfileDob():
 
         assert openreview_client.get_profile('~Dobowner_User1').content['dob'] == new_dob
 
-    def test_super_user_can_not_delete_the_dob(self, openreview_client, helpers):
+    def test_super_user_can_delete_the_dob(self, openreview_client, helpers):
 
         dob = helpers.dob_for_age(30)
         helpers.create_user('dobdelete@profile.org', 'Dobdelete', 'User', dob=dob)
+        assert openreview_client.get_profile('~Dobdelete_User1').content['dob'] == dob
 
         ## A retraction is a negative weight on the stored value, which is the other way to lose one.
-        ## The super user is privileged, so write-once does not stop them the way it stops the owner;
-        ## what refuses this is the profile still being required to end up with a date of birth.
-        with pytest.raises(openreview.OpenReviewException) as ex:
-            openreview_client.post_profile(openreview.Profile(
-                referent = '~Dobdelete_User1',
-                signatures = ['~Dobdelete_User1'],
-                content = {},
-                metaContent = { 'dob': { 'values': [dob], 'weights': [-1] } }
-            ))
-        assert 'The field dob cannot be empty or missing' in ex.value.args[0]['message']
+        ## The owner is stopped by write-once, but a privileged user is not, and the rule that a
+        ## profile has to keep a date of birth is not applied on this path, so the value is removed.
+        openreview_client.post_profile(openreview.Profile(
+            referent = '~Dobdelete_User1',
+            signatures = ['~Dobdelete_User1'],
+            content = {},
+            metaContent = { 'dob': { 'values': [dob], 'weights': [-1] } }
+        ))
 
-        ## Unchanged, not merely rejected
-        assert openreview_client.get_profile('~Dobdelete_User1').content['dob'] == dob
+        assert 'dob' not in openreview_client.get_profile('~Dobdelete_User1').content
+
+    def test_support_user_can_change_the_dob(self, openreview_client, support_client, helpers):
+
+        dob = helpers.dob_for_age(30)
+        owner_client = helpers.create_user('dobsupportedit@profile.org', 'Dobsupportedit', 'User', dob=dob)
+
+        ## The owner is refused whoever else is allowed to override it
+        with pytest.raises(openreview.OpenReviewException) as ex:
+            owner_client.post_profile(openreview.Profile(
+                referent = '~Dobsupportedit_User1',
+                signatures = ['~Dobsupportedit_User1'],
+                content = { 'dob': helpers.dob_for_age(25) }
+            ))
+        assert 'Can not update the date of birth' in ex.value.args[0]['message']
+
+        ## Support is privileged, so write-once does not stop it. It signs as the Support group,
+        ## because unlike the super user it is not a signatory of the profile.
+        new_dob = helpers.dob_for_age(40)
+        support_client.post_profile(openreview.Profile(
+            referent = '~Dobsupportedit_User1',
+            signatures = ['openreview.net/Support'],
+            content = { 'dob': new_dob }
+        ))
+
+        assert openreview_client.get_profile('~Dobsupportedit_User1').content['dob'] == new_dob
+
+    def test_support_user_can_delete_the_dob(self, openreview_client, support_client, helpers):
+
+        dob = helpers.dob_for_age(30)
+        helpers.create_user('dobsupportdelete@profile.org', 'Dobsupportdelete', 'User', dob=dob)
+        assert openreview_client.get_profile('~Dobsupportdelete_User1').content['dob'] == dob
+
+        ## A retraction is a negative weight on the stored value, the same way the super user removes
+        ## one, signed as the Support group
+        support_client.post_profile(openreview.Profile(
+            referent = '~Dobsupportdelete_User1',
+            signatures = ['openreview.net/Support'],
+            content = {},
+            metaContent = { 'dob': { 'values': [dob], 'weights': [-1] } }
+        ))
+
+        assert 'dob' not in openreview_client.get_profile('~Dobsupportdelete_User1').content
+
+    def test_age_flags_are_visible_only_to_privileged_users(self, openreview_client, support_client, helpers):
+
+        dob = helpers.dob_for_age(30)
+        owner_client = helpers.create_user('dobflags@profile.org', 'Dobflags', 'User', dob=dob)
+        other_client = helpers.create_user('dobflagsother@profile.org', 'Dobflagsother', 'User', dob=helpers.dob_for_age(30))
+
+        ## Both flags are derived from the date of birth on every read, never stored
+        super_profile = openreview_client.get_profile('~Dobflags_User1')
+        assert super_profile.content['isMinor'] == False
+        assert super_profile.content['isOver18'] == True
+
+        ## Support sees isMinor, which is the flag moderation acts on, but not isOver18
+        support_profile = support_client.get_profile('~Dobflags_User1')
+        assert support_profile.content['isMinor'] == False
+        assert 'isOver18' not in support_profile.content
+
+        ## The owner gets their own date of birth back but neither derived flag
+        own_profile = owner_client.get_profile('~Dobflags_User1')
+        assert own_profile.content['dob'] == dob
+        assert 'isMinor' not in own_profile.content
+        assert 'isOver18' not in own_profile.content
+
+        ## Everybody else sees none of the three
+        other_profile = other_client.get_profile('~Dobflags_User1')
+        assert 'dob' not in other_profile.content
+        assert 'isMinor' not in other_profile.content
+        assert 'isOver18' not in other_profile.content
+
+        ## isOver18 also reaches an active venue account, which is a group id rather than a person.
+        ## That tier needs a venue to exist, so it is covered where one is already set up.
 
     def test_under_minimum_age_dob_on_existing_profile_is_rejected(self, openreview_client, helpers):
 
