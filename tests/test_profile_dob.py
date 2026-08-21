@@ -216,6 +216,26 @@ class TestProfileDob():
 
         assert openreview_client.get_profile('~Dobowner_User1').content['dob'] == new_dob
 
+    def test_super_user_can_not_delete_the_dob(self, openreview_client, helpers):
+
+        dob = helpers.dob_for_age(30)
+        helpers.create_user('dobdelete@profile.org', 'Dobdelete', 'User', dob=dob)
+
+        ## A retraction is a negative weight on the stored value, which is the other way to lose one.
+        ## The super user is privileged, so write-once does not stop them the way it stops the owner;
+        ## what refuses this is the profile still being required to end up with a date of birth.
+        with pytest.raises(openreview.OpenReviewException) as ex:
+            openreview_client.post_profile(openreview.Profile(
+                referent = '~Dobdelete_User1',
+                signatures = ['~Dobdelete_User1'],
+                content = {},
+                metaContent = { 'dob': { 'values': [dob], 'weights': [-1] } }
+            ))
+        assert 'The field dob cannot be empty or missing' in ex.value.args[0]['message']
+
+        ## Unchanged, not merely rejected
+        assert openreview_client.get_profile('~Dobdelete_User1').content['dob'] == dob
+
     def test_under_minimum_age_dob_on_existing_profile_is_rejected(self, openreview_client, helpers):
 
         helpers.create_user('dobchildedit@profile.org', 'Dobchildedit', 'User', dob=helpers.dob_for_age(30))
