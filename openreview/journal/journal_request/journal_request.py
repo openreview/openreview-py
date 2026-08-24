@@ -432,7 +432,7 @@ class JournalRequest():
                 process = content
             )
 
-            self.post_invitation_edit(invitation = invitation)
+            return self.post_invitation_edit(invitation = invitation)
 
     def setup_recruitment_invitations(self, note_id, ae_template=None, reviewer_template=None):
 
