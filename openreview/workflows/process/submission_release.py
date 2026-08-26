@@ -5,9 +5,46 @@ def process(client, invitation):
     venue_id = domain.id
     title = domain.content['title']['value']
     short_name = domain.content['subtitle']['value']
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
+    support_user = invitation.invitations[0].split('Template')[0] + 'Support'
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
+
+    # # update invitation to include readers for all submissions
+    venue = openreview.helpers.get_venue(client, venue_id, support_user)
+    submission_fields = venue.compute_submission_fields()
+    print(f'checking invitation {invitation.id} for readers for all submission fields')
+    print(f'submission fields: {submission_fields}')
+    release_invitation = client.get_invitation(invitation.id)
+    invitation_content = release_invitation.edit['note']['content']
+    new_invitation_content = {}
+    for field in submission_fields:
+        print(f'checking field {field} for readers')
+        if not invitation_content.get(field, {}).get('readers'):
+            print(f'adding readers for field {field}')
+            new_invitation_content[field] = {
+                'readers': [
+                    venue_id,
+                    venue.get_authors_id('$' + '{{4/id}/number}')
+                ]
+            }
+
+    if new_invitation_content:
+        print(f'updating invitation {release_invitation.id} to include readers for all submission fields')
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=release_invitation.id,
+                edit={
+                    'note': {
+                        'content': new_invitation_content
+                    }
+                }
+            )
+        )
+        return
 
     if cdate > now:
         ## invitation is in the future, do not process
@@ -21,7 +58,6 @@ def process(client, invitation):
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
     accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
-    meta_invitation_id = domain.content['meta_invitation_id']['value']
     decision_option = invitation.get_content_value('decision_option')
     release_accepted = openreview.tools.is_accept_decision(decision_option, accept_options)
 

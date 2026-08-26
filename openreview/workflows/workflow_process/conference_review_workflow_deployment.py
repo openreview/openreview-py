@@ -275,6 +275,8 @@ def process(client, edit, invitation):
     )
     venue.create_submission_revision_stage()
 
+    print('Posting Accept and Reject Submission Release invitations...')
+
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Accept_Submission_Release',
         signatures=[invitation_prefix],
