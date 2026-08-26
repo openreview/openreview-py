@@ -282,6 +282,7 @@ class TestReviewersOnly():
         assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(now)
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
         assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
+        assert all('readers' in submission_inv.edit['note']['content'][field] for field in ['authors', 'pdf', 'keywords', 'TLDR'])
         submission_deadline_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Dates')
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
@@ -478,7 +479,11 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
                                     ],
                                     'input': 'select'
                                 }
-                            }
+                            },
+                            'readers': [
+                                'ABCD.cc/2025/Conference',
+                                'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
                         },
                         'keywords': {
                             'delete': True
@@ -498,6 +503,7 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
 
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
         assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']
+        assert 'readers' in submission_inv.edit['note']['content']['subject_area']
         assert 'keywords' not in submission_inv.edit['note']['content']
         content_keys = submission_inv.edit['note']['content'].keys()
         assert all(field in content_keys for field in ['title', 'authors', 'TLDR', 'abstract', 'pdf'])
@@ -534,7 +540,7 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
         content_keys = invitation_content.keys()
         assert all(field in content_keys for field in ['title', 'authors', 'TLDR', 'abstract', 'pdf'])
         assert 'authorids' not in content_keys
-        assert 'readers' not in invitation_content['authors']
+        assert 'readers' in invitation_content['authors']
 
         notifications_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Notifications')
         assert notifications_inv
@@ -989,6 +995,12 @@ For more details, please check the following links:
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[-1].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', '~Andrea_Umass1']
+        assert all('readers' in submissions[-1].content[field] for field in ['pdf', 'authors', 'subject_area', 'TLDR', 'email_sharing', 'data_release'])
+        assert not any('readers' in submissions[-1].content[field] for field in ['title', 'abstract', 'venue', 'venueid'])
+        assert submissions[-1].content['authors']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission10/Authors',
+        ]
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -2873,6 +2885,10 @@ booktitle={The ABCD Conference},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[0].id+'''}
 }'''
+        assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['subject_area']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['email_sharing']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
 
         # poster and rejected submissions haven't been updated
         assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
@@ -2927,6 +2943,10 @@ author={SomeFirstName User and Andrea Cs},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[2].id+'''}
 }'''
+        assert submissions[2].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
+        assert submissions[2].content['subject_area']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
+        assert submissions[2].content['email_sharing']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
+        assert submissions[2].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
 
         # re-run to hide rejected submissions and hide author names: once the activation date
         # has passed, every invitation edit re-runs the release with the updated schema
@@ -2990,6 +3010,10 @@ author={Anonymous},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''+submissions[2].id+'''}
 }'''
+        assert submissions[2].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
+        assert submissions[2].content['subject_area']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
+        assert submissions[2].content['email_sharing']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
+        assert submissions[2].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
 
         # submission #10 is ignored by Submission Release because it has no decision
         assert submissions[-1].readers == [
@@ -3047,6 +3071,9 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert 'readers' not in submissions[0].content['pdf']
+        assert submissions[0].content['subject_area']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['email_sharing']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
 
         # Release the author identities of rejected submissions by deleting the authors
         # readers through the content schema. The note readers are unchanged: the fields become
@@ -3080,6 +3107,10 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
             'ABCD.cc/2025/Conference/Submission3/Authors'
         ]
         assert 'readers' not in submissions[2].content['authors']
+        assert submissions[2].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
+        assert submissions[2].content['subject_area']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
+        assert submissions[2].content['email_sharing']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
+        assert submissions[2].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission3/Authors']
 
         # poster and revision needed submissions haven't been updated
         assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
