@@ -369,6 +369,12 @@ class SubmissionStage(object):
                             }
                         }
                     }
+                    for field in content.keys():
+                        if field not in ['title', 'abstract', 'venue', 'venueid']:
+                            content[field]['readers'] = [
+                                conference.get_id(),
+                                conference.get_authors_id('${{4/id}/number}')
+                            ]
 
                 if venue_id:
                     content['venue'] = {
