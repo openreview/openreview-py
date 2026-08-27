@@ -7059,13 +7059,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             },
-            'duedate': {
-                'value': {
-                    'param': {
-                        'type': 'integer'
-                    }
-                }
-            },
             'cdate': {
                 'value': {
                     'param': {

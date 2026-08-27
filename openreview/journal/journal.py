@@ -1287,8 +1287,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
         invitation = self.invitation_builder.set_note_release_review_invitation(submission)
 
         if self.should_enable_ai_review():
-            print('Release LLM review...')
-            self.invitation_builder.set_note_release_ai_review_invitation(submission)
+            ai_reviews = self.client.get_notes(invitation=self.get_ai_review_id(number=submission.number))
+            if ai_reviews:
+                print('Release LLM review...')
+                self.invitation_builder.set_note_release_ai_review_invitation(submission)
 
         print('Release comments...')
         invitation = self.invitation_builder.set_note_release_comment_invitation(submission)
