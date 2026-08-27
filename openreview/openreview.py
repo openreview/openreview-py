@@ -299,7 +299,7 @@ class Client(object):
         self.__handle_token(json_response)
         return json_response
 
-    def register_user(self, email = None, fullname = None, password = None):
+    def register_user(self, email = None, fullname = None, password = None, dob = None):
         """
         Registers a new user
 
@@ -309,6 +309,8 @@ class Client(object):
         :type fullname: str, optional
         :param password: Password used to log into OpenReview
         :type password: str, optional
+        :param dob: Date of birth as epoch milliseconds. Mandatory when the API is configured with profile.requireDob
+        :type dob: int, optional
 
         :return: Dictionary containing the new user information including his id, username, email(s), readers, writers, etc.
         :rtype: dict
@@ -318,6 +320,8 @@ class Client(object):
             'fullname': fullname,
             'password': password
         }
+        if dob is not None:
+            register_payload['dob'] = dob
         response = self.session.post(self.register_url, json = register_payload, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()

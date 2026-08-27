@@ -4,6 +4,7 @@ import inspect
 import sys
 import time
 import json
+import datetime
 from urllib.parse import quote, unquote
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -17,10 +18,33 @@ from urllib.parse import urlparse, parse_qs
 class Helpers:
     strong_password = 'Or$3cur3P@ssw0rd'
 
+    ## Epoch milliseconds, UTC, matching what the API expects at registration. Anybody under 18 is
+    ## flagged a minor and always routed to moderation, so the default has to be clearly an adult.
     @staticmethod
-    def create_user(email, first, last, alternates=[], institution=None, fullname=None, dblp_url=None):
+    def dob_for_age(years):
+        today = datetime.datetime.now(datetime.timezone.utc)
+        try:
+            birth = datetime.datetime(today.year - years, today.month, today.day, tzinfo=datetime.timezone.utc)
+        except ValueError:
+            ## Feb 29 when the target year is not a leap year
+            birth = datetime.datetime(today.year - years, today.month, today.day - 1, tzinfo=datetime.timezone.utc)
+        return int(birth.timestamp() * 1000)
+
+    ## Memoized: registration and activation must send the identical value (dob is write-once), and
+    ## those two calls can land on either side of UTC midnight in a long run.
+    _default_dob = None
+
+    @staticmethod
+    def default_dob():
+        if Helpers._default_dob is None:
+            Helpers._default_dob = Helpers.dob_for_age(30)
+        return Helpers._default_dob
+
+    @staticmethod
+    def create_user(email, first, last, alternates=[], institution=None, fullname=None, dblp_url=None, dob=None):
 
         fullname = f'{first} {last}' if fullname is None else fullname
+        dob = Helpers.default_dob() if dob is None else dob
 
         super_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='openreview.net', password=Helpers.strong_password)
         profile = openreview.tools.get_profile(super_client, email)
@@ -30,7 +54,7 @@ class Helpers:
         client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
         assert client is not None, "Client is none"
 
-        res = client.register_user(email = email, fullname = fullname, password = Helpers.strong_password)
+        res = client.register_user(email = email, fullname = fullname, password = Helpers.strong_password, dob = dob)
         username = res.get('id')
         assert res, "Res i none"
         profile_content={
@@ -44,6 +68,9 @@ class Helpers:
             'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email,
             'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
+            ## Activation replaces the stored content wholesale, so the dob saved at registration has
+            ## to be repeated here. It is write-once, so it must be the same value.
+            'dob': dob,
         }
         if dblp_url:
             profile_content['dblp'] = dblp_url
