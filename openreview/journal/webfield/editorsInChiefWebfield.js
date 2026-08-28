@@ -285,6 +285,61 @@ var getGroupMembersCount = function(groupId) {
     });
 };
 
+// The per-paper invitations the console actually indexes, keyed by the super
+// invitation that creates them. Fetching by parent instead of by the
+// `<venue>/Paper` prefix leaves behind Public_Comment / Official_Comment /
+// Moderation, which expire_paper_invitations() deliberately exempts, so they
+// accumulate one set per submission for the life of the journal and make up
+// roughly 60% of the prefix query's payload.
+var getPaperInvitationsById = function() {
+  var parentInvitationIds = [
+    VENUE_ID + '/-/' + REVIEW_APPROVAL_NAME,
+    VENUE_ID + '/-/' + DESK_REJECTION_APPROVAL_NAME,
+    VENUE_ID + '/-/' + REVIEW_NAME,
+    VENUE_ID + '/-/' + OFFICIAL_RECOMMENDATION_NAME,
+    VENUE_ID + '/-/' + DECISION_NAME,
+    VENUE_ID + '/-/' + DECISION_APPROVAL_NAME,
+    VENUE_ID + '/-/' + CAMERA_READY_REVISION_NAME,
+    VENUE_ID + '/-/' + CAMERA_READY_VERIFICATION_NAME,
+    VENUE_ID + '/-/' + RETRACTION_NAME,
+    VENUE_ID + '/-/' + RETRACTION_APPROVAL_NAME,
+    VENUE_ID + '/-/Rating'
+  ];
+
+  var requests = parentInvitationIds.map(function(parentInvitationId) {
+    return Webfield2.api.get('/invitations', {
+      invitation: parentInvitationId,
+      type: 'all',
+      select: 'id,cdate,duedate,expdate',
+      domain: VENUE_ID,
+      stream: true
+    }).then(function(result) { return result.invitations; });
+  });
+
+  // `<venue>/Paper<N>/Reviewers/-/Assignment` and `.../Action_Editors/-/Recommendation`
+  // are posted directly rather than from a per-name super invitation, so their only
+  // parent is the venue meta invitation, which every invitation carries. They are the
+  // only per-paper edge invitations, so type=edge isolates them without pulling the
+  // comment invitations back in.
+  requests.push(Webfield2.api.get('/invitations', {
+    prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
+    type: 'edge',
+    select: 'id,cdate,duedate,expdate',
+    domain: VENUE_ID,
+    stream: true
+  }).then(function(result) { return result.invitations; }));
+
+  return $.when.apply($, requests).then(function() {
+    var invitationsById = {};
+    Array.prototype.slice.call(arguments).forEach(function(invitations) {
+      (invitations || []).forEach(function(invitation) {
+        invitationsById[invitation.id] = invitation;
+      });
+    });
+    return invitationsById;
+  });
+};
+
 var loadData = function() {
   var doneLoad = perfStart('loadData TOTAL (all requests run in parallel)');
   var allData = $.when(
@@ -310,15 +365,7 @@ var loadData = function() {
     perfTrack('  group: reviewers', Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true})),
     perfTrack('  group: reviewers archived', Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true})),
     perfTrack('  group: reviewers volunteers', Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true})),
-    perfTrack('  invitations: per-paper (keyBy id)', Webfield2.api.get('/invitations', {
-      prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
-      type: 'all',
-      select: 'id,cdate,duedate,expdate',
-      domain: VENUE_ID,
-      stream: true
-    }).then(function(result) {
-      return _.keyBy(result.invitations, 'id');
-    })),
+    perfTrack('  invitations: per-paper (12 requests by parent invitation)', getPaperInvitationsById()),
     perfTrack('  invitations: venue super', Webfield2.api.get('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; })),
     perfTrack('  invitations: reviewers', Webfield2.api.get('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; })),
     perfTrack('  invitations: action editors', Webfield2.api.get('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; })),
