@@ -269,6 +269,33 @@ var main = function() {
     .fail(Webfield2.ui.errorMessage);
 };
 
+// Only the fields formatData reads. Without this, `details=replies` returns every
+// reply in full — including the review bodies, which are ~88% of the payload — and on
+// a journal the size of TMLR the untrimmed fetch runs to hundreds of MB of JSON.
+//
+// Two properties of the API's `select` matter here:
+//  - a select that omits the `details.replies[*]` entries drops details.replies from
+//    the response entirely, and does so silently;
+//  - `content` is omitted from a reply altogether when none of the selected content
+//    fields exist on it, so every reply content access below has to be null-safe.
+var SUBMISSION_SELECT = [
+  'id', 'forum', 'number', 'cdate', 'mdate', 'tcdate', 'tmdate', 'invitations', 'content',
+  'details.replies[*].id',
+  'details.replies[*].forum',
+  'details.replies[*].replyto',
+  'details.replies[*].tcdate',
+  'details.replies[*].invitations',
+  'details.replies[*].signatures',
+  'details.replies[*].readers',
+  'details.replies[*].content.rating',
+  'details.replies[*].content.recommendation',
+  'details.replies[*].content.certifications',
+  'details.replies[*].content.decision_recommendation',
+  'details.replies[*].content.certification_recommendations',
+  'details.replies[*].content.comment',
+  'details.replies[*].content.title'
+].join(',');
+
 var getGroupMembersCount = function(groupId) {
   if (!groupId) {
     return $.Deferred().resolve(0);
@@ -343,7 +370,21 @@ var loadData = function() {
   var allData = $.when(
     perfTrack('  groups: action editors by number', Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME)),
     perfTrack('  groups: reviewers by number (+profiles)', Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true})),
-    perfTrack('  notes: all submissions (+details=replies)', Webfield2.api.getAllSubmissions(SUBMISSION_ID, { domain: VENUE_ID })),
+    perfTrack('  notes: all submissions (+details=replies)', Webfield2.api.getAllSubmissions(SUBMISSION_ID, { domain: VENUE_ID, select: SUBMISSION_SELECT })
+    .then(function(submissions) {
+      // A selected request omits `details` altogether for a submission with no replies,
+      // where an unselected one returns details.replies: []. Normalize it back so the
+      // reply helpers here and in Webfield2.utils can assume the array exists.
+      submissions.forEach(function(submission) {
+        if (!submission.details) {
+          submission.details = {};
+        }
+        if (!submission.details.replies) {
+          submission.details.replies = [];
+        }
+      });
+      return submissions;
+    })),
     perfTrack('  notes: responsibility acknowledgements', Webfield2.api.get('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID, stream: true }).then(function(result) { return result.notes; })),
     perfTrack('  notes: reviewer report', Webfield2.api.get('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID, stream: true })
     .then(function(result) {
@@ -839,13 +880,13 @@ var formatData = function(
       if (completedReview) {
         reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
         if (reviewerRecommendation) {
-          status.Recommendation = reviewerRecommendation.content.decision_recommendation?.value || 'Yes';
-          status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
+          status.Recommendation = reviewerRecommendation.content?.decision_recommendation?.value || 'Yes';
+          status.Certifications = reviewerRecommendation.content?.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
         }
         var reviewerRating = reviewerRatingReplies.find(function (p) {
           return p.replyto === completedReview.id;
         });
-        if(reviewerRating){
+        if (reviewerRating && reviewerRating.content?.rating) {
           status.Rating = reviewerRating.content.rating.value;
           if(reviewerStatus){
             var rating = reviewerRating.content.rating.value;
@@ -919,7 +960,7 @@ var formatData = function(
         });
         actionEditorStatus.decisionProgressData.papers.push({
           note: formattedSubmission,
-          metaReview: completedDecision && { id: completedDecision.id, forum: submission.id, content: { recommendation: completedDecision.content.recommendation.value }}
+          metaReview: completedDecision && { id: completedDecision.id, forum: submission.id, content: { recommendation: completedDecision.content?.recommendation?.value }}
         });
       }
     });
@@ -932,8 +973,8 @@ var formatData = function(
         id: decision.id,
         forum: submission.id,
         content: {
-          recommendation: decision.content.recommendation.value,
-          certification: (decision.content.certifications && decision.content.certifications.value) || []
+          recommendation: decision.content?.recommendation?.value,
+          certification: (decision.content?.certifications && decision.content.certifications.value) || []
         }
       };
     }
@@ -1158,8 +1199,8 @@ var renderTable = function(container, rows) {
           return (
             '<li class="mb-3">' +
               '<p class="text-muted mb-1">' + view.forumDate(c.tcdate) + ': </p>' +
-              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + (c.content.title?.value ?? 'Comment') + '</a></strong></p>' +
-              '<p style="word-break: break-word;">' + c.content.comment.value + '</p>' +
+              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + (c.content?.title?.value ?? 'Comment') + '</a></strong></p>' +
+              '<p style="word-break: break-word;">' + (c.content?.comment?.value ?? '') + '</p>' +
             '</li>'
           );
         });
