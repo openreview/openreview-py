@@ -769,46 +769,22 @@ var renderTable = function(tab, rows) {
       replyTo: EDITORS_IN_CHIEF_EMAIL,
       messageInvitationId: VENUE_ID + '/-/Edit',
       messageSignature: VENUE_ID,
-      // Messaging acts on the rows currently loaded. With server-side paging
-      // that is this page, which is also what the checkboxes can select.
-      menu: [
-        {
-          id: 'unsubmitted-reviews',
-          name: 'Reviewers with missing reviews (this page)',
-          getUsers: function(selectedIds) {
-            selectedIds = selectedIds || [];
-            return rows.map(function(row) {
-              return {
-                groups: selectedIds.indexOf(row.submission.id) > -1
-                  ? Object.values(row.reviewProgressData.reviewers).filter(function(reviewer) {
-                    return !reviewer.completedReview;
-                  })
-                  : [],
-                forumUrl: 'https://openreview.net/forum?' + $.param({
-                  id: row.submission.forum,
-                  noteId: row.submission.forum,
-                  invitationId: getInvitationId(row.submission.number, REVIEW_NAME)
-                })
-              };
-            });
-          }
-        },
-        {
-          id: 'all-action-editors',
-          name: 'Action editors of selected papers (this page)',
-          getUsers: function(selectedIds) {
-            selectedIds = selectedIds || [];
-            return rows.map(function(row) {
-              return {
-                groups: selectedIds.indexOf(row.submission.id) > -1
-                  ? [row.actionEditorProgressData.actionEditor]
-                  : [],
-                forumUrl: 'https://openreview.net/forum?' + $.param({ id: row.submission.forum })
-              };
-            });
-          }
-        }
-      ]
+      // No bulk Message dropdown on this console yet.
+      //
+      // Webfield2.ui.renderTable only inserts that dropdown inside the bar it
+      // builds for `sortOptions`, and sorting here is server-side over the whole
+      // tab, so passing sortOptions would put a second, client-side sort control
+      // next to this one that silently reorders only the loaded page. Rendering
+      // the dropdown from renderControls instead means this console owns its
+      // toolbar; that is the intended fix, deferred for now.
+      //
+      // The rest of reminderOptions is live: the per-reviewer "send reminder"
+      // links in the Review Progress column are bound independently of
+      // sortOptions and work today.
+      //
+      // When the dropdown is added, it acts on the current page: selection can
+      // only reach loaded rows, which is narrower than the same menu item in the
+      // unpaginated console, where it covers the whole tab.
     },
     postRenderTable: function() {
       // Sums to 100. The number column has to hold four digits, and Status
