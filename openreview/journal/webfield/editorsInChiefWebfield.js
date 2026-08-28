@@ -63,7 +63,6 @@ var DECISION_NAME = 'Decision';
 var DECISION_APPROVAL_NAME = 'Decision_Approval';
 var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
-var RETRACTION_NAME = 'Retraction';
 var RETRACTION_APPROVAL_NAME = 'Retraction_Approval';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
@@ -301,7 +300,6 @@ var getPaperInvitationsById = function() {
     VENUE_ID + '/-/' + DECISION_APPROVAL_NAME,
     VENUE_ID + '/-/' + CAMERA_READY_REVISION_NAME,
     VENUE_ID + '/-/' + CAMERA_READY_VERIFICATION_NAME,
-    VENUE_ID + '/-/' + RETRACTION_NAME,
     VENUE_ID + '/-/' + RETRACTION_APPROVAL_NAME,
     VENUE_ID + '/-/Rating'
   ];
@@ -365,7 +363,7 @@ var loadData = function() {
     perfTrack('  group: reviewers', Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true})),
     perfTrack('  group: reviewers archived', Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true})),
     perfTrack('  group: reviewers volunteers', Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true})),
-    perfTrack('  invitations: per-paper (12 requests by parent invitation)', getPaperInvitationsById()),
+    perfTrack('  invitations: per-paper (by parent invitation)', getPaperInvitationsById()),
     perfTrack('  invitations: venue super', Webfield2.api.get('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; })),
     perfTrack('  invitations: reviewers', Webfield2.api.get('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; })),
     perfTrack('  invitations: action editors', Webfield2.api.get('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; })),
@@ -627,9 +625,6 @@ var formatData = function(
     var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
     var cameraReadyTask = null;
     var cameraReadyVerificationTask = null;
-    // Retraction by Authors
-    var retractionInvitation = invitationsById[getInvitationId(number, RETRACTION_NAME)];
-    var retractionNotes = getReplies(submission, RETRACTION_NAME);
     // Retraction Approval by EIC
     var retractionApprovalInvitation = invitationsById[getInvitationId(number, RETRACTION_APPROVAL_NAME)];
     var retractionApprovalNotes = getReplies(submission, RETRACTION_APPROVAL_NAME);
