@@ -1880,12 +1880,12 @@ class EditInvitationsBuilder(object):
                 'content' :{
                     'overlap_committee_ids': {
                         'order': 1,
-                        'description': 'List of committee group ids that invited users cannot be members of when accepting this invitation. Users that are already members of any of these groups will be asked to decline that role first. Leave this field empty to allow users to serve in multiple roles.',
+                        'description': 'List of committee group ids that invited users cannot be members of when accepting this invitation. Users that are already members of any of these groups will be asked to decline that role first. Delete this value to allow users to serve in multiple roles.',
                         'value': {
                             'param': {
                                 'type': 'string[]',
                                 'input': 'text',
-                                'default': []
+                                'deletable': True
                             }
                         }
                     }
