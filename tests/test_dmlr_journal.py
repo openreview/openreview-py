@@ -425,12 +425,12 @@ note={Under review}
 
         ae_group = ce_client.get_group('DMLR/Paper1/Action_Editors')
         assert ae_group.members == ['~Andrew_Ng1']
-        assert ae_group.readers == ['everyone']
+        assert ae_group.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
 
         andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'DMLR/Paper1/Action_Editor_.*', signatory='~Andrew_Ng1')
         assert len(andrew_paper1_anon_groups) == 1
         andrew_paper1_anon_group = andrew_paper1_anon_groups[0]        
-        assert andrew_paper1_anon_group.readers == ['everyone', andrew_paper1_anon_group.id]
+        assert andrew_paper1_anon_group.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors', andrew_paper1_anon_group.id]
 
         edits = openreview_client.get_note_edits(note.id, invitation='DMLR/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)

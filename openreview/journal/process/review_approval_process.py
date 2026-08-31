@@ -22,13 +22,14 @@ def process(client, edit, invitation):
         ## Notify readers
         journal.notify_readers(edit, content_fields=['under_review', 'comment'])
 
-        # update AE group readers to be everyone if AE is not anonymous
+        # update AE group readers to include authors if the AE is not anonymous
         if not journal.is_action_editor_anonymous():
+            readers = ['everyone'] if journal.is_submission_public() else [venue_id, paper_action_editor_group.id, journal.get_reviewers_id(submission.number), journal.get_authors_id(submission.number)]
             client.post_group_edit(invitation=journal.get_meta_invitation_id(),
                 signatures=[venue_id],
                 group=openreview.api.Group(
                     id=paper_action_editor_group.id, 
-                    readers=['everyone']
+                    readers=readers
                 )
             )
 
