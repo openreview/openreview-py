@@ -524,6 +524,21 @@ class TestJournal():
         recommendation_inv = openreview_client.get_invitation('TMLR/-/Official_Recommendation')
         assert 'description' in recommendation_inv.edit['invitation']
 
+    def test_is_over_18_visible_to_the_venue_account(self, openreview_client, helpers):
+
+        ## isOver18 is offered to an active venue account, which is a group id rather than a person.
+        ## TMLR is added to active_venues when the journal is set up, so impersonating it is what
+        ## makes this tier reachable; a person on the venue does not get the flag.
+        venue_client = OpenReviewClient(username='fabian@mail.com', password=helpers.strong_password)
+        venue_client.impersonate('TMLR')
+
+        profile = venue_client.get_profile('~Raia_Hadsell1')
+        assert profile.content['isOver18'] == True
+
+        ## The date itself and the minor flag stay with the privileged tiers
+        assert 'dob' not in profile.content
+        assert 'isMinor' not in profile.content
+
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
