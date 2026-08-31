@@ -440,6 +440,22 @@ class Venue(object):
             return reviewers_id + '/Submitted'
         return reviewers_id
 
+    def get_reviewers_ids(self, submitted=False):
+        """Return the top level group id of every reviewer role."""
+        return [self.get_reviewers_id(name=role, submitted=submitted) for role in self.reviewer_roles]
+
+    def get_submission_reviewers_ids(self, number, submitted=False, anon=False):
+        """Return the per-submission reviewer group ids of a submission.
+
+        One id per configured per-submission group name, so roles merged into a
+        single group yield a single id.
+        """
+        return [self.get_reviewers_id(number=number, name=name, submitted=submitted, anon=anon) for name in self.submission_reviewer_roles]
+
+    def get_submission_area_chairs_ids(self, number, anon=False):
+        """Return the per-submission area chair group ids of a submission."""
+        return [self.get_area_chairs_id(number=number, name=name, anon=anon) for name in self.submission_area_chair_roles]
+
     def get_authors_id(self, number = None):
         return self.get_committee_id(self.authors_name, number)
 

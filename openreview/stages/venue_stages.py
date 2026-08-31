@@ -724,16 +724,20 @@ class ReviewStage(object):
         self.submission_reviewer_roles = submission_reviewer_roles
 
     def _get_reviewer_roles(self, conference):
-        return self.submission_reviewer_roles or [conference.reviewers_name]
+        ## the top level groups are the recruiting roles, unless this stage targets specific ones
+        return self.submission_reviewer_roles or conference.reviewer_roles
+
+    def _get_submission_reviewer_roles(self, conference):
+        ## the per-submission groups may merge several roles into one
+        return self.submission_reviewer_roles or conference.submission_reviewer_roles
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
-        reviewer_roles = self._get_reviewer_roles(conference)
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
-            return [conference.get_reviewers_id(name=name) for name in reviewer_roles]
+            return [conference.get_reviewers_id(name=name) for name in self._get_reviewer_roles(conference)]
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
-            return [conference.get_reviewers_id(number=number, name=name) for name in reviewer_roles]
+            return [conference.get_reviewers_id(number=number, name=name) for name in self._get_submission_reviewer_roles(conference)]
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
-            return [conference.get_reviewers_id(number=number, name=name) + '/Submitted' for name in reviewer_roles]
+            return [conference.get_reviewers_id(number=number, name=name) + '/Submitted' for name in self._get_submission_reviewer_roles(conference)]
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWER_SIGNATURE:
             if review_signature:
                 return [review_signature]
@@ -1172,13 +1176,13 @@ class CommentStage(object):
                 readers.append({ 'value': conference.get_area_chairs_id(number), 'optional': True })
 
             if self.Readers.REVIEWERS_ASSIGNED in self.readers:
-                readers.append({ 'value': conference.get_reviewers_id(number), 'optional': True })
+                readers.extend([{ 'value': reviewers_id, 'optional': True } for reviewers_id in conference.get_submission_reviewers_ids(number)])
 
             if self.Readers.REVIEWERS_SUBMITTED in self.readers:
-                readers.append({ 'value': conference.get_reviewers_id(number) + '/Submitted', 'optional': True })
+                readers.extend([{ 'value': reviewers_id, 'optional': True } for reviewers_id in conference.get_submission_reviewers_ids(number, submitted=True)])
 
             if self.Readers.REVIEWERS_ASSIGNED in self.readers or self.Readers.REVIEWERS_SUBMITTED in self.readers:
-                readers.append({ 'inGroup': conference.get_reviewers_id(number), 'optional': True })
+                readers.extend([{ 'inGroup': reviewers_id, 'optional': True } for reviewers_id in conference.get_submission_reviewers_ids(number)])
 
             if self.Readers.AUTHORS in self.readers:
                 readers.append({ 'value': conference.get_authors_id(number), 'optional': True })                
@@ -1191,7 +1195,7 @@ class CommentStage(object):
             readers.append('everyone')
 
         if self.reader_selection:
-            readers.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+            readers.extend(conference.get_submission_reviewers_ids(number, anon=True))
 
         if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
             readers.append(conference.get_senior_area_chairs_id(number))
@@ -1200,10 +1204,10 @@ class CommentStage(object):
             readers.append(conference.get_area_chairs_id(number))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
-            readers.append(conference.get_reviewers_id(number))
+            readers.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.readers:
-            readers.append(conference.get_reviewers_id(number) + '/Submitted')
+            readers.extend(conference.get_submission_reviewers_ids(number, submitted=True))
 
         if self.Readers.AUTHORS in self.readers:
             readers.append(conference.get_authors_id(number))
@@ -1224,7 +1228,7 @@ class CommentStage(object):
             committee.append(conference.get_anon_secondary_area_chair_id(number=number, anon_id='.*'))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
-            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+            committee.extend(conference.get_submission_reviewers_ids(number, anon=True))
 
         if self.Readers.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
@@ -1241,10 +1245,10 @@ class CommentStage(object):
             invitees.append(conference.get_area_chairs_id(number))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number))
+            invitees.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number) + '/Submitted')
+            invitees.extend(conference.get_submission_reviewers_ids(number, submitted=True))
 
         if self.Readers.AUTHORS in self.invitees:
             invitees.append(conference.get_authors_id(number))
@@ -1261,10 +1265,10 @@ class CommentStage(object):
             invitees.append(conference.get_area_chairs_id(number))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number))
+            invitees.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number) + '/Submitted')
+            invitees.extend(conference.get_submission_reviewers_ids(number, submitted=True))
 
         return invitees
     
@@ -1282,7 +1286,7 @@ class CommentStage(object):
             committee.append(conference.get_anon_secondary_area_chair_id(number=number, anon_id='.*'))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
-            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+            committee.extend(conference.get_submission_reviewers_ids(number, anon=True))
 
         return committee    
 
@@ -1297,10 +1301,10 @@ class CommentStage(object):
             readers.append(conference.get_area_chairs_id(number))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
-            readers.append(conference.get_reviewers_id(number))
+            readers.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.readers:
-            readers.append(conference.get_reviewers_id(number) + '/Submitted')               
+            readers.extend(conference.get_submission_reviewers_ids(number, submitted=True))               
 
         return readers
 
