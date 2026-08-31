@@ -3181,6 +3181,17 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             process=self.get_process_content('process/under_review_submission_process.py')
         )
 
+        if not self.journal.is_action_editor_anonymous():
+            invitation.edit['note']['content']['assigned_action_editor'] = {
+                'readers': {
+                    'param': {
+                        'const': {
+                            'delete': True
+                        }
+                    }
+                }
+            }
+
         self.save_invitation(invitation)
 
     def set_desk_rejected_invitation(self):
