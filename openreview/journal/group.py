@@ -92,6 +92,11 @@ class GroupBuilder(object):
             content['videos_url'] = { 'value': self.journal.get_website_url('videos') }
         if self.journal.request_form_id:
             content['journal_request_id'] = { 'value': self.journal.request_form_id }
+        if self.journal.secret_key:
+            content['secret_key'] = {
+                'value': self.journal.secret_key,
+                'readers': [venue_id]
+            }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
@@ -486,7 +491,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         action_editors_group=openreview.tools.get_group(self.client, action_editors_group_id)
         if not action_editors_group:
             action_editors_group=self.post_group(Group(id=action_editors_group_id,
-                readers=[venue_id, action_editors_group_id, reviewers_group_id] if self.journal.is_action_editor_anonymous() else ['everyone'],
+                readers=[venue_id, action_editors_group_id, reviewers_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
                 signatories=[venue_id],

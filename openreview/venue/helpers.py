@@ -36,6 +36,7 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     venue.senior_area_chairs_name = domain.content.get('senior_area_chairs_name', {}).get('value', venue.senior_area_chair_roles[0])
     venue.area_chair_roles = domain.content.get('area_chair_roles', {}).get('value', ['Area_Chairs'])
     venue.area_chairs_name = domain.content.get('area_chairs_name', {}).get('value', venue.area_chair_roles[0])
+    venue.secondary_area_chairs_name = domain.content.get('secondary_area_chairs_name', {}).get('value', f'Secondary_{venue.area_chairs_name}')
     venue.reviewer_roles = domain.content.get('reviewer_roles', {}).get('value', ['Reviewers'])
     venue.reviewers_name = domain.content.get('reviewers_name', {}).get('value', venue.reviewer_roles[0])
     venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)

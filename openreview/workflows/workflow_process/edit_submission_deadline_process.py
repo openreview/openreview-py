@@ -170,36 +170,3 @@ def process(client, edit, invitation):
                     }
                 )
             )
-
-    # always update Full_Submission cdate if it exists
-    if full_submission_invitation_id:
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=full_submission_invitation_id,
-                signatures=[venue_id],
-                cdate=expdate,
-                edit={
-                    'invitation': {
-                        'cdate': expdate
-                    }
-                }
-            )
-        )
-
-        deletion_invitation_id = f'{venue_id}/-/Deletion'
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=deletion_invitation_id,
-                signatures=[venue_id],
-                cdate=expdate,
-                edit={
-                    'invitation': {
-                        'cdate': expdate
-                    }
-                }
-            )
-        )
