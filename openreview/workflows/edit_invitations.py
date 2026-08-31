@@ -1864,9 +1864,54 @@ class EditInvitationsBuilder(object):
             invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=False)
-        
+
+        invitation_id = super_invitation_id + '/Overlap_Committees'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'overlap_committee_ids': {
+                        'order': 1,
+                        'description': 'List of committee group ids that invited users can not be members of when accepting this invitation. Users that are already members of any of these groups will be asked to decline that role first. Leave this field empty to allow users to serve in multiple roles.',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'text',
+                                'default': []
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'content': {
+                        'overlap_committee_ids': {
+                            'value': '${4/content/overlap_committee_ids/value}'
+                        }
+                    },
+                    'signatures': [venue_id]
+                }
+            }
+        )
+
+        if process_file:
+            invitation.process = self.get_process_content(f'{process_file}')
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+
         return invitation
-    
+
     def set_edit_committee_recruitment_request_invitation(self, super_invitation_id, process_file=None, due_date=None):
 
         venue_id = self.venue_id
