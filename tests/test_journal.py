@@ -396,6 +396,18 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
+        under_review_invitation = openreview_client.get_invitation('TMLR/-/Under_Review')
+        assert 'assigned_action_editor' in under_review_invitation.edit['note']['content']
+        assert under_review_invitation.edit['note']['content']['assigned_action_editor'] == {
+            'readers': {
+                'param': {
+                    'const': {
+                        'delete': True
+                    }
+                }
+            }
+        }
+
         openreview_client.add_members_to_group('TMLR/Expert_Reviewers', ['~Andrew_McCallumm1'])
 
         tmlr =  openreview_client.get_group('TMLR')
@@ -965,7 +977,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
 
-        # Assign Action Editor and immediately remove  assignment
+        # Assign Action Editor and immediately remove assignment
         paper_assignment_edge = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
@@ -995,10 +1007,15 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
         assert ae_group.members == ['~Joelle_Pineau1']
+        # assert authors cannot see AE name
+        assert ae_group.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Reviewers']
+        ae_anon_group_id = ae_group.anon_members[0]
+        assert openreview_client.get_group(ae_anon_group_id).readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Reviewers', ae_anon_group_id]
 
         note = joelle_client.get_note(note_id_1)
         assert note
-        assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'        
+        assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+        assert note.content['assigned_action_editor']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Reviewers']
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
@@ -1087,6 +1104,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+        assert 'readers' not in note.content['assigned_action_editor']
         assert note.content['_bibtex']['value'] == '''@article{
 anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {UPDATED}},
@@ -1106,6 +1124,14 @@ note={Under review}
         assert edits
         for edit in edits:
             assert 'everyone' in edit.readers
+
+        # check authors can now see AE identity
+        ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
+        assert ae_group.members == ['~Joelle_Pineau1']
+        # assert authors can see AE name
+        assert ae_group.readers == ['everyone']
+        ae_anon_group_id = ae_group.anon_members[0]
+        assert openreview_client.get_group(ae_anon_group_id).readers == ['everyone', ae_anon_group_id]
 
         ## Remove assertion, the process function may run faster in the new machines
         ## try to make an assignment before the scores were computed
@@ -1203,6 +1229,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         # assert new AE is still assigned
         submission_two = raia_client.get_note(note_id_2)
         assert 'assigned_action_editor' in submission_two.content and submission_two.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+        assert 'readers' in submission_two.content['assigned_action_editor'] and submission_two.content['assigned_action_editor']['readers'] == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Reviewers']
 
         joelle_paper2_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper2/Action_Editor_.*', signatory='~Joelle_Pineau1')
         assert len(joelle_paper2_anon_groups) == 1
@@ -1299,6 +1326,14 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Desk_Rejected'
 
+        # assert AE stays anonymous after desk-rejection
+        assert 'readers' in note.content['assigned_action_editor'] and note.content['assigned_action_editor']['readers'] == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Reviewers']
+        ae_group = openreview_client.get_group(f'{venue_id}/Paper2/Action_Editors')
+        assert ae_group.members == ['~Joelle_Pineau1']
+        assert ae_group.readers == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Reviewers']
+        ae_anon_group_id = ae_group.anon_members[0]
+        assert openreview_client.get_group(ae_anon_group_id).readers == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Reviewers', ae_anon_group_id]
+
         ## Check invitations as an author
         invitations = test_client.get_invitations(replyForum=note_id_2)
         assert len(invitations) == 1
@@ -1360,6 +1395,10 @@ year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_3 + '''},
 note={Withdrawn}
 }'''
+
+        assert 'assigned_action_editor' not in note.content
+        ae_group = openreview_client.get_group(f'{venue_id}/Paper3/Action_Editors')
+        assert ae_group.readers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Reviewers']
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -3420,7 +3459,8 @@ note={Retracted after acceptance}
 
         joelle_paper4_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper4/Action_Editor_.*', signatory='~Joelle_Pineau1')
         assert len(joelle_paper4_anon_groups) == 1
-        joelle_paper4_anon_group = joelle_paper4_anon_groups[0]         
+        joelle_paper4_anon_group = joelle_paper4_anon_groups[0]
+        assert joelle_paper4_anon_group.readers == ['everyone', joelle_paper4_anon_group.id]
 
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -5360,7 +5400,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert len(joelle_paper11_anon_groups) == 1
         joelle_paper11_anon_group = joelle_paper11_anon_groups[0]         
 
-        ## Accept the submission 8
+        ## Accept the submission 11
         under_review_note = joelle_client.post_note_edit(invitation= f'TMLR/Paper{note.number}/-/Review_Approval',
                                     signatures=[joelle_paper11_anon_group.id],
                                     note=Note(content={
@@ -5573,7 +5613,7 @@ note={Under review}
             )
         )
         
-        ## Accept the submission 1
+        ## Accept the submission 13
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper13/-/Review_Approval',
                                     signatures=[joelle_paper13_anon_group.id],
                                     note=Note(content={
@@ -6009,7 +6049,7 @@ note={Expert Certification}
 
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
 
-        # Assign Action Editor and immediately remove  assignment
+        # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
             writers=[venue_id, editor_in_chief_group_id],
@@ -6021,16 +6061,22 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        note = openreview_client.get_note(note_id_14)
+        assert 'readers' in note.content['assigned_action_editor']
+        assert note.content['assigned_action_editor']['readers'] == [venue_id, f'{venue_id}/Paper{submission.number}/Action_Editors', f'{venue_id}/Paper{submission.number}/Reviewers']
+
         ae_group = raia_client.get_group(f'{venue_id}/Paper{submission.number}/Action_Editors')
         assert ae_group.members == ['~Samy_Bengio1']
+        assert ae_group.readers == [venue_id, f'{venue_id}/Paper{submission.number}/Action_Editors', f'{venue_id}/Paper{submission.number}/Reviewers']
 
-        joelle_paper13_anon_groups = samy_client.get_groups(prefix=f'{venue_id}/Paper{submission.number}/Action_Editor_.*', signatory='~Samy_Bengio1')
-        assert len(joelle_paper13_anon_groups) == 1
-        joelle_paper13_anon_group = joelle_paper13_anon_groups[0]         
+        sammy_paper14_anon_groups = samy_client.get_groups(prefix=f'{venue_id}/Paper{submission.number}/Action_Editor_.*', signatory='~Samy_Bengio1')
+        assert len(sammy_paper14_anon_groups) == 1
+        sammy_paper14_anon_group = sammy_paper14_anon_groups[0]
+        assert sammy_paper14_anon_group.readers == [venue_id, f'{venue_id}/Paper{submission.number}/Action_Editors', f'{venue_id}/Paper{submission.number}/Reviewers', sammy_paper14_anon_group.id]     
 
-        ## Accept the submission 1
+        ## Accept the submission 14
         under_review_note = samy_client.post_note_edit(invitation= f'TMLR/Paper{submission.number}/-/Review_Approval',
-                                    signatures=[joelle_paper13_anon_group.id],
+                                    signatures=[sammy_paper14_anon_group.id],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
@@ -6042,9 +6088,56 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
 
+        note = openreview_client.get_note(note_id_14)
+        assert 'readers' not in note.content['assigned_action_editor']
+        assert note.content['assigned_action_editor']['value'] == '~Samy_Bengio1'
+
+        ae_group = raia_client.get_group(f'{venue_id}/Paper{submission.number}/Action_Editors')
+        assert ae_group.members == ['~Samy_Bengio1']
+        assert ae_group.readers == ['everyone']
+
+        sammy_paper14_anon_groups = samy_client.get_groups(prefix=f'{venue_id}/Paper{submission.number}/Action_Editor_.*', signatory='~Samy_Bengio1')
+        assert len(sammy_paper14_anon_groups) == 1
+        sammy_paper14_anon_group = sammy_paper14_anon_groups[0]
+        assert sammy_paper14_anon_group.readers == ['everyone', sammy_paper14_anon_group.id]
+
+        #re-assign AE after paper was marked appropriate for review
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        paper_assignment_edge = raia_client.post_edge(paper_assignment_edge)
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/Action_Editors/-/Assignment', count=19)
+
+        note = openreview_client.get_note(note_id_14)
+        assert 'assigned_action_editor' not in note.content
+        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
+
+        paper_assignment_edge = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_14,
+            tail='~Samy_Bengio1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        note = openreview_client.get_note(note_id_14)
+        assert 'readers' not in note.content['assigned_action_editor']
+        assert note.content['assigned_action_editor']['value'] == '~Samy_Bengio1'
+
+        ae_group = raia_client.get_group(f'{venue_id}/Paper{submission.number}/Action_Editors')
+        assert ae_group.members == ['~Samy_Bengio1']
+        assert ae_group.readers == ['everyone']
+
+        sammy_paper14_anon_groups = samy_client.get_groups(prefix=f'{venue_id}/Paper{submission.number}/Action_Editor_.*', signatory='~Samy_Bengio1')
+        assert len(sammy_paper14_anon_groups) == 1
+        sammy_paper14_anon_group = sammy_paper14_anon_groups[0]
+        assert sammy_paper14_anon_group.readers == ['everyone', sammy_paper14_anon_group.id]
+
         ## Invite external reviewer with profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
-            signatures=[joelle_paper13_anon_group.id],
+            signatures=[sammy_paper14_anon_group.id],
             head=note_id_14,
             tail='melisa@mailten.com',
             weight=1,
@@ -6066,11 +6159,11 @@ note={Expert Certification}
             parsed_url = urlparse(url)
             params = parse_qs(parsed_url.query)
             key_value = params['key'][0]
-        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
+        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {sammy_paper14_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
 
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\n\nThe following invitation email was sent to Melisa Bok:\n\nHi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to melisa@mailten.com.\n'''
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\n\nThe following invitation email was sent to Melisa Bok:\n\nHi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {sammy_paper14_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to melisa@mailten.com.\n'''
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -6110,7 +6203,7 @@ note={Expert Certification}
                       
         ## Invite external reviewer with no profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
-            signatures=[joelle_paper13_anon_group.id],
+            signatures=[sammy_paper14_anon_group.id],
             head=note_id_14,
             tail='harold@hotmail.com',
             weight=1,
@@ -6128,7 +6221,7 @@ note={Expert Certification}
             parsed_url = urlparse(url)
             params = parse_qs(parsed_url.query)
             key_value = params['key'][0]
-        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=harold@hotmail.com&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
+        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=harold@hotmail.com&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {sammy_paper14_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -6156,7 +6249,7 @@ note={Expert Certification}
         ## Invite external reviewer with a conflict of interest
         with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for harold@mail'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
-                signatures=[joelle_paper13_anon_group.id],
+                signatures=[sammy_paper14_anon_group.id],
                 head=note_id_14,
                 tail='harold@mail.com',
                 weight=1,
@@ -6166,7 +6259,7 @@ note={Expert Certification}
         ## Invite reviewer that is already in the pool
         with pytest.raises(openreview.OpenReviewException, match=r'tail "javier@mailtwo.com" is member of TMLR/Reviewers'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
-                signatures=[joelle_paper13_anon_group.id],
+                signatures=[sammy_paper14_anon_group.id],
                 head=note_id_14,
                 tail='javier@mailtwo.com',
                 weight=1,
@@ -6176,7 +6269,7 @@ note={Expert Certification}
         ## Invite reviewer that is already has an assignment
         with pytest.raises(openreview.OpenReviewException, match=r'Already invited as ~Melisa_Bok1'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
-                signatures=[joelle_paper13_anon_group.id],
+                signatures=[sammy_paper14_anon_group.id],
                 head=note_id_14,
                 tail='melisa@mailten.com',
                 weight=1,
@@ -6220,7 +6313,7 @@ note={Expert Certification}
 
         ## Invite archived reviewers with status unavailable
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
-            signatures=[joelle_paper13_anon_group.id],
+            signatures=[sammy_paper14_anon_group.id],
             head=note_id_14,
             tail='~David_Belanger1',
             weight=1,
@@ -6242,7 +6335,7 @@ note={Expert Certification}
             parsed_url = urlparse(url)
             params = parse_qs(parsed_url.query)
             key_value = params['key'][0]
-        assert messages[0]['content']['text'] == f'''Hi David Belanger,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~David_Belanger1&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
+        assert messages[0]['content']['text'] == f'''Hi David Belanger,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~David_Belanger1&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {sammy_paper14_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
