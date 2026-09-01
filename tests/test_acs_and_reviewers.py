@@ -316,10 +316,10 @@ For more details, please check the following links:
 
         ## By default, the deployment does not allow overlap between reviewers and action editors
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Reviewers/-/Recruitment_Response')
-        assert invitation.content['overlap_committee_ids']['value'] == ['EFGH.cc/2025/Conference/Action_Editors']
+        assert invitation.content['no_overlap_committee_ids']['value'] == ['EFGH.cc/2025/Conference/Action_Editors']
 
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Recruitment_Response')
-        assert invitation.content['overlap_committee_ids']['value'] == ['EFGH.cc/2025/Conference/Reviewers']
+        assert invitation.content['no_overlap_committee_ids']['value'] == ['EFGH.cc/2025/Conference/Reviewers']
 
         # use invitation to recruit reviewers, including an accepted action editor
         edit = openreview_client.post_group_edit(
@@ -395,12 +395,12 @@ For more details, please check the following links:
         pc_client.post_invitation_edit(
             invitations='EFGH.cc/2025/Conference/Reviewers/-/Recruitment_Response/Overlap_Committees',
             content={
-                'overlap_committee_ids': { 'value': { 'delete': True } }
+                'no_overlap_committee_ids': { 'value': { 'delete': True } }
             }
         )
 
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Reviewers/-/Recruitment_Response')
-        assert invitation.content.get('overlap_committee_ids', {}).get('value') is None
+        assert invitation.content.get('no_overlap_committee_ids', {}).get('value') is None
 
         ## The action editor can now accept the reviewer invitation while keeping the action editor role
         openreview_client.flush_members_cache('~ACOne_EFGH1')

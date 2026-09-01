@@ -1878,7 +1878,7 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content' :{
-                    'overlap_committee_ids': {
+                    'no_overlap_committee_ids': {
                         'order': 1,
                         'description': 'List of committee group ids that invited users cannot be members of when accepting this invitation. Users that are already members of any of these groups will be asked to decline that role first. Delete this value to allow users to serve in multiple roles.',
                         'value': {
@@ -1893,8 +1893,8 @@ class EditInvitationsBuilder(object):
                 'invitation': {
                     'id': super_invitation_id,
                     'content': {
-                        'overlap_committee_ids': {
-                            'value': '${4/content/overlap_committee_ids/value}'
+                        'no_overlap_committee_ids': {
+                            'value': '${4/content/no_overlap_committee_ids/value}'
                         }
                     },
                     'signatures': [venue_id]

@@ -122,33 +122,21 @@ def process(client, edit, invitation):
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_edit['invitation']['id'], include_due_date=True, include_exp_date=True)
     edit_invitations_builder.set_edit_committee_recruitment_invitation(invitation_edit['invitation']['id'])
 
-    content[f'{committee_role}_recruitment_id'] = { 'value': invitation_edit['invitation']['id'] }
+    ## By default, do not allow users to serve as both reviewers and area chairs. Each role
+    ## sets the overlap on its own recruitment invitation, so nothing has to be recorded on
+    ## the domain for the other role to read back.
+    no_overlap_committee_id = None
+    if committee_role == 'area_chairs':
+        no_overlap_committee_id = domain.content.get('reviewers_id', {}).get('value')
+    elif committee_role == 'reviewers':
+        no_overlap_committee_id = domain.content.get('area_chairs_id', {}).get('value')
 
-    ## By default, do not allow users to serve as both reviewers and area chairs
-    if committee_role == 'area_chairs' and 'reviewers_recruitment_id' in domain.content:
+    if no_overlap_committee_id:
         client.post_invitation_edit(
             invitations=f"{invitation_edit['invitation']['id']}/Overlap_Committees",
             signatures=[venue_id],
             content={
-                'overlap_committee_ids': { 'value': [domain.content['reviewers_id']['value']] }
+                'no_overlap_committee_ids': { 'value': [no_overlap_committee_id] }
             },
             invitation=openreview.api.Invitation()
         )
-
-        client.post_invitation_edit(
-            invitations=f"{domain.content['reviewers_recruitment_id']['value']}/Overlap_Committees",
-            signatures=[venue_id],
-            content={
-                'overlap_committee_ids': { 'value': [edit.group.id] }
-            },
-            invitation=openreview.api.Invitation()
-        )
-
-    client.post_group_edit(
-        invitation=domain.content['meta_invitation_id']['value'],
-        signatures=[invitation.domain],
-        group=openreview.api.Group(
-            id=venue_id,
-            content=content
-        )
-    )

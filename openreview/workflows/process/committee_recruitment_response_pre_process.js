@@ -13,14 +13,14 @@ async function process(client, edit, invitation) {
   const user = edit.signatures[0]
 
   if (note.content.response.value == 'Yes') {
-    const overlapCommitteeIds = invitation.content.overlap_committee_ids?.value ?? []
+    const noOverlapCommitteeIds = invitation.content.no_overlap_committee_ids?.value ?? []
     const shortPhrase = domain.content.subtitle?.value
     const committeePrettyName = invitation.content.committee_pretty_name?.value
 
-    for (const overlapCommitteeId of overlapCommitteeIds) {
-      const { groups: overlapGroups } = await client.getGroups({ id: overlapCommitteeId, member: user })
+    for (const noOverlapCommitteeId of noOverlapCommitteeIds) {
+      const { groups: overlapGroups } = await client.getGroups({ id: noOverlapCommitteeId, member: user })
       if (overlapGroups.length > 0) {
-        const overlapPrettyName = overlapGroups[0].content?.committee_pretty_name?.value ?? Tools.prettyId(overlapCommitteeId, true)
+        const overlapPrettyName = overlapGroups[0].content?.committee_pretty_name?.value ?? Tools.prettyId(noOverlapCommitteeId, true)
         return Promise.reject(new OpenReviewError({ name: 'Error', message: `You have already accepted an invitation to serve as ${overlapPrettyName} for ${shortPhrase}. If you would like to change your decision and serve as ${committeePrettyName}, please decline the invitation to be ${overlapPrettyName} and then accept the invitation to be ${committeePrettyName}.` }))
       }
     }
