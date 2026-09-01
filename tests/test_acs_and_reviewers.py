@@ -665,6 +665,38 @@ For more details, please check the following links:
         assert 'EFGH.cc/2025/Conference/Submission1/Action_Editors' in paper_conflicts[0].readers
         assert paper_conflicts[0].readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Action_Editors',  paper_conflicts[0].tail]
 
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score/Dates')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score/Model')
+
+        # select manual upload of affinity scores; invitation should stay active
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score/Model',
+            content={
+                'affinity_score_model': { 'value': 'I will upload my own affinity scores' }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score-0-1', count=2)
+
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score')
+        assert invitation.content['affinity_score_model']['value'] == 'I will upload my own affinity scores'
+        assert 'expertise_job_id' not in invitation.content
+
+        # trigger date process for reviewer affinity scores
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score-0-1', count=3)
+
+        # assert no status was posted to request form since PCs selected manual upload of affinity scores
+        venue = openreview_client.get_group('EFGH.cc/2025/Conference')
+        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
+        assert not notes
+
     def test_area_chairs_deployment(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)

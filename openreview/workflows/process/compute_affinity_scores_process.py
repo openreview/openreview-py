@@ -19,8 +19,17 @@ def process(client, invitation):
 
     support_user = domain.content['request_form_invitation']['value'].split('/Venue_Request')[0]
 
-    affinity_scores_model = invitation.get_content_value('affinity_score_model')
-    if not affinity_scores_model:
+    affinity_scores_model = invitation.get_content_value('affinity_score_model', False)
+    print('affinity_scores_model', affinity_scores_model)
+    expertise_job_id = invitation.get_content_value('expertise_job_id', False)
+    print('expertise_job_id', expertise_job_id)
+
+    if affinity_scores_model == 'I will upload my own affinity scores' and not expertise_job_id:
+        print('PCs will upload their own affinity scores, but no expertise job ID was provided. No affinity scores were computed')
+        # PCs will upload their own affinity scores, but no expertise job ID was provided. Return and leave invitation active
+        return
+
+    if not affinity_scores_model and not expertise_job_id:
         prefix = venue_id + '/'
         # post status to request form
         client.post_note_edit(
@@ -62,18 +71,11 @@ def process(client, invitation):
         matching_status = venue.setup_committee_matching(
             committee_id=committee_id,
             compute_affinity_scores=affinity_scores_model,
-            alternate_matching_group=alternate_committee_id
+            alternate_matching_group=alternate_committee_id,
+            job_id=expertise_job_id
         )
     except Exception as e:
-        if 'Submissions not found.' in str(e):
-            matching_status['error'] = 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed.'
-        elif 'The match group is empty' in str(e):
-            matching_status['error'] = f'Could not compute affinity scores and conflicts since there are no {committee_name}.'
-        elif 'The alternate match group is empty' in str(e):
-            role_name = venue.get_area_chairs_name()
-            matching_status['error'] = f'Could not compute affinity scores and conflicts since there are no {alternate_committee_name}.'
-        else:
-            matching_status['error'] = str(e)
+        matching_status['error'] = str(e)
 
     if 'error' not in matching_status:
 

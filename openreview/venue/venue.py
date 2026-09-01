@@ -1333,7 +1333,7 @@ Total Errors: {len(errors)}
         venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
         venue_matching.setup()
 
-    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None, job_id=None):
         """Set up paper matching for a specific committee, optionally computing affinity scores and conflicts.
 
         Creates matching invitations (proposed assignments, affinity scores,
@@ -1354,6 +1354,8 @@ Total Errors: {len(errors)}
         :type alternate_matching_group: str, optional
         :param submission_track: Filter submissions to a specific track for matching.
         :type submission_track: str, optional
+        :param job_id: Job ID for the expertise computation.
+        :type job_id: str, optional
         :return: The configured Matching object after setup.
         :rtype: openreview.venue.matching.Matching
         """
@@ -1363,7 +1365,7 @@ Total Errors: {len(errors)}
             alternate_matching_group = self.get_area_chairs_id()
         venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group, { 'track': submission_track } if submission_track else None)
 
-        return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
+        return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, job_id=job_id)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
         """Deploy proposed assignments as official assignments for a committee.
