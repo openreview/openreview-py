@@ -879,6 +879,18 @@ class OpenReviewClient(object):
 
         return response.json()['venues']
     
+    def get_meta_invitation_id(self):
+        """
+        Returns the super user meta invitation id: ``openreview.net/-/Edit`` for local
+        environments and ``OpenReview.net/-/Edit`` for the live site.
+
+        :return: Meta invitation id
+        :rtype: str
+        """
+        if 'localhost' in self.baseurl:
+            return 'openreview.net/-/Edit'
+        return 'OpenReview.net/-/Edit'
+
     def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None):
         """
         Updates the domain for an entire venue
@@ -934,7 +946,7 @@ class OpenReviewClient(object):
         for path in paths:
             if tools.get_group(self, path) is None:
                 self.post_group_edit(
-                    invitation = 'openreview.net/-/Edit',
+                    invitation = self.get_meta_invitation_id(),
                     readers = ['everyone'],
                     writers = ['~Super_User1'],
                     signatures = ['~Super_User1'],

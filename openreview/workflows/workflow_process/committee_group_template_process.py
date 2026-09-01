@@ -121,3 +121,34 @@ def process(client, edit, invitation):
 
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_edit['invitation']['id'], include_due_date=True, include_exp_date=True)
     edit_invitations_builder.set_edit_committee_recruitment_invitation(invitation_edit['invitation']['id'])
+
+    content[f'{committee_role}_recruitment_id'] = { 'value': invitation_edit['invitation']['id'] }
+
+    ## By default, do not allow users to serve as both reviewers and area chairs
+    if committee_role == 'area_chairs' and 'reviewers_recruitment_id' in domain.content:
+        client.post_invitation_edit(
+            invitations=f"{invitation_edit['invitation']['id']}/Overlap_Committees",
+            signatures=[venue_id],
+            content={
+                'overlap_committee_ids': { 'value': [domain.content['reviewers_id']['value']] }
+            },
+            invitation=openreview.api.Invitation()
+        )
+
+        client.post_invitation_edit(
+            invitations=f"{domain.content['reviewers_recruitment_id']['value']}/Overlap_Committees",
+            signatures=[venue_id],
+            content={
+                'overlap_committee_ids': { 'value': [edit.group.id] }
+            },
+            invitation=openreview.api.Invitation()
+        )
+
+    client.post_group_edit(
+        invitation=domain.content['meta_invitation_id']['value'],
+        signatures=[invitation.domain],
+        group=openreview.api.Group(
+            id=venue_id,
+            content=content
+        )
+    )
