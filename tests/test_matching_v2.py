@@ -36,8 +36,10 @@ class TestMatching():
         venue.use_area_chairs = True
         venue.area_chairs_name = 'Senior_Program_Committee'
         venue.area_chair_roles = ['Senior_Program_Committee']
+        venue.submission_area_chair_roles = ['Senior_Program_Committee']
         venue.reviewers_name = 'Program_Committee'
         venue.reviewer_roles = ['Program_Committee']
+        venue.submission_reviewer_roles = ['Program_Committee']
         now = datetime.datetime.now()
         venue.submission_stage = openreview.stages.SubmissionStage(
             due_date = now + datetime.timedelta(minutes = 40),

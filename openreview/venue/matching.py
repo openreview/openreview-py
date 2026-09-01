@@ -40,7 +40,9 @@ class Matching(object):
         self.should_read_by_area_chair = self.is_reviewer and venue.use_area_chairs and (openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED in self.venue.reviewer_identity_readers or openreview.stages.IdentityReaders.AREA_CHAIRS in self.venue.reviewer_identity_readers)
         self.sac_profile_info = None #expects a policy, for example: openreview.tools.get_sac_profile_info
         self.sac_n_years = None
-        self.submission_content = submission_content
+        ## a committee group restricted to a track only matches submissions of that track
+        group_track = self.match_group.content.get('track', {}).get('value') if self.match_group.content else None
+        self.submission_content = submission_content if submission_content else ({ 'track': group_track } if group_track else None)
 
     def _get_submission_content_query(self):
         if not self.submission_content:
@@ -1229,16 +1231,19 @@ class Matching(object):
         venue = self.venue
         client = self.client
 
-        committee_id=self.match_group.id
-        role_name = committee_id.split('/')[-1]
         review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
-        reviewer_name = venue.reviewers_name
-        if role_name in venue.area_chair_roles:
-            reviewer_name = venue.area_chairs_name
+        if self.is_area_chair:
             review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
-        elif self.is_senior_area_chair:
-            reviewer_name = venue.senior_area_chairs_name
-            
+
+        deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
+        paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')
+        if not paper_committee_name:
+            if self.is_senior_area_chair:
+                paper_committee_name = venue.senior_area_chairs_name
+            else:
+                ## pair the role being deployed with its per-submission group by position
+                paper_committee_name = venue.get_submission_committee_name(venue.get_committee_name(self.match_group.id))
+
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), domain=venue.id,
             groupby='head', select=None)} if not venue.sac_paper_assignments else {}
@@ -1246,8 +1251,10 @@ class Matching(object):
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id), domain=venue.id,
             label=assignment_title, groupby='head', select=None)}
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
-        submission_group_invitation_id = venue.get_invitation_id(f'{venue.submission_stage.name}_Group', prefix=self.match_group.id)
-        existing_paper_committee_ids = { g.id for g in client.get_all_groups(prefix=venue.get_paper_group_prefix(), domain=venue.id) if g.id.endswith(f'/{reviewer_name}') }
+        ## the per-submission group is owned by paper_committee_name, which is the shared
+        ## group when several roles are deployed into one
+        submission_group_invitation_id = venue.get_invitation_id(f'{venue.submission_stage.name}_Group', prefix=venue.get_committee_id(paper_committee_name))
+        existing_paper_committee_ids = { g.id for g in client.get_all_groups(prefix=venue.get_paper_group_prefix(), domain=venue.id) if g.id.endswith(f'/{paper_committee_name}') }
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None, domain=venue.id)}
 
         print('Check if there are reviews posted')
@@ -1262,7 +1269,7 @@ class Matching(object):
             ## Remove the members from the groups based on the current assignments
             for paper in tqdm(papers, total=len(papers)):
                 if paper.id in current_assignment_edges:
-                    paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
+                    paper_committee_id = venue.get_committee_id(name=paper_committee_name, number=paper.number)
                     current_edges=current_assignment_edges[paper.id]
                     for current_edge in current_edges:
                         client.remove_members_from_group(paper_committee_id, current_edge['tail'])
@@ -1274,7 +1281,7 @@ class Matching(object):
         def process_paper_assignments(paper):
             paper_assignment_edges = []
             if paper.id in proposed_assignment_edges:
-                paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
+                paper_committee_id = venue.get_committee_id(name=paper_committee_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
                 assigned_users = []
                 for proposed_edge in proposed_edges:
@@ -1339,11 +1346,17 @@ class Matching(object):
             )
 
             if venue.use_area_chairs:
+                # clear the title from the area chair role paired with this reviewer role
+                area_chairs_id = venue.get_area_chairs_id()
+                if self.match_group_name in venue.reviewer_roles:
+                    role_index = venue.reviewer_roles.index(self.match_group_name)
+                    if role_index < len(venue.area_chair_roles):
+                        area_chairs_id = venue.get_committee_id(venue.area_chair_roles[role_index])
                 self.client.post_group_edit(
                     invitation = venue.get_meta_invitation_id(),
                     signatures = [venue.venue_id],
                     group = openreview.api.Group(
-                        id = venue.get_area_chairs_id(),
+                        id = area_chairs_id,
                         content = {
                             'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
                         }
@@ -1402,16 +1415,19 @@ class Matching(object):
         venue = self.venue
         client = self.client
 
-        committee_id=self.match_group.id
-        role_name = committee_id.split('/')[-1]
         review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
-        reviewer_name = venue.reviewers_name
-        if role_name in venue.area_chair_roles:
-            reviewer_name = venue.area_chairs_name
+        if self.is_area_chair:
             review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
-        elif self.is_senior_area_chair:
-            reviewer_name = venue.senior_area_chairs_name
-            
+
+        deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
+        paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')
+        if not paper_committee_name:
+            if self.is_senior_area_chair:
+                paper_committee_name = venue.senior_area_chairs_name
+            else:
+                ## pair the role being deployed with its per-submission group by position
+                paper_committee_name = venue.get_submission_committee_name(venue.get_committee_name(self.match_group.id))
+
         papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
             groupby='head', select=None, domain=venue.id)} if not venue.sac_paper_assignments else {}
@@ -1430,7 +1446,7 @@ class Matching(object):
 
         def process_paper_assignments(paper):
             if paper.id in proposed_assignment_edges:
-                paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
+                paper_committee_id = venue.get_committee_id(name=paper_committee_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
                 assigned_users = []
                 for proposed_edge in proposed_edges:
@@ -1457,7 +1473,6 @@ class Matching(object):
         recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id)
         self.venue.invitation_builder.expire_invitation(recruitment_invitation_id)
         self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
-       
 
         ## Deploy assignments creating groups and assignment edges
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
@@ -1495,7 +1510,7 @@ class Matching(object):
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
             self.undeploy_sac_assignments(assignment_title)
         else:
-            self.undeploy_assignments(assignment_title)  
+            self.undeploy_assignments(assignment_title)
             self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id, deployed=True))      
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_assignment_id(self.match_group.id))     
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id))
@@ -1516,6 +1531,8 @@ class Matching(object):
                 'withInvitation':  venue.get_submission_id()
             }
         }
+        if self.submission_content:
+            edge_head['param']['withContent'] = self.submission_content
         description = f'<span>This step runs automatically at its "activation date", and creates "edges" between the {venue.get_committee_name(self.match_group.id, pretty=True)} group and article submissions that represent expertise. Configure which expertise model will compute affinity scores. (We find that the model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.)</span>'
         content = {
             'committee_name': {
@@ -1688,12 +1705,7 @@ class Matching(object):
                             'default': [venue.get_program_chairs_id()]
                         }
                     },
-                    'head': {
-                        'param': {
-                            'type': 'note',
-                            'withInvitation':  venue.get_submission_id()
-                        }
-                    },
+                    'head': edge_head,
                     'tail': {
                         'param': {
                             'type': 'profile',
