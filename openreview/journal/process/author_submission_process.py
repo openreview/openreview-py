@@ -42,5 +42,3 @@ def process(client, edit, invitation):
 
     if journal.should_enable_ai_review():
         journal.invitation_builder.set_note_ai_review_invitation(note)
-
-        # add code here to call llm services, do not wait for the response, just send the request to the llm service and return
