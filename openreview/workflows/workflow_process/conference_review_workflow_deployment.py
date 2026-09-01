@@ -298,6 +298,28 @@ def process(client, edit, invitation):
     )
 
     # remove PC access to editing the note and make note visible to PC group and Support
+    hidden_fields = [
+        'venue_start_date',
+        'program_chair_emails',
+        'contact_email',
+        'submission_start_date',
+        'submission_deadline',
+        'full_submission_deadline',
+        'reviewers_name',
+        'reviewer_groups_names',
+        'area_chairs_support',
+        'area_chairs_name',
+        'area_chair_groups_names',
+        'senior_area_chairs_support',
+        'senior_area_chair_groups_names',
+        'release_role_participation',
+        'venue_organizer_agreement'
+    ]
+    # only hide fields present in the note, otherwise the edit creates value-less stub fields
+    note_content = { field: { 'readers': [support_user] } for field in hidden_fields if field in note.content }
+    note_content['program_chair_console'] = { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' }
+    note_content['workflow_timeline'] = { 'value': f'https://openreview.net/group/edit?id={venue_id}' }
+
     client.post_note_edit(
         invitation=f'{support_user}/-/Edit',
         signatures=[venue_id],
@@ -305,25 +327,7 @@ def process(client, edit, invitation):
             id = note.id,
             readers = [venue_id, support_user],
             writers = [support_user],
-            content = {
-                'venue_start_date': { 'readers': [support_user] },
-                'program_chair_emails': { 'readers': [support_user] },
-                'contact_email': { 'readers': [support_user] },
-                'submission_start_date': { 'readers': [support_user] },
-                'submission_deadline': { 'readers': [support_user] },
-                'full_submission_deadline': { 'readers': [support_user] },
-                'reviewers_name': { 'readers': [support_user] },
-                'reviewer_groups_names': { 'readers': [support_user] },
-                'area_chairs_support': { 'readers': [support_user] },
-                'area_chairs_name': { 'readers': [support_user] },
-                'area_chair_groups_names': { 'readers': [support_user] },
-                'senior_area_chairs_support': { 'readers': [support_user] },
-                'senior_area_chair_groups_names': { 'readers': [support_user] },
-                'release_role_participation': { 'readers': [support_user] },
-                'venue_organizer_agreement': { 'readers': [support_user] },
-                'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
-                'workflow_timeline': { 'value': f'https://openreview.net/group/edit?id={venue_id}' }
-            }
+            content = note_content
         )
     )
 
