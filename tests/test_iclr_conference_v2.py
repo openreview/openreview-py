@@ -21,18 +21,17 @@ class TestICLRConference():
         helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
         pc_client = openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
 
-
-        helpers.create_user('sac10@gmail.com', 'SAC', 'ICLROne')
-        helpers.create_user('sac2@iclr.cc', 'SAC', 'ICLRTwo')
-        helpers.create_user('ac1@iclr.cc', 'AC', 'ICLROne')
-        helpers.create_user('ac2@iclr.cc', 'AC', 'ICLRTwo')
-        helpers.create_user('reviewer1@iclr.cc', 'Reviewer', 'ICLROne')
-        helpers.create_user('reviewer2@iclr.cc', 'Reviewer', 'ICLRTwo')
-        helpers.create_user('reviewer3@iclr.cc', 'Reviewer', 'ICLRThree')
-        helpers.create_user('reviewer4@gmail.com', 'Reviewer', 'ICLRFour')
-        helpers.create_user('reviewer5@gmail.com', 'Reviewer', 'ICLRFive')
-        helpers.create_user('reviewer6@gmail.com', 'Reviewer', 'ICLRSix')
-        helpers.create_user('reviewerethics@gmail.com', 'Reviewer', 'ICLRSeven')
+        helpers.create_user('sac10@gmail.com', 'SACICLR', 'One')
+        helpers.create_user('sac2@iclr.cc', 'SACICLR', 'Two')
+        helpers.create_user('ac1@iclr.cc', 'ACICLR', 'One')
+        helpers.create_user('ac2@iclr.cc', 'ACICLR', 'Two')
+        helpers.create_user('reviewer1@iclr.cc', 'ReviewerICLR', 'One')
+        helpers.create_user('reviewer2@iclr.cc', 'ReviewerICLR', 'Two')
+        helpers.create_user('reviewer3@iclr.cc', 'ReviewerICLR', 'Three')
+        helpers.create_user('reviewer4@gmail.com', 'ReviewerICLR', 'Four')
+        helpers.create_user('reviewer5@gmail.com', 'ReviewerICLR', 'Five')
+        helpers.create_user('reviewer6@gmail.com', 'ReviewerICLR', 'Six')
+        helpers.create_user('reviewerethics@gmail.com', 'ReviewerICLR', 'Seven')
         helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName') # Author
 
         request_form_note = pc_client.post_note(openreview.Note(
@@ -203,8 +202,8 @@ class TestICLRConference():
                 }
             )
             if i == 1 or i == 11:
-                note.content['authors']['value'].append('SAC ICLROne')
-                note.content['authorids']['value'].append('~SAC_ICLROne1')
+                note.content['authors']['value'].append('SACICLR One')
+                note.content['authorids']['value'].append('~SACICLR_One1')
 
             test_client.post_note_edit(invitation='ICLR.cc/2024/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
@@ -214,8 +213,8 @@ class TestICLRConference():
 
         submissions = openreview_client.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 11
-        assert ['ICLR.cc/2024/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].readers
-        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].content['authorids']['value']
+        assert ['ICLR.cc/2024/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SACICLR_One1'] == submissions[0].readers
+        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SACICLR_One1'] == submissions[0].content['authorids']['value']
 
         # Check that note.license is from license list
         licenses = request_form.content['submission_license']
@@ -332,6 +331,17 @@ note={under review}
 }'''
         assert submission.content['_bibtex']['value'] == valid_bibtex
 
+        guest_client = openreview.api.OpenReviewClient()
+        search_notes = guest_client.search_notes('Paper title 1 license revision')
+        assert search_notes
+        assert 'authors' not in search_notes[0].content
+        assert 'authorids' not in search_notes[0].content
+
+        search_notes = pc_client_v2.search_notes('Paper title 1 license revision')
+        assert search_notes
+        assert 'authors' in search_notes[0].content
+        assert 'authorids' in search_notes[0].content
+        assert search_notes[0].content['authors']['value'] == ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc', 'SACICLR One']
 
         # Assert that activation date of matching invitation == abstract deadline
         matching_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
@@ -416,7 +426,7 @@ note={under review}
 
     def test_review_stage(self, client, openreview_client, helpers, test_client):
 
-        openreview_client.add_members_to_group('ICLR.cc/2024/Conference/Submission1/Reviewers', ['~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'])
+        openreview_client.add_members_to_group('ICLR.cc/2024/Conference/Submission1/Reviewers', ['~ReviewerICLR_One1', '~ReviewerICLR_Two1', '~ReviewerICLR_Three1'])
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
@@ -447,7 +457,7 @@ note={under review}
 
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@iclr.cc', password=helpers.strong_password)
 
-        anon_groups = reviewer_client.get_groups(prefix='ICLR.cc/2024/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICLROne1')
+        anon_groups = reviewer_client.get_groups(prefix='ICLR.cc/2024/Conference/Submission1/Reviewer_', signatory='~ReviewerICLR_One1')
         anon_group_id = anon_groups[0].id
 
         review_edit = reviewer_client.post_note_edit(

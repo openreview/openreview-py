@@ -31,7 +31,7 @@ def process(client, invitation):
                 signatures=[venue_id],
                 content={
                     'title': { 'value': f'{committee_name.replace("_", " ").title()} Conflicts Computation Failed' },
-                    'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid conflict policy to use. Please re-schedule this process to run at a later time and then select a valid policy.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split(prefix)[-1].replace("_", " ").replace("/-/", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Conflict" invitation, select a valid conflict policy to use and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid policy. Once you have selected the policy, click "Submit" and the process will automatically be scheduled to run shortly.'}
+                    'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid conflict policy to use. Please re-schedule this process to run at a later time and then select a valid policy.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?id={venue_id}), find and expand the "Create {invitation.id.split(prefix)[-1].replace("_", " ").replace("/-/", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Conflict" invitation, select a valid conflict policy to use and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid policy. Once you have selected the policy, click "Submit" and the process will automatically be scheduled to run shortly.'}
                 }
             )
         )
@@ -71,11 +71,41 @@ def process(client, invitation):
         else:
             matching_status['error'] = str(e)
 
-    if 'error' not in matching_status:
+    log = ''
+
+    if 'error' in matching_status:
+        print(matching_status['error'])
+        return
+    else:
         if len(matching_status['no_profiles']):
             num_revs = len(match_group.members) - len(matching_status['no_profiles'])
-            print(f'Conflicts were successfully computed for {num_revs} users. The following users do not have a profile:', ''.join(matching_status['no_profiles']))
+            log = f'Conflicts were successfully computed for {num_revs} users. The following users do not have a profile:', ''.join(matching_status['no_profiles'])
         else:
-            print(f'Conflicts were successfully computed for all users in the {committee_name} group')
-    else:
-        print(matching_status['error'])
+            log = f'Conflicts were successfully computed for all users in the {committee_name} group'
+
+    # if process was triggered for ACs, and venue has SACs, post a note to the request form
+    area_chair_roles = domain.content.get('area_chair_roles', {}).get('value', [])
+    senior_area_chairs_id = domain.content.get('senior_area_chairs_id', {}).get('value')
+    assignment_inv_id = venue.get_assignment_id(senior_area_chairs_id, deployed=True) if senior_area_chairs_id else None
+    if committee_name in area_chair_roles and senior_area_chairs_id:
+        edges = client.get_edges_count(invitation=assignment_inv_id, domain=venue_id)
+        if edges == 0:
+            client.post_note_edit(
+                invitation=status_invitation_id,
+                signatures=[venue_id],
+                readers=[venue_id, support_user],
+                note=openreview.api.Note(
+                    forum=request_form_id,
+                    signatures=[venue_id],
+                    content={
+                        'title': { 'value': f'{committee_name.replace("_", " ").title()} Conflicts Reminder' },
+                        'comment': { 'value': f'{committee_name.replace("_", " ").title()} conflicts have been successfully computed. Please note that you will need to recompute {committee_name.replace("_", " ").title()} conflicts once you deploy SAC-AC assignments to account for SAC conflicts.' }
+                    }
+                )
+            )
+            log += f'Since your venue uses Senior Area Chairs, please remember to recompute {committee_name.replace("_", " ").title()} conflicts once you deploy SAC-AC assignments to account for SAC conflicts'
+
+        else:
+            print('SAC-AC assignments have been deployed, skipping posting reminder to recompute conflicts after SAC-AC deployment since there are already SAC-AC edges')
+
+    print(log)

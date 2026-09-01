@@ -134,7 +134,8 @@ class TestCVPRConference():
                 note.content['authors']['value'].append('SAC CVPROne')
                 note.content['authorids']['value'].append('~SAC_CVPROne1')
 
-            test_client.post_note_edit(invitation='thecvf.com/CVPR/2024/Conference/-/Submission',
+            # post with the super user to bypass the default attachment rate limit
+            openreview_client.post_note_edit(invitation='thecvf.com/CVPR/2024/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
@@ -551,9 +552,7 @@ class TestCVPRConference():
         assert '~Reviewer_CVPRSeven1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Reviewers').members
 
         messages = openreview_client.get_messages(to='reviewer7@gmail.com', subject='[CVPR 2024] Reviewer Invitation accepted for paper 1')
-        assert messages and len(messages) == 1
-        assert '~AC_CVPROne1' not in messages[0]['content']['text']
-        assert 'AC CVPROne' not in messages[0]['content']['text'] 
+        assert not messages
 
         messages = openreview_client.get_messages(to='reviewer7@gmail.com', subject='[CVPR 2024] You have been assigned as a Reviewer for paper number 1')
         assert messages and len(messages) == 1

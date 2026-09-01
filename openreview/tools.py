@@ -3,8 +3,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import inspect
 
+import io
 import json
 import os
+import shutil
+import zipfile
 
 import openreview
 import re
@@ -33,13 +36,17 @@ DEV_API_V1 = 'https://api.dev.openreview.net'
 DEV_API_V2 = 'https://api2.dev.openreview.net'
 DEV_SITE   = 'https://dev.openreview.net'
 
-LOCAL_API_V1 = 'http://localhost:3000'
-LOCAL_API_V2 = 'http://localhost:3001'
-LOCAL_SITE   = 'http://localhost:3030'
+LOCAL_API_V1 = os.environ.get('OPENREVIEW_API_V1_URL', 'http://localhost:3000')
+LOCAL_API_V2 = os.environ.get('OPENREVIEW_API_V2_URL', 'http://localhost:3001')
+LOCAL_SITE   = os.environ.get('OPENREVIEW_WEB_URL', 'http://localhost:3030')
 
 # Remote-only lists (exclude localhost) used by client guards
 V1_REMOTE_URLS = [PROD_API_V1, DEV_API_V1]
 V2_REMOTE_URLS = [PROD_API_V2, DEV_API_V2]
+
+# Default rate limit applied to submission (and publication import) invitations
+# to prevent a user from posting too many edits/notes in a short window
+DEFAULT_HUMAN_VERIFICATION = { 'limit': 15, 'windowMs': 3600000 }
 
 def _identify_environment(baseurl):
     """Return 'dev', 'prod', or 'local' based on baseurl."""
@@ -114,7 +121,7 @@ def format_params(params):
 
     return params
 
-def concurrent_requests(request_func, params, desc='Gathering Responses', max_workers=None):
+def concurrent_requests(request_func, params, desc='Gathering Responses', max_workers=None, return_exceptions=False, retries=0, retry_max_workers=None):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -126,28 +133,59 @@ def concurrent_requests(request_func, params, desc='Gathering Responses', max_wo
     :type desc: str
     :param max_workers: number of workers to use in the ThreadPoolExecutor, default value is min(16, cpu_count() * 5).
     :type max_workers: int
+    :param return_exceptions: when True, an execution that still fails after all retries contributes its exception object to the results instead of raising.
+    :type return_exceptions: bool
+    :param retries: number of extra passes over the executions that raised, running only the failed values again. Executions that keep failing after all passes raise (or are returned when return_exceptions is True).
+    :type retries: int
+    :param retry_max_workers: number of workers for the retry passes, default value is max(1, max_workers // 4) to give a struggling server room to recover.
+    :type retry_max_workers: int
 
-    :return: A list of results given for each func value execution
+    :return: A list of results for each params value, in the same order as params
     :rtype: list
     """
     if max_workers is None:
         max_workers = min(16, (cpu_count() or 1) * 5)
+    if retry_max_workers is None:
+        retry_max_workers = max(1, max_workers // 4)
 
-    futures = []
-    gathering_responses = tqdm(total=len(params), desc=desc)
-    results = []
+    params = list(params)
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for param in params:
-            futures.append(executor.submit(request_func, param))
+    def run_batch(batch_params, workers, batch_desc):
+        futures = []
+        gathering_responses = tqdm(total=len(batch_params), desc=batch_desc)
+        batch_results = []
 
-        for future in futures:
-            gathering_responses.update(1)
-            results.append(future.result())
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            for param in batch_params:
+                futures.append(executor.submit(request_func, param))
 
-        gathering_responses.close()
+            for future in futures:
+                gathering_responses.update(1)
+                try:
+                    batch_results.append(future.result())
+                except Exception as e:
+                    batch_results.append(e)
 
-        return results
+            gathering_responses.close()
+
+        return batch_results
+
+    results = run_batch(params, max_workers, desc)
+
+    for attempt in range(retries):
+        failed_indexes = [index for index, result in enumerate(results) if isinstance(result, Exception)]
+        if not failed_indexes:
+            break
+        retry_results = run_batch([params[index] for index in failed_indexes], retry_max_workers, f'{desc} (retry {attempt + 1})')
+        for index, result in zip(failed_indexes, retry_results):
+            results[index] = result
+
+    if not return_exceptions:
+        for result in results:
+            if isinstance(result, Exception):
+                raise result
+
+    return results
 
 def get_profile(client, value, with_publications=False):
     """
@@ -514,7 +552,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
         first_author_last_name = 'anonymous'
         authors = 'Anonymous'
     else:
-        note_author_list = note.content['authors'] if isinstance(note.content['authors'], list) else note.content['authors']['value']
+        note_author_list = note.authors
         first_author_last_name = note_author_list[0].split(' ')[-1].lower()
         if names_reversed:
             # last, first
@@ -954,8 +992,31 @@ def iterget_edges (client,
                    head = None,
                    tail = None,
                    label = None,
-                   limit = None, 
+                   limit = None,
                    trash = None):
+    """Return an iterator over Edges, bypassing API pagination limits.
+
+    Fetches all matching edges across multiple API pages transparently. Use this
+    instead of ``client.get_edges()`` when the result set may exceed the single-request limit.
+
+    :param client: Client used to get the Edges.
+    :type client: Client
+    :param invitation: An Invitation ID. If provided, returns Edges whose invitation field matches.
+    :type invitation: str, optional
+    :param head: A head entity ID. If provided, returns Edges whose head field matches.
+    :type head: str, optional
+    :param tail: A tail entity ID. If provided, returns Edges whose tail field matches.
+    :type tail: str, optional
+    :param label: If provided, returns Edges whose label field matches.
+    :type label: str, optional
+    :param limit: Maximum number of Edges to return. If None, returns all matching Edges.
+    :type limit: int, optional
+    :param trash: If True, includes Edges that have been deleted.
+    :type trash: bool, optional
+
+    :return: Iterator over Edge objects matching the provided filters.
+    :rtype: iterget
+    """
     params = {}
     if invitation is not None:
         params['invitation'] = invitation
@@ -1268,7 +1329,7 @@ def datetime_millis(dt):
     :rtype: int
     """
     if isinstance(dt, datetime.datetime):
-        return int(dt.timestamp() * 1000)        
+        return int(dt.timestamp() * 1000)
 
     return dt
 
@@ -1358,6 +1419,36 @@ def recruit_user(client, user,
     message_invitation,
     message_signature,
     name=None):
+    """Send a recruitment email to a user with a personalized acceptance link.
+
+    Generates an HMAC-based hash key for the user, builds a unique recruitment
+    URL, personalizes the message template by replacing ``{{fullname}}``,
+    ``{{invitation_url}}``, and ``{{contact_info}}`` placeholders, and sends
+    the email via ``client.post_message()``.
+
+    :param client: Client used to send the recruitment email.
+    :type client: Client
+    :param user: Email address or profile ID of the user to recruit.
+    :type user: str
+    :param hash_seed: Secret seed used to generate the HMAC hash key for the recruitment link.
+    :type hash_seed: str
+    :param recruitment_message_subject: Subject line for the recruitment email.
+    :type recruitment_message_subject: str
+    :param recruitment_message_content: Message body template. Supports ``{{fullname}}``, ``{{invitation_url}}``, and ``{{contact_info}}`` placeholders.
+    :type recruitment_message_content: str
+    :param recruitment_invitation_id: Invitation ID used in the recruitment URL.
+    :type recruitment_invitation_id: str
+    :param comittee_invited_id: Group ID for the invited committee group, used as parentGroup for the message. (Note: parameter name is a legacy misspelling of "committee".)
+    :type comittee_invited_id: str
+    :param contact_email: Contact email address substituted into ``{{contact_info}}`` and used as the replyTo address.
+    :type contact_email: str
+    :param message_invitation: Invitation ID for the message invitation.
+    :type message_invitation: str
+    :param message_signature: Signature used when posting the message.
+    :type message_signature: str
+    :param name: Full name of the user, used to replace ``{{fullname}}`` in the message.
+    :type name: str, optional
+    """
 
     hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
 
@@ -1372,6 +1463,21 @@ def recruit_user(client, user,
     client.post_message(recruitment_message_subject, [user], personalized_message, parentGroup=comittee_invited_id, replyTo=contact_email, invitation=message_invitation, signature=message_signature)
 
 def get_user_hash_key(user, hash_seed, invitation=None):
+    """Generate a hash key for a user's recruitment or authentication link.
+
+    When ``invitation`` is provided, returns a JWT token encoding the user and
+    invitation. Otherwise, returns an HMAC-SHA256 hex digest keyed by ``hash_seed``.
+
+    :param user: Email address or group ID of the user.
+    :type user: str
+    :param hash_seed: Secret seed used for HMAC hashing or JWT signing.
+    :type hash_seed: str
+    :param invitation: Invitation ID. If provided, a JWT is returned instead of an HMAC hash.
+    :type invitation: str, optional
+
+    :return: JWT token string (if invitation is given) or HMAC-SHA256 hex digest.
+    :rtype: str
+    """
     if invitation is not None:
         jwt_payload = {
             "group": user,
@@ -1405,7 +1511,8 @@ def get_all_venues(client):
 def info_function_builder(policy_function):
     def inner(profile, n_years=None, submission_venueid=None):
         common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
-                    'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+                    'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com',
+                    'independent-researcher.org']
         argspec = inspect.getfullargspec(policy_function)
         if 'submission_venueid' in argspec.args:
             result = policy_function(profile, n_years, submission_venueid)
@@ -1766,6 +1873,21 @@ def filter_relations_by_year(relations, cut_off_year, only_relations=None):
     return filtered_relations
 
 def post_bulk_edges(client, edges, batch_size = 50000):
+    """Post a large list of Edges in batches with a progress bar.
+
+    Splits the edge list into chunks of ``batch_size`` and posts each chunk
+    via ``client.post_edges()``. Returns all posted Edge objects.
+
+    :param client: Client used to post the Edges.
+    :type client: Client
+    :param edges: List of Edge objects to post.
+    :type edges: list[Edge]
+    :param batch_size: Number of edges per batch. Default: 50000.
+    :type batch_size: int, optional
+
+    :return: List of all posted Edge objects across all batches.
+    :rtype: list[Edge]
+    """
     num_edges = len(edges)
     result = []
     for i in tqdm(range(0, num_edges, batch_size), total=(num_edges // batch_size + 1)):
@@ -1775,6 +1897,21 @@ def post_bulk_edges(client, edges, batch_size = 50000):
     return result
 
 def post_bulk_tags(client, tags, batch_size = 50000):
+    """Post a large list of Tags in batches with a progress bar.
+
+    Splits the tag list into chunks of ``batch_size`` and posts each chunk
+    via ``client.post_tags()``. Returns all posted Tag objects.
+
+    :param client: Client used to post the Tags.
+    :type client: Client
+    :param tags: List of Tag objects to post.
+    :type tags: list[Tag]
+    :param batch_size: Number of tags per batch. Default: 50000.
+    :type batch_size: int, optional
+
+    :return: List of all posted Tag objects across all batches.
+    :rtype: list[Tag]
+    """
     num_tags = len(tags)
     result = []
     for i in tqdm(range(0, num_tags, batch_size), total=(num_tags // batch_size + 1)):
@@ -1975,7 +2112,7 @@ def get_invitation_source(invitation, domain):
     meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
     rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
 
-    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else { 'venueid': submission_venue_id }
+    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else {}
 
     ## Deprecated, user source as dictionary
     if isinstance(source, str):
@@ -2012,17 +2149,20 @@ def get_invitation_source(invitation, domain):
         source['content'][key] = value
     ##
 
-    print('transformed source', source)
     return source
 
-def should_match_invitation_source(client, invitation, submission, note=None):
+def should_match_invitation_source(client, invitation, submission, note=None, domain=None):
     """
     Checks if the invitation source matches the submission and note.
     """
 
-    domain = client.get_group(submission.domain)
+    if domain is None:
+        domain = client.get_group(submission.domain)
 
     source = get_invitation_source(invitation, domain)
+
+    if not source:
+        return False
 
     if submission.content['venueid']['value'] not in source.get('venueid', []):
         return False
@@ -2044,62 +2184,67 @@ def should_match_invitation_source(client, invitation, submission, note=None):
             if value != submission.content.get(key, {}).get('value'):
                 return False
 
-    if 'with_decision_accept' in source:
-        with_decision_accept = source.get('with_decision_accept')
-        print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
+    if 'with_decision_accept' in source or 'decision_options' in source:
         decision_invitation_id = f'{domain.id}/{domain.content["submission_name"]["value"]}{submission.number}/-/{domain.content.get("decision_name", {}).get("value", "Decision")}'
         replies = submission.details.get('replies', submission.details.get('directReplies'))
         if replies is None:
             decision_notes = client.get_notes(forum=submission.id, invitation=decision_invitation_id)
         else:
             decision_notes = [openreview.api.Note.from_json(note) for note in replies if note['invitations'][0] == decision_invitation_id]
-        
+
         if not decision_notes:
             return False
 
-        accept_options = domain.content.get('accept_decision_options', {}).get('value')
         decision_value = decision_notes[0].content[domain.content.get('decision_field_name', {}).get('value', 'decision')]['value']
-        if is_accept_decision(decision_value, accept_options) != with_decision_accept:
+
+        if 'decision_options' in source:
+            decision_options = source.get('decision_options')
+            if decision_value not in decision_options:
+                return False
+        elif 'with_decision_accept' in source:
+            with_decision_accept = source.get('with_decision_accept')
+            print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
+            accept_options = domain.content.get('accept_decision_options', {}).get('value')
+            if is_accept_decision(decision_value, accept_options) != with_decision_accept:
+                return False
+
+    if invitation.edit:
+        content_keys = invitation.edit.get('content', {}).keys()
+
+        if 'withdrawalId' in content_keys:
             return False
 
-    
-    content_keys = invitation.edit.get('content', {}).keys()
-    
-    if not content_keys:
-        return False
-    
-    if 'withdrawalId' in content_keys:
-        return False
-    
-    if 'deskRejectionId' in content_keys:
-        return False
-    
-    if 'noteReaders' in content_keys:
-        return False
-    
-    if 'noteId' not in content_keys:
-        return False
-    
-    if 'noteNumber' not in content_keys:
-        return False
+        if 'deskRejectionId' in content_keys:
+            return False
 
-    if note and 'replyto' not in content_keys:
-        return False
+        if 'noteReaders' in content_keys:
+            return False
+
+        if content_keys and 'noteId' not in content_keys:
+            return False
+
+        if content_keys and 'noteNumber' not in content_keys:
+            return False
+
+        if note and 'replyto' not in content_keys:
+            return False
     
     return True
 
 def is_forum_invitation(invitation):
 
-    content_keys = invitation.edit.get('content', {}).keys()
-    
-    if 'noteId' not in content_keys:
-        return False
-    
-    if 'noteNumber' not in content_keys:
-        return False
-    
-    if 'replyto' in content_keys:
-        return False
+    if invitation.edit:
+
+        content_keys = invitation.edit.get('content', {}).keys()
+
+        if 'noteId' not in content_keys:
+            return False
+
+        if 'noteNumber' not in content_keys:
+            return False
+
+        if 'replyto' in content_keys:
+            return False
 
     return True    
 
@@ -2136,7 +2281,7 @@ def create_replyto_invitations(client, submission, note):
 
 def create_forum_invitations(client, submission):
     
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active()]
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active() and i.date_processes]
 
     for invitation in invitation_invitations:
         print('processing invitation: ', invitation.id)
@@ -2171,4 +2316,93 @@ def singularize(word):
         return word[:-2]
     elif word.endswith('s'):
         return word[:-1]
-    return word                    
+    return word
+
+def get_all_attachments(client, venueid, field_name, output_dir=None):
+    """
+    Downloads the attachments of all the notes with the given ``venueid`` and extracts them into a directory.
+
+    The files are requested sequentially in batches of 50 ids, the max number of ids supported by the API,
+    and each batch is returned as a zip file that gets extracted into ``output_dir``.
+    Notes that don't have a file in ``field_name`` are skipped.
+
+    :param client: Client used to get the submissions and the attachments
+    :type client: openreview.api.OpenReviewClient
+    :param venueid: Value of the ``venueid`` content field, like ``auai.org/UAI/2026/Conference``
+    :type venueid: str
+    :param field_name: Name of the content field that contains the attachment, like ``pdf`` or ``latex_source_zip``
+    :type field_name: str
+    :param output_dir: Directory where the files are extracted, it gets created if it doesn't exist.
+        Defaults to a directory named after ``field_name``
+    :type output_dir: str, optional
+
+    :return: Paths of the downloaded files
+    :rtype: list[str]
+
+    Example:
+
+    >>> files = openreview.tools.get_all_attachments(client, venueid='auai.org/UAI/2026/Conference', field_name='latex_source_zip')
+
+    """
+    output_dir = output_dir or field_name
+
+    submissions = client.get_all_notes(content={ 'venueid': venueid }, sort='number:asc')
+    notes = [s for s in submissions if s.content.get(field_name, {}).get('value')]
+
+    print(f'{len(notes)} submissions out of {len(submissions)} have a file in {field_name}')
+
+    if not notes:
+        return []
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    ## The API returns the file itself instead of a zip file when only one id is requested
+    if len(notes) == 1:
+        note = notes[0]
+        extension = note.content[field_name]['value'].split('.')[-1]
+        file_path = os.path.join(output_dir, f'{note.number}_{field_name}.{extension}')
+        with open(file_path, 'wb') as f:
+            f.write(client.get_attachment(id=note.id, field_name=field_name))
+        return [file_path]
+
+    batch_size = 50
+    batches = [notes[i:i + batch_size] for i in range(0, len(notes), batch_size)]
+
+    ## Avoid leaving a single note in the last batch, it would not return a zip file either
+    if len(batches[-1]) == 1:
+        batches[-1].insert(0, batches[-2].pop())
+
+    file_paths = []
+    for batch in tqdm(batches, desc='Downloading attachments'):
+        archive_content = client.get_attachment(ids=[note.id for note in batch], field_name=field_name)
+        with zipfile.ZipFile(io.BytesIO(archive_content)) as archive:
+            for member in archive.infolist():
+                file_path = os.path.join(output_dir, member.filename)
+                with archive.open(member) as source, open(file_path, 'wb') as target:
+                    shutil.copyfileobj(source, target)
+
+                file_paths.append(file_path)
+
+    return file_paths
+
+def percentile(data, percent):
+    """Return the percentile value from *data* using linear interpolation,
+    matching the behaviour of numpy.percentile with the default 'linear' method.
+
+    *percent* may be an int or float in [0, 100].
+    *data* must be a non-empty sequence of numbers.
+    """
+    if not data:
+        raise ValueError("data must be non-empty")
+    sorted_data = sorted(data)
+    n = len(sorted_data)
+    if n == 1:
+        return sorted_data[0]
+    # NumPy linear interpolation: index = percent/100 * (n - 1)
+    idx = percent / 100.0 * (n - 1)
+    lo = int(idx)
+    hi = lo + 1
+    if hi >= n:
+        return sorted_data[-1]
+    frac = idx - lo
+    return sorted_data[lo] + frac * (sorted_data[hi] - sorted_data[lo])

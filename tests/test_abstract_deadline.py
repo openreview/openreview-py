@@ -39,8 +39,6 @@ class TestAbstractDeadline():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'full_submission_deadline': { 'value': openreview.tools.datetime_millis(full_submission_due_date) },
-                    'reviewers_name': { 'value': 'Reviewers' },
-                    'area_chairs_name': { 'value': 'Area_Chairs' },
                     'expected_submissions': { 'value': 20 },
                     'venue_organizer_agreement': { 
                         'value': [
@@ -51,8 +49,6 @@ class TestAbstractDeadline():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
-                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                     }
                 }
@@ -136,7 +132,47 @@ class TestAbstractDeadline():
         assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Bid')
         assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Venue_Information')
         assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Author_Reviews_Notification')
-        assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Author_Decision_Notification')
+        assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Author_Accept_Decision_Notification')
+        assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Author_Reject_Decision_Notification')
+
+    def test_submission_full_submission_dates_validation(self, openreview_client, helpers):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@emas.cc', password=helpers.strong_password)
+
+        submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission')
+        full_submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission')
+
+        # sanity check: the Full_Submission activation date currently matches the Submission expiration date exactly
+        assert full_submission_inv.edit['invitation']['cdate'] == submission_inv.expdate
+
+        # extending the Submission deadline so its expiration date moves past the Full_Submission
+        # activation date should be rejected by edit_submission_dates_preprocess.py
+        new_duedate = submission_inv.duedate + (24*60*60*1000)  # push due date forward by 1 day
+        with pytest.raises(openreview.OpenReviewException, match=r'Submission expiration date must be less than or equal to the Full Submission activation date'):
+            pc_client.post_invitation_edit(
+                invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission/Dates',
+                content={
+                    'activation_date': { 'value': submission_inv.cdate },
+                    'due_date': { 'value': new_duedate }
+                }
+            )
+
+        # moving the Full_Submission activation date earlier than the current Submission expiration date
+        # should be rejected by edit_full_submission_dates_preprocess.py
+        earlier_cdate = submission_inv.expdate - (60*60*1000)  # 1 hour before the current expiration date
+        with pytest.raises(openreview.OpenReviewException, match=r'Full Submission activation date must be later than or equal to the Submission deadline \+ grace period \(30 minutes\)'):
+            pc_client.post_invitation_edit(
+                invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission/Dates',
+                content={
+                    'activation_date': { 'value': earlier_cdate },
+                    'due_date': { 'value': full_submission_inv.edit['invitation']['duedate'] },
+                    'expiration_date': { 'value': full_submission_inv.edit['invitation']['expdate'] }
+                }
+            )
+
+        # neither invitation should have been modified by the rejected edits
+        assert pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission').duedate == submission_inv.duedate
+        assert pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission').edit['invitation']['cdate'] == full_submission_inv.edit['invitation']['cdate']
 
     def test_update_submission_deadline(self, openreview_client, helpers):
 
@@ -148,7 +184,47 @@ class TestAbstractDeadline():
 
         submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission')
 
-        # extend Submission duedate with Submission/Deadline invitation
+        with pytest.raises(openreview.OpenReviewException, match=r'The field due_date value cannot be empty or missing'):
+        # try to remove submission deadline, should not be allowed
+            edit = pc_client.post_invitation_edit(
+                invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission/Dates',
+                content={
+                    'activation_date': { 'value': submission_inv.cdate },
+                    'due_date': { 'value': None }
+                }
+            )
+
+        new_expdate = new_duedate + (30*60*1000)
+
+        # extending the Submission deadline so its expiration date would move past the Full_Submission
+        # activation date is rejected until the Full_Submission dates are moved forward first
+        with pytest.raises(openreview.OpenReviewException, match=r'Submission expiration date must be less than or equal to the Full Submission activation date'):
+            pc_client.post_invitation_edit(
+                invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission/Dates',
+                content={
+                    'activation_date': { 'value': submission_inv.cdate },
+                    'due_date': { 'value': new_duedate }
+                }
+            )
+
+        # PCs now move the Full_Submission activation date forward explicitly, since it is no
+        # longer kept in sync automatically with the Submission deadline
+        full_submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission')
+        edit = pc_client.post_invitation_edit(
+            invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission/Dates',
+            content={
+                'activation_date': { 'value': new_expdate },
+                'due_date': { 'value': full_submission_inv.edit['invitation']['duedate'] },
+                'expiration_date': { 'value': full_submission_inv.edit['invitation']['expdate'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission-0-1', count=2)
+
+        full_submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission')
+        assert full_submission_inv.edit['invitation']['cdate'] == new_expdate
+
+        # extend Submission duedate with Submission/Dates invitation, now that it no longer conflicts
         edit = pc_client.post_invitation_edit(
             invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission/Dates',
             content={
@@ -158,10 +234,11 @@ class TestAbstractDeadline():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Message-0-1', count=2)
 
+        # Full_Submission dates are no longer changed as a side effect of the Submission deadline edit
         full_submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission')
-        assert full_submission_inv.edit['invitation']['cdate'] == new_duedate + (30*60*1000)
+        assert full_submission_inv.edit['invitation']['cdate'] == new_expdate
 
         # assert other invitations were not changed
         withdrawal_invitation = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Withdrawal')
@@ -176,9 +253,15 @@ class TestAbstractDeadline():
         post_submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission_Change_Before_Bidding')
         assert post_submission_inv.cdate == full_submission_inv.edit['invitation']['expdate']
 
+        # Deletion cdate is no longer synced with the Submission deadline directly, but it does still
+        # track the Full_Submission cdate, which we moved forward above
         deletion_invitation = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Deletion')
         assert deletion_invitation.edit['invitation']['cdate'] == full_submission_inv.edit['invitation']['cdate']
-        assert deletion_invitation.edit['invitation']['expdate'] == full_submission_inv.edit['invitation']['expdate']
+        assert deletion_invitation.edit['invitation']['expdate'] == full_submission_inv.edit['invitation']['duedate'] + (30*60*1000)
+
+        submission_message_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Message')
+        assert submission_message_inv and submission_message_inv.cdate == new_duedate + (30*60*1000)
+        assert submission_message_inv.edit['invitation']['cdate'] == new_duedate + (30*60*1000)
 
     def test_update_full_submission_deadline(self, openreview_client, helpers):
 
@@ -189,9 +272,12 @@ class TestAbstractDeadline():
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=6))
         new_expdate = new_duedate + (30*60*1000)
 
+        full_submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission')
+
         edit = pc_client.post_invitation_edit(
             invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission/Dates',
             content={
+                'activation_date': { 'value': full_submission_inv.edit['invitation']['cdate'] },
                 'due_date': { 'value': new_duedate },
                 'expiration_date': { 'value': new_expdate }
             }
@@ -215,6 +301,8 @@ class TestAbstractDeadline():
         assert post_submission_inv.cdate == new_expdate
         deletion_invitation = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Deletion')
         assert deletion_invitation.edit['invitation']['expdate'] == new_expdate
+        # cdate was left unchanged on Full_Submission in this edit, so Deletion cdate tracks that
+        assert deletion_invitation.edit['invitation']['cdate'] == full_submission_inv.edit['invitation']['cdate']
 
     def test_post_submissions(self, openreview_client, test_client, helpers):
 
@@ -228,8 +316,20 @@ class TestAbstractDeadline():
                 content = {
                     'title': { 'value': 'Test Submission 1' },
                     'abstract': { 'value': 'This is an abstract for submission 1' },
-                    'authors': { 'value': ['SomeFirstName User', 'AuthorOne EMAS'] },
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~AuthorOne_EMAS1'] },
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'AuthorOne EMAS',
+                                'username': '~AuthorOne_EMAS1',
+                                'institutions': [{ 'domain': 'emas.cc', 'country': 'US' }]
+                            }
+                        ]
+                    },
                     'keywords': { 'value': ['machine learning', 'artificial intelligence'] },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
                     'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
@@ -260,7 +360,26 @@ class TestAbstractDeadline():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Deletion-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Message-0-1', count=3)
+
+        # enable the Full_Submission invitation so per-paper invitations get created for the
+        # already-submitted paper: since its cdate is no longer synced from the Submission
+        # deadline automatically, the PC needs to move it into the past explicitly
+        submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission')
+        full_submission_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission')
+        edit = pc_client.post_invitation_edit(
+            invitations='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission/Dates',
+            content={
+                'activation_date': { 'value': submission_inv.expdate },
+                'due_date': { 'value': full_submission_inv.edit['invitation']['duedate'] },
+                'expiration_date': { 'value': full_submission_inv.edit['invitation']['expdate'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Deletion-0-1', count=4)
 
         full_submission_invitations = pc_client.get_invitations(invitation='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission')
         assert len(full_submission_invitations) == 1
@@ -273,3 +392,7 @@ class TestAbstractDeadline():
 
         desk_rejection_invitations = pc_client.get_invitations(invitation='ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Desk_Rejection')
         assert len(desk_rejection_invitations) == 0
+
+        submission_message_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Message')
+        assert submission_message_inv and submission_message_inv.cdate == new_duedate + (30*60*1000)
+        assert submission_message_inv.edit['invitation']['cdate'] == new_duedate + (30*60*1000)

@@ -9,11 +9,11 @@
             "name": "pytests",
             "type": "python",
             "request": "launch",
-            "program": "/opt/homebrew/bin/pytest",
+            "module": "pytest",
             "console": "integratedTerminal",
             "justMyCode": true,
             "purpose": [ "debug-test" ],
-            "env": {"PYTEST_ADDOPTS": "--no-cov"}
+            "env": {}
         }
     ]
 }

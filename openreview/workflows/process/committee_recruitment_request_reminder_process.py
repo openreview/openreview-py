@@ -2,14 +2,12 @@ def process(client, edit, invitation):
 
     domain = client.get_group(invitation.domain)
     committee_id = invitation.content['committee_id']['value']
-    committee_group = client.get_group(committee_id)
-    committee_role = committee_group.content['committee_role']['value']
-    committee_invited_id= domain.content[f'{committee_role}_invited_id']['value']
-    committee_id = domain.content[f'{committee_role}_id']['value']
-    committee_declined_id = domain.content[f'{committee_role}_declined_id']['value']
-    committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
-    committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
+    committee_invited_id = f'{committee_id}/Invited'
+    committee_declined_id = f'{committee_id}/Declined'
+    committee_invited_response_id = f'{committee_id}/-/Recruitment_Response'
+    committee_invited_message_id = f'{committee_id}/Invited/-/Message'
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
+    contact_email = domain.get_content_value('contact')
     
     recruitment_status = {
         'reminded': []
@@ -45,8 +43,9 @@ def process(client, edit, invitation):
 
         personalized_message = recruitment_message_content
         personalized_message = personalized_message.replace("{{invitation_url}}", url)
+        personalized_message = personalized_message.replace("{{venue_email}}", contact_email)
 
-        client.post_message(f'{recruitment_message_subject}', [invitee], personalized_message, invitation=committee_invited_message_id)
+        client.post_message(f'{recruitment_message_subject}', [invitee], personalized_message, invitation=committee_invited_message_id, replyTo=contact_email)
 
         return invitee
         

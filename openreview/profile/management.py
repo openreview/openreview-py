@@ -83,7 +83,18 @@ class ProfileManagement():
                             'regex': '.*'
                         }
                     },
-                }
+                },
+                web='''// Webfield component
+return {
+  component: 'ProfileTagsViewer',
+  version: 1,
+  properties: {
+    tagInvitation: entity.id,
+    instructions:'Profiles that were tagged by support staff for moderation reasons.',
+    title: 'Moderation Labels'
+  }
+}
+'''
             )
         )
 
@@ -95,7 +106,7 @@ class ProfileManagement():
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Profile_Blocked_Status',
-                readers=[self.support_group_id],
+                readers=[self.support_group_id, 'active_venues'],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
                 invitees=[self.support_group_id],
@@ -140,7 +151,18 @@ class ProfileManagement():
                             'regex': '.*'
                         }
                     },
-                }
+                },
+                web='''// Webfield component
+return {
+  component: 'ProfileTagsViewer',
+  version: 1,
+  properties: {
+    tagInvitation: entity.id,
+    instructions:'Profiles blocked from participating in venues. This tag is added by support staff after reviewing the user\\'s profile and activity history. If you think this is a mistake, please contact support.',
+    title: 'Blocked Profiles'
+  }
+}
+'''
             )
         )                
     
@@ -149,10 +171,16 @@ class ProfileManagement():
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Vouch',
-                readers=[self.support_group_id],
+                readers=['everyone'],
                 writers=[self.support_group_id],
                 signatures=[self.support_group_id],
-                invitees=[self.support_group_id],
+                invitees=['~'],
+                preprocess=self.get_process_content('process/vouch_pre_process.py'),
+                process=self.get_process_content('process/vouch_process.py'),
+                content={
+                    'lifetimeLimit': { 'value': 20 },
+                    'monthLimit': { 'value': 5 }
+                },
                 tag={
                     'id': {
                         'param': {
@@ -178,8 +206,25 @@ class ProfileManagement():
                         'param': {
                             'regex': '^~.*'
                         }
+                    },
+                    'label': {
+                        'param': {
+                            'regex': '.*',
+                            'optional': True
+                        }
                     }
-                }
+                },
+                web='''// Webfield component
+return {
+  component: 'ProfileTagsViewer',
+  version: 1,
+  properties: {
+    tagInvitation: entity.id,
+    instructions:'Profiles that have been activated because another OpenReview user vouched for them.',
+    title: 'Vouched Profiles'
+  }
+}
+'''
             )
         )
 
@@ -210,9 +255,9 @@ class ProfileManagement():
             signatures = [self.super_user],
             invitation = openreview.api.Invitation(
                 id=self.public_article_meta_invitation_id,
-                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
-                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
-                signatures=[self.public_article_group_id],                
+                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
+                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
+                signatures=[self.public_article_group_id],
                 edit=True
             )
         )
@@ -222,6 +267,7 @@ class ProfileManagement():
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.public_article_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=authorship_claim_invitation_id,
                 readers=['everyone'],
@@ -263,6 +309,15 @@ class ProfileManagement():
                                 }
                             }
                         },
+                        'author_name': {
+                            'order': 3,
+                            'description': 'Enter the author name at the given index.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                }
+                            }
+                        },
                     },
                     'note': {
                         'id': {
@@ -271,21 +326,25 @@ class ProfileManagement():
                             }
                         },
                         'content': {
-                            'authorids': {
+                            'authors': {
                                 'order': 2,
                                 'value': {
                                     'param': {
                                         'const': {
                                             'replace': {
                                                 'index': '${6/content/author_index/value}',
-                                                'value': '${6/content/author_id/value}'
+                                                'value': {
+                                                    'fullname': '${7/content/author_name/value}',
+                                                    'username': '${7/content/author_id/value}'
+                                                }
                                             }
-                                        }
+                                        },
+                                        'hidden': True
                                     }
                                 }
                             }
                         }
-                    }                                        
+                    }
                 }
             )
         )
@@ -295,17 +354,18 @@ class ProfileManagement():
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.public_article_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=author_removal_invitation_id,
                 readers=['everyone'],
                 writers=[self.public_article_group_id],
                 signatures=[self.public_article_group_id],
                 invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.support_group_id],
-                preprocess=self.get_process_content('process/author_coreference_pre_process.js'),
+                preprocess=self.get_process_content('process/author_removal_pre_process.js'),
                 edit={
                     'readers': ['everyone'],
-                    'signatures': { 
-                        'param': { 
+                    'signatures': {
+                        'param': {
                             'items': [
                                 { 'prefix': '~.*', 'optional': True },
                                 { 'value': self.support_group_id, 'optional': True },
@@ -313,7 +373,7 @@ class ProfileManagement():
                                 { 'value': self.arxiv_group_id, 'optional': True },
                                 { 'value': self.orcid_group_id, 'optional': True }
                             ]
-                        } 
+                        }
                     },
                     'writers':  [self.public_article_group_id],
                     'content': {
@@ -336,6 +396,15 @@ class ProfileManagement():
                                 }
                             }
                         },
+                        'author_name': {
+                            'order': 3,
+                            'description': 'Enter the author name at the given index.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                }
+                            }
+                        },
                     },
                     'note': {
                         'id': {
@@ -344,21 +413,25 @@ class ProfileManagement():
                             }
                         },
                         'content': {
-                            'authorids': {
+                            'authors': {
                                 'order': 2,
                                 'value': {
                                     'param': {
                                         'const': {
                                             'replace': {
                                                 'index': '${6/content/author_index/value}',
-                                                'value': '${6/content/author_id/value}'
+                                                'value': {
+                                                    'fullname': '${7/content/author_name/value}',
+                                                    'username': '${7/content/author_id/value}'
+                                                }
                                             }
-                                        }
+                                        },
+                                        'hidden': True
                                     }
                                 }
                             }
                         }
-                    }                                        
+                    }
                 }
             )
         )        
@@ -873,6 +946,7 @@ class ProfileManagement():
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.dblp_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=record_invitation_id,
                 readers=['everyone'],
@@ -933,24 +1007,19 @@ class ProfileManagement():
                             },
                             'authors': {
                                 'order': 2,
+                                'description': 'Authors of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
                                     }
                                 }
                             },
-                            'authorids': {
-                                'order': 3,
-                                'value': {
-                                    'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                            
                             'venue': {
-                                'order': 4,
+                                'order': 3,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -960,7 +1029,7 @@ class ProfileManagement():
                                 }
                             },
                             'venueid': {
-                                'order': 5,
+                                'order': 4,
                                 'value': {
                                     'param': {
                                         'type': "string",
@@ -1053,12 +1122,14 @@ class ProfileManagement():
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.arxiv_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=record_invitation_id,
                 readers=['everyone'],
                 writers=[self.arxiv_group_id],
                 signatures=[self.arxiv_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 process=self.get_process_content('process/arxiv_record_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -1121,27 +1192,22 @@ class ProfileManagement():
                             },
                             'authors': {
                                 'order': 2,
+                                'description': 'Authors of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
                                     }
                                 }
                             },
-                            'authorids': {
+                            'abstract': {
                                 'order': 3,
+                                'description': 'Abstract of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                             
-                            'abstract': {
-                                'order': 4,
-                                'description': 'Abstract of paper.',
-                                'value': { 
-                                    'param': { 
                                         'type': 'string',
                                         'markdown': True,
                                         'input': 'textarea',
@@ -1150,7 +1216,7 @@ class ProfileManagement():
                                 }
                             },
                             'subject_areas': {
-                                'order': 5,
+                                'order': 4,
                                 'description': 'Subject areas of paper.',
                                 'value': {
                                     'param': {
@@ -1162,7 +1228,7 @@ class ProfileManagement():
                                 }
                             },
                             'pdf': {
-                                'order': 6,
+                                'order': 5,
                                 'description': 'Link to the PDF paper.',
                                 'value': {
                                     'param': {
@@ -1171,9 +1237,9 @@ class ProfileManagement():
                                         'optional': True
                                     }
                                 }
-                            },                                                    
+                            },
                             'venue': {
-                                'order': 7,
+                                'order': 6,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -1184,7 +1250,7 @@ class ProfileManagement():
                                 }
                             },
                             'venueid': {
-                                'order': 8,
+                                'order': 7,
                                 'value': {
                                     'param': {
                                         'type': "string",
@@ -1240,6 +1306,7 @@ class ProfileManagement():
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.orcid_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=record_invitation_id,
                 readers=['everyone'],
@@ -1300,24 +1367,19 @@ class ProfileManagement():
                             },
                             'authors': {
                                 'order': 2,
+                                'description': 'Authors of paper.',
                                 'value': {
                                     'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
                                     }
                                 }
                             },
-                            'authorids': {
-                                'order': 3,
-                                'value': {
-                                    'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                            
                             'venue': {
-                                'order': 4,
+                                'order': 3,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -1327,7 +1389,7 @@ class ProfileManagement():
                                 }
                             },
                             'venueid': {
-                                'order': 5,
+                                'order': 4,
                                 'value': {
                                     'param': {
                                         'type': "string",
@@ -1431,7 +1493,7 @@ class ProfileManagement():
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(                    
                         id=f'{self.support_group_id}/-/Profile_Name_Removal',
-                        readers=['everyone'],
+                        readers=['~'],
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
                         invitees=['~'],
@@ -1597,10 +1659,10 @@ class ProfileManagement():
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(
                         id=f'{self.support_group_id}/-/Profile_Email_Removal',
-                        readers=['everyone'],
+                        readers=[self.support_group_id],
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
-                        invitees=['~'],
+                        invitees=[self.support_group_id],
                         process=file_content,
                         preprocess=pre_file_content,
                         edit={
@@ -1659,6 +1721,7 @@ class ProfileManagement():
                 writers=[self.support_group_id],
                 signatures=[archive_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 

@@ -39,9 +39,7 @@ class TestSLADSJournal():
                 content = {
                     'official_venue_name': {'value': 'Statistical Learning and Data Science'},
                     'abbreviated_venue_name' : {'value': 'SLADS'},
-                    'venue_id': {'value': 'SLADS'},
                     'contact_info': {'value': 'slads@scichina.com'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': '~Ruiyan_Zhang1' },
                     'editors': {'value': ['~Ruiyan_Zhang1', '~Ce_Zhang1'] },
                     'website': {'value': 'data.mlr.press' },
@@ -51,6 +49,7 @@ class TestSLADSJournal():
                             "author_anonymity": True,
                             "eic_submission_notification": True,
                             "AE_anonymity": True,
+                            "reviewer_to_reviewer_anonymity": True,
                             "assignment_delay": 5,
                             "submission_name": "Submission",
                             "issn": "3051-3901",
@@ -94,7 +93,8 @@ class TestSLADSJournal():
                                     }
                                 }
                                 }
-                            }
+                            },
+                            "eic_decision_notification": True
                             }
                     }
                 }
@@ -102,6 +102,50 @@ class TestSLADSJournal():
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'SLADS'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
+
+        under_review_invitation = openreview_client.get_invitation('SLADS/-/Under_Review')
+        assert 'assigned_action_editor' not in under_review_invitation.edit['note']['content']
+        ## a comment with the journal links is posted to the request form after deployment
+        request_note = openreview_client.get_note(request_form['note']['id'])
+        comment_invitation_id = f'openreview.net/Support/Journal_Request{request_note.number}/-/Comment'
+
+        helpers.await_queue_edit(openreview_client, invitation=comment_invitation_id)
+
+        comments = openreview_client.get_notes(invitation=comment_invitation_id, forum=request_note.id)
+        assert len(comments) == 1
+        assert comments[0].replyto == request_note.id
+        assert comments[0].signatures == ['openreview.net/Support']
+        assert comments[0].readers == ['SLADS', 'openreview.net/Support']
+        assert comments[0].content['title']['value'] == 'Your journal is available in OpenReview'
+        comment_text = comments[0].content['comment']['value']
+        assert 'Thank you for choosing OpenReview to host your journal.' in comment_text
+        assert f'We have set up the journal based on the information that you provided here: http://localhost:3030/forum?id={request_note.id}' in comment_text
+        assert '- **Journal home page:** http://localhost:3030/group?id=SLADS\n' in comment_text
+        assert '- **Journal Editors-in-Chief Console:** http://localhost:3030/group?id=SLADS/Editors_In_Chief\n' in comment_text
+        assert f'- **Journal Request Form:** http://localhost:3030/forum?id={request_note.id}\n' in comment_text
+        assert comment_text.endswith('The OpenReview Team')
+
+        ## the EICs get an email about the comment, support does not
+        comment_subject = 'Comment posted to your journal request: Statistical Learning and Data Science'
+
+        for eic_email in ['ruiyan@mail.com', 'ce@mailseven.com']:
+            messages = openreview_client.get_messages(to=eic_email, subject=comment_subject)
+            assert len(messages) == 1
+            assert 'Comment title: Your journal is available in OpenReview' in messages[0]['content']['text']
+            assert f'To view the comment, click here: https://openreview.net/forum?id={request_note.id}&noteId={comments[0].id}' in messages[0]['content']['text']
+
+        messages = openreview_client.get_messages(to='support@openreview.net', subject=comment_subject)
+        assert len(messages) == 0
 
         ## Action Editors
         helpers.create_user('andrew@sladszero.com', 'Jiashun', 'Jin')
@@ -192,7 +236,11 @@ Thanks,
         author_group=openreview_client.get_group("SLADS/Paper1/Authors")
         assert author_group
         assert author_group.members == ['~SomeFirstName_User1', '~Melisa_Amex1']
-        assert openreview_client.get_group("SLADS/Paper1/Reviewers")
+        reviewers_group = openreview_client.get_group("SLADS/Paper1/Reviewers")
+        assert reviewers_group
+        ## reviewer_to_reviewer_anonymity is enabled, so reviewers must NOT be able to deanonymize each other
+        assert reviewers_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+        assert reviewers_group.deanonymizers == ['SLADS', 'SLADS/Paper1/Action_Editors']
         ae_group = openreview_client.get_group("SLADS/Paper1/Action_Editors")
         assert ae_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
 
@@ -205,7 +253,6 @@ Thanks,
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Amex1']
         assert note.content['venue']['value'] == 'Submitted to SLADS'
         assert note.content['venueid']['value'] == 'SLADS/Submitted'
-
 
     def test_review_approval(self, journal, openreview_client, helpers):
 
@@ -225,8 +272,13 @@ Thanks,
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        note = openreview_client.get_note(note_id_1)
+        assert note.content['assigned_action_editor']['value'] == '~Jiashun_Jin1'
+        assert note.content['assigned_action_editor']['readers'] == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+
         ae_group = ce_client.get_group('SLADS/Paper1/Action_Editors')
         assert ae_group.members == ['~Jiashun_Jin1']
+        assert ae_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
 
         messages = journal.client.get_messages(to = 'andrew@sladszero.com', subject = '[SLADS] Assignment to new SLADS submission 1: Paper title')
         assert len(messages) == 1
@@ -252,7 +304,8 @@ Please note that responding to this email will direct your reply to slads@scichi
 
         andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'SLADS/Paper1/Action_Editor_.*', signatory='~Jiashun_Jin1')
         assert len(andrew_paper1_anon_groups) == 1
-        graham_paper1_anon_group = andrew_paper1_anon_groups[0]         
+        graham_paper1_anon_group = andrew_paper1_anon_groups[0]
+        assert graham_paper1_anon_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers', graham_paper1_anon_group.id]
 
         ## Accept the submission 1
         under_review_note = andrew_client.post_note_edit(invitation= 'SLADS/Paper1/-/Review_Approval',
@@ -283,6 +336,20 @@ year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
+
+        # after approval, AE is still anonymous to authors
+        note = openreview_client.get_note(note_id_1)
+        assert note.content['assigned_action_editor']['value'] == '~Jiashun_Jin1'
+        assert note.content['assigned_action_editor']['readers'] == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+
+        ae_group = ce_client.get_group('SLADS/Paper1/Action_Editors')
+        assert ae_group.members == ['~Jiashun_Jin1']
+        assert ae_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+
+        andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'SLADS/Paper1/Action_Editor_.*', signatory='~Jiashun_Jin1')
+        assert len(andrew_paper1_anon_groups) == 1
+        graham_paper1_anon_group = andrew_paper1_anon_groups[0]
+        assert graham_paper1_anon_group.readers == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers', graham_paper1_anon_group.id]
 
         edits = openreview_client.get_note_edits(note.id, invitation='SLADS/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
@@ -435,3 +502,107 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'slads@scichina.com'
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,\n\nThe discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.\n\nThe SLADS Editors-in-Chief\n\n\nPlease note that responding to this email will direct your reply to slads@scichina.com.\n'''
+
+    def test_preferred_emails_invitation(self, openreview_client, helpers):
+
+        invitation = openreview.tools.get_invitation(openreview_client, 'SLADS/-/Preferred_Emails')
+        assert invitation
+
+        group = openreview_client.get_group('SLADS/Preferred_Emails_Readers')
+        assert group
+        assert group.members == ['SLADS', 'SLADS/Action_Editors']
+
+         ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='SLADS/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='SLADS/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='SLADS/-/Preferred_Emails-0-0', count=2)
+
+        # 1 AE, 3 Reviewers and 2 authors
+        assert openreview_client.get_edges_count(invitation='SLADS/-/Preferred_Emails') == 6
+        edge = openreview_client.get_edges(invitation='SLADS/-/Preferred_Emails', head='~Melisa_Amex1')[0]
+        assert edge.readers == ['SLADS/Preferred_Emails_Readers', '~Melisa_Amex1']
+        edge = openreview_client.get_edges(invitation='SLADS/-/Preferred_Emails', head='~SomeFirstName_User1')[0]
+        assert edge.readers == ['SLADS/Preferred_Emails_Readers', '~SomeFirstName_User1']
+
+    def test_decision(self, journal, openreview_client, helpers):
+
+        david_client = OpenReviewClient(username='david@sladsone.com', password=helpers.strong_password)
+        david_anon_groups=david_client.get_groups(prefix=f'SLADS/Paper1/Reviewer_.*', signatory='~David_Box1')
+        carlos_client = OpenReviewClient(username='carlos@sladsthree.com', password=helpers.strong_password)
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'SLADS/Paper1/Reviewer_.*', signatory='~Carlos_Gex1')
+
+
+        # post official recommendations and review ratings to enable decision stage
+        official_recommendation_note = carlos_client.post_note_edit(invitation=f'SLADS/Paper1/-/Official_Recommendation',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'No' },
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'comment': { 'value': 'I recommend this paper to be rejected because...' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        official_recommendation_note = david_client.post_note_edit(invitation=f'SLADS/Paper1/-/Official_Recommendation',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'claims_and_evidence': { 'value': 'No' },
+                    'audience': { 'value': 'No' },
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'comment': { 'value': 'I recommend this paper to be rejected because...' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        reviews=openreview_client.get_notes(invitation='SLADS/Paper1/-/Review', sort='number:asc')
+
+        andrew_client = OpenReviewClient(username='andrew@sladszero.com', password=helpers.strong_password)
+        andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'SLADS/Paper1/Action_Editor_.*', signatory='~Jiashun_Jin1')
+
+        for review in reviews:
+            signature=review.signatures[0]
+            rating_note=andrew_client.post_note_edit(invitation=f'{signature}/-/Rating',
+                signatures=[andrew_paper1_anon_groups[0].id],
+                note=Note(
+                    content={
+                        'rating': { 'value': 'Exceeds expectations' }
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+
+        # post decision
+        decision_note = andrew_client.post_note_edit(invitation=f'SLADS/Paper1/-/Decision',
+            signatures=[andrew_paper1_anon_groups[0].id],
+            note=Note(
+                content={
+                    'claims_and_evidence': { 'value': 'No' },
+                    'audience': { 'value': 'No' },
+                    'recommendation': { 'value': 'Reject' },
+                    'comment': { 'value': 'This is not a good paper' },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        messages = openreview_client.get_messages(to = 'andrew@sladszero.com', subject = '[SLADS] Decision posted on submission 1: Paper title')
+        assert len(messages) == 1
+
+        # decision email should be sent to EICs too
+        messages = openreview_client.get_messages(to = 'ruiyan@mail.com', subject = '[SLADS] Decision posted on submission 1: Paper title')
+        assert len(messages) == 1

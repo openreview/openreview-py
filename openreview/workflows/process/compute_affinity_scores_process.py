@@ -12,6 +12,8 @@ def process(client, invitation):
     venue_id = domain.id
     committee_name = invitation.get_content_value('committee_name')
     committee_id = f'{venue_id}/{committee_name}'
+    alternate_committee_id = invitation.get_content_value('alternate_committee_id')
+    alternate_committee_name = alternate_committee_id.split('/')[-1] if alternate_committee_id else None
     status_invitation_id = domain.get_content_value('status_invitation_id')
     request_form_id = domain.get_content_value('request_form_id')
 
@@ -30,7 +32,7 @@ def process(client, invitation):
                 signatures=[venue_id],
                 content={
                     'title': { 'value': f'{committee_name.replace("_", " ").title()} Affinity Scores Computation Failed' },
-                    'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid affinity score model to use. Please re-schedule this process to run at a later time and then select a valid model.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split(prefix)[-1].replace("_", " ").replace("/-/", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Model" invitation, select a valid affinity score model to use and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid model. Once you have selected the model, click "Submit" and the process will automatically be scheduled to run shortly.'}
+                    'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid affinity score model to use. Please re-schedule this process to run at a later time and then select a valid model.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?id={venue_id}), find and expand the "Create {invitation.id.split(prefix)[-1].replace("_", " ").replace("/-/", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Model" invitation, select a valid affinity score model to use and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid model. Once you have selected the model, click "Submit" and the process will automatically be scheduled to run shortly.'}
                 }
             )
         )
@@ -39,13 +41,18 @@ def process(client, invitation):
     venue = openreview.helpers.get_venue(client, venue_id, support_user)
 
     match_group = client.get_group(committee_id)
+    alternate_match_group = client.get_group(alternate_committee_id) if alternate_committee_id else None
 
     if not match_group.members:
-        print(f'No members found in the {committee_name} group. No affinnity scores were computed')
+        print(f'No members found in the {committee_name} group. No affinity scores were computed')
+        return
+
+    if alternate_match_group and not alternate_match_group.members:
+        print(f'No members found in the {alternate_committee_name} group. No affinity scores were computed')
         return
 
     submissions, num_submissions = client.get_notes(content={ 'venueid': venue.get_submission_venue_id() }, limit=1, with_count=True, domain=venue_id)
-    if not num_submissions:
+    if not num_submissions and not alternate_match_group:
         print(f'No submissions found for the venue {venue_id}. No affinity scores were computed')
         return
 
@@ -54,7 +61,8 @@ def process(client, invitation):
     try:
         matching_status = venue.setup_committee_matching(
             committee_id=committee_id,
-            compute_affinity_scores=affinity_scores_model
+            compute_affinity_scores=affinity_scores_model,
+            alternate_matching_group=alternate_committee_id
         )
     except Exception as e:
         if 'Submissions not found.' in str(e):
@@ -63,7 +71,7 @@ def process(client, invitation):
             matching_status['error'] = f'Could not compute affinity scores and conflicts since there are no {committee_name}.'
         elif 'The alternate match group is empty' in str(e):
             role_name = venue.get_area_chairs_name()
-            matching_status['error'] = f'Could not compute affinity scores and conflicts since there are no {role_name}.'
+            matching_status['error'] = f'Could not compute affinity scores and conflicts since there are no {alternate_committee_name}.'
         else:
             matching_status['error'] = str(e)
 

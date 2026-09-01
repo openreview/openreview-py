@@ -46,6 +46,8 @@ class Workflows():
         self.set_conference_review_comment()
         self.set_conference_review_status_comment()
         self.set_conference_review_internal_status()
+        self.set_conference_review_cancel_request()
+        self.set_conference_feedback_form()
 
     def get_process_content(self, file_path):
         process = None
@@ -103,7 +105,7 @@ class Workflows():
 
         invitation = Invitation(
             id = conference_venue_invitation_id,
-            invitees = ['everyone'],
+            invitees = ['~'],
             readers = ['everyone'],
             writers = [],
             signatures = [super_id],
@@ -225,23 +227,37 @@ class Workflows():
                                 'param': {
                                     'type': 'date',
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
-                        'reviewers_name': {
-                            'order': 11,
-                            'description': 'Please provide the designated name to be used for reviewers. Default is "Reviewers".',
+                        'reviewer_groups_names': {
+                            'order': 12,
+                            'description': 'Please provide the designated name to be used for reviewers. Use underscores for spaces and capitalize as needed. Leave empty to use the default "Reviewers".',
                             'value': {
                                 'param': {
-                                    'type': 'string',
+                                    'type': 'string[]',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Reviewers'
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'submission_reviewer_group_names': {
+                            'order': 13,
+                            'description': 'Please provide the name(s) of the reviewer groups to be created for each submission. Provide one name to put every reviewer role into the same group per submission, or one name per reviewer role, in the same order, to give each role its own group. Leave empty to use the first reviewer role name.',
+                            'value': {
+                                'param': {
+                                    'type': 'string[]',
+                                    'regex': '^[a-zA-Z_]+$',
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
                         'area_chairs_support': {
-                            'order': 12,
+                            'order': 14,
                             'description': "Does your venue have area chairs? Leave unchecked if your venue does not have area chairs.",
                             'value': {
                                 'param': {
@@ -253,19 +269,57 @@ class Workflows():
                                 }
                             }
                         },
-                        'area_chairs_name': {
-                            'order': 13,
-                            'description': 'Please provide the designated name to be used for area chairs. Use underscores for spaces and capitalize as needed. Default is "Area_Chairs". Ignore if your venue does not have area chairs.',
+                        'area_chair_groups_names': {
+                            'order': 15,
+                            'description': 'Please provide the designated name to be used for area chairs. Use underscores for spaces and capitalize as needed. Leave empty to use the default "Area_Chairs". Ignore if your venue does not have area chairs.',
                             'value': {
                                 'param': {
-                                    'type': 'string',
+                                    'type': 'string[]',
                                     'regex': '^[a-zA-Z_]+$',
-                                    'default': 'Area_Chairs'
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'submission_area_chair_group_names': {
+                            'order': 16,
+                            'description': 'Please provide the name(s) of the area chair groups to be created for each submission. Provide one name to put every area chair role into the same group per submission, or one name per area chair role, in the same order, to give each role its own group. Leave empty to use the first area chair role name. Ignore if your venue does not have area chairs.',
+                            'value': {
+                                'param': {
+                                    'type': 'string[]',
+                                    'regex': '^[a-zA-Z_]+$',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'senior_area_chairs_support': {
+                            'order': 17,
+                            'description': "Does your venue have senior area chairs? Leave unchecked if your venue does not have senior area chairs. In order to have senior area chairs, your venue must also have area chairs.",
+                            'value': {
+                                'param': {
+                                    'type': "boolean",
+                                    'enum': [{ 'value': True, 'description': 'Yes, my venue does have Senior Area Chairs.'}],
+                                    'input': 'checkbox',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'senior_area_chair_groups_names': {
+                            'order': 18,
+                            'description': 'Please provide the designated name to be used for senior area chairs. Use underscores for spaces and capitalize as needed. Leave empty to use the default "Senior_Area_Chairs". Ignore if your venue does not have senior area chairs.',
+                            'value': {
+                                'param': {
+                                    'type': 'string[]',
+                                    'regex': '^[a-zA-Z_]+$',
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
                         'colocated': {
-                            'order': 14,
+                            'order': 19,
                             'description': 'Please provide the name of the conference, organization, or academic institution with which your event is colocated. If your event is independent of a conference or organization, you can leave this blank or write "independent"',
                             'value': {
                                 'param': {
@@ -277,7 +331,7 @@ class Workflows():
                             }
                         },
                         'previous_venue': {
-                            'order': 15,
+                            'order': 20,
                             'description': 'If possible, please provide a link to the previous iteration of this venue on OpenReview.',
                             'value': {
                                 'param': {
@@ -289,7 +343,7 @@ class Workflows():
                             }
                         },
                         'expected_submissions': {
-                            'order': 16,
+                            'order': 21,
                             'description': 'How many submissions do you expect to receive for this venue? Please provide a number. This will help us plan for the expected load on our servers.',
                             'value': {
                                 'param': {
@@ -299,7 +353,7 @@ class Workflows():
                             }
                         },
                         'how_did_you_hear_about_us': {
-                            'order': 17,
+                            'order': 22,
                             'description': 'How did you hear about OpenReview?',
                             'value': {
                                 'param': {
@@ -312,7 +366,7 @@ class Workflows():
                             }
                         },
                         'other_important_information': {
-                            'order': 18,
+                            'order': 23,
                             'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
                             'value': {
                                 'param': {
@@ -324,8 +378,25 @@ class Workflows():
                                 }
                             }
                         },
+                        'release_role_participation': {
+                            'order': 24,
+                            'description': 'Should role participation be collected for all participants—including reviewers, area chairs, senior area chairs, program chairs, publication chairs, workflow chairs, and any other role—and made publicly available in the OpenReview profile of each participant? Select "No" if you do not want this information to become public.',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [
+                                        { 'value': True, 'description': 'Yes, collect role participation and make it publicly available in each participant\'s OpenReview profile.' },
+                                        { 'value': False, 'description': 'No, do not make role participation publicly available.' }
+                                    ],
+                                    'input': 'radio',
+                                    'default': True,
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
                         'venue_organizer_agreement': {
-                            'order': 19,
+                            'order': 25,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {
@@ -337,9 +408,7 @@ class Workflows():
                                         { 'value': 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'description': 'We acknowledge that, if our venue’s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'optional': True},
                                         { 'value': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'description': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'optional': True},
                                         { 'value': 'We will treat the OpenReview staff with kindness and consideration.', 'description': 'We will treat the OpenReview staff with kindness and consideration.', 'optional': True},
-                                        { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True},
-                                        { 'value': 'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.', 'description': 'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.', 'optional': True},
-                                        { 'value': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'description': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'optional': True}
+                                        { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True}
                                     ],
                                     'input': 'checkbox'
                                 }
@@ -350,16 +419,6 @@ class Workflows():
                         'param': {
                             'withInvitation': conference_venue_invitation_id,
                             'optional': True
-                        }
-                    },
-                    'ddate': {
-                        'param': {
-                            'range': [
-                                0,
-                                9999999999999
-                            ],
-                            'optional': True,
-                            'deletable': True
                         }
                     }
                 }
@@ -407,6 +466,16 @@ class Workflows():
                                 'param': {
                                     'type': 'string',
                                     'regex': '.*'
+                                }
+                            }
+                        },
+                        'redeployment': {
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio',
+                                    'optional': True
                                 }
                             }
                         }
@@ -656,6 +725,236 @@ class Workflows():
                                 }
                             },
                             'readers': [support_group_id],
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def set_conference_review_cancel_request(self):
+
+        super_id = self.super_id
+        support_group_id = self.support_group_id
+        cancel_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Cancel_Request'
+
+        invitation = Invitation(id=cancel_invitation_id,
+            invitees=[support_group_id, '~'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[super_id],
+            edit = {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': support_group_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id, '${2/signatures}'],
+                'writers': [support_group_id, '${2/signatures}'],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow',
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def set_conference_feedback_form(self):
+
+        support_group_id = self.support_group_id
+        feedback_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Feedback'
+
+        invitation = Invitation(id=feedback_invitation_id,
+            invitees=[support_group_id],
+            readers=[support_group_id],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            content={
+                'comment_process_script': {
+                    'value': self.get_process_content('workflow_process/venue_comment_process.py')
+                }
+            },
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_id': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.*'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${2/content/noteNumber/value}' + '/-/Feedback',
+                    'signatures': [self.super_id],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': [support_group_id],
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'maxReplies': 1,
+                    'description': 'We would love to hear your feedback about your experience managing your venue on OpenReview. Please share any comments, suggestions, or feedback you have about your experience, including any features you found particularly helpful, any parts of the process you found frustrating or unclear, and any other thoughts you have about how we can improve the OpenReview experience for venue organizers in the future.',
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                'items': [
+                                    { 'value': support_group_id, 'optional': True },
+                                    { 'prefix': '~.*', 'optional': True}
+                                ]
+                            }
+                        },
+                        'readers': ['${2/note/readers}'],
+                        'writers': [support_group_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${6/content/noteNumber/value}' + '/-/Feedback',
+                                    'optional': True
+                                }
+                                },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': [support_group_id, '${5/content/venue_id/value}'],
+                            'writers': ['${3/signatures}'],
+                            'content': {
+                                'overall_rating': {
+                                    'order': 1,
+                                    'description': 'How would you rate your overall experience with managing your venue? (5 = excellent, 1 = very poor)',
+                                    'value': {
+                                        'param': {
+                                            'type': 'integer',
+                                            'enum': [
+                                                { 'value': 5, 'description': '5: Excellent - Intuitive and easy to understand'},
+                                                { 'value': 4, 'description': '4: Good - Mostly able to run the conference with little assistance'},
+                                                { 'value': 3, 'description': '3: Fair - Some features were confusing, but figured out navigation over time'},
+                                                { 'value': 2, 'description': '2: Poor - Struggled to navigate the UI, but documentation helped; some OpenReview support needed'},
+                                                { 'value': 1, 'description': '1: Very poor - Could not navigate the UI; documentation did not help; needed OpenReview support for basic tasks'}
+                                            ],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'support_resources_accessed': {
+                                    'order': 2,
+                                    'description': 'Which forms of support did you access while managing your venue? Select all that apply.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'enum': [
+                                                'OpenReview support team',
+                                                'OpenReview documentation site',
+                                                'OpenReview GitHub',
+                                                'Workflow step timeline descriptions',
+                                                'LLM (ChatGPT, Claude, etc)',
+                                                'Colleagues',
+                                                'Other external sources',
+                                                'None of the above'
+                                            ],
+                                            'input': 'checkbox'
+                                        }
+                                    }
+                                },
+                                'positives': {
+                                    'order': 3,
+                                    'description': 'What went well with your experience with the OpenReview platform? Please describe any features you found particularly helpful, or anything that went smoothly during your experience.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                },
+                                'pain_points': {
+                                    'order': 4,
+                                    'description': 'What parts of the experience were unclear, frustrating, or blocking? For example the venue editing, submission, recruitment, assignments, or decision process. Specific examples will help us improve the tool. Please describe any bugs, unclear labels, or unexpected behavior you encountered.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                },
+                                'new_feature_requests': {
+                                    'order': 5,
+                                    'description': 'Are there any new features you would like to see in OpenReview? Please describe any features you wish had been available during your experience managing your venue.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea',
+                                            'optional': True
+                                        }
+                                    }
+                                },
+                                'other_comments': {
+                                    'order': 6,
+                                    'description': 'Use this space to share any other feedback that is not reflected in the questions above. We are especially interested in any support resources you wish had been available during your experience managing your venue.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea',
+                                            'optional': True
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

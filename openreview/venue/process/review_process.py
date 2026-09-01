@@ -22,10 +22,14 @@ def process(client, edit, invitation):
     email_reviewers = parent_invitation.get_content_value('email_reviewers') or 'submission_reviewers' in users_to_notify
     email_authors = parent_invitation.get_content_value('email_authors') or 'submission_authors' in users_to_notify
 
+    # The roles this review invitation is wired to (set in set_review_invitation).
+    # Falls back to the umbrella reviewers_name for back-compat with older invitations.
+    reviewer_roles = parent_invitation.get_content_value('reviewer_roles', [reviewers_name])
+
     submission = client.get_note(edit.note.forum)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
-    paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
-    paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
+    paper_reviewers_ids = [f'{paper_group_id}/{role}' for role in reviewer_roles]
+    paper_reviewers_submitted_ids = [f'{paper_reviewers_id}/{reviewers_submitted_name}' for paper_reviewers_id in paper_reviewers_ids]
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
     paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
 
@@ -60,7 +64,13 @@ def process(client, edit, invitation):
             )
         )
 
-    create_group(paper_reviewers_submitted_id, [review.signatures[0]])
+    # Match the anon signature to its role by prefix: e.g.
+    # 'venue/Submission1/Expert_Reviewer_XYCV' belongs to role 'Expert_Reviewers'.
+    for role in reviewer_roles:
+        anon_prefix = f'{paper_group_id}/{role[:-1] if role.endswith("s") else role}_'
+        if review.signatures[0].startswith(anon_prefix):
+            create_group(f'{paper_group_id}/{role}/{reviewers_submitted_name}', [review.signatures[0]])
+            break
 
     capital_review_name = review_name.replace('_', ' ')
     review_name = capital_review_name.lower()
@@ -121,12 +131,15 @@ Paper title: {submission.content['title']['value']}
         )
 
     if email_reviewers:
-        if 'everyone' in review.readers or paper_reviewers_id in review.readers:
+        role_recipients = [role_id for role_id in paper_reviewers_ids if role_id in review.readers]
+        submitted_recipients = [submitted_id for submitted_id in paper_reviewers_submitted_ids if submitted_id in review.readers]
+        if 'everyone' in review.readers or role_recipients:
+            recipients = role_recipients if role_recipients else paper_reviewers_ids
             client.post_message(
                 invitation=meta_invitation_id,
                 signature=venue_id,
                 sender=sender,
-                recipients=[paper_reviewers_id],
+                recipients=recipients,
                 ignoreRecipients=ignore_groups,
                 replyTo=contact,
                 subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
@@ -139,13 +152,13 @@ Paper title: {submission.content['title']['value']}
 {content}
 '''
             )
-        elif paper_reviewers_submitted_id in review.readers:
+        elif submitted_recipients:
             print('emailing reviewers who have submitted')
             client.post_message(
                 invitation=meta_invitation_id,
                 signature=venue_id,
                 sender=sender,
-                recipients=[paper_reviewers_submitted_id],
+                recipients=submitted_recipients,
                 ignoreRecipients=ignore_groups,
                 replyTo=contact,
                 subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',

@@ -519,7 +519,7 @@ class Templates():
             }
         )
 
-        self.post_invitation_edit(invitation)
+        return self.post_invitation_edit(invitation)
 
     def setup_committee_group_recruitment_template_invitation(self):
 
@@ -531,7 +531,6 @@ class Templates():
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/committee_invited_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -551,6 +550,16 @@ class Templates():
                                 'type': 'string'
                             }
                         }
+                    },
+                    'committee_pretty_name': {
+                        'order': 3,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -559,7 +568,7 @@ class Templates():
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Invited',
-                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue.',
+                    'description': 'Group consisting of the users who have been invited to serve as ${2/content/committee_pretty_name/value} for the venue.',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Invited'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -596,6 +605,16 @@ class Templates():
                                 'type': 'string'
                             }
                         }
+                    },
+                    'committee_pretty_name': {
+                        'order': 3,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -604,7 +623,7 @@ class Templates():
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Declined',
-                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue and have declined the invitation.',
+                    'description': 'Group consisting of the users who have been invited to serve as ${2/content/committee_pretty_name/value} for the venue and have declined the invitation.',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Declined'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -673,15 +692,6 @@ class Templates():
                             }
                         }
                     },
-                    'venue_contact': {
-                        'order': 5,
-                        'description': 'Venue contact email address',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },                    
                     'reminder_delay': {
                         'order': 4,
                         'description': 'Number of seconds to wait before sending a reminder',
@@ -787,7 +797,7 @@ Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact ${7/content/venue_contact/value}.
+If you have any questions, please contact {{venue_email}}.
 
 Cheers!
 
@@ -861,15 +871,6 @@ Program Chairs'''
                             }
                         }
                     },
-                    'venue_contact': {
-                        'order': 5,
-                        'description': 'Venue contact email address',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },                   
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -929,7 +930,7 @@ Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact ${7/content/venue_contact/value}.
+If you have any questions, please contact {{venue_email}}.
 
 Cheers!
 
@@ -1147,15 +1148,6 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'message_reply_to': {
-                        'order': 3,
-                        'description': 'Venue reply to address',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
                     'venue_short_name': {
                         'order': 4,
                         'description': 'Venue shot name',
@@ -1184,7 +1176,7 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Message any group members',
                     'message': {
-                        'replyTo': '${3/content/message_reply_to/value}',
+                        'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'inGroup': '${5/content/group_id/value}' } },
@@ -1222,15 +1214,6 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'message_reply_to': {
-                        'order': 3,
-                        'description': 'Venue reply to address',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
                     'venue_short_name': {
                         'order': 4,
                         'description': 'Venue shot name',
@@ -1259,11 +1242,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Message any group members',
                     'message': {
-                        'replyTo': '${3/content/message_reply_to/value}',
+                        'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'regex': '${5/content/venue_id/value}.*' } },
-                        'parentGroup': '${3/content/venue_id/value}',
+                        'parentGroup': { 'param': { 'prefix': '${5/content/venue_id/value}', 'optional': True } },
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/venue_short_name/value}',
@@ -1445,11 +1428,19 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/email_authors_template_process.py'),
+            content={
+                'accept_message': {
+                    'value': 'Hi {{{{fullname}}}},\n\nWe are delighted to inform you that your submission has been accepted. Congratulations!\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n{short_name} Program Chairs'
+                },
+                'reject_message': {
+                    'value': 'Hi {{{{fullname}}}},\n\nWe regret to inform you that your submission was not accepted. We encourage you to consider the feedback provided and submit to future venues.\n\n{formatted_decision}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}\n\nBest,\n{short_name} Program Chairs'
+                }
+            },
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
-                            { 'prefix': '~.*', 'optional': True },
+                            { 'prefix': '.*', 'optional': True },
                             { 'value': self.template_domain, 'optional': True }
                         ]
                     }
@@ -1471,13 +1462,12 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Decision_Notification.',
+                        'description': 'Name for this step, use underscores to represent spaces.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Author_Decision_Notification'
+                                'regex': '^[a-zA-Z0-9_]*$'
                             }
                         }
                     },
@@ -1509,11 +1499,11 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                     'message_reply_to': {
-                        'order': 3,
+                    'decision': {
                         'value': {
                             'param': {
-                                'type': 'string'
+                                'type': 'string',
+                                'regex': '.*'
                             }
                         }
                     }
@@ -1535,12 +1525,12 @@ If you would like to change your decision, please follow the link in the previou
                         'subject': {
                             'value': '[${4/content/short_name/value}] The decision for your submission #{submission_number}, titled "{submission_title}" is now available'
                         },
-                        'message': {
-                            'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the decision for your submission #{submission_number}, "{submission_title}", to ${4/content/short_name/value} is now available.\n\n{formatted_decision}\n\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}'
+                        'decision_option': {
+                            'value': '${4/content/decision/value}'
                         }
                     },
                     'message': {
-                        'replyTo': '${3/content/message_reply_to/value}',
+                        'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
@@ -1628,13 +1618,6 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
-                    },
-                     'message_reply_to': {
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1659,7 +1642,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'message': {
-                        'replyTo': '${3/content/message_reply_to/value}',
+                        'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
@@ -1730,8 +1713,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
                     'authors_name': {
-                        'order': 4,
                         'description': 'Author\'s group name',
                         'value': {
                             'param': {
@@ -1742,24 +1735,50 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Authors'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'decision_option': {
+                        'value': {
+                            'param': {
+                                'type': "string",
+                                'enum': ['Accepted', 'Rejected']
+                            }
+                        }
+                    },
+                    'decision_venue_id': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*'
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/submission_name/value}_Release',
+                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option/value}_${2/content/submission_name/value}_Release',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'This step runs automatically at its "activation date", and releases submissions to the public. Configure which submissions (all submissions or only accepted submissions) to release to the public.',
+                    'description': 'This step releases ${2/content/decision_option/value} submissions to the specified readers, as well as author identities if this option is selected.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')
                     }],
                     'content': {
-                        'source': {
-                            'value': 'accepted_submissions'
+                        'decision_option': {
+                            'value': '${4/content/decision_option/value}'
                         }
                     },
                     'edit': {
@@ -1788,17 +1807,24 @@ If you would like to change your decision, please follow the link in the previou
                                 }
                             },
                             'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
-                            'readers': ['everyone'],
+                            'readers': [
+                                '${5/content/venue_id/value}',
+                                '${5/content/additional_readers/value}',
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/reviewers_name/value}',
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
+                            ],
                             'writers': [
                                 '${5/content/venue_id/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'content': {
                                 'authors': {
-                                    'readers': { 'param': { 'regex': '.*', 'deletable': True } }
-                                },
-                                'authorids': {
-                                    'readers': { 'param': { 'regex': '.*', 'deletable': True } }
+                                    'readers': {
+                                        'param': {
+                                            'regex': '.*',
+                                            'deletable': True
+                                        }
+                                    }
                                 },
                                 'venue': {
                                     'value': {
@@ -1811,8 +1837,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'venueid': {
                                     'value': {
                                         'param': {
-                                            'type': 'string',
-                                            'regex': '.*'
+                                            'const': '${8/content/decision_venue_id/value}'
                                         }
                                     }
                                 },

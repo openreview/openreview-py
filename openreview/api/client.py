@@ -19,6 +19,7 @@ import re
 import time
 import jwt
 import json
+import csv
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from ..openreview import MfaRequiredException
@@ -85,6 +86,7 @@ class OpenReviewClient(object):
         self.profiles_rename = self.baseurl + '/profiles/rename'
         self.relation_readers_url = self.baseurl + '/settings/relationReaders'
         self.profiles_moderate = self.baseurl + '/profile/moderate'
+        self.profile_documents_url = self.baseurl + '/profile-documents'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -101,6 +103,7 @@ class OpenReviewClient(object):
         self.group_edits_url = self.baseurl + '/groups/edits'
         self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
+        self.domains_restriction = self.baseurl + '/domains/restriction'
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
         self.mfa_challenge_url = self.baseurl + '/mfa/challenge'
         self.mfa_verify_url = self.baseurl + '/mfa/verify'
@@ -121,17 +124,44 @@ class OpenReviewClient(object):
             'Accept': 'application/json'
         }
 
-        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=True)
+        retry_params = dict(
+            total=8,
+            connect=1,
+            backoff_factor=1,
+            backoff_max=120,
+            backoff_jitter=1,
+            status_forcelist=[ 429, 500, 502, 503, 504 ],
+            raise_on_status=False,
+            respect_retry_after_header=True
+        )
+        retry_strategy = LogRetry(**retry_params)
+        # Same retry policy, differing only in allowed_methods: POST is added so edit
+        # posts are retried on 429/5xx. Edit posts are safe to retry (re-posting the
+        # same edit converges to the same entity) and the API reserves 5xx for server
+        # faults — deliberate rejections such as process function validation return
+        # 400, which is never retried. Other POSTs (e.g. messages) are not idempotent
+        # and keep urllib3's default allowed_methods, which exclude POST.
+        edits_retry_strategy = LogRetry(
+            allowed_methods=frozenset(['HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST']),
+            **retry_params
+        )
         self.session = requests.Session()
-        adapter = HTTPAdapter(max_retries=retry_strategy)
+        adapter = HTTPAdapter(max_retries=retry_strategy, pool_maxsize=128)
+        edits_adapter = HTTPAdapter(max_retries=edits_retry_strategy, pool_maxsize=128)
         self.session.mount('https://', adapter)
         self.session.mount('http://', adapter)
+        # requests picks the longest matching prefix, so only the edits endpoints
+        # get the POST-retrying adapter
+        for edits_url in [self.note_edits_url, self.invitation_edits_url, self.group_edits_url]:
+            self.session.mount(edits_url, edits_adapter)
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
-            self.user = jwt.decode(self.token, options={"verify_signature": False})
             try:
-                self.profile = self.get_profile()
+                payload = jwt.decode(self.token, options={"verify_signature": False})
+                self.user = payload.get('user', payload)
+                user_id = self.user.get('profile', {}).get('id') or self.user.get('id')
+                self.profile = self.get_profile(user_id) if user_id else None
             except:
                 self.profile = None
         else:
@@ -226,14 +256,13 @@ class OpenReviewClient(object):
         })
 
     def __await_process(self, edit_id):
-    
+
         process_logs = self.get_process_logs(id=edit_id)
         if not process_logs:
             return ## no process function found
-        
-        for i in range(100):
 
-            print('Check logs for process function', process_logs[0])
+        for i in range(1200):  # 1200 × 0.5s = 10 minutes
+
             if process_logs[0]['status'] == 'ok':
                 return
             elif process_logs[0]['status'] == 'error':
@@ -242,7 +271,7 @@ class OpenReviewClient(object):
             time.sleep(0.5)
             process_logs = self.get_process_logs(id=edit_id)
 
-        raise OpenReviewException("Process timed out")    
+        raise OpenReviewException("Process timed out")
 
     def get_invitation_date_process_job(self, job_id):
         response = self.session.get(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/' + job_id.replace('/', '%2F'), params = {}, headers = self.headers)
@@ -253,9 +282,26 @@ class OpenReviewClient(object):
         response = self.session.post(self.baseurl + '/invitations/dateprocesses', json = { 'ids': [invitation_id]}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
+
+    def delete_invitation_date_process_scheduler(self, job_id):
+        response = self.session.delete(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/schedulers/' + job_id.replace('/', '%2F'), headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
     
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
+        """Impersonate a group by obtaining a new authentication token scoped to the given group.
+
+        Replaces the current client session token with a token that authorizes
+        requests as the specified group. The client's profile and authorization
+        headers are updated in place.
+
+        :param group_id: ID of the group to impersonate (e.g., a venue ID such as ``ICML.cc/2024/Conference``).
+        :type group_id: str
+
+        :return: Dictionary containing the new authentication token and user information.
+        :rtype: dict
+        """
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
@@ -291,7 +337,7 @@ class OpenReviewClient(object):
         self.__handle_authorization(json_response)
         return json_response
 
-    def register_user(self, email = None, fullname = None, password = None):
+    def register_user(self, email = None, fullname = None, password = None, dob = None):
         """
         Registers a new user
 
@@ -301,6 +347,8 @@ class OpenReviewClient(object):
         :type fullname: str, optional
         :param password: Password used to log into OpenReview
         :type password: str, optional
+        :param dob: Date of birth as epoch milliseconds. Mandatory when the API is configured with profile.requireDob
+        :type dob: int, optional
 
         :return: Dictionary containing the new user information including his id, username, email(s), readers, writers, etc.
         :rtype: dict
@@ -310,6 +358,8 @@ class OpenReviewClient(object):
             'fullname': fullname,
             'password': password
         }
+        if dob is not None:
+            register_payload['dob'] = dob
         response = self.session.post(self.register_url, json = register_payload, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
@@ -343,7 +393,9 @@ class OpenReviewClient(object):
         response = self.session.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
-        self.__handle_authorization(json_response)
+        ## A profile pending moderation is activated without an authentication token
+        if json_response.get('token'):
+            self.__handle_authorization(json_response)
 
         return json_response
 
@@ -381,6 +433,20 @@ class OpenReviewClient(object):
     
     
     def post_note_edit_as_guest(self, token, edit):
+        """Post a note edit as a guest user using a guest token.
+
+        Submits a note edit without requiring a logged-in session. The guest
+        token is sent via the ``X-Guest-Token`` header instead of the standard
+        ``Authorization`` header.
+
+        :param token: Guest authentication token (e.g., provided via an invitation link).
+        :type token: str
+        :param edit: Dictionary representing the note edit to post, following the same schema as :meth:`post_note_edit`.
+        :type edit: dict
+
+        :return: Dictionary containing the posted edit, including the assigned edit ``id``.
+        :rtype: dict
+        """
         headers = {
             'User-Agent': self.user_agent,
             'Accept': 'application/json',
@@ -786,17 +852,18 @@ class OpenReviewClient(object):
         return response.content
 
     def get_venues(self, id=None, ids=None, invitations=None):
-        """
-        Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
+        """Get a list of Venue objects based on the filters provided.
 
-        :param id: a Venue ID. If provided, returns Notes whose ID matches the given ID.
+        Returns Venues matching all the criteria passed in the parameters.
+
+        :param id: A Venue ID. If provided, returns the Venue whose ID matches the given ID.
         :type id: str, optional
-        :param ids: A list of Venue IDs. If provided, returns Notes containing these IDs.
-        :type ids: list, optional
-        :param invitations: A list of Invitation IDs. If provided, returns Venues whose "invitation" field is this Invitation ID.
-        :type invitations: list, optional
+        :param ids: A list of Venue IDs. If provided, returns Venues whose IDs are in this list.
+        :type ids: list[str], optional
+        :param invitations: A list of Invitation IDs. If provided, returns Venues whose ``invitation`` field matches one of these IDs.
+        :type invitations: list[str], optional
 
-        :return: List of Venues
+        :return: List of Venues.
         :rtype: list[dict]
         """
         params = {}
@@ -812,6 +879,18 @@ class OpenReviewClient(object):
 
         return response.json()['venues']
     
+    def get_meta_invitation_id(self):
+        """
+        Returns the super user meta invitation id: ``openreview.net/-/Edit`` for local
+        environments and ``OpenReview.net/-/Edit`` for the live site.
+
+        :return: Meta invitation id
+        :rtype: str
+        """
+        if 'localhost' in self.baseurl:
+            return 'openreview.net/-/Edit'
+        return 'OpenReview.net/-/Edit'
+
     def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None):
         """
         Updates the domain for an entire venue
@@ -836,20 +915,81 @@ class OpenReviewClient(object):
 
 
         response = self.__handle_response(response)
-        return response.json()    
+        result = response.json()
+
+        ## The rename is processed asynchronously. Wait for the specific rename job to finish
+        ## (its id is returned in the response) before doing any post-processing, so we don't
+        ## race with the server-side rename (which would leave the venue half-renamed).
+        job_id = result.get('jobId')
+        if job_id:
+            wait_time = 0.5
+            max_iterations = int(600 / wait_time)
+            for _ in range(max_iterations):
+                try:
+                    job = self.get_job('internalQueueMQ', job_id)
+                except OpenReviewException as e:
+                    error = e.args[0] if e.args else {}
+                    message = error.get('message', '') if isinstance(error, dict) else str(error)
+                    ## the job finished and was removed from the queue
+                    if error.get('name') == 'NotFoundError' or 'not found' in message.lower():
+                        break
+                    raise
+                if not job or job.get('finishedOn'):
+                    break
+                time.sleep(wait_time)
+
+        ## Make sure the parent groups for the new venue id exist (e.g. ICML.org and
+        ## ICML.org/2023 for ICML.org/2023/Conference), creating any that are missing the
+        ## same way the venue group builder does.
+        path_components = new_venue_id.split('/')
+        paths = ['/'.join(path_components[0:index + 1]) for index in range(len(path_components))]
+        for path in paths:
+            if tools.get_group(self, path) is None:
+                self.post_group_edit(
+                    invitation = self.get_meta_invitation_id(),
+                    readers = ['everyone'],
+                    writers = ['~Super_User1'],
+                    signatures = ['~Super_User1'],
+                    group = Group(
+                        id = path,
+                        readers = ['everyone'],
+                        nonreaders = [],
+                        writers = [path],
+                        signatories = [path],
+                        signatures = ['~Super_User1'],
+                        members = [],
+                        details = { 'writable': True }
+                    )
+                )
+
+        ## The old venue id no longer exists after the rename. Replace it with the new venue
+        ## id in the active_venues/venues groups so the renamed venue stays registered and no
+        ## stale member is left behind (which would break jobs that iterate these groups).
+        for group_id in ['active_venues', 'venues']:
+            try:
+                group = self.get_group(group_id)
+            except OpenReviewException as e:
+                error = e.args[0]
+                if error.get('name') == 'NotFoundError' or error.get('message', '').startswith('Group Not Found'):
+                    continue
+                raise e
+            if old_venue_id in (group.members or []):
+                self.remove_members_from_group(group_id, old_venue_id)
+                self.add_members_to_group(group_id, new_venue_id)
+
+        return response.json()
 
     def put_attachment(self, file_path, invitation, name):
-        """
-        Uploads a file to the openreview server
+        """Upload a file attachment to the OpenReview server.
 
-        :param file: Path to the file
-        :type file: str
-        :param invitation: Invitation of the note that required the attachment
-        :type file: str
-        :param file: name of the note field to save the attachment url
-        :type file: str
+        :param file_path: Path to the local file to upload.
+        :type file_path: str
+        :param invitation: Invitation ID of the note that requires the attachment.
+        :type invitation: str
+        :param name: Name of the note content field where the attachment URL will be stored (e.g., ``pdf``, ``supplementary_material``).
+        :type name: str
 
-        :return: A relative URL for the uploaded file
+        :return: A relative URL for the uploaded file, to be used as the field value in a Note.
         :rtype: str
         """
 
@@ -910,15 +1050,14 @@ class OpenReviewClient(object):
         return response.json()
 
     def rename_profile(self, current_id, new_id):
-        """
-        Updates a the profile id of a Profile
+        """Rename a Profile by changing its tilde ID.
 
-        :param current_id: Current profile id
-        :type profile: str
-        :param new_id: New profile id
-        :type profile: str
+        :param current_id: Current profile ID (e.g., ``~Old_Name1``).
+        :type current_id: str
+        :param new_id: New profile ID (e.g., ``~New_Name1``).
+        :type new_id: str
 
-        :return: The new updated Profile
+        :return: The updated Profile with the new ID.
         :rtype: Profile
         """
         response = self.session.post(
@@ -983,6 +1122,155 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
+    def create_profile_document_upload_link(self, profile_id, document_type):
+        """
+        Creates a short-lived upload link scoped to one profile and document type.
+        The link can be shared with the profile owner (e.g. in a moderation rejection message)
+        so they can upload the requested document without logging in. This is a support method.
+
+        :param profile_id: Profile id the uploaded document will be attached to
+        :type profile_id: str
+        :param document_type: Type of document the link accepts ('identity' or 'parentalConsent')
+        :type document_type: str
+
+        :return: Dictionary with the keys ``url``, ``token`` and ``expiresAt``
+        :rtype: dict
+        """
+        response = self.session.post(
+            self.profile_documents_url + '/upload-link',
+            json = {
+                'profileId': profile_id,
+                'type': document_type
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return response.json()
+
+    def post_profile_document(self, file_path, token, document_type):
+        """
+        Uploads a profile document using an upload link token. No login is required:
+        the token, minted with :meth:`create_profile_document_upload_link`, authorizes
+        the upload and fixes the target profile and document type.
+
+        :param file_path: Path to the local file to upload
+        :type file_path: str
+        :param token: Upload link token
+        :type token: str
+        :param document_type: Type of document being uploaded ('identity' or 'parentalConsent')
+        :type document_type: str
+
+        :return: Dictionary with the uploaded document metadata (``id``, ``type``, ``filename``, ``size``, ``tcdate``)
+        :rtype: dict
+        """
+        type_url_paths = {
+            'identity': 'identity',
+            'parentalConsent': 'parental-consent'
+        }
+        if document_type not in type_url_paths:
+            raise OpenReviewException(f'Invalid document type: {document_type}')
+
+        with open(file_path, 'rb') as f:
+            response = self.session.post(
+                f'{self.profile_documents_url}/{type_url_paths[document_type]}/{token}',
+                files = { 'file': (os.path.basename(file_path), f) },
+                headers = self.headers)
+
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_profile_documents(self, profile_id, document_type=None, trash=None):
+        """
+        Gets the list of documents uploaded for a profile. This is a support method:
+        users can upload documents but cannot retrieve them.
+
+        :param profile_id: Profile id to list documents for
+        :type profile_id: str
+        :param document_type: Filter by document type ('identity' or 'parentalConsent')
+        :type document_type: str, optional
+        :param trash: If True, include soft-deleted documents (returned with a ``ddate``)
+        :type trash: bool, optional
+
+        :return: List of dictionaries with the document metadata
+        :rtype: list[dict]
+        """
+        params = { 'profileId': profile_id }
+        if document_type is not None:
+            params['type'] = document_type
+        if trash is not None:
+            params['trash'] = trash
+
+        response = self.session.get(self.profile_documents_url, params=tools.format_params(params), headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()['profileDocuments']
+
+    def get_profile_document(self, id):
+        """
+        Downloads a profile document. This is a support method: users can upload
+        documents but cannot retrieve them.
+
+        :param id: Id of the document to download
+        :type id: str
+
+        :return: The binary content of the document
+        :rtype: bytes
+        """
+        response = self.session.get(self.profile_documents_url + '/' + id, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.content
+
+    def delete_profile_document(self, id):
+        """
+        Deletes a profile document. The stored file is removed and the profile owner
+        is notified by email. This is a support method.
+
+        :param id: Id of the document to delete
+        :type id: str
+
+        :return: Status of the request
+        :rtype: dict
+        """
+        response = self.session.delete(self.profile_documents_url + '/' + id, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_identity_documents(self, after=None, limit=None):
+        """
+        Gets the identity documents pending review, oldest first. This is a support method.
+
+        :param after: Document id to start after, for keyset pagination
+        :type after: str, optional
+        :param limit: Maximum number of documents to return
+        :type limit: int, optional
+
+        :return: Dictionary with the keys ``count`` and ``documents``, where each document includes its ``profileId``
+        :rtype: dict
+        """
+        params = {}
+        if after is not None:
+            params['after'] = after
+        if limit is not None:
+            params['limit'] = limit
+
+        response = self.session.get(self.profile_documents_url + '/identity', params=tools.format_params(params), headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def delete_identity_documents(self, profile_id):
+        """
+        Deletes all the identity documents of a profile. The stored files are removed
+        and the profile owner is notified by email. This is a support method.
+
+        :param profile_id: Profile id to delete identity documents for
+        :type profile_id: str
+
+        :return: Dictionary with the key ``deletedCount``
+        :rtype: dict
+        """
+        response = self.session.delete(self.profile_documents_url + '/identity/profiles/' + profile_id, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def update_relation_readers(self, update):
         """
@@ -1544,6 +1832,7 @@ class OpenReviewClient(object):
             paperhash = None,
             forum = None,
             invitation = None,
+            parent_invitations = None,
             replyto = None,
             signature = None,
             transitive_members = None,
@@ -1571,6 +1860,8 @@ class OpenReviewClient(object):
         :type forum: str, optional
         :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
         :type invitation: str, optional
+        :param parent_invitations: An Invitation ID. If provided, returns Notes whose parentInvitations field contains the given Invitation ID.
+        :type parent_invitations: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
         :type replyto: str, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
@@ -1611,6 +1902,8 @@ class OpenReviewClient(object):
             params['forum'] = forum
         if invitation is not None:
             params['invitation'] = invitation
+        if parent_invitations is not None:
+            params['parent_invitations'] = parent_invitations
         if replyto is not None:
             params['replyto'] = replyto
         if signature is not None:
@@ -1638,34 +1931,6 @@ class OpenReviewClient(object):
         if domain is not None:
             params['domain'] = domain
 
-        if 'details' not in params:
-            params['stream'] = True
-            # Handle sort param for local sorting
-            sort_key = None
-            reverse = False
-            if 'sort' in params:
-                # Accept format like "number:asc", "tcdate:desc", etc.
-                valid_fields = {
-                    'number': lambda n: n.number,
-                    'tcdate': lambda n: n.tcdate,
-                    'tmdate': lambda n: n.tmdate,
-                    'cdate': lambda n: n.cdate,
-                    'mdate': lambda n: n.mdate
-                }
-                if ':' in sort:
-                    field, direction = sort.split(':', 1)
-                else:
-                    field, direction = sort, 'desc'
-                if field in valid_fields:
-                    sort_key = valid_fields[field]
-                    reverse = direction == 'desc'
-                    params['sort'] = None  # Remove for API call, sort locally            
-            
-            results = self.get_notes(**params)
-            if sort_key:
-                return sorted(results, key=sort_key, reverse=reverse)
-            return results
-        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):
@@ -1684,11 +1949,26 @@ class OpenReviewClient(object):
         return Edit.from_json(n)
 
     def get_note_edits(self, note_id = None, invitation = None, with_count=None, sort=None, trash=None, limit=None):
-        """
-        Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
+        """Get a list of Edit objects for a Note matching the filters provided.
 
-        :return: List of edits
-        :rtype: list[Edit]
+        Returns edits that match all the criteria passed in the parameters. When
+        ``with_count`` is True, returns a tuple of ``(edits, count)``.
+
+        :param note_id: ID of the Note whose edits to retrieve.
+        :type note_id: str, optional
+        :param invitation: Invitation ID to filter edits by.
+        :type invitation: str, optional
+        :param with_count: If True, also returns the total count of matching edits.
+        :type with_count: bool, optional
+        :param sort: Field to sort results by (e.g., ``tcdate``, ``tmdate``).
+        :type sort: str, optional
+        :param trash: If True, includes soft-deleted edits in the results.
+        :type trash: bool, optional
+        :param limit: Maximum number of edits to return.
+        :type limit: int, optional
+
+        :return: List of Edit objects, or a tuple ``(list[Edit], int)`` when ``with_count`` is True.
+        :rtype: list[Edit] | tuple[list[Edit], int]
         """
         params = {}
         if note_id:
@@ -1802,18 +2082,43 @@ class OpenReviewClient(object):
 
 
     def get_tags(self, id = None, note = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None, domain=None):
-        """
-        Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
+        """Get a list of Tag objects based on the filters provided.
 
-        :param id: A Tag ID. If provided, returns Tags whose ID matches the given ID.
+        Returns Tags matching all the criteria passed in the parameters. When
+        ``with_count`` is True and ``offset`` is not set, returns a tuple of
+        ``(tags, count)``.
+
+        :param id: A Tag ID. If provided, returns the Tag whose ID matches.
         :type id: str, optional
-        :param forum: A Note ID. If provided, returns Tags whose forum matches the given ID.
-        :type forum: str, optional
-        :param invitation: An Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+        :param note: A Note ID. If provided, returns Tags whose ``note`` field matches.
+        :type note: str, optional
+        :param invitation: An Invitation ID. If provided, returns Tags whose ``invitation`` field matches.
         :type invitation: str, optional
+        :param parent_invitations: A list of parent Invitation IDs to filter Tags by.
+        :type parent_invitations: list[str], optional
+        :param forum: A Note ID. If provided, returns Tags whose ``forum`` field matches.
+        :type forum: str, optional
+        :param profile: A Profile ID. If provided, returns Tags associated with this profile.
+        :type profile: str, optional
+        :param signature: A group ID. If provided, returns Tags signed by this group.
+        :type signature: str, optional
+        :param tag: Tag value to filter by.
+        :type tag: str, optional
+        :param limit: Maximum number of Tags to return.
+        :type limit: int, optional
+        :param offset: Number of Tags to skip (for pagination).
+        :type offset: int, optional
+        :param with_count: If True, also returns the total count of matching Tags.
+        :type with_count: bool, optional
+        :param mintmdate: Minimum modification timestamp (in epoch milliseconds). Returns Tags modified on or after this time.
+        :type mintmdate: int, optional
+        :param stream: If True, returns all matching Tags using server-side streaming (ignores ``limit``/``offset``).
+        :type stream: bool, optional
+        :param domain: Venue domain ID; improves query efficiency when the caller is a venue organizer.
+        :type domain: str, optional
 
-        :return: List of tags
-        :rtype: list[Tag]
+        :return: List of Tag objects, or a tuple ``(list[Tag], int)`` when ``with_count`` is True and ``offset`` is None.
+        :rtype: list[Tag] | tuple[list[Tag], int]
         """
         params = {}
 
@@ -1885,14 +2190,39 @@ class OpenReviewClient(object):
         return self.get_tags(**params)
 
     def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, select=None, stream=None, domain=None):
-        """
-        Returns a list of Edge objects based on the filters provided.
+        """Get a list of Edge objects based on the filters provided.
 
-        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
-        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
-        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
-        :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label: Label ID of the match
+        Returns Edges matching all the criteria passed in the parameters. When
+        ``with_count`` is True and ``offset`` is not set, returns a tuple of
+        ``(edges, count)``.
+
+        :param id: An Edge ID. If provided, returns the Edge whose ID matches.
+        :type id: str, optional
+        :param invitation: An Invitation ID. If provided, returns Edges whose ``invitation`` field matches.
+        :type invitation: str, optional
+        :param head: ID of the Edge head entity (type defined by the edge invitation, e.g., a Note ID or Profile ID).
+        :type head: str, optional
+        :param tail: ID of the Edge tail entity (type defined by the edge invitation, e.g., a Note ID or Profile ID).
+        :type tail: str, optional
+        :param label: Label value to filter Edges by.
+        :type label: str, optional
+        :param limit: Maximum number of Edges to return. Default is determined by the server.
+        :type limit: int, optional
+        :param offset: Number of Edges to skip (for pagination).
+        :type offset: int, optional
+        :param with_count: If True, also returns the total count of matching Edges.
+        :type with_count: bool, optional
+        :param trash: If True, includes soft-deleted Edges in the results.
+        :type trash: bool, optional
+        :param select: Comma-separated list of fields to include in the response (e.g., ``id,head,tail``).
+        :type select: str, optional
+        :param stream: If True, returns all matching Edges using server-side streaming (ignores ``limit``/``offset``).
+        :type stream: bool, optional
+        :param domain: Venue domain ID; improves query efficiency when the caller is a venue organizer.
+        :type domain: str, optional
+
+        :return: List of Edge objects, or a tuple ``(list[Edge], int)`` when ``with_count`` is True and ``offset`` is None.
+        :rtype: list[Edge] | tuple[list[Edge], int]
         """
         params = {}
 
@@ -1924,14 +2254,30 @@ class OpenReviewClient(object):
         return edges
 
     def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, trash=None, select=None, domain=None):
-        """
-        Returns a list of Edge objects based on the filters provided.
+        """Get all Edge objects matching the filters using server-side streaming.
 
-        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
-        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
-        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
-        :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label: Label ID of the match
+        Convenience wrapper around :meth:`get_edges` with ``stream=True``, which
+        retrieves all matching Edges without manual pagination.
+
+        :param id: An Edge ID. If provided, returns the Edge whose ID matches.
+        :type id: str, optional
+        :param invitation: An Invitation ID. If provided, returns Edges whose ``invitation`` field matches.
+        :type invitation: str, optional
+        :param head: ID of the Edge head entity.
+        :type head: str, optional
+        :param tail: ID of the Edge tail entity.
+        :type tail: str, optional
+        :param label: Label value to filter Edges by.
+        :type label: str, optional
+        :param trash: If True, includes soft-deleted Edges in the results.
+        :type trash: bool, optional
+        :param select: Comma-separated list of fields to include in the response.
+        :type select: str, optional
+        :param domain: Venue domain ID; improves query efficiency when the caller is a venue organizer.
+        :type domain: str, optional
+
+        :return: List of all matching Edge objects.
+        :rtype: list[Edge]
         """
         params = {
             'id': id,
@@ -1948,15 +2294,26 @@ class OpenReviewClient(object):
         return self.get_edges(**params)
 
     def get_edges_count(self, id=None, invitation=None, head=None, tail=None, label=None, domain=None):
-        """
-        Returns a list of Edge objects based on the filters provided.
+        """Return the count of Edge objects matching the filters provided.
 
-        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
-        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
-        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
-        :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label: Label ID of the match
-        :arg domain: If provided, and the user has the domain as transitive member (venue organizer), it makes the request more efficient.
+        If ``domain`` is not provided but ``invitation`` is, the method attempts
+        to infer the domain from the invitation for more efficient querying.
+
+        :param id: An Edge ID. If provided, counts only the Edge whose ID matches.
+        :type id: str, optional
+        :param invitation: An Invitation ID. If provided, counts Edges whose ``invitation`` field matches.
+        :type invitation: str, optional
+        :param head: ID of the Edge head entity.
+        :type head: str, optional
+        :param tail: ID of the Edge tail entity.
+        :type tail: str, optional
+        :param label: Label value to filter Edges by.
+        :type label: str, optional
+        :param domain: Venue domain ID; improves query efficiency when the caller is a venue organizer.
+        :type domain: str, optional
+
+        :return: Number of Edges matching the filters.
+        :rtype: int
         """
         params = {}
 
@@ -1981,19 +2338,38 @@ class OpenReviewClient(object):
         return response.json()['count']
 
     def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None, trash=None, domain=None):
-        '''
-        Returns a list of JSON objects where each one represents a group of edges.  For example calling this
-        method with default arguments will give back a list of groups where each group is of the form:
-        {id: {head: paper-1} values: [ {tail: user-1}, {tail: user-2} ]}
-        Note: The limit applies to the number of groups returned.  It does not apply to the number of edges within the groups.
+        """Get Edges grouped by a specified field.
 
-        :param invitation:
-        :param groupby:
-        :param select:
-        :param limit:
-        :param offset:
-        :return:
-        '''
+        Returns a list of JSON objects where each one represents a group of Edges.
+        For example, with ``groupby='head'`` each group has the form:
+        ``{id: {head: paper-1}, values: [{tail: user-1}, {tail: user-2}]}``.
+        The ``limit`` applies to the number of groups returned, not the number of
+        Edges within each group.
+
+        :param invitation: An Invitation ID. If provided, returns Edges whose ``invitation`` field matches.
+        :type invitation: str, optional
+        :param head: ID of the Edge head entity to filter by.
+        :type head: str, optional
+        :param tail: ID of the Edge tail entity to filter by.
+        :type tail: str, optional
+        :param label: Label value to filter Edges by.
+        :type label: str, optional
+        :param groupby: Field to group Edges by. Defaults to ``head``.
+        :type groupby: str, optional
+        :param select: Comma-separated list of fields to include in each group's values.
+        :type select: str, optional
+        :param limit: Maximum number of groups to return.
+        :type limit: int, optional
+        :param offset: Number of groups to skip (for pagination).
+        :type offset: int, optional
+        :param trash: If True, includes soft-deleted Edges in the results.
+        :type trash: bool, optional
+        :param domain: Venue domain ID; improves query efficiency when the caller is a venue organizer.
+        :type domain: str, optional
+
+        :return: List of grouped edge dictionaries, each containing ``id`` and ``values`` keys.
+        :rtype: list[dict]
+        """
         params = {}
         params['id'] = None
         params['invitation'] = invitation
@@ -2029,8 +2405,16 @@ class OpenReviewClient(object):
     
     
     def post_edge(self, edge):
-        """
-        Posts the edge. Upon success, returns the posted Edge object.
+        """Post a single Edge to the server.
+
+        Creates or updates an Edge. Upon success, returns the posted Edge
+        object with its server-assigned ``id``.
+
+        :param edge: Edge object to post.
+        :type edge: Edge
+
+        :return: The posted Edge object.
+        :rtype: Edge
         """
         response = self.session.post(self.edges_url, json = edge.to_json(), headers = self.headers)
         response = self.__handle_response(response)
@@ -2049,14 +2433,18 @@ class OpenReviewClient(object):
         return edge_objects
 
     def rename_edges(self, current_id, new_id):
-        """
-        Updates an Edge
+        """Rename all Edges that reference a given ID, replacing it with a new ID.
 
-        :param profile: Edge object
-        :type edge: Edge
+        Updates the ``head`` and ``tail`` fields of all Edges that contain
+        ``current_id``, replacing occurrences with ``new_id``.
 
-        :return: The new updated Edge
-        :rtype: Edge
+        :param current_id: The current ID to find in Edge head/tail fields (e.g., a profile tilde ID).
+        :type current_id: str
+        :param new_id: The new ID to replace it with.
+        :type new_id: str
+
+        :return: List of updated Edge objects.
+        :rtype: list[Edge]
         """
         response = self.session.post(
             self.edges_rename,
@@ -2080,6 +2468,34 @@ class OpenReviewClient(object):
         response = self.session.post(self.venues_url, json=venue, headers=self.headers)
         response = self.__handle_response(response)
 
+        return response.json()
+
+    def restrict(self, venue_id):
+        """
+        Restricts a domain/venue, preventing non-authorized users from accessing its data.
+
+        :param venue_id: the domain/venue ID to restrict
+        :type venue_id: str
+
+        :return: the API response
+        :rtype: dict
+        """
+        response = self.session.post(self.domains_restriction, json={'domain': venue_id, 'action': 'restrict'}, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def unrestrict(self, venue_id):
+        """
+        Removes the restriction from a domain/venue, restoring normal data access.
+
+        :param venue_id: the domain/venue ID to unrestrict
+        :type venue_id: str
+
+        :return: the API response
+        :rtype: dict
+        """
+        response = self.session.post(self.domains_restriction, json={'domain': venue_id, 'action': 'unrestrict'}, headers=self.headers)
+        response = self.__handle_response(response)
         return response.json()
 
     def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
@@ -2200,6 +2616,20 @@ class OpenReviewClient(object):
         :rtype: dict
         """
         response = self.session.delete(self.institutions_url + '/' + institution_id, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def delete_invitation(self, invitation_id):
+        """
+        Deletes the invitation
+
+        :param invitation_id: ID of Invitation to be deleted
+        :type invitation_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.invitations_url, json = {'id': invitation_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -2498,16 +2928,22 @@ class OpenReviewClient(object):
         return response.json()['messages']
 
     def get_process_logs(self, id = None, invitation = None, status = None, min_sdate = None):
-        """
-        **Only for Super User**. Retrieves the logs of the process function executed by an Invitation
+        """Retrieve process function execution logs.
 
-        :param id: Note id
+        **Only for Super User.** Returns log entries for process functions
+        triggered by edits or invitation date processes.
+
+        :param id: Edit ID (the ``id`` returned by a ``post_*_edit`` call) that triggered the process function.
         :type id: str, optional
-        :param invitation: Invitation id that executed the process function that produced the logs
+        :param invitation: Invitation ID to filter logs by the invitation whose process function produced them.
         :type invitation: str, optional
+        :param status: Filter by execution status (e.g., ``ok``, ``error``, ``running``).
+        :type status: str, optional
+        :param min_sdate: Minimum start date in epoch milliseconds. Returns logs started on or after this time.
+        :type min_sdate: int, optional
 
-        :return: Logs of the process
-        :rtype: dict
+        :return: List of process log entry dictionaries, each containing ``id``, ``status``, ``log``, and timestamp fields.
+        :rtype: list[dict]
         """
 
         response = self.session.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status, 'minsdate': min_sdate }, headers = self.headers)
@@ -2531,7 +2967,33 @@ class OpenReviewClient(object):
         return response.json()
 
     def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None, domain=None, await_process=False):
-        """
+        """Create or update an Invitation via the edit system.
+
+        Posts an edit that creates a new Invitation or modifies an existing one.
+        The edit is validated against the parent invitation(s) specified by
+        ``invitations``.
+
+        :param invitations: Parent invitation ID that authorizes this edit (e.g., ``venue/-/Edit``).
+        :type invitations: str
+        :param readers: List of group IDs that can read this edit.
+        :type readers: list[str], optional
+        :param writers: List of group IDs that can modify this edit.
+        :type writers: list[str], optional
+        :param signatures: List of group IDs signing this edit.
+        :type signatures: list[str], optional
+        :param invitation: Invitation object containing the fields to create or update. Use ``invitation.id`` to target an existing Invitation.
+        :type invitation: Invitation, optional
+        :param content: Additional content fields for the edit itself.
+        :type content: dict, optional
+        :param replacement: If True, the edit fully replaces the existing Invitation rather than merging fields.
+        :type replacement: bool, optional
+        :param domain: Domain (venue ID) that this edit belongs to.
+        :type domain: str, optional
+        :param await_process: If True, blocks until the server-side process function completes; raises OpenReviewException on error.
+        :type await_process: bool, optional
+
+        :return: Dictionary containing the posted edit, including the assigned edit ``id``.
+        :rtype: dict
         """
         edit_json = {}
         
@@ -2568,7 +3030,31 @@ class OpenReviewClient(object):
         return response.json()
 
     def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None, nonreaders=None, content=None, await_process=False):
-        """
+        """Create or update a Note via the edit system.
+
+        Posts an edit that creates a new Note or modifies an existing one. The
+        edit is validated against the specified invitation's schema. To update an
+        existing Note, set ``note.id`` to the target Note's ID.
+
+        :param invitation: Invitation ID that defines the schema and permissions for this edit (e.g., ``venue/-/Submission``).
+        :type invitation: str
+        :param signatures: List of group IDs signing this edit.
+        :type signatures: list[str]
+        :param note: Note object containing the fields to create or update. Use ``note.id`` to target an existing Note.
+        :type note: Note, optional
+        :param readers: List of group IDs that can read this edit.
+        :type readers: list[str], optional
+        :param writers: List of group IDs that can modify this edit.
+        :type writers: list[str], optional
+        :param nonreaders: List of group IDs excluded from reading this edit.
+        :type nonreaders: list[str], optional
+        :param content: Additional content fields for the edit itself (not the Note).
+        :type content: dict, optional
+        :param await_process: If True, blocks until the server-side process function completes; raises OpenReviewException on error.
+        :type await_process: bool, optional
+
+        :return: Dictionary containing the posted edit, including the assigned edit ``id`` and the ``note`` with its ``id``.
+        :rtype: dict
         """
         edit_json = {
             'invitation': invitation,
@@ -2599,7 +3085,34 @@ class OpenReviewClient(object):
         return response.json()
 
     def post_group_edit(self, invitation, signatures=None, group=None, readers=None, writers=None, content=None, replacement=None, await_process=False, flush_members_cache=True):
-        """
+        """Create or update a Group via the edit system.
+
+        Posts an edit that creates a new Group or modifies an existing one. The
+        edit is validated against the specified invitation's schema. When the edit
+        modifies group members and the signature matches the domain, the members
+        cache is automatically flushed unless ``flush_members_cache`` is False.
+
+        :param invitation: Invitation ID that defines the schema and permissions for this edit.
+        :type invitation: str
+        :param signatures: List of group IDs signing this edit.
+        :type signatures: list[str], optional
+        :param group: Group object containing the fields to create or update. Use ``group.id`` to target an existing Group.
+        :type group: Group, optional
+        :param readers: List of group IDs that can read this edit.
+        :type readers: list[str], optional
+        :param writers: List of group IDs that can modify this edit.
+        :type writers: list[str], optional
+        :param content: Additional content fields for the edit itself.
+        :type content: dict, optional
+        :param replacement: If True, the edit fully replaces the existing Group rather than merging fields.
+        :type replacement: bool, optional
+        :param await_process: If True, blocks until the server-side process function completes; raises OpenReviewException on error.
+        :type await_process: bool, optional
+        :param flush_members_cache: If True (default), flushes the members cache for affected members when the domain signs the edit.
+        :type flush_members_cache: bool, optional
+
+        :return: Dictionary containing the posted edit, including the assigned edit ``id``.
+        :rtype: dict
         """
         edit_json = {
             'invitation': invitation
@@ -2649,7 +3162,17 @@ class OpenReviewClient(object):
         return response.json()        
 
     def post_edit(self, edit):
-        """
+        """Post an Edit object, routing it to the correct endpoint based on its contents.
+
+        Inspects the serialized edit for the presence of ``note``, ``group``, or
+        ``invitation`` keys and POSTs to the corresponding edits endpoint
+        (``/notes/edits``, ``/groups/edits``, or ``/invitations/edits``).
+
+        :param edit: Edit object to post. Must contain exactly one of ``note``, ``group``, or ``invitation``.
+        :type edit: Edit
+
+        :return: Dictionary containing the posted edit, including the assigned edit ``id``.
+        :rtype: dict
         """
 
         edit_json = edit.to_json()
@@ -2677,6 +3200,41 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def get_job(self, queue_name, job_id):
+        """
+        **Only for Super User**. Retrieves a single job from a queue by id.
+
+        :param queue_name: Name of the queue (e.g. ``internalQueueMQ``)
+        :type queue_name: str
+        :param job_id: Id of the job
+        :type job_id: str
+
+        :return: Job object
+        :rtype: dict
+        """
+        response = self.session.get(f'{self.baseurl}/jobs/queues/{queue_name}/{job_id}', headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def request_raw_expertise(self, expertise_request, baseurl=None):
+        """
+        Calls the Expertise API with a raw expertise request.
+
+        :param expertise_request: Dictionary containing the expertise request to be sent to the Expertise API
+        :type expertise_request: dict
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the response from the Expertise API
+        :rtype: dict
+        """
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
     def request_expertise(self, 
                         name, 
                         group_id, 
@@ -3062,7 +3620,21 @@ class OpenReviewClient(object):
         print('get expertise jobs', response_json)
         return response_json
     
-    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
+    def get_expertise_metadata(self, job_id, baseurl=None):
+
+        print('get expertise metadata', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            print('get expertise metadata localhost, return {}')
+            return {}
+
+        response = self.session.get(base_url + '/expertise/metadata', params = {'jobId': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        response_json = response.json()
+        print('get expertise metadata', response_json)
+        return response_json
+
+    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json'):
 
         print('get expertise results', baseurl, job_id)
         base_url = baseurl if baseurl else self.baseurl
@@ -3070,30 +3642,66 @@ class OpenReviewClient(object):
 
         if base_url.startswith('http://localhost'):
             print('return expertise results localhost, return []')
-            return { 'results': [] }
+            return iter([]) if format == 'csv' else { 'results': [] }
 
         if wait_for_complete:
             call_count = 0
             status_response = self.get_expertise_status(job_id, baseurl=base_url)
             status = status_response.get('status')
-            while status not in ['Completed', 'Error'] and call_count < call_max:
+            status_text = status if isinstance(status, str) else ''
+            while 'Completed' != status_text and 'Error' not in status_text and call_count < call_max:
                 time.sleep(60)
-                status_response = self.get_expertise_status(job_id)
+                status_response = self.get_expertise_status(job_id, baseurl=base_url)
                 status = status_response.get('status')
+                status_text = status if isinstance(status, str) else ''
                 call_count += 1
 
-            if 'Completed' == status:
-                return self.get_expertise_results(job_id, baseurl=base_url)
-            if 'Error' == status:
+            if 'Completed' == status_text:
+                return self.get_expertise_results(job_id, baseurl=base_url, format=format)
+            if 'Error' in status_text:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
+            if format == 'csv':
+                response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
+                response = self.__handle_response(response)
+                print('return expertise results', baseurl, job_id)
+                def _iter_csv_results(response):
+                    try:
+                        yield from csv.DictReader(response.iter_lines(decode_unicode=True))
+                    finally:
+                        response.close()
+                return _iter_csv_results(response)
+
             response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
             response = self.__handle_response(response)
             print('return expertise results', baseurl, job_id)
             return response.json()
+
+    def get_expertise_all_results(self, job_id, baseurl=None, output_filename=None):
+
+        print('get expertise all results', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+
+        if base_url.startswith('http://localhost'):
+            print('return expertise all results localhost, return empty file')
+            if output_filename is None:
+                output_filename = f"{job_id}_scores.pt"
+            open(output_filename, 'wb').close()
+            return output_filename
+
+        if output_filename is None:
+            output_filename = f"{job_id}_scores.pt"
+        response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
+        response = self.__handle_response(response)
+        with response:
+            with open(output_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        print('return expertise all results', baseurl, job_id)
+        return output_filename
 
 
 class Edit(object):
@@ -3296,6 +3904,32 @@ class Note(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
+    @property
+    def authors(self):
+        """
+        Returns the list of author display names, working for both the unified
+        ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
+        """
+        if not self.content:
+            return []
+        authors_value = self.content.get('authors', {}).get('value') or []
+        if authors_value and isinstance(authors_value[0], dict):
+            return [author.get('fullname', '') for author in authors_value]
+        return list(authors_value)
+
+    @property
+    def authorids(self):
+        """
+        Returns the list of author profile IDs / emails, working for both the
+        unified ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
+        """
+        if not self.content:
+            return []
+        authors_value = self.content.get('authors', {}).get('value') or []
+        if authors_value and isinstance(authors_value[0], dict):
+            return [author['username'] for author in authors_value if author.get('username')]
+        return list(self.content.get('authorids', {}).get('value') or [])
+
     def to_json(self):
         """
         Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
@@ -3418,7 +4052,8 @@ class Invitation(object):
         description = None,
         instructions = None,
         guestPosting = None,
-        secret = None):
+        secret = None,
+        humanVerificationRequired = None):
 
         self.id = id
         self.invitations = invitations
@@ -3457,6 +4092,7 @@ class Invitation(object):
         self.instructions = instructions
         self.guestPosting = guestPosting
         self.secret = secret
+        self.humanVerificationRequired = humanVerificationRequired
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -3583,6 +4219,8 @@ class Invitation(object):
             body['guestPosting']=self.guestPosting
         if self.secret is not None:
             body['secret']=self.secret
+        if self.humanVerificationRequired is not None:
+            body['humanVerificationRequired']=self.humanVerificationRequired
         return body
 
     @classmethod
@@ -3649,6 +4287,8 @@ class Invitation(object):
             invitation.guestPosting = i['guestPosting']
         if 'secret' in i:
             invitation.secret = i['secret']
+        if 'humanVerificationRequired' in i:
+            invitation.humanVerificationRequired = i['humanVerificationRequired']
         return invitation
 class Edge(object):
     def __init__(self, head, tail, invitation, domain=None, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):

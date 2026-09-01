@@ -30,7 +30,7 @@ class TestNeurIPSConference():
         helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
         helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair', institution='fb.com')
-        helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution='ibm.com')
+        helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution=['ibm.com', 'mit.edu'])
         helpers.create_user('ac2@gmail.com', 'Area', 'GoogleChair', institution='google.com')
         helpers.create_user('ac3@umass.edu', 'Area', 'UMassChair', institution='umass.edu')
         helpers.create_user('reviewer1@umass.edu', 'Reviewer', 'UMass', institution='umass.edu')
@@ -174,6 +174,9 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
             }
         ))
         helpers.await_queue()
+
+        submission_inv = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Submission')
+        assert submission_inv.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
         request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
@@ -784,7 +787,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Ethics_Reviewers/-/Recruitment', count=1)
 
-        group = client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
+        group = openreview_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
         assert group
         assert len(group.members) == 1
         assert 'reviewerethics@neurips.com' in group.members

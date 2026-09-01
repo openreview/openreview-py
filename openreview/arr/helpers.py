@@ -8,6 +8,7 @@ import time
 from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
+    arr_metareview_recommendation_field,
     arr_submission_content,
     arr_registration_task_forum,
     arr_registration_task,
@@ -16,6 +17,8 @@ from openreview.stages.arr_content import (
     arr_reviewer_ac_recognition_task_forum,
     arr_reviewer_ac_recognition_task,
     arr_max_load_task_forum,
+    arr_voluntary_reviewing_task_forum,
+    arr_voluntary_meta_reviewing_task_forum,
     arr_ethics_max_load_task,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
@@ -35,8 +38,6 @@ from openreview.stages.arr_content import (
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
-    hide_fields_from_public,
-    hide_fields,
     arr_submitted_author_forum,
     arr_submitted_author_content,
     arr_delay_notification_content,
@@ -49,6 +50,7 @@ from openreview.stages.default_content import comment_v2
 
 class ARRWorkflow(object):
     UPDATE_WAIT_TIME = 5000
+    DEFAULT_AUTHOR_RESPONSE_EXTENSION_CRON = '0 */12 * * *'
     CONFIGURATION_INVITATION_CONTENT = {
         "form_expiration_date": {
             "description": "What should the default expiration date be? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). All dates on this form should be in this format.",
@@ -144,12 +146,6 @@ class ARRWorkflow(object):
             "description": "What should be the displayed deadline for the recognition form tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 14,
-            "required": False
-        },
-        "preprint_release_submission_date": {
-            "description": "When should submissions be copied over and the opt-in papers be revealed to the public? This should be done several hours (12+ hours) after the submission deadline.",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 15,
             "required": False
         },
         "setup_sae_ae_assignment_date": {
@@ -320,6 +316,25 @@ class ARRWorkflow(object):
             "order": 45,
             "required": False
         },
+        "author_response_extension_start_date": {
+            "description": "When should the author response extension manager start running?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 58,
+            "required": False
+        },
+        "author_response_extension_end_date": {
+            "description": "When should the author response extension manager stop running?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 59,
+            "required": False
+        },
+        "author_response_extension_cron": {
+            "description": "What cron expression should be used to rerun the author response extension manager?",
+            "default": DEFAULT_AUTHOR_RESPONSE_EXTENSION_CRON,
+            "value-regex": ".*",
+            "order": 60,
+            "required": False
+        },
         "emergency_metareviewing_start_date": {
             "description": "When should the emergency metareviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
@@ -395,64 +410,6 @@ class ARRWorkflow(object):
 }
 
 
-    @staticmethod
-    def _build_preprint_release_edit(client, venue, builder, request_form):
-        venue_id = venue.id
-        submission_stage = venue.submission_stage
-
-        submission_id = submission_stage.get_submission_id(venue)
-
-        hidden_field_names = hide_fields_from_public
-        committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
-        note_content = { f: { 'readers': committee_members } for f in hidden_field_names}
-
-        # Always hide authors and authorids
-        author_readers = [venue_id, venue.get_authors_id(number='${{4/id}/number}')]
-        note_content['authors'] = { 'readers': author_readers }
-        note_content['authorids'] = { 'readers': author_readers }
-        for field in hide_fields:
-            note_content[field] = { 'readers': author_readers }
-
-        edit = {
-            'signatures': [venue_id],
-            'readers': [venue_id, venue.get_authors_id('${{2/note/id}/number}')],
-            'writers': [venue_id],
-            'note': {
-                'id': {
-                    'param': {
-                        'withInvitation': submission_id,
-                        'optional': True
-                    }
-                },
-                'odate': {
-                    'param': {
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
-                    }
-                },
-                'signatures': [ venue.get_authors_id('${{2/id}/number}') ],
-                'readers': ['everyone'],
-                'writers': [venue_id, venue.get_authors_id('${{2/id}/number}')],
-            }
-        }
-
-        note_content['_bibtex'] = {
-            'value': {
-                'param': {
-                    'type': 'string',
-                    'maxLength': 200000,
-                    'input': 'textarea',
-                    'optional': True
-                }
-            }
-        }
-
-        if note_content:
-            edit['note']['content'] = note_content
-
-        return {'edit': edit}
-    
     @staticmethod
     def _extend_desk_reject_verification(client, venue, builder, request_form):
         venue.invitation_builder.set_verification_flag_invitation()
@@ -589,15 +546,6 @@ class ARRWorkflow(object):
         self.workflow_stages = [
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=['preprint_release_submission_date'],
-                super_invitation_id=f"{self.venue_id}/-/Preprint_Release_{venue.submission_stage.name}",
-                stage_arguments={},
-                start_date=self.configuration_note.content.get('preprint_release_submission_date'),
-                process='process/preprint_release_submission_process.py',
-                build_edit=ARRWorkflow._build_preprint_release_edit
-            ),
-            ARRStage(
-                type=ARRStage.Type.PROCESS_INVITATION,
                 required_fields=['setup_shared_data_date', 'previous_cycle'],
                 super_invitation_id=f"{self.venue_id}/-/Share_Data",
                 stage_arguments={
@@ -683,6 +631,25 @@ class ARRWorkflow(object):
                 stage_arguments={},
                 start_date=self.configuration_note.content.get('close_author_response_date'),
                 process='management/setup_rebuttal_end.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['author_response_extension_start_date', 'author_response_extension_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/Author_Response_Extension_Manager",
+                stage_arguments={
+                    'content': {
+                        'author_response_delay_ms': {'value': 259200000},      # 3 days
+                        'reviewer_response_delay_ms': {'value': 345600000},    # 4 days
+                        'review_issue_report_delay_ms': {'value': 432000000},  # 5 days
+                    }
+                },
+                start_date=self.configuration_note.content.get('author_response_extension_start_date'),
+                exp_date=self.configuration_note.content.get('author_response_extension_end_date'),
+                process='management/setup_author_response_extension.py',
+                cron=self.configuration_note.content.get(
+                    'author_response_extension_cron',
+                    self.DEFAULT_AUTHOR_RESPONSE_EXTENSION_CRON
+                )
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -819,8 +786,8 @@ class ARRWorkflow(object):
                 stage_arguments={
                     'committee_id': venue.get_reviewers_id(),
                     'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
-                    'instructions': arr_max_load_task_forum['instructions'],
-                    'title': venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
+                    'instructions': arr_voluntary_reviewing_task_forum['instructions'],
+                    'title': venue.get_reviewers_name() + ' ' + arr_voluntary_reviewing_task_forum['title'],
                     'additional_fields': arr_reviewer_max_load_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
@@ -837,8 +804,8 @@ class ARRWorkflow(object):
                 stage_arguments={
                     'committee_id': venue.get_area_chairs_id(),
                     'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
-                    'instructions': arr_max_load_task_forum['instructions'],
-                    'title': venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
+                    'instructions': arr_voluntary_meta_reviewing_task_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_voluntary_meta_reviewing_task_forum['title'],
                     'additional_fields': arr_ac_max_load_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
@@ -912,7 +879,7 @@ class ARRWorkflow(object):
                     'committee_id': venue.get_authors_id(),
                     'name': self.invitation_builder.SUBMITTED_AUTHORS_NAME,
                     'instructions': arr_submitted_author_forum['instructions'],
-                    'title': venue.get_area_chairs_name() + ' ' + arr_submitted_author_forum['title'],
+                    'title': arr_submitted_author_forum['title'],
                     'additional_fields': arr_submitted_author_content,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
@@ -1211,6 +1178,7 @@ class ARRWorkflow(object):
                         'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                         'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                         'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                        'recommendation_field_name': arr_metareview_recommendation_field,
                         'additional_meta_review_form_options': arr_metareview_content,
                         'remove_meta_review_form_options': ['recommendation', 'confidence']
                     },
@@ -1264,7 +1232,7 @@ class ARRWorkflow(object):
                         'submission_revision_name': 'Blind_Submission_License_Agreement',
                         'accepted_submissions_only': 'Enable revision for all submissions',
                         'submission_author_edition': 'Do not allow any changes to author lists',
-                        'submission_revision_remove_options': list(set(arr_submission_content.keys()) - 
+                        'submission_revision_remove_options': list(set(venue.submission_stage.get_content(api_version='2').keys()) -
                         {
                             'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement',
                         }),
@@ -1501,6 +1469,10 @@ class ARRStage(object):
                     Participants.AREA_CHAIRS_ASSIGNED,
                     Participants.AUTHORS
                 ],
+                'note_to_chairs': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
                 'best_paper_ae_justification': [
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                     Participants.AREA_CHAIRS_ASSIGNED
@@ -1547,6 +1519,7 @@ class ARRStage(object):
         exp_date = None,
         process = None,
         preprocess = None,
+        cron = None,
         build_edit = None,
         extend = None,
         ignore_dates = [],
@@ -1561,6 +1534,7 @@ class ARRStage(object):
         self.extend: function = extend
         self.process: str = process
         self.preprocess: str = preprocess
+        self.cron: str = cron
 
         self.ignore_dates: list = ignore_dates
         self.ignore_dates_map: list = {
@@ -1788,6 +1762,11 @@ class ARRStage(object):
             latest_reference = latest_references[0]
             stage_dates = self._get_stage_note_dates(format_type='strftime')
             latest_reference.content.update(stage_dates)
+            if latest_reference.content.get('submission_revision_remove_options') and latest_reference.content.get('submission_revision_name', '') == 'Blind_Submission_License_Agreement':
+                latest_reference.content['submission_revision_remove_options'] = list(set(venue.submission_stage.get_content(api_version='2').keys()) -
+                {
+                    'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement',
+                })
 
             stage_note = openreview.Note(
                 content = latest_reference.content,

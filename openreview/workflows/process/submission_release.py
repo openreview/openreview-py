@@ -6,17 +6,6 @@ def process(client, invitation):
     title = domain.content['title']['value']
     short_name = domain.content['subtitle']['value']
 
-    submission_venue_id = domain.content['submission_venue_id']['value']
-    article_endorsement_id = domain.content['article_endorsement_id']['value']
-    submission_name = domain.content['submission_name']['value']
-    decision_name = domain.content.get('decision_name', {}).get('value')
-    rejected_venue_id = domain.content['rejected_venue_id']['value']
-    decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
-    decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
-    accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
-    meta_invitation_id = domain.content['meta_invitation_id']['value']
-    source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
-
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
@@ -25,82 +14,62 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
-    def get_all_notes():
-        submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies', domain=venue_id)
-        if not submissions:
-            submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='directReplies', domain=venue_id)
+    submission_id = domain.content['submission_id']['value']
+    article_endorsement_id = domain.content['article_endorsement_id']['value']
+    submission_name = domain.content['submission_name']['value']
+    decision_name = domain.content.get('decision_name', {}).get('value', 'Decision')
+    decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
+    decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
+    accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
+    decision_option = invitation.get_content_value('decision_option')
+    release_accepted = True if decision_option == 'Accepted' else False
 
-        return submissions
-
-    def get_source_submission_tuples(all_submissions):
-        source_submissions = [(submission, openreview.api.Note.from_json(reply)) for submission in all_submissions for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]
-        return source_submissions
-
+    # The authors/authorids readers are defined in the invitation content schema: a readers
+    # constant, or the escaped delete { 'const': { 'delete': True } } that the API stamps as
+    # { 'delete': True } on every note edit. The process only uses the schema to build the
+    # bibtex accordingly.
+    authors_readers_schema = invitation.edit.get('note', {}).get('content', {}).get('authors', {}).get('readers')
+    reveal_authors = authors_readers_schema == { 'const': { 'delete': True } }
 
     def edit_submission(submission_tuple):
         submission, decision = submission_tuple
-        decision_value = decision.content[decision_field_name]['value'] if decision else None
-        note_accepted = openreview.tools.is_accept_decision(decision_value, accept_options) if decision_value else False
+        decision_value = decision[0].content[decision_field_name]['value']
+        note_accepted = release_accepted
 
         venue = openreview.tools.decision_to_venue(short_name, decision_value, accept_options)
 
-        updated_note = openreview.api.Note(
-            id=submission.id,
-            content={
-                'authors': {
-                    'readers': { 'delete': True }
-                },
-                'authorids': {
-                    'readers': { 'delete': True }
-                },
-                'venueid': {
-                    'value': venue_id if note_accepted else rejected_venue_id
-                },
-                'venue': {
-                    'value': venue
-                }
-            }
-        )
-
-        if submission.odate is None:
-            updated_note.odate = now
-        # only if note is accepted
-        if submission.pdate is None and note_accepted:
-            updated_note.pdate = now
-
-        updated_note.content['_bibtex'] = {
-            'value': openreview.tools.generate_bibtex(
-                note=submission,
-                venue_fullname=title,
-                year=str(datetime.datetime.now().year),
-                url_forum=submission.forum,
-                paper_status = 'accepted' if note_accepted else 'rejected',
-                anonymous=False
-            )
-        }            
-
-        if note_accepted or source == 'all_submissions':
-            client.post_note_edit(
-                invitation=invitation.id,
-                note=updated_note,
-                signatures=[venue_id]
-            )
-        elif not note_accepted:
-            client.post_note_edit(
-                invitation=meta_invitation_id,
-                signatures=[venue_id],
-                note=openreview.api.Note(
-                    id=submission.id,
-                    content={
-                        'venueid': {
-                            'value': rejected_venue_id
-                        },
-                        'venue': {
-                            'value': venue
-                        }
-                    }
+        # The authors/authorids readers are not posted here: they are stamped by the API
+        # from the constants defined in the invitation content schema. The process only
+        # posts the values that cannot be defined as invitation constants.
+        updated_content = {
+            'venue': {
+                'value': venue
+            },
+            '_bibtex': {
+                'value': openreview.tools.generate_bibtex(
+                    note=submission,
+                    venue_fullname=title,
+                    year=str(datetime.datetime.now().year),
+                    url_forum=submission.forum,
+                    paper_status='accepted' if note_accepted else 'rejected',
+                    anonymous=not reveal_authors
                 )
+            }
+        }
+
+        public = invitation.edit['note']['readers'] == ['everyone']
+
+        client.post_note_edit(
+            invitation=invitation.id,
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=submission.id,
+                content=updated_content,
+                odate=now if (public and submission.odate is None) else None,
+                pdate=now if (note_accepted and submission.pdate is None) else None
             )
+        )
 
         if note_accepted:
             client.post_tag(openreview.api.Tag(
@@ -111,19 +80,25 @@ def process(client, invitation):
                 label=re.sub(r'[()\W]+', '', decision_value.replace('Accept', ''))
             ))
 
-    ## Release the submissions to specified readers if venueid is still submission
-    submissions = get_all_notes()
-    source_submissions = get_source_submission_tuples(submissions)
+    ## Release the submissions to specified readers
+    all_submissions = client.get_all_notes(invitation=submission_id, sort='number:asc', details='directReplies', domain=venue_id)
 
-    if not source_submissions:
-        print('No submissions were updated since there are no active submissions')
+    filtered_submissions = []
+    for submission in all_submissions:
+        if openreview.tools.should_match_invitation_source(client, invitation, submission, domain=domain):
+            filtered_submissions.append((submission, [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]))
+
+    print(f'{len(filtered_submissions)} out of {len(all_submissions)} submissions matched the source criteria and will be released')
+
+    if not filtered_submissions:
+        print(f'No submissions were updated since there are no {decision_option.lower()} submissions')
         return
     
-    print(f'update {len(submissions)} submissions')
-    openreview.tools.concurrent_requests(edit_submission, source_submissions, desc='post_submission_edit')
+    openreview.tools.concurrent_requests(edit_submission, filtered_submissions, desc='post_submission_edit')
 
-    print(f'{len(submissions)} submissions updated successfully')
+    print(f'{len(filtered_submissions)} submissions updated successfully')
 
+    # update the decision heading map
     decision_options = decision_invitation.content.get('decision_options', {}).get('value')
     decision_heading_map = { openreview.tools.decision_to_venue(short_name, o):o for o in decision_options}
 

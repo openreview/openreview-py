@@ -16,7 +16,7 @@ class IdentityReaders(Enum):
     REVIEWERS_ASSIGNED = 6
 
     @classmethod
-    def get_readers(self, conference, number, identity_readers):
+    def get_readers(self, conference, number, identity_readers, reviewers_name=None, area_chairs_name=None):
         readers = [conference.id]
         if self.PROGRAM_CHAIRS in identity_readers:
             readers.append(conference.get_program_chairs_id())
@@ -25,13 +25,13 @@ class IdentityReaders(Enum):
         if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
             readers.append(conference.get_senior_area_chairs_id(number))
         if self.AREA_CHAIRS in identity_readers:
-            readers.append(conference.get_area_chairs_id())
+            readers.append(conference.get_area_chairs_id(name=area_chairs_name))
         if self.AREA_CHAIRS_ASSIGNED in identity_readers:
-            readers.append(conference.get_area_chairs_id(number))
+            readers.append(conference.get_area_chairs_id(number, name=area_chairs_name))
         if self.REVIEWERS in identity_readers:
-            readers.append(conference.get_reviewers_id())
+            readers.append(conference.get_reviewers_id(name=reviewers_name))
         if self.REVIEWERS_ASSIGNED in identity_readers:
-            readers.append(conference.get_reviewers_id(number))
+            readers.append(conference.get_reviewers_id(number, name=reviewers_name))
         return readers
 
 class AuthorReorder(Enum):
@@ -82,14 +82,15 @@ class SubmissionStage(object):
             email_pcs_on_desk_reject=False,
             author_names_revealed=False,
             papers_released=False,
-            author_reorder_after_first_deadline=AuthorReorder.ALLOW_EDIT,
+            author_reorder_after_first_deadline=AuthorReorder.ALLOW_REORDER,
             submission_email=None,
             force_profiles=False,
             second_deadline_additional_fields={},
             second_deadline_remove_fields=[],
             commitments_venue=False,
             description=None,
-            withdraw_additional_fields={}
+            withdraw_additional_fields={},
+            unified_authors=False
         ):
 
         self.start_date = start_date
@@ -127,6 +128,7 @@ class SubmissionStage(object):
         self.commitments_venue = commitments_venue
         self.description = description
         self.withdraw_additional_fields = withdraw_additional_fields
+        self.unified_authors = unified_authors
 
     def get_readers(self, conference, number, decision=None, accept_options=None):
 
@@ -142,8 +144,8 @@ class SubmissionStage(object):
                 if conference.use_senior_area_chairs:
                     submission_readers.append(conference.get_senior_area_chairs_id(number=number))
                 if conference.use_area_chairs:
-                    submission_readers.append(conference.get_area_chairs_id(number=number))
-                submission_readers.append(conference.get_reviewers_id(number=number))
+                    submission_readers.extend(conference.get_submission_area_chairs_ids(number))
+                submission_readers.extend(conference.get_submission_reviewers_ids(number))
                 submission_readers.append(conference.get_authors_id(number=number))
                 return submission_readers
             else:
@@ -159,13 +161,13 @@ class SubmissionStage(object):
             submission_readers.append(conference.get_area_chairs_id())
 
         if self.Readers.AREA_CHAIRS_ASSIGNED in self.readers and conference.use_area_chairs:
-            submission_readers.append(conference.get_area_chairs_id(number=number))
+            submission_readers.extend(conference.get_submission_area_chairs_ids(number))
 
         if self.Readers.REVIEWERS in self.readers:
             submission_readers.append(conference.get_reviewers_id())
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
-            submission_readers.append(conference.get_reviewers_id(number=number))
+            submission_readers.extend(conference.get_submission_reviewers_ids(number))
 
         if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
             if conference.use_ethics_chairs:
@@ -274,6 +276,11 @@ class SubmissionStage(object):
         elif api_version == '2':
             content = deepcopy(default_content.submission_v2)
 
+            if self.unified_authors:
+                del content['authors']
+                del content['authorids']
+                content['authors'] = deepcopy(default_content.submission_v2_unified_authors)
+
             if self.subject_areas:
                 content['subject_areas'] = {
                     'order' : 5,
@@ -301,7 +308,7 @@ class SubmissionStage(object):
             for key, value in self.additional_fields.items():
                 content[key] = value
 
-            if self.force_profiles:
+            if self.force_profiles and not self.unified_authors:
                 content['authorids'] = {
                     'order': 3,
                     'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
@@ -384,7 +391,11 @@ class SubmissionStage(object):
         return content
     
     def get_hidden_field_names(self):
-        return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
+        if self.double_blind and not self.author_names_revealed:
+            default_hidden = ['authors'] if self.unified_authors else ['authors', 'authorids']
+        else:
+            default_hidden = []
+        return default_hidden + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.now() < self.due_date
@@ -398,8 +409,8 @@ class SubmissionStage(object):
             if conference.use_senior_area_chairs:
                 readers.append(conference.get_senior_area_chairs_id(number))
             if conference.use_area_chairs:
-                readers.append(conference.get_area_chairs_id(number))
-            readers.append(conference.get_reviewers_id(number))
+                readers.extend(conference.get_submission_area_chairs_ids(number))
+            readers.extend(conference.get_submission_reviewers_ids(number))
             readers.append(conference.get_authors_id(number))
             return readers
 
@@ -412,8 +423,8 @@ class SubmissionStage(object):
             if conference.use_senior_area_chairs:
                 readers.append(conference.get_senior_area_chairs_id(number))
             if conference.use_area_chairs:
-                readers.append(conference.get_area_chairs_id(number))
-            readers.append(conference.get_reviewers_id(number))
+                readers.extend(conference.get_submission_area_chairs_ids(number))
+            readers.extend(conference.get_submission_reviewers_ids(number))
             readers.append(conference.get_authors_id(number))
             return readers
         
@@ -588,20 +599,26 @@ class SubmissionRevisionStage():
             content[key] = value
 
         if self.allow_author_reorder == AuthorReorder.ALLOW_REORDER:
-            content['authors'] = {
-                'value': {
-                    'param': {
-                        'type': 'string[]',
-                        'const': ['${{6/id}/content/authors/value}'],
-                        'hidden': True,
-                    }
-                },
-                'order': 3
-            }
-            content['authorids'] = {
-                'value': ['${{4/id}/content/authorids/value}'],
-                'order':4
-            }
+            if conference and conference.submission_stage.unified_authors:
+                content['authors'] = {
+                    'value': ['${{4/id}/content/authors/value}'],
+                    'order': 3
+                }
+            else:
+                content['authors'] = {
+                    'value': {
+                        'param': {
+                            'type': 'string[]',
+                            'const': ['${{6/id}/content/authors/value}'],
+                            'hidden': True,
+                        }
+                    },
+                    'order': 3
+                }
+                content['authorids'] = {
+                    'value': ['${{4/id}/content/authorids/value}'],
+                    'order':4
+                }
         elif self.allow_author_reorder == AuthorReorder.DISALLOW_EDIT:
             if 'authors' in content:
                 del content['authors']
@@ -616,7 +633,7 @@ class SubmissionRevisionStage():
                 if field not in content:
                     content[field] = { 'delete': True }
 
-            only_accepted = self.only_accepted
+            only_accepted = self.only_accepted or self.only_accepted_decision_options(conference)
 
             hidden_field_names = conference.submission_stage.get_hidden_field_names()
             
@@ -629,6 +646,18 @@ class SubmissionRevisionStage():
                     content[field]['readers'] = { 'delete': True }                        
 
         return content
+
+    def only_accepted_decision_options(self, venue):
+        # True when the source's decision_options exactly match the venue's accept
+        # options, so the stage targets only accepted papers and authors/authorids
+        # should be hidden like the only_accepted / with_decision_accept path.
+        decision_options = self.source.get('decision_options')
+        if not decision_options:
+            return False
+        accept_options = venue.client.get_group(venue.venue_id).content.get('accept_decision_options', {}).get('value')
+        if not accept_options:
+            return False
+        return set(decision_options) == set(accept_options)
 
     def get_source_submissions(self, venue):
 
@@ -668,6 +697,7 @@ class ReviewStage(object):
         child_invitations_name = 'Official_Review',
         description = None,
         submission_source=None,
+        submission_reviewer_roles=None,
     ):
 
         self.start_date = start_date
@@ -691,18 +721,27 @@ class ReviewStage(object):
         self.preprocess_path = None
         self.description = description
         self.submission_source = submission_source
+        self.submission_reviewer_roles = submission_reviewer_roles
+
+    def _get_reviewer_roles(self, conference):
+        ## the top level groups are the recruiting roles, unless this stage targets specific ones
+        return self.submission_reviewer_roles or conference.reviewer_roles
+
+    def _get_submission_reviewer_roles(self, conference):
+        ## the per-submission groups may merge several roles into one
+        return self.submission_reviewer_roles or conference.submission_reviewer_roles
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
-            return conference.get_reviewers_id()
+            return [conference.get_reviewers_id(name=name) for name in self._get_reviewer_roles(conference)]
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
-            return conference.get_reviewers_id(number = number)
+            return [conference.get_reviewers_id(number=number, name=name) for name in self._get_submission_reviewer_roles(conference)]
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
-            return conference.get_reviewers_id(number = number) + '/Submitted'
+            return [conference.get_reviewers_id(number=number, name=name) + '/Submitted' for name in self._get_submission_reviewer_roles(conference)]
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWER_SIGNATURE:
             if review_signature:
-                return review_signature
-            return '{signatures}'
+                return [review_signature]
+            return ['{signatures}']
         raise openreview.OpenReviewException('Unrecognized readers option')
 
     def get_readers(self, conference, number, review_signature=None):
@@ -716,9 +755,9 @@ class ReviewStage(object):
             readers.append(conference.get_senior_area_chairs_id(number = number))
 
         if conference.use_area_chairs:
-            readers.append(conference.get_area_chairs_id(number = number))
+            readers.extend(conference.get_submission_area_chairs_ids(number))
 
-        readers.append(self._get_reviewer_readers(conference, number, review_signature))
+        readers.extend(self._get_reviewer_readers(conference, number, review_signature))
 
         ## Workaround to make the reviews visible to the author of the review when reviewers submitted is selected
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED and review_signature:
@@ -749,8 +788,8 @@ class ReviewStage(object):
         if self.allow_de_anonymization:
             return ['~.*']
 
-        return [conference.get_anon_reviewer_id(number=number, anon_id='.*')]
-    
+        return [conference.get_anon_reviewer_id(number=number, anon_id='.*', name=name) for name in self._get_reviewer_roles(conference)]
+
     def get_content(self, api_version='2', conference=None):
 
         content = deepcopy(default_content.review_v2)
@@ -859,9 +898,9 @@ class EthicsReviewStage(object):
                 readers.append(conference.get_senior_area_chairs_id(number=number))
 
             if conference.use_area_chairs:
-                readers.append(conference.get_area_chairs_id(number=number))
+                readers.extend(conference.get_submission_area_chairs_ids(number))
 
-            readers.append(conference.get_reviewers_id(number=number))
+            readers.extend(conference.get_submission_reviewers_ids(number))
 
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
@@ -976,16 +1015,16 @@ class ReviewRebuttalStage(object):
             invitation_readers.append(conference.get_area_chairs_id())
 
         if self.Readers.AREA_CHAIRS_ASSIGNED in self.readers and conference.use_area_chairs:
-            invitation_readers.append(conference.get_area_chairs_id(number=number))
+            invitation_readers.extend(conference.get_submission_area_chairs_ids(number))
 
         if self.Readers.REVIEWERS in self.readers:
             invitation_readers.append(conference.get_reviewers_id())
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
-            invitation_readers.append(conference.get_reviewers_id(number=number))
+            invitation_readers.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.readers:
-            invitation_readers.append(conference.get_reviewers_id(number=number) + '/Submitted')
+            invitation_readers.extend(conference.get_submission_reviewers_ids(number, submitted=True))
 
         if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
             if conference.use_ethics_chairs:
@@ -1048,13 +1087,13 @@ class ReviewRatingStage(object):
 
     def _get_reviewer_readers(self, conference, number, review_signature):
         if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWERS:
-            return conference.get_reviewers_id()
+            return conference.get_reviewers_ids()
         if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWERS_ASSIGNED:
-            return conference.get_reviewers_id(number = number)
+            return conference.get_submission_reviewers_ids(number)
         if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWERS_SUBMITTED:
-            return conference.get_reviewers_id(number = number) + '/Submitted'
+            return conference.get_submission_reviewers_ids(number, submitted=True)
         if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWER_SIGNATURE:
-            return review_signature
+            return [review_signature]
         raise openreview.OpenReviewException('Unrecognized readers option')
 
     def get_readers(self, conference, number, review_signature):
@@ -1068,7 +1107,7 @@ class ReviewRatingStage(object):
             readers.append('{signatures}')
 
         if self.release_to_reviewers is not ReviewRatingStage.Readers.NO_REVIEWERS:
-            readers.append(self._get_reviewer_readers(conference, number, review_signature))
+            readers.extend(self._get_reviewer_readers(conference, number, review_signature))
 
         return readers
 
@@ -1134,16 +1173,16 @@ class CommentStage(object):
                 readers.append({ 'value': conference.get_senior_area_chairs_id(number), 'optional': False })
 
             if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
-                readers.append({ 'value': conference.get_area_chairs_id(number), 'optional': True })
+                readers.extend([{ 'value': ac_id, 'optional': True } for ac_id in conference.get_submission_area_chairs_ids(number)])
 
             if self.Readers.REVIEWERS_ASSIGNED in self.readers:
-                readers.append({ 'value': conference.get_reviewers_id(number), 'optional': True })
+                readers.extend([{ 'value': reviewers_id, 'optional': True } for reviewers_id in conference.get_submission_reviewers_ids(number)])
 
             if self.Readers.REVIEWERS_SUBMITTED in self.readers:
-                readers.append({ 'value': conference.get_reviewers_id(number) + '/Submitted', 'optional': True })
+                readers.extend([{ 'value': reviewers_id, 'optional': True } for reviewers_id in conference.get_submission_reviewers_ids(number, submitted=True)])
 
             if self.Readers.REVIEWERS_ASSIGNED in self.readers or self.Readers.REVIEWERS_SUBMITTED in self.readers:
-                readers.append({ 'inGroup': conference.get_reviewers_id(number), 'optional': True })
+                readers.extend([{ 'inGroup': reviewers_id, 'optional': True } for reviewers_id in conference.get_submission_reviewers_ids(number)])
 
             if self.Readers.AUTHORS in self.readers:
                 readers.append({ 'value': conference.get_authors_id(number), 'optional': True })                
@@ -1156,19 +1195,19 @@ class CommentStage(object):
             readers.append('everyone')
 
         if self.reader_selection:
-            readers.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+            readers.extend(conference.get_submission_reviewers_ids(number, anon=True))
 
         if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
             readers.append(conference.get_senior_area_chairs_id(number))
 
         if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
-            readers.append(conference.get_area_chairs_id(number))
+            readers.extend(conference.get_submission_area_chairs_ids(number))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
-            readers.append(conference.get_reviewers_id(number))
+            readers.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.readers:
-            readers.append(conference.get_reviewers_id(number) + '/Submitted')
+            readers.extend(conference.get_submission_reviewers_ids(number, submitted=True))
 
         if self.Readers.AUTHORS in self.readers:
             readers.append(conference.get_authors_id(number))
@@ -1183,13 +1222,13 @@ class CommentStage(object):
             committee.append(conference.get_senior_area_chairs_id(number))
 
         if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
-            committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+            committee.extend(conference.get_submission_area_chairs_ids(number, anon=True))
 
         if conference.use_secondary_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_secondary_area_chair_id(number=number, anon_id='.*'))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
-            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+            committee.extend(conference.get_submission_reviewers_ids(number, anon=True))
 
         if self.Readers.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
@@ -1203,13 +1242,13 @@ class CommentStage(object):
             invitees.append(conference.get_senior_area_chairs_id(number))
 
         if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
-            invitees.append(conference.get_area_chairs_id(number))
+            invitees.extend(conference.get_submission_area_chairs_ids(number))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number))
+            invitees.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number) + '/Submitted')
+            invitees.extend(conference.get_submission_reviewers_ids(number, submitted=True))
 
         if self.Readers.AUTHORS in self.invitees:
             invitees.append(conference.get_authors_id(number))
@@ -1223,13 +1262,13 @@ class CommentStage(object):
             invitees.append(conference.get_senior_area_chairs_id(number))
 
         if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
-            invitees.append(conference.get_area_chairs_id(number))
+            invitees.extend(conference.get_submission_area_chairs_ids(number))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number))
+            invitees.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number) + '/Submitted')
+            invitees.extend(conference.get_submission_reviewers_ids(number, submitted=True))
 
         return invitees
     
@@ -1241,13 +1280,13 @@ class CommentStage(object):
             committee.append(conference.get_senior_area_chairs_id(number))
 
         if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
-            committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+            committee.extend(conference.get_submission_area_chairs_ids(number, anon=True))
 
         if conference.use_secondary_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_secondary_area_chair_id(number=number, anon_id='.*'))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
-            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+            committee.extend(conference.get_submission_reviewers_ids(number, anon=True))
 
         return committee    
 
@@ -1259,13 +1298,13 @@ class CommentStage(object):
             readers.append(conference.get_senior_area_chairs_id(number))
 
         if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
-            readers.append(conference.get_area_chairs_id(number))
+            readers.extend(conference.get_submission_area_chairs_ids(number))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
-            readers.append(conference.get_reviewers_id(number))
+            readers.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.readers:
-            readers.append(conference.get_reviewers_id(number) + '/Submitted')               
+            readers.extend(conference.get_submission_reviewers_ids(number, submitted=True))               
 
         return readers
 
@@ -1338,11 +1377,11 @@ class MetaReviewStage(object):
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
-            return conference.get_reviewers_id()
+            return conference.get_reviewers_ids()
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS_ASSIGNED:
-            return conference.get_reviewers_id(number = number)
+            return conference.get_submission_reviewers_ids(number)
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS_SUBMITTED:
-            return conference.get_reviewers_id(number = number) + '/Submitted'
+            return conference.get_submission_reviewers_ids(number, submitted=True)
         raise openreview.OpenReviewException('Unrecognized readers option')
 
     def get_readers(self, conference, number):
@@ -1356,13 +1395,13 @@ class MetaReviewStage(object):
             readers.append(conference.get_senior_area_chairs_id(number = number))
 
         if conference.use_area_chairs:
-            readers.append(conference.get_area_chairs_id(number = number))
+            readers.extend(conference.get_submission_area_chairs_ids(number))
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
 
         if self.release_to_reviewers is not MetaReviewStage.Readers.NO_REVIEWERS:
-            readers.append(self._get_reviewer_readers(conference, number))
+            readers.extend(self._get_reviewer_readers(conference, number))
         readers.append(conference.get_program_chairs_id())
 
         return readers
@@ -1393,7 +1432,7 @@ class MetaReviewStage(object):
         committee = [conference.get_program_chairs_id()]
 
         if conference.use_area_chairs:
-            committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+            committee.extend(conference.get_submission_area_chairs_ids(number, anon=True))
 
         return committee
 
@@ -1437,6 +1476,8 @@ class DecisionStage(object):
     def __init__(self, name = 'Decision', options = None, accept_options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None, content=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
+        if not accept_options:
+            accept_options = [option for option in options if 'accept' in option.lower()]
         self.options = options
         self.accept_options = accept_options
         self.start_date = start_date
@@ -1463,10 +1504,10 @@ class DecisionStage(object):
             readers.append(conference.get_senior_area_chairs_id(number = number))
 
         if self.release_to_area_chairs and conference.use_area_chairs:
-            readers.append(conference.get_area_chairs_id(number = number))
+            readers.extend(conference.get_submission_area_chairs_ids(number))
 
         if self.release_to_reviewers:
-            readers.append(conference.get_reviewers_id(number = number))
+            readers.extend(conference.get_submission_reviewers_ids(number))
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
@@ -1629,6 +1670,7 @@ class CustomStage(object):
                  notify_readers=False, 
                  email_template=None, 
                  allow_de_anonymization=False,
+                 description=None,
                  child_invitations_name=None):
         self.name = name
         self.child_invitations_name = child_invitations_name if child_invitations_name else self.name
@@ -1647,6 +1689,7 @@ class CustomStage(object):
         self.notify_readers = notify_readers
         self.email_template = email_template
         self.allow_de_anonymization = allow_de_anonymization
+        self.description = description
         self.process_path = None
         self.preprocess_path = None
 
@@ -1657,16 +1700,16 @@ class CustomStage(object):
             invitees.append(conference.get_senior_area_chairs_id(number))
 
         if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees:
-            invitees.append(conference.get_area_chairs_id(number))
+            invitees.extend(conference.get_submission_area_chairs_ids(number))
 
         if conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS in self.invitees:
             invitees.append(conference.get_secondary_area_chairs_id(number))
 
         if self.Participants.REVIEWERS_ASSIGNED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number))
+            invitees.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Participants.REVIEWERS_SUBMITTED in self.invitees:
-            invitees.append(conference.get_reviewers_id(number) + '/Submitted')
+            invitees.extend(conference.get_submission_reviewers_ids(number, submitted=True))
 
         if self.Participants.AUTHORS in self.invitees:
             invitees.append(conference.get_authors_id(number))
@@ -1700,13 +1743,13 @@ class CustomStage(object):
             readers.append(conference.get_senior_area_chairs_id(number))
 
         if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.readers:
-            readers.append(conference.get_area_chairs_id(number))
+            readers.extend(conference.get_submission_area_chairs_ids(number))
 
         if self.Participants.REVIEWERS_ASSIGNED in self.readers:
-            readers.append(conference.get_reviewers_id(number))
+            readers.extend(conference.get_submission_reviewers_ids(number))
 
         if self.Participants.REVIEWERS_SUBMITTED in self.readers:
-            readers.append(conference.get_reviewers_id(number) + '/Submitted')
+            readers.extend(conference.get_submission_reviewers_ids(number, submitted=True))
 
         if self.Participants.AUTHORS in self.readers:
             readers.append(conference.get_authors_id(number))
@@ -1743,10 +1786,10 @@ class CustomStage(object):
                 committee.append(conference.get_senior_area_chairs_id(number))
 
         if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees:
-                committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+                committee.extend(conference.get_submission_area_chairs_ids(number, anon=True))
 
         if self.Participants.REVIEWERS_ASSIGNED in self.invitees or self.Participants.REVIEWERS_SUBMITTED in self.invitees:
-            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+            committee.extend(conference.get_submission_reviewers_ids(number, anon=True))
 
         if self.Participants.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
