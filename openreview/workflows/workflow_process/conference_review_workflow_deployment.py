@@ -6,6 +6,7 @@ def process(client, edit, invitation):
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
     print('Venue ID:', venue_id)
+    short_name = note.content['abbreviated_venue_name']['value']
 
     venue = openreview.venue.Venue(client, venue_id, support_user=support_user)
     venue.set_main_settings(note)
@@ -179,7 +180,7 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Author_Reviews_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5.1) },
-            'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'short_name': { 'value': short_name },
             'from_email': { 'value': from_email }
         }
     )
@@ -234,6 +235,9 @@ def process(client, edit, invitation):
         await_process=True
     )
 
+    decision_notification_template = client.get_invitation(f'{invitation_prefix}/-/Author_Decision_Notification')
+    source_venue_ids = [venue.get_submission_venue_id(), venue_id, venue.get_rejected_submission_venue_id()]
+
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
         signatures=[invitation_prefix],
@@ -241,9 +245,11 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Author_Accept_Decision_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
-            'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'short_name': { 'value': short_name },
             'from_email': { 'value': from_email },
-            'decision': { 'value': 'Accept' }
+            'decision': { 'value': 'Accept' },
+            'message': { 'value': decision_notification_template.content['accept_message']['value'].replace('{short_name}', short_name) },
+            'source': { 'value': { 'venueid': source_venue_ids, 'decision_options': ['Accept'] } }
         }
     )
 
@@ -254,9 +260,11 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Author_Reject_Decision_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
-            'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'short_name': { 'value': short_name },
             'from_email': { 'value': from_email },
-            'decision': { 'value': 'Reject' }
+            'decision': { 'value': 'Reject' },
+            'message': { 'value': decision_notification_template.content['reject_message']['value'].replace('{short_name}', short_name) },
+            'source': { 'value': { 'venueid': source_venue_ids, 'decision_options': ['Reject'] } }
         }
     )
 
@@ -268,7 +276,7 @@ def process(client, edit, invitation):
     venue.create_submission_revision_stage()
 
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission_Release',
+        invitations=f'{invitation_prefix}/-/Accept_Submission_Release',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
@@ -277,13 +285,16 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': submission_release_additional_readers },
-            'decision_option': { 'value': 'Accepted' },
-            'decision_venue_id': { 'value': venue_id }
+            'decision_option': { 'value': 'Accept' },
+            'decision_option_id': { 'value': openreview.tools.decision_option_to_id('Accept') },
+            'decision_venue_id': { 'value': venue_id },
+            'decision_venue': { 'value': openreview.tools.decision_to_venue(short_name, 'Accept', ['Accept']) },
+            'source': { 'value': { 'venueid': source_venue_ids, 'decision_options': ['Accept'] } }
         }
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission_Release',
+        invitations=f'{invitation_prefix}/-/Reject_Submission_Release',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
@@ -292,8 +303,11 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': submission_release_additional_readers },
-            'decision_option': { 'value': 'Rejected' },
-            'decision_venue_id': { 'value': venue.get_rejected_submission_venue_id() }
+            'decision_option': { 'value': 'Reject' },
+            'decision_option_id': { 'value': openreview.tools.decision_option_to_id('Reject') },
+            'decision_venue_id': { 'value': venue.get_rejected_submission_venue_id() },
+            'decision_venue': { 'value': openreview.tools.decision_to_venue(short_name, 'Reject', ['Accept']) },
+            'source': { 'value': { 'venueid': source_venue_ids, 'decision_options': ['Reject'] } }
         }
     )
 
