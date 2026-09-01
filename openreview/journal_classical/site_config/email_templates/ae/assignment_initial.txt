@@ -1,0 +1,17 @@
+Hi {{{{fullname}}}},
+
+With this email, we request that you manage the review process for a new {short_name} submission "{submission_number}: {submission_title}".
+
+As a reminder, {short_name} Action Editors are expected to handle assigned submissions that fall within their expertise and active-paper load. Reasonable exceptions are exceptional personal circumstances that prevent you from performing your duties or a conflict of interest with an author. If an exception applies, contact us at {contact_info}.
+
+Your first task is to complete Review Approval. Select "Appropriate for Review" to begin the normal reviewer-assignment workflow, or "Desk Reject" if the submission should not proceed.
+
+Open the Review Approval task here:
+
+{invitation_url}
+
+After selecting "Appropriate for Review", assign {number_of_reviewers} reviewers when OpenReview makes reviewer assignment available.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief

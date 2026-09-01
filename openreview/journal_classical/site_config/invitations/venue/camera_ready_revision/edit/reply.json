@@ -1,0 +1,92 @@
+{
+  "signatures": ["JMLR"],
+  "readers": ["JMLR"],
+  "writers": ["JMLR"],
+  "content": {
+    "noteNumber": {"value": {"param": {"type": "integer"}}},
+    "noteId": {"value": {"param": {"type": "string"}}},
+    "duedate": {"value": {"param": {"type": "integer"}}}
+  },
+  "invitation": {
+    "id": "JMLR/Paper${2/content/noteNumber/value}/-/Camera_Ready_Revision",
+    "invitees": ["JMLR/Paper${3/content/noteNumber/value}/Authors"],
+    "readers": [
+      "JMLR",
+      "JMLR/Editors_In_Chief",
+      "JMLR/Paper${3/content/noteNumber/value}/Action_Editors",
+      "JMLR/Paper${3/content/noteNumber/value}/Authors"
+    ],
+    "writers": ["JMLR"],
+    "signatures": ["JMLR"],
+    "postprocesses": [
+      {
+        "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/camera_ready_revision/postprocess.py}}"
+      }
+    ],
+    "duedate": "${2/content/duedate/value}",
+    "dateprocesses": [
+      {
+        "dates": [
+          "#{4/duedate} + 86400000",
+          "#{4/duedate} + 604800000",
+          "#{4/duedate} + 2592000000"
+        ],
+        "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/camera_ready/dateprocess_reminder.py}}"
+      }
+    ],
+    "edit": {
+      "signatures": ["JMLR/Paper${4/content/noteNumber/value}/Authors"],
+      "readers": [
+        "JMLR",
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${4/content/noteNumber/value}/Action_Editors",
+        "JMLR/Paper${4/content/noteNumber/value}/Authors"
+      ],
+      "writers": ["JMLR/Paper${4/content/noteNumber/value}/Authors"],
+      "note": {
+        "id": "${4/content/noteId/value}",
+        "forum": "${4/content/noteId/value}",
+        "content": {
+          "pdf": {
+            "order": 1,
+            "description": "Final JMLR manuscript PDF. Replace the current PDF with the formatted camera-ready manuscript. Use the paper-specific JMLR metadata block shown in this form and in the decision email.",
+            "value": {
+              "param": {
+                "type": "file",
+                "extensions": ["pdf"],
+                "maxSize": 50
+              }
+            },
+            "readers": [
+              "JMLR",
+              "JMLR/Editors_In_Chief",
+              "JMLR/Paper${7/content/noteNumber/value}/Action_Editors",
+              "JMLR/Paper${7/content/noteNumber/value}/Authors"
+            ]
+          },
+          "supplementary_material": {
+            "order": 2,
+            "description": "Optional camera-ready supplementary material. Upload at most one PDF or ZIP file; leave empty when there is no supplement. Maximum size: 10 MB.",
+            "value": {
+              "param": {
+                "type": "file",
+                "extensions": ["zip", "pdf"],
+                "maxSize": 10,
+                "optional": true,
+                "deletable": true
+              }
+            },
+            "readers": [
+              "JMLR",
+              "JMLR/Editors_In_Chief",
+              "JMLR/Paper${7/content/noteNumber/value}/Action_Editors",
+              "JMLR/Paper${7/content/noteNumber/value}/Authors"
+            ]
+          }
+        }
+      }
+    },
+    "process": "def process(client, edit, invitation):\n    meta_invitation = client.get_invitation(invitation.invitations[0])\n    script = meta_invitation.content['process_script']['value']\n    funcs = {'openreview': openreview, 'datetime': datetime}\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n"
+  },
+  "replacement": true
+}

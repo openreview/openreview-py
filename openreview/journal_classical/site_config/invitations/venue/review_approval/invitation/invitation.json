@@ -1,0 +1,8 @@
+{
+  "content": {
+    "process_script": {
+      "value": "{{PYTHON_SCRIPT_JSON:invitations/venue/review_approval/process.py}}"
+    }
+  },
+  "postprocesses": []
+}

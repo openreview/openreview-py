@@ -1,0 +1,8 @@
+Hi {{{{fullname}}}},
+
+Verification of the latest camera-ready PDF for {short_name} submission {submission_number}: {submission_title} was due on {duedate}.
+
+Please verify the latest upload. If correction is needed, post a restricted Official Comment to the paper Authors and wait for a corrected upload before approving:
+{invitation_url}
+
+The {short_name} Editors-in-Chief

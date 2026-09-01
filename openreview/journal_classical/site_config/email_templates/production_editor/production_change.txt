@@ -1,0 +1,6 @@
+A {event} was completed for JMLR paper {submission_number}.
+
+Review the public record and reconcile the manual jmlr.org publication if needed:
+{paper_url}
+
+This is a notification only; OpenReview creates no production task or completion state.
