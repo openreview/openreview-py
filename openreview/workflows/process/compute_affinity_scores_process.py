@@ -20,12 +20,9 @@ def process(client, invitation):
     support_user = domain.content['request_form_invitation']['value'].split('/Venue_Request')[0]
 
     affinity_scores_model = invitation.get_content_value('affinity_score_model', False)
-    print('affinity_scores_model', affinity_scores_model)
     expertise_job_id = invitation.get_content_value('expertise_job_id', False)
-    print('expertise_job_id', expertise_job_id)
 
     if affinity_scores_model == 'I will upload my own affinity scores' and not expertise_job_id:
-        print('PCs will upload their own affinity scores, but no expertise job ID was provided. No affinity scores were computed')
         # PCs will upload their own affinity scores, but no expertise job ID was provided. Return and leave invitation active
         return
 
