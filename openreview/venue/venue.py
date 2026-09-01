@@ -137,7 +137,7 @@ class Venue(object):
         if request_note.content.get('reviewer_groups_names', {}).get('value'):
             self.reviewer_roles = request_note.content['reviewer_groups_names']['value']
             self.reviewers_name = self.reviewer_roles[0]
-        elif 'reviewers_name' in request_note.content:
+        elif request_note.content.get('reviewers_name', {}).get('value'):
             self.reviewers_name = request_note.content['reviewers_name']['value']
             self.reviewer_roles = [self.reviewers_name]
         preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
@@ -146,7 +146,7 @@ class Venue(object):
             if request_note.content.get('area_chair_groups_names', {}).get('value'):
                 self.area_chair_roles = request_note.content['area_chair_groups_names']['value']
                 self.area_chairs_name = self.area_chair_roles[0]
-            elif 'area_chairs_name' in request_note.content:
+            elif request_note.content.get('area_chairs_name', {}).get('value'):
                 self.area_chairs_name = request_note.content['area_chairs_name']['value']
                 self.area_chair_roles = [self.area_chairs_name]
             self.use_area_chairs = True
