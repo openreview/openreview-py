@@ -337,7 +337,7 @@ class OpenReviewClient(object):
         self.__handle_authorization(json_response)
         return json_response
 
-    def register_user(self, email = None, fullname = None, password = None):
+    def register_user(self, email = None, fullname = None, password = None, dob = None):
         """
         Registers a new user
 
@@ -347,6 +347,8 @@ class OpenReviewClient(object):
         :type fullname: str, optional
         :param password: Password used to log into OpenReview
         :type password: str, optional
+        :param dob: Date of birth as epoch milliseconds. Mandatory when the API is configured with profile.requireDob
+        :type dob: int, optional
 
         :return: Dictionary containing the new user information including his id, username, email(s), readers, writers, etc.
         :rtype: dict
@@ -356,6 +358,8 @@ class OpenReviewClient(object):
             'fullname': fullname,
             'password': password
         }
+        if dob is not None:
+            register_payload['dob'] = dob
         response = self.session.post(self.register_url, json = register_payload, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
@@ -875,6 +879,18 @@ class OpenReviewClient(object):
 
         return response.json()['venues']
     
+    def get_meta_invitation_id(self):
+        """
+        Returns the super user meta invitation id: ``openreview.net/-/Edit`` for local
+        environments and ``OpenReview.net/-/Edit`` for the live site.
+
+        :return: Meta invitation id
+        :rtype: str
+        """
+        if 'localhost' in self.baseurl:
+            return 'openreview.net/-/Edit'
+        return 'OpenReview.net/-/Edit'
+
     def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None):
         """
         Updates the domain for an entire venue
@@ -930,7 +946,7 @@ class OpenReviewClient(object):
         for path in paths:
             if tools.get_group(self, path) is None:
                 self.post_group_edit(
-                    invitation = 'openreview.net/-/Edit',
+                    invitation = self.get_meta_invitation_id(),
                     readers = ['everyone'],
                     writers = ['~Super_User1'],
                     signatures = ['~Super_User1'],
