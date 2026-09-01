@@ -110,7 +110,7 @@ def process(client, edit, invitation):
         remove_fields=['email_sharing', 'data_release']
     )
 
-    venue.setup(note.content['program_chair_emails']['value'])
+    venue.setup(note.content['program_chair_emails']['value'], note.content.get('publication_chairs_emails', {}).get('value', []))
     venue.invitation_builder.set_venue_template_invitations()
 
     client.post_group_edit(
@@ -319,6 +319,7 @@ def process(client, edit, invitation):
                 'area_chair_groups_names': { 'readers': [support_user] },
                 'senior_area_chairs_support': { 'readers': [support_user] },
                 'senior_area_chair_groups_names': { 'readers': [support_user] },
+                'publication_chairs_emails': { 'readers': [support_user] },
                 'release_role_participation': { 'readers': [support_user] },
                 'venue_organizer_agreement': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },

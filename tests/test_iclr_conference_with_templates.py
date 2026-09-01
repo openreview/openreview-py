@@ -83,7 +83,8 @@ class TestSimpleDualAnonymous():
             'ICLR.cc/2026/Conference/Reviewers',
             'ICLR.cc/2026/Conference/Authors',
             'ICLR.cc/2026/Conference/Area_Chairs',
-            'ICLR.cc/2026/Conference/Senior_Area_Chairs'
+            'ICLR.cc/2026/Conference/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Publication_Chairs'
         ]
         assert 'preferred_emails_id' in group.content and group.content['preferred_emails_id']['value'] == 'ICLR.cc/2026/Conference/-/Preferred_Emails'
         invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Preferred_Emails')

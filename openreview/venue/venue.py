@@ -159,6 +159,10 @@ class Venue(object):
             self.use_senior_area_chairs = True
             preferred_email_groups.append(self.get_senior_area_chairs_id())
 
+        # always create publication chairs group
+        self.use_publication_chairs = True
+        preferred_email_groups.append(self.get_publication_chairs_id())
+
         self.release_role_participation = request_note.content.get('release_role_participation', {}).get('value', True)
 
         self.preferred_emails_groups = preferred_email_groups

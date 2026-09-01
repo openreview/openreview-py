@@ -443,7 +443,6 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 await_process=True
             )
 
-
     def create_authors_group(self):
 
         venue_id = self.venue_id
@@ -554,7 +553,6 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     reviewer_group.web = content
                     self.post_group(reviewer_group)
 
-            
 
     def create_area_chairs_group(self):
 
@@ -708,6 +706,18 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 self.client.add_members_to_group(publication_chairs_group_id, members_to_add)
             if members_to_remove:
                 self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
+
+        if self.venue.is_template_related_workflow():
+            self.client.post_invitation_edit(
+                invitations=f'{self.openreview_template}/-/Group_Members',
+                signatures=[self.openreview_template],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'group_id': { 'value': publication_chairs_group_id },
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )
 
     def create_preferred_emails_readers_group(self):
         venue_id = self.venue_id
