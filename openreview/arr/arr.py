@@ -87,6 +87,7 @@ class ARR(object):
         self.submission_license = None
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
+        self.release_role_participation = True
         self.sac_paper_assignments = False
         self.submission_assignment_max_reviewers = None
         self.comment_notification_threshold = None
@@ -109,6 +110,8 @@ class ARR(object):
         self.venue.reviewers_name = self.reviewers_name
         self.venue.reviewer_roles = self.reviewer_roles
         self.venue.area_chair_roles = self.area_chair_roles
+        self.venue.submission_reviewer_roles = [self.reviewers_name]
+        self.venue.submission_area_chair_roles = [self.area_chairs_name]
         self.venue.senior_area_chair_roles = self.senior_area_chair_roles
         self.venue.area_chairs_name = self.area_chairs_name
         self.venue.secondary_area_chairs_name = self.secondary_area_chairs_name
@@ -129,6 +132,8 @@ class ARR(object):
         self.venue.senior_area_chair_roles = self.senior_area_chair_roles
         self.venue.area_chair_roles = self.area_chair_roles
         self.venue.reviewer_roles = self.reviewer_roles
+        self.venue.submission_reviewer_roles = [self.reviewers_name]
+        self.venue.submission_area_chair_roles = [self.area_chairs_name]
         self.venue.allow_gurobi_solver = self.allow_gurobi_solver
         self.venue.submission_license = self.submission_license
         self.venue.reviewer_identity_readers = self.reviewer_identity_readers
@@ -136,6 +141,7 @@ class ARR(object):
         self.venue.senior_area_chair_identity_readers = self.senior_area_chair_identity_readers
         self.venue.decision_heading_map = self.decision_heading_map
         self.venue.source_submissions_query_mapping = self.source_submissions_query_mapping
+        self.venue.release_role_participation = self.release_role_participation
         self.venue.sac_paper_assignments = self.sac_paper_assignments
         self.venue.submission_assignment_max_reviewers = self.submission_assignment_max_reviewers
         self.venue.comment_notification_threshold = self.comment_notification_threshold
@@ -588,6 +594,13 @@ class ARR(object):
     def get_submission_id(self):
         return self.venue.get_submission_id()
 
+    def get_post_submission_id(self):
+        return self.venue.get_post_submission_id()
+
+    def get_preprint_post_submission_id(self):
+        submission_name = self.submission_stage.name if self.submission_stage else self.venue.submission_stage.name
+        return self.get_invitation_id(f'Preprint_Post_{submission_name}')
+
     def get_pc_submission_revision_id(self):
         return self.venue.get_pc_submission_revision_id()
 
@@ -666,8 +679,17 @@ class ARR(object):
     def get_anon_area_chairs_name(self, pretty=True):
         return self.venue.get_anon_area_chairs_name(pretty)
 
-    def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        return self.venue.get_reviewers_id(number, anon, submitted)
+    def get_reviewers_id(self, number = None, anon=False, submitted=False, name=None):
+        return self.venue.get_reviewers_id(number, anon, submitted, name=name)
+
+    def get_reviewers_ids(self, submitted=False):
+        return self.venue.get_reviewers_ids(submitted=submitted)
+
+    def get_submission_reviewers_ids(self, number, submitted=False, anon=False):
+        return self.venue.get_submission_reviewers_ids(number, submitted=submitted, anon=anon)
+
+    def get_submission_area_chairs_ids(self, number, anon=False):
+        return self.venue.get_submission_area_chairs_ids(number, anon=anon)
 
     def get_authors_id(self, number = None):
         return self.venue.get_authors_id(number)
@@ -678,8 +700,8 @@ class ARR(object):
     def get_program_chairs_id(self):
         return self.venue.get_program_chairs_id()
 
-    def get_area_chairs_id(self, number = None, anon=False):
-        return self.venue.get_area_chairs_id(number, anon)
+    def get_area_chairs_id(self, number = None, anon=False, name=None):
+        return self.venue.get_area_chairs_id(number, anon, name=name)
 
     def get_secondary_area_chairs_id(self, number = None, anon=False):
         return self.venue.get_secondary_area_chairs_id(number, anon)
@@ -735,8 +757,30 @@ class ARR(object):
     def expire_invitation(self, invitation_id):
         return self.venue.expire_invitation(invitation_id)
 
+    def prune_active_arr_venues(self, previous_count=1):
+        active_venues = self.client.get_group('active_venues')
+        arr_venues = []
+
+        for venue_id in active_venues.members or []:
+            if not venue_id.startswith('aclweb.org/ACL/ARR'):
+                continue
+
+            venue_group = tools.get_group(self.client, venue_id)
+            if venue_group is None:
+                continue
+            arr_venues.append((venue_group.cdate, venue_id))
+
+        arr_venues.sort(reverse=True)
+
+        stale_venue_ids = [
+            venue_id for _, venue_id in arr_venues if venue_id != self.venue_id
+        ][previous_count:]
+        if stale_venue_ids:
+            self.client.remove_members_from_group(active_venues.id, stale_venue_ids)
+
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
+        self.prune_active_arr_venues()
 
         setup_arr_invitations(self.invitation_builder)
 
@@ -796,7 +840,40 @@ class ARR(object):
 
     # For stage invitations, pass value to inner venue objects
     def create_submission_stage(self):
-        stage_value = self.venue.create_submission_stage()
+        self.invitation_builder.set_submission_invitation()
+        if self.venue.iThenticate_plagiarism_check:
+            self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
+        self.invitation_builder.set_withdrawal_invitation()
+        self.invitation_builder.set_desk_rejection_invitation()
+        self.invitation_builder.set_post_submission_invitation()
+        self.invitation_builder.set_preprint_post_submission_invitation()
+        self.invitation_builder.set_pc_submission_revision_invitation()
+        self.invitation_builder.set_submission_reviewer_group_invitation()
+        self.invitation_builder.set_submission_message_invitation()
+        if self.use_area_chairs:
+            self.invitation_builder.set_submission_area_chair_group_invitation()
+        if self.use_senior_area_chairs:
+            self.invitation_builder.set_submission_senior_area_chair_group_invitation()
+        if self.expertise_selection_stage:
+            self.invitation_builder.set_expertise_selection_invitations()
+
+        if self.submission_stage.second_due_date:
+            stage = self.submission_stage
+            submission_revision_stage = openreview.stages.SubmissionRevisionStage(
+                name=f'Full_{stage.name}',
+                start_date=stage.exp_date,
+                due_date=stage.second_due_date,
+                additional_fields=stage.second_deadline_additional_fields if stage.second_deadline_additional_fields else stage.additional_fields,
+                remove_fields=stage.second_deadline_remove_fields if stage.second_deadline_remove_fields else stage.remove_fields,
+                only_accepted=False,
+                multiReply=True,
+                allow_author_reorder=stage.author_reorder_after_first_deadline,
+                allow_license_edition=True,
+                source={'venueid': self.get_submission_venue_id()}
+            )
+            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
+            self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
+
         invitation = self.client.get_invitation(self.get_submission_id())
         invitation.preprocess = self.invitation_builder.get_process_content('process/submission_preprocess.py')
         invitation.process = invitation.process + self.invitation_builder.get_process_content('process/submission_process_extension.py')
@@ -809,10 +886,10 @@ class ARR(object):
             replacement=False,
             invitation=invitation
         )
-        return stage_value
 
     def create_post_submission_stage(self):
-        return self.venue.create_post_submission_stage()
+        self.invitation_builder.set_post_submission_invitation()
+        self.invitation_builder.set_preprint_post_submission_invitation()
 
     def create_submission_revision_stage(self):
         self.venue.submission_revision_stage = self.submission_revision_stage

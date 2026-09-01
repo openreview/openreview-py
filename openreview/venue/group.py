@@ -76,22 +76,22 @@ class GroupBuilder(object):
 
         return groups
 
-    def get_reviewer_identity_readers(self, number):
-        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers)
+    def get_reviewer_identity_readers(self, number, name=None):
+        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers, reviewers_name=name)
 
-    def get_area_chair_identity_readers(self, number):
-        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.area_chair_identity_readers)
+    def get_area_chair_identity_readers(self, number, name=None):
+        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.area_chair_identity_readers, area_chairs_name=name)
 
     def get_senior_area_chair_identity_readers(self, number):
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.senior_area_chair_identity_readers)
 
-    def get_reviewer_paper_group_readers(self, number):
+    def get_reviewer_paper_group_readers(self, number, name=None):
         readers=[self.venue.id]
         if self.venue.use_senior_area_chairs:
             readers.append(self.venue.get_senior_area_chairs_id(number))
         if self.venue.use_area_chairs:
             readers.append(self.venue.get_area_chairs_id(number))
-        readers.append(self.venue.get_reviewers_id(number))
+        readers.append(self.venue.get_reviewers_id(number, name=name))
         return readers
 
     def get_reviewer_paper_group_writers(self, number):
@@ -103,11 +103,11 @@ class GroupBuilder(object):
         return readers
 
 
-    def get_area_chair_paper_group_readers(self, number):
+    def get_area_chair_paper_group_readers(self, number, name=None):
         readers=[self.venue.id, self.venue.get_program_chairs_id()]
         if self.venue.use_senior_area_chairs:
             readers.append(self.venue.get_senior_area_chairs_id(number))
-        readers.append(self.venue.get_area_chairs_id(number))
+        readers.append(self.venue.get_area_chairs_id(number, name=name))
         if openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED in self.venue.area_chair_identity_readers:
             readers.append(self.venue.get_reviewers_id(number))
         return readers
@@ -164,10 +164,12 @@ class GroupBuilder(object):
             'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
             'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },
             'date': { 'value': self.venue.date if self.venue.date else '' },
+            'release_role_participation': { 'value': self.venue.release_role_participation },
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
             'reviewer_roles': { 'value': self.venue.reviewer_roles },
+            'submission_reviewer_roles': { 'value': self.venue.submission_reviewer_roles },
             'reviewers_anon_name': { 'value': self.venue.get_anon_reviewers_name() },
             'reviewers_submitted_name': { 'value': 'Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
@@ -239,6 +241,7 @@ class GroupBuilder(object):
 
         if self.venue.use_area_chairs:
             content['area_chair_roles'] = { 'value': self.venue.area_chair_roles }
+            content['submission_area_chair_roles'] = { 'value': self.venue.submission_area_chair_roles }
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
             content['area_chairs_anon_name'] = { 'value': self.venue.get_anon_area_chairs_name() }
@@ -271,6 +274,7 @@ class GroupBuilder(object):
 
         if self.venue.review_stage:
             content['review_name'] = { 'value': self.venue.review_stage.name }
+            content['review_names'] = { 'value': [self.venue.review_stage.name] + [f'{role}_Review' for role in self.venue.submission_reviewer_roles[1:]] }
             content['review_rating'] = { 'value': self.venue.review_stage.rating_field_name }
             content['review_confidence'] = { 'value': self.venue.review_stage.confidence_field_name }
             content['review_email_pcs'] = { 'value': self.venue.review_stage.email_pcs }
@@ -351,26 +355,37 @@ class GroupBuilder(object):
 
         if self.venue.is_template_related_workflow():
             submission_name = self.venue.submission_stage.name
-            content['exclusion_workflow_invitations']  = {
-                'value': [
-                    f'{venue_id}/-/Edit',
-                    f'/{venue_id}/Submission[0-9]+/',
-                    f'/{venue_id}/-/Venue.*/',
-                    f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
-                    f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment).*/', # matching invitations
-                    f'{venue_id}/Authors/-/Message',
-                    f'{venue_id}/Authors/Accepted/-/Message',
-                    f'{venue_id}/-/Message',
-                    f'{venue_id}/-/Withdrawn_Submission',
-                    f'{venue_id}/-/Desk_Rejected_Submission'
-                ]
-            }
+            exclusion_workflow_invitations = [
+                f'{venue_id}/-/Edit',
+                f'/{venue_id}/Submission[0-9]+/',
+                f'/{venue_id}/-/Venue.*/'
+            ]
+
+            # every reviewer role has its own message and matching invitations
+            for role in self.venue.reviewer_roles:
+                exclusion_workflow_invitations.append(f'{venue_id}/{role}/-/Message') # TODO: parametrize invitation names
+                exclusion_workflow_invitations.append(f'/{venue_id}/{role}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration).*/') # matching invitations
+
+            exclusion_workflow_invitations.extend([
+                f'{venue_id}/Authors/-/Message',
+                f'{venue_id}/Authors/Accepted/-/Message',
+                f'{venue_id}/-/Message',
+                f'{venue_id}/-/Withdrawn_Submission',
+                f'{venue_id}/-/Desk_Rejected_Submission'
+            ])
+
+            content['exclusion_workflow_invitations']  = { 'value': exclusion_workflow_invitations }
             content['status_invitation_id'] = { 'value': f'{self.venue.support_user}/Venue_Request/Conference_Review_Workflow/-/Status' }
 
         update_content = self.get_update_content(venue_group.content, content)
         if self.venue.is_template_related_workflow() and venue_group.content:
             update_content = False # avoid updating the content on every deployment for template related workflows
         if update_content:
+
+            description = f'''Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria. [Learn more in the documentation](https://docs.openreview.net/new-venue-ui-beta/overview).
+
+For questions, assistance, or feedback, use the **Comment** or **Feedback** buttons in your [**venue configuration request**](https://openreview.net/forum?id={self.venue.request_form_id}) to reach the OpenReview team.''' if self.venue.is_template_related_workflow() else None
+
             self.client.post_group_edit(
                 invitation = self.venue.get_meta_invitation_id(),
                 readers = [self.venue.venue_id],
@@ -379,7 +394,7 @@ class GroupBuilder(object):
                 group = openreview.api.Group(
                     id = self.venue_id,
                     content = update_content,
-                    description = 'Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria. You can find more information [here](https://docs.openreview.net/new-venue-ui-beta/overview).'
+                    description = description
                 )
             )
 
@@ -511,7 +526,7 @@ class GroupBuilder(object):
                 if self.venue.use_area_chairs:
                     area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
                     additional_readers.append(area_chairs_id)
-                
+
                 self.client.post_group_edit(
                     invitation=f'{self.openreview_template}/-/Committee_Group',
                     signatures=[self.openreview_template],
@@ -521,11 +536,12 @@ class GroupBuilder(object):
                         'committee_role': { 'value': 'reviewers' },
                         'committee_pretty_name': { 'value': pretty_name },
                         'committee_anon_name': { 'value': self.venue.get_anon_committee_name(role) },
-                        'committee_submitted_name': { 'value': 'Submitted' },                    
+                        'committee_submitted_name': { 'value': 'Submitted' },
                         'additional_readers': { 'value': additional_readers }
                     },
                     await_process=True
                 )
+
             return            
 
         for index, role in enumerate(self.venue.reviewer_roles):
@@ -553,6 +569,7 @@ class GroupBuilder(object):
     def create_area_chairs_group(self):
 
         if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue.id)
             for index, role in enumerate(self.venue.area_chair_roles):
                 
                 additional_readers = []
@@ -562,7 +579,7 @@ class GroupBuilder(object):
                     senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
                     additional_readers.append(senior_area_chairs_id)
 
-                self.client.post_group_edit(
+                edit = self.client.post_group_edit(
                     invitation=f'{self.openreview_template}/-/Committee_Group',
                     signatures=[self.openreview_template],
                     content={
@@ -575,6 +592,14 @@ class GroupBuilder(object):
                     },
                     await_process=True
                 )
+                
+                area_chairs_group_id = edit['group']['id']
+                # create invitation to enable reviewer reassignment, where the program chairs
+                # also pick which reviewers group these area chairs may edit assignments for.
+                # The role in the same position is offered as the default.
+                paired_reviewers_name = self.venue.reviewer_roles[index] if index < len(self.venue.reviewer_roles) else self.venue.reviewers_name
+                edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id, area_chairs_name=role, reviewers_name=paired_reviewers_name, reviewer_roles=self.venue.reviewer_roles)
+
             return
 
         venue_id = self.venue.id

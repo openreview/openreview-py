@@ -72,7 +72,7 @@ def process(client, edit, invitation):
         readers = None
         writers = None
         needs_change = False
-        for index, author in enumerate(publication.content.get('authorids', {}).get('value')):
+        for index, author in enumerate(publication.content.get('authorids', {}).get('value') or []):
             if email == author:
                 authors.append(preferred_name)
                 authorids.append(preferred_id)
@@ -162,4 +162,10 @@ def process(client, edit, invitation):
     
 
     print('Remove email group')
-    client.delete_group(email)
+    try:
+        client.delete_group(email)
+    except openreview.OpenReviewException as e:
+        ## The API removes the email group when the email is retracted from the profile above, so by
+        ## the time we get here it is usually already gone. Anything else is a real failure.
+        if 'Group Not Found' not in e.args[0].get('message', ''):
+            raise

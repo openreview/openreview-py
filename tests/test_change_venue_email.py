@@ -42,9 +42,6 @@ class TestChangeVenueEmail():
                     'contact_email': { 'value': 'venueemail2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(start_date) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'reviewer_groups_names': { 'value': ['Reviewers'] },
-                    'area_chair_groups_names': { 'value': ['Area_Chairs'] },
-                    'senior_area_chair_groups_names': { 'value': ['Senior_Area_Chairs'] },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'VenueEmail.cc/2024/Conference' },
                     'expected_submissions': { 'value': 1000 },
@@ -58,8 +55,6 @@ class TestChangeVenueEmail():
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
-                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
-                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
                             ]
                     }
                 }
@@ -99,7 +94,8 @@ class TestChangeVenueEmail():
 
         venue_group = openreview.tools.get_group(openreview_client, 'VenueEmail.cc/2025/Conference')
         assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'VenueEmail.cc/2025/Conference/Reviewers/-/Recruitment_Response'
-        assert all(key in venue_group.content for key in ['reviewers_declined_id', 'reviewers_invited_id', 'reviewers_invited_message_id'])
+        assert openreview_client.get_group('VenueEmail.cc/2025/Conference/Reviewers/Invited')
+        assert openreview_client.get_group('VenueEmail.cc/2025/Conference/Reviewers/Declined')
 
         request_note = openreview_client.get_note(request.id)
         assert request_note.domain == 'openreview.net/Support'
@@ -107,8 +103,11 @@ class TestChangeVenueEmail():
         review_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Reviews_Notification')
         assert review_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
-        decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Decision_Notification')
-        assert decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+        accept_decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+        assert accept_decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+
+        reject_decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Reject_Decision_Notification')
+        assert reject_decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
     def test_change_venue_email(self, openreview_client, helpers):
 
@@ -138,8 +137,11 @@ class TestChangeVenueEmail():
         review_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Reviews_Notification')
         assert review_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
-        decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Decision_Notification')
-        assert decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+        accept_decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Accept_Decision_Notification')
+        assert accept_decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+
+        reject_decision_notification_inv = openreview_client.get_invitation('VenueEmail.cc/2025/Conference/-/Author_Reject_Decision_Notification')
+        assert reject_decision_notification_inv.message['replyTo']['param']['regex'] == r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
 
     def test_recruitment_invitations(self, openreview_client, helpers):
 

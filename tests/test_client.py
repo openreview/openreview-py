@@ -4,6 +4,7 @@ import datetime
 import openreview
 import pytest
 import time
+from unittest.mock import patch, MagicMock
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.venue import Venue
@@ -11,8 +12,23 @@ from openreview.stages import SubmissionStage
 
 class TestClient():
 
-    def test_get_groups(self, client):
-        groups = client.get_groups(ids=[
+    def test_retry_strategy(self, client, openreview_client):
+        ## Transient 5xx errors and rate limiting (429) should be retried with a
+        ## capped, jittered backoff so brief server overloads or throttling don't
+        ## abort long-running jobs.
+        for api_client in [client, openreview_client]:
+            retry = api_client.session.get_adapter(api_client.baseurl).max_retries
+            assert retry.total == 8
+            assert retry.connect == 1
+            assert retry.backoff_factor == 1
+            assert retry.backoff_max == 120
+            assert retry.backoff_jitter == 1
+            assert set(retry.status_forcelist) == {429, 500, 502, 503, 504}
+            assert retry.respect_retry_after_header is True
+
+    def test_get_groups(self, openreview_client):
+        ## The V2 API has no bulk lookup by ids, only a single id, so the groups are fetched one by one
+        group_ids = [
             '(anonymous)',
             'everyone',
             '~',
@@ -21,8 +37,8 @@ class TestClient():
             'openreview.net',
             'active_venues',
             'host'
-        ])
-        group_names = [g.id for g in groups]
+        ]
+        group_names = [openreview_client.get_group(group_id).id for group_id in group_ids]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
         assert '~' in group_names
@@ -121,12 +137,12 @@ class TestClient():
             error = e.args[0]
             assert e.args[0]['name'] == 'TokenExpiredError'
 
-    def test_get_notes_with_details(self, client):
-        notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
+    def test_get_notes_with_details(self, openreview_client):
+        notes = openreview_client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
         assert len(notes) == 0, 'notes is empty'
 
-    def test_get_profile(self, client, test_client, openreview_client):
-        profile = client.get_profile('test@mail.com')
+    def test_get_profile(self, test_client, openreview_client):
+        profile = openreview_client.get_profile('test@mail.com')
         assert profile, "Could not get the profile by email"
         assert isinstance(profile, openreview.Profile)
         assert profile.id == '~SomeFirstName_User1'
@@ -136,77 +152,89 @@ class TestClient():
         assert profile, "Could not get the profile by capitalized email"
         assert profile.id == '~SomeFirstName_User1'
 
-        profile = client.get_profile('~Super_User1')
+        profile = openreview_client.get_profile('~Super_User1')
         assert profile, "Could not get the profile by id"
         assert isinstance(profile, openreview.Profile)
         assert 'openreview@local.openreview.net' in profile.content['emails']
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*Profile Not Found.*'):
-            profile = client.get_profile('mbok@sss.edu')
+            profile = openreview_client.get_profile('mbok@sss.edu')
 
-        assert openreview.tools.get_profile(client, '~Super_User1')
-        assert not openreview.tools.get_profile(client, 'mbok@sss.edu')
+        assert openreview.tools.get_profile(openreview_client, '~Super_User1')
+        assert not openreview.tools.get_profile(openreview_client, 'mbok@sss.edu')
 
-    def test_search_profiles(self, client, openreview_client, helpers):
-        guest = openreview.Client()
-        guest.register_user(email = 'mbok@mail.com', fullname= 'Melisa Bokk', password = helpers.strong_password)
-        guest.register_user(email = 'andrew@mail.com', fullname = 'Andrew E McCallum', password = helpers.strong_password)
+    def test_search_profiles(self, openreview_client, helpers):
+        guest = openreview.api.OpenReviewClient()
+        guest.register_user(email = 'mbok@mail.com', fullname= 'Melisa Bokk', password = helpers.strong_password, dob = helpers.default_dob())
+        guest.register_user(email = 'andrew@mail.com', fullname = 'Andrew E McCallum', password = helpers.strong_password, dob = helpers.default_dob())
 
-        profiles = client.search_profiles(confirmedEmails=['mbok@mail.com'])
+        ## The email is only confirmed at activation, which happens in test_confirm_registration, so
+        ## these lookups go through emails rather than confirmedEmails. That returns a list per email.
+        profiles = openreview_client.search_profiles(emails=['mbok@mail.com'])
         assert profiles, "Could not get the profile by email"
         assert isinstance(profiles, dict)
-        assert isinstance(profiles['mbok@mail.com'], openreview.Profile)
-        assert profiles['mbok@mail.com'].id == '~Melisa_Bokk1'
+        assert isinstance(profiles['mbok@mail.com'][0], openreview.Profile)
+        assert profiles['mbok@mail.com'][0].id == '~Melisa_Bokk1'
 
-        profiles = client.search_profiles(ids=['~Melisa_Bokk1', '~Andrew_E_McCallum1'])
+        profiles = openreview_client.search_profiles(ids=['~Melisa_Bokk1', '~Andrew_E_McCallum1'])
         assert profiles, "Could not get the profile by id"
         assert isinstance(profiles, list)
         assert len(profiles) == 2
         assert '~Melisa_Bokk1' in profiles[1].id
         assert '~Andrew_E_McCallum1' in profiles[0].id
 
-        profiles = client.search_profiles(emails=[])
+        profiles = openreview_client.search_profiles(emails=[])
         assert len(profiles) == 0
 
-        assert client.profile
-        assert client.profile.id == '~Super_User1'
+        assert openreview_client.profile
+        assert openreview_client.profile.id == '~Super_User1'
 
-        assert '~Melisa_Bokk1' == client.search_profiles(ids = ['~Melisa_Bokk1'])[0].id
-        assert '~Melisa_Bokk1' == client.search_profiles(confirmedEmails = ['mbok@mail.com'])['mbok@mail.com'].id
-        assert '~Melisa_Bokk1' == client.search_profiles(first = 'Melisa', last = 'Bokk')[0].id
-        assert len(client.search_profiles(ids = ['~Melisa_Bok2'])) == 0
-        assert len(client.search_profiles(emails = ['mail@mail.com'])) == 0
-        assert len(client.search_profiles(first = 'Anna')) == 0
+        assert '~Melisa_Bokk1' == openreview_client.search_profiles(ids = ['~Melisa_Bokk1'])[0].id
+        assert '~Melisa_Bokk1' == openreview_client.search_profiles(emails = ['mbok@mail.com'])['mbok@mail.com'][0].id
+        ## The V2 API searches names by fullname; first/middle/last are not filters it applies
+        assert '~Melisa_Bokk1' in [p.id for p in openreview_client.search_profiles(fullname = 'Melisa Bokk')]
+        assert len(openreview_client.search_profiles(ids = ['~Melisa_Bok2'])) == 0
+        assert len(openreview_client.search_profiles(emails = ['mail@mail.com'])) == 0
+        assert len(openreview_client.search_profiles(fullname = 'Anna')) == 0
 
         # Test case sensitivity
-        assert '~Melisa_Bokk1' == openreview_client.search_profiles(confirmedEmails = ['MBOK@MAIL.COM'])['mbok@mail.com'].id
+        assert '~Melisa_Bokk1' == openreview_client.search_profiles(emails = ['MBOK@MAIL.COM'])['mbok@mail.com'][0].id
         assert '~Andrew_E_McCallum1' == openreview_client.search_profiles(emails = ['ANDREW@MAIL.COM'])['andrew@mail.com'][0].id
 
         helpers.create_user('user_a@mail.com', 'User', 'A', alternates=['users@alternate.com'])
         helpers.create_user('user_b@mail.com', 'User', 'B', alternates=['users@alternate.com'])
-        profiles = client.search_profiles(emails = ['users@alternate.com'])
+        profiles = openreview_client.search_profiles(emails = ['users@alternate.com'])
         assert profiles
         assert 'users@alternate.com' in profiles
         assert len(profiles['users@alternate.com']) == 2
 
-        profiles = client.search_profiles(confirmedEmails = ['users@alternate.com'])
+        profiles = openreview_client.search_profiles(confirmedEmails = ['users@alternate.com'])
         assert not profiles
 
 
-    def test_confirm_registration(self):
+    def test_confirm_registration(self, helpers):
 
-        guest = openreview.Client()
+        guest = openreview.api.OpenReviewClient()
         res = guest.activate_user('mbok@mail.com', {
             'names': [
                     {
-                        'first': 'Melisa',
-                        'last': 'Bok',
+                        'fullname': 'Melisa Bokk',
                         'username': '~Melisa_Bokk1'
                     }
                 ],
             'emails': ['mbok@mail.com'],
             'preferredEmail': 'mbok@mail.com',
             'homepage': f"https://melisa{int(time.time())}.openreview.net",
+            'dob': helpers.default_dob(),
+            'history': [{
+                'position': 'PhD Student',
+                'start': 2017,
+                'end': None,
+                'institution': {
+                    'country': 'US',
+                    'domain': 'mail.com',
+                }
+            }],
             })
         assert res, "Res i none"
         group = guest.get_group(id = 'mbok@mail.com')
@@ -286,38 +314,36 @@ class TestClient():
         notes = openreview_client.get_all_notes(invitation=invitation, content = { 'title': 'Paper title333'})
         assert len(notes) == 0
 
-    def test_merge_profile(self, client, helpers):
-        guest = openreview.Client()
-        from_profile = guest.register_user(email = 'celeste@gmail.com', fullname = 'Celeste Bok', password = helpers.strong_password)
-        assert from_profile
-        to_profile = guest.register_user(email = 'melisab@mail.com', fullname = 'Melissa Bok', password = helpers.strong_password)
-        assert to_profile
+    def test_merge_profile(self, openreview_client, helpers):
+        guest = openreview.api.OpenReviewClient()
+        guest.register_user(email = 'celeste@gmail.com', fullname = 'Celeste Bok', password = helpers.strong_password, dob = helpers.default_dob())
+        guest.register_user(email = 'melisab@mail.com', fullname = 'Melissa Bok', password = helpers.strong_password, dob = helpers.default_dob())
 
-        assert from_profile['id'] == '~Celeste_Bok1'
-        assert to_profile['id'] == '~Melissa_Bok1'
+        ## The V2 registration response only carries a status, so the ids are read off the profiles
+        assert openreview_client.get_profile('~Celeste_Bok1').id == '~Celeste_Bok1'
+        assert openreview_client.get_profile('~Melissa_Bok1').id == '~Melissa_Bok1'
 
-        profile = client.merge_profiles('~Melissa_Bok1', '~Celeste_Bok1')
+        profile = openreview_client.merge_profiles('~Melissa_Bok1', '~Celeste_Bok1')
         assert profile, 'Could not merge the profiles'
         assert profile.id == '~Melissa_Bok1'
         usernames = [name['username'] for name in profile.content['names']]
         assert '~Melissa_Bok1' in usernames
         assert '~Celeste_Bok1' in usernames
-        merged_profile = client.get_profile(email_or_id = '~Celeste_Bok1')
+        merged_profile = openreview_client.get_profile(email_or_id = '~Celeste_Bok1')
         merged_profile.id == '~Melissa_Bok1'
 
         
 
-    def test_rename_profile(self, client, helpers):
-        guest = openreview.Client()
-        from_profile = guest.register_user(email = 'lbahy@mail.com', fullname = 'Nadia LBahy', password = helpers.strong_password)
-        assert from_profile
-        to_profile = guest.register_user(email = 'steph@mail.com', fullname = 'David Steph', password = helpers.strong_password)
-        assert to_profile
+    def test_rename_profile(self, openreview_client, helpers):
+        guest = openreview.api.OpenReviewClient()
+        guest.register_user(email = 'lbahy@mail.com', fullname = 'Nadia LBahy', password = helpers.strong_password, dob = helpers.default_dob())
+        guest.register_user(email = 'steph@mail.com', fullname = 'David Steph', password = helpers.strong_password, dob = helpers.default_dob())
 
-        assert from_profile['id'] == '~Nadia_LBahy1'
-        assert to_profile['id'] == '~David_Steph1'
+        ## The V2 registration response only carries a status, so the ids are read off the profiles
+        assert openreview_client.get_profile('~Nadia_LBahy1').id == '~Nadia_LBahy1'
+        assert openreview_client.get_profile('~David_Steph1').id == '~David_Steph1'
 
-        profile = client.merge_profiles('~David_Steph1', '~Nadia_LBahy1')
+        profile = openreview_client.merge_profiles('~David_Steph1', '~Nadia_LBahy1')
         assert profile, 'Could not merge the profiles'
         assert profile.id == '~David_Steph1'
         usernames = [name['username'] for name in profile.content['names']]
@@ -326,7 +352,7 @@ class TestClient():
 
         # Test rename profile 
         assert profile.id == '~David_Steph1'
-        profile = client.rename_profile('~David_Steph1', '~Nadia_LBahy1')
+        profile = openreview_client.rename_profile('~David_Steph1', '~Nadia_LBahy1')
         assert profile.id == '~Nadia_LBahy1'
 
     @pytest.mark.skip()
@@ -422,10 +448,111 @@ class TestClient():
 
     def test_get_notes_by_ids(self, openreview_client):
         notes = openreview_client.get_notes(invitation='Test.ws/2019/Conference/-/Submission', content = { 'title': 'Paper title'})
-        assert len(notes) == 1        
-       
+        assert len(notes) == 1
+
         notes = openreview_client.get_notes_by_ids(ids = [notes[0].id])
         assert len(notes) == 1, 'notes is not empty'
+
+    def test_delete_invitation(self, openreview_client):
+        invitation_id = 'openreview.net/-/To_Delete'
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id=invitation_id,
+                readers=['everyone'],
+                writers=['openreview.net'],
+                signatures=['~Super_User1'],
+                invitees=['everyone'],
+                edit={
+                    'readers': { 'param': { 'regex': '.+' } },
+                    'signatures': { 'param': { 'regex': '.+' } },
+                    'writers': { 'param': { 'regex': '.+' } },
+                    'note': {
+                        'readers': { 'param': { 'regex': '.+' } },
+                        'signatures': { 'param': { 'regex': '.+' } },
+                        'writers': { 'param': { 'regex': '.+' } },
+                        'content': {
+                        'title': { 'value': { 'param': { 'type': 'string', 'regex': '.*' } } },
+                        }
+                    }
+                }
+            )
+        )
+
+        ## Invitation and its edits exist before deletion
+        invitation = openreview_client.get_invitation(invitation_id)
+        assert invitation.id == invitation_id
+
+        edits = openreview_client.get_invitation_edits(invitation_id=invitation_id)
+        assert len(edits) == 1
+
+        ## Delete the invitation
+        response = openreview_client.delete_invitation(invitation_id)
+        assert response['status'] == 'ok'
+
+        ## Invitation no longer exists after deletion
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation openreview.net/-/To_Delete was not found'):
+            openreview_client.get_invitation(invitation_id)
+
+        ## Its edits no longer exist after deletion
+        edits = openreview_client.get_invitation_edits(invitation_id=invitation_id)
+        assert len(edits) == 0
+
+    def test_preprocess_error_status(self, openreview_client):
+        ## A preprocess rejection must surface as a client error (400) with its message.
+        ## If the API returned it as a 500, the client would retry it on the edits
+        ## endpoints and replace the validation message with a RetryError after
+        ## several minutes of backoff.
+        invitation_id = 'openreview.net/-/Preprocess_Test'
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id=invitation_id,
+                readers=['everyone'],
+                writers=['openreview.net'],
+                signatures=['~Super_User1'],
+                invitees=['everyone'],
+                preprocess='''def process(client, edit, invitation):
+    raise openreview.OpenReviewException('This submission is not valid')''',
+                edit={
+                    'readers': { 'param': { 'regex': '.+' } },
+                    'signatures': { 'param': { 'regex': '.+' } },
+                    'writers': { 'param': { 'regex': '.+' } },
+                    'note': {
+                        'readers': { 'param': { 'regex': '.+' } },
+                        'signatures': { 'param': { 'regex': '.+' } },
+                        'writers': { 'param': { 'regex': '.+' } },
+                        'content': {
+                            'title': { 'value': { 'param': { 'type': 'string', 'regex': '.*' } } },
+                        }
+                    }
+                }
+            )
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'This submission is not valid') as excinfo:
+            openreview_client.post_note_edit(
+                invitation=invitation_id,
+                signatures=['~Super_User1'],
+                readers=['everyone'],
+                writers=['openreview.net'],
+                note=openreview.api.Note(
+                    readers=['everyone'],
+                    writers=['openreview.net'],
+                    signatures=['~Super_User1'],
+                    content={ 'title': { 'value': 'Test preprocess' } }
+                )
+            )
+
+        assert excinfo.value.args[0].get('status') == 400
 
     # def test_infer_notes(self, client):
     #     notes = client.get_notes(signature='openreview.net/Support')
@@ -665,4 +792,55 @@ class TestMfaLogin():
             )
             assert client.token
             assert client.profile
+
+class TestExpertiseAllResultsDownload():
+    """Tests for get_expertise_all_results downloading result files."""
+
+    def _make_binary_response(self, content):
+        response = MagicMock()
+        response.headers = {}
+        response.raise_for_status.return_value = None
+        response.iter_content.return_value = [content]
+        response.__enter__ = MagicMock(return_value=response)
+        response.__exit__ = MagicMock(return_value=False)
+        return response
+
+    def _make_json_response(self, data):
+        response = MagicMock()
+        response.headers = {'Content-Type': 'application/json'}
+        response.raise_for_status.return_value = None
+        response.json.return_value = data
+        return response
+
+    def test_default_returns_json(self, client, openreview_client):
+        for api_client in [client, openreview_client]:
+            with patch.object(api_client.session, 'get', return_value=self._make_json_response({'results': []})) as mock_get:
+                result = api_client.get_expertise_results('job-123', baseurl='https://api.openreview.net')
+                assert result == {'results': []}
+                mock_get.assert_called_once()
+                assert mock_get.call_args[1]['params']['jobId'] == 'job-123'
+
+    def test_all_results_downloads_default_filename(self, client, openreview_client, tmp_path):
+        expected_content = b'full scores matrix bytes'
+        for api_client in [client, openreview_client]:
+            with patch.object(api_client.session, 'get', return_value=self._make_binary_response(expected_content)) as mock_get:
+                result = api_client.get_expertise_all_results('job-123', baseurl='https://api.openreview.net')
+                assert result == 'job-123_scores.pt'
+                mock_get.assert_called_once()
+                assert mock_get.call_args[0][0].endswith('/expertise/results/all')
+                assert mock_get.call_args[1]['params']['jobId'] == 'job-123'
+                assert os.path.exists(result)
+                with open(result, 'rb') as f:
+                    assert f.read() == expected_content
+                os.remove(result)
+
+    def test_all_results_downloads_custom_filename(self, client, openreview_client, tmp_path):
+        expected_content = b'custom file bytes'
+        custom_file = str(tmp_path / 'custom_scores.pt')
+        for api_client in [client, openreview_client]:
+            with patch.object(api_client.session, 'get', return_value=self._make_binary_response(expected_content)) as mock_get:
+                result = api_client.get_expertise_all_results('job-123', baseurl='https://api.openreview.net', output_filename=custom_file)
+                assert result == custom_file
+                with open(custom_file, 'rb') as f:
+                    assert f.read() == expected_content
 

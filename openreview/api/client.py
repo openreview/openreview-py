@@ -19,6 +19,7 @@ import re
 import time
 import jwt
 import json
+import csv
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from ..openreview import MfaRequiredException
@@ -85,6 +86,7 @@ class OpenReviewClient(object):
         self.profiles_rename = self.baseurl + '/profiles/rename'
         self.relation_readers_url = self.baseurl + '/settings/relationReaders'
         self.profiles_moderate = self.baseurl + '/profile/moderate'
+        self.profile_documents_url = self.baseurl + '/profile-documents'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -122,11 +124,36 @@ class OpenReviewClient(object):
             'Accept': 'application/json'
         }
 
-        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=True)
+        retry_params = dict(
+            total=8,
+            connect=1,
+            backoff_factor=1,
+            backoff_max=120,
+            backoff_jitter=1,
+            status_forcelist=[ 429, 500, 502, 503, 504 ],
+            raise_on_status=False,
+            respect_retry_after_header=True
+        )
+        retry_strategy = LogRetry(**retry_params)
+        # Same retry policy, differing only in allowed_methods: POST is added so edit
+        # posts are retried on 429/5xx. Edit posts are safe to retry (re-posting the
+        # same edit converges to the same entity) and the API reserves 5xx for server
+        # faults — deliberate rejections such as process function validation return
+        # 400, which is never retried. Other POSTs (e.g. messages) are not idempotent
+        # and keep urllib3's default allowed_methods, which exclude POST.
+        edits_retry_strategy = LogRetry(
+            allowed_methods=frozenset(['HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST']),
+            **retry_params
+        )
         self.session = requests.Session()
-        adapter = HTTPAdapter(max_retries=retry_strategy)
+        adapter = HTTPAdapter(max_retries=retry_strategy, pool_maxsize=128)
+        edits_adapter = HTTPAdapter(max_retries=edits_retry_strategy, pool_maxsize=128)
         self.session.mount('https://', adapter)
         self.session.mount('http://', adapter)
+        # requests picks the longest matching prefix, so only the edits endpoints
+        # get the POST-retrying adapter
+        for edits_url in [self.note_edits_url, self.invitation_edits_url, self.group_edits_url]:
+            self.session.mount(edits_url, edits_adapter)
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
@@ -229,14 +256,13 @@ class OpenReviewClient(object):
         })
 
     def __await_process(self, edit_id):
-    
+
         process_logs = self.get_process_logs(id=edit_id)
         if not process_logs:
             return ## no process function found
-        
-        for i in range(100):
 
-            print('Check logs for process function', process_logs[0])
+        for i in range(1200):  # 1200 × 0.5s = 10 minutes
+
             if process_logs[0]['status'] == 'ok':
                 return
             elif process_logs[0]['status'] == 'error':
@@ -245,7 +271,7 @@ class OpenReviewClient(object):
             time.sleep(0.5)
             process_logs = self.get_process_logs(id=edit_id)
 
-        raise OpenReviewException("Process timed out")    
+        raise OpenReviewException("Process timed out")
 
     def get_invitation_date_process_job(self, job_id):
         response = self.session.get(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/' + job_id.replace('/', '%2F'), params = {}, headers = self.headers)
@@ -254,6 +280,11 @@ class OpenReviewClient(object):
     
     def reschedule_date_process_jobs(self, invitation_id):
         response = self.session.post(self.baseurl + '/invitations/dateprocesses', json = { 'ids': [invitation_id]}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def delete_invitation_date_process_scheduler(self, job_id):
+        response = self.session.delete(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/schedulers/' + job_id.replace('/', '%2F'), headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
     
@@ -306,7 +337,7 @@ class OpenReviewClient(object):
         self.__handle_authorization(json_response)
         return json_response
 
-    def register_user(self, email = None, fullname = None, password = None):
+    def register_user(self, email = None, fullname = None, password = None, dob = None):
         """
         Registers a new user
 
@@ -316,6 +347,8 @@ class OpenReviewClient(object):
         :type fullname: str, optional
         :param password: Password used to log into OpenReview
         :type password: str, optional
+        :param dob: Date of birth as epoch milliseconds. Mandatory when the API is configured with profile.requireDob
+        :type dob: int, optional
 
         :return: Dictionary containing the new user information including his id, username, email(s), readers, writers, etc.
         :rtype: dict
@@ -325,6 +358,8 @@ class OpenReviewClient(object):
             'fullname': fullname,
             'password': password
         }
+        if dob is not None:
+            register_payload['dob'] = dob
         response = self.session.post(self.register_url, json = register_payload, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
@@ -358,7 +393,9 @@ class OpenReviewClient(object):
         response = self.session.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
-        self.__handle_authorization(json_response)
+        ## A profile pending moderation is activated without an authentication token
+        if json_response.get('token'):
+            self.__handle_authorization(json_response)
 
         return json_response
 
@@ -842,6 +879,18 @@ class OpenReviewClient(object):
 
         return response.json()['venues']
     
+    def get_meta_invitation_id(self):
+        """
+        Returns the super user meta invitation id: ``openreview.net/-/Edit`` for local
+        environments and ``OpenReview.net/-/Edit`` for the live site.
+
+        :return: Meta invitation id
+        :rtype: str
+        """
+        if 'localhost' in self.baseurl:
+            return 'openreview.net/-/Edit'
+        return 'OpenReview.net/-/Edit'
+
     def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None):
         """
         Updates the domain for an entire venue
@@ -866,7 +915,69 @@ class OpenReviewClient(object):
 
 
         response = self.__handle_response(response)
-        return response.json()    
+        result = response.json()
+
+        ## The rename is processed asynchronously. Wait for the specific rename job to finish
+        ## (its id is returned in the response) before doing any post-processing, so we don't
+        ## race with the server-side rename (which would leave the venue half-renamed).
+        job_id = result.get('jobId')
+        if job_id:
+            wait_time = 0.5
+            max_iterations = int(600 / wait_time)
+            for _ in range(max_iterations):
+                try:
+                    job = self.get_job('internalQueueMQ', job_id)
+                except OpenReviewException as e:
+                    error = e.args[0] if e.args else {}
+                    message = error.get('message', '') if isinstance(error, dict) else str(error)
+                    ## the job finished and was removed from the queue
+                    if error.get('name') == 'NotFoundError' or 'not found' in message.lower():
+                        break
+                    raise
+                if not job or job.get('finishedOn'):
+                    break
+                time.sleep(wait_time)
+
+        ## Make sure the parent groups for the new venue id exist (e.g. ICML.org and
+        ## ICML.org/2023 for ICML.org/2023/Conference), creating any that are missing the
+        ## same way the venue group builder does.
+        path_components = new_venue_id.split('/')
+        paths = ['/'.join(path_components[0:index + 1]) for index in range(len(path_components))]
+        for path in paths:
+            if tools.get_group(self, path) is None:
+                self.post_group_edit(
+                    invitation = self.get_meta_invitation_id(),
+                    readers = ['everyone'],
+                    writers = ['~Super_User1'],
+                    signatures = ['~Super_User1'],
+                    group = Group(
+                        id = path,
+                        readers = ['everyone'],
+                        nonreaders = [],
+                        writers = [path],
+                        signatories = [path],
+                        signatures = ['~Super_User1'],
+                        members = [],
+                        details = { 'writable': True }
+                    )
+                )
+
+        ## The old venue id no longer exists after the rename. Replace it with the new venue
+        ## id in the active_venues/venues groups so the renamed venue stays registered and no
+        ## stale member is left behind (which would break jobs that iterate these groups).
+        for group_id in ['active_venues', 'venues']:
+            try:
+                group = self.get_group(group_id)
+            except OpenReviewException as e:
+                error = e.args[0]
+                if error.get('name') == 'NotFoundError' or error.get('message', '').startswith('Group Not Found'):
+                    continue
+                raise e
+            if old_venue_id in (group.members or []):
+                self.remove_members_from_group(group_id, old_venue_id)
+                self.add_members_to_group(group_id, new_venue_id)
+
+        return response.json()
 
     def put_attachment(self, file_path, invitation, name):
         """Upload a file attachment to the OpenReview server.
@@ -1011,6 +1122,155 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
+    def create_profile_document_upload_link(self, profile_id, document_type):
+        """
+        Creates a short-lived upload link scoped to one profile and document type.
+        The link can be shared with the profile owner (e.g. in a moderation rejection message)
+        so they can upload the requested document without logging in. This is a support method.
+
+        :param profile_id: Profile id the uploaded document will be attached to
+        :type profile_id: str
+        :param document_type: Type of document the link accepts ('identity' or 'parentalConsent')
+        :type document_type: str
+
+        :return: Dictionary with the keys ``url``, ``token`` and ``expiresAt``
+        :rtype: dict
+        """
+        response = self.session.post(
+            self.profile_documents_url + '/upload-link',
+            json = {
+                'profileId': profile_id,
+                'type': document_type
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return response.json()
+
+    def post_profile_document(self, file_path, token, document_type):
+        """
+        Uploads a profile document using an upload link token. No login is required:
+        the token, minted with :meth:`create_profile_document_upload_link`, authorizes
+        the upload and fixes the target profile and document type.
+
+        :param file_path: Path to the local file to upload
+        :type file_path: str
+        :param token: Upload link token
+        :type token: str
+        :param document_type: Type of document being uploaded ('identity' or 'parentalConsent')
+        :type document_type: str
+
+        :return: Dictionary with the uploaded document metadata (``id``, ``type``, ``filename``, ``size``, ``tcdate``)
+        :rtype: dict
+        """
+        type_url_paths = {
+            'identity': 'identity',
+            'parentalConsent': 'parental-consent'
+        }
+        if document_type not in type_url_paths:
+            raise OpenReviewException(f'Invalid document type: {document_type}')
+
+        with open(file_path, 'rb') as f:
+            response = self.session.post(
+                f'{self.profile_documents_url}/{type_url_paths[document_type]}/{token}',
+                files = { 'file': (os.path.basename(file_path), f) },
+                headers = self.headers)
+
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_profile_documents(self, profile_id, document_type=None, trash=None):
+        """
+        Gets the list of documents uploaded for a profile. This is a support method:
+        users can upload documents but cannot retrieve them.
+
+        :param profile_id: Profile id to list documents for
+        :type profile_id: str
+        :param document_type: Filter by document type ('identity' or 'parentalConsent')
+        :type document_type: str, optional
+        :param trash: If True, include soft-deleted documents (returned with a ``ddate``)
+        :type trash: bool, optional
+
+        :return: List of dictionaries with the document metadata
+        :rtype: list[dict]
+        """
+        params = { 'profileId': profile_id }
+        if document_type is not None:
+            params['type'] = document_type
+        if trash is not None:
+            params['trash'] = trash
+
+        response = self.session.get(self.profile_documents_url, params=tools.format_params(params), headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()['profileDocuments']
+
+    def get_profile_document(self, id):
+        """
+        Downloads a profile document. This is a support method: users can upload
+        documents but cannot retrieve them.
+
+        :param id: Id of the document to download
+        :type id: str
+
+        :return: The binary content of the document
+        :rtype: bytes
+        """
+        response = self.session.get(self.profile_documents_url + '/' + id, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.content
+
+    def delete_profile_document(self, id):
+        """
+        Deletes a profile document. The stored file is removed and the profile owner
+        is notified by email. This is a support method.
+
+        :param id: Id of the document to delete
+        :type id: str
+
+        :return: Status of the request
+        :rtype: dict
+        """
+        response = self.session.delete(self.profile_documents_url + '/' + id, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_identity_documents(self, after=None, limit=None):
+        """
+        Gets the identity documents pending review, oldest first. This is a support method.
+
+        :param after: Document id to start after, for keyset pagination
+        :type after: str, optional
+        :param limit: Maximum number of documents to return
+        :type limit: int, optional
+
+        :return: Dictionary with the keys ``count`` and ``documents``, where each document includes its ``profileId``
+        :rtype: dict
+        """
+        params = {}
+        if after is not None:
+            params['after'] = after
+        if limit is not None:
+            params['limit'] = limit
+
+        response = self.session.get(self.profile_documents_url + '/identity', params=tools.format_params(params), headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def delete_identity_documents(self, profile_id):
+        """
+        Deletes all the identity documents of a profile. The stored files are removed
+        and the profile owner is notified by email. This is a support method.
+
+        :param profile_id: Profile id to delete identity documents for
+        :type profile_id: str
+
+        :return: Dictionary with the key ``deletedCount``
+        :rtype: dict
+        """
+        response = self.session.delete(self.profile_documents_url + '/identity/profiles/' + profile_id, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def update_relation_readers(self, update):
         """
@@ -1671,34 +1931,6 @@ class OpenReviewClient(object):
         if domain is not None:
             params['domain'] = domain
 
-        if 'details' not in params:
-            params['stream'] = True
-            # Handle sort param for local sorting
-            sort_key = None
-            reverse = False
-            if 'sort' in params:
-                # Accept format like "number:asc", "tcdate:desc", etc.
-                valid_fields = {
-                    'number': lambda n: n.number,
-                    'tcdate': lambda n: n.tcdate,
-                    'tmdate': lambda n: n.tmdate,
-                    'cdate': lambda n: n.cdate,
-                    'mdate': lambda n: n.mdate
-                }
-                if ':' in sort:
-                    field, direction = sort.split(':', 1)
-                else:
-                    field, direction = sort, 'desc'
-                if field in valid_fields:
-                    sort_key = valid_fields[field]
-                    reverse = direction == 'desc'
-                    params['sort'] = None  # Remove for API call, sort locally            
-            
-            results = self.get_notes(**params)
-            if sort_key:
-                return sorted(results, key=sort_key, reverse=reverse)
-            return results
-        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):
@@ -2387,6 +2619,20 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_invitation(self, invitation_id):
+        """
+        Deletes the invitation
+
+        :param invitation_id: ID of Invitation to be deleted
+        :type invitation_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.invitations_url, json = {'id': invitation_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=None):
         """
         Posts a message to the recipients and consequently sends them emails
@@ -2954,6 +3200,41 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def get_job(self, queue_name, job_id):
+        """
+        **Only for Super User**. Retrieves a single job from a queue by id.
+
+        :param queue_name: Name of the queue (e.g. ``internalQueueMQ``)
+        :type queue_name: str
+        :param job_id: Id of the job
+        :type job_id: str
+
+        :return: Job object
+        :rtype: dict
+        """
+        response = self.session.get(f'{self.baseurl}/jobs/queues/{queue_name}/{job_id}', headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def request_raw_expertise(self, expertise_request, baseurl=None):
+        """
+        Calls the Expertise API with a raw expertise request.
+
+        :param expertise_request: Dictionary containing the expertise request to be sent to the Expertise API
+        :type expertise_request: dict
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the response from the Expertise API
+        :rtype: dict
+        """
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
     def request_expertise(self, 
                         name, 
                         group_id, 
@@ -3339,7 +3620,21 @@ class OpenReviewClient(object):
         print('get expertise jobs', response_json)
         return response_json
     
-    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
+    def get_expertise_metadata(self, job_id, baseurl=None):
+
+        print('get expertise metadata', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            print('get expertise metadata localhost, return {}')
+            return {}
+
+        response = self.session.get(base_url + '/expertise/metadata', params = {'jobId': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        response_json = response.json()
+        print('get expertise metadata', response_json)
+        return response_json
+
+    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False, format='json'):
 
         print('get expertise results', baseurl, job_id)
         base_url = baseurl if baseurl else self.baseurl
@@ -3347,7 +3642,7 @@ class OpenReviewClient(object):
 
         if base_url.startswith('http://localhost'):
             print('return expertise results localhost, return []')
-            return { 'results': [] }
+            return iter([]) if format == 'csv' else { 'results': [] }
 
         if wait_for_complete:
             call_count = 0
@@ -3362,17 +3657,51 @@ class OpenReviewClient(object):
                 call_count += 1
 
             if 'Completed' == status_text:
-                return self.get_expertise_results(job_id, baseurl=base_url)
+                return self.get_expertise_results(job_id, baseurl=base_url, format=format)
             if 'Error' in status_text:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
+            if format == 'csv':
+                response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id, 'format': 'csv'}, headers = self.headers, stream = True)
+                response = self.__handle_response(response)
+                print('return expertise results', baseurl, job_id)
+                def _iter_csv_results(response):
+                    try:
+                        yield from csv.DictReader(response.iter_lines(decode_unicode=True))
+                    finally:
+                        response.close()
+                return _iter_csv_results(response)
+
             response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
             response = self.__handle_response(response)
             print('return expertise results', baseurl, job_id)
             return response.json()
+
+    def get_expertise_all_results(self, job_id, baseurl=None, output_filename=None):
+
+        print('get expertise all results', baseurl, job_id)
+        base_url = baseurl if baseurl else self.baseurl
+
+        if base_url.startswith('http://localhost'):
+            print('return expertise all results localhost, return empty file')
+            if output_filename is None:
+                output_filename = f"{job_id}_scores.pt"
+            open(output_filename, 'wb').close()
+            return output_filename
+
+        if output_filename is None:
+            output_filename = f"{job_id}_scores.pt"
+        response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
+        response = self.__handle_response(response)
+        with response:
+            with open(output_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        print('return expertise all results', baseurl, job_id)
+        return output_filename
 
 
 class Edit(object):
@@ -3578,23 +3907,28 @@ class Note(object):
     @property
     def authors(self):
         """
-        Returns the authors as a canonical list of ``{'fullname', 'username'}`` dicts,
-        regardless of whether the underlying content stores them as a list of objects
-        (current schema) or as parallel ``authors``/``authorids`` arrays (legacy schema).
+        Returns the list of author display names, working for both the unified
+        ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
         """
         if not self.content:
             return []
         authors_value = self.content.get('authors', {}).get('value') or []
         if authors_value and isinstance(authors_value[0], dict):
-            return [{'fullname': a.get('fullname', ''), 'username': a.get('username', '')} for a in authors_value]
-        authorids_value = self.content.get('authorids', {}).get('value') or []
-        return [
-            {
-                'fullname': authors_value[i] if i < len(authors_value) else '',
-                'username': authorids_value[i] if i < len(authorids_value) else ''
-            }
-            for i in range(max(len(authors_value), len(authorids_value)))
-        ]
+            return [author.get('fullname', '') for author in authors_value]
+        return list(authors_value)
+
+    @property
+    def authorids(self):
+        """
+        Returns the list of author profile IDs / emails, working for both the
+        unified ``author{}`` schema and the legacy ``authors``/``authorids`` schema.
+        """
+        if not self.content:
+            return []
+        authors_value = self.content.get('authors', {}).get('value') or []
+        if authors_value and isinstance(authors_value[0], dict):
+            return [author['username'] for author in authors_value if author.get('username')]
+        return list(self.content.get('authorids', {}).get('value') or [])
 
     def to_json(self):
         """

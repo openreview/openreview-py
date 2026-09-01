@@ -106,7 +106,7 @@ return {
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Profile_Blocked_Status',
-                readers=[self.support_group_id],
+                readers=[self.support_group_id, 'active_venues'],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
                 invitees=[self.support_group_id],
@@ -171,10 +171,16 @@ return {
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Vouch',
-                readers=[self.support_group_id],
+                readers=['everyone'],
                 writers=[self.support_group_id],
                 signatures=[self.support_group_id],
-                invitees=[self.support_group_id],
+                invitees=['~'],
+                preprocess=self.get_process_content('process/vouch_pre_process.py'),
+                process=self.get_process_content('process/vouch_process.py'),
+                content={
+                    'lifetimeLimit': { 'value': 20 },
+                    'monthLimit': { 'value': 5 }
+                },
                 tag={
                     'id': {
                         'param': {
@@ -199,6 +205,12 @@ return {
                     'profile': {
                         'param': {
                             'regex': '^~.*'
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'regex': '.*',
+                            'optional': True
                         }
                     }
                 },
@@ -255,6 +267,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.public_article_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=authorship_claim_invitation_id,
                 readers=['everyone'],
@@ -341,6 +354,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.public_article_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=author_removal_invitation_id,
                 readers=['everyone'],
@@ -932,6 +946,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.dblp_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=record_invitation_id,
                 readers=['everyone'],
@@ -1107,12 +1122,14 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.arxiv_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=record_invitation_id,
                 readers=['everyone'],
                 writers=[self.arxiv_group_id],
                 signatures=[self.arxiv_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 process=self.get_process_content('process/arxiv_record_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -1289,6 +1306,7 @@ return {
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.orcid_group_id],
+            replacement=True,
             invitation = openreview.api.Invitation(
                 id=record_invitation_id,
                 readers=['everyone'],
@@ -1703,6 +1721,7 @@ return {
                 writers=[self.support_group_id],
                 signatures=[archive_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
