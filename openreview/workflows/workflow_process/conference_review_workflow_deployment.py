@@ -59,7 +59,8 @@ def process(client, edit, invitation):
 
     venue.review_stage = openreview.stages.ReviewStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
-        due_date=submission_deadline_datetime + datetime.timedelta(weeks=5)
+        due_date=submission_deadline_datetime + datetime.timedelta(weeks=5),
+        submission_reviewer_roles=[venue.submission_reviewer_roles[0]]
     )
 
     venue_committee = [
@@ -143,6 +144,19 @@ def process(client, edit, invitation):
 
     venue.create_review_stage()
     venue.create_comment_stage()
+
+    # When reviewers are split into several per-submission groups, create one additional review
+    # invitation per secondary reviewer role so each role gets its own form.
+    for additional_role in venue.submission_reviewer_roles[1:]:
+        review_name = f'{additional_role}_Review'
+        venue.review_stage = openreview.stages.ReviewStage(
+            name=review_name,
+            child_invitations_name=review_name,
+            start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
+            due_date=submission_deadline_datetime + datetime.timedelta(weeks=5),
+            submission_reviewer_roles=[additional_role]
+        )
+        venue.create_review_stage()
 
     additional_readers = []
     submission_release_additional_readers = []
@@ -307,9 +321,11 @@ def process(client, edit, invitation):
         'full_submission_deadline',
         'reviewers_name',
         'reviewer_groups_names',
+        'submission_reviewer_group_names'
         'area_chairs_support',
         'area_chairs_name',
         'area_chair_groups_names',
+        'submission_area_chair_group_names'
         'senior_area_chairs_support',
         'senior_area_chair_groups_names',
         'release_role_participation',

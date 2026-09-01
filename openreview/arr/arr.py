@@ -110,6 +110,8 @@ class ARR(object):
         self.venue.reviewers_name = self.reviewers_name
         self.venue.reviewer_roles = self.reviewer_roles
         self.venue.area_chair_roles = self.area_chair_roles
+        self.venue.submission_reviewer_roles = [self.reviewers_name]
+        self.venue.submission_area_chair_roles = [self.area_chairs_name]
         self.venue.senior_area_chair_roles = self.senior_area_chair_roles
         self.venue.area_chairs_name = self.area_chairs_name
         self.venue.secondary_area_chairs_name = self.secondary_area_chairs_name
@@ -130,6 +132,8 @@ class ARR(object):
         self.venue.senior_area_chair_roles = self.senior_area_chair_roles
         self.venue.area_chair_roles = self.area_chair_roles
         self.venue.reviewer_roles = self.reviewer_roles
+        self.venue.submission_reviewer_roles = [self.reviewers_name]
+        self.venue.submission_area_chair_roles = [self.area_chairs_name]
         self.venue.allow_gurobi_solver = self.allow_gurobi_solver
         self.venue.submission_license = self.submission_license
         self.venue.reviewer_identity_readers = self.reviewer_identity_readers
@@ -675,8 +679,17 @@ class ARR(object):
     def get_anon_area_chairs_name(self, pretty=True):
         return self.venue.get_anon_area_chairs_name(pretty)
 
-    def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        return self.venue.get_reviewers_id(number, anon, submitted)
+    def get_reviewers_id(self, number = None, anon=False, submitted=False, name=None):
+        return self.venue.get_reviewers_id(number, anon, submitted, name=name)
+
+    def get_reviewers_ids(self, submitted=False):
+        return self.venue.get_reviewers_ids(submitted=submitted)
+
+    def get_submission_reviewers_ids(self, number, submitted=False, anon=False):
+        return self.venue.get_submission_reviewers_ids(number, submitted=submitted, anon=anon)
+
+    def get_submission_area_chairs_ids(self, number, anon=False):
+        return self.venue.get_submission_area_chairs_ids(number, anon=anon)
 
     def get_authors_id(self, number = None):
         return self.venue.get_authors_id(number)
@@ -687,8 +700,8 @@ class ARR(object):
     def get_program_chairs_id(self):
         return self.venue.get_program_chairs_id()
 
-    def get_area_chairs_id(self, number = None, anon=False):
-        return self.venue.get_area_chairs_id(number, anon)
+    def get_area_chairs_id(self, number = None, anon=False, name=None):
+        return self.venue.get_area_chairs_id(number, anon, name=name)
 
     def get_secondary_area_chairs_id(self, number = None, anon=False):
         return self.venue.get_secondary_area_chairs_id(number, anon)
