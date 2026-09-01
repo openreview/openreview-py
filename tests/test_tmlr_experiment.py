@@ -1,0 +1,803 @@
+import openreview
+import pytest
+import datetime
+from openreview.api import OpenReviewClient
+from openreview.api import Note
+from openreview.journal import JournalRequest
+
+
+class TestTMLRExperiment():
+
+    @pytest.fixture(scope="class")
+    def journal(self, openreview_client, helpers):
+        venue_id = 'TMLRE'
+        percy_client = OpenReviewClient(username='percy@expmail.com', password=helpers.strong_password)
+        percy_client.impersonate('TMLRE')
+        requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={'venue_id': venue_id})
+        return JournalRequest.get_journal(percy_client, requests[0].id)
+
+    def test_setup(self, openreview_client, request_page, selenium, helpers, journal_request):
+        ## Support Role
+        helpers.create_user('percy@expmail.com', 'Percy', 'Liang')
+
+        ## Editors in Chief
+        helpers.create_user('sarah@expmail.com', 'Sarah', 'Miller')
+        helpers.create_user('thomas@expmail.com', 'Thomas', 'Brown')
+
+        ## Action Editor
+        helpers.create_user('alice@expmailseven.com', 'Alice', 'Johnson')
+
+        ## Reviewers
+        helpers.create_user('bob@expmailone.com', 'Bob', 'Williams')
+        helpers.create_user('carol@expmailtwo.com', 'Carol', 'Davis')
+        helpers.create_user('dan@expmailthree.com', 'Dan', 'Lee')
+
+        ## Author
+        helpers.create_user('eve@expmaileight.com', 'Eve', 'Garcia')
+
+        ## AI Reviewer
+        helpers.create_user('lele@mail.com', 'Lele', 'Cao')
+
+        request_form = openreview_client.post_note_edit(
+            invitation='openreview.net/Support/-/Journal_Request',
+            signatures=['openreview.net/Support'],
+            note=Note(
+                signatures=['openreview.net/Support'],
+                content={
+                    'official_venue_name': {'value': 'Transactions on Machine Learning Research Experiment'},
+                    'abbreviated_venue_name': {'value': 'TMLRE'},
+                    'contact_info': {'value': 'tmlre@jmlr.org'},
+                    'support_role': {'value': '~Percy_Liang1'},
+                    'editors': {'value': ['~Sarah_Miller1', '~Thomas_Brown1']},
+                    'website': {'value': 'jmlr.org/tmlre'},
+                    'settings': {
+                        'value': {
+                            'submission_public': True,
+                            'assignment_delay': 5,
+                            'submission_name': 'Submission',
+                            'submission_license': 'CC BY-SA 4.0',
+                            'eic_submission_notification': False,
+                            'certifications': [
+                                'Featured Certification',
+                                'Reproducibility Certification',
+                                'Survey Certification'
+                            ],
+                            'eic_certifications': ['Outstanding Certification'],
+                            'submission_length': [
+                                'Regular submission (no more than 12 pages of main content)',
+                                'Long submission (more than 12 pages of main content)',
+                            ],
+                            'issn': '2835-8856',
+                            'website_urls': {
+                                'editorial_board': 'https://jmlr.org/tmlr/editorial-board.html',
+                                'evaluation_criteria': 'https://jmlr.org/tmlr/editorial-policies.html#evaluation',
+                                'reviewer_guide': 'https://jmlr.org/tmlr/reviewer-guide.html',
+                                'editorial_policies': 'https://jmlr.org/tmlr/editorial-policies.html',
+                                'faq': 'https://jmlr.org/tmlr/contact.html',
+                            },
+                            'editors_email': 'tmlre-editors@jmlr.org',
+                            'skip_ac_recommendation': False,
+                            'number_of_reviewers': 3,
+                            'reviewers_max_papers': 6,
+                            'ae_recommendation_period': 1,
+                            'under_review_approval_period': 1,
+                            'reviewer_assignment_period': 1,
+                            'review_period': 2,
+                            'discussion_period': 2,
+                            'recommendation_period': 2,
+                            'decision_period': 1,
+                            'camera_ready_period': 4,
+                            'camera_ready_verification_period': 1,
+                            'archived_action_editors': True,
+                            'archived_reviewers': True,
+                            'expert_reviewers': True,
+                            'external_reviewers': True,
+                            'expertise_model': 'specter2+scincl',
+                            'review_additional_fields': {
+                                'strengths_and_weaknesses': False,
+                                'summary_of_contributions': {
+                                    'order': 1,
+                                    'value': {
+                                        'param': {
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'type': 'string',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'claims_and_evidence': {
+                                    'order': 2,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'claims_explanation': {
+                                    'order': 3,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'audience': {
+                                    'order': 4,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'audience_explanation': {
+                                    'order': 5,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'requested_changes': {
+                                    'order': 6,
+                                    'value': {
+                                        'param': {
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'type': 'string',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'broader_impact_concerns': {
+                                    'order': 7,
+                                    'value': {
+                                        'param': {
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'type': 'string',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                            },
+                            'official_recommendation_additional_validation': (
+                                "if edit.note.content.get('claims_and_evidence', {}).get('value') == 'Yes'"
+                                " and edit.note.content.get('audience', {}).get('value') == 'Yes':\n"
+                                "    if 'Reject' in edit.note.content.get('decision_recommendation', {}).get('value', ''):\n"
+                                "        raise openreview.OpenReviewException("
+                                "'Decision recommendation should be \"Accept\" or \"Leaning Accept\" if you answered"
+                                " \"Yes\" to both TMLR criteria.')\n"
+                                "if edit.note.content.get('claims_and_evidence', {}).get('value') == 'No'"
+                                " or edit.note.content.get('audience', {}).get('value') == 'No':\n"
+                                "    if 'Accept' in edit.note.content.get('decision_recommendation', {}).get('value', ''):\n"
+                                "        raise openreview.OpenReviewException("
+                                "'Decision recommendation should not be \"Accept\" nor \"Leaning Accept\" if you answered"
+                                " \"No\" to either of the two TMLR criteria.')"
+                            ),
+                            'decision_additional_fields': {
+                                'claims_and_evidence': {
+                                    'order': 2,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'claims_explanation': {
+                                    'order': 3,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'audience': {
+                                    'order': 4,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'audience_explanation': {
+                                    'order': 5,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'comment': False,
+                                'additional_comments': {
+                                    'order': 10,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True,
+                                            'optional': True
+                                        }
+                                    }
+                                },
+                            },
+                            'assignment_delay_after_submitted_review': 0.0001,
+                            'max_solicit_review_per_month': 3,
+                            'enable_blocked_authors': True,
+                            'enable_ai_review': True
+                        }
+                    }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'TMLRE'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
+
+        tmlre = openreview_client.get_group('TMLRE')
+        assert tmlre
+        assert tmlre.members == ['~Percy_Liang1', 'TMLRE/Editors_In_Chief']
+
+        assert openreview_client.get_invitation('TMLRE/-/AI_Review')
+        assert openreview_client.get_group('TMLRE/AI_Reviewer')
+        assert openreview_client.get_invitation('TMLRE/-/AI_Review_Release')
+
+        openreview_client.add_members_to_group('TMLRE/AI_Reviewer', ['~Lele_Cao1'])
+
+    def test_invite_action_editors(self, journal, openreview_client, helpers):
+        openreview_client.add_members_to_group('TMLRE/Action_Editors', ['~Alice_Johnson1'])
+        group = openreview_client.get_group('TMLRE/Action_Editors')
+        assert '~Alice_Johnson1' in group.members
+
+    def test_invite_reviewers(self, journal, openreview_client, helpers):
+        openreview_client.add_members_to_group('TMLRE/Reviewers', ['~Bob_Williams1', '~Carol_Davis1', '~Dan_Lee1'])
+        group = openreview_client.get_group('TMLRE/Reviewers')
+        assert len(group.members) == 3
+
+    def test_submission(self, journal, openreview_client, test_client, helpers):
+        venue_id = journal.venue_id
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        sarah_client = OpenReviewClient(username='sarah@expmail.com', password=helpers.strong_password)
+        alice_client = OpenReviewClient(username='alice@expmailseven.com', password=helpers.strong_password)
+
+        submission_note = test_client.post_note_edit(invitation='TMLRE/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(content={
+                'title': {'value': 'Experiment Paper Title'},
+                'abstract': {'value': 'Experiment paper abstract'},
+                'authors': {'value': ['SomeFirstName User', 'Eve Garcia']},
+                'authorids': {'value': ['~SomeFirstName_User1', '~Eve_Garcia1']},
+                'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
+                'competing_interests': {'value': 'None beyond the authors normal conflict of interests'},
+                'human_subjects_reporting': {'value': 'Not applicable'},
+                'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)'}
+            }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'])
+        note_id = submission_note['note']['id']
+
+        note = openreview_client.get_note(note_id)
+        assert note.readers == ['TMLRE', 'TMLRE/Paper1/Action_Editors', 'TMLRE/Paper1/Authors', 'TMLRE/AI_Reviewer']
+        assert note.content['venue']['value'] == 'Submitted to TMLRE'
+        assert note.content['venueid']['value'] == 'TMLRE/Submitted'
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Eve_Garcia1']
+
+        author_group = openreview_client.get_group(f'{venue_id}/Paper1/Authors')
+        assert author_group.members == ['~SomeFirstName_User1', '~Eve_Garcia1']
+
+        assert openreview_client.get_invitation(f'{venue_id}/Paper1/-/AI_Review')
+
+        lele_client = OpenReviewClient(username='lele@mail.com', password=helpers.strong_password)
+
+        # post LLM Review before AE is assigned
+        edit = lele_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/AI_Review',
+            signatures=[f'{venue_id}/AI_Reviewer'],
+            note=Note(
+                content={
+                    'ai_review': {'value': 'This is a LLM review.'}
+                }
+            )
+        )
+
+        ai_review = openreview_client.get_note(edit['note']['id'])
+        assert ai_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper1/Action_Editors', 'TMLRE/AI_Reviewer']
+        assert ai_review.nonreaders == ['TMLRE/Paper1/Authors']
+
+        # Author recommends AE
+        test_client.post_edge(openreview.api.Edge(
+            invitation='TMLRE/Action_Editors/-/Recommendation',
+            head=note_id,
+            tail='~Alice_Johnson1',
+            weight=1
+        ))
+
+        # EIC assigns AE
+        editor_in_chief_group_id = f'{venue_id}/Editors_In_Chief'
+        paper_assignment_edge = sarah_client.post_edge(openreview.api.Edge(
+            invitation='TMLRE/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Alice_Johnson1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id,
+            tail='~Alice_Johnson1',
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ae_group = openreview_client.get_group(f'{venue_id}/Paper1/Action_Editors')
+        assert ae_group.members == ['~Alice_Johnson1']
+
+        alice_paper1_anon_groups = alice_client.get_groups(
+            prefix=f'{venue_id}/Paper1/Action_Editor_.*', signatory='~Alice_Johnson1')
+        assert len(alice_paper1_anon_groups) == 1
+        alice_paper1_anon_group = alice_paper1_anon_groups[0]
+
+        messages = openreview_client.get_messages(
+            to='alice@expmailseven.com',
+            subject='[TMLRE] Assignment to new TMLRE submission 1: Experiment Paper Title')
+        assert len(messages) == 1
+
+        # AE approves submission for review
+        under_review_note = alice_client.post_note_edit(invitation='TMLRE/Paper1/-/Review_Approval',
+            signatures=[alice_paper1_anon_group.id],
+            note=Note(content={'under_review': {'value': 'Appropriate for Review'}}))
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='TMLRE/-/Under_Review')
+
+        note = openreview_client.get_note(note_id)
+        assert note.readers == ['everyone']
+        assert note.content['venue']['value'] == 'Under review for TMLRE'
+        assert note.content['venueid']['value'] == 'TMLRE/Under_Review'
+        assert note.content['assigned_action_editor']['value'] == '~Alice_Johnson1'
+
+    def test_desk_rejection(self, journal, openreview_client, helpers):
+        venue_id = journal.venue_id
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        sarah_client = OpenReviewClient(username='sarah@expmail.com', password=helpers.strong_password)
+        alice_client = OpenReviewClient(username='alice@expmailseven.com', password=helpers.strong_password)
+
+        # Submit a second paper
+        submission_note = test_client.post_note_edit(invitation='TMLRE/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(content={
+                'title': {'value': 'Desk Rejected Paper Title'},
+                'abstract': {'value': 'Abstract of a paper that will be desk rejected'},
+                'authors': {'value': ['SomeFirstName User', 'Eve Garcia']},
+                'authorids': {'value': ['~SomeFirstName_User1', '~Eve_Garcia1']},
+                'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
+                'competing_interests': {'value': 'None beyond the authors normal conflict of interests'},
+                'human_subjects_reporting': {'value': 'Not applicable'},
+                'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)'}
+            }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'])
+        note_id = submission_note['note']['id']
+
+        note = openreview_client.get_note(note_id)
+        assert note.content['venue']['value'] == 'Submitted to TMLRE'
+        assert note.content['venueid']['value'] == 'TMLRE/Submitted'
+
+        # post LLM Review before AE is assigned
+        edit = openreview_client.post_note_edit(
+            invitation=f'{venue_id}/Paper2/-/AI_Review',
+            signatures=[f'{venue_id}/AI_Reviewer'],
+            note=Note(
+                content={
+                    'ai_review': {'value': 'This is another LLM review.'}
+                }
+            )
+        )
+
+        ai_review = openreview_client.get_note(edit['note']['id'])
+        assert ai_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper2/Action_Editors', 'TMLRE/AI_Reviewer']
+
+        # EIC assigns AE to Paper 2
+        editor_in_chief_group_id = f'{venue_id}/Editors_In_Chief'
+        paper_assignment_edge = sarah_client.post_edge(openreview.api.Edge(
+            invitation='TMLRE/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Alice_Johnson1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id,
+            tail='~Alice_Johnson1',
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ae_group = openreview_client.get_group(f'{venue_id}/Paper2/Action_Editors')
+        assert ae_group.members == ['~Alice_Johnson1']
+
+        alice_paper2_anon_groups = alice_client.get_groups(
+            prefix=f'{venue_id}/Paper2/Action_Editor_.*', signatory='~Alice_Johnson1')
+        assert len(alice_paper2_anon_groups) == 1
+        alice_paper2_anon_group = alice_paper2_anon_groups[0]
+
+        # AE desk-rejects the submission
+        desk_reject_note = alice_client.post_note_edit(invitation='TMLRE/Paper2/-/Review_Approval',
+            signatures=[alice_paper2_anon_group.id],
+            note=Note(content={
+                'under_review': {'value': 'Desk Reject'},
+                'comment': {'value': 'This paper is out of scope for TMLRE.'}
+            }))
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        # EIC approves the desk rejection
+        approval_note = sarah_client.post_note_edit(invitation='TMLRE/Paper2/-/Desk_Rejection_Approval',
+            signatures=['TMLRE/Editors_In_Chief'],
+            note=Note(content={'approval': {'value': "I approve the AE's decision."}}))
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+
+        note = openreview_client.get_note(note_id)
+        assert note.content['venueid']['value'] == 'TMLRE/Desk_Rejected'
+        assert note.content['venue']['value'] == 'Desk rejected by TMLRE'
+
+        messages = openreview_client.get_messages(
+            to='test@mail.com',
+            subject='[TMLRE] Decision for your TMLRE submission 2: Desk Rejected Paper Title')
+        assert len(messages) == 1
+
+        # assert LLM review does not become visible to authors after desk rejection
+        ai_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper2/-/AI_Review')[0]
+        assert ai_review.readers == ['TMLRE/Editors_In_Chief', 'TMLRE/Paper2/Action_Editors', 'TMLRE/AI_Reviewer']
+        assert ai_review.nonreaders == ['TMLRE/Paper2/Authors']
+
+    def test_review_process(self, journal, openreview_client, test_client, helpers):
+        venue_id = journal.venue_id
+        sarah_client = OpenReviewClient(username='sarah@expmail.com', password=helpers.strong_password)
+        alice_client = OpenReviewClient(username='alice@expmailseven.com', password=helpers.strong_password)
+        bob_client = OpenReviewClient(username='bob@expmailone.com', password=helpers.strong_password)
+        carol_client = OpenReviewClient(username='carol@expmailtwo.com', password=helpers.strong_password)
+        dan_client = OpenReviewClient(username='dan@expmailthree.com', password=helpers.strong_password)
+
+        submissions = openreview_client.get_notes(invitation='TMLRE/-/Submission', number=1)
+        note_id = submissions[0].id
+
+        alice_paper1_anon_groups = alice_client.get_groups(
+            prefix=f'{venue_id}/Paper1/Action_Editor_.*', signatory='~Alice_Johnson1')
+        alice_paper1_anon_group = alice_paper1_anon_groups[0]
+
+        # Assign 3 reviewers
+        for reviewer in ['~Bob_Williams1', '~Carol_Davis1', '~Dan_Lee1']:
+            edge = alice_client.post_edge(openreview.api.Edge(
+                invitation='TMLRE/Reviewers/-/Assignment',
+                readers=[venue_id, f'{venue_id}/Paper1/Action_Editors', reviewer],
+                nonreaders=[f'{venue_id}/Paper1/Authors'],
+                writers=[venue_id, f'{venue_id}/Paper1/Action_Editors'],
+                signatures=[alice_paper1_anon_group.id],
+                head=note_id,
+                tail=reviewer,
+                weight=1
+            ))
+            helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        reviewers_group = openreview_client.get_group(f'{venue_id}/Paper1/Reviewers')
+        assert len(reviewers_group.members) == 3
+
+        # All 3 reviewers post reviews
+        for reviewer_client, reviewer_id in [
+            (bob_client, '~Bob_Williams1'),
+            (carol_client, '~Carol_Davis1'),
+            (dan_client, '~Dan_Lee1'),
+        ]:
+            anon_groups = reviewer_client.get_groups(
+                prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory=reviewer_id)
+            review_note = reviewer_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+                signatures=[anon_groups[0].id],
+                note=Note(content={
+                    'summary_of_contributions': {'value': 'Good contributions.'},
+                    'claims_and_evidence': {'value': 'Yes'},
+                    'claims_explanation': {'value': 'Claims are well supported.'},
+                    'audience': {'value': 'Yes'},
+                    'audience_explanation': {'value': 'Broad ML audience.'},
+                    'requested_changes': {'value': 'None.'},
+                    'broader_impact_concerns': {'value': 'None.'},
+                }))
+            helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        reviews = openreview_client.get_notes(forum=note_id, invitation=f'{venue_id}/Paper1/-/Review')
+        assert len(reviews) == 3
+        for review in reviews:
+            assert review.readers == ['everyone']
+
+        # LLM Review should be released to authors after all human reviews are posted
+        ai_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper1/-/AI_Review')[0]
+        assert ai_review.readers == ['everyone']
+        assert ai_review.nonreaders == []
+
+        # assert Survey invitation has been created
+        survey_invitation = openreview.tools.get_invitation(openreview_client, f'{venue_id}/Paper1/-/Survey')
+        assert survey_invitation
+        assert survey_invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
+
+        # author posts a reply to the LLM review
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        comment_edit = test_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            signatures=[f'{venue_id}/Paper1/Authors'],
+            note=Note(
+                replyto=ai_review.id,
+                readers=['everyone'],
+                content={
+                    'comment': {'value': 'Thank you for the LLM review.'}
+                }
+            )
+        )
+
+        comment = openreview_client.get_note(comment_edit['note']['id'])
+        assert comment.readers == ['everyone']
+        assert comment.replyto == ai_review.id
+        assert comment.signatures == [f'{venue_id}/Paper1/Authors']
+
+        # Move recommendation cdate to now since the discussion period hasn't elapsed
+        sarah_client.post_invitation_edit(
+            invitations='TMLRE/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/Paper1/-/Official_Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
+                signatures=['TMLRE/Editors_In_Chief']
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/Paper1/-/Official_Recommendation-0-0')
+
+        # Post official recommendations
+        for reviewer_client, reviewer_id in [
+            (bob_client, '~Bob_Williams1'),
+            (carol_client, '~Carol_Davis1'),
+            (dan_client, '~Dan_Lee1'),
+        ]:
+            anon_groups = reviewer_client.get_groups(
+                prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory=reviewer_id)
+            rec_note = reviewer_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
+                signatures=[anon_groups[0].id],
+                note=Note(content={
+                    'decision_recommendation': {'value': 'Accept'},
+                    'certification_recommendations': {'value': ['Featured Certification']},
+                    'claims_and_evidence': {'value': 'Yes'},
+                    'audience': {'value': 'Yes'},
+                }))
+            helpers.await_queue_edit(openreview_client, edit_id=rec_note['id'])
+
+        messages = openreview_client.get_messages(
+            to='alice@expmailseven.com',
+            subject='[TMLRE] Evaluate reviewers and submit decision for TMLRE submission 1: Experiment Paper Title')
+        assert len(messages) == 1
+
+        # Rate all reviewer submissions
+        reviews = openreview_client.get_notes(forum=note_id, invitation=f'{venue_id}/Paper1/-/Review')
+        for review in reviews:
+            signature = review.signatures[0]
+            openreview_client.post_invitation_edit(
+                invitations='TMLRE/-/Edit',
+                signatures=['TMLRE'],
+                invitation=openreview.api.Invitation(
+                    id=f'{signature}/-/Rating',
+                    cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days=1)),
+                    duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(minutes=30))
+                )
+            )
+            rating_note = alice_client.post_note_edit(invitation=f'{signature}/-/Rating',
+                signatures=[alice_paper1_anon_group.id],
+                note=Note(content={'rating': {'value': 'Exceeds expectations'}}))
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+
+        # LLM review is not rated
+        ai_review_signature = ai_review.signatures[0]
+        assert not openreview.tools.get_invitation(openreview_client, f'{ai_review_signature}/-/Rating')
+
+        # AE posts decision
+        decision_note = alice_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+            signatures=[alice_paper1_anon_group.id],
+            note=Note(content={
+                'claims_and_evidence': {'value': 'Yes'},
+                'claims_explanation': {'value': 'Claims are well supported.'},
+                'audience': {'value': 'Yes'},
+                'audience_explanation': {'value': 'Broad ML audience.'},
+                'recommendation': {'value': 'Accept as is'},
+                'certifications': {'value': ['Featured Certification']},
+                'additional_comments': {'value': 'Great paper!'},
+            }))
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        submission = openreview_client.get_note(note_id)
+        assert submission.content['venueid']['value'] == 'TMLRE/Decision_Pending'
+
+        decision_note_obj = alice_client.get_note(decision_note['note']['id'])
+        assert decision_note_obj.readers == [f'{venue_id}/Editors_In_Chief', f'{venue_id}/Paper1/Action_Editors']
+
+        # EIC approves decision
+        approval_note = sarah_client.post_note_edit(invitation='TMLRE/Paper1/-/Decision_Approval',
+            signatures=['TMLRE/Editors_In_Chief'],
+            note=Note(content={'approval': {'value': "I approve the AE's decision."}}))
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+
+        decision_note_obj = sarah_client.get_note(decision_note['note']['id'])
+        assert decision_note_obj.readers == ['everyone']
+
+        messages = openreview_client.get_messages(
+            to='test@mail.com',
+            subject='[TMLRE] Decision for your TMLRE submission 1: Experiment Paper Title')
+        assert len(messages) == 1
+
+        assert openreview_client.get_invitation(f'{venue_id}/Paper1/-/Camera_Ready_Revision')
+
+    def test_survey(self, journal, openreview_client, test_client, helpers):
+        venue_id = journal.venue_id
+        sarah_client = OpenReviewClient(username='sarah@expmail.com', password=helpers.strong_password)
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        alice_client = OpenReviewClient(username='alice@expmailseven.com', password=helpers.strong_password)
+        bob_client = OpenReviewClient(username='bob@expmailone.com', password=helpers.strong_password)
+
+        ai_review = openreview_client.get_notes(invitation=f'{venue_id}/Paper1/-/AI_Review')[0]
+
+        alice_paper1_anon_groups = alice_client.get_groups(
+            prefix=f'{venue_id}/Paper1/Action_Editor_.*', signatory='~Alice_Johnson1')
+        alice_paper1_anon_group = alice_paper1_anon_groups[0]
+
+        bob_paper1_anon_groups = bob_client.get_groups(
+            prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Bob_Williams1')
+        bob_paper1_anon_group = bob_paper1_anon_groups[0]
+
+        # Move the Survey invitation cdate to now since the discussion period hasn't elapsed
+        sarah_client.post_invitation_edit(
+            invitations='TMLRE/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/Paper1/-/Survey',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()),
+                signatures=['TMLRE/Editors_In_Chief']
+            )
+        )
+
+        # Authors post a survey response
+        author_survey_edit = test_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/Survey',
+            signatures=[f'{venue_id}/Paper1/Authors'],
+            note=Note(content={
+                'share_of_valid_issues': {'value': 'About 50%'},
+                'false_claims': {'value': 'None'},
+                'addressing_suggestions': {'value': 'Agree'},
+                'actionable_suggestions': {'value': 'Agree'},
+                'clear_feedback': {'value': 'Agree'},
+                'comments': {'value': 'Thanks for the LLM review.'}
+            }))
+
+        author_survey = openreview_client.get_note(author_survey_edit['note']['id'])
+        assert author_survey.signatures == [f'{venue_id}/Paper1/Authors']
+        assert author_survey.content['share_of_valid_issues']['value'] == 'About 50%'
+        assert author_survey.readers == [venue_id, f'{venue_id}/Paper1/Authors']
+
+        # AE posts a survey response
+        ae_survey_edit = alice_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/Survey',
+            signatures=[alice_paper1_anon_group.id],
+            note=Note(content={
+                'share_of_valid_issues': {'value': 'More than 75%'},
+                'missed_technical_issues': {'value': 'No'},
+                'false_claims': {'value': 'One minor'},
+                'addressing_suggestions': {'value': 'Strongly agree'},
+                'actionable_suggestions': {'value': 'Strongly agree'},
+                'clear_feedback': {'value': 'Strongly agree'},
+                'added_value': {'value': 'Agree'},
+                'comments': {'value': 'The LLM review was helpful.'}
+            }))
+
+        ae_survey = openreview_client.get_note(ae_survey_edit['note']['id'])
+        assert ae_survey.signatures == [alice_paper1_anon_group.id]
+        assert ae_survey.content['added_value']['value'] == 'Agree'
+        assert ae_survey.readers == [venue_id, alice_paper1_anon_group.id]
+
+        # Reviewer posts a survey response
+        reviewer_survey_edit = bob_client.post_note_edit(
+            invitation=f'{venue_id}/Paper1/-/Survey',
+            signatures=[bob_paper1_anon_group.id],
+            note=Note(content={
+                'share_of_valid_issues': {'value': 'All'},
+                'missed_technical_issues': {'value': 'Unsure'},
+                'false_claims': {'value': 'Unsure'},
+                'addressing_suggestions': {'value': 'Neutral'},
+                'actionable_suggestions': {'value': 'Neutral'},
+                'clear_feedback': {'value': 'Neutral'},
+                'added_value': {'value': 'Neutral'},
+                'comments': {'value': 'Reasonable review overall.'}
+            }))
+
+        reviewer_survey = openreview_client.get_note(reviewer_survey_edit['note']['id'])
+        assert reviewer_survey.signatures == [bob_paper1_anon_group.id]
+        assert reviewer_survey.readers == [venue_id, bob_paper1_anon_group.id]
+
+        surveys = openreview_client.get_notes(invitation=f'{venue_id}/Paper1/-/Survey')
+        assert len(surveys) == 3
+
+    def test_camera_ready(self, journal, openreview_client, test_client, helpers):
+        venue_id = journal.venue_id
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        alice_client = OpenReviewClient(username='alice@expmailseven.com', password=helpers.strong_password)
+
+        submissions = openreview_client.get_notes(invitation='TMLRE/-/Submission', sort='number:asc')
+        note_id = submissions[0].id
+
+        alice_paper1_anon_groups = alice_client.get_groups(
+            prefix=f'{venue_id}/Paper1/Action_Editor_.*', signatory='~Alice_Johnson1')
+        alice_paper1_anon_group = alice_paper1_anon_groups[0]
+
+        # Authors submit camera ready version
+        revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
+            signatures=[f'{venue_id}/Paper1/Authors'],
+            note=Note(content={
+                'title': {'value': 'Experiment Paper Title Camera Ready'},
+                'authors': {'value': ['SomeFirstName User', 'Eve Garcia']},
+                'authorids': {'value': ['~SomeFirstName_User1', '~Eve_Garcia1']},
+                'abstract': {'value': 'Experiment paper abstract'},
+                'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
+                'competing_interests': {'value': 'None beyond the authors normal conflict of interests'},
+                'human_subjects_reporting': {'value': 'Not applicable'},
+            }))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        messages = openreview_client.get_messages(
+            to='alice@expmailseven.com',
+            subject='[TMLRE] Review camera ready version for TMLRE paper 1: Experiment Paper Title Camera Ready')
+        assert len(messages) == 1
+
+        # AE verifies camera ready
+        verification_note = alice_client.post_note_edit(invitation='TMLRE/Paper1/-/Camera_Ready_Verification',
+            signatures=[alice_paper1_anon_group.id],
+            note=Note(content={
+                'verification': {
+                    'value': 'I confirm that camera ready manuscript complies with the TMLRE stylefile and, if appropriate, includes the minor revisions that were requested.'
+                }
+            }))
+        helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
+
+        note = openreview_client.get_note(note_id)
+        assert note.pdate
+        assert 'TMLRE/-/Accepted' in note.invitations
+        assert note.readers == ['everyone']
+        assert note.writers == ['TMLRE']
+        assert note.content['venue']['value'] == 'Accepted by TMLRE'
+        assert note.content['venueid']['value'] == 'TMLRE'
+        assert note.content['title']['value'] == 'Experiment Paper Title Camera Ready'
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Eve_Garcia1']
+        assert note.content['certifications']['value'] == ['Featured Certification']
+
+        messages = openreview_client.get_messages(
+            to='test@mail.com',
+            subject='[TMLRE] Camera ready version accepted for your TMLRE submission 1: Experiment Paper Title Camera Ready')
+        assert len(messages) == 1
