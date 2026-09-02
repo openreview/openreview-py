@@ -1129,6 +1129,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('workflow_process/edit_affinities_settings_process.py'),
             edit = {
                 'content': {
                     'affinity_score_model': {
