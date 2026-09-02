@@ -2295,6 +2295,12 @@ def create_forum_invitations(client, submission):
         print('processing invitation: ', invitation.id)
 
         if should_match_invitation_source(client, invitation, submission, domain=domain, compute_note_readers=True):
+            ## The process function runs as the venue user, so skip invitations it can not sign for,
+            ## like the ARR revision invitations signed by the super user
+            invitation_signatures = invitation.edit.get('invitation', {}).get('signatures') if invitation.edit else None
+            if isinstance(invitation_signatures, list) and invitation_signatures != [venue_id]:
+                print('skipping invitation: ', invitation.id, ' - venue can not sign the created invitation')
+                continue
             print('create invitation: ', invitation.id)
             content = {
                 'noteId': { 'value': submission.id },
