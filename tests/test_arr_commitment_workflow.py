@@ -68,6 +68,22 @@ class TestARRCommitmentWorkflow():
         arr_submission = openreview_client.get_note(submission['note']['id'])
         assert 'everyone' not in arr_submission.readers
 
+        # a second ARR submission, committed separately in the tests
+        submission_2 = author_client.post_note_edit(
+            invitation=f'{domain}/-/Submission',
+            signatures=['~ARRAuthor_One1'],
+            note=Note(content={
+                'title': { 'value': 'ARR Paper Title 2' },
+                'abstract': { 'value': 'This is another abstract' },
+                'authors': { 'value': ['ARRAuthor One'] },
+                'authorids': { 'value': ['~ARRAuthor_One1'] },
+                'keywords': { 'value': ['commitment'] },
+                'paper_type': { 'value': 'Long' },
+                'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' }
+            })
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=submission_2['id'])
+
         # per-submission review and meta review invitations posted directly (fixture, not the full ARR workflow)
         for stage in ['Official_Review', 'Meta_Review']:
             openreview_client.post_invitation_edit(
@@ -209,7 +225,9 @@ class TestARRCommitmentWorkflow():
 
         venue_id = 'ABCD.cc/2026/Commitment'
         author_client = OpenReviewClient(username='author_one@arrtest.cc', password=helpers.strong_password)
-        arr_submission = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2025/January/-/Submission')[0]
+        arr_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2025/January/-/Submission', sort='number:asc')
+        arr_submission = arr_submissions[0]
+        arr_submission_2 = arr_submissions[1]
 
         def post_commitment(paper_link, paper_type='Long'):
             return author_client.post_note_edit(
@@ -254,8 +272,8 @@ class TestARRCommitmentWorkflow():
         edit = post_commitment(f'https://openreview.net/forum?id={arr_submission.id}')
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        # valid: bare note id
-        edit = post_commitment(arr_submission.id)
+        # valid: bare note id, committing a different ARR submission
+        edit = post_commitment(arr_submission_2.id)
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         assert len(openreview_client.get_notes(invitation=f'{venue_id}/-/Submission')) == 2
@@ -296,13 +314,21 @@ class TestARRCommitmentWorkflow():
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
+        # each ARR submission has its own Commitment_Readers group with the venue
+        # and the committee of the one commitment that links it
         readers_group = openreview_client.get_group(f'{arr_domain}/Submission1/Commitment_Readers')
         assert venue_id in readers_group.members
         assert f'{venue_id}/Submission1/Area_Chairs' in readers_group.members
-        assert f'{venue_id}/Submission2/Area_Chairs' in readers_group.members
+        assert f'{venue_id}/Submission2/Area_Chairs' not in readers_group.members
 
-        arr_submission = openreview_client.get_notes(invitation=f'{arr_domain}/-/Submission')[0]
+        readers_group_2 = openreview_client.get_group(f'{arr_domain}/Submission2/Commitment_Readers')
+        assert venue_id in readers_group_2.members
+        assert f'{venue_id}/Submission2/Area_Chairs' in readers_group_2.members
+
+        arr_submissions = openreview_client.get_notes(invitation=f'{arr_domain}/-/Submission', sort='number:asc')
+        arr_submission = arr_submissions[0]
         assert f'{arr_domain}/Submission1/Commitment_Readers' in arr_submission.readers
+        assert f'{arr_domain}/Submission2/Commitment_Readers' in arr_submissions[1].readers
 
         replies = openreview_client.get_notes(forum=arr_submission.id)
         review_replies = [r for r in replies if 'Official_Review' in r.invitations[0] or 'Meta_Review' in r.invitations[0]]

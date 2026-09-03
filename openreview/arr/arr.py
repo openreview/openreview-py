@@ -1149,28 +1149,20 @@ class ARR(object):
 
         commitment_submissions = client.get_all_notes(invitation=submission_id, domain=venue_id)
 
-        # group commitments by the ARR submission they link so that commitments pointing to the
-        # same ARR submission are processed sequentially by one worker; concurrent workers would
-        # race on the shared Commitment_Readers group and drop each other's members
-        commitments_by_arr_id = {}
-        for note in commitment_submissions:
+        def process_commitment_submission(note):
             arr_submission_link = note.content.get('paper_link', {}).get('value')
             if arr_submission_link:
-                commitments_by_arr_id.setdefault(arr_submission_link.split('=')[-1], []).append(note)
-
-        def process_arr_submission(item):
-            arr_submission_id, commitment_notes = item
-            arr_submission = openreview.tools.get_note(client, arr_submission_id)
-            if arr_submission and 'aclweb.org/ACL/ARR/' in arr_submission.invitations[0]:
-                for note in commitment_notes:
+                arr_submission_id = arr_submission_link.split('=')[-1]
+                arr_submission = openreview.tools.get_note(client, arr_submission_id)
+                if arr_submission and 'aclweb.org/ACL/ARR/' in arr_submission.invitations[0]:
                     create_readers_group(arr_submission, note)
-                add_readers_to_arr_submission(arr_submission)
-                if get_previous_url_submission:  # Trigger process_previous_url if the parameter is True
-                    process_previous_url(arr_submission)
-                return True
+                    add_readers_to_arr_submission(arr_submission)
+                    if get_previous_url_submission:  # Trigger process_previous_url if the parameter is True
+                        process_previous_url(arr_submission)
+                    return True
             return False
 
-        result = openreview.tools.concurrent_requests(process_arr_submission, list(commitments_by_arr_id.items()), desc='process_commitment_submissions')
+        result = openreview.tools.concurrent_requests(process_commitment_submission, commitment_submissions, desc='process_commitment_submissions')
         count = sum(1 for r in result if r)
         print(f'Gave access to {count} submissions!')
         return True
