@@ -11,6 +11,10 @@ def process(client, edit, invitation):
     venue.use_reviewers = False
     venue.set_main_settings(note)
 
+    # reuse the ARR paper type definition so commitment values match the ARR submission values
+    paper_type_content = dict(openreview.stages.arr_content.arr_submission_content['paper_type'])
+    paper_type_content['order'] = 9
+
     submission_cdate = datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000)
     submission_duedate = datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000)
 
@@ -34,17 +38,7 @@ def process(client, edit, invitation):
                     }
                 }
             },
-            'paper_type': {
-                'order': 9,
-                'description': 'The type of your ARR submission.',
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'enum': ['short', 'long'],
-                        'input': 'radio'
-                    }
-                }
-            }
+            'paper_type': paper_type_content
         }
     )
 

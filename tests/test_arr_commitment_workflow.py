@@ -41,7 +41,10 @@ class TestARRCommitmentWorkflow():
             double_blind=True,
             due_date=now + datetime.timedelta(minutes=30),
             readers=[SubmissionStage.Readers.REVIEWERS_ASSIGNED],
-            force_profiles=True
+            force_profiles=True,
+            additional_fields={
+                'paper_type': openreview.stages.arr_content.arr_submission_content['paper_type']
+            }
         )
         venue.setup(program_chair_ids=['pc@aclrollingreview.org'])
         venue.create_submission_stage()
@@ -56,6 +59,7 @@ class TestARRCommitmentWorkflow():
                 'authors': { 'value': ['ARRAuthor One'] },
                 'authorids': { 'value': ['~ARRAuthor_One1'] },
                 'keywords': { 'value': ['commitment'] },
+                'paper_type': { 'value': 'Long' },
                 'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' }
             })
         )
@@ -173,7 +177,7 @@ class TestARRCommitmentWorkflow():
         submission_invitation = openreview_client.get_invitation(f'{venue_id}/-/Submission')
         assert 'paper_link' in submission_invitation.edit['note']['content']
         assert 'paper_type' in submission_invitation.edit['note']['content']
-        assert submission_invitation.edit['note']['content']['paper_type']['value']['param']['enum'] == ['short', 'long']
+        assert submission_invitation.edit['note']['content']['paper_type']['value']['param']['enum'] == openreview.stages.arr_content.arr_submission_content['paper_type']['value']['param']['enum']
         assert submission_invitation.signatures == ['~Super_User1']
 
         # excluded stages do not exist
@@ -207,7 +211,7 @@ class TestARRCommitmentWorkflow():
         author_client = OpenReviewClient(username='author_one@arrtest.cc', password=helpers.strong_password)
         arr_submission = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2025/January/-/Submission')[0]
 
-        def post_commitment(paper_link):
+        def post_commitment(paper_link, paper_type='Long'):
             return author_client.post_note_edit(
                 invitation=f'{venue_id}/-/Submission',
                 signatures=['~ARRAuthor_One1'],
@@ -228,7 +232,7 @@ class TestARRCommitmentWorkflow():
                     'keywords': { 'value': ['commitment'] },
                     'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                     'paper_link': { 'value': paper_link },
-                    'paper_type': { 'value': 'long' },
+                    'paper_type': { 'value': paper_type },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
                     'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
                 })
@@ -241,6 +245,10 @@ class TestARRCommitmentWorkflow():
         # invalid: id that does not exist
         with pytest.raises(openreview.OpenReviewException, match=r'.*does not correspond to a submission in OpenReview.*'):
             post_commitment('nonExistentNoteId123')
+
+        # invalid: paper type does not match the ARR submission paper type
+        with pytest.raises(openreview.OpenReviewException, match=r'.*does not match the paper type of the ARR submission.*'):
+            post_commitment(f'https://openreview.net/forum?id={arr_submission.id}', paper_type='Short')
 
         # valid: full URL
         edit = post_commitment(f'https://openreview.net/forum?id={arr_submission.id}')
