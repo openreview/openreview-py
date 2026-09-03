@@ -12,6 +12,15 @@ const tabs = [
     }
   },
   {
+    name: 'ARR Commitment Workflow Requests',
+    query: {
+      'invitation': `${supportGroup}/Venue_Request/-/ARR_Commitment_Workflow`
+    },
+    options: {
+      enableSearch: true
+    }
+  },
+  {
     name: 'Journal Requests',
     query: {
       'invitation': `${supportGroup}/-/Journal_Request`
@@ -50,9 +59,9 @@ If you would like to use OpenReview for your upcoming venue such as a Journal, C
 #### **Which form is right for your venue?**
 + **Conference Review Workflow:** use this form if your venue uses reviewers, area chairs and/or senior area chairs and follows a standard workflow.
 
-+ **Journal Request:** use this form if you are hosting a journal with Editors-in-Chief, Action Editors and Reviewers, following a [TMLR](https://jmlr.org/tmlr/)-style workflow with rolling submissions.
++ **ARR Commitment Workflow:** use this form if your venue accepts commitments of ACL Rolling Review (ARR) submissions. Authors submit a link to their ARR submission, and after the commitment deadline the venue is automatically given read access to the committed ARR submissions and their reviews and meta reviews.
 
-+ **Request Form (legacy):** use this form if your venue needs an ethics review stage or publication chairs, or if it has an unconventional workflow.
++ **Journal Request:** use this form if you are hosting a journal with Editors-in-Chief, Action Editors and Reviewers, following a [TMLR](https://jmlr.org/tmlr/)-style workflow with rolling submissions.
 
 #### **What does the Conference Review Workflow support?**
 
@@ -60,7 +69,7 @@ The Conference Review Workflow currently supports the main stages of the peer re
 
 Paper matching is available for all committee roles — reviewers, area chairs, and senior area chairs — and supports both automated matching and manual assignment, using conflicts of interest and affinity scores computed from OpenReview profiles.
 
-We are actively expanding this workflow and will keep adding more features and stages as soon as we can. If your venue needs a stage that is not yet supported, please use the legacy Request Form or reach out to us.
+We are actively expanding this workflow and will keep adding more features and stages as soon as we can. If your venue needs a stage that is not yet supported, please reach out to us.
 
 #### **Questions?**
 
@@ -69,8 +78,8 @@ Please contact the OpenReview support team using the [feedback form](https://ope
     },
     submissionId: [
       {'value': `${supportGroup}/Venue_Request/-/Conference_Review_Workflow`, 'version': 2},
-      {'value': `${supportGroup}/-/Journal_Request`, 'version': 2},
-      {'value': `${supportGroup}/-/Request_Form`,'version': 1}
+      {'value': `${supportGroup}/Venue_Request/-/ARR_Commitment_Workflow`, 'version': 2},
+      {'value': `${supportGroup}/-/Journal_Request`, 'version': 2}
     ],
     submissionConfirmationMessage: 'Your request for OpenReview service has been received.',
     tabs: tabs

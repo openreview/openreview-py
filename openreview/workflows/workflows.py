@@ -48,6 +48,14 @@ class Workflows():
         self.set_conference_review_internal_status()
         self.set_conference_review_cancel_request()
         self.set_conference_feedback_form()
+        self.set_arr_commitment_review_request()
+        self.set_conference_review_deployment(workflow_name='ARR_Commitment_Workflow', process_file='workflow_process/arr_commitment_workflow_deployment.py')
+        self.set_conference_review_comment(workflow_name='ARR_Commitment_Workflow')
+        self.set_conference_review_status_comment(workflow_name='ARR_Commitment_Workflow')
+        self.set_conference_review_internal_status(workflow_name='ARR_Commitment_Workflow')
+        self.set_conference_review_cancel_request(workflow_name='ARR_Commitment_Workflow')
+        self.set_conference_feedback_form(workflow_name='ARR_Commitment_Workflow')
+        self.set_arr_commitment_release()
 
     def get_process_content(self, file_path):
         process = None
@@ -428,10 +436,239 @@ class Workflows():
 
         self.post_invitation_edit(invitation)
 
-    def set_conference_review_deployment(self):
+    def set_arr_commitment_review_request(self):
+
+        super_id = self.super_id
+        support_group_id = self.support_group_id
+        commitment_venue_invitation_id = f'{support_group_id}/Venue_Request/-/ARR_Commitment_Workflow'
+
+        invitation = Invitation(
+            id = commitment_venue_invitation_id,
+            invitees = ['~'],
+            readers = ['everyone'],
+            writers = [],
+            signatures = [super_id],
+            preprocess = self.get_process_content('workflow_process/request_form_preprocess.py'),
+            edit = {
+                'signatures': { 'param': { 'regex': '~.*' } },
+                'writers': ['${2/note/writers}'],
+                'readers': ['${2/note/readers}'],
+                'note': {
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ self.support_group_id, '${2/content/program_chair_emails/value}', '${3/signatures}' ],
+                    'writers': [ self.support_group_id, '${2/content/program_chair_emails/value}', '${3/signatures}'],
+                    'content': {
+                        'title': {
+                            'description': 'Used for display purposes. This is copied from the Official Venue Name',
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const': '${2/official_venue_name/value}',
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'official_venue_name': {
+                            'order': 2,
+                            'description': 'The official name of your venue. This will appear on your venue\'s OpenReview page. Example: "Seventh International Conference on Learning Representations',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{0,500}'
+                                }
+                            }
+                        },
+                        'abbreviated_venue_name': {
+                            'order': 3,
+                            'description': 'The abbreviated name for your venue. Please include the year as well. This will be used to identify your venue on OpenReview and in email subject lines. Example: "ICLR 2019"',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{0,500}'
+                                }
+                            }
+                        },
+                        'venue_website_url': {
+                            'order': 4,
+                            'description': 'The URL of the official website for your venue.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{0,500}'
+                                }
+                            }
+                        },
+                        'location': {
+                            'order': 5,
+                            'description': 'Where will your venue be held? This will be displayed on your venue\'s OpenReview page. Example: "Vancouver, Canada"',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{0,500}'
+                                }
+                            }
+                        },
+                        'venue_start_date': {
+                            'order': 6,
+                            'description': 'What date does the venue start?',
+                            'value': {
+                                'param': {
+                                    'type': 'date',
+                                    'range': [ 0, 9999999999999 ]
+                                }
+                            }
+                        },
+                        'program_chair_emails': {
+                            'order': 7,
+                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request.',
+                            'value': {
+                                'param': {
+                                    'type': 'string[]',
+                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+                                }
+                            }
+                        },
+                        'contact_email': {
+                            'order': 8,
+                            'description': 'Single point of contact *lower-cased* email address which will be displayed on the venue page. For example: pc@venue.org',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+                                }
+                            }
+                        },
+                        'submission_start_date': {
+                            'order': 9,
+                            'description': 'When should your OpenReview submission portal open?',
+                            'value': {
+                                'param': {
+                                    'type': 'date',
+                                    'range': [ 0, 9999999999999 ]
+                                }
+                            }
+                        },
+                        'submission_deadline': {
+                            'order': 10,
+                            'description': 'By when do authors need to commit their ARR submissions?',
+                            'value': {
+                                'param': {
+                                    'type': 'date',
+                                    'range': [ 0, 9999999999999 ]
+                                }
+                            }
+                        },
+                        'area_chairs_support': {
+                            'order': 11,
+                            'description': "Does your venue have Area Chairs who will write meta reviews for the committed submissions? Leave unchecked if decisions are made by the Program Chairs only.",
+                            'value': {
+                                'param': {
+                                    'type': "boolean",
+                                    'enum': [{ 'value': True, 'description': 'Yes, my venue does have Area Chairs.'}],
+                                    'input': 'checkbox',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'colocated': {
+                            'order': 12,
+                            'description': 'Please provide the name of the conference, organization, or academic institution with which your event is colocated. If your event is independent of a conference or organization, you can leave this blank or write "independent"',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{0,500}',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'previous_venue': {
+                            'order': 13,
+                            'description': 'If possible, please provide a link to the previous iteration of this venue on OpenReview.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{0,500}',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'expected_submissions': {
+                            'order': 14,
+                            'description': 'How many submissions do you expect to receive for this venue? Please provide a number. This will help us plan for the expected load on our servers.',
+                            'value': {
+                                'param': {
+                                    'type': 'integer',
+                                    'minimum': 1
+                                }
+                            }
+                        },
+                        'how_did_you_hear_about_us': {
+                            'order': 15,
+                            'description': 'How did you hear about OpenReview?',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'optional': True,
+                                    'deletable': True,
+                                    'input': 'textarea'
+                                }
+                            }
+                        },
+                        'other_important_information': {
+                            'order': 16,
+                            'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'optional': True,
+                                    'deletable': True,
+                                    'input': 'textarea'
+                                }
+                            }
+                        },
+                        'venue_organizer_agreement': {
+                            'order': 17,
+                            'description': 'In order to use OpenReview, venue chairs must agree to the following:',
+                            'value': {
+                                'param': {
+                                    'type': 'string[]',
+                                    'items': [
+                                        { 'value': 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.', 'description': 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.', 'optional': True},
+                                        { 'value': 'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.', 'description': 'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.', 'optional': True},
+                                        { 'value': 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)', 'description': 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)', 'optional': True},
+                                        { 'value': 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'description': 'We acknowledge that, if our venue’s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'optional': True},
+                                        { 'value': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'description': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'optional': True},
+                                        { 'value': 'We will treat the OpenReview staff with kindness and consideration.', 'description': 'We will treat the OpenReview staff with kindness and consideration.', 'optional': True},
+                                        { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True}
+                                    ],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        }
+                    },
+                    'id' : {
+                        'param': {
+                            'withInvitation': commitment_venue_invitation_id,
+                            'optional': True
+                        }
+                    }
+                }
+            },
+            process=self.get_process_content('workflow_process/support_process.py')
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def set_conference_review_deployment(self, workflow_name='Conference_Review_Workflow', process_file='workflow_process/conference_review_workflow_deployment.py'):
 
         support_group_id = self.support_group_id
-        deploy_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Deployment'
+        deploy_invitation_id = f'{support_group_id}/Venue_Request/{workflow_name}/-/Deployment'
 
         invitation = Invitation(
             id = deploy_invitation_id,
@@ -457,7 +694,7 @@ class Workflows():
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow'
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/{workflow_name}'
                         }
                     },
                     'content': {
@@ -483,15 +720,15 @@ class Workflows():
                 }
             },
             preprocess=self.get_process_content('workflow_process/conferenceWorkflowDeploymentPreprocess.js'),
-            process=self.get_process_content('workflow_process/conference_review_workflow_deployment.py')
+            process=self.get_process_content(process_file)
         )
 
         self.post_invitation_edit(invitation)
 
-    def set_conference_review_comment(self):
+    def set_conference_review_comment(self, workflow_name='Conference_Review_Workflow'):
 
         support_group_id = self.support_group_id
-        comment_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Comment'
+        comment_invitation_id = f'{support_group_id}/Venue_Request/{workflow_name}/-/Comment'
 
         invitation = Invitation(id=comment_invitation_id,
             invitees=[support_group_id],
@@ -525,7 +762,7 @@ class Workflows():
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${2/content/noteNumber/value}' + '/-/Comment',
+                    'id': f'{support_group_id}/Venue_Request/{workflow_name}' + '${2/content/noteNumber/value}' + '/-/Comment',
                     'signatures': [self.super_id],
                     'readers': ['everyone'],
                     'writers': [support_group_id],
@@ -554,7 +791,7 @@ class Workflows():
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${6/content/noteNumber/value}' + '/-/Comment',
+                                    'withInvitation': f'{support_group_id}/Venue_Request/{workflow_name}' + '${6/content/noteNumber/value}' + '/-/Comment',
                                     'optional': True
                                 }
                                 },
@@ -608,10 +845,10 @@ class Workflows():
 
         self.post_invitation_edit(invitation)
 
-    def set_conference_review_status_comment(self):
+    def set_conference_review_status_comment(self, workflow_name='Conference_Review_Workflow'):
 
         support_group_id = self.support_group_id
-        status_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Status'
+        status_invitation_id = f'{support_group_id}/Venue_Request/{workflow_name}/-/Status'
 
         invitation = Invitation(id=status_invitation_id,
             invitees=['active_venues'],
@@ -636,13 +873,13 @@ class Workflows():
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Status',
+                            'withInvitation': f'{support_group_id}/Venue_Request/{workflow_name}/-/Status',
                             'optional': True
                         }
                     },
                     'forum': {
                         'param': {
-                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow'
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/{workflow_name}'
                         }
                     },
                     'ddate': {
@@ -688,10 +925,10 @@ class Workflows():
 
         self.post_invitation_edit(invitation)
 
-    def set_conference_review_internal_status(self):
+    def set_conference_review_internal_status(self, workflow_name='Conference_Review_Workflow'):
 
         support_group_id = self.support_group_id
-        status_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Internal_Status'
+        status_invitation_id = f'{support_group_id}/Venue_Request/{workflow_name}/-/Internal_Status'
 
         invitation = Invitation(id=status_invitation_id,
             invitees=[support_group_id],
@@ -709,7 +946,7 @@ class Workflows():
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow',
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/{workflow_name}',
                         }
                     },
                     'content': {
@@ -733,11 +970,11 @@ class Workflows():
 
         self.post_invitation_edit(invitation)
 
-    def set_conference_review_cancel_request(self):
+    def set_conference_review_cancel_request(self, workflow_name='Conference_Review_Workflow'):
 
         super_id = self.super_id
         support_group_id = self.support_group_id
-        cancel_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Cancel_Request'
+        cancel_invitation_id = f'{support_group_id}/Venue_Request/{workflow_name}/-/Cancel_Request'
 
         invitation = Invitation(id=cancel_invitation_id,
             invitees=[support_group_id, '~'],
@@ -758,7 +995,7 @@ class Workflows():
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow',
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/{workflow_name}',
                         }
                     },
                     'ddate': {
@@ -774,10 +1011,66 @@ class Workflows():
 
         self.post_invitation_edit(invitation)
 
-    def set_conference_feedback_form(self):
+    def set_arr_commitment_release(self):
 
         support_group_id = self.support_group_id
-        feedback_invitation_id = f'{support_group_id}/Venue_Request/Conference_Review_Workflow/-/Feedback'
+        release_invitation_id = f'{support_group_id}/Venue_Request/ARR_Commitment_Workflow/-/ARR_Release'
+
+        invitation = Invitation(
+            id=release_invitation_id,
+            invitees=[support_group_id],
+            readers=[support_group_id],
+            writers=[support_group_id],
+            signatures=[self.super_id],
+            content={
+                'arr_release_process_script': {
+                    'value': self.get_process_content('workflow_process/arr_commitment_release_process.py')
+                }
+            },
+            edit={
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'noteNumber': { 'value': { 'param': { 'type': 'integer' } } },
+                    'venue_id': { 'value': { 'param': { 'type': 'string', 'regex': '.*' } } },
+                    'activation_date': { 'value': { 'param': { 'type': 'date', 'range': [ 0, 9999999999999 ] } } }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': f'{support_group_id}/Venue_Request/ARR_Commitment_Workflow' + '${2/content/noteNumber/value}' + '/-/ARR_Release',
+                    'signatures': [self.super_id],
+                    'readers': [support_group_id, '${3/content/venue_id/value}'],
+                    'writers': [support_group_id],
+                    'invitees': [support_group_id],
+                    'cdate': '${2/content/activation_date/value}',
+                    'content': {
+                        'venue_id': { 'value': '${4/content/venue_id/value}' }
+                    },
+                    'description': 'This step runs automatically at its activation date and gives the venue read access to the committed ARR submissions and their reviews and meta reviews.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}"],
+                        'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['arr_release_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+'''
+                    }]
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def set_conference_feedback_form(self, workflow_name='Conference_Review_Workflow'):
+
+        support_group_id = self.support_group_id
+        feedback_invitation_id = f'{support_group_id}/Venue_Request/{workflow_name}/-/Feedback'
 
         invitation = Invitation(id=feedback_invitation_id,
             invitees=[support_group_id],
@@ -819,7 +1112,7 @@ class Workflows():
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${2/content/noteNumber/value}' + '/-/Feedback',
+                    'id': f'{support_group_id}/Venue_Request/{workflow_name}' + '${2/content/noteNumber/value}' + '/-/Feedback',
                     'signatures': [self.super_id],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': [support_group_id],
@@ -850,7 +1143,7 @@ class Workflows():
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': f'{support_group_id}/Venue_Request/Conference_Review_Workflow' + '${6/content/noteNumber/value}' + '/-/Feedback',
+                                    'withInvitation': f'{support_group_id}/Venue_Request/{workflow_name}' + '${6/content/noteNumber/value}' + '/-/Feedback',
                                     'optional': True
                                 }
                                 },
