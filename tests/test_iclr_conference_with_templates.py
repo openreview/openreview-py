@@ -251,7 +251,7 @@ class TestSimpleDualAnonymous():
         # the recruitment invitations are grouped under the 'recruitment' timeline stage
         for invitation_name in ['Recruitment_Request', 'Recruitment_Request_Reminder', 'Recruitment_Response']:
             invitation = openreview_client.get_invitation(f'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/{invitation_name}')
-            assert invitation.get_content_value('workflow_stage_name') == 'recruitment'
+            assert invitation.get_content_value('workflow_stage_name') == 'recruitment - Senior_Area_Chairs'
 
         # use invitation to recruit reviewers
         edit = openreview_client.post_group_edit(
@@ -665,7 +665,7 @@ def test_sac_deployment(client, openreview_client, helpers):
     assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment')
     assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment/Dates')
     assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment/Match')
-    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment').get_content_value('workflow_stage_name') == 'assignment'
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment').get_content_value('workflow_stage_name') == 'assignment - Senior_Area_Chairs'
 
     #submit Assignment_Configuration
     config_note = openreview_client.post_note_edit(
@@ -926,9 +926,12 @@ def test_registration_stages(client, openreview_client, helpers):
 
     # the registration invitations are stamped so the workflow timeline shows them
     domain = openreview_client.get_group('ICLR.cc/2026/Conference')
-    for invitation_id in ['ICLR.cc/2026/Conference/Reviewers/-/Registration', 'ICLR.cc/2026/Conference/Area_Chairs/-/Registration']:
+    for invitation_id, expected_stage in {
+        'ICLR.cc/2026/Conference/Reviewers/-/Registration': 'recruitment - Reviewers',
+        'ICLR.cc/2026/Conference/Area_Chairs/-/Registration': 'recruitment - Area_Chairs',
+    }.items():
         invitation = openreview_client.get_invitation(invitation_id)
-        assert invitation.get_content_value('workflow_stage_name') == 'recruitment'
+        assert invitation.get_content_value('workflow_stage_name') == expected_stage
 
         # and they are not filtered out by the exclusion list
         for pattern in domain.content['exclusion_workflow_invitations']['value']:
@@ -940,9 +943,18 @@ def test_registration_stages(client, openreview_client, helpers):
     # the domain group defines the order of the workflow stages in the timeline
     assert domain.content['workflow_stages']['value'] == [
         'recruitment',
+        'recruitment - Senior_Area_Chairs',
+        'recruitment - Area_Chairs',
+        'recruitment - Reviewers',
         'submission',
         'bidding',
+        'bidding - Senior_Area_Chairs',
+        'bidding - Area_Chairs',
+        'bidding - Reviewers',
         'assignment',
+        'assignment - Senior_Area_Chairs',
+        'assignment - Area_Chairs',
+        'assignment - Reviewers',
         'reviewing',
         'discussion',
         'decision',
@@ -950,6 +962,9 @@ def test_registration_stages(client, openreview_client, helpers):
         'camera_ready',
         'data_release',
         'statistics',
+        'statistics - Senior_Area_Chairs',
+        'statistics - Area_Chairs',
+        'statistics - Reviewers',
     ]
 
 def test_reviewers_conflicts(client, openreview_client, helpers):

@@ -1,7 +1,7 @@
 from .. import openreview
 from openreview.api import Group
 from openreview import tools
-from .invitation import DEFAULT_WORKFLOW_STAGE_ORDER
+from .invitation import get_workflow_stage_order
 
 import os
 import json
@@ -355,7 +355,7 @@ class GroupBuilder(object):
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
 
         if self.venue.is_template_related_workflow():
-            content['workflow_stages'] = { 'value': list(DEFAULT_WORKFLOW_STAGE_ORDER) }
+            content['workflow_stages'] = { 'value': get_workflow_stage_order(self.venue) }
             submission_name = self.venue.submission_stage.name
             exclusion_workflow_invitations = [
                 f'{venue_id}/-/Edit',

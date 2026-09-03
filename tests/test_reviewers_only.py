@@ -207,9 +207,12 @@ class TestReviewersOnly():
         # group them; the venue group stores the order of the stages.
         assert venue_group.content['workflow_stages']['value'] == [
             'recruitment',
+            'recruitment - Program_Committee',
             'submission',
             'bidding',
+            'bidding - Program_Committee',
             'assignment',
+            'assignment - Program_Committee',
             'reviewing',
             'discussion',
             'decision',
@@ -217,14 +220,15 @@ class TestReviewersOnly():
             'camera_ready',
             'data_release',
             'statistics',
+            'statistics - Program_Committee',
         ]
 
         expected_workflow_stage = {
             'ABCD.cc/2025/Conference/-/Submission': 'submission',
             'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding': 'bidding',
             'ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing': 'reviewing',
-            'ABCD.cc/2025/Conference/Program_Committee/-/Bid': 'bidding',
-            'ABCD.cc/2025/Conference/Program_Committee/-/Conflict': 'assignment',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Bid': 'bidding - Program_Committee',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Conflict': 'assignment - Program_Committee',
             'ABCD.cc/2025/Conference/-/Official_Review': 'reviewing',
             'ABCD.cc/2025/Conference/-/Official_Comment': 'discussion',
             'ABCD.cc/2025/Conference/-/Decision': 'decision',
@@ -233,8 +237,8 @@ class TestReviewersOnly():
             'ABCD.cc/2025/Conference/-/Rejected_Submission_Release': 'data_release',
             'ABCD.cc/2025/Conference/-/Withdrawal': 'reviewing',
             'ABCD.cc/2025/Conference/-/Desk_Rejection': 'reviewing',
-            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request': 'recruitment',
-            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response': 'recruitment',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request': 'recruitment - Program_Committee',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response': 'recruitment - Program_Committee',
         }
         for invitation_id, stage in expected_workflow_stage.items():
             invitation = openreview_client.get_invitation(invitation_id)
@@ -648,9 +652,12 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         domain = openreview_client.get_group('ABCD.cc/2025/Conference')
         assert domain.content['workflow_stages']['value'] == [
             'recruitment',
+            'recruitment - Program_Committee',
             'submission',
             'bidding',
+            'bidding - Program_Committee',
             'assignment',
+            'assignment - Program_Committee',
             'reviewing',
             'ethics_review',
             'discussion',
@@ -659,6 +666,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             'camera_ready',
             'data_release',
             'statistics',
+            'statistics - Program_Committee',
         ]
 
         # Custom stage that reuses an existing timeline stage ('reviewing')
@@ -682,9 +690,12 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         domain = openreview_client.get_group('ABCD.cc/2025/Conference')
         assert domain.content['workflow_stages']['value'] == [
             'recruitment',
+            'recruitment - Program_Committee',
             'submission',
             'bidding',
+            'bidding - Program_Committee',
             'assignment',
+            'assignment - Program_Committee',
             'reviewing',
             'ethics_review',
             'discussion',
@@ -693,6 +704,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             'camera_ready',
             'data_release',
             'statistics',
+            'statistics - Program_Committee',
         ]
 
     def test_deployment_with_same_venue_id(self, openreview_client, helpers):
@@ -2410,7 +2422,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         # the statistics invitations are grouped under the 'statistics' timeline stage
         for statistics_invitation_name in ['Review_Count', 'Review_Assignment_Count', 'Review_Days_Late_Sum']:
             statistics_invitation = pc_client.get_invitation(f'ABCD.cc/2025/Conference/Program_Committee/-/{statistics_invitation_name}')
-            assert statistics_invitation.get_content_value('workflow_stage_name') == 'statistics'
+            assert statistics_invitation.get_content_value('workflow_stage_name') == 'statistics - Program_Committee'
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept']
 

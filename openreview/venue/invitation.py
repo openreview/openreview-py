@@ -40,6 +40,33 @@ DEFAULT_WORKFLOW_STAGE_ORDER = [
     'statistics',
 ]
 
+# Stages whose invitations belong to a specific committee role. The timeline shows one
+# group per role ('recruitment - Reviewers', 'recruitment - Area_Chairs', ...); invitations
+# in these stages that are not scoped to a role group keep the generic stage name.
+ROLE_SCOPED_WORKFLOW_STAGES = (
+    'recruitment',
+    'bidding',
+    'assignment',
+    'statistics',
+)
+
+def get_workflow_stage_order(venue):
+    '''Expand the default stage order into this venue's timeline order: each role-scoped
+    stage keeps its generic entry followed by one entry per committee role, senior roles
+    first to match the usual chronology.'''
+    roles = []
+    if venue.use_senior_area_chairs:
+        roles.append(venue.senior_area_chairs_name)
+    if venue.use_area_chairs:
+        roles.extend(venue.area_chair_roles)
+    roles.extend(venue.reviewer_roles)
+    order = []
+    for stage in DEFAULT_WORKFLOW_STAGE_ORDER:
+        order.append(stage)
+        if stage in ROLE_SCOPED_WORKFLOW_STAGES:
+            order.extend(f'{stage} - {role}' for role in roles)
+    return order
+
 # Stage assignment for invitations whose name is fixed regardless of stage configuration.
 # Stage objects with configurable names (review, comment, decision, ...) are resolved
 # dynamically in `InvitationBuilder.get_workflow_stage_map`.
@@ -145,11 +172,16 @@ class InvitationBuilder(object):
         return stage_map
 
     def get_workflow_stage_name(self, invitation_id):
-        '''Resolve the `workflow_stage_name` for an invitation from its id, or None.'''
+        '''Resolve the `workflow_stage_name` for an invitation from its id, or None. Role-scoped
+        stages are suffixed with the role group the invitation belongs to.'''
         if not invitation_id or '/-/' not in invitation_id:
             return None
-        invitation_name = invitation_id.split('/-/')[-1]
-        return self.get_workflow_stage_map().get(invitation_name)
+        group_id, _, invitation_name = invitation_id.partition('/-/')
+        stage_name = self.get_workflow_stage_map().get(invitation_name)
+        if stage_name in ROLE_SCOPED_WORKFLOW_STAGES and group_id.startswith(self.venue_id + '/'):
+            role = group_id[len(self.venue_id) + 1:]
+            return f'{stage_name} - {role}'
+        return stage_name
 
     def update_domain_workflow_stages(self, workflow_stage_name, insert_after=None):
         '''Insert a stage name into the `workflow_stages` array of the venue group, which
@@ -5536,6 +5568,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             content={
                 'venue_id': {'value': self.venue_id},
                 'reviewers_id': {'value': self.venue.get_reviewers_id() },
+                'workflow_stage_name': { 'value': f'statistics - {self.venue.reviewers_name}' },
                 'activation_date': { 'value': activation_date },
             },
             await_process=True
@@ -5547,6 +5580,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             content={
                 'venue_id': {'value': self.venue_id},
                 'reviewers_id': {'value': self.venue.get_reviewers_id() },
+                'workflow_stage_name': { 'value': f'statistics - {self.venue.reviewers_name}' },
                 'activation_date': { 'value': activation_date },
             },
             await_process=True
@@ -5558,6 +5592,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             content={
                 'venue_id': {'value': self.venue_id},
                 'reviewers_id': {'value': self.venue.get_reviewers_id() },
+                'workflow_stage_name': { 'value': f'statistics - {self.venue.reviewers_name}' },
                 'activation_date': { 'value': activation_date },
             },
             await_process=True

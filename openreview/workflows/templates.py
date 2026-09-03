@@ -705,6 +705,18 @@ class Templates():
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'recruitment'
+                            }
+                        }
+                    },
                     'venue_short_name': {
                         'order': 4,
                         'description': 'Venue reviewers name',
@@ -765,7 +777,7 @@ class Templates():
                             'value': '${4/content/committee_id/value}',
                         },
                         'workflow_stage_name': {
-                            'value': 'recruitment'
+                            'value': '${4/content/workflow_stage_name/value}'
                         }
                     },
                     'edit': {
@@ -887,6 +899,18 @@ Program Chairs'''
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'recruitment'
+                            }
+                        }
+                    },
                     'venue_short_name': {
                         'order': 4,
                         'description': 'Venue reviewers name',
@@ -912,7 +936,7 @@ Program Chairs'''
                             'value': '${4/content/committee_id/value}',
                         },
                         'workflow_stage_name': {
-                            'value': 'recruitment'
+                            'value': '${4/content/workflow_stage_name/value}'
                         }
                     },
                     'edit': {
@@ -1034,6 +1058,18 @@ Program Chairs'''
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'recruitment'
+                            }
+                        }
+                    },
                     'due_date': {
                         'order': 5,
                         'description': 'By when do users can submit their response?',
@@ -1066,7 +1102,7 @@ Program Chairs'''
                             'value': '${4/content/committee_id/value}',
                         },
                         'workflow_stage_name': {
-                            'value': 'recruitment'
+                            'value': '${4/content/workflow_stage_name/value}'
                         },
                         'committee_pretty_name': {
                             'value': '${4/content/committee_pretty_name/value}',
@@ -1445,7 +1481,7 @@ If you would like to change your decision, please follow the link in the previou
                             'value': '${4/content/committee_name/value}'
                         },
                         'workflow_stage_name': {
-                            'value': 'assignment'
+                            'value': 'assignment - ${4/content/committee_name/value}'
                         }
                     }
                 }
@@ -2045,6 +2081,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'statistics'
+                            }
+                        }
+                    },
                     'activation_date': {
                         'order': 3,
                         'description': 'When should we compute the number of reviews for each reviewer?',
@@ -2068,7 +2116,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and computes the review counts for all reviewers.',
                     'content': {
                         'workflow_stage_name': {
-                            'value': 'statistics'
+                            'value': '${4/content/workflow_stage_name/value}'
                         }
                     },
                     'dateprocesses': [{
@@ -2168,6 +2216,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'statistics'
+                            }
+                        }
+                    },
                     'activation_date': {
                         'order': 3,
                         'description': 'When should we compute the number of reviews for each reviewer?',
@@ -2191,7 +2251,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and computes the review assignment counts for all reviewers.',
                     'content': {
                         'workflow_stage_name': {
-                            'value': 'statistics'
+                            'value': '${4/content/workflow_stage_name/value}'
                         }
                     },
                     'dateprocesses': [{
@@ -2292,6 +2352,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'statistics'
+                            }
+                        }
+                    },
                     'activation_date': {
                         'order': 3,
                         'description': 'When should we compute the number of reviews for each reviewer?',
@@ -2315,7 +2387,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and computes the total number of days a reviewer was late submitting their reviews.',
                     'content': {
                         'workflow_stage_name': {
-                            'value': 'statistics'
+                            'value': '${4/content/workflow_stage_name/value}'
                         }
                     },
                     'dateprocesses': [{
