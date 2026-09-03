@@ -1864,9 +1864,54 @@ class EditInvitationsBuilder(object):
             invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=False)
-        
+
+        invitation_id = super_invitation_id + '/Overlap_Committees'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'no_overlap_committee_ids': {
+                        'order': 1,
+                        'description': 'List of committee group ids that invited users cannot be members of when accepting this invitation. Users that are already members of any of these groups will be asked to decline that role first. Delete this value to allow users to serve in multiple roles.',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'text',
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'content': {
+                        'no_overlap_committee_ids': {
+                            'value': '${4/content/no_overlap_committee_ids/value}'
+                        }
+                    },
+                    'signatures': [venue_id]
+                }
+            }
+        )
+
+        if process_file:
+            invitation.process = self.get_process_content(f'{process_file}')
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+
         return invitation
-    
+
     def set_edit_committee_recruitment_request_invitation(self, super_invitation_id, process_file=None, due_date=None):
 
         venue_id = self.venue_id
@@ -2015,14 +2060,58 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_reviewer_reassignment_invitation(self, group_id):
+    def set_edit_track_invitation(self, group_id, track_options=[]):
+
+        venue_id = self.venue_id
+
+        invitation_id = f'{group_id}/-/Track'
+        pretty_committee_name = group_id.split('/')[-1].replace('_', ' ')
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'track': {
+                        'order': 1,
+                        'description': f'Which submission track should {pretty_committee_name} be restricted to? Leave empty for the group to consider every submission.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': track_options,
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': group_id,
+                    'content': {
+                        'track': { 'value': '${4/content/track/value?}' }
+                    }
+                }
+            },
+            process = self.get_process_content('workflow_process/committee_track_process.py')
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_reviewer_reassignment_invitation(self, group_id, area_chairs_name=None, reviewers_name=None, reviewer_roles=None):
 
         venue_id = self.venue_id
 
         invitation_id = f'{group_id}/-/Reviewer_Reassignment'
-        area_chairs_name = self.get_content_value('area_chairs_name')
+        area_chairs_name = area_chairs_name or self.get_content_value('area_chairs_name')
         pretty_ac_name = area_chairs_name.replace('_', ' ')
-        reviewers_name = self.get_content_value('reviewers_name')
+        reviewers_name = reviewers_name or self.get_content_value('reviewers_name')
         pretty_reviewers_name = reviewers_name.replace('_', ' ')
         
         invitation = Invitation(
@@ -2045,12 +2134,37 @@ class EditInvitationsBuilder(object):
                                 'enum': [True, False]
                             }
                         }
+                    },
+                  'reviewers_name': {
+                        'order': 2,
+                        'description': f'Which group of reviewers should {pretty_ac_name} be able to edit assignments for?',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': reviewer_roles if reviewer_roles else [reviewers_name],
+                                'default': reviewers_name,
+                                'optional': True
+                            }
+                        }
+                    },
+                  'reviewers_proposed_assignment_title': {
+                        'order': 3,
+                        'description': f'If you would like {pretty_ac_name} to edit proposed assignments, enter the title of the matching they should edit. Leave empty for them to edit deployed assignments.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
                     }
                 },
                 'group': {
                     'id': group_id,
                     'content': {
-                        'enable_reviewers_reassignment': { 'value': '${4/content/enable_reviewers_reassignment/value}'}
+                        'enable_reviewers_reassignment': { 'value': '${4/content/enable_reviewers_reassignment/value}'},
+                        'reviewers_name': { 'value': '${4/content/reviewers_name/value?}'},
+                        'reviewers_proposed_assignment_title': { 'value': '${4/content/reviewers_proposed_assignment_title/value?}'}
                     }
                 }
             }
