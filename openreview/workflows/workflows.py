@@ -1022,47 +1022,44 @@ class Workflows():
             readers=[support_group_id],
             writers=[support_group_id],
             signatures=[self.super_id],
-            content={
-                'arr_release_process_script': {
-                    'value': self.get_process_content('workflow_process/arr_commitment_release_process.py')
-                }
-            },
+            description='Run this step after the commitment deadline to give the venue read access to the committed ARR submissions and their reviews and meta reviews. It can be run multiple times to process new commitments.',
             edit={
-                'signatures': [support_group_id],
+                'signatures': {
+                    'param': {
+                        'items': [ { 'value': support_group_id, 'optional': True } ]
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
                 'readers': [support_group_id],
                 'writers': [support_group_id],
-                'content': {
-                    'noteNumber': { 'value': { 'param': { 'type': 'integer' } } },
-                    'venue_id': { 'value': { 'param': { 'type': 'string', 'regex': '.*' } } },
-                    'activation_date': { 'value': { 'param': { 'type': 'date', 'range': [ 0, 9999999999999 ] } } }
-                },
-                'replacement': True,
-                'invitation': {
-                    'id': f'{support_group_id}/Venue_Request/ARR_Commitment_Workflow' + '${2/content/noteNumber/value}' + '/-/ARR_Release',
-                    'signatures': [self.super_id],
-                    'readers': [support_group_id, '${3/content/venue_id/value}'],
-                    'writers': [support_group_id],
-                    'invitees': [support_group_id],
-                    'cdate': '${2/content/activation_date/value}',
-                    'content': {
-                        'venue_id': { 'value': '${4/content/venue_id/value}' }
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/ARR_Commitment_Workflow'
+                        }
                     },
-                    'description': 'This step runs automatically at its activation date and gives the venue read access to the committed ARR submissions and their reviews and meta reviews.',
-                    'dateprocesses': [{
-                        'dates': ["#{4/cdate}"],
-                        'script': '''def process(client, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['arr_release_process_script']['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime
-    }
-    exec(script, funcs)
-    funcs['process'](client, invitation)
-'''
-                    }]
+                    'content': {
+                        'arr_submissions_released': {
+                            'order': 1,
+                            'description': 'Confirm that you want to release the committed ARR submissions and their reviews and meta reviews to the venue.',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [ { 'value': True, 'description': 'Yes, release the ARR submissions to the venue.' } ],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        }
+                    }
                 }
-            }
+            },
+            process=self.get_process_content('workflow_process/arr_commitment_release_process.py')
         )
 
         self.post_invitation_edit(invitation)

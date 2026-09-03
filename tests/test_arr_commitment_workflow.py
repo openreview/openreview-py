@@ -182,6 +182,10 @@ class TestARRCommitmentWorkflow():
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/Area_Chairs/-/Bid') is None
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/Reviewers/-/Submission_Group') is None
 
+        # no reviewer role participation tag invitation and no reviewer stats
+        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Reviewer') is None
+        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/Reviewers/-/Review_Count') is None
+
         # included stages exist
         assert openreview_client.get_invitation(f'{venue_id}/-/Meta_Review')
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision')
@@ -191,10 +195,9 @@ class TestARRCommitmentWorkflow():
         assert openreview_client.get_invitation(f'{venue_id}/Area_Chairs/-/Assignment')
         assert openreview_client.get_invitation(f'{venue_id}/Area_Chairs/-/Submission_Group')
 
-        # ARR release step scheduled 30 minutes after the submission deadline
-        request = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/-/ARR_Commitment_Workflow', sort='number:asc')[0]
-        release_invitation = openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/ARR_Commitment_Workflow{request.number}/-/ARR_Release')
-        assert release_invitation.cdate == request.content['submission_deadline']['value'] + (30*60*1000)
+        # the manual ARR release step is available to the support team on the request form
+        release_invitation = openreview_client.get_invitation('openreview.net/Support/Venue_Request/ARR_Commitment_Workflow/-/ARR_Release')
+        assert release_invitation.invitees == ['openreview.net/Support']
 
     def test_submit_commitments(self, openreview_client, helpers):
 
@@ -253,18 +256,30 @@ class TestARRCommitmentWorkflow():
 
         request = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/-/ARR_Commitment_Workflow', sort='number:asc')[0]
 
-        # reschedule the release step to now to trigger the date process
+        # create the per-submission Area_Chairs groups first, as in production:
+        # the Submission_Group step activates at the submission expiration date,
+        # before the ARR release runs
+        now_ms = openreview.tools.datetime_millis(datetime.datetime.now())
         openreview_client.post_invitation_edit(
-            invitations='openreview.net/Support/Venue_Request/ARR_Commitment_Workflow/-/ARR_Release',
+            invitations=f'{venue_id}/-/Edit',
+            signatures=[venue_id],
+            invitation=Invitation(id=f'{venue_id}/Area_Chairs/-/Submission_Group', cdate=now_ms, signatures=[venue_id])
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/Area_Chairs/-/Submission_Group-0-1', count=2)
+        assert openreview_client.get_group(f'{venue_id}/Submission1/Area_Chairs')
+        assert openreview_client.get_group(f'{venue_id}/Submission2/Area_Chairs')
+
+        # the support team runs the release step manually from the request form
+        edit = openreview_client.post_note_edit(
+            invitation='openreview.net/Support/Venue_Request/ARR_Commitment_Workflow/-/ARR_Release',
             signatures=['openreview.net/Support'],
-            content={
-                'noteNumber': { 'value': request.number },
-                'venue_id': { 'value': venue_id },
-                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(seconds=3)) }
-            }
+            note=Note(
+                id=request.id,
+                content={ 'arr_submissions_released': { 'value': True } }
+            )
         )
 
-        helpers.await_queue_edit(openreview_client, invitation=f'openreview.net/Support/Venue_Request/ARR_Commitment_Workflow{request.number}/-/ARR_Release')
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         readers_group = openreview_client.get_group(f'{arr_domain}/Submission1/Commitment_Readers')
         assert venue_id in readers_group.members
@@ -280,28 +295,44 @@ class TestARRCommitmentWorkflow():
         for reply in review_replies:
             assert f'{arr_domain}/Submission1/Commitment_Readers' in reply.readers
 
+        # a confirmation comment is posted to the request form
+        comments = openreview_client.get_notes(invitation=f'openreview.net/Support/Venue_Request/ARR_Commitment_Workflow{request.number}/-/Comment')
+        assert any(c.content.get('title', {}).get('value') == 'ARR submissions released' for c in comments)
+
+        # the request form records the release
+        request = openreview_client.get_note(request.id)
+        assert request.content['arr_submissions_released']['value'] == True
+
     def test_meta_review_and_decision(self, openreview_client, helpers):
 
         venue_id = 'ABCD.cc/2026/Commitment'
         helpers.create_user('ac_one@abcd.cc', 'ACOne', 'ABCD')
 
-        # activate the post-deadline steps: move cdates to now
+        # activate the post-deadline steps
+        # (the Area_Chairs Submission_Group step was already activated in test_arr_release)
         now_ms = openreview.tools.datetime_millis(datetime.datetime.now())
-        for invitation_id in [f'{venue_id}/-/Submission_Change_After_Deadline', f'{venue_id}/Area_Chairs/-/Submission_Group']:
-            openreview_client.post_invitation_edit(
-                invitations=f'{venue_id}/-/Edit',
-                signatures=[venue_id],
-                invitation=Invitation(id=invitation_id, cdate=now_ms, signatures=[venue_id])
-            )
-            helpers.await_queue_edit(openreview_client, invitation=invitation_id)
+        due_ms = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days=1))
 
-        for invitation_id in [f'{venue_id}/-/Meta_Review', f'{venue_id}/-/Decision']:
-            openreview_client.post_invitation_edit(
-                invitations=f'{venue_id}/-/Edit',
-                signatures=[venue_id],
-                invitation=Invitation(id=invitation_id, cdate=now_ms, signatures=[venue_id])
+        openreview_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Edit',
+            signatures=[venue_id],
+            invitation=Invitation(id=f'{venue_id}/-/Submission_Change_After_Deadline', cdate=now_ms, signatures=[venue_id])
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Change_After_Deadline-0-1', count=2)
+
+        # meta review and decision stages are activated through their Dates edit invitations,
+        # which update the child invitation cdate the date process reads
+        pc_client = OpenReviewClient(username='commitment_pc@abcd.cc', password=helpers.strong_password)
+        for stage_name in ['Meta_Review', 'Decision']:
+            pc_client.post_invitation_edit(
+                invitations=f'{venue_id}/-/{stage_name}/Dates',
+                content={
+                    'activation_date': { 'value': now_ms },
+                    'due_date': { 'value': due_ms },
+                    'expiration_date': { 'value': due_ms }
+                }
             )
-            helpers.await_queue_edit(openreview_client, invitation=invitation_id)
+            helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/{stage_name}-0-1', count=2)
 
         assert openreview_client.get_invitation(f'{venue_id}/Submission1/-/Meta_Review')
         assert openreview_client.get_invitation(f'{venue_id}/Submission1/-/Decision')
@@ -314,13 +345,14 @@ class TestARRCommitmentWorkflow():
         ac_anon_groups = ac_client.get_groups(prefix=f'{venue_id}/Submission1/Area_Chair_', signatory='~ACOne_ABCD1')
         assert ac_anon_groups
 
-        meta_review_invitation = openreview_client.get_invitation(f'{venue_id}/Submission1/-/Meta_Review')
-        meta_review_content = { key: { 'value': 'Accept' if key == 'recommendation' else 'Good paper, accept.' } for key in meta_review_invitation.edit['note']['content'].keys() if key not in ['title'] }
-
         meta_review = ac_client.post_note_edit(
             invitation=f'{venue_id}/Submission1/-/Meta_Review',
             signatures=[ac_anon_groups[0].id],
-            note=Note(content=meta_review_content)
+            note=Note(content={
+                'metareview': { 'value': 'Good paper, accept.' },
+                'recommendation': { 'value': 'Accept (Oral)' },
+                'confidence': { 'value': 5 }
+            })
         )
         helpers.await_queue_edit(openreview_client, edit_id=meta_review['id'])
 

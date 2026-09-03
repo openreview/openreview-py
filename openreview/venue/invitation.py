@@ -5444,15 +5444,16 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if not self.venue.release_role_participation:
             return
 
-        self.client.post_invitation_edit(
-            invitations=f'{super_id}/-/Reviewer_Role',
-            signatures=[template_domain],
-            content={
-                'venue_id': {'value': self.venue_id},
-                'committee_name': {'value': tools.singularize(self.venue.reviewers_name) },
-                'activation_date': { 'value': activation_date },
-            }
-        )
+        if self.venue.use_reviewers:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Reviewer_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.reviewers_name) },
+                    'activation_date': { 'value': activation_date },
+                }
+            )
 
         if self.venue.use_ethics_reviewers:
             self.client.post_invitation_edit(

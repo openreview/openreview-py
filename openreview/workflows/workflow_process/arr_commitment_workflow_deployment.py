@@ -168,16 +168,6 @@ def process(client, edit, invitation):
         }
     )
 
-    client.post_invitation_edit(
-        invitations=f'{support_user}/Venue_Request/ARR_Commitment_Workflow/-/ARR_Release',
-        signatures=[support_user],
-        content={
-            'noteNumber': { 'value': note.number },
-            'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': submission_deadline + (30*60*1000) }
-        }
-    )
-
     # remove PC access to editing the note and make note visible to PC group and Support
     hidden_fields = [
         'venue_start_date',
@@ -263,7 +253,7 @@ You can use the following links to access the venue:
 - **Venue Timeline:** {baseurl}/group/edit?id={venue_id}
     - This page is visible only to Program Chairs. Use this page to configure your venue.
 
-After the commitment deadline the venue will automatically be given read access to the committed ARR submissions and their reviews and meta reviews.
+After the commitment deadline, the OpenReview team will release the committed ARR submissions and their reviews and meta reviews to the venue. We will post a comment here when the data has been released.
 
 If you need special features that are not included in your request form, you can post a comment here or use the feedback form [here]({baseurl}/contact). We recommend reaching out to us well in advance and setting deadlines for a Monday.
 
