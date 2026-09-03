@@ -2819,8 +2819,9 @@ The OpenReview Team.
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
 
         ## post vouch tag
-        ## A profile can only be vouched for after the moderation team has rejected it,
-        ## so reject Paul's profile first. The vouch below reactivates it.
+        ## A profile can only be vouched for while it is under moderation or after the
+        ## moderation team has rejected it, so reject Paul's profile first. The vouch below
+        ## reactivates it.
         support_client.moderate_profile('~Paul_Last1', 'reject', 'Please ask an OpenReview user to vouch for you.')
         assert openreview_client.get_profile('~Paul_Last1').state == 'Rejected'
 
@@ -4677,7 +4678,8 @@ The OpenReview Team.
 
         try:
             ## New user without an institutional email -> pending moderation, then rejected
-            ## by the moderation team. A profile must be rejected before it can be vouched for.
+            ## by the moderation team. A profile must be under moderation or rejected before
+            ## it can be vouched for.
             register_unmoderated_user('vouchee@gmail.com', 'Vouchee', 'User')
             assert openreview_client.get_profile('~Vouchee_User1').state == 'Needs Moderation'
 
@@ -4714,8 +4716,8 @@ The OpenReview Team.
                     )
                 )
 
-            ## The target profile must be in state Rejected. An already-active profile cannot be vouched for.
-            with pytest.raises(openreview.OpenReviewException, match=r'only vouch for a profile that has been rejected'):
+            ## The target profile must be under moderation or rejected. An already-active profile cannot be vouched for.
+            with pytest.raises(openreview.OpenReviewException, match=r'only vouch for a profile that is under moderation or has been rejected'):
                 voucher_client.post_tag(
                     openreview.api.Tag(
                         invitation='openreview.net/Support/-/Vouch',
@@ -4798,9 +4800,16 @@ The OpenReview Team.
 
             ## The voucher can vouch for at most 5 users per month. They already vouched for
             ## ~Vouchee_User1 above, so 4 more vouches bring them to the limit of 5.
+            ## A profile does not need to be rejected first: one that is still waiting for the
+            ## moderation team (Needs Moderation) can be vouched for as well, so leave
+            ## ~Voucheeb_User1 unmoderated and vouch for it directly.
             for name in ['Voucheea', 'Voucheeb', 'Voucheec', 'Voucheed']:
                 register_unmoderated_user(f'{name.lower()}@gmail.com', name, 'User')
-                support_client.moderate_profile(f'~{name}_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+                if name == 'Voucheeb':
+                    assert openreview_client.get_profile('~Voucheeb_User1').state == 'Needs Moderation'
+                else:
+                    support_client.moderate_profile(f'~{name}_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+                    assert openreview_client.get_profile(f'~{name}_User1').state == 'Rejected'
                 add_voucher_relation(f'~{name}_User1', f'{name} User')
                 limit_tag = voucher_client.post_tag(
                     openreview.api.Tag(
