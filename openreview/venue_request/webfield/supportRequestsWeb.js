@@ -59,7 +59,7 @@ If you would like to use OpenReview for your upcoming venue such as a Journal, C
 #### **Which form is right for your venue?**
 + **Conference Review Workflow:** use this form if your venue uses reviewers, area chairs and/or senior area chairs and follows a standard workflow.
 
-+ **ARR Commitment Workflow:** use this form if your venue accepts commitments of ACL Rolling Review (ARR) submissions. Authors submit a link to their ARR submission, and after the commitment deadline the venue is automatically given read access to the committed ARR submissions and their reviews and meta reviews.
++ **ARR Commitment Workflow:** use this form if your venue accepts commitments of ACL Rolling Review (ARR) submissions. Authors submit a link to their ARR submission, and after the commitment deadline the OpenReview team will give the venue read access to the committed ARR submissions and their reviews and meta reviews.
 
 + **Journal Request:** use this form if you are hosting a journal with Editors-in-Chief, Action Editors and Reviewers, following a [TMLR](https://jmlr.org/tmlr/)-style workflow with rolling submissions.
 
