@@ -29,3 +29,14 @@ def process(client, edit, invitation):
 
     if arr_submission_v1 and 'aclweb.org/ACL/ARR' in arr_submission_v1.invitation and not arr_submission_v1.invitation.endswith('Blind_Submission'):
         raise openreview.OpenReviewException('Provided paper link does not point to a blind submission. Make sure you get the url to your submission from the browser')
+
+    commitment_paper_type = edit.note.content.get('paper_type', {}).get('value')
+    if commitment_paper_type:
+        arr_paper_type = None
+        if arr_submission_v2:
+            arr_paper_type = arr_submission_v2.content.get('paper_type', {}).get('value')
+        elif arr_submission_v1:
+            arr_paper_type = arr_submission_v1.content.get('paper_type')
+
+        if arr_paper_type and arr_paper_type.lower() != commitment_paper_type.lower():
+            raise openreview.OpenReviewException(f'The paper type of your submission does not match the paper type of the ARR submission: {arr_paper_type}')
