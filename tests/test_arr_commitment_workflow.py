@@ -169,9 +169,11 @@ class TestARRCommitmentWorkflow():
         assert openreview_client.get_group(f'{venue_id}/Authors')
         assert openreview.tools.get_group(openreview_client, f'{venue_id}/Reviewers') is None
 
-        # submission form has paper_link accepting a url or a note id
+        # submission form has paper_link accepting a url or a note id, and paper_type
         submission_invitation = openreview_client.get_invitation(f'{venue_id}/-/Submission')
         assert 'paper_link' in submission_invitation.edit['note']['content']
+        assert 'paper_type' in submission_invitation.edit['note']['content']
+        assert submission_invitation.edit['note']['content']['paper_type']['value']['param']['enum'] == ['short', 'long']
         assert submission_invitation.signatures == ['~Super_User1']
 
         # excluded stages do not exist
@@ -226,6 +228,7 @@ class TestARRCommitmentWorkflow():
                     'keywords': { 'value': ['commitment'] },
                     'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
                     'paper_link': { 'value': paper_link },
+                    'paper_type': { 'value': 'long' },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
                     'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
                 })
@@ -269,13 +272,17 @@ class TestARRCommitmentWorkflow():
         assert openreview_client.get_group(f'{venue_id}/Submission1/Area_Chairs')
         assert openreview_client.get_group(f'{venue_id}/Submission2/Area_Chairs')
 
-        # the support team runs the release step manually from the request form
+        # the support team runs the release step manually from the request form,
+        # confirming which replies to release and which committee roles get access
         edit = openreview_client.post_note_edit(
             invitation='openreview.net/Support/Venue_Request/ARR_Commitment_Workflow/-/ARR_Release',
             signatures=['openreview.net/Support'],
             note=Note(
                 id=request.id,
-                content={ 'arr_submissions_released': { 'value': True } }
+                content={
+                    'arr_reply_invitation_names': { 'value': ['Official_Review', 'Meta_Review'] },
+                    'arr_additional_readers': { 'value': ['Area_Chairs'] }
+                }
             )
         )
 
@@ -299,9 +306,10 @@ class TestARRCommitmentWorkflow():
         comments = openreview_client.get_notes(invitation=f'openreview.net/Support/Venue_Request/ARR_Commitment_Workflow{request.number}/-/Comment')
         assert any(c.content.get('title', {}).get('value') == 'ARR submissions released' for c in comments)
 
-        # the request form records the release
+        # the request form records the release parameters
         request = openreview_client.get_note(request.id)
-        assert request.content['arr_submissions_released']['value'] == True
+        assert request.content['arr_reply_invitation_names']['value'] == ['Official_Review', 'Meta_Review']
+        assert request.content['arr_additional_readers']['value'] == ['Area_Chairs']
 
     def test_meta_review_and_decision(self, openreview_client, helpers):
 
@@ -418,3 +426,4 @@ class TestARRCommitmentWorkflow():
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision')
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision_Release')
         assert 'paper_link' in openreview_client.get_invitation(f'{venue_id}/-/Submission').edit['note']['content']
+        assert 'paper_type' in openreview_client.get_invitation(f'{venue_id}/-/Submission').edit['note']['content']

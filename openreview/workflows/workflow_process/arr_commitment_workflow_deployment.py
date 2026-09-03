@@ -33,6 +33,17 @@ def process(client, edit, invitation):
                         'mismatchError': 'must be a valid link to an OpenReview submission (https://openreview.net/forum?id=...) or a note id'
                     }
                 }
+            },
+            'paper_type': {
+                'order': 9,
+                'description': 'The type of your ARR submission.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['short', 'long'],
+                        'input': 'radio'
+                    }
+                }
             }
         }
     )

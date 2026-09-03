@@ -8,17 +8,16 @@ def process(client, edit, invitation):
     if not venue_id:
         raise openreview.OpenReviewException('The venue must be deployed before releasing the ARR submissions')
 
-    venue_group = client.get_group(venue_id)
+    reply_invitation_names = note.content.get('arr_reply_invitation_names', {}).get('value', ['Official_Review', 'Meta_Review'])
+    additional_readers = note.content.get('arr_additional_readers', {}).get('value', [])
 
-    additional_readers = []
-    area_chairs_name = venue_group.content.get('area_chairs_name', {}).get('value')
-    if area_chairs_name:
-        additional_readers.append(area_chairs_name)
+    # only grant access to roles the venue actually has
+    additional_readers = [role for role in additional_readers if openreview.tools.get_group(client, f'{venue_id}/{role}')]
 
     openreview.arr.ARR.process_commitment_venue(
         client,
         venue_id,
-        invitation_reply_ids=['Official_Review', 'Meta_Review'],
+        invitation_reply_ids=reply_invitation_names,
         additional_readers=additional_readers
     )
 

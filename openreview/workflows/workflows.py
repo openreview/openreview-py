@@ -1045,14 +1045,27 @@ class Workflows():
                         }
                     },
                     'content': {
-                        'arr_submissions_released': {
+                        'arr_reply_invitation_names': {
                             'order': 1,
-                            'description': 'Confirm that you want to release the committed ARR submissions and their reviews and meta reviews to the venue.',
+                            'description': 'Invitation names of the ARR submission replies to release to the venue, for example: Official_Review, Meta_Review, Official_Comment.',
                             'value': {
                                 'param': {
-                                    'type': 'boolean',
-                                    'enum': [ { 'value': True, 'description': 'Yes, release the ARR submissions to the venue.' } ],
-                                    'input': 'checkbox'
+                                    'type': 'string[]',
+                                    'regex': '^[a-zA-Z_]+$',
+                                    'default': ['Official_Review', 'Meta_Review']
+                                }
+                            }
+                        },
+                        'arr_additional_readers': {
+                            'order': 2,
+                            'description': 'Committee role names that should be given access to the released ARR data per commitment submission, in addition to the Program Chairs, for example: Area_Chairs. Leave empty to give access to the Program Chairs only.',
+                            'value': {
+                                'param': {
+                                    'type': 'string[]',
+                                    'regex': '^[a-zA-Z_]+$',
+                                    'default': ['Area_Chairs'],
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         }
