@@ -763,6 +763,9 @@ class Templates():
                     'content': {
                         'committee_id': {
                             'value': '${4/content/committee_id/value}',
+                        },
+                        'workflow_stage_name': {
+                            'value': 'recruitment'
                         }
                     },
                     'edit': {
@@ -907,6 +910,9 @@ Program Chairs'''
                     'content': {
                         'committee_id': {
                             'value': '${4/content/committee_id/value}',
+                        },
+                        'workflow_stage_name': {
+                            'value': 'recruitment'
                         }
                     },
                     'edit': {
@@ -1058,6 +1064,9 @@ Program Chairs'''
                     'content': {
                         'committee_id': {
                             'value': '${4/content/committee_id/value}',
+                        },
+                        'workflow_stage_name': {
+                            'value': 'recruitment'
                         },
                         'committee_pretty_name': {
                             'value': '${4/content/committee_pretty_name/value}',
@@ -1434,6 +1443,9 @@ If you would like to change your decision, please follow the link in the previou
                     'content': {
                         'committee_name': {
                             'value': '${4/content/committee_name/value}'
+                        },
+                        'workflow_stage_name': {
+                            'value': 'assignment'
                         }
                     }
                 }
@@ -1806,7 +1818,7 @@ If you would like to change your decision, please follow the link in the previou
                     }],
                     'content': {
                         'workflow_stage_name': {
-                            'value': 'camera_ready'
+                            'value': 'data_release'
                         },
                         'decision_option': {
                             'value': '${4/content/decision_option/value}'
@@ -2425,6 +2437,11 @@ If you would like to change your decision, please follow the link in the previou
                         'readers': ['${3/content/venue_id/value}'],
                         'writers': ['${3/content/venue_id/value}'],
                         'cdate': '${2/content/activation_date/value}',
+                        'content': {
+                            'workflow_stage_name': {
+                                'value': 'data_release'
+                            }
+                        },
                         'description': f'This step runs automatically at its "activation date", and it creates tags for all the users that performed the {role} role. This tag will be shown in each user\'s profile and it is visible to everyone.',
                         'dateprocesses': [{
                             'dates': ["#{4/cdate}", self.update_date_string],

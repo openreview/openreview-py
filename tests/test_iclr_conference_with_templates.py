@@ -248,6 +248,11 @@ class TestSimpleDualAnonymous():
 
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
+        # the recruitment invitations are grouped under the 'recruitment' timeline stage
+        for invitation_name in ['Recruitment_Request', 'Recruitment_Request_Reminder', 'Recruitment_Response']:
+            invitation = openreview_client.get_invitation(f'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/{invitation_name}')
+            assert invitation.get_content_value('workflow_stage_name') == 'recruitment'
+
         # use invitation to recruit reviewers
         edit = openreview_client.post_group_edit(
 
@@ -394,6 +399,7 @@ For more details, please check the following links:
         # Full_Submission invitations for the already-submitted papers.
         submission_inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Submission')
         full_submission_inv = pc_client.get_invitation('ICLR.cc/2026/Conference/-/Full_Submission')
+        assert full_submission_inv.get_content_value('workflow_stage_name') == 'submission'
         edit = pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Full_Submission/Dates',
             content={
@@ -659,6 +665,7 @@ def test_sac_deployment(client, openreview_client, helpers):
     assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment')
     assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment/Dates')
     assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment/Match')
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment').get_content_value('workflow_stage_name') == 'assignment'
 
     #submit Assignment_Configuration
     config_note = openreview_client.post_note_edit(
@@ -935,12 +942,13 @@ def test_registration_stages(client, openreview_client, helpers):
         'recruitment',
         'submission',
         'bidding',
-        'matching',
+        'assignment',
         'reviewing',
         'discussion',
         'decision',
         'post_decision',
         'camera_ready',
+        'data_release',
         'statistics',
     ]
 
@@ -1319,6 +1327,10 @@ def test_review_stage(client, openreview_client, helpers):
     desk_rejection_invitations = openreview_client.get_all_invitations(invitation='ICLR.cc/2026/Conference/-/Desk_Rejection')
     assert len(desk_rejection_invitations) == 10
 
+    # both stages are grouped under the 'reviewing' timeline stage
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Withdrawal').get_content_value('workflow_stage_name') == 'reviewing'
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Desk_Rejection').get_content_value('workflow_stage_name') == 'reviewing'
+
     submissions = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
     assert len(submissions) == 10
     assert submissions[0].readers == [
@@ -1696,11 +1708,14 @@ def test_desk_rejection_and_custom_stage(client, openreview_client, helpers, tes
             }
         },
         notify_readers=True,
-        email_sacs=False)
+        email_sacs=False,
+        workflow_stage_name='reviewing')
 
     venue.create_custom_stage()
 
     helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Desk_Rejection_Challenge-0-1', count=1)
+
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Desk_Rejection_Challenge').get_content_value('workflow_stage_name') == 'reviewing'
 
     invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Desk_Rejection_Challenge')
     assert len(invitations) == 1
@@ -1932,6 +1947,7 @@ def test_public_comment_stage(client, openreview_client, helpers, test_client):
 
     invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Public_Comment')
     assert len(invitations) == 10
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Public_Comment').get_content_value('workflow_stage_name') == 'discussion'
 
     invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission2/-/Public_Comment')
     assert invitation.invitees == ['everyone']
@@ -2033,7 +2049,8 @@ def test_rebuttal_revision_stage(client, openreview_client, helpers, test_client
         remove_fields=['title', 'abstract', 'keywords', 'email_sharing', 'data_release', 'reciprocal_reviewing'],
         allow_author_reorder=openreview.stages.AuthorReorder.DISALLOW_EDIT,
         source={ 'venueid': 'ICLR.cc/2026/Conference/Submission' },
-        revision_history_readers=['${{2/note/id}/readers}']
+        revision_history_readers=['${{2/note/id}/readers}'],
+        workflow_stage_name='discussion'
     )
     venue.create_submission_revision_stage()
 
@@ -2041,6 +2058,7 @@ def test_rebuttal_revision_stage(client, openreview_client, helpers, test_client
 
     invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Rebuttal_Revision')
     assert len(invitations) == 10
+    assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Rebuttal_Revision').get_content_value('workflow_stage_name') == 'discussion'
 
     invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission1/-/Rebuttal_Revision')
     assert 'pdf' in invitation.edit['note']['content']
@@ -2346,6 +2364,8 @@ def test_metareview_release_stage(client, openreview_client, helpers):
 def test_metareview_sac_revision_stage(client, openreview_client, helpers):
 
     pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAC_Revision').get_content_value('workflow_stage_name') == 'decision'
 
     # create the per paper SAC revision invitations
     now = datetime.datetime.now()

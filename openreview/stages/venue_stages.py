@@ -561,8 +561,10 @@ class SubmissionRevisionStage():
                  allow_author_reorder=False, 
                  allow_license_edition=False, 
                  preprocess_path=None,
-                 revision_history_readers=None):
+                 revision_history_readers=None,
+                 workflow_stage_name=None):
         self.name = name
+        self.workflow_stage_name = workflow_stage_name
         self.start_date = start_date
         self.due_date = due_date
         self.exp_date = exp_date

@@ -209,12 +209,13 @@ class TestReviewersOnly():
             'recruitment',
             'submission',
             'bidding',
-            'matching',
+            'assignment',
             'reviewing',
             'discussion',
             'decision',
             'post_decision',
             'camera_ready',
+            'data_release',
             'statistics',
         ]
 
@@ -223,13 +224,17 @@ class TestReviewersOnly():
             'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding': 'bidding',
             'ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing': 'reviewing',
             'ABCD.cc/2025/Conference/Program_Committee/-/Bid': 'bidding',
-            'ABCD.cc/2025/Conference/Program_Committee/-/Conflict': 'matching',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Conflict': 'assignment',
             'ABCD.cc/2025/Conference/-/Official_Review': 'reviewing',
             'ABCD.cc/2025/Conference/-/Official_Comment': 'discussion',
             'ABCD.cc/2025/Conference/-/Decision': 'decision',
             'ABCD.cc/2025/Conference/-/Decision_Upload': 'decision',
-            'ABCD.cc/2025/Conference/-/Accepted_Submission_Release': 'camera_ready',
-            'ABCD.cc/2025/Conference/-/Rejected_Submission_Release': 'camera_ready',
+            'ABCD.cc/2025/Conference/-/Accepted_Submission_Release': 'data_release',
+            'ABCD.cc/2025/Conference/-/Rejected_Submission_Release': 'data_release',
+            'ABCD.cc/2025/Conference/-/Withdrawal': 'reviewing',
+            'ABCD.cc/2025/Conference/-/Desk_Rejection': 'reviewing',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request': 'recruitment',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response': 'recruitment',
         }
         for invitation_id, stage in expected_workflow_stage.items():
             invitation = openreview_client.get_invitation(invitation_id)
@@ -645,13 +650,14 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             'recruitment',
             'submission',
             'bidding',
-            'matching',
+            'assignment',
             'reviewing',
             'ethics_review',
             'discussion',
             'decision',
             'post_decision',
             'camera_ready',
+            'data_release',
             'statistics',
         ]
 
@@ -678,13 +684,14 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             'recruitment',
             'submission',
             'bidding',
-            'matching',
+            'assignment',
             'reviewing',
             'ethics_review',
             'discussion',
             'decision',
             'post_decision',
             'camera_ready',
+            'data_release',
             'statistics',
         ]
 

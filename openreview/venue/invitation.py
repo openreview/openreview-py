@@ -30,12 +30,13 @@ DEFAULT_WORKFLOW_STAGE_ORDER = [
     'recruitment',
     'submission',
     'bidding',
-    'matching',
+    'assignment',
     'reviewing',
     'discussion',
     'decision',
     'post_decision',
     'camera_ready',
+    'data_release',
     'statistics',
 ]
 
@@ -47,10 +48,10 @@ STATIC_WORKFLOW_STAGE_BY_NAME = {
     'Submission': 'submission',
     'Submission_Change_Before_Bidding': 'bidding',
     'Submission_Change_Before_Reviewing': 'reviewing',
-    'Conflict': 'matching',
-    'Affinity_Score': 'matching',
-    'Assignment': 'matching',
-    'Submission_Group': 'matching',
+    'Conflict': 'assignment',
+    'Affinity_Score': 'assignment',
+    'Assignment': 'assignment',
+    'Submission_Group': 'assignment',
     'Bid': 'bidding',
     'Review_Count': 'statistics',
     'Review_Assignment_Count': 'statistics',
@@ -117,18 +118,27 @@ class InvitationBuilder(object):
             stage_map[bid_stage.name] = 'bidding'
         for registration_stage in (venue.registration_stages or []):
             stage_map[registration_stage.name] = 'recruitment'
+        if venue.submission_stage:
+            stage_map[venue.submission_stage.withdrawal_name] = 'reviewing'
+            stage_map[venue.submission_stage.desk_rejection_name] = 'reviewing'
         if venue.review_stage:
             stage_map[venue.review_stage.name] = 'reviewing'
         if venue.comment_stage:
             stage_map[venue.comment_stage.official_comment_name] = 'discussion'
+            stage_map[venue.comment_stage.public_name] = 'discussion'
         if venue.review_rebuttal_stage:
             stage_map[venue.review_rebuttal_stage.name] = 'discussion'
         if venue.meta_review_stage:
             stage_map[venue.meta_review_stage.name] = 'decision'
+            if venue.use_senior_area_chairs:
+                sac_acronym = ''.join([s[0].upper() for s in venue.senior_area_chairs_name.split('_')])
+                stage_map[f'{venue.meta_review_stage.name}_{sac_acronym}_Revision'] = 'decision'
         if venue.decision_stage:
             stage_map[venue.decision_stage.name] = 'decision'
         if venue.submission_revision_stage:
-            stage_map[venue.submission_revision_stage.name] = 'camera_ready'
+            stage_map[venue.submission_revision_stage.name] = getattr(venue.submission_revision_stage, 'workflow_stage_name', None) or 'camera_ready'
+        if venue.submission_stage:
+            stage_map[f'Full_{venue.submission_stage.name}'] = 'submission'
         if venue.custom_stage and getattr(venue.custom_stage, 'workflow_stage_name', None):
             stage_map[venue.custom_stage.name] = venue.custom_stage.workflow_stage_name
 
