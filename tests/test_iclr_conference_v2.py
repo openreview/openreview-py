@@ -687,6 +687,88 @@ note={under review}
         helpers.await_queue_edit(openreview_client, edit_id=des_rejection_reversion_note['id'], count=1)
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/Submission1/-/Desk_Rejection_Reversion')        
 
+    def test_desk_rejection_reversion_after_review_invitation_update(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@iclr.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        paper_number = 3
+        review_invitation_id = f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Official_Review'
+        active_review_invitation_id = 'ICLR.cc/2024/Conference/Submission4/-/Official_Review'
+        parent_review_invitation_id = 'ICLR.cc/2024/Conference/-/Official_Review'
+        parent_review_process_id = f'{parent_review_invitation_id}-0-1'
+
+        original_review_invitation = openreview_client.get_invitation(review_invitation_id)
+        original_review_expdate = original_review_invitation.expdate
+        original_active_review_expdate = openreview_client.get_invitation(active_review_invitation_id).expdate
+
+        desk_rejected_process_count = len(openreview_client.get_process_logs(invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission'))
+        desk_rejection_note = pc_client_v2.post_note_edit(invitation=f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Desk_Rejection',
+                                    signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'Wrong format.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission', count=desk_rejected_process_count + 1)
+
+        note = pc_client_v2.get_note(desk_rejection_note['note']['forum'])
+        assert note.content['venueid']['value'] == 'ICLR.cc/2024/Conference/Desk_Rejected_Submission'
+
+        desk_rejected_review_invitation = openreview_client.get_invitation(review_invitation_id)
+        assert desk_rejected_review_invitation.ddate
+        assert desk_rejected_review_invitation.expdate == original_review_expdate
+
+        updated_due_date = (datetime.datetime.now() + datetime.timedelta(days=30)).replace(second=0, microsecond=0)
+        updated_exp_date = updated_due_date + datetime.timedelta(days=30)
+        updated_expdate = openreview.tools.datetime_millis(updated_exp_date)
+        official_review_process_count = len(openreview_client.get_process_logs(id=parent_review_process_id))
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'review_deadline': updated_due_date.strftime('%Y/%m/%d %H:%M'),
+                'review_expiration_date': updated_exp_date.strftime('%Y/%m/%d %H:%M'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['ICLR.cc/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICLRChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, parent_review_process_id, count=official_review_process_count + 1)
+
+        parent_review_invitation = openreview_client.get_invitation(parent_review_invitation_id)
+        assert parent_review_invitation.edit['invitation']['expdate'] == updated_expdate
+        assert 'ICLR.cc/2024/Conference/Desk_Rejected_Submission' not in parent_review_invitation.content['source']['value']['venueid']
+        assert openreview_client.get_invitation(active_review_invitation_id).expdate == updated_expdate
+        assert original_active_review_expdate != updated_expdate
+
+        reversion_process_count = len(openreview_client.get_process_logs(invitation=f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Desk_Rejection_Reversion'))
+        desk_rejection_reversion_note = pc_client_v2.post_note_edit(invitation=f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Desk_Rejection_Reversion',
+                                    signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Desk_Rejection_Reversion', count=reversion_process_count + 1)
+
+        reverted_review_invitation = openreview_client.get_invitation(review_invitation_id)
+        assert not reverted_review_invitation.ddate
+        assert reverted_review_invitation.expdate == updated_expdate
+
     def test_comment_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)

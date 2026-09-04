@@ -2155,7 +2155,7 @@ def get_invitation_source(invitation, domain):
 
     return source
 
-def should_match_invitation_source(client, invitation, submission, note=None, domain=None):
+def should_match_invitation_source(client, invitation, submission, note=None, domain=None, compute_note_readers=False):
     """
     Checks if the invitation source matches the submission and note.
     """
@@ -2221,7 +2221,7 @@ def should_match_invitation_source(client, invitation, submission, note=None, do
         if 'deskRejectionId' in content_keys:
             return False
 
-        if 'noteReaders' in content_keys:
+        if 'noteReaders' in content_keys and not compute_note_readers:
             return False
 
         if content_keys and 'noteId' not in content_keys:
@@ -2284,19 +2284,50 @@ def create_replyto_invitations(client, submission, note):
             print('skipping invitation: ', invitation.id, ' - does not match source')             
 
 def create_forum_invitations(client, submission):
-    
+
+    domain = client.get_group(submission.domain)
+    venue_id = domain.id
+    submission_name = domain.get_content_value('submission_name')
+    meta_review_name = domain.get_content_value('meta_review_name')
+    ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
+    ethics_reviewers_name = domain.get_content_value('ethics_reviewers_name')
+    release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
+
     invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active() and i.date_processes]
 
     for invitation in invitation_invitations:
         print('processing invitation: ', invitation.id)
-        
-        if should_match_invitation_source(client, invitation, submission):
+
+        if should_match_invitation_source(client, invitation, submission, domain=domain, compute_note_readers=True):
+            ## The process function runs as the venue user, so skip invitations it can not sign for,
+            ## like the ARR revision invitations signed by the super user
+            invitation_signatures = invitation.edit.get('invitation', {}).get('signatures') if invitation.edit else None
+            if isinstance(invitation_signatures, list) and invitation_signatures != [venue_id]:
+                print('skipping invitation: ', invitation.id, ' - venue can not sign the created invitation')
+                continue
             print('create invitation: ', invitation.id)
+            content = {
+                'noteId': { 'value': submission.id },
+                'noteNumber': { 'value': submission.number }
+            }
+            content_keys = invitation.edit.get('content', {}).keys() if invitation.edit else []
+            if 'noteReaders' in content_keys:
+                paper_readers = invitation.content.get('review_readers',{}).get('value') or invitation.content.get('comment_readers',{}).get('value')
+                final_readers = []
+                final_readers.extend(paper_readers)
+                final_readers = [reader.replace('{number}', str(submission.number)) for reader in final_readers]
+                if '{signatures}' in final_readers:
+                    final_readers.remove('{signatures}')
+                if submission.content.get('flagged_for_ethics_review', {}).get('value', False):
+                    if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
+                        is_meta_review_invitation = meta_review_name and invitation.id == f'{venue_id}/-/{meta_review_name}'
+                        if not is_meta_review_invitation:
+                            final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
+                        if release_to_ethics_chairs:
+                            final_readers.append(ethics_chairs_id)
+                content['noteReaders'] = { 'value': final_readers }
             client.post_invitation_edit(invitations=invitation.id,
-                content={
-                    'noteId': { 'value': submission.id },
-                    'noteNumber': { 'value': submission.number }
-                },
+                content=content,
                 invitation=openreview.api.Invitation()
             )
         else:
