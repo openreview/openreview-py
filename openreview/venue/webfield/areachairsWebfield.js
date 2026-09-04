@@ -1,12 +1,20 @@
 // Webfield component
 const committee_name = entity.id.split('/').slice(-1)[0]
-const committee_reviewer_name = committee_name.replace(domain.content.area_chairs_name?.value, domain.content.reviewers_name?.value)
+const area_chair_roles = domain.content.area_chair_roles?.value || []
+const reviewer_roles = domain.content.reviewer_roles?.value || []
+// the paired reviewer role is stored on the group at deployment; fall back to the
+// role in the same position for venues deployed before it was stored
+const role_index = area_chair_roles.indexOf(committee_name)
+const committee_reviewer_name = entity?.content?.reviewers_name?.value
+  || (role_index >= 0 && role_index < reviewer_roles.length
+    ? reviewer_roles[role_index]
+    : committee_name.replace(domain.content.area_chairs_name?.value, domain.content.reviewers_name?.value))
 const committee_sac_name = committee_name.replace(domain.content.area_chairs_name?.value, domain.content.senior_area_chairs_name?.value)
 const replaceAreaChairName = (invitationId) => invitationId?.replace(domain.content.area_chairs_name?.value, committee_name)
 const replaceReviewerName = (invitationId) => invitationId?.replace(domain.content.reviewers_name?.value, committee_reviewer_name)
 const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 
-const reviewerAssignmentTitle = domain.content.reviewers_proposed_assignment_title?.value
+const reviewerAssignmentTitle = entity?.content?.reviewers_proposed_assignment_title?.value || domain.content.reviewers_proposed_assignment_title?.value
 const reviewerGroup = replaceReviewerName(domain.content.reviewers_id?.value)
 const startParam = `${replaceAreaChairName(domain.content.area_chairs_assignment_id?.value)},tail:${user.profile.id}`
 const traverseProposedParam = `${replaceReviewerName(domain.content.reviewers_proposed_assignment_id?.value)},label:${reviewerAssignmentTitle}`
@@ -41,7 +49,7 @@ return {
     },
     venueId: domain.id,
     reviewerAssignment: {
-      showEdgeBrowserUrl: domain.content.enable_reviewers_reassignment?.value,
+      showEdgeBrowserUrl: entity?.content?.enable_reviewers_reassignment?.value || domain.content.enable_reviewers_reassignment?.value,
       proposedAssignmentTitle: reviewerAssignmentTitle,
       edgeBrowserProposedUrl: `/edges/browse?start=${startParam}&traverse=${traverseProposedParam}&edit=${replaceReviewerName(domain.content.reviewers_proposed_assignment_id?.value)},label:${reviewerAssignmentTitle};${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseProposedInvitations.join(';')}${otherParams}`,
       edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseInvitations.join(';')}${otherParams}`,

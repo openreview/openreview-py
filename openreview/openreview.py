@@ -131,10 +131,13 @@ class Client(object):
             backoff_max=120,
             backoff_jitter=1,
             status_forcelist=[ 429, 500, 502, 503, 504 ],
+            raise_on_status=False,
             respect_retry_after_header=True
         )
         self.session = requests.Session()
-        adapter = HTTPAdapter(max_retries=retry_strategy)
+        # pool_maxsize must be >= the max_workers used with tools.concurrent_requests,
+        # otherwise urllib3 discards connections and re-does the TLS handshake per request
+        adapter = HTTPAdapter(max_retries=retry_strategy, pool_maxsize=128)
         self.session.mount('https://', adapter)
         self.session.mount('http://', adapter)
 
@@ -296,7 +299,7 @@ class Client(object):
         self.__handle_token(json_response)
         return json_response
 
-    def register_user(self, email = None, fullname = None, password = None):
+    def register_user(self, email = None, fullname = None, password = None, dob = None):
         """
         Registers a new user
 
@@ -306,6 +309,8 @@ class Client(object):
         :type fullname: str, optional
         :param password: Password used to log into OpenReview
         :type password: str, optional
+        :param dob: Date of birth as epoch milliseconds. Mandatory when the API is configured with profile.requireDob
+        :type dob: int, optional
 
         :return: Dictionary containing the new user information including his id, username, email(s), readers, writers, etc.
         :rtype: dict
@@ -315,6 +320,8 @@ class Client(object):
             'fullname': fullname,
             'password': password
         }
+        if dob is not None:
+            register_payload['dob'] = dob
         response = self.session.post(self.register_url, json = register_payload, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
@@ -2268,6 +2275,19 @@ class Client(object):
         response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
+
+    def get_expertise_all_results(self, job_id, baseurl=None, output_filename=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if output_filename is None:
+            output_filename = f"{job_id}_scores.pt"
+        response = self.session.get(base_url + '/expertise/results/all', params={'jobId': job_id}, headers=self.headers, stream=True)
+        response = self.__handle_response(response)
+        with response:
+            with open(output_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        return output_filename
 
 class Group(object):
     """

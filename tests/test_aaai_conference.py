@@ -100,10 +100,11 @@ class TestAAAIConference():
 
         helpers.await_queue()
 
-        # Use super user to update the roles
+        # Use super user to update the roles and to enable Secondary Area Chairs
         request_form_note.content['reviewer_roles'] = ['Program_Committee']
         request_form_note.content['area_chair_roles'] = ['Senior_Program_Committee']
         request_form_note.content['senior_area_chair_roles'] = ['Area_Chairs']
+        request_form_note.content['secondary_area_chairs'] = 'Yes, our venue has Secondary Area Chairs'
         client.post_note(request_form_note)
 
         helpers.await_queue()
@@ -2161,3 +2162,88 @@ Best,
 
         messages = openreview_client.get_messages(to='senior_program_committee1@aaai.org', subject='[AAAI 2025] Program Committee.*')
         assert messages and len(messages) == 1
+
+    def test_secondary_area_chairs(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        # This venue renamed the Area Chair role to Senior Program Committee and has Secondary Area Chairs enabled
+        assert request_form.content['area_chair_roles'] == ['Senior_Program_Committee']
+        assert request_form.content['secondary_area_chairs'] == 'Yes, our venue has Secondary Area Chairs'
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        assert venue.use_secondary_area_chairs
+        assert venue.area_chairs_name == 'Senior_Program_Committee'
+        # the secondary role name follows the Area Chair role name
+        assert venue.secondary_area_chairs_name == 'Secondary_Senior_Program_Committee'
+        assert venue.get_secondary_area_chairs_id(number=1) == 'AAAI.org/2025/Conference/Submission1/Secondary_Senior_Program_Committee'
+        assert venue.get_secondary_area_chairs_id(number=1, anon=True) == 'AAAI.org/2025/Conference/Submission1/Secondary_Senior_Program_Committee_.*'
+
+        # the domain group stores the secondary name derived from the custom Area Chair role name
+        venue_group = openreview_client.get_group('AAAI.org/2025/Conference')
+        assert venue_group.content['area_chairs_name']['value'] == 'Senior_Program_Committee'
+        assert venue_group.content['area_chairs_anon_name']['value'] == 'Senior_Program_Committee_'
+        assert venue_group.content['secondary_area_chairs_name']['value'] == 'Secondary_Senior_Program_Committee'
+        assert venue_group.content['secondary_area_chairs_anon_name']['value'] == 'Secondary_Senior_Program_Committee_'
+
+        # the comment invitation lets the anon secondary group sign
+        invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Official_Comment')
+        assert { 'prefix': 'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee_.*', 'optional': True } in invitation.edit['signatures']['param']['items']
+        assert { 'prefix': 'AAAI.org/2025/Conference/Submission1/Secondary_Senior_Program_Committee_.*', 'optional': True } in invitation.edit['signatures']['param']['items']
+
+        # Assign a secondary SPC to submission 1
+        openreview_client.post_group_edit(
+            invitation='AAAI.org/2025/Conference/-/Edit',
+            signatures=['AAAI.org/2025/Conference'],
+            group=openreview.api.Group(
+                id=venue.get_secondary_area_chairs_id(number=1),
+                readers=[
+                    'AAAI.org/2025/Conference',
+                    'AAAI.org/2025/Conference/Submission1/Area_Chairs',
+                    'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee'
+                ],
+                nonreaders=['AAAI.org/2025/Conference/Submission1/Authors'],
+                writers=['AAAI.org/2025/Conference'],
+                signatures=['AAAI.org/2025/Conference'],
+                signatories=['AAAI.org/2025/Conference'],
+                anonids=True,
+                members=['~Senior_Program_Committee_AAAITwo1']
+            )
+        )
+
+        openreview_client.add_members_to_group('AAAI.org/2025/Conference/Submission1/Senior_Program_Committee', venue.get_secondary_area_chairs_id(number=1))
+
+        assert openreview_client.get_group('AAAI.org/2025/Conference/Submission1/Secondary_Senior_Program_Committee')
+
+        # the anon group created for the secondary Area Chair also uses the derived name
+        secondary_ac_client = openreview.api.OpenReviewClient(username='senior_program_committee2@aaai.org', password=helpers.strong_password)
+        anon_groups = secondary_ac_client.get_groups(prefix='AAAI.org/2025/Conference/Submission1/Secondary_Senior_Program_Committee_', signatory='~Senior_Program_Committee_AAAITwo1')
+        assert len(anon_groups) == 1
+        secondary_anon_group_id = anon_groups[0].id
+
+        # the secondary Area Chair posts a comment signed with the secondary group
+        submissions = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
+
+        comment_edit = secondary_ac_client.post_note_edit(
+            invitation='AAAI.org/2025/Conference/Submission1/-/Official_Comment',
+            signatures=[secondary_anon_group_id],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                content={
+                    'title': { 'value': 'Title' },
+                    'comment': { 'value': 'Secondary Senior Program Committee comment' }
+                },
+                readers=[
+                    'AAAI.org/2025/Conference/Program_Chairs',
+                    'AAAI.org/2025/Conference/Submission1/Area_Chairs',
+                    'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee'
+                ]
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        comment = openreview_client.get_note(comment_edit['note']['id'])
+        assert comment.signatures == [secondary_anon_group_id]
+        assert comment.signatures[0].startswith('AAAI.org/2025/Conference/Submission1/Secondary_Senior_Program_Committee_')

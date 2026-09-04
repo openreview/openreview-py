@@ -62,7 +62,7 @@ class TestARRVenueV2():
 
         # Manually create Reviewer ARROne as having more than 5 *CL main publications and full professor
         fullname = f'Reviewer ARROne'
-        res = openreview_client.register_user(email = 'reviewer1@aclrollingreview.com', fullname = fullname, password = helpers.strong_password)
+        res = openreview_client.register_user(email = 'reviewer1@aclrollingreview.com', fullname = fullname, password = helpers.strong_password, dob = helpers.default_dob())
         username = res.get('id')
         profile_content={
             'names': [
@@ -79,6 +79,7 @@ class TestARRVenueV2():
             'emails': ['reviewer1@aclrollingreview.com'],
             'preferredEmail': 'reviewer1@aclrollingreview.com',
             'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
+            'dob': helpers.default_dob(),
         }
         profile_content['history'] = [{
             'position': 'Full Professor',
@@ -126,7 +127,7 @@ class TestARRVenueV2():
 
         # Manually create Reviewer ARRTwo as having more than 5 non-*CL main publications
         fullname = f'Reviewer ARRTwo'
-        res = openreview_client.register_user(email = 'reviewer2@aclrollingreview.com', fullname = fullname, password = helpers.strong_password)
+        res = openreview_client.register_user(email = 'reviewer2@aclrollingreview.com', fullname = fullname, password = helpers.strong_password, dob = helpers.default_dob())
         username = res.get('id')
         profile_content={
             'names': [
@@ -143,6 +144,7 @@ class TestARRVenueV2():
             'emails': ['reviewer2@aclrollingreview.com'],
             'preferredEmail': 'reviewer2@aclrollingreview.com',
             'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
+            'dob': helpers.default_dob(),
         }
         profile_content['history'] = [{
             'position': 'Full Professor',
@@ -2485,7 +2487,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note.content['reassignment_request_area_chair']['value'] = 'This is not a resubmission'
                 del note.content['justification_for_not_keeping_action_editor_or_reviewers']
 
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+            openreview_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
@@ -3201,7 +3203,38 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content=current_cycle_link_content
                 )
             )
-        
+
+        # A revision on an already public submission regenerates its BibTeX, which is the
+        # only branch of the revision process that uses datetime. The process globals built
+        # by the metadata revision invitation must provide it.
+        public_submission = submissions[5]
+        assert public_submission.readers == ['everyone']
+        assert '_bibtex' in public_submission.content
+
+        public_metadata_invitation = openreview_client.get_invitation(
+            f"aclweb.org/ACL/ARR/2023/August/Submission{public_submission.number}/-/Submission_Metadata_Revision"
+        )
+        public_revision_content = {
+            field: {'value': value['value']}
+            for field, value in public_submission.content.items()
+            if field in public_metadata_invitation.edit['note']['content'] and 'value' in value
+        }
+        public_revision_content['title'] = {'value': 'public metadata edit title'}
+
+        public_revision_edit = pc_client_v2.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{public_submission.number}/-/Submission_Metadata_Revision",
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                content=public_revision_content
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=public_revision_edit['id'])
+
+        updated_public_submission = openreview_client.get_note(public_submission.id)
+        assert updated_public_submission.content['title']['value'] == 'public metadata edit title'
+        assert 'public metadata edit title' in updated_public_submission.content['_bibtex']['value']
+
         # Change dates
         past_start = now - datetime.timedelta(days=2)
         past_end = now - datetime.timedelta(days=1)
@@ -7656,7 +7689,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         for submission in august_submissions:
-            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission',
+            openreview_client.post_note_edit(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
                     content = {

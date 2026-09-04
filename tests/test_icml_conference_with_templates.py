@@ -71,6 +71,7 @@ class TestICMLConference():
         venue.review_stage = openreview.stages.ReviewStage(
             start_date = due_date + datetime.timedelta(weeks=1),
             allow_de_anonymization = False,
+            submission_reviewer_roles = [venue.reviewers_name],
         )
 
         venue.meta_review_stage = openreview.stages.MetaReviewStage(
@@ -705,7 +706,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                     'institutions': [{ 'domain': 'gmail.com', 'country': 'US' }]
                 })
 
-            test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
+            openreview_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 

@@ -399,7 +399,8 @@ class TestVenueWithTracks():
                 note.content['authorids']['value'].append('~SAC_WebChairOne1')
                 note.content['track']['value'] = 'COI'
 
-            test_client.post_note_edit(invitation='ACM.org/TheWebConf/2024/Conference/-/Submission',
+            # post with the super user to bypass the default attachment rate limit
+            openreview_client.post_note_edit(invitation='ACM.org/TheWebConf/2024/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 

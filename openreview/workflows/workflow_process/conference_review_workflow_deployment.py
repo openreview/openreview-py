@@ -59,7 +59,8 @@ def process(client, edit, invitation):
 
     venue.review_stage = openreview.stages.ReviewStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
-        due_date=submission_deadline_datetime + datetime.timedelta(weeks=5)
+        due_date=submission_deadline_datetime + datetime.timedelta(weeks=5),
+        submission_reviewer_roles=[venue.submission_reviewer_roles[0]]
     )
 
     venue_committee = [
@@ -98,7 +99,8 @@ def process(client, edit, invitation):
     venue.decision_stage = openreview.stages.DecisionStage(
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=6),
         due_date=submission_deadline_datetime + datetime.timedelta(weeks=7),
-        accept_options=['Accept (Oral)', 'Accept (Poster)']
+        options=['Accept', 'Reject'],
+        accept_options=['Accept']
     )
 
     venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
@@ -143,11 +145,27 @@ def process(client, edit, invitation):
     venue.create_review_stage()
     venue.create_comment_stage()
 
+    # When reviewers are split into several per-submission groups, create one additional review
+    # invitation per secondary reviewer role so each role gets its own form.
+    for additional_role in venue.submission_reviewer_roles[1:]:
+        review_name = f'{additional_role}_Review'
+        venue.review_stage = openreview.stages.ReviewStage(
+            name=review_name,
+            child_invitations_name=review_name,
+            start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
+            due_date=submission_deadline_datetime + datetime.timedelta(weeks=5),
+            submission_reviewer_roles=[additional_role]
+        )
+        venue.create_review_stage()
+
     additional_readers = []
+    submission_release_additional_readers = []
     if venue.use_senior_area_chairs:
         additional_readers.append(venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}'))
+        submission_release_additional_readers.append(venue.get_senior_area_chairs_id(number='${{2/id}/number}'))
     if venue.use_area_chairs:
         additional_readers.append(venue.get_area_chairs_id(number='${5/content/noteNumber/value}'))
+        submission_release_additional_readers.append(venue.get_area_chairs_id(number='${{2/id}/number}'))
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Note_Release',
@@ -235,10 +253,24 @@ def process(client, edit, invitation):
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Author_Decision_Notification' },
+            'name': { 'value': 'Author_Accept_Decision_Notification' },
             'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'from_email': { 'value': from_email }
+            'from_email': { 'value': from_email },
+            'decision': { 'value': 'Accept' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
+        signatures=[invitation_prefix],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Author_Reject_Decision_Notification' },
+            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*7) },
+            'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'from_email': { 'value': from_email },
+            'decision': { 'value': 'Reject' }
         }
     )
 
@@ -258,7 +290,7 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': additional_readers },
+            'additional_readers': { 'value': submission_release_additional_readers },
             'decision_option': { 'value': 'Accepted' },
             'decision_venue_id': { 'value': venue_id }
         }
@@ -273,13 +305,37 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': additional_readers },
+            'additional_readers': { 'value': submission_release_additional_readers },
             'decision_option': { 'value': 'Rejected' },
             'decision_venue_id': { 'value': venue.get_rejected_submission_venue_id() }
         }
     )
 
     # remove PC access to editing the note and make note visible to PC group and Support
+    hidden_fields = [
+        'venue_start_date',
+        'program_chair_emails',
+        'contact_email',
+        'submission_start_date',
+        'submission_deadline',
+        'full_submission_deadline',
+        'reviewers_name',
+        'reviewer_groups_names',
+        'submission_reviewer_group_names'
+        'area_chairs_support',
+        'area_chairs_name',
+        'area_chair_groups_names',
+        'submission_area_chair_group_names'
+        'senior_area_chairs_support',
+        'senior_area_chair_groups_names',
+        'release_role_participation',
+        'venue_organizer_agreement'
+    ]
+    # only hide fields present in the note, otherwise the edit creates value-less stub fields
+    note_content = { field: { 'readers': [support_user] } for field in hidden_fields if field in note.content }
+    note_content['program_chair_console'] = { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' }
+    note_content['workflow_timeline'] = { 'value': f'https://openreview.net/group/edit?id={venue_id}' }
+
     client.post_note_edit(
         invitation=f'{support_user}/-/Edit',
         signatures=[venue_id],
@@ -287,25 +343,7 @@ def process(client, edit, invitation):
             id = note.id,
             readers = [venue_id, support_user],
             writers = [support_user],
-            content = {
-                'venue_start_date': { 'readers': [support_user] },
-                'program_chair_emails': { 'readers': [support_user] },
-                'contact_email': { 'readers': [support_user] },
-                'submission_start_date': { 'readers': [support_user] },
-                'submission_deadline': { 'readers': [support_user] },
-                'full_submission_deadline': { 'readers': [support_user] },
-                'reviewers_name': { 'readers': [support_user] },
-                'reviewer_groups_names': { 'readers': [support_user] },
-                'area_chairs_support': { 'readers': [support_user] },
-                'area_chairs_name': { 'readers': [support_user] },
-                'area_chair_groups_names': { 'readers': [support_user] },
-                'senior_area_chairs_support': { 'readers': [support_user] },
-                'senior_area_chair_groups_names': { 'readers': [support_user] },
-                'release_role_participation': { 'readers': [support_user] },
-                'venue_organizer_agreement': { 'readers': [support_user] },
-                'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
-                'workflow_timeline': { 'value': f'https://openreview.net/group/edit?id={venue_id}' }
-            }
+            content = note_content
         )
     )
 
@@ -358,7 +396,7 @@ Hi Program Chairs,
 Thank you for choosing OpenReview to host your upcoming venue.
 
 We recommend making authors aware of OpenReview's moderation policy for newly created profiles in the Call for Papers:
-- New profiles created without an institutional email will go through a moderation process that **can take up to two weeks**.
+- New profiles created without an institutional email will go through a moderation process.
 - New profiles created with an institutional email will be activated automatically.
 
 We have set up the venue based on the information that you provided here: {baseurl}/forum?id={note.id}
