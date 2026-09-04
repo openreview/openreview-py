@@ -2299,6 +2299,15 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             )
 
         # edit decision options
+        with pytest.raises(openreview.OpenReviewException, match=r'accept_decision_options value/1 must be equal to one of the allowed values: Accept, Revision Needed, Reject'):
+            edit = pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Decision/Decision_Options',
+                content={
+                    'decision_options': { 'value': ['Accept', 'Revision Needed', 'Reject'] },
+                    'accept_decision_options': { 'value': ['Accept', 'Accept (Oral)'] }
+                }
+            )
+
         edit = pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Decision/Decision_Options',
             content={
