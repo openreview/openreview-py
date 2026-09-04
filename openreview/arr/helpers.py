@@ -1883,6 +1883,7 @@ def flag_submission(
             'length': 'Yes',
             'anonymity': 'Yes',
             'responsible_checklist': 'Yes',
+            'overall_level': 'Yes',
             'limitations': 'Yes'
         },
         'Meta_Review': {
