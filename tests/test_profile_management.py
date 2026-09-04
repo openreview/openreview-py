@@ -204,6 +204,62 @@ class TestProfileManagement():
         assert profile.content['relations'] == []
         assert 'dob' not in profile.content or profile.content['dob'] == profile_content_before['dob']
 
+        ## A verification may assert data that differs from the profile, e.g. a date of
+        ## birth confirmed from an identity document that does not match the declared
+        ## one. The record keeps the verified value and the profile keeps its own, so
+        ## the UI can surface the mismatch.
+        different_dob = helpers.dob_for_age(25)
+        assert different_dob != profile_content_before['dob']
+        mismatch_edit = support_client.post_profile_edit(
+            invitation='openreview.net/Support/-/Identity_Verification',
+            signatures=['openreview.net/Support'],
+            profile={
+                'id': '~Gwen_Verified1',
+                'content': {
+                    'dob': { 'value': different_dob }
+                }
+            }
+        )
+        assert mismatch_edit['profile']['content']['dob']['value'] == different_dob
+
+        profile = support_client.get_profile('~Gwen_Verified1')
+        assert profile.content['dob'] == profile_content_before['dob']
+
+        ## The same applies to slightly different affiliations: a student ID may show
+        ## the position ends in a given year while the profile says Present. A verified
+        ## end year that has not passed yet still agrees with Present; one already in
+        ## the past is a mismatch the UI surfaces next to the profile dates.
+        current_year = datetime.datetime.now().year
+        for end_year in [current_year, current_year - 1]:
+            edit = support_client.post_profile_edit(
+                invitation='openreview.net/Support/-/Affiliation_Verification',
+                signatures=['openreview.net/Support'],
+                profile={
+                    'id': '~Gwen_Verified1',
+                    'content': {
+                        'history': {
+                            'value': {
+                                'add': [{
+                                    'position': 'PhD Student',
+                                    'start': 2017,
+                                    'end': end_year,
+                                    'institution': {
+                                        'domain': 'profile.org',
+                                        'name': 'Profile Org'
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }
+            )
+            assert edit['profile']['content']['history']['value']['add'][0]['end'] == end_year
+
+        ## The profile still lists the position as Present
+        profile = support_client.get_profile('~Gwen_Verified1')
+        assert profile.content['history'] == profile_content_before['history']
+        assert profile.content['history'][0]['end'] is None
+
     def test_import_deprecated_dblp_notes(self, client, openreview_client, test_client, helpers):
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
