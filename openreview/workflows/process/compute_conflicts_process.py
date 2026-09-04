@@ -19,6 +19,10 @@ def process(client, invitation):
     request_form_id = domain.get_content_value('request_form_id')
     support_user = domain.content['request_form_invitation']['value'].split('/Venue_Request')[0]
 
+    if conflicts_policy == 'I will upload my own conflicts':
+        # PCs will upload their own conflicts. Return and leave invitation active
+        return
+
     if not conflicts_policy:
         # post status to request form
         prefix = venue_id + '/'

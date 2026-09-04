@@ -1080,10 +1080,11 @@ class EditInvitationsBuilder(object):
             edit = {
                 'content': {
                     'conflict_policy': {
+                        'description': 'Select the conflict policy to use, or select "I will upload my own conflicts" if you prefer to upload your own.',
                         'value': {
                             'param': {
                                     'type': 'string',
-                                    'enum': ['Default', 'NeurIPS'] ## TODO: Add the authors only policy
+                                    'enum': ['Default', 'NeurIPS', 'I will upload my own conflicts']
                                 }
                         }
                     },
@@ -1128,15 +1129,26 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('workflow_process/edit_affinities_settings_process.py'),
             edit = {
                 'content': {
                     'affinity_score_model': {
-                        'description': f'Select the model to use for calculating affinity scores between reviewers and submissions.',
+                        'description': f'Select the model to use for calculating affinity scores between reviewers and submissions, or select "I will upload my own affinity scores" if you prefer to upload your own.',
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'enum': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr'],
+                                'enum': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'I will upload my own affinity scores'],
                                 'default': 'specter2+scincl',
+                            }
+                        }
+                    },
+                    'expertise_job_id': {
+                        'description': 'If you have used the expertise API to calculate affinity scores, enter the job ID here and select "I will upload my own affinity scores" in the model field.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -1150,6 +1162,9 @@ class EditInvitationsBuilder(object):
                     'content': {
                         'affinity_score_model': {
                             'value': '${4/content/affinity_score_model/value}'
+                        },
+                        'expertise_job_id': {
+                            'value': '${4/content/expertise_job_id/value?}'
                         }
                     }
                 }
