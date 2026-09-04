@@ -957,10 +957,10 @@ def test_registration_stages(client, openreview_client, helpers):
         'assignment - Reviewers',
         'reviewing',
         'discussion',
+        'meta_review',
         'decision',
-        'post_decision',
         'camera_ready',
-        'data_release',
+        'public_release',
         'statistics',
         'statistics - Senior_Area_Chairs',
         'statistics - Area_Chairs',
@@ -2380,7 +2380,7 @@ def test_metareview_sac_revision_stage(client, openreview_client, helpers):
 
     pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
 
-    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAC_Revision').get_content_value('workflow_stage_name') == 'decision'
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Meta_Review_SAC_Revision').get_content_value('workflow_stage_name') == 'meta_review'
 
     # create the per paper SAC revision invitations
     now = datetime.datetime.now()

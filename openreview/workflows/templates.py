@@ -1837,6 +1837,18 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
+                    },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this release step is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'public_release'
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1854,7 +1866,7 @@ If you would like to change your decision, please follow the link in the previou
                     }],
                     'content': {
                         'workflow_stage_name': {
-                            'value': 'data_release'
+                            'value': '${4/content/workflow_stage_name/value}'
                         },
                         'decision_option': {
                             'value': '${4/content/decision_option/value}'
@@ -2511,7 +2523,7 @@ If you would like to change your decision, please follow the link in the previou
                         'cdate': '${2/content/activation_date/value}',
                         'content': {
                             'workflow_stage_name': {
-                                'value': 'data_release'
+                                'value': 'public_release'
                             }
                         },
                         'description': f'This step runs automatically at its "activation date", and it creates tags for all the users that performed the {role} role. This tag will be shown in each user\'s profile and it is visible to everyone.',

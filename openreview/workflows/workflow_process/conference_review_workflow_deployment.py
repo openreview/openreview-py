@@ -215,7 +215,7 @@ def process(client, edit, invitation):
                 'reviewers_name': { 'value': reviewers_name },
                 'authors_name': { 'value': authors_name },
                 'additional_readers': { 'value': additional_readers },
-                'workflow_stage_name': { 'value': 'decision' },
+                'workflow_stage_name': { 'value': 'meta_review' },
                 'description': { 'value': 'This step runs automatically at its "activation date", and releases meta reviews to the specified readers.' }
             },
             await_process=True
@@ -295,6 +295,7 @@ def process(client, edit, invitation):
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': submission_release_additional_readers },
             'decision_option': { 'value': 'Accepted' },
+            'workflow_stage_name': { 'value': 'public_release' },
             'decision_venue_id': { 'value': venue_id }
         }
     )
@@ -310,6 +311,7 @@ def process(client, edit, invitation):
             'authors_name': { 'value': authors_name },
             'additional_readers': { 'value': submission_release_additional_readers },
             'decision_option': { 'value': 'Rejected' },
+            'workflow_stage_name': { 'value': 'decision' },
             'decision_venue_id': { 'value': venue.get_rejected_submission_venue_id() }
         }
     )

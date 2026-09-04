@@ -33,10 +33,10 @@ DEFAULT_WORKFLOW_STAGE_ORDER = [
     'assignment',
     'reviewing',
     'discussion',
+    'meta_review',
     'decision',
-    'post_decision',
     'camera_ready',
-    'data_release',
+    'public_release',
     'statistics',
 ]
 
@@ -156,10 +156,10 @@ class InvitationBuilder(object):
         if venue.review_rebuttal_stage:
             stage_map[venue.review_rebuttal_stage.name] = 'discussion'
         if venue.meta_review_stage:
-            stage_map[venue.meta_review_stage.name] = 'decision'
+            stage_map[venue.meta_review_stage.name] = 'meta_review'
             if venue.use_senior_area_chairs:
                 sac_acronym = ''.join([s[0].upper() for s in venue.senior_area_chairs_name.split('_')])
-                stage_map[f'{venue.meta_review_stage.name}_{sac_acronym}_Revision'] = 'decision'
+                stage_map[f'{venue.meta_review_stage.name}_{sac_acronym}_Revision'] = 'meta_review'
         if venue.decision_stage:
             stage_map[venue.decision_stage.name] = 'decision'
         if venue.submission_revision_stage:
