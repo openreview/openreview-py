@@ -33,5 +33,5 @@ def process(client, edit, invitation):
             )
         )
 
-
-
+    ## the proposed assignment title area chairs may edit is typed into the
+    ## Reviewer_Reassignment invitation, it is not synchronized from here

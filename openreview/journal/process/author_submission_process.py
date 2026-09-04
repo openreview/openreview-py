@@ -39,3 +39,6 @@ def process(client, edit, invitation):
             signature=journal.venue_id,
             sender=journal.get_message_sender()
         )   
+
+    if journal.should_enable_ai_review():
+        journal.invitation_builder.set_note_ai_review_invitation(note)

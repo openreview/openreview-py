@@ -30,7 +30,7 @@ class TestNeurIPSConference():
         helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
         helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair', institution='fb.com')
-        helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution='ibm.com')
+        helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution=['ibm.com', 'mit.edu'])
         helpers.create_user('ac2@gmail.com', 'Area', 'GoogleChair', institution='google.com')
         helpers.create_user('ac3@umass.edu', 'Area', 'UMassChair', institution='umass.edu')
         helpers.create_user('reviewer1@umass.edu', 'Reviewer', 'UMass', institution='umass.edu')
@@ -138,20 +138,6 @@ class TestNeurIPSConference():
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-
-        # set submission_human_verification on the domain group so Revision picks it up
-        openreview_client.post_group_edit(
-            invitation='NeurIPS.cc/2023/Conference/-/Edit',
-            signatures=['NeurIPS.cc/2023/Conference'],
-            group=openreview.api.Group(
-                id='NeurIPS.cc/2023/Conference',
-                content={
-                    'submission_human_verification': {
-                        'value': { 'limit': 15, 'windowMs': 3600000 }
-                    }
-                }
-            )
-        )
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)

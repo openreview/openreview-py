@@ -38,7 +38,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
       - name: Run deploy script
         run: |
-          instance_prefix='dev-instance'
+          instance_prefix='openreview-dev-15'
 
           instances=$(gcloud compute instances list | grep "$instance_prefix" | grep RUNNING | tr -s ' ' | cut -d' ' -f1,2)
 

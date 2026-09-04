@@ -21,6 +21,16 @@ def process(client, edit, invitation):
     if full_submission_deadline and full_submission_deadline < submission_deadline:
         raise openreview.OpenReviewException('The full submission deadline must be after the submission deadline.')
 
+    reviewer_roles = request_note.content.get('reviewer_groups_names', {}).get('value', []) or ['Reviewers']
+    submission_reviewer_group_names = request_note.content.get('submission_reviewer_group_names', {}).get('value', [])
+    if submission_reviewer_group_names and len(submission_reviewer_group_names) not in [1, len(reviewer_roles)]:
+        raise openreview.OpenReviewException('Please provide either one submission reviewer group name or one per reviewer role.')
+
+    area_chair_roles = request_note.content.get('area_chair_groups_names', {}).get('value', []) or ['Area_Chairs']
+    submission_area_chair_group_names = request_note.content.get('submission_area_chair_group_names', {}).get('value', [])
+    if submission_area_chair_group_names and len(submission_area_chair_group_names) not in [1, len(area_chair_roles)]:
+        raise openreview.OpenReviewException('Please provide either one submission area chair group name or one per area chair role.')
+
     reviewer_groups_names = set(request_note.content.get('reviewer_groups_names', {}).get('value', []))
     area_chair_groups_names = set(request_note.content.get('area_chair_groups_names', {}).get('value', []))
     senior_area_chair_groups_names = set(request_note.content.get('senior_area_chair_groups_names', {}).get('value', []))

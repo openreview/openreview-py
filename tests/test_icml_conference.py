@@ -741,7 +741,8 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 note.content['authors']['value'].append('SAC ICMLOne')
                 note.content['authorids']['value'].append('~SAC_ICMLOne1')
 
-            test_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
+            # post with the super user to bypass the default attachment rate limit
+            openreview_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 

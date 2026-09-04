@@ -5,12 +5,11 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     committee_id = invitation.content['committee_id']['value']
     committee_group = client.get_group(committee_id)
-    committee_role = committee_group.content['committee_role']['value']
     committee_name = committee_group.content['committee_name']['value']
-    invited_group = client.get_group(domain.content[f'{committee_role}_invited_id']['value'])
-    group_id = domain.content[f'{committee_role}_id']['value']
-    committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
-    committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
+    group_id = committee_id
+    invited_group = client.get_group(f'{committee_id}/Invited')
+    committee_invited_response_id = f'{committee_id}/-/Recruitment_Response'
+    committee_invited_message_id = f'{committee_id}/Invited/-/Message'
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
     contact_email = domain.get_content_value('contact')
 

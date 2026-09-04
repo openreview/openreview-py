@@ -59,9 +59,7 @@ class TestJournal():
                 content = {
                     'official_venue_name': {'value': 'The Journal of Machine Learning for Biomedical Imaging'},
                     'abbreviated_venue_name' : {'value': 'MELBA'},
-                    'venue_id': {'value': 'MELBA'},
                     'contact_info': {'value': 'editors@melba-journal.org'},
-                    'secret_key': {'value': '1234'},
                     'support_role': {'value': '~Adrian_Dalca1' },
                     'editors': {'value': ['~Mert_Sabuncu1', '~Adrian_Dalca1'] },
                     'website': {'value': 'melba-journal.org' },
@@ -110,6 +108,17 @@ class TestJournal():
             ))
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'MELBA'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
         request_page(selenium, 'http://localhost:3030/group?id=MELBA', client=adrian_client, wait_for_element='tabs-container')
         tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')

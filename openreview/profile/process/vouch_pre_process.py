@@ -47,7 +47,7 @@ def process(client, tag, invitation):
             break
 
     if not has_institutional_email:
-        raise openreview.OpenReviewException('You are not allowed to vouch for another user: you must have an institutional email in your profile.')
+        raise openreview.OpenReviewException('You are not allowed to vouch for another user: you must have an institutional email in your profile that is included in our institution list.')
 
     ## The voucher must have declared a relation to the profile they are vouching for.
     ## Relations reference the related user by username (when they have a profile) or by

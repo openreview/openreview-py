@@ -39,9 +39,7 @@ class TestJournalMatching():
                 content = {
                     'official_venue_name': {'value': 'CARP Journal'},
                     'abbreviated_venue_name' : {'value': 'CARP'},
-                    'venue_id': {'value': 'CARP'},
                     'contact_info': {'value': 'carp@venue.org'},
-                    'secret_key': {'value': '4567'},
                     'support_role': {'value': 'manuel@mail.com' },
                     'editors': {'value': ['~Emily_Dickinson1'] },
                     'website': {'value': 'testjournal.org' }
@@ -49,6 +47,17 @@ class TestJournalMatching():
             ))
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        deployment_edit = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_form['note']['id'],
+                content = {
+                    'venue_id': {'value': 'CARP'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, deployment_edit['id'])
 
         JournalRequest.get_journal(openreview_client, request_form['note']['id'], setup=True)
 

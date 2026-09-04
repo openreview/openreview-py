@@ -51,6 +51,6 @@ def process(client, invitation):
         return
 
     print(f'update {len(filtered_submissions)} submissions')
-    openreview.tools.concurrent_requests(post_submission_edit, filtered_submissions, desc='post_submission_edit')
+    openreview.tools.concurrent_requests(post_submission_edit, filtered_submissions, desc='post_submission_edit', max_workers=128)
 
     print(f'{len(filtered_submissions)} submissions updated successfully')

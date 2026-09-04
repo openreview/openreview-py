@@ -28,7 +28,7 @@ To view the comment, click here: https://openreview.net/forum?id={edit.note.foru
         subject_eic = f'Comment posted to your journal request: {full_name}'
         message_eic = f'''A comment was posted to your journal request.
 
-Comment title {edit.note.content['title']['value']}
+Comment title: {edit.note.content['title']['value']}
 
 Comment: {edit.note.content['comment']['value']}
 

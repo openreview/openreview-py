@@ -4,6 +4,7 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     reviewers_id = domain.get_content_value('reviewers_id')
+    cdate = edit.invitation.edit['invitation']['cdate']
     expdate = edit.invitation.edit['invitation']['expdate']
     submission_name = domain.get_content_value('submission_name', 'Submission')
     withdrawal_name = domain.get_content_value('withdrawal_name', 'Withdrawal')
@@ -119,6 +120,7 @@ def process(client, edit, invitation):
                 )
             )
 
+    # keep Deletion cdate in sync with Full_Submission cdate
     deletion_invitation_id = f'{venue_id}/-/Deletion'
     client.post_invitation_edit(
         invitations=meta_invitation_id,
@@ -126,8 +128,10 @@ def process(client, edit, invitation):
         invitation=openreview.api.Invitation(
             id=deletion_invitation_id,
             signatures=[venue_id],
+            cdate=cdate,
             edit={
                 'invitation': {
+                    'cdate': cdate,
                     'expdate': expdate
                 }
             }

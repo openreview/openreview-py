@@ -88,10 +88,12 @@ Comment: {comment.content['comment']['value']}
 
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
 
+    program_chairs_id = domain.get_content_value('program_chairs_id')
+    email_pcs = domain.get_content_value('comment_email_pcs')
+
     if comment_threshold is None or (signed_by_author and comment_count <= comment_threshold) or (signed_by_reviewer and comment_count <= comment_threshold) or not (signed_by_author or signed_by_reviewer):
-        program_chairs_id = domain.get_content_value('program_chairs_id')
         minimum_number_of_readers = 3 if domain.get_content_value('senior_area_chairs_name') else 2
-        email_PC = domain.get_content_value('comment_email_pcs') or (domain.get_content_value('direct_comment_email_pcs') and len(comment.readers) == minimum_number_of_readers)
+        email_PC = email_pcs or (domain.get_content_value('direct_comment_email_pcs') and len(comment.readers) == minimum_number_of_readers)
         if email_PC and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
             client.post_message(
                 invitation=meta_invitation_id,
@@ -177,15 +179,20 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             )
 
     #send email to author of comment
-    client.post_message(
-        invitation=meta_invitation_id,
-        recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else [],
-        subject=f'''[{short_name}] Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-        message=f'''Your comment was received on a submission to {short_name}.{content}''',
-        replyTo=contact,
-        signature=venue_id,
-        sender=sender
-    )
+    comment_author_recipients = [edit.tauthor] if edit.tauthor.lower() != 'openreview.net' else []
+    if program_chairs_id in comment.signatures and not email_pcs:
+        comment_author_recipients = []
+
+    if comment_author_recipients:
+        client.post_message(
+            invitation=meta_invitation_id,
+            recipients=comment_author_recipients,
+            subject=f'''[{short_name}] Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''Your comment was received on a submission to {short_name}.{content}''',
+            replyTo=contact,
+            signature=venue_id,
+            sender=sender
+        )
 
     #send email to paper authors
     paper_authors_id = f'{paper_group_id}/{authors_name}'
