@@ -101,6 +101,7 @@ class OpenReviewClient(object):
         self.note_edits_url = self.baseurl + '/notes/edits'
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.group_edits_url = self.baseurl + '/groups/edits'
+        self.profile_edits_url = self.baseurl + '/profiles/edits'
         self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
         self.domains_restriction = self.baseurl + '/domains/restriction'
@@ -152,7 +153,7 @@ class OpenReviewClient(object):
         self.session.mount('http://', adapter)
         # requests picks the longest matching prefix, so only the edits endpoints
         # get the POST-retrying adapter
-        for edits_url in [self.note_edits_url, self.invitation_edits_url, self.group_edits_url]:
+        for edits_url in [self.note_edits_url, self.invitation_edits_url, self.group_edits_url, self.profile_edits_url]:
             self.session.mount(edits_url, edits_adapter)
 
         if self.token:
@@ -891,6 +892,18 @@ class OpenReviewClient(object):
             return 'openreview.net/-/Edit'
         return 'OpenReview.net/-/Edit'
 
+    def get_support_group_id(self):
+        """
+        Returns the support group id: ``openreview.net/Support`` for local environments
+        and ``OpenReview.net/Support`` for the live site.
+
+        :return: Support group id
+        :rtype: str
+        """
+        if 'localhost' in self.baseurl:
+            return 'openreview.net/Support'
+        return 'OpenReview.net/Support'
+
     def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None):
         """
         Updates the domain for an entire venue
@@ -1094,9 +1107,15 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
     
-    def moderate_profile(self, profile_id, decision, reason=None):
+    def moderate_profile(self, profile_id, decision, reason=None, labels=None):
         """
         Moderates a Profile
+
+        After the moderation endpoint changes the profile state, the decision is also
+        recorded as a ``Profile_State`` profile edit so the state history can be read
+        back through the profile edits API. The record is informative only and best
+        effort: deployments without the ``Profile_State`` invitation still moderate
+        normally.
 
         :param profile_id: Profile id to moderate
         :type profile_id: str
@@ -1104,6 +1123,8 @@ class OpenReviewClient(object):
         :type decision: str
         :param reason: Reason for the decision. When rejecting, this text is emailed to the user.
         :type reason: str, optional
+        :param labels: Short labels of the selected reasons, stored in the ``Profile_State`` record for compact display; ``reason`` keeps the full message.
+        :type labels: list[str], optional
 
         :return: The new updated Profile
         :rtype: Profile
@@ -1121,7 +1142,32 @@ class OpenReviewClient(object):
             headers = self.headers)
 
         response = self.__handle_response(response)
-        return Profile.from_json(response.json())
+        profile = Profile.from_json(response.json())
+
+        if not profile.state:
+            return profile
+
+        support_group_id = self.get_support_group_id()
+        content = { 'state': { 'value': profile.state } }
+        if reason is not None:
+            content['reason'] = { 'value': reason }
+        if labels:
+            content['labels'] = { 'value': labels }
+        try:
+            self.post_profile_edit(
+                invitation = f'{support_group_id}/-/Profile_State',
+                signatures = [support_group_id],
+                content = content,
+                profile = { 'id': profile.id }
+            )
+        except OpenReviewException as e:
+            ## Skip the record when the deployment has no Profile_State invitation, or
+            ## when the decision removed the profile so there is no subject left.
+            error = e.args[0] if e.args else {}
+            if not (isinstance(error, dict) and error.get('name') == 'NotFoundError'):
+                raise
+
+        return profile
 
     def create_profile_document_upload_link(self, profile_id, document_type):
         """
@@ -2029,6 +2075,52 @@ class OpenReviewClient(object):
             params['count'] = with_count
 
         response = self.session.get(self.group_edits_url, params=tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+
+        edits = [Edit.from_json(n) for n in response.json()['edits']]
+
+        if with_count and params.get('offset') is None:
+            return edits, response.json()['count']
+
+        return edits
+
+    def get_profile_edits(self, profile_id = None, invitation = None, with_count = False, sort = None, trash = None, limit = None):
+        """
+        Gets a list of edits for a profile. Profile edits record assertions about a profile
+        (e.g. moderation verifications) and never modify the profile itself. The edits that
+        will be returned match all the criteria passed in the parameters.
+
+        :param profile_id: ID of the Profile whose edits to retrieve.
+        :type profile_id: str, optional
+        :param invitation: Invitation ID to filter edits by.
+        :type invitation: str, optional
+        :param with_count: If True, also returns the total count of matching edits.
+        :type with_count: bool, optional
+        :param sort: Field to sort results by (e.g., ``tcdate``, ``tmdate``, ``id``).
+        :type sort: str, optional
+        :param trash: If True, includes soft-deleted edits in the results.
+        :type trash: bool, optional
+        :param limit: Maximum number of edits to return.
+        :type limit: int, optional
+
+        :return: List of Edit objects, or a tuple ``(list[Edit], int)`` when ``with_count`` is True.
+        :rtype: list[Edit] | tuple[list[Edit], int]
+        """
+        params = {}
+        if profile_id:
+            params['profile.id'] = profile_id
+        if invitation:
+            params['invitation'] = invitation
+        if sort:
+            params['sort'] = sort
+        if trash:
+            params['trash'] = trash
+        if with_count is not None:
+            params['count'] = with_count
+        if limit is not None:
+            params['limit'] = limit
+
+        response = self.session.get(self.profile_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edits = [Edit.from_json(n) for n in response.json()['edits']]
@@ -3159,16 +3251,76 @@ class OpenReviewClient(object):
         if await_process:
             self.__await_process(response.json()['id'])
 
-        return response.json()        
+        return response.json()
+
+    def post_profile_edit(self, invitation, signatures=None, profile=None, readers=None, writers=None, nonreaders=None, content=None, await_process=False):
+        """Post a Profile edit.
+
+        Posts an edit that records an assertion about a Profile (e.g. an identity or
+        affiliation verification made during moderation). Unlike note or group edits,
+        a profile edit is a record only: it is validated against the invitation's schema
+        and stored, but it never modifies the profile's content. The subject profile
+        must already exist and ``profile['id']`` must be its canonical tilde id. To
+        update or soft delete an existing edit, post an :class:`Edit` object with the
+        edit ``id`` (and optionally ``ddate``) through :meth:`post_edit`.
+
+        :param invitation: Invitation ID that defines the schema and permissions for this edit.
+        :type invitation: str
+        :param signatures: List of group IDs signing this edit.
+        :type signatures: list[str], optional
+        :param profile: Dictionary with the subject profile ``id`` and the asserted ``content`` (e.g. ``{'id': '~Jane_Doe1', 'content': {...}}``).
+        :type profile: dict, optional
+        :param readers: List of group IDs that can read this edit.
+        :type readers: list[str], optional
+        :param writers: List of group IDs that can modify this edit.
+        :type writers: list[str], optional
+        :param nonreaders: List of group IDs excluded from reading this edit.
+        :type nonreaders: list[str], optional
+        :param content: Additional content fields for the edit itself (not the Profile).
+        :type content: dict, optional
+        :param await_process: If True, blocks until the server-side process function completes; raises OpenReviewException on error.
+        :type await_process: bool, optional
+
+        :return: Dictionary containing the posted edit, including the assigned edit ``id``.
+        :rtype: dict
+        """
+        edit_json = {
+            'invitation': invitation,
+            'profile': profile if profile is not None else {}
+        }
+
+        if signatures is not None:
+            edit_json['signatures'] = signatures
+
+        if readers is not None:
+            edit_json['readers'] = readers
+
+        if writers is not None:
+            edit_json['writers'] = writers
+
+        if nonreaders is not None:
+            edit_json['nonreaders'] = nonreaders
+
+        if content is not None:
+            edit_json['content'] = content
+
+        response = self.session.post(self.profile_edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        if await_process:
+            self.__await_process(response.json()['id'])
+
+        return response.json()
 
     def post_edit(self, edit):
         """Post an Edit object, routing it to the correct endpoint based on its contents.
 
-        Inspects the serialized edit for the presence of ``note``, ``group``, or
-        ``invitation`` keys and POSTs to the corresponding edits endpoint
-        (``/notes/edits``, ``/groups/edits``, or ``/invitations/edits``).
+        Inspects the serialized edit for the presence of ``note``, ``group``,
+        ``profile``, or ``invitation`` keys and POSTs to the corresponding edits
+        endpoint (``/notes/edits``, ``/groups/edits``, ``/profiles/edits``, or
+        ``/invitations/edits``).
 
-        :param edit: Edit object to post. Must contain exactly one of ``note``, ``group``, or ``invitation``.
+        :param edit: Edit object to post. Must contain exactly one of ``note``, ``group``, ``profile``, or ``invitation``.
         :type edit: Edit
 
         :return: Dictionary containing the posted edit, including the assigned edit ``id``.
@@ -3181,6 +3333,8 @@ class OpenReviewClient(object):
             response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
         elif 'group' in edit_json:
             response = self.session.post(self.group_edits_url, json = edit_json, headers = self.headers)
+        elif 'profile' in edit_json:
+            response = self.session.post(self.profile_edits_url, json = edit_json, headers = self.headers)
         elif 'invitation' in edit_json:
             response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
 
@@ -3718,6 +3872,8 @@ class Edit(object):
     :type note: dict, optional
     :param invitation: Template of the Invitation that will be created
     :type invitation: dict, optional
+    :param profile: Subject profile id and asserted content of a profile edit, as a dictionary
+    :type profile: dict, optional
     :param nonreaders: List of nonreaders in the Edit, each nonreader is a Group id
     :type nonreaders: list[str], optional
     :param cdate: Creation date
@@ -3739,6 +3895,7 @@ class Edit(object):
         content = None,
         note = None,
         group = None,
+        profile = None,
         invitation = None,
         nonreaders = None,
         cdate = None,
@@ -3761,6 +3918,7 @@ class Edit(object):
         self.content = content
         self.note = note
         self.group = group
+        self.profile = profile
         self.invitation = invitation
         self.tauthor = tauthor
 
@@ -3799,6 +3957,8 @@ class Edit(object):
             body['note'] = self.note.to_json()
         if (self.group):
             body['group'] = self.group.to_json()
+        if (self.profile):
+            body['profile'] = self.profile
         if isinstance(self.invitation, Invitation):
             body['invitation'] = self.invitation.to_json()
         if isinstance(self.invitation, str):
@@ -3833,6 +3993,7 @@ class Edit(object):
             content = e.get('content'),
             note = Note.from_json(e['note']) if 'note' in e else None,
             group = Group.from_json(e['group']) if 'group' in e else None,
+            profile = e.get('profile'),
             invitation = e.get('invitation'),
             tauthor = e.get('tauthor')
             )

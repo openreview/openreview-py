@@ -21,6 +21,7 @@ class ProfileManagement():
 
     def setup(self):
         self.set_profile_moderation_invitations()
+        self.set_profile_edit_invitations()
         self.set_remove_name_invitations()
         self.set_remove_email_invitations()
         self.set_archive_invitations()
@@ -228,7 +229,313 @@ return {
             )
         )
 
+    def set_profile_edit_invitations(self):
+        '''
+        Profile edit invitations used during moderation. A profile edit records an assertion
+        about a profile (it never modifies the profile itself), so these invitations replace
+        the moderation tag invitations with structured, per-field records that follow the
+        profile schema.
+        '''
 
+        ## Posted by support after reviewing an identity document uploaded by the user:
+        ## confirms the profile name and date of birth. The record is visible to the
+        ## profile owner and the support team only.
+        self.client.post_invitation_edit(
+            invitations=self.meta_invitation_id,
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Identity_Verification',
+                invitees=[self.support_group_id],
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                edit={
+                    'signatures': [self.support_group_id],
+                    'readers': ['${2/profile/id}', self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'id': {
+                            'param': {
+                                'type': 'profile',
+                                'regex': '^~.+$'
+                            }
+                        },
+                        'content': {
+                            'names': {
+                                'value': {
+                                    'param': {
+                                        'type': 'object{}',
+                                        'change': 'add',
+                                        'optional': True,
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string', 'minLength': 1 } }
+                                        }
+                                    }
+                                }
+                            },
+                            'dob': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'range': [ 0, 9999999999999 ],
+                                        'optional': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        ## Posted by support after reviewing a document proving institution affiliation:
+        ## confirms the institution domain, name and the position held. The record is
+        ## public so anyone can see the affiliation was verified.
+        self.client.post_invitation_edit(
+            invitations=self.meta_invitation_id,
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Affiliation_Verification',
+                invitees=[self.support_group_id],
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                edit={
+                    'signatures': [self.support_group_id],
+                    'readers': ['everyone'],
+                    'writers': [self.support_group_id],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'id': {
+                            'param': {
+                                'type': 'profile',
+                                'regex': '^~.+$'
+                            }
+                        },
+                        'content': {
+                            'history': {
+                                'value': {
+                                    'param': {
+                                        'type': 'object{}',
+                                        'change': 'add',
+                                        'optional': True,
+                                        'properties': {
+                                            'position': { 'param': { 'type': 'string', 'minLength': 1 } },
+                                            'start': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } },
+                                            'end': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } },
+                                            'institution': {
+                                                'param': {
+                                                    'type': 'object',
+                                                    'properties': {
+                                                        'domain': { 'param': { 'type': 'string', 'minLength': 1 } },
+                                                        'name': { 'param': { 'type': 'string', 'optional': True } }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        ## Posted by support after reviewing a parental consent document for a minor:
+        ## confirms the parent relation declared in the profile. Not public because we
+        ## never disclose that a profile belongs to a minor: the record is visible to
+        ## the profile owner and the support team only.
+        self.client.post_invitation_edit(
+            invitations=self.meta_invitation_id,
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Parent_Consent',
+                invitees=[self.support_group_id],
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                edit={
+                    'signatures': [self.support_group_id],
+                    'readers': ['${2/profile/id}', self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'id': {
+                            'param': {
+                                'type': 'profile',
+                                'regex': '^~.+$'
+                            }
+                        },
+                        'content': {
+                            'relations': {
+                                'value': {
+                                    'param': {
+                                        'type': 'object{}',
+                                        'change': 'add',
+                                        'optional': True,
+                                        'properties': {
+                                            'relation': { 'param': { 'type': 'string', 'minLength': 1 } },
+                                            'name': { 'param': { 'type': 'string', 'optional': True } },
+                                            'email': { 'param': { 'type': 'string', 'regex': r'([a-z0-9_\-.]{1,}@[a-z0-9_\-.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-.]{1,}@[a-z0-9_\-.]{2,}\.[a-z]{2,})', 'optional': True } },
+                                            'start': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } },
+                                            'end': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        ## Posted automatically by moderate_profile: records the new state of the
+        ## profile and the reason for the decision. Informative only; the state itself
+        ## is changed through the moderation endpoint. The state and reason live in the
+        ## edit content because they describe the moderation decision, not profile
+        ## content. The labels enum is the controlled vocabulary of moderation reasons:
+        ## the edit schema enforces that every record uses labels from this set, and the
+        ## support team can add/edit/remove them by editing the invitation instead of
+        ## changing the UI code. An entry's description is the default message the
+        ## moderation UI offers for that label; the message actually sent is free text
+        ## stored in reason. {{issuedByCurrentInstitution}} is replaced by the UI with
+        ## "issued by <current institution> " when the profile has a current
+        ## affiliation, and removed otherwise.
+        self.client.post_invitation_edit(
+            invitations=self.meta_invitation_id,
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Profile_State',
+                invitees=[self.support_group_id],
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                edit={
+                    'signatures': [self.support_group_id],
+                    'readers': ['${2/profile/id}', self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'content': {
+                        'state': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Active', 'Active Automatic', 'Active Institutional', 'Inactive', 'Blocked', 'Limited', 'Rejected', 'Merged', 'Deleted', 'Needs Moderation']
+                                }
+                            }
+                        },
+                        'reason': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'optional': True
+                                }
+                            }
+                        },
+                        ## Short labels of the selected moderation reasons, for compact
+                        ## display; reason keeps the full message sent to the user.
+                        'labels': {
+                            'value': {
+                                'param': {
+                                    'type': 'string[]',
+                                    'optional': True,
+                                    'input': 'select',
+                                    'enum': [
+                                        {
+                                            'value': 'Institutional Email is missing',
+                                            'description': 'Please add and confirm an institutional email {{issuedByCurrentInstitution}}to your profile. Please make sure the verification token is entered and verified.\n\nIf your affiliation {{issuedByCurrentInstitution}}is not current, please update your profile with your current affiliation and associated institutional email.\n\nIf your institution does not provide you with an email, please use our contact form at https://openreview.net/contact, and make sure your profile is filled out completely: https://docs.openreview.net/getting-started/creating-an-openreview-profile/expediting-profile-activation'
+                                        },
+                                        {
+                                            'value': 'Institutional Email is added but not confirmed',
+                                            'description': 'Please confirm the institutional email in your profile by clicking the "Confirm" button next to the email and enter the verification token received.'
+                                        },
+                                        {
+                                            'value': 'DBLP link is a disambiguation page',
+                                            'description': 'The DBLP link you have provided is a disambiguation page and is not intended to be used as a bibliography. Please select the correct bibliography page listed under "Other persons with a similar name". If your page is not listed please contact the DBLP team so they can add your bibliography page. We recommend providing a different bibliography homepage when resubmitting to OpenReview moderation.'
+                                        },
+                                        {
+                                            'value': 'Homepage is invalid',
+                                            'description': "The homepage url provided in your profile is invalid or does not display your name/email used to register so your identity can't be determined."
+                                        },
+                                        {
+                                            'value': 'Profile name is invalid',
+                                            'description': 'The name in your profile does not match the name listed in your homepage or is invalid.'
+                                        },
+                                        {
+                                            'value': 'ORCID profile is incomplete',
+                                            'description': "The ORCID profile you've provided as a homepage is empty or does not match the Career & Education history you've provided."
+                                        },
+                                        {
+                                            'value': 'Request supervisor or coauthor to vouch',
+                                            'description': 'Please ask a supervisor, coauthor, or colleague who already has an active OpenReview profile with a confirmed institutional email to vouch for you.\n\nThey should add your profile ID to the Relations section of their profile, save their profile, and then click the vouch button next to your name.\n\nYour profile will be activated automatically once they vouch.\n\nIf no such person is available, please use our contact form at https://openreview.net/contact, and make sure your profile is filled out completely: https://docs.openreview.net/getting-started/creating-an-openreview-profile/expediting-profile-activation'
+                                        },
+                                        {
+                                            'value': 'Profiles cannot represent an organization',
+                                            'description': 'Profiles can only represent an individual, we do not allow profiles to be created for an organization.'
+                                        },
+                                        {
+                                            'value': 'Education/career history is incomplete',
+                                            'description': 'Please complete your full education and career history in your profile, not just your current position.\n\nA complete history helps us verify your identity and is required for profile activation. If you are currently an independent researcher, please find more information here:\nhttps://docs.openreview.net/getting-started/frequently-asked-questions/i-am-an-independent-researcher-how-do-i-sign-up'
+                                        },
+                                        {
+                                            'value': 'Documentation / ID requests',
+                                            'description': "To proceed with activation and verify your affiliation, please provide a document from each of the following categories:\n\nA photo ID (government ID, passport, or driver's license) to verify your identity.\n\nA certificate or official document proving your affiliation with the institution listed in your profile (e.g. enrollment letter, employee ID, or student ID).\n\nWe handle all documents in accordance with our privacy policy and delete them after verification is complete.\n\nPlease upload the requested documents using the following link:\n\n{{documentVerificationLink}}\n\nOnce you have uploaded all of the requested documents, use the activation link in this email to update and resubmit your profile."
+                                        },
+                                        {
+                                            'value': 'Consent form required for underage researchers',
+                                            'description': 'OpenReview welcomes younger researchers, aged 13 and above, to participate in scholarly peer review.\n\nIf you are at least 13 and under 18 years of age, you must submit a consent form to activate your profile. More information can be found here: https://docs.openreview.net/getting-started/creating-an-openreview-profile/information-for-high-school-students\n\nPlease upload the completed consent form using the following link. Do not email the form directly to OpenReview.\n\n{{underageConsentLink}}\n\nOnce you have uploaded the consent form, use the activation link in this email to update and resubmit your profile.'
+                                        },
+                                        ## Labels used outside the rejection flow (no
+                                        ## default message)
+                                        {
+                                            'value': 'Suspicious Activity'
+                                        },
+                                        {
+                                            'value': 'Terms of Service Violation'
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    'profile': {
+                        'id': {
+                            'param': {
+                                'type': 'profile',
+                                'regex': '^~.+$'
+                            }
+                        }
+                    }
+                }
+            )
+        )
 
     def set_public_article_invitations(self):
         

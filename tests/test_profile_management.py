@@ -55,6 +55,211 @@ class TestProfileManagement():
 
         assert len(client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')) == 0
 
+    def test_profile_edit_moderation(self, helpers, support_client):
+
+        ## Profile edits record moderation assertions about a profile without modifying it.
+        gwen_client = helpers.create_user('gwen@profile.org', 'Gwen', 'Verified', alternates=[], institution='profile.org')
+        profile_content_before = gwen_client.get_profile('~Gwen_Verified1').content
+
+        ## 1. The user uploaded an identity document: support confirms the name and dob.
+        identity_edit = support_client.post_profile_edit(
+            invitation='openreview.net/Support/-/Identity_Verification',
+            signatures=['openreview.net/Support'],
+            profile={
+                'id': '~Gwen_Verified1',
+                'content': {
+                    'names': { 'value': { 'add': [{ 'fullname': 'Gwen Verified' }] } },
+                    'dob': { 'value': helpers.default_dob() }
+                }
+            }
+        )
+        assert identity_edit['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
+
+        ## The record is visible to the profile owner.
+        edits = gwen_client.get_profile_edits(profile_id='~Gwen_Verified1')
+        assert len(edits) == 1
+        assert edits[0].invitation == 'openreview.net/Support/-/Identity_Verification'
+        assert edits[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Gwen Verified'
+        assert edits[0].profile['content']['dob']['value'] == helpers.default_dob()
+
+        ## Other users cannot see the identity verification record.
+        amelia_client = helpers.get_user('amelia@profile.org')
+        edits = amelia_client.get_profile_edits(profile_id='~Gwen_Verified1')
+        assert len(edits) == 0
+
+        ## 2. The user uploaded a document proving affiliation: support confirms the
+        ## institution domain, name and position. This record is public.
+        affiliation_edit = support_client.post_profile_edit(
+            invitation='openreview.net/Support/-/Affiliation_Verification',
+            signatures=['openreview.net/Support'],
+            profile={
+                'id': '~Gwen_Verified1',
+                'content': {
+                    'history': {
+                        'value': {
+                            'add': [{
+                                'position': 'PhD Student',
+                                'start': 2017,
+                                'institution': {
+                                    'domain': 'profile.org',
+                                    'name': 'Profile Org'
+                                }
+                            }]
+                        }
+                    }
+                }
+            }
+        )
+
+        assert affiliation_edit['readers'] == ['everyone']
+
+        ## Anyone can see the affiliation was verified.
+        edits = amelia_client.get_profile_edits(profile_id='~Gwen_Verified1')
+        assert len(edits) == 1
+        assert edits[0].invitation == 'openreview.net/Support/-/Affiliation_Verification'
+
+        ## 3. The user uploaded a parental consent document: support confirms the parent
+        ## relation. Not public: visible to the profile owner and the support team only.
+        parent_consent_edit = support_client.post_profile_edit(
+            invitation='openreview.net/Support/-/Parent_Consent',
+            signatures=['openreview.net/Support'],
+            profile={
+                'id': '~Gwen_Verified1',
+                'content': {
+                    'relations': {
+                        'value': {
+                            'add': [{
+                                'relation': 'Parent',
+                                'name': 'Gustavo Verified',
+                                'email': 'gustavo@profile.org'
+                            }]
+                        }
+                    }
+                }
+            }
+        )
+        assert parent_consent_edit['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
+
+        ## The owner and support see all the records, other users only the public one.
+        edits = gwen_client.get_profile_edits(profile_id='~Gwen_Verified1')
+        assert len(edits) == 3
+        edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1')
+        assert len(edits) == 3
+        edits = amelia_client.get_profile_edits(profile_id='~Gwen_Verified1')
+        assert len(edits) == 1
+
+        ## 4. Moderation changes the state of the profile: moderate_profile changes the
+        ## state through the moderation endpoint and records every decision as a
+        ## Profile_State edit. The labels enum in the edit schema is the controlled
+        ## vocabulary of moderation reasons: support manages it by editing the
+        ## invitation, and every record is validated against it. Entries with a
+        ## description are offered by the rejection UI with the description as the
+        ## default message.
+        invitation = support_client.get_invitation('openreview.net/Support/-/Profile_State')
+        label_options = invitation.edit['content']['labels']['value']['param']['enum']
+        assert len(label_options) == 13
+        assert len([option for option in label_options if 'description' in option]) == 11
+
+        ## A label outside the vocabulary is rejected by the edit schema.
+        with pytest.raises(openreview.OpenReviewException):
+            support_client.post_profile_edit(
+                invitation='openreview.net/Support/-/Profile_State',
+                signatures=['openreview.net/Support'],
+                content={
+                    'state': { 'value': 'Blocked' },
+                    'labels': { 'value': ['Not A Vocabulary Label'] }
+                },
+                profile={ 'id': '~Gwen_Verified1' }
+            )
+        support_client.moderate_profile('~Gwen_Verified1', 'block', 'Suspicious activity detected in the profile.', labels=['Suspicious Activity'])
+        support_client.moderate_profile('~Gwen_Verified1', 'unblock')
+
+        state_edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1', invitation='openreview.net/Support/-/Profile_State', sort='tcdate:asc')
+        assert len(state_edits) == 2
+        assert state_edits[0].content['state']['value'] == 'Blocked'
+        assert state_edits[0].content['reason']['value'] == 'Suspicious activity detected in the profile.'
+        assert state_edits[0].content['labels']['value'] == ['Suspicious Activity']
+        ## Unblocking leaves the profile pending re-activation
+        assert state_edits[1].content['state']['value'] == 'Inactive'
+        assert 'reason' not in state_edits[1].content
+
+        ## A verification record can be retracted with a soft delete.
+        support_client.post_edit(openreview.api.Edit(
+            id=parent_consent_edit['id'],
+            invitation='openreview.net/Support/-/Parent_Consent',
+            signatures=['openreview.net/Support'],
+            ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
+            profile={ 'id': '~Gwen_Verified1' }
+        ))
+        edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1')
+        assert len(edits) == 4
+        edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1', trash=True)
+        assert len(edits) == 5
+
+        ## None of the records modified the profile itself. The API always materializes
+        ## content.relations on read, so an untouched profile has an empty list there.
+        profile = support_client.get_profile('~Gwen_Verified1')
+        assert profile.content['names'] == profile_content_before['names']
+        assert profile.content['history'] == profile_content_before['history']
+        assert profile.content['relations'] == []
+        assert 'dob' not in profile.content or profile.content['dob'] == profile_content_before['dob']
+
+        ## A verification may assert data that differs from the profile, e.g. a date of
+        ## birth confirmed from an identity document that does not match the declared
+        ## one. The record keeps the verified value and the profile keeps its own, so
+        ## the UI can surface the mismatch.
+        different_dob = helpers.dob_for_age(25)
+        assert different_dob != profile_content_before['dob']
+        mismatch_edit = support_client.post_profile_edit(
+            invitation='openreview.net/Support/-/Identity_Verification',
+            signatures=['openreview.net/Support'],
+            profile={
+                'id': '~Gwen_Verified1',
+                'content': {
+                    'dob': { 'value': different_dob }
+                }
+            }
+        )
+        assert mismatch_edit['profile']['content']['dob']['value'] == different_dob
+
+        profile = support_client.get_profile('~Gwen_Verified1')
+        assert profile.content['dob'] == profile_content_before['dob']
+
+        ## The same applies to slightly different affiliations: a student ID may show
+        ## the position ends in a given year while the profile says Present. A verified
+        ## end year that has not passed yet still agrees with Present; one already in
+        ## the past is a mismatch the UI surfaces next to the profile dates.
+        current_year = datetime.datetime.now().year
+        for end_year in [current_year, current_year - 1]:
+            edit = support_client.post_profile_edit(
+                invitation='openreview.net/Support/-/Affiliation_Verification',
+                signatures=['openreview.net/Support'],
+                profile={
+                    'id': '~Gwen_Verified1',
+                    'content': {
+                        'history': {
+                            'value': {
+                                'add': [{
+                                    'position': 'PhD Student',
+                                    'start': 2017,
+                                    'end': end_year,
+                                    'institution': {
+                                        'domain': 'profile.org',
+                                        'name': 'Profile Org'
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }
+            )
+            assert edit['profile']['content']['history']['value']['add'][0]['end'] == end_year
+
+        ## The profile still lists the position as Present
+        profile = support_client.get_profile('~Gwen_Verified1')
+        assert profile.content['history'] == profile_content_before['history']
+        assert profile.content['history'][0]['end'] is None
+
     def test_import_deprecated_dblp_notes(self, client, openreview_client, test_client, helpers):
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
@@ -2821,7 +3026,7 @@ The OpenReview Team.
         ## post vouch tag
         ## A profile can only be vouched for after the moderation team has rejected it,
         ## so reject Paul's profile first. The vouch below reactivates it.
-        support_client.moderate_profile('~Paul_Last1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+        support_client.moderate_profile('~Paul_Last1', 'reject', 'Please ask an OpenReview user to vouch for you.', labels=['Request supervisor or coauthor to vouch'])
         assert openreview_client.get_profile('~Paul_Last1').state == 'Rejected'
 
         ## The voucher must be an active institutional user with a confirmed institutional email
@@ -4548,7 +4753,7 @@ The OpenReview Team.
         
         helpers.create_user('lina@profile.org', 'Lina', 'First', alternates=[], institution='google.com')
 
-        support_client.moderate_profile('~Lina_First1', 'block')
+        support_client.moderate_profile('~Lina_First1', 'block', labels=['Suspicious Activity'])
 
         tag = support_client.post_tag(
             openreview.api.Tag(
@@ -4681,7 +4886,7 @@ The OpenReview Team.
             register_unmoderated_user('vouchee@gmail.com', 'Vouchee', 'User')
             assert openreview_client.get_profile('~Vouchee_User1').state == 'Needs Moderation'
 
-            support_client.moderate_profile('~Vouchee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            support_client.moderate_profile('~Vouchee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.', labels=['Request supervisor or coauthor to vouch'])
             assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
 
             ## A non-institutional (Active Automatic) user cannot vouch: their profile is active
@@ -4762,7 +4967,7 @@ The OpenReview Team.
 
             ## A user that was activated through a vouch cannot vouch for others
             register_unmoderated_user('vouchee2@gmail.com', 'Voucheetwo', 'User')
-            support_client.moderate_profile('~Voucheetwo_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            support_client.moderate_profile('~Voucheetwo_User1', 'reject', 'Please ask an OpenReview user to vouch for you.', labels=['Request supervisor or coauthor to vouch'])
             assert openreview_client.get_profile('~Voucheetwo_User1').state == 'Rejected'
 
             vouchee_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='vouchee@gmail.com', password=helpers.strong_password)
@@ -4800,7 +5005,7 @@ The OpenReview Team.
             ## ~Vouchee_User1 above, so 4 more vouches bring them to the limit of 5.
             for name in ['Voucheea', 'Voucheeb', 'Voucheec', 'Voucheed']:
                 register_unmoderated_user(f'{name.lower()}@gmail.com', name, 'User')
-                support_client.moderate_profile(f'~{name}_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+                support_client.moderate_profile(f'~{name}_User1', 'reject', 'Please ask an OpenReview user to vouch for you.', labels=['Request supervisor or coauthor to vouch'])
                 add_voucher_relation(f'~{name}_User1', f'{name} User')
                 limit_tag = voucher_client.post_tag(
                     openreview.api.Tag(
@@ -4815,7 +5020,7 @@ The OpenReview Team.
 
             ## The voucher now has 5 vouches in the last month, so the 6th one is rejected
             register_unmoderated_user('voucheee@gmail.com', 'Voucheee', 'User')
-            support_client.moderate_profile('~Voucheee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.')
+            support_client.moderate_profile('~Voucheee_User1', 'reject', 'Please ask an OpenReview user to vouch for you.', labels=['Request supervisor or coauthor to vouch'])
             add_voucher_relation('~Voucheee_User1', 'Voucheee User')
             with pytest.raises(openreview.OpenReviewException, match=r'more than 5 users per month'):
                 voucher_client.post_tag(
@@ -4861,7 +5066,7 @@ The OpenReview Team.
 
         ## Reject the profile asking for an identity document; the reason, including the
         ## upload link, is emailed to the user
-        support_client.moderate_profile('~Rita_Identity1', 'reject', f"Please upload a copy of your ID document using this link: {link['url']}")
+        support_client.moderate_profile('~Rita_Identity1', 'reject', f"Please upload a copy of your ID document using this link: {link['url']}", labels=['Documentation / ID requests'])
         assert openreview_client.get_profile('~Rita_Identity1').state == 'Rejected'
 
         messages = openreview_client.get_messages(to='rita@idcheck.org', subject='OpenReview profile activation status')
@@ -4927,7 +5132,7 @@ The OpenReview Team.
         messages = openreview_client.get_messages(to='rita@idcheck.org', subject='Documents removed from the OpenReview system')
         assert len(messages) == 2
 
-        ## Support approves the profile and records the ID check with a moderation label
+        ## Support approves the profile and records the ID check with a profile edit
         support_client.moderate_profile('~Rita_Identity1', 'accept')
         assert openreview_client.get_profile('~Rita_Identity1').state == 'Active'
 
@@ -4937,18 +5142,32 @@ The OpenReview Team.
         with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
             rita_client.get_profile_documents('~Rita_Identity1')
 
-        support_client.post_tag(
-            openreview.api.Tag(
-                invitation='openreview.net/Support/-/Profile_Moderation_Label',
-                signature='openreview.net/Support',
-                profile='~Rita_Identity1',
-                label='ID Check'
-            )
+        support_client.post_profile_edit(
+            invitation='openreview.net/Support/-/Identity_Verification',
+            signatures=['openreview.net/Support'],
+            profile={
+                'id': '~Rita_Identity1',
+                'content': {
+                    'names': { 'value': { 'add': [{ 'fullname': 'Rita Identity' }] } }
+                }
+            }
         )
 
-        tags = support_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Rita_Identity1')
-        assert len(tags) == 1
-        assert tags[0].label == 'ID Check'
+        edits = support_client.get_profile_edits(profile_id='~Rita_Identity1', invitation='openreview.net/Support/-/Identity_Verification')
+        assert len(edits) == 1
+        assert edits[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Rita Identity'
+
+        ## The verification record and the state history recorded by moderate_profile
+        ## are visible to the profile owner
+        edits = rita_client.get_profile_edits(profile_id='~Rita_Identity1', sort='tcdate:asc')
+        assert len(edits) == 3
+        assert edits[0].invitation == 'openreview.net/Support/-/Profile_State'
+        assert edits[0].content['state']['value'] == 'Rejected'
+        assert edits[0].content['labels']['value'] == ['Documentation / ID requests']
+        assert link['url'] in edits[0].content['reason']['value']
+        assert edits[1].invitation == 'openreview.net/Support/-/Profile_State'
+        assert edits[1].content['state']['value'] == 'Active'
+        assert edits[2].invitation == 'openreview.net/Support/-/Identity_Verification'
 
     def test_profile_identity_documents_kept_for_review(self, openreview_client, support_client, helpers, tmp_path):
 
@@ -4960,7 +5179,7 @@ The OpenReview Team.
         helpers.create_user('diego@idcheck.org', 'Diego', 'Identity', alternates=[], institution='google.com')
 
         link = support_client.create_profile_document_upload_link('~Diego_Identity1', 'identity')
-        support_client.moderate_profile('~Diego_Identity1', 'reject', f"Please upload a copy of your ID document using this link: {link['url']}")
+        support_client.moderate_profile('~Diego_Identity1', 'reject', f"Please upload a copy of your ID document using this link: {link['url']}", labels=['Documentation / ID requests'])
         assert openreview_client.get_profile('~Diego_Identity1').state == 'Rejected'
 
         front_path = tmp_path / 'id_front.pdf'
