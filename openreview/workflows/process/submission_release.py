@@ -60,6 +60,7 @@ def process(client, invitation):
     accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
     decision_option = invitation.get_content_value('decision_option')
     release_accepted = openreview.tools.is_accept_decision(decision_option, accept_options)
+    authors_name= domain.get_content_value('authors_name', 'Authors')
 
     # The authors/authorids readers are defined in the invitation content schema: a readers
     # constant, or the escaped delete { 'const': { 'delete': True } } that the API stamps as
@@ -67,6 +68,8 @@ def process(client, invitation):
     # bibtex accordingly.
     authors_readers_schema = invitation.edit.get('note', {}).get('content', {}).get('authors', {}).get('readers')
     reveal_authors = authors_readers_schema == { 'const': { 'delete': True } }
+
+    fields_defined_in_invitation = invitation.edit.get('note', {}).get('content', {}).keys()
 
     def edit_submission(submission_tuple):
         submission, decision = submission_tuple
@@ -90,6 +93,17 @@ def process(client, invitation):
         }
 
         public = invitation.edit['note']['readers'] == ['everyone']
+
+        submission_fields = submission.content.keys()
+        for field in submission_fields:
+            # for any field not defined in the invitation, add readers
+            if field not in fields_defined_in_invitation:
+                updated_content[field] = {
+                    'readers': [
+                        venue_id,
+                        f'{venue_id}/{submission_name}{submission.number}/{authors_name}'
+                    ]
+                }
 
         client.post_note_edit(
             invitation=invitation.id,

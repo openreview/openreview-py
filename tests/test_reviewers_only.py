@@ -487,6 +487,18 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
                         },
                         'keywords': {
                             'delete': True
+                        },
+                        'sensitive_notes': {
+                            'order': 11,
+                            'description': 'Sensitive notes for the committee, not for public release.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
+                            }
                         }
                     }
                 },
@@ -504,6 +516,7 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
         assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']
         assert 'readers' in submission_inv.edit['note']['content']['subject_area']
+        assert 'sensitive_notes' in submission_inv.edit['note']['content']
         assert 'keywords' not in submission_inv.edit['note']['content']
         content_keys = submission_inv.edit['note']['content'].keys()
         assert all(field in content_keys for field in ['title', 'authors', 'TLDR', 'abstract', 'pdf'])
@@ -976,6 +989,7 @@ For more details, please check the following links:
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
                     'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                    'sensitive_notes': { 'value': 'Confidential committee note for paper ' + str(i) },
                 }
             )
 
@@ -1001,6 +1015,7 @@ For more details, please check the following links:
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission10/Authors',
         ]
+        assert submissions[0].content['sensitive_notes']['value'] == 'Confidential committee note for paper 1'
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -2874,6 +2889,14 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].pdate == new_pdate
         assert submissions[0].odate
         assert 'readers' not in submissions[0].content['authors']
+
+        # once released to the public, every field except title, abstract and author names
+        # must remain restricted to non-public readers
+        public_fields = {'title', 'abstract', 'authors'}
+        for field, field_content in submissions[0].content.items():
+            if field in public_fields:
+                continue
+            assert 'readers' in field_content and 'everyone' not in field_content['readers'], f'"{field}" is visible to the public'
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference'
         assert submissions[0].content['venue']['value'] == 'ABCD 2025'
         year = datetime.datetime.now().year
