@@ -6,6 +6,7 @@ def process(client, edit, invitation):
 
     committee_role = edit.content['committee_role']['value']
     committee_pretty_name = edit.content['committee_pretty_name']['value']
+    committee_name = edit.group.id.split('/')[-1]
 
     venue_short_name = domain.content['subtitle']['value']
     venue_from_email = f"{venue_short_name.replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()}-notifications@openreview.net"
@@ -84,6 +85,7 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'committee_id': { 'value': edit.group.id },
             'committee_pretty_name': { 'value': committee_pretty_name },
+            'workflow_stage_name': { 'value': f'recruitment - {committee_name}' },
             'venue_short_name': { 'value': venue_short_name },
             'reminder_delay': { 'value': 3000 if (invitation.domain.startswith('openreview.net')) else (1000 * 60 * 60 * 24 * 7)  }
         },
@@ -101,6 +103,7 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'committee_id': { 'value': edit.group.id },
             'committee_pretty_name': { 'value': committee_pretty_name },
+            'workflow_stage_name': { 'value': f'recruitment - {committee_name}' },
             'venue_short_name': { 'value': venue_short_name }
         },
         invitation=openreview.api.Invitation()
@@ -114,6 +117,7 @@ def process(client, edit, invitation):
             'venue_short_name': { 'value': venue_short_name },
             'committee_id': { 'value': edit.group.id },
             'committee_pretty_name': { 'value': committee_pretty_name },
+            'workflow_stage_name': { 'value': f'recruitment - {committee_name}' },
             'due_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=12)) }
         },
         invitation=openreview.api.Invitation()

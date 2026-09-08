@@ -203,6 +203,48 @@ class TestReviewersOnly():
 
         assert venue_group.content['status_invitation_id']['value'] == f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status'
 
+        # workflow invitations declare which timeline stage they belong to so the UI can
+        # group them; the venue group stores the order of the stages.
+        assert venue_group.content['workflow_stages']['value'] == [
+            'recruitment',
+            'recruitment - Program_Committee',
+            'submission',
+            'bidding',
+            'bidding - Program_Committee',
+            'assignment',
+            'assignment - Program_Committee',
+            'reviewing',
+            'discussion',
+            'meta_review',
+            'decision',
+            'camera_ready',
+            'public_release',
+            'statistics',
+            'statistics - Program_Committee',
+        ]
+
+        expected_workflow_stage = {
+            'ABCD.cc/2025/Conference/-/Submission': 'submission',
+            'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding': 'bidding',
+            'ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing': 'reviewing',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Bid': 'bidding - Program_Committee',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Conflict': 'assignment - Program_Committee',
+            'ABCD.cc/2025/Conference/-/Official_Review': 'reviewing',
+            'ABCD.cc/2025/Conference/-/Official_Comment': 'discussion',
+            'ABCD.cc/2025/Conference/-/Decision': 'decision',
+            'ABCD.cc/2025/Conference/-/Decision_Upload': 'decision',
+            'ABCD.cc/2025/Conference/-/Accepted_Submission_Release': 'public_release',
+            'ABCD.cc/2025/Conference/-/Rejected_Submission_Release': 'decision',
+            'ABCD.cc/2025/Conference/-/Withdrawal': 'reviewing',
+            'ABCD.cc/2025/Conference/-/Desk_Rejection': 'reviewing',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request': 'recruitment - Program_Committee',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response': 'recruitment - Program_Committee',
+        }
+        for invitation_id, stage in expected_workflow_stage.items():
+            invitation = openreview_client.get_invitation(invitation_id)
+            assert invitation.content['workflow_stage_name']['value'] == stage, \
+                f'{invitation_id} expected stage {stage}, got {invitation.content.get("workflow_stage_name")}'
+
         # re-deploy to mimic deployment error and re-deployment
         # deploy the venue
         edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
@@ -560,6 +602,110 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
         assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['submission_authors', 'program_chairs']
+
+    def test_custom_stage_workflow_timeline(self, openreview_client, helpers):
+
+        # Reconstruct the deployed venue to add custom stages. These are used to test how the
+        # timeline groups invitations by `workflow_stage_name`: one custom stage defines a
+        # brand new stage and another reuses an existing default stage.
+        venue = openreview.venue.Venue(openreview_client, 'ABCD.cc/2025/Conference', support_user='openreview.net/Support')
+        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/Conference_Review_Workflow'
+        venue.reviewer_roles = ['Program_Committee']
+        venue.reviewers_name = 'Program_Committee'
+        venue.use_area_chairs = False
+        venue.use_senior_area_chairs = False
+        venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, unified_authors=True)
+
+        now = datetime.datetime.now()
+        custom_stage_content = {
+            'comment': {
+                'order': 1,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 5000,
+                        'input': 'textarea'
+                    }
+                }
+            }
+        }
+
+        # Custom stage that defines a brand new timeline stage ('ethics_review')
+        venue.custom_stage = openreview.stages.CustomStage(
+            name='Ethics_Review',
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            start_date=now,
+            due_date=now + datetime.timedelta(days=5),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS, openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            content=custom_stage_content,
+            workflow_stage_name='ethics_review',
+            workflow_stage_insert_after='reviewing'
+        )
+        venue.create_custom_stage()
+
+        ethics_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Ethics_Review')
+        assert ethics_invitation.content['workflow_stage_name']['value'] == 'ethics_review'
+
+        # the new stage is inserted into the timeline order right after 'reviewing'
+        domain = openreview_client.get_group('ABCD.cc/2025/Conference')
+        assert domain.content['workflow_stages']['value'] == [
+            'recruitment',
+            'recruitment - Program_Committee',
+            'submission',
+            'bidding',
+            'bidding - Program_Committee',
+            'assignment',
+            'assignment - Program_Committee',
+            'reviewing',
+            'ethics_review',
+            'discussion',
+            'meta_review',
+            'decision',
+            'camera_ready',
+            'public_release',
+            'statistics',
+            'statistics - Program_Committee',
+        ]
+
+        # Custom stage that reuses an existing timeline stage ('reviewing')
+        venue.custom_stage = openreview.stages.CustomStage(
+            name='Reviewer_Checklist',
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            start_date=now,
+            due_date=now + datetime.timedelta(days=5),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS, openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            content=custom_stage_content,
+            workflow_stage_name='reviewing'
+        )
+        venue.create_custom_stage()
+
+        checklist_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Checklist')
+        assert checklist_invitation.content['workflow_stage_name']['value'] == 'reviewing'
+
+        # reusing an existing stage does not change the timeline order
+        domain = openreview_client.get_group('ABCD.cc/2025/Conference')
+        assert domain.content['workflow_stages']['value'] == [
+            'recruitment',
+            'recruitment - Program_Committee',
+            'submission',
+            'bidding',
+            'bidding - Program_Committee',
+            'assignment',
+            'assignment - Program_Committee',
+            'reviewing',
+            'ethics_review',
+            'discussion',
+            'meta_review',
+            'decision',
+            'camera_ready',
+            'public_release',
+            'statistics',
+            'statistics - Program_Committee',
+        ]
 
     def test_deployment_with_same_venue_id(self, openreview_client, helpers):
 
@@ -2272,6 +2418,11 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
+
+        # the statistics invitations are grouped under the 'statistics' timeline stage
+        for statistics_invitation_name in ['Review_Count', 'Review_Assignment_Count', 'Review_Days_Late_Sum']:
+            statistics_invitation = pc_client.get_invitation(f'ABCD.cc/2025/Conference/Program_Committee/-/{statistics_invitation_name}')
+            assert statistics_invitation.get_content_value('workflow_stage_name') == 'statistics - Program_Committee'
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept']
 
