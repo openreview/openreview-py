@@ -208,6 +208,9 @@ class TestARRCommitmentWorkflow():
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Reviewer') is None
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/Reviewers/-/Review_Count') is None
 
+        # no reviewer reassignment invitation for the area chairs
+        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/Area_Chairs/-/Reviewer_Reassignment') is None
+
         # included stages exist
         assert openreview_client.get_invitation(f'{venue_id}/-/Meta_Review')
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision')
