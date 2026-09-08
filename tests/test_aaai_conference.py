@@ -133,9 +133,12 @@ class TestAAAIConference():
         assert submission_invitation
         assert submission_invitation.duedate
 
-        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Expertise_Selection')
-        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Expertise_Selection')
-        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Area_Chairs/-/Expertise_Selection')
+        expertise_invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Expertise_Selection')
+        assert expertise_invitation
+        # edge invitations get the higher edge/tag human verification rate limit
+        assert expertise_invitation.humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
+        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Expertise_Selection').humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
+        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Area_Chairs/-/Expertise_Selection').humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
 
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
@@ -706,6 +709,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Bid')
         assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Senior_Program_Committee'
+        # bid invitations get the edge/tag human verification rate limit
+        assert invitation.humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
 
         # Check that SPC Bid Console loads
         request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client, wait_for_element='header')
@@ -714,6 +719,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Bid')
         assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Program_Committee'
+        assert invitation.humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
 
         # Check that PC Bid Console loads
         reviewer_client = openreview.api.OpenReviewClient(username = 'program_committee1@aaai.org', password=helpers.strong_password)
