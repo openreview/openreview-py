@@ -1012,7 +1012,7 @@ class Matching(object):
 
         invitation = venue.invitation_builder.save_invitation(config_inv)
 
-    def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, job_id=None):
+    def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None):
 
         venue = self.venue
         client = self.client
@@ -1045,47 +1045,46 @@ class Matching(object):
             elif not submissions:
                 raise openreview.OpenReviewException('Submissions not found.')
 
-        if not job_id:
-            type_affinity_scores = type(compute_affinity_scores)
+        type_affinity_scores = type(compute_affinity_scores)
 
-            if type_affinity_scores == dict:
+        if type_affinity_scores == dict:
+            if compute_affinity_scores.get('model'):
                 invitation, matching_status = self._compute_scores(
                     venue.get_affinity_score_id(self.match_group.id),
                     submissions,
                     compute_affinity_scores.get('model', 'specter2+scincl'),
                     compute_affinity_scores.get('percentile_selection', None)
                 )
+            if compute_affinity_scores.get('job_id'):
+                invitation, matching_status = self._upload_scores_from_job(
+                    compute_affinity_scores.get('job_id'),
+                    venue.get_affinity_score_id(self.match_group.id),
+                    submissions
+                )
 
-            if type_affinity_scores == str:
-                if compute_affinity_scores in ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']:
-                    invitation, matching_status = self._compute_scores(
-                        venue.get_affinity_score_id(self.match_group.id),
-                        submissions,
-                        compute_affinity_scores
-                    )
-                else:
-                    self._build_scores_from_file(
-                        venue.get_affinity_score_id(self.match_group.id),
-                        compute_affinity_scores,
-                        submissions
-                    )
-
-            if type_affinity_scores == bytes:
-                self._build_scores_from_stream(
+        if type_affinity_scores == str:
+            if compute_affinity_scores in ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']:
+                invitation, matching_status = self._compute_scores(
+                    venue.get_affinity_score_id(self.match_group.id),
+                    submissions,
+                    compute_affinity_scores
+                )
+            else:
+                self._build_scores_from_file(
                     venue.get_affinity_score_id(self.match_group.id),
                     compute_affinity_scores,
                     submissions
                 )
 
-            if compute_affinity_scores == True:
-                invitation, matching_status = self._compute_scores(
-                    venue.get_affinity_score_id(self.match_group.id),
-                    submissions
-                )
+        if type_affinity_scores == bytes:
+            self._build_scores_from_stream(
+                venue.get_affinity_score_id(self.match_group.id),
+                compute_affinity_scores,
+                submissions
+            )
 
-        else:
-            invitation, matching_status = self._upload_scores_from_job(
-                job_id,
+        if compute_affinity_scores == True:
+            invitation, matching_status = self._compute_scores(
                 venue.get_affinity_score_id(self.match_group.id),
                 submissions
             )

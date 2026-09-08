@@ -64,12 +64,16 @@ def process(client, invitation):
 
     matching_status = {}
 
+    if expertise_job_id:
+        affinity_scores_model = {
+            'job_id': expertise_job_id
+        }
+
     try:
         matching_status = venue.setup_committee_matching(
             committee_id=committee_id,
             compute_affinity_scores=affinity_scores_model,
-            alternate_matching_group=alternate_committee_id,
-            job_id=expertise_job_id
+            alternate_matching_group=alternate_committee_id
         )
     except Exception as e:
         matching_status['error'] = str(e)
