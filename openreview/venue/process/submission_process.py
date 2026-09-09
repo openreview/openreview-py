@@ -18,8 +18,15 @@ def process_update(client, edit, invitation, existing_edit):
 
     note = client.get_note(edit.note.id)
 
-    author_subject = f'''{short_phrase} has received your submission titled {note.content['title']['value']}'''
-    note_abstract = f'''\n\nAbstract: {note.content['abstract']['value']}''' if 'abstract' in note.content else ''
+    # The note has no content when all its edits were deleted, and the title field
+    # may have been renamed by the program chairs, so never assume note.content['title'].
+    note_content = note.content or {}
+    previous_content = (existing_edit.note.content if existing_edit and existing_edit.note else None) or {}
+    note_title = note_content.get('title', {}).get('value') or previous_content.get('title', {}).get('value') or ''
+    note_abstract = f'''\n\nAbstract: {note_content['abstract']['value']}''' if 'abstract' in note_content else ''
+
+    author_subject = f'''{short_phrase} has received your submission titled {note_title}''' if note_title else f'''{short_phrase} has received your submission'''
+    pcs_subject = f'''{short_phrase} has received a new submission titled {note_title}''' if note_title else f'''{short_phrase} has received a new submission'''
 
     action = 'posted' if note.tcdate == note.tmdate else 'updated'
     if note.ddate:
@@ -28,7 +35,7 @@ def process_update(client, edit, invitation, existing_edit):
     if submission_email:
         author_message=submission_email.replace('{{Abbreviated_Venue_Name}}', short_phrase)
         author_message=author_message.replace('{{action}}', action)
-        author_message=author_message.replace('{{note_title}}', note.content['title']['value'])
+        author_message=author_message.replace('{{note_title}}', note_title)
         author_message=author_message.replace('{{note_abstract}}', note_abstract)
         author_message=author_message.replace('{{note_number}}', str(note.number))
         author_message=author_message.replace('{{note_forum}}', note.forum)
@@ -37,9 +44,52 @@ def process_update(client, edit, invitation, existing_edit):
 
 Submission Number: {note.number}
 
-Title: {note.content['title']['value']} {note_abstract}
+Title: {note_title} {note_abstract}
 
 To view your submission, click here: https://openreview.net/forum?id={note.forum}'''
+
+    def send_notifications():
+        if email_authors:
+            #send tauthor email
+            if edit.tauthor.lower() != 'openreview.net':
+                client.post_message(
+                    invitation=meta_invitation_id,
+                    subject=author_subject,
+                    message=author_message,
+                    recipients=[edit.tauthor],
+                    replyTo=contact,
+                    signature=venue_id,
+                    sender=sender
+                )
+
+            # send co-author emails
+            if note.authorids:
+                coauthor_message = author_message + f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
+                client.post_message(
+                    invitation=meta_invitation_id,
+                    subject=author_subject,
+                    message=coauthor_message,
+                    recipients=[authors_group_id],
+                    ignoreRecipients=[edit.tauthor],
+                    replyTo=contact,
+                    signature=venue_id,
+                    sender=sender
+                )
+
+        if email_pcs:
+            client.post_message(
+                invitation=meta_invitation_id,
+                subject=pcs_subject,
+                message=f'''A submission to {short_phrase} has been {action}.
+
+Submission Number: {note.number}
+Title: {note_title} {note_abstract}
+
+To view the submission, click here: https://openreview.net/forum?id={note.forum}''',
+                recipients=[program_chairs_id],
+                signature=venue_id,
+                sender=sender
+            )
 
     paper_group_id=f'{venue_id}/{submission_name}{note.number}'
     paper_group=openreview.tools.get_group(client, paper_group_id)
@@ -73,10 +123,13 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
             members=list(set(note.authorids)) ## always update authors
         )
     )
-    if action == 'posted' or action == 'updated':
-        client.add_members_to_group(authors_id, authors_group_id)
     if action == 'deleted':
+        # A deleted note has nothing else to set up: notify and stop here
         client.remove_members_from_group(authors_id, authors_group_id)
+        send_notifications()
+        return
+
+    client.add_members_to_group(authors_id, authors_group_id)
 
     ### Invitation invitations
     openreview.tools.create_forum_invitations(client, note)
@@ -108,44 +161,4 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
                 group=openreview.api.Group()
             )
 
-    if email_authors:
-        #send tauthor email
-        if edit.tauthor.lower() != 'openreview.net':
-            client.post_message(
-                invitation=meta_invitation_id,
-                subject=author_subject,
-                message=author_message,
-                recipients=[edit.tauthor],
-                replyTo=contact,
-                signature=venue_id,
-                sender=sender
-            )
-
-        # send co-author emails
-        if note.authorids:
-            author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
-            client.post_message(
-                invitation=meta_invitation_id,
-                subject=author_subject,
-                message=author_message,
-                recipients=[authors_group_id],
-                ignoreRecipients=[edit.tauthor],
-                replyTo=contact,
-                signature=venue_id,
-                sender=sender
-            )
-
-    if email_pcs:
-        client.post_message(
-            invitation=meta_invitation_id,
-            subject=f'''{short_phrase} has received a new submission titled {note.content['title']['value']}''',
-            message=f'''A submission to {short_phrase} has been {action}.
-
-Submission Number: {note.number}
-Title: {note.content['title']['value']} {note_abstract}
-
-To view the submission, click here: https://openreview.net/forum?id={note.forum}''',
-            recipients=[program_chairs_id],
-            signature=venue_id,
-            sender=sender
-        )
+    send_notifications()

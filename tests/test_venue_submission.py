@@ -1126,3 +1126,126 @@ Please note that responding to this email will direct your reply to testvenue@co
         assert tags and len(tags) == 1
         assert tags[0].profile == '~Reviewer_Venue_One1'
         assert tags[0].weight == 3
+
+    def test_delete_submission_edit(self, venue, openreview_client, helpers):
+        '''Deleting the only edit of a submission leaves a note with ddate and no content.
+        The submission process_update must still run without crashing.'''
+
+        submission_edit = openreview_client.post_note_edit(
+            invitation='TestVenue.cc/-/提交',
+            signatures=['~Celeste_MartinezEleven1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper To Be Deleted' },
+                    'authors': { 'value': ['Celeste MartinezEleven']},
+                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_edit['id'])
+
+        note_id = submission_edit['note']['id']
+        messages = openreview_client.get_messages(subject='TV 22 has received your submission titled Paper To Be Deleted')
+        assert len(messages) == 1
+
+        # the post submission stage added a second edit to the note
+        submission_edits = openreview_client.get_note_edits(note_id=note_id, invitation='TestVenue.cc/-/提交')
+        assert len(submission_edits) == 1
+        post_submission_edits = openreview_client.get_note_edits(note_id=note_id, invitation='TestVenue.cc/-/Post_提交')
+        assert len(post_submission_edits) == 1
+
+        # delete every edit of the submission, the submission edit last
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
+        # the Post_提交 invitation does not accept an edit ddate, so delete that edit through the meta invitation
+        post_submission_edits[0].invitation = 'TestVenue.cc/-/Edit'
+        for edit in post_submission_edits + submission_edits:
+            edit.ddate = now
+            deleted_edit = openreview_client.post_edit(edit)
+            assert deleted_edit['id'] == edit.id
+
+        # the note is now deleted and has no content
+        deleted_note = openreview_client.get_note(note_id)
+        assert deleted_note.ddate
+        assert deleted_note.content is None
+
+        # process_update runs a second time for the submission edit id, this time for the deletion
+        process_logs = []
+        for _ in range(120):
+            process_logs = openreview_client.get_process_logs(id=submission_edits[0].id)
+            if len(process_logs) == 2 and all(log['status'] in ['ok', 'error'] for log in process_logs):
+                break
+            time.sleep(0.5)
+        assert len(process_logs) == 2
+        errors = [log['error'] for log in process_logs if log['status'] == 'error']
+        assert not errors, errors
+
+        # the authors group of the deleted submission is emptied and removed from the venue authors group
+        authors_group = openreview_client.get_group(f'TestVenue.cc/提交{deleted_note.number}/Authors')
+        assert authors_group.members == []
+        assert authors_group.id not in openreview_client.get_group('TestVenue.cc/Authors').members
+
+    def test_submission_with_renamed_title_field(self, venue, openreview_client, helpers):
+        '''PCs can rename the title field of the submission form. The submission process
+        must not assume note.content['title'] exists.'''
+
+        openreview_client.post_invitation_edit(
+            invitations='TestVenue.cc/-/Edit',
+            readers=['TestVenue.cc'],
+            writers=['TestVenue.cc'],
+            signatures=['TestVenue.cc'],
+            invitation=Invitation(
+                id='TestVenue.cc/-/提交',
+                edit={
+                    'note': {
+                        'content': {
+                            'title': { 'delete': True },
+                            'paper_title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/-/提交')
+        assert 'title' not in invitation.edit['note']['content']
+        assert 'paper_title' in invitation.edit['note']['content']
+
+        submission_edit = openreview_client.post_note_edit(
+            invitation='TestVenue.cc/-/提交',
+            signatures=['~Celeste_MartinezEleven1'],
+            note=Note(
+                content={
+                    'paper_title': { 'value': 'Paper With Renamed Title' },
+                    'authors': { 'value': ['Celeste MartinezEleven']},
+                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_edit['id'])
+
+        note = openreview_client.get_note(submission_edit['note']['id'])
+        assert note.content['paper_title']['value'] == 'Paper With Renamed Title'
+        assert 'title' not in note.content
+
+        # the notification is sent without a title
+        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='TV 22 has received your submission')
+        messages = [m for m in messages if f'Submission Number: {note.number}' in m['content']['text']]
+        assert len(messages) == 1
+        assert 'Your submission to TV 22 has been posted.' in messages[0]['content']['text']
+
+        authors_group = openreview_client.get_group(f'TestVenue.cc/提交{note.number}/Authors')
+        assert authors_group.members == ['~Celeste_MartinezEleven1']
+        assert authors_group.id in openreview_client.get_group('TestVenue.cc/Authors').members
