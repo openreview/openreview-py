@@ -195,18 +195,16 @@ class TestProfileDob():
         ))
         assert owner_client.get_profile('~Dobowner_User1').content['dob'] == dob
 
-        ## Replacing it is not
-        with pytest.raises(openreview.OpenReviewException) as ex:
-            owner_client.post_profile(openreview.Profile(
-                referent = '~Dobowner_User1',
-                signatures = ['~Dobowner_User1'],
-                content = { 'dob': helpers.dob_for_age(25) }
-            ))
-        assert 'Can not update the date of birth' in ex.value.args[0]['message']
+        ## Replacing dob is allowed within allowed window
+        new_dob = helpers.dob_for_age(25)
+        owner_client.post_profile(openreview.Profile(
+            referent = '~Dobowner_User1',
+            signatures = ['~Dobowner_User1'],
+            content = { 'dob': new_dob }
+        ))
+        assert owner_client.get_profile('~Dobowner_User1').content['dob'] == new_dob
 
-        assert owner_client.get_profile('~Dobowner_User1').content['dob'] == dob
-
-        ## The super user is privileged and can override it
+        ## The super user is privileged and can always edit it
         new_dob = helpers.dob_for_age(40)
         openreview_client.post_profile(openreview.Profile(
             referent = '~Dobowner_User1',
@@ -237,16 +235,7 @@ class TestProfileDob():
     def test_support_user_can_change_the_dob(self, openreview_client, support_client, helpers):
 
         dob = helpers.dob_for_age(30)
-        owner_client = helpers.create_user('dobsupportedit@profile.org', 'Dobsupportedit', 'User', dob=dob)
-
-        ## The owner is refused whoever else is allowed to override it
-        with pytest.raises(openreview.OpenReviewException) as ex:
-            owner_client.post_profile(openreview.Profile(
-                referent = '~Dobsupportedit_User1',
-                signatures = ['~Dobsupportedit_User1'],
-                content = { 'dob': helpers.dob_for_age(25) }
-            ))
-        assert 'Can not update the date of birth' in ex.value.args[0]['message']
+        helpers.create_user('dobsupportedit@profile.org', 'Dobsupportedit', 'User', dob=dob)
 
         ## Support is privileged, so write-once does not stop it. It signs as the Support group,
         ## because unlike the super user it is not a signatory of the profile.
