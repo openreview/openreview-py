@@ -1159,11 +1159,28 @@ Please note that responding to this email will direct your reply to testvenue@co
         # delete every edit of the submission, the submission edit last
         now = openreview.tools.datetime_millis(datetime.datetime.now())
         # the Post_提交 invitation does not accept an edit ddate, so delete that edit through the meta invitation
-        post_submission_edits[0].invitation = 'TestVenue.cc/-/Edit'
-        for edit in post_submission_edits + submission_edits:
-            edit.ddate = now
-            deleted_edit = openreview_client.post_edit(edit)
-            assert deleted_edit['id'] == edit.id
+        post_submission_edit = post_submission_edits[0]
+        post_submission_edit.invitation = 'TestVenue.cc/-/Edit'
+        post_submission_edit.ddate = now
+        deleted_edit = openreview_client.post_edit(post_submission_edit)
+        assert deleted_edit['id'] == post_submission_edit.id
+
+        # reopen the submission invitation so the author can delete their own edit
+        openreview_client.post_invitation_edit(
+            invitations='TestVenue.cc/-/Edit',
+            readers=['TestVenue.cc'],
+            writers=['TestVenue.cc'],
+            signatures=['TestVenue.cc'],
+            invitation=Invitation(
+                id='TestVenue.cc/-/提交',
+                expdate=openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days=1))
+            )
+        )
+        author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)
+        submission_edit = submission_edits[0]
+        submission_edit.ddate = now
+        deleted_edit = author_client.post_edit(submission_edit)
+        assert deleted_edit['id'] == submission_edit.id
 
         # the note is now deleted and has no content
         deleted_note = openreview_client.get_note(note_id)
@@ -1185,6 +1202,19 @@ Please note that responding to this email will direct your reply to testvenue@co
         authors_group = openreview_client.get_group(f'TestVenue.cc/提交{deleted_note.number}/Authors')
         assert authors_group.members == []
         assert authors_group.id not in openreview_client.get_group('TestVenue.cc/Authors').members
+
+        # the author who deleted the submission is notified, the title comes from the deleted edit
+        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='TV 22 has received your submission titled Paper To Be Deleted')
+        assert len(messages) == 2
+        deleted_messages = [m for m in messages if 'Your submission to TV 22 has been deleted.' in m['content']['text']]
+        assert len(deleted_messages) == 1
+        assert f'''Your submission to TV 22 has been deleted.
+
+Submission Number: {deleted_note.number}
+
+Title: Paper To Be Deleted 
+
+To view your submission, click here: https://openreview.net/forum?id={note_id}''' in deleted_messages[0]['content']['text']
 
     def test_submission_with_renamed_title_field(self, venue, openreview_client, helpers):
         '''PCs can rename the title field of the submission form. The submission process
