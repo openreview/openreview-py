@@ -27,6 +27,21 @@ def process(client, edit, invitation):
             )
         )
 
+    # update post submission cdate for ARR commitment venues
+    after_deadline_invitation_id = f'{venue_id}/-/{submission_name}_Change_After_Deadline'
+    after_deadline_invitation = openreview.tools.get_invitation(client, after_deadline_invitation_id)
+    if after_deadline_invitation and after_deadline_invitation.cdate < expdate and not full_submission_invitation_id:
+        print('Setting post submission cdate to:', expdate)
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=after_deadline_invitation_id,
+                cdate=expdate,
+                signatures=[venue_id]
+            )
+        )
+
     # update withdrawal cdate
     withdrawal_invitation_id = f'{venue_id}/-/{withdrawal_name}'
     withdrawal_invitation = openreview.tools.get_invitation(client, withdrawal_invitation_id)
