@@ -300,7 +300,7 @@ class Venue(object):
 
     def get_recruitment_id(self, committee_id):
         if self.is_template_related_workflow():
-            return self.get_invitation_id('Recruitment_Response', prefix=committee_id)        
+            return self.get_invitation_id('Recruitment_Response', prefix=committee_id)
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
     def get_expertise_selection_id(self, committee_id):
