@@ -18,11 +18,14 @@ def process_update(client, edit, invitation, existing_edit):
 
     note = client.get_note(edit.note.id)
 
-    # The note has no content when all its edits were deleted, and the title field
-    # may have been renamed by the program chairs, so never assume note.content['title'].
+    # The note has no content when all its edits were deleted, so the title and the authors
+    # fall back to the previous version of the edit. The title field may also have been
+    # renamed by the program chairs, so never assume note.content['title'].
+    previous_note = existing_edit.note if existing_edit else None
     note_content = note.content or {}
-    previous_content = (existing_edit.note.content if existing_edit and existing_edit.note else None) or {}
+    previous_content = (previous_note.content if previous_note else None) or {}
     note_title = note_content.get('title', {}).get('value') or previous_content.get('title', {}).get('value') or ''
+    note_authorids = note.authorids or (previous_note.authorids if previous_note else [])
     note_abstract = f'''\n\nAbstract: {note_content['abstract']['value']}''' if 'abstract' in note_content else ''
 
     author_subject = f'''{short_phrase} has received your submission titled {note_title}''' if note_title else f'''{short_phrase} has received your submission'''
@@ -63,7 +66,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
                 )
 
             # send co-author emails
-            if note.authorids:
+            if note_authorids:
                 coauthor_message = author_message + f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
                 client.post_message(
                     invitation=meta_invitation_id,
@@ -120,7 +123,7 @@ To view the submission, click here: https://openreview.net/forum?id={note.forum}
             writers=[venue_id],
             signatures=[venue_id],
             signatories=[venue_id, authors_group_id],
-            members=list(set(note.authorids)) ## always update authors
+            members=list(set(note_authorids)) ## always update authors
         )
     )
     if action == 'deleted':

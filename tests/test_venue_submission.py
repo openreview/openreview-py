@@ -1137,8 +1137,8 @@ Please note that responding to this email will direct your reply to testvenue@co
             note=Note(
                 content={
                     'title': { 'value': 'Paper To Be Deleted' },
-                    'authors': { 'value': ['Celeste MartinezEleven']},
-                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'authors': { 'value': ['Celeste MartinezEleven', 'Celeste MartinezTwelve']},
+                    'authorids': { 'value': ['~Celeste_MartinezEleven1', '~Celeste_MartinezTwelve1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'keywords': {'value': ['aa'] }
                 }
@@ -1148,7 +1148,7 @@ Please note that responding to this email will direct your reply to testvenue@co
 
         note_id = submission_edit['note']['id']
         messages = openreview_client.get_messages(subject='TV 22 has received your submission titled Paper To Be Deleted')
-        assert len(messages) == 1
+        assert len(messages) == 2
 
         # the post submission stage added a second edit to the note
         submission_edits = openreview_client.get_note_edits(note_id=note_id, invitation='TestVenue.cc/-/提交')
@@ -1198,23 +1198,33 @@ Please note that responding to this email will direct your reply to testvenue@co
         errors = [log['error'] for log in process_logs if log['status'] == 'error']
         assert not errors, errors
 
-        # the authors group of the deleted submission is emptied and removed from the venue authors group
+        # the authors group keeps the authors of the deleted edit and is removed from the venue authors group
         authors_group = openreview_client.get_group(f'TestVenue.cc/提交{deleted_note.number}/Authors')
-        assert authors_group.members == []
+        assert set(authors_group.members) == {'~Celeste_MartinezEleven1', '~Celeste_MartinezTwelve1'}
         assert authors_group.id not in openreview_client.get_group('TestVenue.cc/Authors').members
 
-        # the author who deleted the submission is notified, the title comes from the deleted edit
-        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='TV 22 has received your submission titled Paper To Be Deleted')
-        assert len(messages) == 2
-        deleted_messages = [m for m in messages if 'Your submission to TV 22 has been deleted.' in m['content']['text']]
-        assert len(deleted_messages) == 1
-        assert f'''Your submission to TV 22 has been deleted.
+        # the author who deleted the submission and the co-authors are notified, the title comes from the deleted edit
+        deleted_message = f'''Your submission to TV 22 has been deleted.
 
 Submission Number: {deleted_note.number}
 
 Title: Paper To Be Deleted 
 
-To view your submission, click here: https://openreview.net/forum?id={note_id}''' in deleted_messages[0]['content']['text']
+To view your submission, click here: https://openreview.net/forum?id={note_id}'''
+
+        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='TV 22 has received your submission titled Paper To Be Deleted')
+        assert len(messages) == 2
+        deleted_messages = [m for m in messages if 'has been deleted' in m['content']['text']]
+        assert len(deleted_messages) == 1
+        assert deleted_message in deleted_messages[0]['content']['text']
+        assert 'If you are not an author of this submission' not in deleted_messages[0]['content']['text']
+
+        messages = openreview_client.get_messages(to='celeste@mailetwelve.com', subject='TV 22 has received your submission titled Paper To Be Deleted')
+        assert len(messages) == 2
+        deleted_messages = [m for m in messages if 'has been deleted' in m['content']['text']]
+        assert len(deleted_messages) == 1
+        assert deleted_message in deleted_messages[0]['content']['text']
+        assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at celeste@maileleven.com' in deleted_messages[0]['content']['text']
 
     def test_submission_with_renamed_title_field(self, venue, openreview_client, helpers):
         '''PCs can rename the title field of the submission form. The submission process
