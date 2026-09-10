@@ -378,8 +378,6 @@ class GroupBuilder(object):
             content['status_invitation_id'] = { 'value': f'{self.venue.support_user}/Venue_Request/Conference_Review_Workflow/-/Status' }
 
         update_content = self.get_update_content(venue_group.content, content)
-        if self.venue.is_template_related_workflow() and venue_group.content:
-            update_content = False # avoid updating the content on every deployment for template related workflows
         if update_content:
 
             description = f'''Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria. [Learn more in the documentation](https://docs.openreview.net/new-venue-ui-beta/overview).

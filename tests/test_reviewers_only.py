@@ -203,6 +203,7 @@ class TestReviewersOnly():
         assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
 
         assert venue_group.content['status_invitation_id']['value'] == f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status'
+        group_content = venue_group.content
 
         # re-deploy to mimic deployment error and re-deployment
         # deploy the venue
@@ -224,6 +225,7 @@ class TestReviewersOnly():
         #after deployment, check domain hasn't changed
         request_note = openreview_client.get_note(request.id)
         assert request_note.domain == 'openreview.net/Support'
+        assert group_content == venue_group.content
 
         openreview_client.flush_members_cache('~ProgramChair_ABCD1')
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
