@@ -975,10 +975,10 @@ return {
                     },
                     'writers':  [dblp_uploader_group_id],
                     'content': {
-                        'xml': {
+                        'json': {
                             'value': {
                                 'param': {
-                                    'type': 'string',
+                                    'type': 'json',
                                     'input': 'textarea',
                                 }
                             }
