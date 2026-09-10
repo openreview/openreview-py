@@ -92,13 +92,13 @@ def process(client, invitation):
     print(f'{len(filtered_submissions)} out of {len(all_submissions)} submissions matched the source criteria')
 
     if not filtered_submissions:
-        print(f'No emails were sent since there are no {decision_option.lower()} submissions')
+        print(f'No emails were sent since there are no "{decision_option}" submissions')
         return
 
     messages = openreview.tools.concurrent_requests(send_decision_email, filtered_submissions)
     len_messages = len([m for m in messages if m is not None])
 
     if len_messages:
-        print(f'{len_messages} {decision_option} decision emails sent to authors')
+        print(f'{len_messages} "{decision_option}" decision emails sent to authors')
     else:
-        print(f'No new {decision_option} decision emails sent to authors')
+        print(f'No new "{decision_option}" decision emails sent to authors')
