@@ -1405,8 +1405,8 @@ Total Errors: {len(errors)}
 
         :param committee_id: Group ID of the committee. Defaults to reviewers.
         :type committee_id: str, optional
-        :param compute_affinity_scores: Model name or True to compute affinity scores.
-        :type compute_affinity_scores: str or bool, optional
+        :param compute_affinity_scores: Model name, True to compute affinity scores or dict specifying the expertise job_id
+        :type compute_affinity_scores: str, bool or dict, optional
         :param compute_conflicts: Conflict policy name or True to compute conflicts.
         :type compute_conflicts: str or bool, optional
         :param compute_conflicts_n_years: Number of years for conflict detection window.
