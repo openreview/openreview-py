@@ -5176,6 +5176,37 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection_Reversion')
 
+        # Invitations with noteReaders must be restored, not deleted, and keep the flagged readers after the reversion
+        review_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert not review_invitation.ddate
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers' in review_invitation.edit['note']['readers']
+
+        rev_chk_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist')
+        assert not rev_chk_inv.ddate
+        assert rev_chk_inv.edit['note']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs'
+        ]
+
+        ae_chk_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist')
+        assert not ae_chk_inv.ddate
+        assert ae_chk_inv.edit['note']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs'
+        ]
+
+        comment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment')
+        assert not comment_invitation.ddate
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in comment_invitation.invitees
+
         # Delete review - check ethics flag is False
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=violation_edit['note'])
         assert 'flagged_for_ethics_review' in test_submission.content
