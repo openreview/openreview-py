@@ -1224,12 +1224,12 @@ class EditInvitationsBuilder(object):
                         }
                     },
                     'accept_decision_options': {
-                        'description': 'List all decision options that signify acceptance. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive"',
+                        'description': 'Select the decision options that signify acceptance. Must be a subset of the decision options listed above.',
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': r'^[\w ()]+$',
-                                'mismatchError': 'can only contain letters, numbers, spaces, underscores and parentheses'
+                                'enum': ['${3/decision_options/value}'],
+                                'input': 'select'
                             }
                         }
                     }
