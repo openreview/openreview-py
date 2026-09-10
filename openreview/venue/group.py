@@ -597,8 +597,9 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 # create invitation to enable reviewer reassignment, where the program chairs
                 # also pick which reviewers group these area chairs may edit assignments for.
                 # The role in the same position is offered as the default.
-                paired_reviewers_name = self.venue.reviewer_roles[index] if index < len(self.venue.reviewer_roles) else self.venue.reviewers_name
-                edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id, area_chairs_name=role, reviewers_name=paired_reviewers_name, reviewer_roles=self.venue.reviewer_roles)
+                if self.venue.use_reviewers:
+                    paired_reviewers_name = self.venue.reviewer_roles[index] if index < len(self.venue.reviewer_roles) else self.venue.reviewers_name
+                    edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id, area_chairs_name=role, reviewers_name=paired_reviewers_name, reviewer_roles=self.venue.reviewer_roles)
 
             return
 
