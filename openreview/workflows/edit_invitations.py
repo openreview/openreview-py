@@ -1084,7 +1084,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                     'type': 'string',
-                                    'enum': ['Default', 'NeurIPS', 'I will upload my own conflicts']
+                                    'enum': ['Default', 'NeurIPS', 'Comprehensive', 'I will upload my own conflicts']
                                 }
                         }
                     },
