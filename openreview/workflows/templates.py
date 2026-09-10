@@ -2003,6 +2003,11 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': 'public_release'
+                        }
+                    },
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
                         'readers': ['everyone'],

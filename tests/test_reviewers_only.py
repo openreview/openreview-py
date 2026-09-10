@@ -2415,6 +2415,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Article_Endorsement')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Article_Endorsement').get_content_value('workflow_stage_name') == 'public_release'
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
