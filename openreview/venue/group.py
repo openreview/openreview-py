@@ -378,8 +378,6 @@ class GroupBuilder(object):
             content['status_invitation_id'] = { 'value': f'{self.venue.support_user}/Venue_Request/Conference_Review_Workflow/-/Status' }
 
         update_content = self.get_update_content(venue_group.content, content)
-        if self.venue.is_template_related_workflow() and venue_group.content:
-            update_content = False # avoid updating the content on every deployment for template related workflows
         if update_content:
 
             description = f'''Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria. [Learn more in the documentation](https://docs.openreview.net/new-venue-ui-beta/overview).
@@ -597,8 +595,9 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 # create invitation to enable reviewer reassignment, where the program chairs
                 # also pick which reviewers group these area chairs may edit assignments for.
                 # The role in the same position is offered as the default.
-                paired_reviewers_name = self.venue.reviewer_roles[index] if index < len(self.venue.reviewer_roles) else self.venue.reviewers_name
-                edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id, area_chairs_name=role, reviewers_name=paired_reviewers_name, reviewer_roles=self.venue.reviewer_roles)
+                if self.venue.use_reviewers:
+                    paired_reviewers_name = self.venue.reviewer_roles[index] if index < len(self.venue.reviewer_roles) else self.venue.reviewers_name
+                    edit_invitations_builder.set_edit_reviewer_reassignment_invitation(area_chairs_group_id, area_chairs_name=role, reviewers_name=paired_reviewers_name, reviewer_roles=self.venue.reviewer_roles)
 
             return
 
