@@ -66,7 +66,7 @@ iso_639_1_languages = [
 arr_submission_content = {
     "title": {
         "order": 1,
-        "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$. \n\n NEW: Many authors in the past cycles had papers desk rejected because they did not acknowledge a resubmission, or filled the responsible NLP checklist incorrectly, or made some mistake with other metadata. In July 2025 cycle we experiment with giving the authors two extra days to edit the metadata after the submission deadline (until July 30 EoD AoE). This is in parallel with the deadline for filling the mandatory author registration form that is also due at the same time. During this time some authors may receive warnings from us about potential problems in their submissions. All fields except the main paper pdf and the author list will remain editable. After that grace period the submission metadata is final and subject to the regular desk rejection rules (see https://aclrollingreview.org/authorchecklist for a list of common issues).",
+        "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$. \n\n NEW: Many authors in the past cycles had papers desk rejected because they did not acknowledge a resubmission, or filled the responsible NLP checklist incorrectly, or made some mistake with other metadata. Since July 2025 cycle we give the authors two extra days to edit the metadata after the submission deadline. This is in parallel with the deadline for filling the mandatory registration form for the designated service contributor, that is also due at the same time. During this time some authors may receive warnings from us about potential problems in their submissions. All fields except the main paper pdf and the author list will remain editable. After that grace period the submission metadata is final and subject to the regular desk rejection rules (see https://aclrollingreview.org/authorchecklist for a list of common issues).",
         "value": {
             "param": {
                 "type": "string",
@@ -86,7 +86,17 @@ arr_submission_content = {
     },
     "authorids": {
         "order": 3,
-        "description": "Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.\n\n NEW IN MAY 2025: ACL adopted a policy similar to CVPR 2025. All qualified authors are expected to sign up to review, and the highly irresponsible reviewers may become ineligible from committing their paper(s) to EMNLP or resubmitting in the next cycle. The submitting authors should (a) make sure that all other authors are aware of this policy, and (b) check that everybody on their team(s) submits their (meta-)reviews on time and in accordance with the guidelines. After submission, all authors must complete the author registration form by May 21 2025 EoD AoE at the latest. More details on the policy here: https://aclrollingreview.org/incentives2025 \n\n The registration form will be in the author console immediately after paper submission: https://openreview.net/group?id=aclweb.org/ACL/ARR/2025/May/Authors",
+        "description": "Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.\n\n NEW IN OCTOBER 2026: ACL has adopted [sustainable reviewer policy](LINK TBD), which caps individual author submissions to 20 in a single ARR cycle (and no more than 5 as a first or joint-first author). All authors are also required to have complete and accurate OpenReview profiles. While it is possible to initially register a submission with email only, all authors must have a valid and complete OpenReview account by day 8th after submission deadline at the latest, including ORCID and (for authors with prior publication history) DBLP / ACL Anthology links. Non-complying submissions will be desk rejected. Malicious manipulation of account information is subject to publication ethics sanctions.",
+        "value": {
+            "param": {
+                "type": "profile{}",
+                "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})"
+            }
+        }
+    },
+    "service_contributor": {
+        "order": 4,
+        "description": "NEW IN OCTOBER 2026: ACL has adopted [sustainable reviewer policy](LINK TBD), which caps the submissions to the available reviewing capacity. Submissions without service capacity go into a lottery for whatever spare capacity remains. To be guaranteed reviewing, please provide the OpenReview ID of the designated service contributor, willing and qualified to review. Typically it is one of the authors, but other qualified individuals can also be nominated. See [here](TBD) for qualification requirements for various service roles. ARR provides an automated [qualification checker](TBD). \n\n A single contributor can be nominated for at most 2 submissions. The service contributors must file a registration form 48h after submission deadline at the latest, confirming that they will serve, and that they vouch for the quality of submission. They must have complete and accurate OpenReview profiles incl. ORCID, DBLP, Anthology links. In case of any emergencies the designated service contributors must file an emergency declaration, providing a qualified and willing replacement. Otherwise any submissions they serve as contributors for, or are authors of, will be desk-rejected.\n\n Search for the contributor profile by first, middle and last name or email address.",
         "value": {
             "param": {
                 "type": "profile{}",
@@ -95,7 +105,7 @@ arr_submission_content = {
         }
     },
     "TLDR": {
-        "order": 8,
+        "order": 5,
         "description": "\"Too Long; Didn't Read\": a short sentence describing your paper",
         "value": {
             "param": {
@@ -107,7 +117,7 @@ arr_submission_content = {
         }
     },
     "abstract": {
-        "order": 9,
+        "order": 6,
         "description": "Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
         "value": {
             "param": {
@@ -119,7 +129,7 @@ arr_submission_content = {
         }
     },
     "pdf": {
-        "order": 10,
+        "order": 7,
         "description": "Upload a PDF file that ends with .pdf.",
         "value": {
             "param": {
@@ -144,7 +154,7 @@ arr_submission_content = {
             }
         },
         "description": "Long or short. See the CFP for the requirements for long and short papers.",
-        "order": 11
+        "order": 8
     },
     "research_area": {
         "value": {
@@ -156,10 +166,10 @@ arr_submission_content = {
             }
         },
         "description": "Research Areas / Tracks. Select the most relevant research area / track for your paper. This will be used to inform the reviewer and area chair assignment.",
-        "order": 12
+        "order": 9
     },
     "research_area_keywords": {
-        "order": 13,
+        "order": 10,
         "description": "Area-specific keywords. Please provide a comma-separated list of keywords from this page: https://aclrollingreview.org/areas",
         "value": {
             "param": {
@@ -190,7 +200,7 @@ arr_submission_content = {
             }
         },
         "description": "Which of the following types of contributions does your paper make? This will inform the reviewers and meta-reviewer about what to look for in your work.",
-        "order": 14
+        "order": 11
     },
     "languages_studied": {
         "value": {
@@ -202,7 +212,7 @@ arr_submission_content = {
             }
         },
         "description": "Please select the natural languages studied in your submission. This form supports languages in the ISO 639-1 standard.",
-        "order": 15
+        "order": 12
     },
     "other_languages": {
         "value": {
@@ -212,7 +222,7 @@ arr_submission_content = {
             }
         },
         "description": "If a language studied in your submission is not listed above, list it here.",
-        "order": 16
+        "order": 13
     },
     "previous_URL": {
         "value": {
@@ -224,7 +234,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF THIS IS A RESUBMISSION]: Provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Make sure to only add the paper id and not other parameters after &. Submissions that do not acknowledge prior versions reviewed at ARR can be desk rejected (see ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy).",
-        "order": 17
+        "order": 14
     },
     "explanation_of_revisions_PDF": {
         "value": {
@@ -238,7 +248,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF THIS IS A RESUBMISSION]: Upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. If any changes to the author list were made in the resubmission, do NOT include this information here. You may optionally prepend this content to the main submission pdf, to increase its visibility for reviewers (in addition to the compulsory upload of the separate file in this field). See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
-        "order": 18
+        "order": 15
     },
     "justification_for_author_changes": {
         "value": {
@@ -249,7 +259,7 @@ arr_submission_content = {
             }
         },
         "description": "If there were any changes to the author list since the original submission, please justify it here. Do NOT include this information in the above explanation of revisions PDF, as this will be a breach of anonymity.",
-        "order": 19
+        "order": 16
     },
     "reassignment_request_area_chair": {
         "value": {
@@ -264,7 +274,7 @@ arr_submission_content = {
             }
         },
         "description": "Do you want your submission to go to a different area chair? If you want your submission to go to the same area chair and they are unavailable this cycle, you will be assigned a new area chair.",
-        "order": 20
+        "order": 17
     },
     "reassignment_request_reviewers": {
         "value": {
@@ -279,7 +289,7 @@ arr_submission_content = {
             }
         },
         "description": "Do you want your submission to go to a different set of reviewers? If you want your submission to go to the same set of reviewers and at least one are unavailable this cycle, you will be assigned new reviewers in their place.",
-        "order": 21
+        "order": 18
     },
     "justification_for_not_keeping_action_editor_or_reviewers": {
         "value": {
@@ -290,7 +300,7 @@ arr_submission_content = {
             }
         },
         "description": "Please specify reason for any reassignment request. Reasons may include clear lack of expertise in the area or dismissing the work without any concrete comments regarding correctness of the results or argumentation, limited perceived impact of the methods or findings, lack of clarity in exposition, or other valid criticisms. It is up to the discretion of the area chairs or editors in chief regarding whether to heed these requests.",
-        "order": 22
+        "order": 19
     },
     "software": {
         "value": {
@@ -305,7 +315,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing software (max. 200MB).",
-        "order": 23
+        "order": 20
     },
     "data": {
         "value": {
@@ -320,7 +330,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB). Any anonymized concurrent submissions by the same authors, referenced within the paper, can also be provided in this field.",
-        "order": 24
+        "order": 21
     },
     "preprint": {
         "value": {
@@ -335,7 +345,7 @@ arr_submission_content = {
             }
         },
         "description": "Would the authors like ARR to release a public anonymous pre-print of the submission?",
-        "order": 25
+        "order": 22
     },
     "preprint_status": {
         "value": {
@@ -351,7 +361,7 @@ arr_submission_content = {
             }
         },
         "description": "Is there are a publicly available non-anonymous preprints of this paper, or do you plan to release one? Note, all options for this question are permitted under the updated ACL preprint policy. We are collecting this information to help inform the review process. The last option is binding, i.e. you cannot change your mind later in the cycle. \n\n NB: this category is about the possibility of deanonymization, rather than any specific publication channel such as arXiv. So e.g. withdrawn publications from other conferences also count as preprints, as long as they reveal the authors' names.",
-        "order": 26
+        "order": 23
     },
     "existing_preprints": {
         "value": {
@@ -362,7 +372,7 @@ arr_submission_content = {
             }
         },
         "description": "If there are any publicly available non-anonymous preprints of this paper, please list them here (provide the URLs please).",
-        "order": 27
+        "order": 24
     },
     "preferred_venue": {
         "value": {
@@ -371,6 +381,7 @@ arr_submission_content = {
                 "enum": [
                     "AACL",
                     "ACL",
+                    "COLING",
                     "EACL",
                     "EMNLP",
                     "NAACL",
@@ -380,7 +391,7 @@ arr_submission_content = {
             }
         },
         "description": "If you have a venue that you are hoping to submit this paper to, please enter it here. You must enter the designated acronym from this list: https://aclrollingreview.org/dates. Note that entering a preferred venue is not a firm commitment to submit your paper to this venue, but it will help ARR and the venue chairs in planning, so we highly recommend filling in your current intentions. Please enter only your first choice.",
-        "order": 28
+        "order": 25
     },
     "visa_needs": {
         "value": {
@@ -395,7 +406,7 @@ arr_submission_content = {
             }
         },
         "description": "If this submission is successfully reviewed, committed and accepted to your target venue specified above, will the presenting author need a visa to attend the conference? This question is only to assist the program chairs with estimating the visa needs of the prospective participants.",
-        "order": 29
+        "order": 26
     },
     "country_of_origin": {
         "value": {
@@ -407,7 +418,7 @@ arr_submission_content = {
             }
         },
         "description": "If this submission is successfully reviewed, committed and accepted to your target venue specified above, and the presenting author would need a visa to attend, what is the country of their origin? This question is only to assist the program chairs with estimating the visa needs of the prospective participants. Please specify the country with the two-letter country code, e.g. 'CN' for China (https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes)",
-        "order": 30
+        "order": 27
     },
     "consent_to_share_data": {
         "value": {
@@ -422,7 +433,7 @@ arr_submission_content = {
             }
         },
         "description": "I agree for the anonymized metadata associated with my submission to be included in a publicly available dataset. This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as acceptance decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc. Your decision to opt-in the data does not affect the reviewing of your submission in any way.",
-        "order": 31
+        "order": 28
     },
     "consent_to_share_submission_details": {
         "value": {
@@ -436,7 +447,7 @@ arr_submission_content = {
             }
         },
         "description": "Upon submitting this paper, authors agree to allow us to share their submission details (such as title, author names, and potentially abstract) with program committees from other conference venues for the purpose of verifying compliance with submission requirements.",
-        "order": 32
+        "order": 29
     },
     "author_submission_checklist": {
         "value": {
@@ -451,7 +462,7 @@ arr_submission_content = {
             }
         },
         "description": "I confirm that this submission adheres to ARR requirements.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist \n\n NEW: Following ICML policy, any related concurrent work should be discussed in related work and enclosed in supplementary material. See the update on submission originality and thinly sliced contributions, with desk rejection penalties: https://aclrollingreview.org/cfp#originality",
-        "order": 33
+        "order": 30
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
         "order": 34,
