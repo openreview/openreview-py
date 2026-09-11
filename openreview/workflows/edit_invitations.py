@@ -633,29 +633,55 @@ class EditInvitationsBuilder(object):
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
+        # Support venues configured with multiple reviewer/area chair roles per
+        # submission build one set of reader options per role instead
+        # of only offering the primary/default role of each committee type. The
+        # "All X" options are built from the top-level committee roles (one group
+        # per role, always present), while the "Assigned X" (per-submission)
+        # options are built from the submission-level roles
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
+        senior_area_chair_roles = self.domain_group.get_content_value(
+            'senior_area_chair_roles', [senior_area_chairs_name] if senior_area_chairs_name else [])
+        submission_senior_area_chair_roles = self.domain_group.get_content_value(
+            'submission_senior_area_chair_roles', senior_area_chair_roles)
+
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        area_chair_roles = self.domain_group.get_content_value(
+            'area_chair_roles', [area_chairs_name] if area_chairs_name else [])
+        submission_area_chair_roles = self.domain_group.get_content_value(
+            'submission_area_chair_roles', area_chair_roles)
+
+        reviewer_roles = self.domain_group.get_content_value('reviewer_roles', [reviewers_name])
+        submission_reviewer_roles = self.domain_group.get_content_value(
+            'submission_reviewer_roles', reviewer_roles)
+
         reply_readers = [
             {'value': program_chairs_id, 'optional': True, 'description': 'Program Chairs'}
         ]
 
-        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
-        if senior_area_chairs_name:
-            reply_readers.extend([
-                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
-            ])
+        for role in senior_area_chair_roles:
+            pretty_role = role.replace('_', ' ')
+            reply_readers.append({'value': f'{venue_id}/{role}', 'optional': True, 'description': f'All {pretty_role}'})
+        for role in submission_senior_area_chair_roles:
+            pretty_role = role.replace('_', ' ')
+            reply_readers.append({'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{role}', 'optional': True, 'description': f'Assigned {pretty_role}'})
 
-        area_chairs_name = self.get_content_value('area_chairs_name')
-        if area_chairs_name:
-            reply_readers.extend([
-                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
-            ])
+        for role in area_chair_roles:
+            pretty_role = role.replace('_', ' ')
+            reply_readers.append({'value': f'{venue_id}/{role}', 'optional': True, 'description': f'All {pretty_role}'})
+        for role in submission_area_chair_roles:
+            pretty_role = role.replace('_', ' ')
+            reply_readers.append({'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{role}', 'optional': True, 'description': f'Assigned {pretty_role}'})
 
-        reply_readers.extend([
-            {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
-            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
-            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'}
-        ])
+        for role in reviewer_roles:
+            pretty_role = role.replace('_', ' ')
+            reply_readers.append({'value': f'{venue_id}/{role}', 'optional': True, 'description': f'All {pretty_role}'})
+        for role in submission_reviewer_roles:
+            pretty_role = role.replace('_', ' ')
+            reply_readers.extend([
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{role}', 'optional': True, 'description': f'Assigned {pretty_role}'},
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{role}/Submitted', 'optional': True, 'description': f'Assigned {pretty_role} who already submitted their review'}
+            ])
 
         if include_signatures:
             reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})

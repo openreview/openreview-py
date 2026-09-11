@@ -522,6 +522,45 @@ class TestTwoSubmissionCommitteeRoles():
             assert any('Technical_Reviewer_' in item.get('prefix', '') for item in signatures_items)
             assert not any('Expert_Reviewer_' in item.get('prefix', '') for item in signatures_items)
 
+        # The /Readers edit invitation for each review form should offer a reader
+        # option for every reviewer/area chair role configured on the venue (both
+        # the "primary" role and any additional roles added via reviewer_groups_names
+        # / area_chair_groups_names), not just the primary role of each committee type.
+        venue_group = openreview_client.get_group('XYZW.cc/2025/Conference')
+        reviewer_roles = venue_group.content['reviewer_roles']['value']
+        area_chair_roles = venue_group.content['area_chair_roles']['value']
+
+        def assert_all_role_reader_options(readers_invitation_id):
+            readers_invitation = openreview_client.get_invitation(readers_invitation_id)
+            items = readers_invitation.edit['content']['readers']['value']['param']['items']
+            values = [item['value'] for item in items]
+
+            assert any(value.endswith('/Program_Chairs') for value in values), (
+                f'Missing Program Chairs reader option in {readers_invitation_id}'
+            )
+
+            for role in area_chair_roles:
+                assert f'XYZW.cc/2025/Conference/{role}' in values, (
+                    f'Missing "All {role}" reader option in {readers_invitation_id}'
+                )
+                assert any(value.endswith(f'/{role}') and 'Submission' in value for value in values), (
+                    f'Missing "Assigned {role}" reader option in {readers_invitation_id}'
+                )
+
+            for role in reviewer_roles:
+                assert f'XYZW.cc/2025/Conference/{role}' in values, (
+                    f'Missing "All {role}" reader option in {readers_invitation_id}'
+                )
+                assert any(value.endswith(f'/{role}') and 'Submission' in value for value in values), (
+                    f'Missing "Assigned {role}" reader option in {readers_invitation_id}'
+                )
+                assert any(value.endswith(f'/{role}/Submitted') for value in values), (
+                    f'Missing "Assigned {role} Submitted" reader option in {readers_invitation_id}'
+                )
+
+        assert_all_role_reader_options('XYZW.cc/2025/Conference/-/Official_Review/Readers')
+        assert_all_role_reader_options('XYZW.cc/2025/Conference/-/Technical_Reviewers_Review/Readers')
+
         # Reviewer assignments were undeployed earlier; redeploy them so reviewers
         # can actually post reviews for submission 1.
         venue = openreview.venue.helpers.get_venue(openreview_client, 'XYZW.cc/2025/Conference', support_user='openreview.net/Support')
