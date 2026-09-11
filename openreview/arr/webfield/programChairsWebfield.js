@@ -140,27 +140,7 @@ return {
       registrationFormName: 'Registration',
       roles: ['Reviewers', 'Area_Chairs', 'Senior_Area_Chairs']
     },
-    submissionContentFields: [
-      {
-        field: 'flagged_for_desk_reject_verification',
-        responseInvitations: ['Desk_Reject_Verification'],
-        reasonInvitations: ['Official_Review', 'Meta_Review', 'Reviewer_Checklist', 'Action_Editor_Checklist'],
-        reasonFields: {
-            'appropriateness': ['No'],
-            'formatting': ['No'],
-            'length': ['No'],
-            'anonymity': ['No'],
-            'responsible_checklist': ['No'],
-            'limitations': ['No'],
-            'Knowledge_of_or_educated_guess_at_author_identity': [
-              'Yes, I learned it orthogonally to the review process ',
-              'Yes, I learned it during review process (e.g. checking literature)',
-              'I can guess from the content of the submission'
-            ],
-            'author_identity_guess': [5]
-        }
-      }
-    ],
+    submissionContentFields: domain.content.arr_flagging_config?.value?.submission_content_fields || [],
     propertiesAllowed: {
       reviewerChecklistCount: `
       const invitationToCheck="Reviewer_Checklist"; 

@@ -20,7 +20,7 @@ from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
-from openreview.stages.arr_content import hide_fields, arr_withdrawal_content, arr_metareview_recommendation_field
+from openreview.stages.arr_content import hide_fields, arr_withdrawal_content, arr_metareview_recommendation_field, arr_flagging_config
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -780,6 +780,14 @@ class ARR(object):
             self.client.remove_members_from_group(active_venues.id, stale_venue_ids)
 
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
+        # Venue setup removes ARR-specific content, so preserve it first.
+        domain = tools.get_group(self.client, self.venue_id)
+        content = {
+            'allow_gurobi_solver': {'value': True},
+            'arr_flagging_config': {'value': arr_flagging_config}
+        }
+        if domain and domain.content:
+            content = {key: domain.content.get(key, value) for key, value in content.items()}
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
         self.prune_active_arr_venues()
 
@@ -791,17 +799,17 @@ class ARR(object):
         ]
         self.set_impersonators(profile_ids)
 
-        # Set domain field for Gurobi
-        self.client.post_group_edit(
-            invitation=self.get_meta_invitation_id(),
-            signatures=[self.venue_id],
-            group=openreview.api.Group(
-                id=self.venue_id,
-                content={
-                    'allow_gurobi_solver': { 'value': True }
-                }
+        domain = self.client.get_group(self.venue_id)
+        content = {key: value for key, value in content.items() if key not in domain.content}
+        if content:
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.venue_id,
+                    content=content
+                )
             )
-        )
 
         return setup_value
 

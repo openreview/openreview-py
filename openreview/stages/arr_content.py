@@ -3,6 +3,75 @@ from datetime import datetime
 
 arr_metareview_recommendation_field = 'overall_assessment'
 
+arr_flagging_config = {
+    "ethics_flag_default": "No",
+    "ethics_flag_fields": {
+        "Review": "needs_ethics_review",
+        "Checklist": "need_ethics_review"
+    },
+    "violation_fields": {
+        "Checklist": {
+            "appropriateness": "Yes",
+            "formatting": "Yes",
+            "length": "Yes",
+            "anonymity": "Yes",
+            "responsible_checklist": "Yes",
+            "overall_level": "Yes",
+            "limitations": "Yes"
+        },
+        "Meta_Review": {
+            "author_identity_guess": [
+                4,
+                3,
+                2,
+                1
+            ]
+        }
+    },
+    "submission_content_fields": [
+        {
+            "field": "flagged_for_desk_reject_verification",
+            "responseInvitations": [
+                "Desk_Reject_Verification"
+            ],
+            "reasonInvitations": [
+                "Official_Review",
+                "Meta_Review",
+                "Reviewer_Checklist",
+                "Action_Editor_Checklist"
+            ],
+            "reasonFields": {
+                "appropriateness": [
+                    "No"
+                ],
+                "formatting": [
+                    "No"
+                ],
+                "length": [
+                    "No"
+                ],
+                "anonymity": [
+                    "No"
+                ],
+                "responsible_checklist": [
+                    "No"
+                ],
+                "limitations": [
+                    "No"
+                ],
+                "Knowledge_of_or_educated_guess_at_author_identity": [
+                    "Yes, I learned it orthogonally to the review process ",
+                    "Yes, I learned it during review process (e.g. checking literature)",
+                    "I can guess from the content of the submission"
+                ],
+                "author_identity_guess": [
+                    5
+                ]
+            }
+        }
+    ]
+}
+
 arr_tracks = [
     "Clinical and Biomedical Applications",
     "Computational Social Science and Cultural Analytics",

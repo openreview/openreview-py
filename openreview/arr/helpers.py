@@ -8,6 +8,7 @@ import time
 from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
+    arr_flagging_config,
     arr_metareview_recommendation_field,
     arr_submission_content,
     arr_registration_task_forum,
@@ -1878,25 +1879,10 @@ def flag_submission(
     short_name = domain.get_content_value('subtitle')
     forum = client.get_note(id=edit.note.forum, details='replies')
 
-    ethics_flag_default = 'No'
-    ethics_flag_fields = {
-        'Review': 'needs_ethics_review',
-        'Checklist': 'need_ethics_review'
-    }
-    violation_fields = {
-        'Checklist': {
-            'appropriateness': 'Yes',
-            'formatting': 'Yes',
-            'length': 'Yes',
-            'anonymity': 'Yes',
-            'responsible_checklist': 'Yes',
-            'overall_level': 'Yes',
-            'limitations': 'Yes'
-        },
-        'Meta_Review': {
-            'author_identity_guess': [4, 3, 2, 1]
-        }
-    }
+    flagging_config = domain.get_content_value('arr_flagging_config', arr_flagging_config)
+    ethics_flag_default = flagging_config['ethics_flag_default']
+    ethics_flag_fields = flagging_config['ethics_flag_fields']
+    violation_fields = flagging_config['violation_fields']
 
     def post_flag(invitation_name, value=False):
         print(f"posting {value} to {invitation_name}")
