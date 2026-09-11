@@ -4,8 +4,6 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     committee_name = invitation.get_content_value('committee_name')
-    reviewer_roles = domain.get_content_value('reviewer_roles', [])
-    area_chairs_name = domain.get_content_value('area_chairs_name')
 
     assignment_title = edit.note.content['title']['value']
 
@@ -35,41 +33,5 @@ def process(client, edit, invitation):
             )
         )
 
-    # if reviewer assignment was created, add it to list of possible reviewer assignment titles that ACs could edit
-    if committee_name in reviewer_roles and area_chairs_name:
-        ac_name = area_chairs_name.replace('_', ' ')
-        committee_pretty_name = committee_name.replace('_', ' ')
-        edit_invitation_id = f'{venue_id}/{area_chairs_name}/-/Reviewer_Reassignment'
-        edit_invitation = openreview.tools.get_invitation(client, edit_invitation_id)
-
-        if edit_invitation:
-            client.post_invitation_edit(
-                invitations=meta_invitation_id,
-                signatures=[venue_id],
-                invitation=openreview.api.Invitation(
-                    id=edit_invitation_id,
-                    edit={
-                        'content': {
-                            'reviewers_proposed_assignment_title': {
-                                'order': 2,
-                                'description': f'If you would like {ac_name} to edit {committee_pretty_name} proposed assignments, select the title of the matching that you would like them to edit. If {ac_name} should edit deployed assignments, leave empty.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'enum': all_assignment_titles,
-                                        'optional': True,
-                                        'deletable': True
-                                    }
-                                }
-                            }
-                        },
-                        'group': {
-                            'content': {
-                                'reviewers_proposed_assignment_title': {
-                                    'value': '${4/content/reviewers_proposed_assignment_title/value?}'
-                                }
-                            }
-                        }
-                    }
-                )
-            )
+    ## the proposed assignment title area chairs may edit is typed into the
+    ## Reviewer_Reassignment invitation, it is not synchronized from here

@@ -54,6 +54,7 @@ return {
     withdrawnVenueId: domain.content.withdrawn_venue_id?.value,
     deskRejectedVenueId: domain.content.desk_rejected_venue_id?.value,
     officialReviewName: domain.content.review_name?.value || "Official_Review",
+    officialReviewNames: domain.content.review_names?.value || [domain.content.review_name?.value || "Official_Review"],
     commentName: domain.content.comment_name?.value || "Official_Comment",
     officialMetaReviewName:
       domain.content.meta_review_name?.value || "Meta_Review",

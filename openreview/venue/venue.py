@@ -41,8 +41,10 @@ class Venue(object):
         self.publication_chairs_name = 'Publication_Chairs'
         self.reviewer_roles = ['Reviewers']
         self.reviewers_name = self.reviewer_roles[0]
+        self.submission_reviewer_roles = [self.reviewers_name]
         self.area_chair_roles = ['Area_Chairs']
         self.area_chairs_name = self.area_chair_roles[0]
+        self.submission_area_chair_roles = [self.area_chairs_name]
         self.senior_area_chair_roles = ['Senior_Area_Chairs']        
         self.senior_area_chairs_name = self.senior_area_chair_roles[0]
         self.secondary_area_chairs_name = f'Secondary_{self.area_chairs_name}'
@@ -69,6 +71,7 @@ class Venue(object):
         self.use_ethics_chairs = False
         self.use_secondary_area_chairs = False
         self.use_recruitment_template = True
+        self.use_reviewers = True
         self.support_user = support_user
         self.invitation_builder = InvitationBuilder(self)
         self.group_builder = GroupBuilder(self)
@@ -140,8 +143,9 @@ class Venue(object):
         elif request_note.content.get('reviewers_name', {}).get('value'):
             self.reviewers_name = request_note.content['reviewers_name']['value']
             self.reviewer_roles = [self.reviewers_name]
-        preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
-    
+        self.submission_reviewer_roles = request_note.content.get('submission_reviewer_group_names', {}).get('value') or [self.reviewers_name]
+        preferred_email_groups = ([self.get_reviewers_id()] if self.use_reviewers else []) + [self.get_authors_id()]
+
         if request_note.content.get('area_chairs_support',{}).get('value'):
             if request_note.content.get('area_chair_groups_names', {}).get('value'):
                 self.area_chair_roles = request_note.content['area_chair_groups_names']['value']
@@ -149,6 +153,7 @@ class Venue(object):
             elif request_note.content.get('area_chairs_name', {}).get('value'):
                 self.area_chairs_name = request_note.content['area_chairs_name']['value']
                 self.area_chair_roles = [self.area_chairs_name]
+            self.submission_area_chair_roles = request_note.content.get('submission_area_chair_group_names', {}).get('value') or [self.area_chairs_name]
             self.use_area_chairs = True
             preferred_email_groups.append(self.get_area_chairs_id())
 
@@ -179,6 +184,7 @@ class Venue(object):
     def is_template_related_workflow(self):
         template_related_workflows = [
             f'{self.support_user}/Venue_Request/-/Conference_Review_Workflow',
+            f'{self.support_user}/Venue_Request/-/ARR_Commitment_Workflow',
             f'{self.support_user}/Venue_Request/-/ICML'
         ]
         return self.request_form_invitation and self.request_form_invitation in template_related_workflows
@@ -220,6 +226,30 @@ class Venue(object):
             if name.endswith('s'):
                 return name[:-1]
         return name
+
+    def get_submission_committee_name(self, role):
+        """Return the name of the per-submission group that a committee role is assigned into.
+
+        Roles are paired with the per-submission group names by position. When a
+        single per-submission group name is configured, every role of that kind is
+        assigned into it.
+
+        :param role: The name of a reviewer or area chair role, e.g. "Technical_Reviewers".
+        :type role: str
+
+        :return: The per-submission group name to use for that role.
+        :rtype: str
+        """
+        if role in self.reviewer_roles:
+            roles, submission_roles = self.reviewer_roles, self.submission_reviewer_roles
+        elif role in self.area_chair_roles:
+            roles, submission_roles = self.area_chair_roles, self.submission_area_chair_roles
+        else:
+            return role
+
+        if len(submission_roles) == len(roles):
+            return submission_roles[roles.index(role)]
+        return submission_roles[0]
 
     def get_committee_names(self):
         committee=[self.reviewers_name]
@@ -276,7 +306,7 @@ class Venue(object):
 
     def get_recruitment_id(self, committee_id):
         if self.is_template_related_workflow():
-            return self.get_invitation_id('Recruitment_Response', prefix=committee_id)        
+            return self.get_invitation_id('Recruitment_Response', prefix=committee_id)
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
     def get_expertise_selection_id(self, committee_id):
@@ -375,7 +405,7 @@ class Venue(object):
     def get_anon_reviewer_id(self, number, anon_id, name=None):
         if name == self.ethics_reviewers_name:
             return self.get_ethics_reviewers_id(number, True)
-        return self.get_reviewers_id(number, True)
+        return self.get_reviewers_id(number, True, name=name)
 
     def get_reviewers_name(self, pretty=True):
         if pretty:
@@ -410,12 +440,29 @@ class Venue(object):
     def get_anon_area_chairs_name(self, pretty=True):
         return self.get_anon_committee_name(self.area_chairs_name)
 
-    def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        rev_name = self.get_anon_reviewers_name()
-        reviewers_id = self.get_committee_id(f'{rev_name}.*' if anon else self.reviewers_name, number)
+    def get_reviewers_id(self, number = None, anon=False, submitted=False, name=None):
+        reviewers_name = name if name else self.reviewers_name
+        rev_name = self.get_anon_committee_name(reviewers_name)
+        reviewers_id = self.get_committee_id(f'{rev_name}.*' if anon else reviewers_name, number)
         if submitted:
             return reviewers_id + '/Submitted'
         return reviewers_id
+
+    def get_reviewers_ids(self, submitted=False):
+        """Return the top level group id of every reviewer role."""
+        return [self.get_reviewers_id(name=role, submitted=submitted) for role in self.reviewer_roles]
+
+    def get_submission_reviewers_ids(self, number, submitted=False, anon=False):
+        """Return the per-submission reviewer group ids of a submission.
+
+        One id per configured per-submission group name, so roles merged into a
+        single group yield a single id.
+        """
+        return [self.get_reviewers_id(number=number, name=name, submitted=submitted, anon=anon) for name in self.submission_reviewer_roles]
+
+    def get_submission_area_chairs_ids(self, number, anon=False):
+        """Return the per-submission area chair group ids of a submission."""
+        return [self.get_area_chairs_id(number=number, name=name, anon=anon) for name in self.submission_area_chair_roles]
 
     def get_authors_id(self, number = None):
         return self.get_committee_id(self.authors_name, number)
@@ -426,9 +473,10 @@ class Venue(object):
     def get_program_chairs_id(self):
         return self.get_committee_id(self.program_chairs_name)
 
-    def get_area_chairs_id(self, number = None, anon=False):
-        ac_name = self.get_anon_area_chairs_name()
-        return self.get_committee_id(f'{ac_name}.*' if anon else self.area_chairs_name, number)
+    def get_area_chairs_id(self, number = None, anon=False, name=None):
+        area_chairs_name = name if name else self.area_chairs_name
+        ac_name = self.get_anon_committee_name(area_chairs_name)
+        return self.get_committee_id(f'{ac_name}.*' if anon else area_chairs_name, number)
     
     def get_secondary_area_chairs_id(self, number = None, anon=False):
         ac_name = self.get_anon_committee_name(self.secondary_area_chairs_name)
@@ -599,8 +647,9 @@ class Venue(object):
 
         self.group_builder.create_authors_group()
 
-        self.group_builder.create_reviewers_group()
-        
+        if self.use_reviewers:
+            self.group_builder.create_reviewers_group()
+
         if self.use_area_chairs:
             self.group_builder.create_area_chairs_group()
 
@@ -713,10 +762,13 @@ class Venue(object):
         self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
-        self.invitation_builder.set_submission_reviewer_group_invitation()
+        if self.use_reviewers:
+            for reviewers_name in self.submission_reviewer_roles:
+                self.invitation_builder.set_submission_reviewer_group_invitation(reviewers_name=reviewers_name)
         self.invitation_builder.set_submission_message_invitation()
         if self.use_area_chairs:
-            self.invitation_builder.set_submission_area_chair_group_invitation()
+            for area_chairs_name in self.submission_area_chair_roles:
+                self.invitation_builder.set_submission_area_chair_group_invitation(area_chairs_name=area_chairs_name)
         if self.use_senior_area_chairs:
             self.invitation_builder.set_submission_senior_area_chair_group_invitation()
         if self.expertise_selection_stage:
@@ -1275,34 +1327,37 @@ Total Errors: {len(errors)}
             )
 
         if self.use_area_chairs:
-            self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(), cdate=submission_deadline + (60*60*1000*24*7*2.1))
+            for ac_role in self.area_chair_roles:
+                self.invitation_builder.set_assignment_invitation(committee_id=self.get_area_chairs_id(name=ac_role), cdate=submission_deadline + (60*60*1000*24*7*2.1))
 
-            self.client.post_invitation_edit(
-                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
-                signatures=[invitation_prefix],
-                content={
-                    'venue_id': { 'value': self.venue_id },
-                    'name': { 'value': f'{self.area_chairs_name}_Assignment_Deployment' },
-                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
-                    'committee_name': { 'value': self.area_chairs_name },
-                    'committee_pretty_name': { 'value': self.get_area_chairs_name(pretty=True) }
-                },
-                await_process=True
-            )
+                self.client.post_invitation_edit(
+                    invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                    signatures=[invitation_prefix],
+                    content={
+                        'venue_id': { 'value': self.venue_id },
+                        'name': { 'value': f'{ac_role}_Assignment_Deployment' },
+                        'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.1) },
+                        'committee_name': { 'value': ac_role },
+                        'committee_pretty_name': { 'value': self.get_committee_name(ac_role, pretty=True) }
+                    },
+                    await_process=True
+                )
 
-        self.invitation_builder.set_assignment_invitation(committee_id=self.get_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*2.2))
-        self.client.post_invitation_edit(
-                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
-                signatures=[invitation_prefix],
-                content={
-                    'venue_id': { 'value': self.venue_id },
-                    'name': { 'value': f'{self.reviewers_name}_Assignment_Deployment' },
-                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.3) },
-                    'committee_name': { 'value': self.reviewers_name },
-                    'committee_pretty_name': { 'value': self.get_reviewers_name(pretty=True) }
-                },
-                await_process=True
-            )
+        if self.use_reviewers:
+            for reviewer_role in self.reviewer_roles:
+                self.invitation_builder.set_assignment_invitation(committee_id=self.get_reviewers_id(name=reviewer_role), cdate=submission_deadline + (60*60*1000*24*7*2.2))
+                self.client.post_invitation_edit(
+                    invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                    signatures=[invitation_prefix],
+                    content={
+                        'venue_id': { 'value': self.venue_id },
+                        'name': { 'value': f'{reviewer_role}_Assignment_Deployment' },
+                        'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*2.3) },
+                        'committee_name': { 'value': reviewer_role },
+                        'committee_pretty_name': { 'value': self.get_committee_name(reviewer_role, pretty=True) }
+                    },
+                    await_process=True
+                )
 
     def setup_matching_invitations(self):
         """Create matching configuration invitations for reviewers and area chairs (if enabled).
@@ -1316,11 +1371,14 @@ Total Errors: {len(errors)}
             venue_matching.setup_matching_invitations()
 
         if self.use_area_chairs:
-            venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
-            venue_matching.setup_matching_invitations()
+            for ac_role in self.area_chair_roles:
+                venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id(name=ac_role)))
+                venue_matching.setup_matching_invitations()
 
-        venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
-        venue_matching.setup_matching_invitations()
+        if self.use_reviewers:
+            for reviewer_role in self.reviewer_roles:
+                venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id(name=reviewer_role)))
+                venue_matching.setup_matching_invitations()
 
     def setup_all_committees_matching(self):
         """Run full matching setup (invitations, affinity scores, conflicts) for all committees.
@@ -1333,11 +1391,14 @@ Total Errors: {len(errors)}
             venue_matching.setup()
 
         if self.use_area_chairs:
-            venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id()))
-            venue_matching.setup()
+            for ac_role in self.area_chair_roles:
+                venue_matching = matching.Matching(self, self.client.get_group(self.get_area_chairs_id(name=ac_role)))
+                venue_matching.setup()
 
-        venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id()))
-        venue_matching.setup()
+        if self.use_reviewers:
+            for reviewer_role in self.reviewer_roles:
+                venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id(name=reviewer_role)))
+                venue_matching.setup()
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         """Set up paper matching for a specific committee, optionally computing affinity scores and conflicts.
@@ -1350,8 +1411,8 @@ Total Errors: {len(errors)}
 
         :param committee_id: Group ID of the committee. Defaults to reviewers.
         :type committee_id: str, optional
-        :param compute_affinity_scores: Model name or True to compute affinity scores.
-        :type compute_affinity_scores: str or bool, optional
+        :param compute_affinity_scores: Model name, True to compute affinity scores or dict specifying the expertise job_id
+        :type compute_affinity_scores: str, bool or dict, optional
         :param compute_conflicts: Conflict policy name or True to compute conflicts.
         :type compute_conflicts: str or bool, optional
         :param compute_conflicts_n_years: Number of years for conflict detection window.
@@ -1376,8 +1437,10 @@ Total Errors: {len(errors)}
 
         Copies edges from the proposed assignment configuration (identified by
         ``assignment_title``) to the deployed assignment invitation, creating
-        per-paper committee member groups. Optionally enables reviewer
-        reassignment for area chairs after deployment.
+        per-paper committee member groups. The target per-submission group name
+        is read from the ``submission_committee_name`` content field on the
+        Assignment invitation. Optionally enables reviewer reassignment for
+        area chairs after deployment.
 
         :param assignment_title: Label of the proposed assignment configuration to deploy.
         :type assignment_title: str
@@ -1394,13 +1457,14 @@ Total Errors: {len(errors)}
         assignment_invitation = self.client.get_invitation(self.get_assignment_id(match_group.id))
         conference_matching = matching.Matching(self, match_group, submission_content=assignment_invitation.edit.get('head', {}).get('param', {}).get('withContent'))
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
-    
+
     def unset_assignments(self, assignment_title, committee_id):
         """Revert deployed assignments back to proposed state for a committee.
 
         Removes the deployed assignment edges and per-paper committee member
         groups, restoring the assignment configuration to its pre-deployment
-        state.
+        state. The target per-submission group name is read from the
+        ``submission_committee_name`` content field on the Assignment invitation.
 
         :param assignment_title: Label of the assignment configuration to undeploy.
         :type assignment_title: str
@@ -1411,7 +1475,7 @@ Total Errors: {len(errors)}
         """
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
-        return conference_matching.undeploy(assignment_title)    
+        return conference_matching.undeploy(assignment_title)
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
         """Set up invite-based assignment recruitment for external or emergency reviewers.
