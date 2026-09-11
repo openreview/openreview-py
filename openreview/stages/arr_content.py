@@ -470,13 +470,11 @@ arr_submission_content = {
                 "optional": False
             }
         }
-    },
-   "checklist_separator": {
-        "description": "---\n\n# The Responsible Research Checklist\n\nPlease see this [page](https://aclrollingreview.org/responsibleNLPresearch/) for advice on filling it in. Please note that inappropriate or missing answers to checklist questions can be grounds for DESK REJECTION. If your answer to a given question is 'yes' or 'no', rather than 'n/a', the 'elaboration' fields MUST be filled in.",
-        "readers": ["everyone"],
-        "order": 35
-    },
-    "A1_potential_risks": {
+    }
+}
+
+responsible_nlp_checklist = {
+   "A1_potential_risks": {
         "value": {
             "param": {
                 "input": "radio",
@@ -489,7 +487,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss any potential ethical, societal or environmental risks of your work? \n\nThis question and those that follow are from the Responsible Research Checklist, please see this page for advice on filling it in: https://aclrollingreview.org/responsibleNLPresearch/. Please note that inappropriate or missing answers to checklist questions can be grounds for DESK REJECTION. If your answer to a given question is 'yes' or 'no', rather than 'n/a', the 'elaboration' fields MUST be filled in.",
-        "order": 36
+        "order": 35
     },
     "A1_elaboration": {
         "value": {
@@ -500,7 +498,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number (we recommend placing such material in the 'Ethical Considerations' section that does not count towards page limit). For no, justify why not.",
-        "order": 37
+        "order": 36
     },
     "B_use_or_create_scientific_artifacts": {
         "value": {
@@ -514,7 +512,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you use or create scientific artifacts? (e.g. code, datasets, models)",
-        "order": 38
+        "order": 37
     },
 
     "B1_cite_creators_of_artifacts": {
@@ -530,7 +528,7 @@ arr_submission_content = {
             }
         },
         "description": "If you used existing scientific artifacts (code, data, models), did you cite the original creators?",
-        "order": 39
+        "order": 38
     },
     "B1_elaboration": {
         "value": {
@@ -541,7 +539,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 40
+        "order": 39
     },
     "B2_discuss_the_license_for_artifacts": {
         "value": {
@@ -556,7 +554,7 @@ arr_submission_content = {
             }
         },
         "description": "If you are releasing any artifacts building on prior artifacts or data, did you ensure that the original license and/or the rights of the original creators allow you to do so?",
-        "order": 41
+        "order": 40
     },
     "B2_elaboration": {
         "value": {
@@ -567,7 +565,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 42
+        "order": 41
     },
     "B3_data_contains_personally_identifying_info": {
         "value": {
@@ -582,7 +580,7 @@ arr_submission_content = {
             }
         },
         "description": "If you are releasing any artifacts that could contain personally identifiable information (unless it is necessary for the research goals), did you discuss what steps were taken to mitigate this?",
-        "order": 43
+        "order": 42
     },
     "B3_elaboration": {
         "value": {
@@ -593,7 +591,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 44
+        "order": 43
     },
     "B4_data_contains_offensive_content": {
         "value": {
@@ -608,7 +606,7 @@ arr_submission_content = {
             }
         },
         "description": "If you are releasing any artifacts that could contain objectionable content (e.g. offensive text, deepfakes, propaganda, unless it is necessary for the research goals), did you discuss what steps were taken to mitigate this?",
-        "order": 45
+        "order": 44
     },
     "B4_elaboration": {
         "value": {
@@ -619,7 +617,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 46
+        "order": 43
     },
     "B5_documentation_of_artifacts": {
         "value": {
@@ -634,7 +632,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you provide documentation of the artifacts, e.g., coverage of domains, languages, and linguistic phenomena, demographic groups represented, etc.?",
-        "order": 47
+        "order": 45
     },
     "B5_elaboration": {
         "value": {
@@ -645,7 +643,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 48
+        "order": 46
     },
     "B6_statistics_for_data": {
         "value": {
@@ -660,7 +658,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report relevant statistics like the number of examples, details of train/test/dev splits, etc. for the data that you used/created?",
-        "order": 49
+        "order": 47
     },
     "B6_elaboration": {
         "value": {
@@ -671,7 +669,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 50
+        "order": 48
     },
     "C_computational_experiments": {
         "value": {
@@ -685,7 +683,7 @@ arr_submission_content = {
             }
         },
         "description": "Is the main goal of this work to present results of computational experiments?",
-        "order": 51
+        "order": 49
     },
     "C1_model_size_and_budget": {
         "value": {
@@ -700,7 +698,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the number of parameters in the models used, the total computational budget (e.g., GPU hours), and computing infrastructure used?",
-        "order": 52
+        "order": 50
     },
     "C1_elaboration": {
         "value": {
@@ -711,7 +709,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 53
+        "order": 51
     },
     "C2_experimental_setup_and_hyperparameters": {
         "value": {
@@ -726,7 +724,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss the experimental setup, e.g. hyperparameter search, best-found hyperparameter values, number and selection of in-context examples?",
-        "order": 54
+        "order": 52
     },
     "C2_elaboration": {
         "value": {
@@ -737,7 +735,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 55
+        "order": 53
     },
     "C3_descriptive_statistics": {
         "value": {
@@ -752,7 +750,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report descriptive statistics about your results (e.g., error bars around results, summary statistics from sets of experiments), and is it transparent whether you are reporting the max, mean, etc. or just a single run?",
-        "order": 56
+        "order": 54
     },
     "C3_elaboration": {
         "value": {
@@ -763,7 +761,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 57
+        "order": 55
     },
     "C4_parameters_for_packages": {
         "value": {
@@ -778,7 +776,7 @@ arr_submission_content = {
             }
         },
         "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation, such as NLTK, ROUGE, LM Evaluation Harness etc.), did you report the implementation, model, and parameter settings used?",
-        "order": 58
+        "order": 56
     },
     "C4_elaboration": {
         "value": {
@@ -789,7 +787,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 59
+        "order": 57
     },
     "D_human_subjects_including_annotators": {
         "value": {
@@ -803,7 +801,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you use human annotators (e.g., crowdworkers) or research with human participants?",
-        "order": 60
+        "order": 58
     },
     "D1_instructions_given_to_participants": {
         "value": {
@@ -818,7 +816,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the full text of instructions given to participants, including e.g., screenshots, disclaimers of any risks to participants or annotators, etc.?",
-        "order": 61
+        "order": 59
     },
     "D1_elaboration": {
         "value": {
@@ -829,7 +827,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 62
+        "order": 60
     },
     "D2_recruitment_and_payment": {
         "value": {
@@ -844,7 +842,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report information about how you recruited (e.g., crowdsourcing platform, students), collected consent from, and paid the participants? If applicable, did you discuss if the payment was adequate and participation free of coercion? (except the case where all annotations were provided by the authors of the submission)",
-        "order": 63
+        "order": 61
     },
     "D2_elaboration": {
         "value": {
@@ -855,7 +853,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 64
+        "order": 62
     },
     "D3_data_consent": {
         "value": {
@@ -870,7 +868,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss whether and how consent was obtained from people whose data you're using/curating? (except the case where all annotations were provided by the authors of the submission)",
-        "order": 65
+        "order": 63
     },
     "D3_elaboration": {
         "value": {
@@ -881,7 +879,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 66
+        "order": 64
     },
     "D4_ethics_review_board_approval": {
         "value": {
@@ -896,7 +894,7 @@ arr_submission_content = {
             }
         },
         "description": "Was the data collection protocol approved (or determined exempt) by an ethics review board in the relevant institutional framework?",
-        "order": 67
+        "order": 65
     },
     "D4_elaboration": {
         "value": {
@@ -907,7 +905,7 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 68
+        "order": 66
     },
     "D5_annotator_population": {
         "value": {
@@ -922,7 +920,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the relevant demographic and geographic characteristics of the annotator population that is the source of the data? (except the case where all annotations were provided by the authors of the submission)",
-        "order": 69
+        "order": 67
     },
     "D5_elaboration": {
         "value": {
@@ -933,9 +931,9 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 70
-    },
-    "E_ai_assistants_in_research_or_writing": {
+        "order": 68
+    },    
+    "E_substantive_ai_assistance_in_research_or_writing": {
         "value": {
             "param": {
                 "input": "radio",
@@ -946,10 +944,10 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Did you use AI assistants (e.g., ChatGPT, Copilot) in your research, coding, or writing?",
-        "order": 71
+        "description": "Did you use AI assistants (e.g., ChatGPT, Copilot) in your research (except as a research object), coding (beyond IDE autocomplete), or writing (beyond grammar or spell-checking)?",
+        "order": 69
     },
-    "E1_information_about_use_of_ai_assistants": {
+    "E1_information_about_substantive_use_of_ai_assistance": {
         "value": {
             "param": {
                 "input": "radio",
@@ -961,8 +959,8 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "If you used any AI assistants for any substantive assistance in writing (beyond grammar or spellchecking), coding (beyond IDE autocomplete), or literature search, did you include information about your use? This question does NOT apply to LLMs used as research objects.",
-        "order": 72
+        "description": "If you used any AI assistants for any substantive assistance in writing (beyond grammar or spell-checking), coding (beyond IDE autocomplete), or literature search, did you include information about your use? This question does NOT apply to LLMs used as research objects.",
+        "order": 70
     },
     "E1_elaboration": {
         "value": {
@@ -973,11 +971,10 @@ arr_submission_content = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number, or include your elaboration directly in the checklist response. For no, justify why not.",
-        "order": 73
-    }
+        "order": 71
+    }    
 }
-
-
+ 
 
 arr_author_consent_content = {
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
