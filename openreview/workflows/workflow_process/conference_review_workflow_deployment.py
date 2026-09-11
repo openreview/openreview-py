@@ -333,6 +333,7 @@ def process(client, edit, invitation):
         'submission_area_chair_group_names'
         'senior_area_chairs_support',
         'senior_area_chair_groups_names',
+        'ethics_review_support',
         'release_role_participation',
         'venue_organizer_agreement'
     ]
