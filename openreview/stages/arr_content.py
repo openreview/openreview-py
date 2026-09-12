@@ -80,7 +80,7 @@ iso_639_1_languages = [
 arr_submission_content = {
     "title": {
         "order": 1,
-        "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$. \n\n NEW: Many authors in the past cycles had papers desk rejected because they did not acknowledge a resubmission, or filled the responsible NLP checklist incorrectly, or made some mistake with other metadata. Since July 2025 cycle we give the authors two extra days to edit the metadata after the submission deadline. This is in parallel with the deadline for filling the mandatory registration form for the designated service contributor, that is also due at the same time. During this time some authors may receive warnings from us about potential problems in their submissions. All fields except the main paper pdf and the author list will remain editable. After that grace period the submission metadata is final and subject to the regular desk rejection rules (see https://aclrollingreview.org/authorchecklist for a list of common issues).",
+        "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$. \n\n NEW: Many authors in the past cycles had papers desk rejected because they did not acknowledge a resubmission, or filled the responsible NLP checklist incorrectly, or made some mistake with other metadata. Since July 2025 cycle we give the authors two extra days to edit the metadata after the submission deadline. This is in parallel with the deadline for filling the mandatory registration form for the designated service contributor, that is also due at the same time. During this time some authors may receive warnings from us about potential problems in their submissions. All fields except the main paper pdf and the author list will remain editable. After that grace period the submission metadata is final.",
         "value": {
             "param": {
                 "type": "string",
@@ -110,7 +110,7 @@ arr_submission_content = {
     },
     "service_contributor": {
         "order": 4,
-        "description": "NEW IN OCTOBER 2026: ACL has adopted [sustainable reviewer policy](https://aclrollingreview.org/sustainable-reviewing-2026), which caps the submissions to the available reviewing capacity. Submissions without service capacity go into a lottery for whatever spare capacity remains. To be guaranteed reviewing, please provide the OpenReview ID of the designated service contributor, willing and qualified to review. Typically it is one of the authors, but other qualified individuals can also be nominated. See [here](https://aclrollingreview.org/qualifications) for qualification requirements for various service roles. ARR provides an automated qualification checker (TBD). \n\n A single contributor can be nominated for at most 2 submissions. The service contributors must file a registration form 48h after submission deadline at the latest, confirming that they will serve, and that they vouch for the quality of submission. They must have complete and accurate OpenReview profiles incl. ORCID, DBLP, Anthology links. In case of any emergencies the designated service contributors must file an emergency declaration, providing a qualified and willing replacement. Otherwise any submissions they serve as contributors for, or are authors of, will be desk-rejected.\n\n Search for the contributor profile by first, middle and last name or email address.",
+        "description": "NEW IN OCTOBER 2026: ACL has adopted [sustainable reviewer policy](https://aclrollingreview.org/sustainable-reviewing-2026), which caps the submissions to the available reviewing capacity. Submissions without service capacity go into a lottery for whatever spare capacity remains. To be guaranteed reviewing, please provide the OpenReview ID of the designated service contributor, willing and qualified to review. Typically it is one of the authors, but other qualified individuals can also be nominated. See [here](https://aclrollingreview.org/qualifications) for qualification requirements for various service roles, as well as instructions for automated qualification checks and applying for manual verification. \n\n A single contributor can be nominated for at most 2 submissions. The service contributors must file a registration form 48h after submission deadline at the latest, confirming that they will serve, and that they vouch for the quality of submission. They must have complete and accurate OpenReview profiles incl. ORCID, DBLP, Anthology links. In case of any emergencies the designated service contributors must file an emergency declaration, providing a qualified and willing replacement. Otherwise any submissions they serve as contributors for, or are authors of, will be desk-rejected.\n\n Search for the contributor profile by first, middle and last name or email address.",
         "value": {
             "param": {
                 "type": "profile{}",
@@ -144,7 +144,7 @@ arr_submission_content = {
     },
     "pdf": {
         "order": 7,
-        "description": "Upload a PDF file that ends with .pdf.",
+        "description": "Upload a PDF file that ends with .pdf. To avoid desk rejection, please consult the ARR [list of common submission issues](https://aclrollingreview.org/authorchecklist).",
         "value": {
             "param": {
                 "type": "file",
@@ -463,7 +463,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "I confirm that this submission adheres to ARR requirements.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist \n\n NEW: Following ICML policy, any related concurrent work should be discussed in related work and enclosed in supplementary material. See the update on submission originality and thinly sliced contributions, with desk rejection penalties: https://aclrollingreview.org/cfp#originality",
+        "description": "On behalf of all authors, I confirm that this submission adheres to ARR requirements, and that the responsible NLP checklist accompanying this submission will be completed 48h after submission deadline at the latest (the checklist task is now separate, and it will appear in the author console after making a submission). I further confirm that all authors are aware of the duty to have complete and accurate OpenReview profiles, under penalty of desk rejection. The named service contributor, if any, is aware of their duties and will complete the registration form 48h after submission deadline at the latest.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist",
         "order": 30
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
