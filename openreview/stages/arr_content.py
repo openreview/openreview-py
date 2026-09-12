@@ -37,6 +37,20 @@ arr_tracks = [
     "Special Theme (conference specific)"
 ]
 
+contribution_types = [
+                    "Approaches to low-resource settings",
+                    "Approaches to low-compute settings (efficiency)",
+                    "Data resources",
+                    "Data analysis",
+                    "Model analysis & interpretability",
+                    "NLP engineering experiment",
+                    "Position papers",
+                    "Publicly available software and/or pre-trained models",
+                    "Reproduction study",
+                    "Surveys",
+                    "Theory"
+                ]
+
 iso_639_1_languages = [
     "Abkhazian", "Afar", "Afrikaans", "Akan", "Albanian", "Amharic", "Arabic", "Aragonese",
     "Armenian", "Assamese", "Avaric", "Avestan", "Aymara", "Azerbaijani", "Bambara", "Bangla",
@@ -181,25 +195,13 @@ arr_submission_content = {
     "contribution_types": {
         "value": {
             "param": {
-                "input": "checkbox",
-                "enum": [
-                    "Model analysis & interpretability",
-                    "NLP engineering experiment",
-                    "Reproduction study",
-                    "Approaches to low-resource settings",
-                    "Approaches to low-compute settings (efficiency)",
-                    "Publicly available software and/or pre-trained models",
-                    "Data resources",
-                    "Data analysis",
-                    "Position papers",
-                    "Surveys",
-                    "Theory"
-                ],
+                "input": "radio",
+                "enum": contribution_types,
                 "optional": False,
                 "type": "string[]"
             }
         },
-        "description": "Which of the following types of contributions does your paper make? This will inform the reviewers and meta-reviewer about what to look for in your work.",
+        "description": "Which of the following types of contributions does your paper make? This will inform the reviewers and meta-reviewer about what to look for in your work. If there are several, select the type of the primary contribution.",
         "order": 11
     },
     "languages_studied": {
@@ -2330,19 +2332,7 @@ arr_registration_task = {
         "value": {
             "param": {
                 "input": "checkbox",
-                "enum": [
-                    "Model analysis & interpretability",
-                    "NLP engineering experiment",
-                    "Reproduction study",
-                    "Approaches to low-resource settings",
-                    "Approaches to low-compute settings (efficiency)",
-                    "Publicly available software and/or pre-trained models",
-                    "Data resources",
-                    "Data analysis",
-                    "Position papers",
-                    "Surveys",
-                    "Theory"
-                ],
+                "enum": contribution_types,
                 "optional": False,
                 "type": "string[]"
             }
@@ -3360,22 +3350,11 @@ arr_metareview_rating_content = {
 }
 
 arr_submitted_author_forum = {
-    'title': 'Submitted Author Profile Form',
-    'instructions': 'This form is required for all authors. Failure to complete it will lead to desk rejection. If any of your co-authors are unable to complete the form (e.g., they are unable to access it), please provide their OpenReview IDs in the first question below. If you believe you should be exempt, please read this blog post before claiming an exemption: https://aclrollingreview.org/exemptions2025 ',
+    'title': 'Submitted Service Contributor Form',
+    'instructions': 'This form is required for all designated service contributors. If a designated contributor fails to complete it within 48h of the submission deadline in a given cycle, the submission(s) for which they are nominated will go into the lottery, and their reviewing will be subject to available capacity.',
 }
 
 arr_submitted_author_content = {
-    "coauthor_issues": {
-        "value": {
-            "param": {
-                "type": "profile[]",
-                "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
-                "optional": True,
-            }
-        },
-        "description": "If any of your co-authors are unable to complete this form, please provide their Openreview IDs in this question. Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.",
-        "order": 2
-    },
     "confirm_you_are_willing_to_serve_as_a_reviewer_or_AC": {
         "value": {
             "param": {
@@ -3384,33 +3363,41 @@ arr_submitted_author_content = {
                     "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified.",
                     "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified, but I would prefer to serve as an AC.",
                     "I will serve as a reviewer in this cycle if ARR considers me qualified, but I do not wish to be an AC.",
-                    "I am already serving in this ARR cycle as one of: senior area chair, ethics reviewer, ethics chair, editor in chief, technical team, support team, or editorial staff, which I will specify in the next question.",
-                    "No, I cannot serve because I am unqualified (we will check this and if you are qualified you will be required to review).",
-                    "No, I cannot serve because I am on parental leave.",
-                    "No, I cannot serve because I am on family medical leave.",
-                    "No, I cannot serve because I have a medical emergency.",
-                    "No, I cannot serve because of another form of emergency beyond my control.",
-                    "No, I cannot serve because I am an AC / SAC / PC / General Chair / Local Chair for a related venue.",
-                    "No, I cannot serve because I am editor-in-chief of a major related journal.",
-                    "No, I cannot serve for another reason (this choice is very rare)."
+                    "I am already serving in this ARR cycle as one of: senior area chair, ethics reviewer, ethics chair, editor in chief, technical team, support team, or editorial staff, which I will specify in the next question."                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Per ACL [sustainable reviewing policy](TBD) in effect from October 2026, submissions to ARR are guaranteed reviewing only if they contribute sufficient service capacity (as reviewer, chair or in other senior roles). No one individual may be designated as the service contributor for more than 2 submissions. The previous exception policy no longer applies: it is the responsibility of the submitting authors to ensure that the designated contributor is available and willing to serve in a given cycle. \n\n We clarify that the service expectations for the service contributors designated in cycle submissions are different from the regular volunteer service. If you are a designated service contributor in this cycle, your answers in this form override any previously indicated unavailability or service load preferences as an ARR volunteer reviewer or chair for this cycle.",
+        "order": 1
+    },
+    "confirm_emergency_policy": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "I confirm that in case of unforeseen circumstances I will provide a replacement."
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
-        "description": "ARR requires all authors of submissions in a given cycle to contribute to the review process in that cycle if asked (see: https://aclrollingreview.org/incentives2026). Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are unable to serve please select the most appropriate option that starts with 'No'. **Note that for the last three options you must provide sufficient justification in the next question or your paper will be desk rejected.** If you are already a reviewer or AC in ARR, please select one of the first three options to confirm you are willing to serve in this cycle. \n\n We clarify that the service expectations for the submitting authors authors are different from the regular volunteer service. If you are a submitting author in this cycle, your answers in this form override any previously indicated unavailability or service load preferences as an ARR volunteer reviewer or chair for this cycle.",
-        "order": 3
+        "description": "Should the unforeseen circumstances prevent a designated contributor from completing their tasks on time, it is their responsibility to notify the chairs of the [when the tasks will be completed](https://aclrollingreview.org/reviewerguidelines#delay). If the tasks cannot be completed at all, designated contributors must file an [emergency declaration form](https://aclrollingreview.org/reviewerguidelines#emergency), where they must provide a qualified and willing replacement. Otherwise any submissions for which they serve, or which they co-author, will be desk rejected.",
+        "order": 2
     },
-    "reason_for_being_unable_to_serve_or_ARR_role": {
+    "confirm_endorsement": {
         "value": {
             "param": {
-                "optional": True,
-                "type": "string",
-                "input": "textarea"
+                "input": "radio",
+                "enum": [
+                    "I confirm that the submission(s) for which I serve meet the expected quality level: ready for consideration for acceptance at a top-tier conference."
+                ],
+                "optional": False,
+                "type": "string"
             }
         },
-        "description": "If you chose 'No, I cannot serve ... which I will specify in the next question' above, please provide details here, e.g., the name of the conference you are a PC for. If you are already serving in this ARR cycle in a role other than reviewer or AC, please specify your role. Otherwise, please leave this blank. If you believe you are not qualified, do *not* write that here. **Without [a suitable explanation](https://aclrollingreview.org/exemptions2025), the request will be denied.**",
-        "order": 4
+        "description": "To mitigate the problem of low-effort submissions, ARR adopts arXiv-style endorsement system. The designated service contributors must confirm that the submission(s), for which they serve, are at the quality level expected at a top-tier NLP conference. Cases of system abuse, including systematic endorsement of low-quality submissions, will be subject to sanctions of the ACL publication ethics committee. See the [sustainable reviewing policy](TBD) for details.",
+        "order": 3
     },
     "serving_as_a_regular_or_emergency_reviewer_or_AC": {
         "value": {
@@ -3425,7 +3412,7 @@ arr_submitted_author_content = {
             }
         },
         "description": "Some reviewers and ACs will be needed to quickly review (in 1-2 days) papers that are missing reviews at the end of the review period. Please indicate if you are willing to serve in this way.",
-        "order": 5
+        "order": 4
     },
     "indicate_emergency_reviewer_load": {
         "value": {
@@ -3442,7 +3429,7 @@ arr_submitted_author_content = {
             }
         },
         "description": "Please indicate how many papers you would be willing to do emergency reviews for if asked.",
-        "order": 6
+        "order": 5
     },
     "are_you_a_student": {
         "value": {
@@ -3459,7 +3446,7 @@ arr_submitted_author_content = {
             }
         },
         "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
-        "order": 7
+        "order": 6
     },
     "what_is_your_highest_level_of_completed_education": {
         "value": {
@@ -3475,7 +3462,7 @@ arr_submitted_author_content = {
             }
         },
         "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
-        "order": 8
+        "order": 7
     },
     "confirm_you_are_qualified_to_review": {
         "value": {
@@ -3490,7 +3477,7 @@ arr_submitted_author_content = {
             }
         },
         "description": "The ARR requirements for reviewers depend on both publications and career stage. Those who have obtained their PhDs and/or have senior academic positions (postdoc/faculty), automatically qualify if they have at least two papers in main ACL events or Findings or major ML venues. Doctoral students (but not bachelor and master students), as well as industry researchers with at least a Masters degree, automatically qualify if they have at least 2 ACL or ML conference publications and a total of >= 3 publications in total. Those who do not automatically qualify by these criteria can serve as secondary reviewers, mentored by a qualified primary reviewer (see https://aclrollingreview.org/reviewerguidelines#secondary-reviewer). \n\n Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major ML venues we consider are: AAAI, COLM, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches online records. Having your self-reported status helps us identify issues with available data.",
-        "order": 9
+        "order": 8
     },
     "confirm_your_profile_has_past_domains": {
         "description": "I confirm that I have specified in my OpenReview profile the full history of domains I am now and previously was affiliated with.",
@@ -3504,7 +3491,7 @@ arr_submitted_author_content = {
                 "optional": False
             }
         },
-        "order": 10
+        "order": 9
     },
     "confirm_your_profile_has_all_email_addresses": {
         "description": "I confirm that I have specified in my OpenReview profile all (professional) email addresses I now use and have used before.",
@@ -3518,7 +3505,7 @@ arr_submitted_author_content = {
                 "optional": False
             }
         },
-        "order": 11
+        "order": 10
     },
     "meta_data_donation": {
         "value": {
@@ -3532,7 +3519,7 @@ arr_submitted_author_content = {
             }
         },
         "description": "If selected as reviewer, do you agree for the anonymized metadata associated with your reviews produced in this cycle to be included in a publicly available dataset? This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as meta-review decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc.",
-        "order": 12
+        "order": 11
     },
     "indicate_your_research_areas": {
         "value": {
@@ -3544,31 +3531,19 @@ arr_submitted_author_content = {
             }
         },
         "description": "If you are selected as a reviewer, we will need to know the research areas / tracks you are qualified to review for. Please select the most relevant research areas / tracks for your expertise. Note: we will try to find optimal matches, given the available information, but we cannot guarantee that everyone's preferences would be satisfied. You will be able to provide feedback on paper-reviewer matching in the review form.",
-        "order": 13
+        "order": 12
     },
     "contribution_types": {
         "value": {
             "param": {
                 "input": "checkbox",
-                "enum": [
-                    "Model analysis & interpretability",
-                    "NLP engineering experiment",
-                    "Reproduction study",
-                    "Approaches to low-resource settings",
-                    "Approaches to low-compute settings (efficiency)",
-                    "Publicly available software and/or pre-trained models",
-                    "Data resources",
-                    "Data analysis",
-                    "Position papers",
-                    "Surveys",
-                    "Theory"
-                ],
+                "enum": contribution_types,
                 "optional": False,
                 "type": "string[]"
             }
         },
         "description": "Please indicate what types of contributions you are overall interested in reviewing.",
-        "order": 14
+        "order": 13
     },
     "indicate_your_languages": {
         "value": {
