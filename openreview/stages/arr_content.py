@@ -2429,6 +2429,22 @@ arr_registration_task = {
     }
 }
 
+dr_types = [
+    "Anonymity",
+    "Authorship",
+    "Dual/multiple submission",
+    "Format",
+    "Out of scope",
+    "Overall_level",
+    "Prior sanctions",
+    "Professional conduct",
+    "Publication ethics",
+    "Resubmission and withdrawal policy",
+    "Service obligations",
+    "Administrative issues",
+    "Other"
+]
+
 arr_desk_reject_verification = {
     "verification": {
         "order": 1,
@@ -2441,6 +2457,48 @@ arr_desk_reject_verification = {
                 "optional": False
             }
         }
+    },
+    "desk_reject_type": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": dr_types,
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "What kind(s) of issue is this case? Detailed description of possible DR types: \n\n TBD",
+        "order": 2
+    },    
+    "decision": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "This paper should be desk rejected",
+                    "This paper should be desk rejected without prejudice",
+                    "This paper should NOT be desk rejected"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If this paper should be desk rejected, are there circumstances that justify waving the resubmission penalty? (i.e. this paper should be allowed to be resubmitted in the following cycle).",
+        "order": 3
+    },
+    "further_relevant_information": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "input": "textarea",
+                "markdown": True,
+                "maxLength": 2000,
+                "type": "string"
+            }
+        },
+        "description": "Any other relevant information (e.g. links to tickets, problematic comments etc.) that you may have.",
+        "order": 4
     }
 }
 
