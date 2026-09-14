@@ -80,7 +80,7 @@ iso_639_1_languages = [
 arr_submission_content = {
     "title": {
         "order": 1,
-        "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$. \n\n NEW: Many authors in the past cycles had papers desk rejected because they did not acknowledge a resubmission, or filled the responsible NLP checklist incorrectly, or made some mistake with other metadata. Since July 2025 cycle we give the authors two extra days to edit the metadata after the submission deadline. This is in parallel with the deadline for filling the mandatory registration form for the designated service contributor, that is also due at the same time. During this time some authors may receive warnings from us about potential problems in their submissions. All fields except the main paper pdf and the author list will remain editable. After that grace period the submission metadata is final.",
+        "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$. \n\n Many authors in the past cycles had papers desk rejected because they did not acknowledge a resubmission, or filled the responsible NLP checklist incorrectly, or made some mistake with other metadata. Since July 2025 cycle we give the authors two extra days to edit the metadata after the submission deadline. This is in parallel with the deadline for filling the mandatory registration form for the designated service contributor (see below), which is also due at the same time. During this time some authors may receive warnings from us about potential problems in their submissions. All fields except the main paper pdf and the author list will remain editable. After that grace period the submission metadata is final.",
         "value": {
             "param": {
                 "type": "string",
@@ -1048,6 +1048,7 @@ hide_fields = [
     "existing_preprints",
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement",
     "preprint_status",
+    "service_contributor"
 ]
 
 hide_fields_from_public = [
