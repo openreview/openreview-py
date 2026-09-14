@@ -6,45 +6,9 @@ def process(client, invitation):
     title = domain.content['title']['value']
     short_name = domain.content['subtitle']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
-    support_user = invitation.invitations[0].split('Template')[0] + 'Support'
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
-
-    # # update invitation to include readers for all submissions
-    venue = openreview.helpers.get_venue(client, venue_id, support_user)
-    submission_fields = venue.compute_submission_fields()
-    print(f'checking invitation {invitation.id} for readers for all submission fields')
-    print(f'submission fields: {submission_fields}')
-    release_invitation = client.get_invitation(invitation.id)
-    invitation_content = release_invitation.edit['note']['content']
-    new_invitation_content = {}
-    for field in submission_fields:
-        print(f'checking field {field} for readers')
-        if not invitation_content.get(field, {}).get('readers'):
-            print(f'adding readers for field {field}')
-            new_invitation_content[field] = {
-                'readers': [
-                    venue_id,
-                    venue.get_authors_id('$' + '{{4/id}/number}')
-                ]
-            }
-
-    if new_invitation_content:
-        print(f'updating invitation {release_invitation.id} to include readers for all submission fields')
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=release_invitation.id,
-                edit={
-                    'note': {
-                        'content': new_invitation_content
-                    }
-                }
-            )
-        )
-        return
 
     if cdate > now:
         ## invitation is in the future, do not process
@@ -60,7 +24,6 @@ def process(client, invitation):
     accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
     decision_option = invitation.get_content_value('decision_option')
     release_accepted = openreview.tools.is_accept_decision(decision_option, accept_options)
-    authors_name= domain.get_content_value('authors_name', 'Authors')
 
     # The authors/authorids readers are defined in the invitation content schema: a readers
     # constant, or the escaped delete { 'const': { 'delete': True } } that the API stamps as
@@ -68,8 +31,6 @@ def process(client, invitation):
     # bibtex accordingly.
     authors_readers_schema = invitation.edit.get('note', {}).get('content', {}).get('authors', {}).get('readers')
     reveal_authors = authors_readers_schema == { 'const': { 'delete': True } }
-
-    fields_defined_in_invitation = invitation.edit.get('note', {}).get('content', {}).keys()
 
     def edit_submission(submission_tuple):
         submission, decision = submission_tuple
@@ -93,17 +54,6 @@ def process(client, invitation):
         }
 
         public = invitation.edit['note']['readers'] == ['everyone']
-
-        submission_fields = submission.content.keys()
-        for field in submission_fields:
-            # for any field not defined in the invitation, add readers
-            if field not in fields_defined_in_invitation:
-                updated_content[field] = {
-                    'readers': [
-                        venue_id,
-                        f'{venue_id}/{submission_name}{submission.number}/{authors_name}'
-                    ]
-                }
 
         client.post_note_edit(
             invitation=invitation.id,
