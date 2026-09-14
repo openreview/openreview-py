@@ -90,7 +90,7 @@ class TestAAAIConference():
                 'iThenticate_plagiarism_check_exclude_small_matches': 8,
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                     'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
@@ -133,9 +133,12 @@ class TestAAAIConference():
         assert submission_invitation
         assert submission_invitation.duedate
 
-        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Expertise_Selection')
-        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Expertise_Selection')
-        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Area_Chairs/-/Expertise_Selection')
+        expertise_invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Expertise_Selection')
+        assert expertise_invitation
+        # edge invitations get the higher edge/tag human verification rate limit
+        assert expertise_invitation.humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
+        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Expertise_Selection').humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
+        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Area_Chairs/-/Expertise_Selection').humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
 
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
@@ -706,6 +709,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Bid')
         assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Senior_Program_Committee'
+        # bid invitations get the edge/tag human verification rate limit
+        assert invitation.humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
 
         # Check that SPC Bid Console loads
         request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client, wait_for_element='header')
@@ -714,6 +719,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Bid')
         assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Program_Committee'
+        assert invitation.humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
 
         # Check that PC Bid Console loads
         reviewer_client = openreview.api.OpenReviewClient(username = 'program_committee1@aaai.org', password=helpers.strong_password)

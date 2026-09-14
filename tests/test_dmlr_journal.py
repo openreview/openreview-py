@@ -327,7 +327,7 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
         assert author_group.members == ['~SomeFirstName_User1', '~Melisa_Ane1']
         assert openreview_client.get_group("DMLR/Paper1/Reviewers")
         ae_group = openreview_client.get_group("DMLR/Paper1/Action_Editors")
-        assert ae_group.readers == ['everyone']
+        assert ae_group.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers']
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -360,6 +360,11 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
 
         ae_group = ce_client.get_group('DMLR/Paper1/Action_Editors')
         assert ae_group.members == ['~Andrew_Ng1']
+        assert ae_group.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers']
+
+        note = openreview_client.get_note(note_id_1)
+        assert 'assigned_action_editor' in note.content and note.content['assigned_action_editor']['value'] == '~Andrew_Ng1'
+        assert 'readers' in note.content['assigned_action_editor'] and note.content['assigned_action_editor']['readers'] == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers']
 
         messages = journal.client.get_messages(to = 'andrew@dmlrzero.com', subject = '[DMLR] Assignment to new DMLR submission 1: Paper title')
         assert len(messages) == 1
@@ -385,11 +390,12 @@ Please note that responding to this email will direct your reply to dmlr@jmlr.or
 
         andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'DMLR/Paper1/Action_Editor_.*', signatory='~Andrew_Ng1')
         assert len(andrew_paper1_anon_groups) == 1
-        graham_paper1_anon_group = andrew_paper1_anon_groups[0]         
+        andrew_paper1_anon_group = andrew_paper1_anon_groups[0]        
+        assert andrew_paper1_anon_group.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', andrew_paper1_anon_group.id]
 
         ## Accept the submission 1
         under_review_note = andrew_client.post_note_edit(invitation= 'DMLR/Paper1/-/Review_Approval',
-                                    signatures=[graham_paper1_anon_group.id],
+                                    signatures=[andrew_paper1_anon_group.id],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
@@ -416,6 +422,15 @@ year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
+
+        ae_group = ce_client.get_group('DMLR/Paper1/Action_Editors')
+        assert ae_group.members == ['~Andrew_Ng1']
+        assert ae_group.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+
+        andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'DMLR/Paper1/Action_Editor_.*', signatory='~Andrew_Ng1')
+        assert len(andrew_paper1_anon_groups) == 1
+        andrew_paper1_anon_group = andrew_paper1_anon_groups[0]        
+        assert andrew_paper1_anon_group.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors', andrew_paper1_anon_group.id]
 
         edits = openreview_client.get_note_edits(note.id, invitation='DMLR/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
@@ -445,14 +460,14 @@ note={Under review}
 
         andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'DMLR/Paper1/Action_Editor_.*', signatory='~Andrew_Ng1')
         assert len(andrew_paper1_anon_groups) == 1
-        graham_paper1_anon_group = andrew_paper1_anon_groups[0]
+        andrew_paper1_anon_group = andrew_paper1_anon_groups[0]
 
         # add David Belanger again
         paper_assignment_edge = paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='DMLR/Reviewers/-/Assignment',
             readers=["DMLR", "DMLR/Paper1/Action_Editors", '~David_Bo1'],
             nonreaders=["DMLR/Paper1/Authors"],
             writers=["DMLR", "DMLR/Paper1/Action_Editors"],
-            signatures=[graham_paper1_anon_group.id],
+            signatures=[andrew_paper1_anon_group.id],
             head=note_id_1,
             tail='~David_Bo1',
             weight=1
@@ -492,7 +507,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             readers=["DMLR", "DMLR/Paper1/Action_Editors", '~Carlos_Ge1'],
             nonreaders=["DMLR/Paper1/Authors"],
             writers=["DMLR", "DMLR/Paper1/Action_Editors"],
-            signatures=[graham_paper1_anon_group.id],
+            signatures=[andrew_paper1_anon_group.id],
             head=note_id_1,
             tail='~Carlos_Ge1',
             weight=1

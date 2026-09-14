@@ -1,24 +1,28 @@
 def process(client, tag, invitation):
 
+    ## A profile can be vouched for while it is waiting for the moderation team or after
+    ## the moderation team rejected it. Keep in sync with vouch_process.py.
+    VOUCHABLE_STATES = ['Needs Moderation', 'Rejected']
+
     ## The validations below apply to CREATING a new vouch. An existing vouch tag may be
     ## re-posted as part of a profile name-removal cascade, which remaps tag.signature /
     ## tag.profile to the renamed profile id. Skip validation in that case: the vouch was
-    ## already validated at creation, and by then the vouchee is no longer in 'Rejected'
+    ## already validated at creation, and by then the vouchee is no longer in a vouchable
     ## state, so re-running the checks would wrongly block the rename.
     if tag.id and client.get_tags(id=tag.id):
         return
 
-    ## Validate the target profile before anything else: it must exist and have been
-    ## rejected by the moderation team. Otherwise the vouch tag would pollute the public
-    ## "Vouched Profiles" list and consume the voucher's monthly quota even though the
-    ## activation step later skips non-rejected profiles.
+    ## Validate the target profile before anything else: it must exist and be either
+    ## pending moderation or already rejected by the moderation team. Otherwise the vouch
+    ## tag would pollute the public "Vouched Profiles" list and consume the voucher's
+    ## monthly quota even though the activation step later skips non-vouchable profiles.
     vouched_profile_id = tag.profile
     vouched_profile = openreview.tools.get_profile(client, vouched_profile_id)
     if not vouched_profile:
         raise openreview.OpenReviewException(f'You can not vouch for {vouched_profile_id}: profile not found.')
 
-    if getattr(vouched_profile, 'state', None) != 'Rejected':
-        raise openreview.OpenReviewException('You can only vouch for a profile that has been rejected by the moderation team.')
+    if getattr(vouched_profile, 'state', None) not in VOUCHABLE_STATES:
+        raise openreview.OpenReviewException('You can only vouch for a profile that is under moderation or has been rejected by the moderation team.')
 
     voucher_id = tag.signature
 
