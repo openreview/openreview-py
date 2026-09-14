@@ -3407,12 +3407,12 @@ arr_metareview_rating_content = {
     }
 }
 
-arr_submitted_author_forum = {
+arr_submitted_contributor_forum = {
     'title': 'Submitted Service Contributor Form',
     'instructions': 'This form is required for all designated service contributors. If a designated contributor fails to complete it within 48h of the submission deadline in a given cycle, the submission(s) for which they are nominated will go into the lottery, and their reviewing will be subject to available capacity.',
 }
 
-arr_submitted_author_content = {
+arr_submitted_contributor_content = {
     "confirm_you_are_willing_to_serve_as_a_reviewer_or_AC": {
         "value": {
             "param": {
