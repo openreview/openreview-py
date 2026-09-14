@@ -21,17 +21,17 @@ class TestICLRConference():
         helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
         pc_client = openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
 
-        helpers.create_user('sac10@gmail.com', 'SAC', 'ICLROne')
-        helpers.create_user('sac2@iclr.cc', 'SAC', 'ICLRTwo')
-        helpers.create_user('ac1@iclr.cc', 'AC', 'ICLROne')
-        helpers.create_user('ac2@iclr.cc', 'AC', 'ICLRTwo')
-        helpers.create_user('reviewer1@iclr.cc', 'Reviewer', 'ICLROne')
-        helpers.create_user('reviewer2@iclr.cc', 'Reviewer', 'ICLRTwo')
-        helpers.create_user('reviewer3@iclr.cc', 'Reviewer', 'ICLRThree')
-        helpers.create_user('reviewer4@gmail.com', 'Reviewer', 'ICLRFour')
-        helpers.create_user('reviewer5@gmail.com', 'Reviewer', 'ICLRFive')
-        helpers.create_user('reviewer6@gmail.com', 'Reviewer', 'ICLRSix')
-        helpers.create_user('reviewerethics@gmail.com', 'Reviewer', 'ICLRSeven')
+        helpers.create_user('sac10@gmail.com', 'SACICLR', 'One')
+        helpers.create_user('sac2@iclr.cc', 'SACICLR', 'Two')
+        helpers.create_user('ac1@iclr.cc', 'ACICLR', 'One')
+        helpers.create_user('ac2@iclr.cc', 'ACICLR', 'Two')
+        helpers.create_user('reviewer1@iclr.cc', 'ReviewerICLR', 'One')
+        helpers.create_user('reviewer2@iclr.cc', 'ReviewerICLR', 'Two')
+        helpers.create_user('reviewer3@iclr.cc', 'ReviewerICLR', 'Three')
+        helpers.create_user('reviewer4@gmail.com', 'ReviewerICLR', 'Four')
+        helpers.create_user('reviewer5@gmail.com', 'ReviewerICLR', 'Five')
+        helpers.create_user('reviewer6@gmail.com', 'ReviewerICLR', 'Six')
+        helpers.create_user('reviewerethics@gmail.com', 'ReviewerICLR', 'Seven')
         helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName') # Author
 
         request_form_note = pc_client.post_note(openreview.Note(
@@ -75,7 +75,7 @@ class TestICLRConference():
                 'submission_license': ['CC BY 4.0', 'CC BY-SA 4.0', 'CC0 1.0'], # Allow authors to select license
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                     'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
@@ -202,8 +202,8 @@ class TestICLRConference():
                 }
             )
             if i == 1 or i == 11:
-                note.content['authors']['value'].append('SAC ICLROne')
-                note.content['authorids']['value'].append('~SAC_ICLROne1')
+                note.content['authors']['value'].append('SACICLR One')
+                note.content['authorids']['value'].append('~SACICLR_One1')
 
             test_client.post_note_edit(invitation='ICLR.cc/2024/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
@@ -213,8 +213,8 @@ class TestICLRConference():
 
         submissions = openreview_client.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 11
-        assert ['ICLR.cc/2024/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].readers
-        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].content['authorids']['value']
+        assert ['ICLR.cc/2024/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SACICLR_One1'] == submissions[0].readers
+        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SACICLR_One1'] == submissions[0].content['authorids']['value']
 
         # Check that note.license is from license list
         licenses = request_form.content['submission_license']
@@ -341,7 +341,7 @@ note={under review}
         assert search_notes
         assert 'authors' in search_notes[0].content
         assert 'authorids' in search_notes[0].content
-        assert search_notes[0].content['authors']['value'] == ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc', 'SAC ICLROne']      
+        assert search_notes[0].content['authors']['value'] == ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc', 'SACICLR One']
 
         # Assert that activation date of matching invitation == abstract deadline
         matching_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
@@ -426,7 +426,7 @@ note={under review}
 
     def test_review_stage(self, client, openreview_client, helpers, test_client):
 
-        openreview_client.add_members_to_group('ICLR.cc/2024/Conference/Submission1/Reviewers', ['~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'])
+        openreview_client.add_members_to_group('ICLR.cc/2024/Conference/Submission1/Reviewers', ['~ReviewerICLR_One1', '~ReviewerICLR_Two1', '~ReviewerICLR_Three1'])
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
@@ -457,7 +457,7 @@ note={under review}
 
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@iclr.cc', password=helpers.strong_password)
 
-        anon_groups = reviewer_client.get_groups(prefix='ICLR.cc/2024/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICLROne1')
+        anon_groups = reviewer_client.get_groups(prefix='ICLR.cc/2024/Conference/Submission1/Reviewer_', signatory='~ReviewerICLR_One1')
         anon_group_id = anon_groups[0].id
 
         review_edit = reviewer_client.post_note_edit(
@@ -686,6 +686,88 @@ note={under review}
 
         helpers.await_queue_edit(openreview_client, edit_id=des_rejection_reversion_note['id'], count=1)
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/Submission1/-/Desk_Rejection_Reversion')        
+
+    def test_desk_rejection_reversion_after_review_invitation_update(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@iclr.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        paper_number = 3
+        review_invitation_id = f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Official_Review'
+        active_review_invitation_id = 'ICLR.cc/2024/Conference/Submission4/-/Official_Review'
+        parent_review_invitation_id = 'ICLR.cc/2024/Conference/-/Official_Review'
+        parent_review_process_id = f'{parent_review_invitation_id}-0-1'
+
+        original_review_invitation = openreview_client.get_invitation(review_invitation_id)
+        original_review_expdate = original_review_invitation.expdate
+        original_active_review_expdate = openreview_client.get_invitation(active_review_invitation_id).expdate
+
+        desk_rejected_process_count = len(openreview_client.get_process_logs(invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission'))
+        desk_rejection_note = pc_client_v2.post_note_edit(invitation=f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Desk_Rejection',
+                                    signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'Wrong format.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission', count=desk_rejected_process_count + 1)
+
+        note = pc_client_v2.get_note(desk_rejection_note['note']['forum'])
+        assert note.content['venueid']['value'] == 'ICLR.cc/2024/Conference/Desk_Rejected_Submission'
+
+        desk_rejected_review_invitation = openreview_client.get_invitation(review_invitation_id)
+        assert desk_rejected_review_invitation.ddate
+        assert desk_rejected_review_invitation.expdate == original_review_expdate
+
+        updated_due_date = (datetime.datetime.now() + datetime.timedelta(days=30)).replace(second=0, microsecond=0)
+        updated_exp_date = updated_due_date + datetime.timedelta(days=30)
+        updated_expdate = openreview.tools.datetime_millis(updated_exp_date)
+        official_review_process_count = len(openreview_client.get_process_logs(id=parent_review_process_id))
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'review_deadline': updated_due_date.strftime('%Y/%m/%d %H:%M'),
+                'review_expiration_date': updated_exp_date.strftime('%Y/%m/%d %H:%M'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['ICLR.cc/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICLRChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, parent_review_process_id, count=official_review_process_count + 1)
+
+        parent_review_invitation = openreview_client.get_invitation(parent_review_invitation_id)
+        assert parent_review_invitation.edit['invitation']['expdate'] == updated_expdate
+        assert 'ICLR.cc/2024/Conference/Desk_Rejected_Submission' not in parent_review_invitation.content['source']['value']['venueid']
+        assert openreview_client.get_invitation(active_review_invitation_id).expdate == updated_expdate
+        assert original_active_review_expdate != updated_expdate
+
+        reversion_process_count = len(openreview_client.get_process_logs(invitation=f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Desk_Rejection_Reversion'))
+        desk_rejection_reversion_note = pc_client_v2.post_note_edit(invitation=f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Desk_Rejection_Reversion',
+                                    signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'ICLR.cc/2024/Conference/Submission{paper_number}/-/Desk_Rejection_Reversion', count=reversion_process_count + 1)
+
+        reverted_review_invitation = openreview_client.get_invitation(review_invitation_id)
+        assert not reverted_review_invitation.ddate
+        assert reverted_review_invitation.expdate == updated_expdate
 
     def test_comment_stage(self, openreview_client, helpers):
 

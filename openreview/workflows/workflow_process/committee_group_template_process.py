@@ -5,24 +5,10 @@ def process(client, edit, invitation):
     domain = client.get_group(venue_id)
 
     committee_role = edit.content['committee_role']['value']
-    committee_name = edit.content['committee_name']['value']
     committee_pretty_name = edit.content['committee_pretty_name']['value']
-    committee_anon_name = edit.content.get('committee_anon_name', {}).get('value', False)
-    committee_submitted_name = edit.content.get('committee_submitted_name', {}).get('value', False)
 
     venue_short_name = domain.content['subtitle']['value']
     venue_from_email = f"{venue_short_name.replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()}-notifications@openreview.net"
-
-    content = {
-        f'{committee_role}_id': { 'value': edit.group.id },
-        f'{committee_role}_name': { 'value': committee_name },
-    }
-
-    if committee_anon_name:
-        content[f'{committee_role}_anon_name'] = { 'value': committee_anon_name }
-
-    if committee_submitted_name:
-        content[f'{committee_role}_submitted_name'] = { 'value': committee_submitted_name }
 
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
@@ -91,10 +77,6 @@ def process(client, edit, invitation):
         }
     )
 
-    content[f'{committee_role}_declined_id'] = { 'value': declined_group_edit['group']['id'] }
-    content[f'{committee_role}_invited_id'] = { 'value': invited_group_id }
-    content[f'{committee_role}_invited_message_id'] = { 'value': invited_message_invitation_edit['invitation']['id'] }
-
     invitation_edit = client.post_invitation_edit(
         invitations=f'{invitation.domain}/-/Committee_Recruitment_Request',
         signatures=[invitation.domain],
@@ -140,13 +122,21 @@ def process(client, edit, invitation):
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_edit['invitation']['id'], include_due_date=True, include_exp_date=True)
     edit_invitations_builder.set_edit_committee_recruitment_invitation(invitation_edit['invitation']['id'])
 
-    content[f'{committee_role}_recruitment_id'] = { 'value': invitation_edit['invitation']['id'] }
+    ## By default, do not allow users to serve as both reviewers and area chairs. Each role
+    ## sets the overlap on its own recruitment invitation, so nothing has to be recorded on
+    ## the domain for the other role to read back.
+    no_overlap_committee_id = None
+    if committee_role == 'area_chairs':
+        no_overlap_committee_id = domain.content.get('reviewers_id', {}).get('value')
+    elif committee_role == 'reviewers':
+        no_overlap_committee_id = domain.content.get('area_chairs_id', {}).get('value')
 
-    client.post_group_edit(
-        invitation=domain.content['meta_invitation_id']['value'],
-        signatures=[invitation.domain],
-        group=openreview.api.Group(
-            id=venue_id,
-            content=content
+    if no_overlap_committee_id:
+        client.post_invitation_edit(
+            invitations=f"{invitation_edit['invitation']['id']}/Overlap_Committees",
+            signatures=[venue_id],
+            content={
+                'no_overlap_committee_ids': { 'value': [no_overlap_committee_id] }
+            },
+            invitation=openreview.api.Invitation()
         )
-    )

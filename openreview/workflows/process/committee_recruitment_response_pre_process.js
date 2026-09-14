@@ -12,6 +12,21 @@ async function process(client, edit, invitation) {
   const note = edit.note
   const user = edit.signatures[0]
 
+  if (note.content.response.value == 'Yes') {
+    const noOverlapCommitteeIds = invitation.content.no_overlap_committee_ids?.value ?? []
+    const shortPhrase = domain.content.subtitle?.value
+    const committeePrettyName = invitation.content.committee_pretty_name?.value
+
+    for (const noOverlapCommitteeId of noOverlapCommitteeIds) {
+      const { groups: overlapGroups } = await client.getGroups({ id: noOverlapCommitteeId, member: user })
+      if (overlapGroups.length > 0) {
+        const overlapPrettyName = overlapGroups[0].content?.committee_pretty_name?.value ?? Tools.prettyId(noOverlapCommitteeId, true)
+        return Promise.reject(new OpenReviewError({ name: 'Error', message: `You have already accepted an invitation to serve as ${overlapPrettyName} for ${shortPhrase}. If you would like to change your decision and serve as ${committeePrettyName}, please decline the invitation to be ${overlapPrettyName} and then accept the invitation to be ${committeePrettyName}.` }))
+      }
+    }
+    return
+  }
+
   if (note.content.response.value != 'No') {
     return
   }
@@ -22,5 +37,5 @@ async function process(client, edit, invitation) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: 'You have already been assigned to a paper. Please contact the paper area chair or program chairs to be unassigned.' }))
     }
   }
-  
+
 }

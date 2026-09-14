@@ -36,8 +36,10 @@ class TestMatching():
         venue.use_area_chairs = True
         venue.area_chairs_name = 'Senior_Program_Committee'
         venue.area_chair_roles = ['Senior_Program_Committee']
+        venue.submission_area_chair_roles = ['Senior_Program_Committee']
         venue.reviewers_name = 'Program_Committee'
         venue.reviewer_roles = ['Program_Committee']
+        venue.submission_reviewer_roles = ['Program_Committee']
         now = datetime.datetime.now()
         venue.submission_stage = openreview.stages.SubmissionStage(
             due_date = now + datetime.timedelta(minutes = 40),
@@ -216,6 +218,43 @@ class TestMatching():
             tail = '~Reviewer_Venue1',
             label = 'Low'
         ))
+
+        ## bid invitations get the edge/tag human verification rate limit
+        reviewer_bid_id = venue.get_bid_id(venue.get_reviewers_id())
+        assert openreview_client.get_invitation(reviewer_bid_id).humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
+
+        ## drop the limit below the number of bids the reviewer has already posted
+        openreview_client.post_invitation_edit(
+            invitations=venue.get_meta_invitation_id(),
+            signatures=[venue.id],
+            invitation=openreview.api.Invitation(
+                id=reviewer_bid_id,
+                humanVerificationRequired={ 'limit': 1, 'windowMs': 300000 }
+            )
+        )
+
+        assert openreview_client.get_invitation(reviewer_bid_id).humanVerificationRequired == { 'limit': 1, 'windowMs': 300000 }
+
+        ## the reviewer is over the limit now, so the next bid must be challenged
+        with pytest.raises(openreview.OpenReviewException, match='Human verification required'):
+            r1_client.post_edge(Edge(invitation = reviewer_bid_id,
+                readers = [venue.id, 'VenueV2.cc/Senior_Program_Committee', '~Reviewer_Venue1'],
+                writers = [venue.id, '~Reviewer_Venue1'],
+                signatures = ['~Reviewer_Venue1'],
+                head = notes[0].id,
+                tail = '~Reviewer_Venue1',
+                label = 'High'
+            ))
+
+        ## restore the limit so the rest of the matching tests are not rate limited
+        openreview_client.post_invitation_edit(
+            invitations=venue.get_meta_invitation_id(),
+            signatures=[venue.id],
+            invitation=openreview.api.Invitation(
+                id=reviewer_bid_id,
+                humanVerificationRequired=openreview.tools.DEFAULT_EDGE_TAG_HUMAN_VERIFICATION
+            )
+        )
 
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment_Configuration')
         assert invitation

@@ -27,6 +27,7 @@ def process(client, edit, invitation):
         submission_edit.invitation = meta_invitation_id
         client.post_edit(submission_edit)
 
+    submission = client.get_note(edit.note.forum)
     invitations = client.get_invitations(replyForum=submission.id, prefix=paper_group_id)
 
     desk_rejection_active_invitations = []
@@ -48,12 +49,13 @@ def process(client, edit, invitation):
             print(f'Remove expiration invitation {expired_invitation.id}')
             invitation_edits = client.get_invitation_edits(invitation_id=expired_invitation.id, invitation=desk_reject_expiration_id)
             for invitation_edit in invitation_edits:
-                print(f'remove edit {edit.id}')
+                print(f'remove edit {invitation_edit.id}')
                 invitation_edit.ddate = now
                 invitation_edit.invitation.expdate = None
                 invitation_edit.invitation.cdate = None
                 client.post_edit(invitation_edit)
 
+    openreview.tools.create_forum_invitations(client, submission)
     formatted_committee = [committee.format(number=submission.number) for committee in desk_reject_committee]
     final_committee = []
     for group in formatted_committee:
