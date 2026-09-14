@@ -148,9 +148,9 @@ class TestProfileManagement():
         edits = amelia_client.get_profile_edits(profile_id='~Gwen_Verified1')
         assert len(edits) == 1
 
-        ## 4. Moderation changes the state of the profile: moderate_profile changes the
-        ## state through the moderation endpoint and records every decision as a
-        ## Profile_State edit. The labels enum in the edit schema is the controlled
+        ## 4. Moderation changes the state of the profile: the moderation endpoint
+        ## changes the state and records every decision as a Profile_State edit.
+        ## The labels enum in the edit schema is the controlled
         ## vocabulary of moderation reasons: support manages it by editing the
         ## invitation, and every record is validated against it. Entries with a
         ## description are offered by the rejection UI with the description as the
@@ -166,22 +166,21 @@ class TestProfileManagement():
                 invitation='openreview.net/Support/-/Profile_State',
                 signatures=['openreview.net/Support'],
                 content={
-                    'state': { 'value': 'Blocked' },
                     'labels': { 'value': ['Not A Vocabulary Label'] }
                 },
-                profile={ 'id': '~Gwen_Verified1' }
+                profile={ 'id': '~Gwen_Verified1', 'state': 'Blocked' }
             )
         support_client.moderate_profile('~Gwen_Verified1', 'block', 'Suspicious activity detected in the profile.', labels=['Suspicious Activity'])
         support_client.moderate_profile('~Gwen_Verified1', 'unblock')
 
         state_edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1', invitation='openreview.net/Support/-/Profile_State', sort='tcdate:asc')
         assert len(state_edits) == 2
-        assert state_edits[0].content['state']['value'] == 'Blocked'
+        assert state_edits[0].profile['state'] == 'Blocked'
         assert state_edits[0].content['reason']['value'] == 'Suspicious activity detected in the profile.'
         assert state_edits[0].content['labels']['value'] == ['Suspicious Activity']
         ## Unblocking leaves the profile pending re-activation
-        assert state_edits[1].content['state']['value'] == 'Inactive'
-        assert 'reason' not in state_edits[1].content
+        assert state_edits[1].profile['state'] == 'Inactive'
+        assert not (state_edits[1].content or {}).get('reason')
 
         ## A verification record can be retracted with a soft delete.
         support_client.post_edit(openreview.api.Edit(
@@ -5171,11 +5170,11 @@ The OpenReview Team.
         edits = rita_client.get_profile_edits(profile_id='~Rita_Identity1', sort='tcdate:asc')
         assert len(edits) == 3
         assert edits[0].invitation == 'openreview.net/Support/-/Profile_State'
-        assert edits[0].content['state']['value'] == 'Rejected'
+        assert edits[0].profile['state'] == 'Rejected'
         assert edits[0].content['labels']['value'] == ['Documentation / ID requests']
         assert link['url'] in edits[0].content['reason']['value']
         assert edits[1].invitation == 'openreview.net/Support/-/Profile_State'
-        assert edits[1].content['state']['value'] == 'Active'
+        assert edits[1].profile['state'] == 'Active'
         assert edits[2].invitation == 'openreview.net/Support/-/Identity_Verification'
 
     def test_profile_identity_documents_kept_for_review(self, openreview_client, support_client, helpers, tmp_path):

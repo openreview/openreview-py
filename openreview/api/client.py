@@ -892,18 +892,6 @@ class OpenReviewClient(object):
             return 'openreview.net/-/Edit'
         return 'OpenReview.net/-/Edit'
 
-    def get_support_group_id(self):
-        """
-        Returns the support group id: ``openreview.net/Support`` for local environments
-        and ``OpenReview.net/Support`` for the live site.
-
-        :return: Support group id
-        :rtype: str
-        """
-        if 'localhost' in self.baseurl:
-            return 'openreview.net/Support'
-        return 'OpenReview.net/Support'
-
     def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None):
         """
         Updates the domain for an entire venue
@@ -1111,11 +1099,9 @@ class OpenReviewClient(object):
         """
         Moderates a Profile
 
-        After the moderation endpoint changes the profile state, the decision is also
-        recorded as a ``Profile_State`` profile edit so the state history can be read
-        back through the profile edits API. The record is informative only and best
-        effort: deployments without the ``Profile_State`` invitation still moderate
-        normally.
+        The moderation endpoint changes the profile state and records the decision as a
+        ``Profile_State`` profile edit, so the state history can be read back through
+        the profile edits API.
 
         :param profile_id: Profile id to moderate
         :type profile_id: str
@@ -1135,6 +1121,8 @@ class OpenReviewClient(object):
         }
         if reason is not None:
             body['reason'] = reason
+        if labels:
+            body['labels'] = labels
 
         response = self.session.post(
             self.profiles_moderate,
@@ -1142,32 +1130,7 @@ class OpenReviewClient(object):
             headers = self.headers)
 
         response = self.__handle_response(response)
-        profile = Profile.from_json(response.json())
-
-        if not profile.state:
-            return profile
-
-        support_group_id = self.get_support_group_id()
-        content = { 'state': { 'value': profile.state } }
-        if reason is not None:
-            content['reason'] = { 'value': reason }
-        if labels:
-            content['labels'] = { 'value': labels }
-        try:
-            self.post_profile_edit(
-                invitation = f'{support_group_id}/-/Profile_State',
-                signatures = [support_group_id],
-                content = content,
-                profile = { 'id': profile.id }
-            )
-        except OpenReviewException as e:
-            ## Skip the record when the deployment has no Profile_State invitation, or
-            ## when the decision removed the profile so there is no subject left.
-            error = e.args[0] if e.args else {}
-            if not (isinstance(error, dict) and error.get('name') == 'NotFoundError'):
-                raise
-
-        return profile
+        return Profile.from_json(response.json())
 
     def create_profile_document_upload_link(self, profile_id, document_type):
         """
