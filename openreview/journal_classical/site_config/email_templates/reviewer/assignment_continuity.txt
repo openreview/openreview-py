@@ -1,0 +1,18 @@
+Hi {{{{fullname}}}},
+
+Thank you again for your previous review of the {short_name} submission "{submission_title}." The authors have submitted a revised version, and we would greatly appreciate it if you could review this revision.
+
+Please submit your review within {review_period_length} weeks (by {review_duedate}) for "{submission_number}: {submission_title}".{submission_length}
+
+Submit your review here: {invitation_url}
+
+You can also access your assignments through the Reviewers Console: https://openreview.net/group?id={venue_id}/Reviewers#reviewer-tasks
+
+Once submitted, your review will become privately visible to the authors and Action Editor. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}. Additional reviewing guidelines are available at {website}.
+
+Reviewers are generally expected to handle revised submissions they previously reviewed when possible. If exceptional personal circumstances prevent you from completing this review on time, contact your Action Editor on the paper's OpenReview page.
+
+Thank you again for your continued service to {short_name}.
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the Action Editor, {assigned_action_editor}.

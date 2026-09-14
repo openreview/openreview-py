@@ -1,0 +1,16 @@
+Hi {{{{fullname}}}},
+
+With this email, we request that you submit, within {review_period_length} weeks ({review_duedate}) a review for your newly assigned {short_name} submission "{submission_number}: {submission_title}".{submission_length}
+
+Please acknowledge on OpenReview that you have received this review assignment by following this link: {ack_invitation_url}
+
+As a reminder, reviewers are expected to accept assignments for submissions that fall within their expertise and active-paper load ({reviewers_max_papers} papers). Acceptable exceptions are an active, unsubmitted review for another {short_name} submission or exceptional personal circumstances that prevent you from performing your reviewing duties. If you cannot review this submission, contact your Action Editor on the paper's OpenReview page.
+
+To submit your review, follow this link: {invitation_url} or check your tasks in the Reviewers Console: https://openreview.net/group?id={venue_id}/Reviewers#reviewer-tasks
+
+Once submitted, your review will become privately visible to the authors and Action Editor. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}. For more details and reviewing guidelines, visit {website}.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the Action Editor, {assigned_action_editor}.

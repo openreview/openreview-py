@@ -1,0 +1,21 @@
+Dear {{{{fullname}}}},
+
+We are happy to inform you that, based on the editorial evaluation of your {short_name} submission "{submission_number}: {submission_title}", the paper has been accepted as is.
+
+Please open the paper forum and use the Camera Ready Revision action:
+
+{{SITE_URL}}/forum?id={submission_id}
+
+Submit the final camera-ready material by {camera_ready_duedate}. The Action Editor will verify the camera-ready material before it is handed to the Production Editor.
+
+Upload the final PDF and, if applicable, one supplementary PDF or ZIP file.
+
+Use the official JMLR Author Guidelines as the general formatting reference:
+
+{{CAMERA_READY_AUTHOR_GUIDELINES_URL}}
+
+The Camera Ready Revision form contains the exact paper-specific formatting instructions, dates, publication identifier, footer URL, and generated LaTeX metadata block. Follow those instructions wherever they differ from the general guide. Do not write a manual JMLR heading or Editor line.
+
+Thank you for your contribution to {short_name}, and congratulations on your accepted paper.
+
+The JMLR Editors-in-Chief

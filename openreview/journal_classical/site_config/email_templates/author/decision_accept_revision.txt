@@ -1,0 +1,23 @@
+Dear {{{{fullname}}}},
+
+We are happy to inform you that, based on the editorial evaluation of your {short_name} submission "{submission_number}: {submission_title}", the paper has been accepted with minor revision.
+
+Please open the paper forum and use the Camera Ready Revision action:
+
+{{SITE_URL}}/forum?id={submission_id}
+
+Submit the revised camera-ready material by {camera_ready_duedate}. The requested changes are described in the Action Editor's decision comments. The Action Editor alone will verify these changes; the paper will not return to reviewers for re-review.
+
+Upload the revised final PDF and, if applicable, one supplementary PDF or ZIP file.
+
+After uploading, post a restricted Official Comment titled "Camera-ready revision summary" explaining how you addressed the Action Editor's requested changes. Select the paper Authors and Action Editors as readers. Editors-in-Chief are always readers; do not select Reviewers or public readers.
+
+Use the official JMLR Author Guidelines as the general formatting reference:
+
+{{CAMERA_READY_AUTHOR_GUIDELINES_URL}}
+
+The Camera Ready Revision form contains the exact paper-specific formatting instructions, dates, publication identifier, footer URL, and generated LaTeX metadata block. Follow those instructions wherever they differ from the general guide. Do not write a manual JMLR heading or Editor line.
+
+Thank you for your contribution to {short_name}, and congratulations on your accepted paper.
+
+The JMLR Editors-in-Chief

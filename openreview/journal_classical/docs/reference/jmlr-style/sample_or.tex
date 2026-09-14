@@ -1,0 +1,61 @@
+\documentclass[twoside,11pt]{article}
+
+\usepackage{blindtext}
+\usepackage{jmlr_or}
+
+\newcommand{\dataset}{{\cal D}}
+\newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
+
+% OpenReview generates this block for the accepted paper.
+% The final paper id is derived from the accepted year and OpenReview paper number.
+\jmlropenreviewdates{
+  submitted = {5/24},
+  revised = {3/26},
+  accepted = {5/26},
+  paperid = {25-00123}
+}
+
+\ShortHeadings{Sample JMLR OpenReview Paper}{One and Two}
+\firstpageno{1}
+
+\begin{document}
+
+\title{Sample JMLR OpenReview Paper}
+
+\author{\name Author One \email one@stat.washington.edu \\
+       \addr Department of Statistics\\
+       University of Washington\\
+       Seattle, WA 98195-4322, USA
+       \AND
+       \name Author Two \email two@cs.berkeley.edu \\
+       \addr Division of Computer Science\\
+       University of California\\
+       Berkeley, CA 94720-1776, USA}
+
+\maketitle
+
+\begin{abstract}%
+\blindtext
+\end{abstract}
+
+\begin{keywords}
+  keyword one, keyword two, keyword three
+\end{keywords}
+
+\section{Introduction}
+
+\blindmathpaper
+
+Here is a citation \cite{chow:68}.
+
+\acks{All acknowledgements go at the end of the paper before appendices and references.
+Moreover, authors are required to declare funding and competing interests.}
+
+\appendix
+\section{Example Appendix}
+
+\blindtext
+
+\bibliography{sample}
+
+\end{document}
