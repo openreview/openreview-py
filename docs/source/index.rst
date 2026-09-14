@@ -15,6 +15,7 @@ Contents
    How to Setup <https://docs.openreview.net/getting-started/using-the-api/installing-and-instantiating-the-python-client>
    api
    help
+   journal_eic_console
 
 
 Indices and Tables

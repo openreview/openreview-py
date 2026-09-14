@@ -170,7 +170,55 @@ var getGroupMembersCount = function(groupId) {
     });
 };
 
+var partitionEicInvitations = function(invitations) {
+  var paperPrefix = VENUE_ID + '/' + SUBMISSION_GROUP_NAME;
+  var venuePrefix = VENUE_ID + '/-/';
+  var reviewerPrefix = REVIEWERS_ID + '/-/';
+  var actionEditorPrefix = ACTION_EDITOR_ID + '/-/';
+  var collections = {
+    invitationsById: {},
+    superInvitationIds: [],
+    reviewerInvitationIds: [],
+    aeInvitationIds: []
+  };
+
+  (invitations || []).forEach(function(invitation) {
+    var invitationId = invitation && invitation.id;
+    if (typeof invitationId !== 'string') {
+      return;
+    }
+
+    var paperSuffix = invitationId.slice(paperPrefix.length);
+    if (invitationId.indexOf(paperPrefix) === 0 && /^\d+\//.test(paperSuffix)) {
+      collections.invitationsById[invitationId] = invitation;
+    }
+    if (invitationId.indexOf(venuePrefix) === 0) {
+      collections.superInvitationIds.push(invitation);
+    }
+    if (invitationId.indexOf(reviewerPrefix) === 0) {
+      collections.reviewerInvitationIds.push(invitation);
+    }
+    if (invitationId.indexOf(actionEditorPrefix) === 0) {
+      collections.aeInvitationIds.push(invitation);
+    }
+  });
+
+  return collections;
+};
+
+var getEicInvitations = function() {
+  return Webfield2.api.getAll('/invitations', {
+    invitation: VENUE_ID + '/-/Edit',
+    type: 'all',
+    select: 'id,cdate,duedate,expdate',
+    expired: true,
+    sort: 'cdate:asc',
+    domain: VENUE_ID
+  }).then(partitionEicInvitations);
+};
+
 var loadData = function() {
+  var eicInvitations = getEicInvitations();
   return $.when(
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
@@ -194,18 +242,10 @@ var loadData = function() {
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true}),
-    Webfield2.api.get('/invitations', {
-      prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
-      type: 'all',
-      select: 'id,cdate,duedate,expdate',
-      domain: VENUE_ID,
-      stream: true
-    }).then(function(result) {
-      return _.keyBy(result.invitations, 'id');
-    }),
-    Webfield2.api.get('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
-    Webfield2.api.get('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
-    Webfield2.api.get('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
+    eicInvitations.then(function(collections) { return collections.invitationsById; }),
+    eicInvitations.then(function(collections) { return collections.superInvitationIds; }),
+    eicInvitations.then(function(collections) { return collections.reviewerInvitationIds; }),
+    eicInvitations.then(function(collections) { return collections.aeInvitationIds; }),
     Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count', domain: VENUE_ID})
     .then(function(response) {
       var groupedEdges = response.groupedEdges;
