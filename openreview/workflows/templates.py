@@ -2109,6 +2109,20 @@ If you would like to change your decision, please follow the link in the previou
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'content': {
+                                'title': {
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
+                                'abstract': {
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
                                 'authors': {
                                     'readers': [
                                         '${7/content/venue_id/value}',
