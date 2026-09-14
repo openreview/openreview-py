@@ -110,7 +110,7 @@ arr_submission_content = {
     },
     "service_contributor": {
         "order": 4,
-        "description": "NEW IN OCTOBER 2026: ACL has adopted [sustainable reviewer policy](https://aclrollingreview.org/sustainable-reviewing-2026), which caps the submissions to the available reviewing capacity. Submissions without service capacity go into a lottery for whatever spare capacity remains. To be guaranteed reviewing, please provide the OpenReview ID of the designated service contributor, willing and qualified to review. Typically it is one of the authors, but other qualified individuals can also be nominated. See [here](https://aclrollingreview.org/qualifications) for qualification requirements for various service roles, as well as instructions for automated qualification checks and applying for manual verification. \n\n A single contributor can be nominated for at most 2 submissions. The service contributors must file a registration form 48h after submission deadline at the latest, confirming that they will serve, and that they vouch for the quality of submission. They must have complete and accurate OpenReview profiles incl. ORCID, DBLP, Anthology links. In case of any emergencies the designated service contributors must file an emergency declaration, providing a qualified and willing replacement. Otherwise any submissions they serve as contributors for, or are authors of, will be desk-rejected.\n\n Search for the contributor profile by first, middle and last name or email address.",
+        "description": "NEW IN OCTOBER 2026: ACL has adopted [sustainable reviewer policy](https://aclrollingreview.org/sustainable-reviewing-2026), which caps the submissions to the available reviewing capacity. Submissions without service capacity go into a lottery for whatever spare capacity remains. To be guaranteed reviewing, please provide the OpenReview ID of the designated service contributor, willing and qualified to review. Typically it is one of the authors, but other qualified individuals can also be nominated. See [here](https://aclrollingreview.org/qualifications) for qualification requirements for various service roles, as well as instructions for automated qualification checks and applying for manual verification. \n\n A single contributor can be nominated for at most 2 submissions (to reiterate, non-author qualified colleagues can be recruited when groups find themselves out of capacity). The service contributors must file a registration form 48h after submission deadline at the latest, confirming that they will serve, and that they vouch for the quality of submission. They must have complete and accurate OpenReview profiles incl. ORCID, DBLP, Anthology links. In case of any emergencies the designated service contributors must file an emergency declaration, providing a qualified and willing replacement. Otherwise any submissions they serve as contributors for, or are authors of, will be desk-rejected.\n\n Search for the contributor profile by first, middle and last name or email address.",
         "value": {
             "param": {
                 "type": "profile{}",
@@ -3547,7 +3547,7 @@ arr_submitted_contributor_content = {
                 "type": "string"
             }
         },
-        "description": "The ARR requirements for reviewers depend on both publications and career stage. Those who have obtained their PhDs and/or have senior academic positions (postdoc/faculty), automatically qualify if they have at least two papers in main ACL events or Findings or major ML venues. Doctoral students (but not bachelor and master students), as well as industry researchers with at least a Masters degree, automatically qualify if they have at least 2 ACL or ML conference publications and a total of >= 3 publications in total. Those who do not automatically qualify by these criteria can serve as secondary reviewers, mentored by a qualified primary reviewer (see https://aclrollingreview.org/reviewerguidelines#secondary-reviewer). \n\n Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major ML venues we consider are: AAAI, COLM, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches online records. Having your self-reported status helps us identify issues with available data.",
+        "description": "The ARR requirements for reviewers depend on both publications and career stage. Please see this page for the up-to-date list of criteria and qualifying venues, and assess whether you qualify: https://aclrollingreview.org/qualifications \n\n Note, we will check that your response matches online records. Having your self-reported status helps us identify issues with available data.",
         "order": 8
     },
     "confirm_your_profile_has_past_domains": {
@@ -3818,7 +3818,7 @@ arr_delay_notification_content = {
 arr_emergency_declaration_content = {
     "declaration": {
         "order": 1,
-        "description": "I certify that I have a personal emergency of the following kind that will make it impossible for me to complete my (meta)-review for this paper, and hereby request that the (S)AC find a replacement for me ASAP:",
+        "description": "I certify that I have a personal emergency of the following kind that will make it impossible for me to complete my (meta)-review for this submission.",
         "value": {
             "param": {
                 "type": "string",
@@ -3830,10 +3830,10 @@ arr_emergency_declaration_content = {
                 ]
             }
         }
-        },
-        "explanation": {
-        "order": 2,
-        "description": "Provide any additional information about your emergency",
+    },
+    "explanation": {
+    "order": 2,
+    "description": "Any additional comments for the chairs (optional).",
         "value": {
             "param": {
                 "type": "string",
@@ -3844,7 +3844,28 @@ arr_emergency_declaration_content = {
                 "deletable": True
             }
         }
-    }
+    },        
+    "emergency_replacement": {
+        "order": 3,
+        "description": "[MANDATORY FOR DESIGNATED SERVICE CONTRIBUTORS] If you are providing service in support of a submission under review in this cycle, please provide a replacement, willing and qualified (see https://aclrollingreview.org/qualifications) to perform your tasks. Under the new sustainable reviewing policy (https://aclrollingreview.org/sustainable-reviewing-2026), emergency replacements will be performed by chairs only for volunteer contributors. In other cases, failure to provide replacements will result in **desk rejection of any submissions co-authored or supported by the missing service contributor**.\n\n Note: you need to file the emergency declaration form for every submission where you are unable to complete your task (they are not automatically visible to chairs across submission forums). You may indicate different replacements in different submissions.",
+        "value": {
+            "param": {
+                "type": "profile{}",
+                "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})"
+            }
+        }
+    },
+    "contingency_planning": {
+    "order": 4,
+    "description": "If you are providing a replacement, please confirm that you have shared the materials with them, and when the task will be completed.",
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        }
+    }        
 }
 
 arr_great_or_irresponsible_reviewer_content = {
