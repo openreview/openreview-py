@@ -216,7 +216,7 @@ class TestARRVenueV2():
                 'comment_notification_threshold': '3',
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                     'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
@@ -598,7 +598,7 @@ class TestARRVenueV2():
                 'submission_license': ['CC BY-SA 4.0'],
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                     'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
@@ -5176,6 +5176,37 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection_Reversion')
 
+        # Invitations with noteReaders must be restored, not deleted, and keep the flagged readers after the reversion
+        review_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert not review_invitation.ddate
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers' in review_invitation.edit['note']['readers']
+
+        rev_chk_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist')
+        assert not rev_chk_inv.ddate
+        assert rev_chk_inv.edit['note']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs'
+        ]
+
+        ae_chk_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist')
+        assert not ae_chk_inv.ddate
+        assert ae_chk_inv.edit['note']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs'
+        ]
+
+        comment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment')
+        assert not comment_invitation.ddate
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in comment_invitation.invitees
+
         # Delete review - check ethics flag is False
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=violation_edit['note'])
         assert 'flagged_for_ethics_review' in test_submission.content
@@ -7575,7 +7606,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'commitments_venue': 'Yes',
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                     'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',

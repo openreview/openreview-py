@@ -56,8 +56,9 @@ class ARR(object):
         self.authors_name = 'Authors'
         self.recommendation_name = 'Recommendation'
         self.use_ethics_chairs = False
-        self.use_ethics_reviewers = False 
-        self.expertise_selection_stage = None       
+        self.use_ethics_reviewers = False
+        self.use_reviewers = True
+        self.expertise_selection_stage = None
         self.submission_stage = None
         self.review_stage = None
         self.review_rebuttal_stage = None
