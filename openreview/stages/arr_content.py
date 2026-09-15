@@ -2443,10 +2443,13 @@ arr_registration_task = {
 }
 
 dr_types = [
+    "Administrative issues",
     "Anonymity",
     "Authorship",
     "Dual/multiple submission",
     "Format",
+    "Ethics violations",
+    "Lottery",
     "Out of scope",
     "Overall_level",
     "Prior sanctions",
@@ -2454,7 +2457,6 @@ dr_types = [
     "Publication ethics",
     "Resubmission and withdrawal policy",
     "Service obligations",
-    "Administrative issues",
     "Other"
 ]
 
@@ -2480,7 +2482,8 @@ arr_desk_reject_verification = {
                 "type": "string"
             }
         },
-        "description": "What kind(s) of issue is this case? Detailed description of possible DR types: \n\n TBD",
+        "description": "What kind(s) of issue is this case? Detailed description of possible DR types: \n\n - Administrative issues: e.g. missing or incomplete openreview profiles for authors, missing responsible NLP checklists \n - Anonymity: e.g. deanonymization in text or supplementary materials, preprint pledge violations \n - Authorship: e.g. late/unjustified author changes \n - Dual/multiple submission: e.g. submissions under review elsewhere, duplicate/overlapping submissions \n Ethics violations: e.g. non-consentual data collection (typically identified in ethics review) \n - Format: e.g. page limit circumvention, template violations, limitations missing) \n - Lottery: desk rejects due to insufficient service capacity \n - Overall level: e.g. incomplete, clearly below bar submissions  \n - Prior sanctions: e.g. resubmissions with prior meta-review score ≤ 1.5, authors under sanctions \n - Professional conduct: e.g. authors grossly violating the norms of professional communication with reviewers or chairs  \n - Publication ethics: e.g. plagiarism, thin slicing, undeclared/uncited concurrent related submissions, hallucinated citations, undisclosed AI-generated content, prompt injection, serious misrepresentation in the checklist  \n - Resubmission and withdrawal policy: e.g. undeclared resubmissions, no explanation of revisions, withdrawal policy violation  \n - Scope: out-of-scope submissions  \n - Service obligations: e.g. missing contributor registration forms, replacement contributor not provided after emergency, over-committed service contributor, over-submitting author \n - Others
+",
         "order": 2
     },    
     "decision": {
@@ -2499,6 +2502,22 @@ arr_desk_reject_verification = {
         "description": "If this paper should be desk rejected, are there circumstances that justify waving the resubmission penalty? (i.e. this paper should be allowed to be resubmitted in the following cycle).",
         "order": 3
     },
+    # "referral": {
+    #     "value": {
+    #         "param": {
+    #             "input": "radio",
+    #             "enum": [
+    #                 "Refer to Publication Ethics Committee",
+    #                 "Refer to Ethics Committee",
+    #                 "Refer to Professional Conduct Committee"
+    #             ],
+    #             "optional": True,
+    #             "type": "string"
+    #         }
+    #     },
+    #     "description": "[Optional] Should this case be referred to a dedicated ACL committee?",
+    #     "order": 4
+    # },
     "further_relevant_information": {
         "value": {
             "param": {
@@ -2511,7 +2530,7 @@ arr_desk_reject_verification = {
             }
         },
         "description": "Any other relevant information (e.g. links to tickets, problematic comments etc.) that you may have.",
-        "order": 4
+        "order": 5
     }
 }
 
