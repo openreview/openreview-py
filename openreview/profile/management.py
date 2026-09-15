@@ -21,6 +21,7 @@ class ProfileManagement():
 
     def setup(self):
         self.set_profile_moderation_invitations()
+        self.set_profile_edit_invitations()
         self.set_remove_name_invitations()
         self.set_remove_email_invitations()
         self.set_archive_invitations()
@@ -228,7 +229,228 @@ return {
             )
         )
 
+    def set_profile_edit_invitations(self):
+        '''
+        Profile edit invitations used during moderation. A profile edit records an assertion
+        about a profile (it never modifies the profile itself), so these invitations replace
+        the moderation tag invitations with structured, per-field records that follow the
+        profile schema.
+        '''
 
+        ## Posted by support after reviewing an identity document uploaded by the user:
+        ## confirms the name and date of birth as flat values read off the document, and
+        ## records which kind of document they were read from. The record is visible to
+        ## the profile owner and the support team only.
+        self.client.post_invitation_edit(
+            invitations=self.meta_invitation_id,
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Identity_Verification',
+                invitees=[self.support_group_id],
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                edit={
+                    'signatures': [self.support_group_id],
+                    'readers': ['${2/profile/id}', self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    ## The document the data was read from describes the verification
+                    ## itself, not the profile, so it sits on the edit content.
+                    'content': {
+                        'source': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'input': 'select',
+                                    'enum': ['Passport', 'Government ID', 'Driver License', 'Other']
+                                }
+                            }
+                        }
+                    },
+                    'profile': {
+                        'id': {
+                            'param': {
+                                'type': 'profile',
+                                'regex': '^~.+$'
+                            }
+                        },
+                        'content': {
+                            'fullname': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'minLength': 1,
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'dob': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'range': [ 0, 9999999999999 ],
+                                        'optional': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        ## Posted by support after reviewing a document proving institution affiliation:
+        ## confirms the institution, the position held, and — when the document carries
+        ## them — the person's name and date of birth. Institution-issued documents
+        ## vary: some show identity data and some do not even state the email domain,
+        ## so every asserted field is optional. The record is public so anyone can see
+        ## the affiliation was verified.
+        self.client.post_invitation_edit(
+            invitations=self.meta_invitation_id,
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Affiliation_Verification',
+                invitees=[self.support_group_id],
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                edit={
+                    'signatures': [self.support_group_id],
+                    'readers': ['everyone'],
+                    'writers': [self.support_group_id],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'content': {
+                        'source': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'input': 'select',
+                                    'enum': ['Enrollment Letter', 'Employment Letter', 'Employee ID', 'Student ID', 'Other']
+                                }
+                            }
+                        }
+                    },
+                    'profile': {
+                        'id': {
+                            'param': {
+                                'type': 'profile',
+                                'regex': '^~.+$'
+                            }
+                        },
+                        'content': {
+                            'fullname': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'minLength': 1,
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'dob': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'range': [ 0, 9999999999999 ],
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'history': {
+                                'value': {
+                                    'param': {
+                                        'type': 'object{}',
+                                        'change': 'add',
+                                        'optional': True,
+                                        'properties': {
+                                            'position': { 'param': { 'type': 'string', 'minLength': 1 } },
+                                            'start': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } },
+                                            'end': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } },
+                                            'institution': {
+                                                'param': {
+                                                    'type': 'object',
+                                                    'properties': {
+                                                        'domain': { 'param': { 'type': 'string', 'minLength': 1, 'optional': True } },
+                                                        'name': { 'param': { 'type': 'string', 'optional': True } }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        ## Posted by support after reviewing a parental consent document for a minor:
+        ## confirms the parent relation declared in the profile. Not public because we
+        ## never disclose that a profile belongs to a minor: the record is visible to
+        ## the profile owner and the support team only.
+        self.client.post_invitation_edit(
+            invitations=self.meta_invitation_id,
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Parent_Consent',
+                invitees=[self.support_group_id],
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                edit={
+                    'signatures': [self.support_group_id],
+                    'readers': ['${2/profile/id}', self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'id': {
+                            'param': {
+                                'type': 'profile',
+                                'regex': '^~.+$'
+                            }
+                        },
+                        'content': {
+                            'relations': {
+                                'value': {
+                                    'param': {
+                                        'type': 'object{}',
+                                        'change': 'add',
+                                        'optional': True,
+                                        'properties': {
+                                            'relation': { 'param': { 'type': 'string', 'minLength': 1 } },
+                                            'name': { 'param': { 'type': 'string', 'optional': True } },
+                                            'email': { 'param': { 'type': 'string', 'regex': r'([a-z0-9_\-.]{1,}@[a-z0-9_\-.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-.]{1,}@[a-z0-9_\-.]{2,}\.[a-z]{2,})', 'optional': True } },
+                                            'start': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } },
+                                            'end': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
 
     def set_public_article_invitations(self):
         
