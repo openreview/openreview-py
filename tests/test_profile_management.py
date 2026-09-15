@@ -61,25 +61,41 @@ class TestProfileManagement():
         gwen_client = helpers.create_user('gwen@profile.org', 'Gwen', 'Verified', alternates=[], institution='profile.org')
         profile_content_before = gwen_client.get_profile('~Gwen_Verified1').content
 
-        ## 1. The user uploaded an identity document: support confirms the name and dob.
+        ## 1. The user uploaded an identity document: support confirms the name and dob
+        ## as read off the document, and records which kind of document it was.
         identity_edit = support_client.post_profile_edit(
             invitation='openreview.net/Support/-/Identity_Verification',
             signatures=['openreview.net/Support'],
+            content={ 'source': { 'value': 'Passport' } },
             profile={
                 'id': '~Gwen_Verified1',
                 'content': {
-                    'names': { 'value': { 'add': [{ 'fullname': 'Gwen Verified' }] } },
+                    'fullname': { 'value': 'Gwen Verified' },
                     'dob': { 'value': helpers.default_dob() }
                 }
             }
         )
         assert identity_edit['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
 
+        ## The document source is required: it says where the data was read from.
+        with pytest.raises(openreview.OpenReviewException):
+            support_client.post_profile_edit(
+                invitation='openreview.net/Support/-/Identity_Verification',
+                signatures=['openreview.net/Support'],
+                profile={
+                    'id': '~Gwen_Verified1',
+                    'content': {
+                        'fullname': { 'value': 'Gwen Verified' }
+                    }
+                }
+            )
+
         ## The record is visible to the profile owner.
         edits = gwen_client.get_profile_edits(profile_id='~Gwen_Verified1')
         assert len(edits) == 1
         assert edits[0].invitation == 'openreview.net/Support/-/Identity_Verification'
-        assert edits[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Gwen Verified'
+        assert edits[0].content['source']['value'] == 'Passport'
+        assert edits[0].profile['content']['fullname']['value'] == 'Gwen Verified'
         assert edits[0].profile['content']['dob']['value'] == helpers.default_dob()
 
         ## Other users cannot see the identity verification record.
@@ -88,13 +104,17 @@ class TestProfileManagement():
         assert len(edits) == 0
 
         ## 2. The user uploaded a document proving affiliation: support confirms the
-        ## institution domain, name and position. This record is public.
+        ## institution and position, plus the name because this enrollment letter
+        ## happens to show it — institution documents may also carry identity data,
+        ## so the identity fields are optional here. This record is public.
         affiliation_edit = support_client.post_profile_edit(
             invitation='openreview.net/Support/-/Affiliation_Verification',
             signatures=['openreview.net/Support'],
+            content={ 'source': { 'value': 'Enrollment Letter' } },
             profile={
                 'id': '~Gwen_Verified1',
                 'content': {
+                    'fullname': { 'value': 'Gwen Verified' },
                     'history': {
                         'value': {
                             'add': [{
@@ -112,6 +132,7 @@ class TestProfileManagement():
         )
 
         assert affiliation_edit['readers'] == ['everyone']
+        assert affiliation_edit['content']['source']['value'] == 'Enrollment Letter'
 
         ## Anyone can see the affiliation was verified.
         edits = amelia_client.get_profile_edits(profile_id='~Gwen_Verified1')
@@ -212,6 +233,7 @@ class TestProfileManagement():
         mismatch_edit = support_client.post_profile_edit(
             invitation='openreview.net/Support/-/Identity_Verification',
             signatures=['openreview.net/Support'],
+            content={ 'source': { 'value': 'Government ID' } },
             profile={
                 'id': '~Gwen_Verified1',
                 'content': {
@@ -233,6 +255,7 @@ class TestProfileManagement():
             edit = support_client.post_profile_edit(
                 invitation='openreview.net/Support/-/Affiliation_Verification',
                 signatures=['openreview.net/Support'],
+                content={ 'source': { 'value': 'Student ID' } },
                 profile={
                     'id': '~Gwen_Verified1',
                     'content': {
@@ -258,6 +281,30 @@ class TestProfileManagement():
         profile = support_client.get_profile('~Gwen_Verified1')
         assert profile.content['history'] == profile_content_before['history']
         assert profile.content['history'][0]['end'] is None
+
+        ## A student ID may show only the institution name, not its email domain, so
+        ## the domain is optional in the asserted history.
+        edit = support_client.post_profile_edit(
+            invitation='openreview.net/Support/-/Affiliation_Verification',
+            signatures=['openreview.net/Support'],
+            content={ 'source': { 'value': 'Student ID' } },
+            profile={
+                'id': '~Gwen_Verified1',
+                'content': {
+                    'history': {
+                        'value': {
+                            'add': [{
+                                'position': 'PhD Student',
+                                'institution': {
+                                    'name': 'Profile Org'
+                                }
+                            }]
+                        }
+                    }
+                }
+            }
+        )
+        assert 'domain' not in edit['profile']['content']['history']['value']['add'][0]['institution']
 
     def test_import_deprecated_dblp_notes(self, client, openreview_client, test_client, helpers):
 
@@ -5153,17 +5200,19 @@ The OpenReview Team.
         support_client.post_profile_edit(
             invitation='openreview.net/Support/-/Identity_Verification',
             signatures=['openreview.net/Support'],
+            content={ 'source': { 'value': 'Government ID' } },
             profile={
                 'id': '~Rita_Identity1',
                 'content': {
-                    'names': { 'value': { 'add': [{ 'fullname': 'Rita Identity' }] } }
+                    'fullname': { 'value': 'Rita Identity' }
                 }
             }
         )
 
         edits = support_client.get_profile_edits(profile_id='~Rita_Identity1', invitation='openreview.net/Support/-/Identity_Verification')
         assert len(edits) == 1
-        assert edits[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Rita Identity'
+        assert edits[0].content['source']['value'] == 'Government ID'
+        assert edits[0].profile['content']['fullname']['value'] == 'Rita Identity'
 
         ## The verification record and the state history recorded by moderate_profile
         ## are visible to the profile owner
