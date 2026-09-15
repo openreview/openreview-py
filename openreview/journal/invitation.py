@@ -1,5 +1,6 @@
 import os
 import json
+import ast
 import random
 import datetime
 from sys import prefix
@@ -264,13 +265,10 @@ class InvitationBuilder(object):
 
     def get_combined_preprocess_content(self, existing, file_path):
         managed = self.get_process_content(file_path)
-        if not existing:
-            return managed
-        if existing.startswith('# journal-managed-track-validation'):
+        existing = self.get_supported_custom_preprocess(existing)
+        if existing is None:
             return managed
         marker = '# journal-managed-tracks-custom: '
-        if existing.startswith(marker):
-            existing = json.loads(existing.splitlines()[0][len(marker):])
         return marker + json.dumps(existing) + '''
 def process(client, edit, invitation):
     scripts = ''' + repr([existing, managed]) + '''
@@ -279,6 +277,28 @@ def process(client, edit, invitation):
         exec(script, funcs)
         funcs['process'](client, edit, invitation)
 '''
+
+    def get_supported_custom_preprocess(self, existing):
+        if not existing or existing.startswith('# journal-managed-track-validation'):
+            return None
+        marker = '# journal-managed-tracks-custom: '
+        if existing.startswith(marker):
+            existing = json.loads(existing.splitlines()[0][len(marker):])
+        try:
+            ast.parse(existing)
+        except (SyntaxError, TypeError) as error:
+            raise openreview.OpenReviewException(
+                'Managed tracks require an existing Python submission preprocess.'
+            ) from error
+        return existing
+
+    def validate_submission_preprocess_compatibility(self):
+        if not self.journal.has_managed_tracks():
+            return
+        existing = openreview.tools.get_invitation(
+            self.client, self.journal.get_author_submission_id()
+        )
+        self.get_supported_custom_preprocess(existing.preprocess if existing else None)
 
     def get_preprocess_without_managed_tracks(self, existing):
         if not existing:

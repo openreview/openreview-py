@@ -94,6 +94,8 @@ class TrackManager:
 
     def validate_registry_update(self, tracks):
         tracks = validate_tracks(tracks)
+        if not tracks:
+            raise ValueError('an enabled track registry cannot be empty')
         prior = {track['id'] for track in self.get_registry()}
         current = {track['id'] for track in tracks}
         removed = prior - current

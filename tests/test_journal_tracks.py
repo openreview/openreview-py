@@ -1,3 +1,4 @@
+from pathlib import Path
 from types import SimpleNamespace
 
 import openreview
@@ -130,6 +131,36 @@ def test_deleted_paper_still_prevents_track_deletion():
         make_manager(client).validate_registry_update([TRACKS[0]])
 
 
+def test_enabled_registry_update_rejects_empty_before_downstream_work():
+    client = FakeClient()
+    client.get_all_notes = lambda **_kwargs: pytest.fail('unexpected note lookup')
+    with pytest.raises(ValueError, match='cannot be empty'):
+        make_manager(client).validate_registry_update([])
+    assert client.writes == []
+
+
+def test_manage_tracks_preprocess_rejects_empty_before_write_and_postprocess(monkeypatch):
+    manager = make_manager()
+    journal = SimpleNamespace(has_managed_tracks=lambda: True, tracks=manager)
+    monkeypatch.setattr(openreview.journal, 'Journal', lambda: journal)
+    namespace = {'openreview': openreview}
+    source = Path('openreview/journal/process/manage_tracks_pre_process.py').read_text()
+    exec(source, namespace)
+    client = SimpleNamespace(
+        post_group_edit=lambda **_kwargs: pytest.fail('unexpected group write')
+    )
+    postprocess_calls = []
+
+    with pytest.raises(openreview.OpenReviewException, match='cannot be empty'):
+        namespace['process'](
+            client,
+            SimpleNamespace(group=SimpleNamespace(content={'tracks': {'value': []}})),
+            SimpleNamespace(),
+        )
+        postprocess_calls.append(True)
+    assert postprocess_calls == []
+
+
 def test_prepare_scores_writes_complete_matrix_and_is_idempotent():
     client = FakeClient()
     manager = make_manager(client)
@@ -197,11 +228,67 @@ def test_prepare_scores_retires_duplicates_and_removed_editors():
 
 def test_submission_preprocess_composition_is_stable_across_setup():
     builder = InvitationBuilder.__new__(InvitationBuilder)
-    builder.get_process_content = lambda path: '# journal-managed-track-validation\ndef process(client, edit, invitation):\n    pass\n'
+    builder.get_process_content = lambda path: '# journal-managed-track-validation\ndef process(client, edit, invitation):\n    edit.managed = True\n'
     custom = 'def process(client, edit, invitation):\n    edit.checked = True\n'
     combined = builder.get_combined_preprocess_content(custom, 'unused.py')
     assert builder.get_combined_preprocess_content(combined, 'unused.py') == combined
     assert builder.get_preprocess_without_managed_tracks(combined) == custom
+    namespace = {'openreview': openreview, 'datetime': __import__('datetime')}
+    exec(combined, namespace)
+    edit = SimpleNamespace()
+    namespace['process'](None, edit, None)
+    assert edit.checked is True
+    assert edit.managed is True
+
+
+def test_submission_preprocess_rejects_javascript_before_save():
+    client = FakeClient()
+    javascript = 'function process(client, edit, invitation) { return true; }'
+    client.invitation = SimpleNamespace(preprocess=javascript, post_processes=None)
+    journal = openreview.journal.Journal(
+        client, 'Test', 'secret', 'test@example.com', 'Test', 'Test',
+        settings={'tracks': TRACKS}
+    )
+    saved = []
+    journal.invitation_builder.save_invitation = saved.append
+
+    with pytest.raises(openreview.OpenReviewException, match='Python submission preprocess'):
+        journal.invitation_builder.set_submission_invitation()
+    assert saved == []
+
+
+def test_setup_rejects_javascript_preprocess_before_any_write():
+    client = FakeClient()
+    client.invitation = SimpleNamespace(
+        preprocess='function process(client, edit, invitation) { return true; }',
+        post_processes=None,
+    )
+    journal = openreview.journal.Journal(
+        client, 'Test', 'secret', 'test@example.com', 'Test', 'Test',
+        settings={'tracks': TRACKS}
+    )
+    writes = []
+    journal.invitation_builder.set_meta_invitation = lambda: writes.append('meta')
+    journal.group_builder.set_groups = lambda *_args: writes.append('groups')
+    journal.tracks.setup_registry = lambda: writes.append('registry')
+    journal.invitation_builder.set_invitations = lambda *_args: writes.append('invitations')
+
+    with pytest.raises(openreview.OpenReviewException, match='Python submission preprocess'):
+        journal.setup('Test/Support')
+    assert writes == []
+
+
+def test_disabled_tracks_preserve_existing_javascript_preprocess():
+    client = FakeClient()
+    javascript = 'function process(client, edit, invitation) { return true; }'
+    client.invitation = SimpleNamespace(preprocess=javascript, post_processes=None)
+    journal = openreview.journal.Journal(
+        client, 'Test', 'secret', 'test@example.com', 'Test', 'Test', settings={}
+    )
+    saved = []
+    journal.invitation_builder.save_invitation = saved.append
+    journal.invitation_builder.set_submission_invitation()
+    assert saved[0].preprocess == javascript
 
 
 def test_disabling_tracks_removes_only_native_validation():
@@ -261,6 +348,10 @@ def test_track_management_invitations_are_feature_gated():
     ]
     assert saved[0].invitees == ['Test/Editors_In_Chief']
     assert 'Listed AEs are included' in saved[0].web
+    assert '<table class="table">' in saved[0].web
+    assert 'Add track' in saved[0].web
+    assert 'track-remove' in saved[0].web
+    assert 'JSON' not in saved[0].web
     assert 'set_submission_invitation()' in saved[0].process
     assert 'settings={"tracks":' in saved[0].process
     assert saved[1].readers == ['Test', 'Test/Editors_In_Chief']

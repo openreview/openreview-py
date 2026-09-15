@@ -491,6 +491,8 @@ class Journal(object):
         :param assignment_delay: Number of minutes to delay before assignment process functions run.
         :type assignment_delay: int, optional
         """
+        self.invitation_builder.validate_submission_preprocess_compatibility()
+
         if not self.secret_key:
             ## create the secret key the first time the journal is set up; it is stored
             ## in the venue group content by the group builder, never edited and only
