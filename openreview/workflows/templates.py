@@ -47,6 +47,7 @@ class Templates():
         self.setup_committee_group_recruitment_template_invitation()
         self.setup_group_message_template_invitation()
         self.setup_group_members_template_invitation()
+        self.setup_group_homepage_template_invitation()
 
         # setup invitation template invitations
         self.setup_note_release_template_invitation()
@@ -224,6 +225,18 @@ class Templates():
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this release step is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': ''
+                            }
+                        }
+                    },
                     'description': {
                         'value': {
                             'param': {
@@ -243,6 +256,11 @@ class Templates():
                     'cdate': '${2/content/activation_date/value}',
                     'expdate': '${2/content/activation_date/value}+1209600000',
                     'description': '${2/content/description/value}',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': '${4/content/workflow_stage_name/value}'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/release_notes_process.py')
@@ -345,6 +363,11 @@ class Templates():
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step runs automatically at the "Upload Date", and posts decisions to submissions based on the contents of a CSV file. The CSV file must contain one decision per line in the format: paper_number, decision, comment. The comment field is optional.',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': 'decision'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/upload_decisions_process.py'),
@@ -682,6 +705,18 @@ class Templates():
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'recruitment'
+                            }
+                        }
+                    },
                     'venue_short_name': {
                         'order': 4,
                         'description': 'Venue reviewers name',
@@ -740,6 +775,9 @@ class Templates():
                     'content': {
                         'committee_id': {
                             'value': '${4/content/committee_id/value}',
+                        },
+                        'workflow_stage_name': {
+                            'value': '${4/content/workflow_stage_name/value}'
                         }
                     },
                     'edit': {
@@ -861,6 +899,18 @@ Program Chairs'''
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'recruitment'
+                            }
+                        }
+                    },
                     'venue_short_name': {
                         'order': 4,
                         'description': 'Venue reviewers name',
@@ -884,6 +934,9 @@ Program Chairs'''
                     'content': {
                         'committee_id': {
                             'value': '${4/content/committee_id/value}',
+                        },
+                        'workflow_stage_name': {
+                            'value': '${4/content/workflow_stage_name/value}'
                         }
                     },
                     'edit': {
@@ -1005,6 +1058,18 @@ Program Chairs'''
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'recruitment'
+                            }
+                        }
+                    },
                     'due_date': {
                         'order': 5,
                         'description': 'By when do users can submit their response?',
@@ -1035,6 +1100,9 @@ Program Chairs'''
                     'content': {
                         'committee_id': {
                             'value': '${4/content/committee_id/value}',
+                        },
+                        'workflow_stage_name': {
+                            'value': '${4/content/workflow_stage_name/value}'
                         },
                         'committee_pretty_name': {
                             'value': '${4/content/committee_pretty_name/value}',
@@ -1320,6 +1388,73 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
+    def setup_group_homepage_template_invitation(self):
+
+        invitation_id = f'{self.template_domain}/-/Group_Homepage'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[self.template_domain],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            edit = {
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'group_id': {
+                        'order': 2,
+                        'description': 'Venue group id',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/group_id/value}/-/Homepage',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Edit the home page of the group',
+                    'edit': {
+                        'content': {
+                            'web': {
+                                'order': 1,
+                                'description': 'Group home page',
+                                'value': {
+                                    'param': {
+                                        'type': 'script'
+                                    }
+                                }
+                            }
+                        },
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'group': {
+                            'id': '${4/content/group_id/value}',
+                            'web': '${2/content/web/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
     def setup_reviewer_matching_template_invitation(self):
 
         invitation = Invitation(id=f'{self.template_domain}/-/Reviewer_Assignment_Deployment',
@@ -1411,6 +1546,9 @@ If you would like to change your decision, please follow the link in the previou
                     'content': {
                         'committee_name': {
                             'value': '${4/content/committee_name/value}'
+                        },
+                        'workflow_stage_name': {
+                            'value': 'assignment - ${4/content/committee_name/value}'
                         }
                     }
                 }
@@ -1521,6 +1659,9 @@ If you would like to change your decision, please follow the link in the previou
                         'script': self.get_process_content('process/email_decisions_process.py')
                     }],
                     'content': {
+                        'workflow_stage_name': {
+                            'value': 'decision'
+                        },
                         'subject': {
                             'value': '[${4/content/short_name/value}] The decision for your submission #{submission_number}, titled "{submission_title}" is now available'
                         },
@@ -1633,6 +1774,9 @@ If you would like to change your decision, please follow the link in the previou
                         'script': self.get_process_content('process/email_reviews_process.py')
                     }],
                     'content': {
+                        'workflow_stage_name': {
+                            'value': 'reviewing'
+                        },
                         'subject': {
                             'value': '[${4/content/short_name/value}] The reviews for your submission #{submission_number}, titled "{submission_title}" are now available'
                         },
@@ -1760,6 +1904,18 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
+                    },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this release step is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'public_release'
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1776,6 +1932,9 @@ If you would like to change your decision, please follow the link in the previou
                         'script': self.get_process_content('process/submission_release.py')
                     }],
                     'content': {
+                        'workflow_stage_name': {
+                            'value': '${4/content/workflow_stage_name/value}'
+                        },
                         'decision_option': {
                             'value': '${4/content/decision_option/value}'
                         }
@@ -1910,6 +2069,11 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': 'public_release'
+                        }
+                    },
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
                         'readers': ['everyone'],
@@ -2000,6 +2164,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'statistics'
+                            }
+                        }
+                    },
                     'activation_date': {
                         'order': 3,
                         'description': 'When should we compute the number of reviews for each reviewer?',
@@ -2021,6 +2197,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step runs automatically at its "activation date", and computes the review counts for all reviewers.',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': '${4/content/workflow_stage_name/value}'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': '''def process(client, invitation):
@@ -2118,6 +2299,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'statistics'
+                            }
+                        }
+                    },
                     'activation_date': {
                         'order': 3,
                         'description': 'When should we compute the number of reviews for each reviewer?',
@@ -2139,6 +2332,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step runs automatically at its "activation date", and computes the review assignment counts for all reviewers.',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': '${4/content/workflow_stage_name/value}'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': '''def process(client, invitation):
@@ -2237,6 +2435,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'workflow_stage_name': {
+                        'description': 'Timeline stage this invitation is grouped under',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'optional': True,
+                                'default': 'statistics'
+                            }
+                        }
+                    },
                     'activation_date': {
                         'order': 3,
                         'description': 'When should we compute the number of reviews for each reviewer?',
@@ -2258,6 +2468,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': 'This step runs automatically at its "activation date", and computes the total number of days a reviewer was late submitting their reviews.',
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': '${4/content/workflow_stage_name/value}'
+                        }
+                    },
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': '''def process(client, invitation):
@@ -2377,6 +2592,11 @@ If you would like to change your decision, please follow the link in the previou
                         'readers': ['${3/content/venue_id/value}'],
                         'writers': ['${3/content/venue_id/value}'],
                         'cdate': '${2/content/activation_date/value}',
+                        'content': {
+                            'workflow_stage_name': {
+                                'value': 'public_release'
+                            }
+                        },
                         'description': f'This step runs automatically at its "activation date", and it creates tags for all the users that performed the {role} role. This tag will be shown in each user\'s profile and it is visible to everyone.',
                         'dateprocesses': [{
                             'dates': ["#{4/cdate}", self.update_date_string],
