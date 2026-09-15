@@ -1820,7 +1820,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'This step releases ${2/content/decision_option/value} submissions and author identities to the public and marks the submissions as accepted. By default, PDFs remain hidden.',
+                    'description': 'This step releases ${2/content/decision_option/value} submissions and author identities to the public and marks the submissions as accepted. By default, all fields remain hidden from the public except for the title, abstract and author names.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')
@@ -1881,6 +1881,12 @@ If you would like to change your decision, please follow the link in the previou
                                     }
                                 },
                                 'pdf': {
+                                    'readers': [
+                                        '${7/content/venue_id/value}',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
+                                    ]
+                                },
+                                '*': {
                                     'readers': [
                                         '${7/content/venue_id/value}',
                                         '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
@@ -2060,7 +2066,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'This step releases ${2/content/decision_option/value} submissions to the specified readers and marks the submissions as rejected. By default, author names and PDFs are hidden.',
+                    'description': 'This step releases ${2/content/decision_option/value} submissions to the specified readers and marks the submissions as rejected. By default, all fields remain hidden from submission readers except for the title and abstract.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')
@@ -2102,6 +2108,20 @@ If you would like to change your decision, please follow the link in the previou
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'content': {
+                                'title': {
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
+                                'abstract': {
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
                                 'authors': {
                                     'readers': [
                                         '${7/content/venue_id/value}',
@@ -2109,6 +2129,12 @@ If you would like to change your decision, please follow the link in the previou
                                     ]
                                 },
                                 'pdf': {
+                                    'readers': [
+                                        '${7/content/venue_id/value}',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
+                                    ]
+                                },
+                                '*': {
                                     'readers': [
                                         '${7/content/venue_id/value}',
                                         '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'

@@ -2719,3 +2719,17 @@ OpenReview Team'''
                     abstract_a, abstract_b
                 ])
         print('File saved at: ', csv_path)
+
+    def compute_submission_fields(self):
+        """Collect the set of all content field names used across venue submissions.
+
+        :return: List of unique content field names found across all submissions.
+        :rtype: list[str]
+        """
+        submissions = self.get_submissions()
+
+        fields = set()
+        for submission in submissions:
+            fields.update(submission.content.keys())
+
+        return list(fields)
