@@ -8,6 +8,7 @@ import time
 from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
+    arr_flagging_config,
     arr_metareview_recommendation_field,
     arr_submission_content,
     arr_registration_task_forum,
@@ -664,7 +665,8 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -711,7 +713,8 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -758,7 +761,8 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -885,7 +889,8 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
                 due_date=self.configuration_note.content.get('reviewer_nomination_end_date'),
-                exp_date=self.configuration_note.content.get('reviewer_nomination_end_date')
+                exp_date=self.configuration_note.content.get('reviewer_nomination_end_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
@@ -1453,6 +1458,11 @@ class ARRStage(object):
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                     Participants.AREA_CHAIRS_ASSIGNED,
                     Participants.SIGNATURE
+                ],
+                'paper_matching_feedback': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.SIGNATURE
                 ]
             }
         },
@@ -1869,24 +1879,10 @@ def flag_submission(
     short_name = domain.get_content_value('subtitle')
     forum = client.get_note(id=edit.note.forum, details='replies')
 
-    ethics_flag_default = 'No'
-    ethics_flag_fields = {
-        'Review': 'needs_ethics_review',
-        'Checklist': 'need_ethics_review'
-    }
-    violation_fields = {
-        'Checklist': {
-            'appropriateness': 'Yes',
-            'formatting': 'Yes',
-            'length': 'Yes',
-            'anonymity': 'Yes',
-            'responsible_checklist': 'Yes',
-            'limitations': 'Yes'
-        },
-        'Meta_Review': {
-            'author_identity_guess': [4, 3, 2, 1]
-        }
-    }
+    flagging_config = domain.get_content_value('arr_flagging_config', arr_flagging_config)
+    ethics_flag_default = flagging_config['ethics_flag_default']
+    ethics_flag_fields = flagging_config['ethics_flag_fields']
+    violation_fields = flagging_config['violation_fields']
 
     def post_flag(invitation_name, value=False):
         print(f"posting {value} to {invitation_name}")
