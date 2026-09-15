@@ -2884,7 +2884,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].odate
         assert 'readers' not in submissions[0].content['authors']
 
-        # once released to the public, every field except title, abstract and author names
+        # once released to the public, every field except title, abstract and author names (paperhash)
         # must remain restricted to non-public readers
         public_fields = {'title', 'abstract', 'authors', 'paperhash'}
         for field, field_content in submissions[0].content.items():
@@ -2958,7 +2958,7 @@ url={https://openreview.net/forum?id='''+submissions[0].id+'''}
         assert not submissions[2].pdate
         assert submissions[2].odate
         assert not 'readers' in submissions[2].content['authors']
-        assert 'readers' not in submissions[2].content['paperhash']
+        assert not 'readers' in submissions[2].content['paperhash']
         public_fields = {'title', 'abstract', 'authors', 'paperhash'}
         for field, field_content in submissions[2].content.items():
             if field in public_fields:
@@ -2997,7 +2997,6 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Reject_Submission_Change_After_Decision-0-1', count=5)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
-        assert 'readers' not in submissions[2].content['paperhash']
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Reject_Submission_Change_After_Decision/Form_Fields',
@@ -3029,8 +3028,6 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
-        assert 'readers' not in submissions[2].content['paperhash']
-
         assert submissions[2].readers == [
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission3/Program_Committee',
@@ -3042,7 +3039,12 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission3/Authors'
         ]
-        public_fields = {'title', 'abstract', 'paperhash'}
+        # paperhash readers matches authors readers
+        assert submissions[2].content['paperhash']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission3/Authors'
+        ]
+        public_fields = {'title', 'abstract'}
         for field, field_content in submissions[2].content.items():
             if field in public_fields:
                 assert 'readers' not in field_content, f'"{field}" should be public'
@@ -3317,7 +3319,11 @@ ABCD 2025 Program Chairs'''
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Poster_Submission_Change_After_Decision/Form_Fields')
         assert openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Poster_Submission_Change_After_Decision/Which_Submissions') is None
         assert 'pdate' not in poster_invitation.edit['note']
-        assert 'abstract' not in poster_invitation.edit['note']['content']
+        assert 'abstract' in poster_invitation.edit['note']['content'] and poster_invitation.edit['note']['content']['abstract']['readers'] == {
+            'const': {
+                'delete': True
+            }
+        }
 
         invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Poster_Decision_Notification')
         assert invitation
