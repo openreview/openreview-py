@@ -882,7 +882,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_dates_one_level_invitation(self, super_invitation_id, include_due_date=False, include_exp_date=False, due_date=None):
+    def set_edit_dates_one_level_invitation(self, super_invitation_id, include_due_date=False, include_exp_date=False, due_date=None, include_pdate=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Dates'
@@ -938,6 +938,21 @@ class EditInvitationsBuilder(object):
                 }
             }
             invitation.edit['invitation']['expdate'] = '${2/content/expiration_date/value}'
+
+        if include_pdate:
+            invitation.edit['content']['publication_date'] = {
+                'value': {
+                    'param': {
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ]
+                    }
+                }
+            }
+            invitation.edit['invitation']['edit'] = {
+                'note': {
+                    'pdate': '${4/content/publication_date/value}'
+                }
+            }
 
         if due_date:
             invitation.duedate = due_date
