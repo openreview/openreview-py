@@ -45,6 +45,7 @@ class TestTACLJournal():
                         'value': {
                             'submission_public': False,
                             'release_submission_after_acceptance': False,
+                            'action_editor_paper_visibility': 'assigned_only',
                             'skip_ac_recommendation': True,
                             'skip_reviewer_responsibility_acknowledgement': True,
                             'assignment_delay': 0,
@@ -219,7 +220,7 @@ Please note that responding to this email will direct your reply to tacl@venue.o
         note = graham_client.get_note(note_id_1)
         assert note
         assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review']
-        assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Andersen1']
@@ -251,7 +252,7 @@ note={Under review}
         edits = openreview_client.get_note_edits(note.id)
         assert len(edits) == 4
         for edit in edits:
-            assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+            assert edit.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
     def test_review(self, journal, openreview_client, helpers):
 
@@ -399,11 +400,11 @@ Please note that responding to this email will direct your reply to graham@mails
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
         assert len(reviews) == 3
-        assert reviews[0].readers == ['TACL/Editors_In_Chief', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert reviews[0].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert reviews[0].signatures == [david_anon_groups[0].id]
-        assert reviews[1].readers == ['TACL/Editors_In_Chief', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert reviews[1].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert reviews[1].signatures == [carlos_anon_groups[0].id]
-        assert reviews[2].readers == ['TACL/Editors_In_Chief', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert reviews[2].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert reviews[2].signatures == [javier_anon_groups[0].id]
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1, prefix='TACL/Paper1')
@@ -584,7 +585,7 @@ Please note that responding to this email will direct your reply to graham@mails
 
 
         decision_note = brian_client.get_note(decision_note.id)
-        assert decision_note.readers == ['TACL/Editors_In_Chief', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert decision_note.readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert decision_note.nonreaders == []
 
     def test_camera_ready_revision(self, journal, openreview_client, helpers):
@@ -619,7 +620,7 @@ Please note that responding to this email will direct your reply to graham@mails
         assert note.forum == note_id_1
         assert note.replyto is None
         assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision']
-        assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melisa_Andersen1', '~SomeFirstName_User1']
@@ -650,7 +651,7 @@ Please note that responding to this email will direct your reply to graham@mails
         assert note.forum == note_id_1
         assert note.replyto is None
         assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
-        assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL']
         assert note.signatures == ['TACL/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melisa_Andersen1', '~SomeFirstName_User1']
@@ -675,7 +676,7 @@ note={Featured Certification, Reproducibility Certification}
         edits = openreview_client.get_note_edits(note.id)
         assert len(edits) == 7
         for edit in edits:
-            assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+            assert edit.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
     def test_withdrawn_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -742,7 +743,7 @@ note={Featured Certification, Reproducibility Certification}
         note = test_client.get_note(note_id_2)
         assert note
         assert note.invitations == ['TACL/-/Submission', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/-/Withdrawn']
-        assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
+        assert note.readers == ['TACL', 'TACL/Paper2/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
         assert note.writers == ['TACL', 'TACL/Paper2/Authors']
         assert note.signatures == ['TACL/Paper2/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Andersen1']
@@ -763,7 +764,7 @@ note={Withdrawn}
         edits = openreview_client.get_note_edits(note.id)
         assert len(edits) == 4
         for edit in edits:
-            assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
+            assert edit.readers == ['TACL', 'TACL/Paper2/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
 
         invitations = openreview_client.get_invitations(replyForum=note_id_2, prefix='TACL/Paper2')
         assert len(invitations) == 1
@@ -771,4 +772,4 @@ note={Withdrawn}
 
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()        
+        journal.invitation_builder.expire_assignment_availability_invitations()

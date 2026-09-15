@@ -136,6 +136,7 @@ class JournalRequest():
                             'submission_name': 'Submission',
                             'assignment_delay': 5,
                             'submission_public': True,
+                            'action_editor_paper_visibility': 'all',
                             'submission_license': 'CC BY-SA 4.0',
                             'author_anonymity': True,
                             'AE_anonymity': False,

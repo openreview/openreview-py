@@ -16,6 +16,7 @@ Contents
    api
    help
    journal_eic_console
+   journal-settings
 
 
 Indices and Tables

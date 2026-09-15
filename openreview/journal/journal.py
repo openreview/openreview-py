@@ -13,6 +13,8 @@ from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, Un
 
 class Journal(object):
 
+    ACTION_EDITOR_PAPER_VISIBILITY = ('all', 'assigned_only')
+
     def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name,
                  website='jmlr.org/tmlr', submission_name='Submission', settings={}):
 
@@ -25,6 +27,11 @@ class Journal(object):
         self.website = website
         self.submission_name = submission_name
         self.settings = settings
+        action_editor_paper_visibility = self.settings.get('action_editor_paper_visibility', 'all')
+        if action_editor_paper_visibility not in self.ACTION_EDITOR_PAPER_VISIBILITY:
+            raise ValueError(
+                'action_editor_paper_visibility must be one of: all, assigned_only'
+            )
         self.request_form_id = None
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
@@ -684,6 +691,17 @@ class Journal(object):
     def is_action_editor_anonymous(self):
         return self.settings.get('AE_anonymity', False)
 
+    def get_action_editor_paper_reader(self, number):
+        """Return the AE group allowed to read private records for one paper.
+
+        ``all`` preserves the historical Journal behavior in which the complete
+        Action Editors roster can read every private paper. ``assigned_only``
+        uses the dynamic per-paper Action Editors group instead.
+        """
+        if self.settings.get('action_editor_paper_visibility', 'all') == 'assigned_only':
+            return self.get_action_editors_id(number)
+        return self.get_action_editors_id()
+
     def is_reviewer_to_reviewer_anonymous(self):
         ## Whether reviewers are anonymous to each other. Defaults to False to preserve
         ## the TMLR behavior where assigned reviewers can see one another's identities.
@@ -799,22 +817,22 @@ class Journal(object):
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.venue_id, self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.venue_id, self.get_action_editor_paper_reader(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_review_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editor_paper_reader(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_decision_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editor_paper_reader(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_authors_readers(self, number):
         if self.is_submission_public() or self.release_submission_after_acceptance():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editor_paper_reader(number), self.get_authors_id(number)]
 
     def get_official_comment_readers(self, number):
         readers = []
@@ -824,10 +842,12 @@ class Journal(object):
         readers.append(self.get_editors_in_chief_id())
 
         if not self.is_submission_public():
-            readers.append(self.get_action_editors_id())
+            readers.append(self.get_action_editor_paper_reader(number))
 
-        return readers + [self.get_action_editors_id(number),
-                          self.get_reviewers_id(number),
+        paper_action_editors_id = self.get_action_editors_id(number)
+        if paper_action_editors_id not in readers:
+            readers.append(paper_action_editors_id)
+        return readers + [self.get_reviewers_id(number),
                           self.get_reviewers_id(number, anon=True) + '.*',
                           self.get_authors_id(number)]
 

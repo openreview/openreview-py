@@ -46,6 +46,7 @@ class TestJMLRJournal():
                         'value': {
                             'submission_public': False,
                             'author_anonymity': False,
+                            'action_editor_paper_visibility': 'assigned_only',
                             'assignment_delay': 0,
                             'skip_official_recommendation': True
                         }
@@ -147,6 +148,56 @@ class TestJMLRJournal():
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         celeste_client = OpenReviewClient(username='celeste@jmlr.com', password=helpers.strong_password)
+        melisa_client = OpenReviewClient(username='melisa@jmlr.com', password=helpers.strong_password)
+
+        assert eic_client.get_note(note_id_1)
+        assert test_client.get_note(note_id_1)
+        with pytest.raises(openreview.OpenReviewException):
+            melisa_client.get_note(note_id_1)
+
+        # Paper-group membership is the authority: remove A, assign B, then
+        # restore A for the remainder of this lifecycle fixture.
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        removed_celeste = eic_client.post_edge(paper_assignment_edge)
+        helpers.await_queue_edit(openreview_client, edit_id=removed_celeste.id)
+        assert openreview_client.get_group('JMLR/Paper1/Action_Editors').members == []
+        with pytest.raises(openreview.OpenReviewException):
+            celeste_client.get_note(note_id_1)
+
+        melisa_assignment = eic_client.post_edge(openreview.Edge(
+            invitation='JMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Melisa_JMLR1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_1,
+            tail='~Melisa_JMLR1',
+            weight=1,
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=melisa_assignment.id)
+        assert melisa_client.get_note(note_id_1)
+        with pytest.raises(openreview.OpenReviewException):
+            celeste_client.get_note(note_id_1)
+
+        melisa_assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        removed_melisa = eic_client.post_edge(melisa_assignment)
+        helpers.await_queue_edit(openreview_client, edit_id=removed_melisa.id)
+
+        paper_assignment_edge = eic_client.post_edge(openreview.Edge(
+            invitation='JMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Celeste_JMLR1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_1,
+            tail='~Celeste_JMLR1',
+            weight=1,
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+        assert openreview_client.get_group('JMLR/Paper1/Action_Editors').members == [
+            '~Celeste_JMLR1'
+        ]
+        assert celeste_client.get_note(note_id_1)
+        with pytest.raises(openreview.OpenReviewException):
+            melisa_client.get_note(note_id_1)
 
         celeste_paper1_anon_groups = celeste_client.get_groups(prefix=f'JMLR/Paper1/Action_Editor_.*', signatory='~Celeste_JMLR1')
         assert len(celeste_paper1_anon_groups) == 1
@@ -164,9 +215,27 @@ class TestJMLRJournal():
         note = celeste_client.get_note(note_id_1)
         assert note
         assert note.invitations == ['JMLR/-/Submission', 'JMLR/-/Edit', 'JMLR/-/Under_Review']
+        assert note.readers == [
+            'JMLR',
+            'JMLR/Paper1/Action_Editors',
+            'JMLR/Paper1/Reviewers',
+            'JMLR/Paper1/Authors',
+        ]
+        assert note.writers == ['JMLR', 'JMLR/Paper1/Authors']
+        assert note.signatures == ['JMLR/Paper1/Authors']
+
+        author_note = test_client.get_note(note_id_1)
+        assert 'assigned_action_editor' not in author_note.content
+
+        unrelated_ae_client = OpenReviewClient(
+            username='melisa@jmlr.com', password=helpers.strong_password
+        )
+        with pytest.raises(openreview.OpenReviewException):
+            unrelated_ae_client.get_note(note_id_1)
 
         edits = openreview_client.get_note_edits(note.id, invitation='JMLR/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+        assert all('JMLR/Action_Editors' not in edit.readers for edit in openreview_client.get_note_edits(note.id))
 
         assert celeste_client.get_invitation('JMLR/Paper1/Reviewers/-/Assignment')
 
@@ -284,6 +353,8 @@ Please note that responding to this email will direct your reply to editor@jmlr.
         # post reviews
         reviewer_one_client = OpenReviewClient(username='rachel@jmlr.com', password=helpers.strong_password)
         reviewer_one_anon_groups=reviewer_one_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Rachel_JMLR1')
+        reviewer_view = reviewer_one_client.get_note(note_id_1)
+        assert reviewer_view.content['assigned_action_editor']['value'] == '~Celeste_JMLR1'
 
         review_note = reviewer_one_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[reviewer_one_anon_groups[0].id],
@@ -344,9 +415,10 @@ Please note that responding to this email will direct your reply to editor@jmlr.
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 3
-        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        expected_review_readers = [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[0].readers == expected_review_readers
+        assert reviews[1].readers == expected_review_readers
+        assert reviews[2].readers == expected_review_readers
 
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation JMLR/Paper1/-/Official_Recommendation was not found'):
             invitation = eic_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
@@ -361,6 +433,10 @@ Please note that responding to this email will direct your reply to editor@jmlr.
 
         messages = journal.client.get_messages(to = 'celeste@jmlr.com', subject = '[JMLR] Evaluate reviewers and submit decision for JMLR submission 1: Paper title')
         assert len(messages) == 1
+        assert journal.client.get_messages(
+            to='melisa@jmlr.com',
+            subject='[JMLR] Evaluate reviewers and submit decision for JMLR submission 1: Paper title',
+        ) == []
         assert messages[0]['content']['text'] == f'''Hi Celeste JMLR,
 
 Thank you for overseeing the review process for JMLR submission "1: Paper title".
@@ -430,3 +506,9 @@ Please note that responding to this email will direct your reply to editor@jmlr.
             )
 
         helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+        decision = celeste_client.get_note(decision_note['note']['id'])
+        assert 'JMLR/Action_Editors' not in decision.readers
+        assert 'JMLR/Paper1/Action_Editors' in decision.readers
+        assert eic_client.get_note(decision.id)
+        with pytest.raises(openreview.OpenReviewException):
+            melisa_client.get_note(decision.id)
