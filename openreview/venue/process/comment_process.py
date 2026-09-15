@@ -34,13 +34,14 @@ def process(client, edit, invitation):
     pretty_signature = openreview.tools.pretty_id(signature)
     pretty_signature = 'An author' if pretty_signature == 'Authors' else pretty_signature
 
+    # add comment field to the email only if the comment contains a 'comment' field
+    comment_field  = f'''\n\nComment: {comment.content['comment']['value']}''' if 'comment' in comment.content else ''
+
     content = f'''
     
 Paper number: {submission.number}
 
-Paper title: {submission.content['title']['value']}
-
-Comment: {comment.content['comment']['value']}
+Paper title: {submission.content['title']['value']} {comment_field}
 
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
 
