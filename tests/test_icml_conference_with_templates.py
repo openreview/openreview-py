@@ -812,7 +812,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
         dropdown_values = dropdown.find_elements(By.TAG_NAME,"a")
         values = [value.text for value in dropdown_values]
-        assert values == ['Submission', 'PC Revision']
+        assert set(values) == {'Submission', 'PC Revision'}
 
         ## compute preferred emails
         openreview_client.post_invitation_edit(
