@@ -42,6 +42,16 @@ def process(client, edit, invitation):
         invitation=openreview.api.Invitation()
     )
 
+    client.post_invitation_edit(
+        invitations=f'{invitation.domain}/-/Group_Homepage',
+        signatures=[invitation.domain],
+        content={
+            'venue_id': { 'value': venue_id },
+            'group_id': { 'value': edit.group.id },
+        },
+        invitation=openreview.api.Invitation()
+    )
+
     ## Enable recruitment?
 
     invited_group_edit = client.post_group_edit(

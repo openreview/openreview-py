@@ -121,6 +121,12 @@ class TestSimpleDualAnonymous():
         assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Message')
         assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Members')
 
+        # program chairs can edit the home page of each committee group
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Homepage')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Homepage')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Homepage')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Program_Chairs/-/Homepage')
+
         submission_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Submission')
         assert submission_invitation
         assert submission_invitation.duedate

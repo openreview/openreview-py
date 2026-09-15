@@ -454,6 +454,17 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 await_process=True
             )
 
+            self.client.post_invitation_edit(
+                invitations=f'{self.openreview_template}/-/Group_Homepage',
+                signatures=[self.openreview_template],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'group_id': { 'value': pc_group_id },
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )
+
 
     def create_authors_group(self):
 

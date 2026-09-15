@@ -47,6 +47,7 @@ class Templates():
         self.setup_committee_group_recruitment_template_invitation()
         self.setup_group_message_template_invitation()
         self.setup_group_members_template_invitation()
+        self.setup_group_homepage_template_invitation()
 
         # setup invitation template invitations
         self.setup_note_release_template_invitation()
@@ -1380,6 +1381,73 @@ If you would like to change your decision, please follow the link in the previou
                                     'deletable': True
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_group_homepage_template_invitation(self):
+
+        invitation_id = f'{self.template_domain}/-/Group_Homepage'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[self.template_domain],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            edit = {
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'group_id': {
+                        'order': 2,
+                        'description': 'Venue group id',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/group_id/value}/-/Homepage',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Edit the home page of the group',
+                    'edit': {
+                        'content': {
+                            'web': {
+                                'order': 1,
+                                'description': 'Group home page',
+                                'value': {
+                                    'param': {
+                                        'type': 'script'
+                                    }
+                                }
+                            }
+                        },
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'group': {
+                            'id': '${4/content/group_id/value}',
+                            'web': '${2/content/web/value}'
                         }
                     }
                 }
