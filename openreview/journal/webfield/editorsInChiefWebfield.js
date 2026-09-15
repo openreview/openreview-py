@@ -18,6 +18,9 @@ var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
 var NUMBER_OF_REVIEWERS = 3;
 var PREFERRED_EMAILS_ID = '';
+var MANAGED_TRACKS_ENABLED = false;
+var MANAGE_TRACKS_ID = '';
+var TRACK_ELIGIBILITY_ID = '';
 var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
@@ -94,6 +97,13 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Brow
   '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
   '<li><a href="/forum?id=' + REVIEWER_REPORT_ID + '&referrer=' + referrerUrl + '">Reviewers Report</a></li></ul>';
+if (MANAGED_TRACKS_ENABLED) {
+  HEADER.instructions += '<ul class="list-inline mb-0"><li><strong>Track Management:</strong></li>' +
+    '<li><a href="/edges/browse?start=staticList,type:head,ids=' + ACTION_EDITOR_ID +
+    '&edit=' + TRACK_ELIGIBILITY_ID + '&browse=' + TRACK_ELIGIBILITY_ID +
+    '&version=2&referrer=' + referrerUrl + '">Manage AE Track Eligibility</a></li>' +
+    '<li><a href="/invitation?id=' + MANAGE_TRACKS_ID + '&referrer=' + referrerUrl + '">Manage Tracks</a></li></ul>';
+}
 var institutionDomains = [];
 
 // Helpers

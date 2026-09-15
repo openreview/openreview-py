@@ -17,6 +17,7 @@ Contents
    help
    journal_eic_console
    journal-settings
+   journal-managed-tracks
 
 
 Indices and Tables

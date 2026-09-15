@@ -3,6 +3,7 @@ from . import group
 from .invitation import InvitationBuilder
 from .recruitment import Recruitment
 from .assignment import Assignment
+from .tracks import TrackManager
 
 import re
 import csv
@@ -32,6 +33,8 @@ class Journal(object):
             raise ValueError(
                 'action_editor_paper_visibility must be one of: all, assigned_only'
             )
+        if self.settings.get('tracks') and 'track_id' in self.settings.get('submission_additional_fields', {}):
+            raise ValueError('track_id is reserved when using managed tracks')
         self.request_form_id = None
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
@@ -64,6 +67,7 @@ class Journal(object):
         }
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
+        self.tracks = TrackManager(self)
         self.unavailable_reminder_period = 4  # weeks
         self.invite_assignment_reminder_period = 1  # week
 
@@ -208,6 +212,30 @@ class Journal(object):
 
     def get_ae_affinity_score_id(self):
         return self.__get_invitation_id(name='Affinity_Score', prefix=self.get_action_editors_id())
+
+    def get_tracks_id(self):
+        return f'{self.venue_id}/Tracks'
+
+    def get_manage_tracks_id(self):
+        return self.__get_invitation_id(name='Manage_Tracks')
+
+    def get_track_eligibility_id(self):
+        return self.__get_invitation_id(name='Track_Eligibility', prefix=self.get_action_editors_id())
+
+    def get_track_score_id(self):
+        return self.__get_invitation_id(name='Track_Score', prefix=self.get_action_editors_id())
+
+    def has_managed_tracks(self):
+        return self.tracks.enabled
+
+    def get_tracks(self):
+        return self.tracks.get_registry()
+
+    def validate_submission_track(self, track_id, allow_closed=False):
+        return self.tracks.validate_submission_track(track_id, allow_closed=allow_closed)
+
+    def prepare_ae_track_scores(self, paper_ids):
+        return self.tracks.prepare_scores(paper_ids)
 
     def get_ae_aggregate_score_id(self):
         return self.__get_invitation_id(name='Aggregate_Score', prefix=self.get_action_editors_id())
@@ -471,6 +499,7 @@ class Journal(object):
 
         self.invitation_builder.set_meta_invitation()
         self.group_builder.set_groups(support_role, editors)
+        self.tracks.setup_registry()
         self.invitation_builder.set_invitations(assignment_delay)
         self.group_builder.set_group_variable(self.get_action_editors_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_action_editors_id() + '/Archived', 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())

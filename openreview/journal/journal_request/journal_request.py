@@ -180,6 +180,7 @@ class JournalRequest():
                             'submission_length': [],
                             'website_urls': {},
                             'submission_additional_fields': {},
+                            'tracks': [],
                             'review_additional_fields': {},
                             'official_recommendation_additional_fields': {},
                             'official_recommendation_additional_validation': {},

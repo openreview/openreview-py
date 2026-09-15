@@ -113,6 +113,7 @@ class InvitationBuilder(object):
         self.set_assignment_configuration_invitation()
         self.set_eic_revision_invitation()
         self.set_expertise_selection_invitations()
+        self.set_track_invitations()
         self.set_review_rating_enabling_invitation()
         self.set_expertise_reviewer_invitation()
         self.set_reviewer_message_invitation()
@@ -123,7 +124,106 @@ class InvitationBuilder(object):
         if self.journal.should_enable_ai_review():
             self.set_ai_review_invitation()
             self.set_survey_invitation()
-    
+
+    def set_track_invitations(self):
+        if not self.journal.has_managed_tracks():
+            return
+
+        venue_id = self.journal.venue_id
+        eic_id = self.journal.get_editors_in_chief_id()
+        tracks_id = self.journal.get_tracks_id()
+        track_ids = [track['id'] for track in self.journal.get_tracks()]
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/manageTracksWebfield.js')) as reader:
+            manage_tracks_web = reader.read()
+            manage_tracks_web = manage_tracks_web.replace("var TRACKS_ID = '';", f"var TRACKS_ID = '{tracks_id}';")
+            manage_tracks_web = manage_tracks_web.replace("var MANAGE_TRACKS_ID = '';", f"var MANAGE_TRACKS_ID = '{self.journal.get_manage_tracks_id()}';")
+            manage_tracks_web = manage_tracks_web.replace("var EIC_ID = '';", f"var EIC_ID = '{eic_id}';")
+            manage_tracks_web = manage_tracks_web.replace("var VENUE_ID = '';", f"var VENUE_ID = '{venue_id}';")
+
+        self.save_invitation(Invitation(
+            id=self.journal.get_manage_tracks_id(),
+            invitees=[eic_id],
+            readers=[venue_id, eic_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [eic_id],
+                'readers': ['everyone'],
+                'writers': [venue_id],
+                'group': {
+                    'id': tracks_id,
+                    'content': {
+                        'tracks': {
+                            'value': {
+                                'param': {
+                                    'type': 'object[]',
+                                    'items': {
+                                        'type': 'object',
+                                        'properties': {
+                                            'id': {'type': 'string'},
+                                            'name': {'type': 'string'},
+                                            'open': {'type': 'boolean'},
+                                            'default': {'type': 'boolean'},
+                                            'eligibility_mode': {
+                                                'type': 'string',
+                                                'enum': ['include', 'exclude']
+                                            }
+                                        },
+                                        'required': ['id', 'name', 'open', 'default', 'eligibility_mode'],
+                                        'additionalProperties': False
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            preprocess=self.get_process_content('process/manage_tracks_pre_process.py'),
+            process=self.get_process_content('process/manage_tracks_process.py'),
+            web=manage_tracks_web
+        ))
+
+        self.save_invitation(Invitation(
+            id=self.journal.get_track_eligibility_id(),
+            invitees=[eic_id],
+            readers=[venue_id, eic_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            type='Edge',
+            edit={
+                'id': {'param': {'withInvitation': self.journal.get_track_eligibility_id(), 'optional': True}},
+                'ddate': {'param': {'range': [0, 9999999999999], 'optional': True, 'deletable': True}},
+                'signatures': [eic_id],
+                'readers': [venue_id, eic_id],
+                'writers': [venue_id, eic_id],
+                'head': tracks_id.replace('/Tracks', '/Action_Editors'),
+                'tail': {'param': {'type': 'profile', 'inGroup': self.journal.get_action_editors_id()}},
+                'label': {'param': {'enum': track_ids}},
+                'weight': 1
+            },
+            preprocess=self.get_process_content('process/track_eligibility_pre_process.py')
+        ))
+
+        self.save_invitation(Invitation(
+            id=self.journal.get_track_score_id(),
+            invitees=[venue_id],
+            readers=[venue_id, eic_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            type='Edge',
+            edit={
+                'id': {'param': {'withInvitation': self.journal.get_track_score_id(), 'optional': True}},
+                'ddate': {'param': {'range': [0, 9999999999999], 'optional': True, 'deletable': True}},
+                'signatures': [venue_id],
+                'readers': [venue_id, eic_id],
+                'writers': [venue_id],
+                'head': {'param': {'type': 'note', 'withInvitation': self.journal.get_author_submission_id()}},
+                'tail': {'param': {'type': 'profile', 'inGroup': self.journal.get_action_editors_id()}},
+                'label': 'Track_Score',
+                'weight': {'param': {'type': 'integer', 'enum': [0, 1]}}
+            }
+        ))
+
     def get_super_process_content(self, field_name):
         return '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -159,7 +259,36 @@ class InvitationBuilder(object):
             if self.journal.request_form_id:
                 return process.replace('openreview.journal.Journal()', f'openreview.journal.JournalRequest.get_journal(client, "{self.journal.request_form_id}")')
             else:
-                return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
+                track_settings = f', settings={{"tracks": {self.journal.tracks.seed!r}}}' if self.journal.has_managed_tracks() else ''
+                return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}"{track_settings})')
+
+    def get_combined_preprocess_content(self, existing, file_path):
+        managed = self.get_process_content(file_path)
+        if not existing:
+            return managed
+        if existing.startswith('# journal-managed-track-validation'):
+            return managed
+        marker = '# journal-managed-tracks-custom: '
+        if existing.startswith(marker):
+            existing = json.loads(existing.splitlines()[0][len(marker):])
+        return marker + json.dumps(existing) + '''
+def process(client, edit, invitation):
+    scripts = ''' + repr([existing, managed]) + '''
+    for script in scripts:
+        funcs = {'openreview': openreview, 'datetime': datetime}
+        exec(script, funcs)
+        funcs['process'](client, edit, invitation)
+'''
+
+    def get_preprocess_without_managed_tracks(self, existing):
+        if not existing:
+            return None
+        if existing.startswith('# journal-managed-track-validation'):
+            return None
+        marker = '# journal-managed-tracks-custom: '
+        if existing.startswith(marker):
+            return json.loads(existing.splitlines()[0][len(marker):])
+        return existing
 
 
     def post_invitation_edit(self, invitation, replacement=None):
@@ -1066,8 +1195,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
-        if existing_invitation and existing_invitation.preprocess:
-            invitation.preprocess=existing_invitation.preprocess
+        existing_preprocess = existing_invitation.preprocess if existing_invitation else None
+        if self.journal.has_managed_tracks():
+            invitation.preprocess = self.get_combined_preprocess_content(
+                existing_preprocess,
+                'process/track_submission_pre_process.py'
+            )
+        else:
+            invitation.preprocess = self.get_preprocess_without_managed_tracks(existing_preprocess)
 
         if self.journal.enable_blocked_authors():
             invitation.post_processes = [
@@ -1099,6 +1234,26 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
                 'order': 6                
+            }
+
+        if self.journal.has_managed_tracks():
+            tracks = self.journal.get_tracks()
+            open_tracks = [track for track in tracks if track['open']]
+            default_track = next(track['id'] for track in open_tracks if track['default'])
+            invitation.edit['note']['content']['track_id'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': [
+                            {'value': track['id'], 'description': track['name']}
+                            for track in open_tracks
+                        ],
+                        'default': default_track,
+                        'input': 'radio'
+                    }
+                },
+                'description': 'Select the track for this submission.',
+                'order': 7
             }
 
         if self.journal.get_submission_additional_fields():

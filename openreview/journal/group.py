@@ -135,6 +135,10 @@ class GroupBuilder(object):
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
             content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
             content = content.replace("var PREFERRED_EMAILS_ID = '';", "var PREFERRED_EMAILS_ID = '" + self.journal.get_preferred_emails_invitation_id() + "';")
+            content = content.replace("var MANAGED_TRACKS_ENABLED = false;", f"var MANAGED_TRACKS_ENABLED = {str(self.journal.has_managed_tracks()).lower()};")
+            if self.journal.has_managed_tracks():
+                content = content.replace("var MANAGE_TRACKS_ID = '';", f"var MANAGE_TRACKS_ID = '{self.journal.get_manage_tracks_id()}';")
+                content = content.replace("var TRACK_ELIGIBILITY_ID = '';", f"var TRACK_ELIGIBILITY_ID = '{self.journal.get_track_eligibility_id()}';")
             if self.journal.request_form_id:
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
