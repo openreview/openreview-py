@@ -377,6 +377,10 @@ class TestVenueDeployment():
                 'expiration_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52)) }
             })
         helpers.await_queue_edit(openreview_client, edit_id=dates_edit['id'])
+        # the dates edit updates the Withdrawal mdate, which re-schedules the -0-1 date process
+        # shortly after. Wait for it to finish before renaming: if it fires while the domain is
+        # frozen for the rename, it fails (and exhausts its retries) with a DomainError
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Withdrawal-0-1', count=2)
 
         # the -0-0 cdate process must be scheduled but not yet executed
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Withdrawal').cdate == activation_date
@@ -392,9 +396,6 @@ class TestVenueDeployment():
         helpers.await_venue_processes(openreview_client, venue_id)
         openreview_client.rename_venue(venue_id, renamed_venue_id, request_note.id)
 
-        ## Wait for the internal process that renames the venue
-        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
-
         assert openreview.tools.get_group(openreview_client, renamed_venue_id)
 
         # the rename replaces the old venue id with the new one in the active_venues/venues groups
@@ -403,8 +404,9 @@ class TestVenueDeployment():
         assert renamed_venue_id in openreview_client.get_group('active_venues').members
         assert renamed_venue_id in openreview_client.get_group('venues').members
 
-        # 3. the date processes must be re-scheduled under the new domain
-        helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-1', count=1)
+        # 3. the finished -0-1 process logs (deployment + dates edit) are moved to the new domain,
+        #    and the invitations keep their date processes under the new domain
+        helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-1', count=2)
 
         assert openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Withdrawal')
         assert openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Withdrawal/Dates')
