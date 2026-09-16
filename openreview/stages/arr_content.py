@@ -2502,22 +2502,6 @@ arr_desk_reject_verification = {
         "description": "If this paper should be desk rejected, are there circumstances that justify waving the resubmission penalty? (i.e. this paper should be allowed to be resubmitted in the following cycle).",
         "order": 3
     },
-    # "referral": {
-    #     "value": {
-    #         "param": {
-    #             "input": "radio",
-    #             "enum": [
-    #                 "Refer to Publication Ethics Committee",
-    #                 "Refer to Ethics Committee",
-    #                 "Refer to Professional Conduct Committee"
-    #             ],
-    #             "optional": True,
-    #             "type": "string"
-    #         }
-    #     },
-    #     "description": "[Optional] Should this case be referred to a dedicated ACL committee?",
-    #     "order": 4
-    # },
     "further_relevant_information": {
         "value": {
             "param": {
@@ -2530,6 +2514,22 @@ arr_desk_reject_verification = {
             }
         },
         "description": "Any other relevant information (e.g. links to tickets, problematic comments etc.) that you may have.",
+        "order": 4
+    },
+    "referral": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Refer to Publication Ethics Committee",
+                    "Refer to Ethics Committee",
+                    "Refer to Professional Conduct Committee"
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "[Optional] Is this case serious enough to be referred to a dedicated ACL committee? Most desk-reject cases do not raise to this level.",
         "order": 5
     }
 }
