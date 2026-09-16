@@ -1983,7 +1983,8 @@ For more details, please check the following links:
     def test_review_release_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review_Release')
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review_Release')
+        assert not invitation.expdate
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review_Release/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review_Release/Readers')
 
