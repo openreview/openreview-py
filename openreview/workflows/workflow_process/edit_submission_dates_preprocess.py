@@ -6,5 +6,8 @@ def process(client, edit, invitation):
 
     if full_submission_invitation_id:
         full_submission_invitation = openreview.tools.get_invitation(client, full_submission_invitation_id)
-        if full_submission_invitation and full_submission_invitation.cdate and expdate > full_submission_invitation.cdate:
+        # Ignore check if the full submission invitation has been disabled or deleted
+        if not full_submission_invitation or full_submission_invitation.ddate:
+            return
+        if full_submission_invitation.cdate and expdate > full_submission_invitation.cdate:
             raise openreview.OpenReviewException('Submission expiration date must be less than or equal to the Full Submission activation date. Please update the Full Submission dates first or select an earlier date.')

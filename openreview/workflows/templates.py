@@ -254,7 +254,6 @@ class Templates():
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'expdate': '${2/content/activation_date/value}+1209600000',
                     'description': '${2/content/description/value}',
                     'content': {
                         'workflow_stage_name': {

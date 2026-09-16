@@ -1409,8 +1409,9 @@ class TestCVPRConference():
 
         helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/Submission5/-/Meta_Review')
 
-        invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/Final_Revision')
+        invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/Final_Revision', sort='id:asc')
         assert invitations and len(invitations) == 2
+        assert 'thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision' in invitations[0].id
         assert 'thecvf.com/CVPR/2024/Conference/Submission5/Meta_Review1/-/Final_Revision' in invitations[1].id
 
         # Post a meta review revision
