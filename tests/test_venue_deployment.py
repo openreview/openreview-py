@@ -392,6 +392,9 @@ class TestVenueDeployment():
         helpers.await_venue_processes(openreview_client, venue_id)
         openreview_client.rename_venue(venue_id, renamed_venue_id, request_note.id)
 
+        ## Wait for the internal process that renames the venue
+        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
+
         assert openreview.tools.get_group(openreview_client, renamed_venue_id)
 
         # the rename replaces the old venue id with the new one in the active_venues/venues groups
