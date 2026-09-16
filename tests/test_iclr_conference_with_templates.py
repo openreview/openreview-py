@@ -1053,6 +1053,23 @@ def test_paper_committee_groups(client, openreview_client, helpers):
     senior_area_chair_groups = [group for group in submission_groups if group.id.endswith('/Senior_Area_Chairs')]
     assert len(senior_area_chair_groups) == 10
 
+    # by default the assigned SACs and ACs can see the reviewers' identities so their
+    # consoles can show the real reviewer names
+    reviewer_group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission1/Reviewers')
+    assert reviewer_group.deanonymizers == [
+        'ICLR.cc/2026/Conference',
+        'ICLR.cc/2026/Conference/Submission1/Senior_Area_Chairs',
+        'ICLR.cc/2026/Conference/Submission1/Area_Chairs'
+    ]
+
+    # the assigned SACs can read their own submission group so their console can find
+    # their assignments
+    senior_area_chair_group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission1/Senior_Area_Chairs')
+    assert senior_area_chair_group.readers == [
+        'ICLR.cc/2026/Conference',
+        'ICLR.cc/2026/Conference/Submission1/Senior_Area_Chairs'
+    ]
+
 def test_ac_assignments(client, openreview_client, helpers):
 
     pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -1801,6 +1818,158 @@ def test_review_release_stage(client, openreview_client, helpers):
     reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
     assert len(reviews) == 1
     assert reviews[0].readers == ['everyone']
+
+def test_ai_review_detection_review_reply(client, openreview_client, helpers):
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+    # post reviews from the other two assigned reviewers
+    for reviewer_email, reviewer_id in [
+        ('reviewer_two@iclr.cc', '~Reviewer_ICLRTwo1'),
+        ('reviewer_three@iclr.cc', '~Reviewer_ICLRThree1')
+    ]:
+        reviewer_client = openreview.api.OpenReviewClient(username=reviewer_email, password=helpers.strong_password)
+        anon_group_id = reviewer_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission2/Reviewer_', signatory=reviewer_id)[0].id
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Good paper, accept'},
+                    'review': { 'value': 'Excellent paper, accept'},
+                    'rating': { 'value': 8},
+                    'confidence': { 'value': 4},
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+    venue = openreview.venue.helpers.get_venue(pc_client, 'ICLR.cc/2026/Conference', support_user='openreview.net/Support')
+    venue.review_stage = openreview.stages.ReviewStage(name='Official_Review')
+
+    now = datetime.datetime.now()
+    due_date = now + datetime.timedelta(days=3)
+    venue.custom_stage = openreview.stages.CustomStage(name='AI_Review_Detection',
+        reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+        source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+        due_date=due_date,
+        exp_date=due_date + datetime.timedelta(days=1),
+        invitees=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS],
+        readers=[
+            openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS,
+            openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+            openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+        ],
+        content={
+            'score': {
+                'order': 1,
+                'description': 'AI review detection score.',
+                'value': {
+                    'param': {
+                        'type': 'float',
+                        'range': [0, 1]
+                    }
+                }
+            },
+            'label': {
+                'order': 2,
+                'description': 'AI review detection label.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'input': 'radio',
+                        'enum': ['Human', 'AI']
+                    }
+                }
+            },
+            'link': {
+                'order': 3,
+                'description': 'Link to the AI review detection dashboard.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'input': 'text',
+                        'maxLength': 5000
+                    }
+                }
+            }
+        },
+        notify_readers=False,
+        email_sacs=False)
+
+    venue.create_custom_stage()
+
+    helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/AI_Review_Detection-0-1', count=1)
+
+    assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/AI_Review_Detection')
+
+    reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
+    assert len(reviews) == 3
+    review_ids = {review.id for review in reviews}
+
+    invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/AI_Review_Detection')
+    assert len(invitations) == 3
+
+    # post an AI review detection reply to each review
+    detection_data = [
+        { 'score': { 'value': 0.92 }, 'label': { 'value': 'AI' }, 'link': { 'value': 'https://dashboard.example.com/review-detection/1' } },
+        { 'score': { 'value': 0.15 }, 'label': { 'value': 'Human' }, 'link': { 'value': 'https://dashboard.example.com/review-detection/2' } },
+        { 'score': { 'value': 0.58 }, 'label': { 'value': 'AI' }, 'link': { 'value': 'https://dashboard.example.com/review-detection/3' } }
+    ]
+
+    for detection_invitation, content in zip(invitations, detection_data):
+        detection_edit = pc_client.post_note_edit(
+            invitation=detection_invitation.id,
+            signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+            note=openreview.api.Note(content=content)
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=detection_edit['id'])
+
+    detection_notes = openreview_client.get_notes(parent_invitations='ICLR.cc/2026/Conference/-/AI_Review_Detection', sort='tcdate:asc')
+    assert len(detection_notes) == 3
+    assert all(note.replyto in review_ids for note in detection_notes)
+
+    # first review is flagged as AI and second as Human
+    assert detection_notes[0].content['label']['value'] == 'AI'
+    assert detection_notes[0].content['score']['value'] == 0.92
+    assert detection_notes[0].content['link']['value'] == 'https://dashboard.example.com/review-detection/1'
+
+    assert detection_notes[1].content['label']['value'] == 'Human'
+    assert detection_notes[1].content['score']['value'] == 0.15
+    assert detection_notes[1].content['link']['value'] == 'https://dashboard.example.com/review-detection/2'
+
+    # add the AI review detection stage to the AC, SAC and PC console settings so the
+    # replies are rendered next to each review in the paper status tabs
+    console_group_ids = [
+        'ICLR.cc/2026/Conference/Area_Chairs',
+        'ICLR.cc/2026/Conference/Senior_Area_Chairs',
+        'ICLR.cc/2026/Conference/Program_Chairs'
+    ]
+    for group_id in console_group_ids:
+        console_group = openreview_client.get_group(group_id)
+        assert 'customStageInvitations' not in console_group.web
+
+        updated_web = console_group.web.replace(
+            'enableQuerySearch: true,',
+            '''enableQuerySearch: true,
+    customStageInvitations: [{
+      name: 'AI_Review_Detection',
+      displayField: 'label',
+      extraDisplayFields: ['score', 'link']
+    }],'''
+        )
+
+        pc_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/-/Edit',
+            signatures=['ICLR.cc/2026/Conference'],
+            group=openreview.api.Group(
+                id=group_id,
+                web=updated_web
+            )
+        )
+
+        console_group = openreview_client.get_group(group_id)
+        assert "name: 'AI_Review_Detection'" in console_group.web
 
 def test_public_comment_stage(client, openreview_client, helpers, test_client):
 
