@@ -1898,12 +1898,22 @@ If you would like to change your decision, please follow the link in the previou
                                         'param': {
                                             'const': '${8/content/decision_venue/value}'
                                         }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
                                     }
                                 },
                                 'venueid': {
                                     'value': {
                                         'param': {
                                             'const': '${8/content/decision_venue_id/value}'
+                                        }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
                                         }
                                     }
                                 },
@@ -2146,12 +2156,22 @@ If you would like to change your decision, please follow the link in the previou
                                         'param': {
                                             'const': '${8/content/decision_venue/value}'
                                         }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
                                     }
                                 },
                                 'venueid': {
                                     'value': {
                                         'param': {
                                             'const': '${8/content/decision_venue_id/value}'
+                                        }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
                                         }
                                     }
                                 },
