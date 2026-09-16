@@ -1062,6 +1062,14 @@ def test_paper_committee_groups(client, openreview_client, helpers):
         'ICLR.cc/2026/Conference/Submission1/Area_Chairs'
     ]
 
+    # the assigned SACs can read their own submission group so their console can find
+    # their assignments
+    senior_area_chair_group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission1/Senior_Area_Chairs')
+    assert senior_area_chair_group.readers == [
+        'ICLR.cc/2026/Conference',
+        'ICLR.cc/2026/Conference/Submission1/Senior_Area_Chairs'
+    ]
+
 def test_ac_assignments(client, openreview_client, helpers):
 
     pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -1849,6 +1857,7 @@ def test_ai_review_detection_review_reply(client, openreview_client, helpers):
         invitees=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS],
         readers=[
             openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS,
+            openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
             openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
         ],
         content={
@@ -1929,32 +1938,38 @@ def test_ai_review_detection_review_reply(client, openreview_client, helpers):
     assert detection_notes[1].content['score']['value'] == 0.15
     assert detection_notes[1].content['link']['value'] == 'https://dashboard.example.com/review-detection/2'
 
-    # add the AI review detection stage to the AC console settings so the replies
-    # are rendered in the paper status tab
-    ac_group = openreview_client.get_group('ICLR.cc/2026/Conference/Area_Chairs')
-    assert 'customStageInvitations' not in ac_group.web
+    # add the AI review detection stage to the AC, SAC and PC console settings so the
+    # replies are rendered next to each review in the paper status tabs
+    console_group_ids = [
+        'ICLR.cc/2026/Conference/Area_Chairs',
+        'ICLR.cc/2026/Conference/Senior_Area_Chairs',
+        'ICLR.cc/2026/Conference/Program_Chairs'
+    ]
+    for group_id in console_group_ids:
+        console_group = openreview_client.get_group(group_id)
+        assert 'customStageInvitations' not in console_group.web
 
-    updated_web = ac_group.web.replace(
-        'enableQuerySearch: true,',
-        '''enableQuerySearch: true,
+        updated_web = console_group.web.replace(
+            'enableQuerySearch: true,',
+            '''enableQuerySearch: true,
     customStageInvitations: [{
       name: 'AI_Review_Detection',
       displayField: 'label',
       extraDisplayFields: ['score', 'link']
     }],'''
-    )
-
-    pc_client.post_group_edit(
-        invitation='ICLR.cc/2026/Conference/-/Edit',
-        signatures=['ICLR.cc/2026/Conference'],
-        group=openreview.api.Group(
-            id='ICLR.cc/2026/Conference/Area_Chairs',
-            web=updated_web
         )
-    )
 
-    ac_group = openreview_client.get_group('ICLR.cc/2026/Conference/Area_Chairs')
-    assert "name: 'AI_Review_Detection'" in ac_group.web
+        pc_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/-/Edit',
+            signatures=['ICLR.cc/2026/Conference'],
+            group=openreview.api.Group(
+                id=group_id,
+                web=updated_web
+            )
+        )
+
+        console_group = openreview_client.get_group(group_id)
+        assert "name: 'AI_Review_Detection'" in console_group.web
 
 def test_public_comment_stage(client, openreview_client, helpers, test_client):
 
