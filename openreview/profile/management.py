@@ -272,6 +272,16 @@ return {
                                     'enum': ['Passport', 'Government ID', 'Driver License', 'Other', '.*']
                                 }
                             }
+                        },
+                        'comment': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
+                            }
                         }
                     },
                     'profile': {
@@ -341,6 +351,16 @@ return {
                                     'type': 'string',
                                     'input': 'select',
                                     'enum': ['Enrollment Letter', 'Employment Letter', 'Employee ID', 'Student ID', 'Other', '.*']
+                                }
+                            }
+                        },
+                        'comment': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True
                                 }
                             }
                         }
@@ -421,6 +441,18 @@ return {
                             'range': [ 0, 9999999999999 ],
                             'optional': True,
                             'deletable': True
+                        }
+                    },
+                    'content': {
+                        'comment': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
+                            }
                         }
                     },
                     'profile': {

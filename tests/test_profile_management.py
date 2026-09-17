@@ -142,6 +142,7 @@ class TestProfileManagement():
         parent_consent_edit = support_client.post_profile_edit(
             invitation='openreview.net/Support/-/Parent_Consent',
             signatures=['openreview.net/Support'],
+            content={ 'comment': { 'value': 'Consent form signed by the parent on file.' } },
             profile={
                 'id': '~Gwen_Verified1',
                 'content': {
@@ -158,6 +159,7 @@ class TestProfileManagement():
             }
         )
         assert parent_consent_edit['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
+        assert parent_consent_edit['content']['comment']['value'] == 'Consent form signed by the parent on file.'
 
         ## The owner and support see all the records, other users only the public one.
         edits = gwen_client.get_profile_edits(profile_id='~Gwen_Verified1')
@@ -301,11 +303,15 @@ class TestProfileManagement():
         assert 'domain' not in edit['profile']['content']['history']['value']['institution']
 
         ## The document type enums end with a '.*' prefix option, so a document that
-        ## matches none of the named types can be recorded verbatim.
+        ## matches none of the named types can be recorded verbatim. Support can also
+        ## attach an optional free-text comment to the record.
         edit = support_client.post_profile_edit(
             invitation='openreview.net/Support/-/Affiliation_Verification',
             signatures=['openreview.net/Support'],
-            content={ 'source': { 'value': 'Notarized letter from the registrar' } },
+            content={
+                'source': { 'value': 'Notarized letter from the registrar' },
+                'comment': { 'value': 'Letter countersigned by the department head; registrar stamp verified by phone.' }
+            },
             profile={
                 'id': '~Gwen_Verified1',
                 'content': {
@@ -321,6 +327,7 @@ class TestProfileManagement():
             }
         )
         assert edit['content']['source']['value'] == 'Notarized letter from the registrar'
+        assert edit['content']['comment']['value'] == 'Letter countersigned by the department head; registrar stamp verified by phone.'
 
     def test_import_deprecated_dblp_notes(self, client, openreview_client, test_client, helpers):
 
