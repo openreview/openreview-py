@@ -38,8 +38,8 @@ from openreview.stages.arr_content import (
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
-    arr_submitted_author_forum,
-    arr_submitted_author_content,
+    arr_submitted_contributor_forum,
+    arr_submitted_contributor_content,
     arr_delay_notification_content,
     arr_emergency_declaration_content,
     arr_great_or_irresponsible_ac_content,
@@ -881,9 +881,9 @@ class ARRWorkflow(object):
                 stage_arguments={   
                     'committee_id': venue.get_authors_id(),
                     'name': self.invitation_builder.SUBMITTED_AUTHORS_NAME,
-                    'instructions': arr_submitted_author_forum['instructions'],
-                    'title': arr_submitted_author_forum['title'],
-                    'additional_fields': arr_submitted_author_content,
+                    'instructions': arr_submitted_contributor_forum['instructions'],
+                    'title': arr_submitted_contributor_forum['title'],
+                    'additional_fields': arr_submitted_contributor_content,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
