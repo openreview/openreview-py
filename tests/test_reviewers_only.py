@@ -283,7 +283,7 @@ class TestReviewersOnly():
         assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(now)
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
         assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
-        assert all('readers' in submission_inv.edit['note']['content'][field] for field in ['authors', 'pdf', 'keywords', 'TLDR'])
+        assert all('readers' in submission_inv.edit['note']['content'][field] for field in ['authors', 'pdf', 'email_sharing', 'data_release'])
         submission_deadline_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Dates')
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
@@ -986,6 +986,7 @@ For more details, please check the following links:
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
                     'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
                     'sensitive_notes': { 'value': 'Confidential committee note for paper ' + str(i) },
+                    'TLDR': { 'value': 'This is a TLDR for paper ' + str(i) }
                 }
             )
 
@@ -1005,15 +1006,14 @@ For more details, please check the following links:
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[-1].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', '~Andrea_Umass1']
-        # default submission fields have readers added to them
-        assert all('readers' in submissions[-1].content[field] for field in ['pdf', 'authors', 'TLDR', 'email_sharing', 'data_release'])
-        assert not any('readers' in submissions[-1].content[field] for field in ['title', 'abstract', 'venue', 'venueid', 'subject_area', 'sensitive_notes'])
+        # authors, pdf, email_sharing and data_release have readers added by default
+        assert all('readers' in submissions[-1].content[field] for field in ['pdf', 'authors', 'email_sharing', 'data_release'])
+        assert not any('readers' in submissions[-1].content[field] for field in ['title', 'abstract', 'TLDR', 'venue', 'venueid', 'subject_area', 'sensitive_notes'])
         assert submissions[-1].content['authors']['readers'] == [
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission10/Authors',
         ]
         assert submissions[0].content['sensitive_notes']['value'] == 'Confidential committee note for paper 1'
-        assert 'readers' not in submissions[-1].content['sensitive_notes']
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
