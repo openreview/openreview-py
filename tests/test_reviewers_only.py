@@ -2887,7 +2887,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         # once released to the public, every field except title, abstract and author names (paperhash)
         # must remain restricted to non-public readers
-        public_fields = {'title', 'abstract', 'authors', 'paperhash', 'venue', 'venueid'}
+        public_fields = {'title', 'abstract', 'authors', 'paperhash', 'venue', 'venueid', '_bibtex'}
         for field, field_content in submissions[0].content.items():
             if field in public_fields:
                 assert 'readers' not in field_content, f'"{field}" should be public'
@@ -2960,7 +2960,7 @@ url={https://openreview.net/forum?id='''+submissions[0].id+'''}
         assert submissions[2].odate
         assert not 'readers' in submissions[2].content['authors']
         assert not 'readers' in submissions[2].content['paperhash']
-        public_fields = {'title', 'abstract', 'authors', 'paperhash', 'venue', 'venueid'}
+        public_fields = {'title', 'abstract', 'authors', 'paperhash', 'venue', 'venueid', '_bibtex'}
         for field, field_content in submissions[2].content.items():
             if field in public_fields:
                 assert 'readers' not in field_content, f'"{field}" should be public'
@@ -3045,7 +3045,7 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission3/Authors'
         ]
-        public_fields = {'title', 'abstract', 'venue', 'venueid'}
+        public_fields = {'title', 'abstract', 'venue', 'venueid', '_bibtex'}
         for field, field_content in submissions[2].content.items():
             if field in public_fields:
                 assert 'readers' not in field_content, f'"{field}" should be public'

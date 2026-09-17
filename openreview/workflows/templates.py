@@ -1925,6 +1925,11 @@ If you would like to change your decision, please follow the link in the previou
                                             'optional': True,
                                             'deletable': True
                                         }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
                                     }
                                 }
                             }
@@ -2182,6 +2187,11 @@ If you would like to change your decision, please follow the link in the previou
                                             'input': 'textarea',
                                             'optional': True,
                                             'deletable': True
+                                        }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
                                         }
                                     }
                                 }
