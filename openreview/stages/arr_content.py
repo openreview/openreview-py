@@ -1047,7 +1047,7 @@ hide_fields = [
     "preprint",
     "existing_preprints",
     "preprint_status",
-    "service_contributor"
+    "service_contributor",
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement",
 ]
 
@@ -1071,7 +1071,7 @@ hide_fields_from_public = [
     "preprint",
     "existing_preprints",
     "preprint_status",
-    "service_contributor"
+    "service_contributor",
     # "A1_potential_risks",
     # "A1_elaboration",
     # "B_use_or_create_scientific_artifacts",
@@ -3884,8 +3884,7 @@ arr_emergency_declaration_content = {
                         "I confirm that the substitute service contributor has agreed to serve in my place, and will file a delay notification if necessary."
                     ],
                     "input": "radio",
-                    "optional": True,
-                    "order": 4
+                    "optional": True
                 }
             }
         }        

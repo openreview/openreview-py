@@ -1861,6 +1861,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatures=['~SomeFirstName_User1'],
             note=openreview.api.Note(content=deleted_source_content)
         )
+        # Finish creating the Authors group before deleting the submission.
+        helpers.await_queue_edit(openreview_client, edit_id=deleted_submission_edit['id'])
         delete_edit = openreview_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/-/Edit',
             readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
