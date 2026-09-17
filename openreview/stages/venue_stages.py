@@ -345,8 +345,9 @@ class SubmissionStage(object):
                     '{venue_id}': conference.get_id(),
                     '{paper_authors_id}': conference.get_authors_id('${{4/id}/number}')
                 }
+
                 for field in content.keys():
-                    if 'readers' in content[field]:
+                    if 'readers' in content[field] and isinstance(content[field]['readers'], list):
                         content[field]['readers'] = [readers_mapping.get(reader, reader) for reader in content[field]['readers']]
 
                 if venue_id:
