@@ -428,7 +428,9 @@ class TestARRVenueV2():
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
         assert 'existing_preprints' in submission_invitation.edit['note']['content']
-        assert 'A1_potential_risks' in submission_invitation.edit['note']['content']
+        assert 'A1_potential_risks' not in submission_invitation.edit['note']['content']
+        assert 'service_contributor' in submission_invitation.edit['note']['content']
+        assert 'country_of_origin' in submission_invitation.edit['note']['content']
         assert 'paper_type' in submission_invitation.edit['note']['content']
         assert 'keywords' not in submission_invitation.edit['note']['content']
         language_options = submission_invitation.edit['note']['content']['languages_studied']['value']['param']['enum']
@@ -746,29 +748,10 @@ class TestARRVenueV2():
                 'existing_preprints': { 'value': 'existing_preprints' },
                 'preferred_venue': { 'value': 'ACL' },
                 'visa_needs': { 'value': 'no' },
+                'country_of_origin': {'value': 'US'},
+                'service_contributor': {'value': ['~SomeFirstName_User1']},
                 'consent_to_share_data': { 'value': 'yes' },
                 'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-                "A1_potential_risks": { 'value': 'Yes' },
-                "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-                "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
-                "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
-                "B3_data_contains_personally_identifying_info": { 'value': 'Yes' },
-                "B4_data_contains_offensive_content": { 'value': 'Yes' },
-                "B5_documentation_of_artifacts": { 'value': 'Yes' },
-                "B6_statistics_for_data": { 'value': 'Yes' },
-                "C_computational_experiments": { 'value': 'Yes' },
-                "C1_model_size_and_budget": { 'value': 'Yes' },
-                "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
-                "C3_descriptive_statistics": { 'value': 'Yes' },
-                "C4_parameters_for_packages": { 'value': 'Yes' },
-                "D_human_subjects_including_annotators": { 'value': 'Yes' },
-                "D1_instructions_given_to_participants": { 'value': 'Yes' },
-                "D2_recruitment_and_payment": { 'value': 'Yes' },
-                "D3_data_consent": { 'value': 'Yes' },
-                "D4_ethics_review_board_approval": { 'value': 'Yes' },
-                "D5_annotator_population": { 'value': 'Yes' },
-                "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
-                "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                 "author_submission_checklist": { 'value': 'yes' },
                 "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
             }
@@ -1576,29 +1559,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL' },
             'visa_needs': { 'value': 'no' },
+            'country_of_origin': {'value': 'US'},
+            'service_contributor': {'value': ['~SomeFirstName_User1']},
             'consent_to_share_data': { 'value': 'yes' },
             'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-            "A1_potential_risks": { 'value': 'Yes' },
-            "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-            "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
-            "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
-            "B3_data_contains_personally_identifying_info": { 'value': 'Yes' },
-            "B4_data_contains_offensive_content": { 'value': 'Yes' },
-            "B5_documentation_of_artifacts": { 'value': 'Yes' },
-            "B6_statistics_for_data": { 'value': 'Yes' },
-            "C_computational_experiments": { 'value': 'Yes' },
-            "C1_model_size_and_budget": { 'value': 'Yes' },
-            "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
-            "C3_descriptive_statistics": { 'value': 'Yes' },
-            "C4_parameters_for_packages": { 'value': 'Yes' },
-            "D_human_subjects_including_annotators": { 'value': 'Yes' },
-            "D1_instructions_given_to_participants": { 'value': 'Yes' },
-            "D2_recruitment_and_payment": { 'value': 'Yes' },
-            "D3_data_consent": { 'value': 'Yes' },
-            "D4_ethics_review_board_approval": { 'value': 'Yes' },
-            "D5_annotator_population": { 'value': 'Yes' },
-            "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
-            "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
             "author_submission_checklist": { 'value': 'yes' },
             "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
         }
@@ -1877,29 +1841,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL' },
             'visa_needs': { 'value': 'no' },
+            'country_of_origin': {'value': 'US'},
+            'service_contributor': {'value': ['~SomeFirstName_User1']},
             'consent_to_share_data': { 'value': 'yes' },
             'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-            "A1_potential_risks": { 'value': 'Yes' },
-            "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-            "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
-            "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
-            "B3_data_contains_personally_identifying_info": { 'value': 'Yes' },
-            "B4_data_contains_offensive_content": { 'value': 'Yes' },
-            "B5_documentation_of_artifacts": { 'value': 'Yes' },
-            "B6_statistics_for_data": { 'value': 'Yes' },
-            "C_computational_experiments": { 'value': 'Yes' },
-            "C1_model_size_and_budget": { 'value': 'Yes' },
-            "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
-            "C3_descriptive_statistics": { 'value': 'Yes' },
-            "C4_parameters_for_packages": { 'value': 'Yes' },
-            "D_human_subjects_including_annotators": { 'value': 'Yes' },
-            "D1_instructions_given_to_participants": { 'value': 'Yes' },
-            "D2_recruitment_and_payment": { 'value': 'Yes' },
-            "D3_data_consent": { 'value': 'Yes' },
-            "D4_ethics_review_board_approval": { 'value': 'Yes' },
-            "D5_annotator_population": { 'value': 'Yes' },
-            "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
-            "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
             "author_submission_checklist": { 'value': 'yes' },
             "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
         }
@@ -2568,29 +2513,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'existing_preprints': { 'value': 'existing_preprints' },
                 'preferred_venue': { 'value': 'ACL' },
                 'visa_needs': { 'value': 'no' },
+                'country_of_origin': {'value': 'US'},
+                'service_contributor': {'value': ['~SomeFirstName_User1']},
                 'consent_to_share_data': { 'value': 'yes' },
                 'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-                "A1_potential_risks": { 'value': 'Yes' },
-                "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-                "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
-                "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
-                "B3_data_contains_personally_identifying_info": { 'value': 'Yes' },
-                "B4_data_contains_offensive_content": { 'value': 'Yes' },
-                "B5_documentation_of_artifacts": { 'value': 'Yes' },
-                "B6_statistics_for_data": { 'value': 'Yes' },
-                "C_computational_experiments": { 'value': 'Yes' },
-                "C1_model_size_and_budget": { 'value': 'Yes' },
-                "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
-                "C3_descriptive_statistics": { 'value': 'Yes' },
-                "C4_parameters_for_packages": { 'value': 'Yes' },
-                "D_human_subjects_including_annotators": { 'value': 'Yes' },
-                "D1_instructions_given_to_participants": { 'value': 'Yes' },
-                "D2_recruitment_and_payment": { 'value': 'Yes' },
-                "D3_data_consent": { 'value': 'Yes' },
-                "D4_ethics_review_board_approval": { 'value': 'Yes' },
-                "D5_annotator_population": { 'value': 'Yes' },
-                "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
-                "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                 "author_submission_checklist": { 'value': 'yes' },
                 "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' }
             }
@@ -2758,10 +2684,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         notes = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form_Form')
         assert len(notes) == 1
         replyto_note = notes[0]
-        assert replyto_note.content['title']['value'] == 'Submitted Author Profile Form'
+        assert replyto_note.content['title']['value'] == 'Submitted Service Contributor Form'
 
         submitted_author_content = {
             'confirm_you_are_willing_to_serve_as_a_reviewer_or_AC': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
+            'confirm_emergency_policy': {'value': 'I confirm that in case of unforeseen circumstances I will provide a replacement.'},
+            'confirm_endorsement': {'value': 'I confirm that the submission(s) for which I serve meet the expected quality level: ready for consideration for acceptance at a top-tier conference.'},
             'serving_as_a_regular_or_emergency_reviewer_or_AC': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
             'indicate_emergency_reviewer_load': {'value': "3"},
             'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
@@ -2828,6 +2756,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                     content={
                         'confirm_you_are_willing_to_serve_as_a_reviewer_or_AC': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
+                        'confirm_emergency_policy': {'value': 'I confirm that in case of unforeseen circumstances I will provide a replacement.'},
+                        'confirm_endorsement': {'value': 'I confirm that the submission(s) for which I serve meet the expected quality level: ready for consideration for acceptance at a top-tier conference.'},
                         'serving_as_a_regular_or_emergency_reviewer_or_AC': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
                         'indicate_emergency_reviewer_load': {'value': '3'},
                         'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
@@ -3059,14 +2989,34 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
 
         assert submissions[1].readers == ['everyone']
+        public_field_readers = {
+            number: [
+                'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                f'aclweb.org/ACL/ARR/2023/August/Submission{number}/Senior_Area_Chairs',
+                f'aclweb.org/ACL/ARR/2023/August/Submission{number}/Area_Chairs',
+                f'aclweb.org/ACL/ARR/2023/August/Submission{number}/Reviewers',
+                f'aclweb.org/ACL/ARR/2023/August/Submission{number}/Authors'
+            ]
+            for number in (2, 4, 6)
+        }
+        assert 'service_contributor' in hide_fields_from_public
+        assert 'country_of_origin' in hide_fields_from_public
+        for index in (1, 3, 5):
+            submission = submissions[index]
+            assert submission.readers == ['everyone']
+            assert 'service_contributor' in submission.content
+            assert 'country_of_origin' in submission.content
+            for field in hide_fields_from_public:
+                if field in submission.content:
+                    assert submission.content[field]['readers'] == public_field_readers[submission.number], field
         assert submissions[1].content['TLDR']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['preprint']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['preprint']['readers'] == public_field_readers[2]
+        assert submissions[1].content['existing_preprints']['readers'] == public_field_readers[2]
+        assert submissions[1].content['preferred_venue']['readers'] == public_field_readers[2]
+        assert submissions[1].content['consent_to_share_data']['readers'] == public_field_readers[2]
+        assert submissions[1].content['consent_to_share_submission_details']['readers'] == public_field_readers[2]
         assert submissions[1].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['preprint_status']['readers'] == public_field_readers[2]
 
         # Assert authors and authorids are only readable by authors
         assert set(submissions[1].content['authors']['readers']) == {
@@ -3121,16 +3071,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }
 
-        responsible_checklist_fields = [field for field in hide_fields_from_public if len(field.split('_')[0]) <= 2] ## Any field that looks like A_, A1_, etc.
-        for field in responsible_checklist_fields:
-            assert set(submissions[1].content[field]['readers']) == {
-                "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
-                "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
-                "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-                "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
-                "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-            }
-
         assert submissions[3].readers == ['everyone']
         assert 'readers' in submissions[3].content['authors']
         assert 'readers' in submissions[3].content['authorids']
@@ -3142,18 +3082,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'aclweb.org/ACL/ARR/2023/August',
             f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
         ]
-        assert submissions[3].content['justification_for_author_changes']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
-        ]
-        assert submissions[3].content['preprint_status']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
-        ]
-        assert submissions[3].content['preferred_venue']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
-        ]
+        assert submissions[3].content['justification_for_author_changes']['readers'] == public_field_readers[4]
+        assert submissions[3].content['preprint_status']['readers'] == public_field_readers[4]
+        assert submissions[3].content['preferred_venue']['readers'] == public_field_readers[4]
 
         assert 'everyone' not in submissions[4].readers
 
@@ -3169,18 +3100,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'aclweb.org/ACL/ARR/2023/August', 
             'aclweb.org/ACL/ARR/2023/August/Submission6/Authors'
         ]
-        assert submissions[5].content['justification_for_author_changes']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
-        ]
-        assert submissions[5].content['preprint_status']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
-        ]
-        assert submissions[5].content['preferred_venue']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
-        ]
+        assert submissions[5].content['justification_for_author_changes']['readers'] == public_field_readers[6]
+        assert submissions[5].content['preprint_status']['readers'] == public_field_readers[6]
+        assert submissions[5].content['preferred_venue']['readers'] == public_field_readers[6]
 
         # Post comment as PCs for the first submission
         comment_edit = pc_client_v2.post_note_edit(
@@ -3313,29 +3235,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "existing_preprints": { "value": "existing_preprints" },
             "preferred_venue": { "value": "ACL" },
             "visa_needs": { "value": "no" },
+            'country_of_origin': {'value': 'US'},
+            'service_contributor': {'value': ['~SomeFirstName_User1']},
             "consent_to_share_data": { "value": "yes" },
             "consent_to_share_submission_details": { "value": "On behalf of all authors, we agree to the terms above to share our submission details." },
-            "A1_potential_risks": { "value": "Yes" },
-            "B_use_or_create_scientific_artifacts": { "value": "Yes" },
-            "B1_cite_creators_of_artifacts": { "value": "Yes" },
-            "B2_discuss_the_license_for_artifacts": { "value": "Yes" },
-            "B3_data_contains_personally_identifying_info": { "value": "Yes" },
-            "B4_data_contains_offensive_content": { "value": "Yes" },
-            "B5_documentation_of_artifacts": { "value": "Yes" },
-            "B6_statistics_for_data": { "value": "Yes" },
-            "C_computational_experiments": { "value": "Yes" },
-            "C1_model_size_and_budget": { "value": "Yes" },
-            "C2_experimental_setup_and_hyperparameters": { "value": "Yes" },
-            "C3_descriptive_statistics": { "value": "Yes" },
-            "C4_parameters_for_packages": { "value": "Yes" },
-            "D_human_subjects_including_annotators": { "value": "Yes" },
-            "D1_instructions_given_to_participants": { "value": "Yes" },
-            "D2_recruitment_and_payment": { "value": "Yes" },
-            "D3_data_consent": { "value": "Yes" },
-            "D4_ethics_review_board_approval": { "value": "Yes" },
-            "D5_annotator_population": { "value": "Yes" },
-            "E_ai_assistants_in_research_or_writing": { "value": "Yes" },
-            "E1_information_about_use_of_ai_assistants": { "value": "Yes" },
             "author_submission_checklist": { "value": "yes" },
             "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { "value": "On behalf of all authors, I do not agree" }
         }
@@ -7103,6 +7006,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content={
                     'declaration': {'value': 'Medical'},
+                    'emergency_replacement': {'value': ['~Reviewer_ARRSix1']},
                     'explanation': {'value': 'I have been hospitalized and will be unable to complete my review for at least 2 weeks.'}
                 }
             )
@@ -7423,6 +7327,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content={
                     'declaration': {'value': 'Medical'},
+                    'emergency_replacement': {'value': ['~AC_ARRSix1']},
                     'explanation': {'value': 'I have a medical emergency and need to step back from this assignment.'}
                 }
             )
