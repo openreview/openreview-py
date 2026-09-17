@@ -1047,7 +1047,7 @@ hide_fields = [
     "preprint",
     "existing_preprints",
     "preprint_status",
-    "service_contributor",
+    "service_contributor"
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement",
 ]
 
@@ -1071,7 +1071,7 @@ hide_fields_from_public = [
     "preprint",
     "existing_preprints",
     "preprint_status",
-    "service_contributor",
+    "service_contributor"
     # "A1_potential_risks",
     # "A1_elaboration",
     # "B_use_or_create_scientific_artifacts",
@@ -2482,7 +2482,7 @@ arr_desk_reject_verification = {
                 "type": "string"
             }
         },
-        "description": "What kind(s) of issue is this case? Detailed description of possible DR types: \n\n - Administrative issues: e.g. missing or incomplete openreview profiles for authors, missing responsible NLP checklists \n - Anonymity: e.g. deanonymization in text or supplementary materials, preprint pledge violations \n - Authorship: e.g. late/unjustified author changes \n - Dual/multiple submission: e.g. submissions under review elsewhere, duplicate/overlapping submissions \n Ethics violations: e.g. non-consentual data collection (typically identified in ethics review) \n - Format: e.g. page limit circumvention, template violations, limitations missing) \n - Lottery: desk rejects due to insufficient service capacity \n - Overall level: e.g. incomplete, clearly below bar submissions  \n - Prior sanctions: e.g. resubmissions with prior meta-review score ≤ 1.5, authors under sanctions \n - Professional conduct: e.g. authors grossly violating the norms of professional communication with reviewers or chairs  \n - Publication ethics: e.g. plagiarism, thin slicing, undeclared/uncited concurrent related submissions, hallucinated citations, undisclosed AI-generated content, prompt injection, serious misrepresentation in the checklist  \n - Resubmission and withdrawal policy: e.g. undeclared resubmissions, no explanation of revisions, withdrawal policy violation  \n - Scope: out-of-scope submissions  \n - Service obligations: e.g. missing contributor registration forms, replacement contributor not provided after emergency, over-committed service contributor, over-submitting author \n - Others\n",
+        "description": "What kind(s) of issue is this case? Detailed description of possible DR types: \n\n - Administrative issues: e.g. missing or incomplete openreview profiles for authors, missing responsible NLP checklists \n - Anonymity: e.g. deanonymization in text or supplementary materials, preprint pledge violations \n - Authorship: e.g. late/unjustified author changes \n - Dual/multiple submission: e.g. submissions under review elsewhere, duplicate/overlapping submissions \n Ethics violations: e.g. non-consentual data collection (typically identified in ethics review) \n - Format: e.g. page limit circumvention, template violations, limitations missing) \n - Lottery: desk rejects due to insufficient service capacity \n - Overall level: e.g. incomplete, clearly below bar submissions  \n - Prior sanctions: e.g. resubmissions with prior meta-review score ≤ 1.5, authors under sanctions \n - Professional conduct: e.g. authors grossly violating the norms of professional communication with reviewers or chairs  \n - Publication ethics: e.g. plagiarism, thin slicing, undeclared/uncited concurrent related submissions, hallucinated citations, undisclosed AI-generated content, prompt injection, serious misrepresentation in the checklist  \n - Resubmission and withdrawal policy: e.g. undeclared resubmissions, no explanation of revisions, withdrawal policy violation  \n - Scope: out-of-scope submissions  \n - Service obligations: e.g. missing contributor registration forms, replacement contributor not provided after emergency, over-committed service contributor, over-submitting author \n - Others",
         "order": 2
     },    
     "decision": {
@@ -3851,7 +3851,7 @@ arr_emergency_declaration_content = {
     },
     "explanation": {
     "order": 2,
-    "description": "Any additional comments for the chairs (optional).",
+    "description": "[OPTIONAL] Any additional comments for the chairs.",
         "value": {
             "param": {
                 "type": "string",
@@ -3865,25 +3865,30 @@ arr_emergency_declaration_content = {
     },        
     "emergency_replacement": {
         "order": 3,
-        "description": "[MANDATORY FOR DESIGNATED SERVICE CONTRIBUTORS] If you are providing service in support of a submission under review in this cycle, please provide a replacement, willing and qualified (see https://aclrollingreview.org/qualifications) to perform your tasks. The reassignment will be performed automatically where possible; in COI cases the replacement contributor will be added to the emergency pool and assigned manually.\n\n Under the new sustainable reviewing policy (https://aclrollingreview.org/sustainable-reviewing-2026), emergency replacement search will be performed by chairs only for volunteer contributors. In other cases, failure to provide replacements will result in **desk rejection of any submissions co-authored or supported by the missing service contributor**.\n\n Note: you need to file the emergency declaration form for every submission where you are unable to complete your task (they are not automatically visible to chairs across submission forums). You may indicate different replacements in different submissions.",
+        "description": "[MANDATORY FOR DESIGNATED SERVICE CONTRIBUTORS] If you are providing service in support of a submission under review in this cycle, please provide a substitute, willing and qualified (see https://aclrollingreview.org/qualifications) to perform your tasks in this research area. \n\n Under the new sustainable reviewing policy (https://aclrollingreview.org/sustainable-reviewing-2026), emergency replacement search will be performed by chairs only for volunteer contributors. In other cases, failure to provide substitute contributors will result in **desk rejection of any submissions co-authored or supported by the missing service contributor**.\n\n Note: you need to file the emergency declaration form for every submission where you are unable to complete your task (they are not automatically visible to chairs across submission forums). You may indicate different replacements in different submissions.",
         "value": {
             "param": {
                 "type": "profile{}",
-                "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})"
+                "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
+                "optional": True
             }
         }
     },
     "contingency_planning": {
-    "order": 4,
-    "description": "If you are providing a replacement, please confirm that you have shared the materials with them, and when the task will be completed.",
-        "value": {
-            "param": {
-                "minLength": 1,
-                "type": "string",
-                "optional": True
+        "order": 4,
+        "description": "[MANDATORY FOR DESIGNATED SERVICE CONTRIBUTORS] If you are providing a substitute, please confirm that they have agreed to serve, and are aware of the following protocol. They should monitor their inbox for assignment notification. The reassignment will be performed automatically where possible, and then the new contributor should have access to the submission at once. In COI cases the replacement contributor will be added to the emergency pool and assigned manually (possibly to another submission). In case of any delays (within a few days past the deadline), they should file a [delay notification](https://aclrollingreview.org/reviewerguidelines#delay) indicating when the task will be completed.",
+            "value": {
+                "param": {
+                    "type": "string",
+                    "enum": [
+                        "I confirm that the substitute service contributor has agreed to serve in my place, and will file a delay notification if necessary."
+                    ],
+                    "input": "radio",
+                    "optional": True,
+                    "order": 4
+                }
             }
-        }
-    }        
+        }        
 }
 
 arr_great_or_irresponsible_reviewer_content = {
