@@ -43,12 +43,13 @@ class TestAbstractDeadline():
                     'venue_organizer_agreement': { 
                         'value': [
                             'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                            'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                             'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                             'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                            'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                             ]
                     }
                 }
@@ -396,3 +397,62 @@ class TestAbstractDeadline():
         submission_message_inv = pc_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Message')
         assert submission_message_inv and submission_message_inv.cdate == new_duedate + (30*60*1000)
         assert submission_message_inv.edit['invitation']['cdate'] == new_duedate + (30*60*1000)
+
+    def test_update_submission_deadline_with_disabled_full_submission(self, openreview_client, helpers):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@emas.cc', password=helpers.strong_password)
+
+        venue_id = 'ifaamas.org/AAMAS/2026/Workshop/EMAS'
+
+        submission_inv = pc_client.get_invitation(f'{venue_id}/-/Submission')
+        full_submission_inv = pc_client.get_invitation(f'{venue_id}/-/Full_Submission')
+
+        # a deadline that pushes the Submission expiration date past the Full_Submission
+        # activation date is still rejected while the Full_Submission invitation is enabled
+        new_duedate = full_submission_inv.cdate + (24*60*60*1000)
+        with pytest.raises(openreview.OpenReviewException, match=r'Submission expiration date must be less than or equal to the Full Submission activation date'):
+            pc_client.post_invitation_edit(
+                invitations=f'{venue_id}/-/Submission/Dates',
+                content={
+                    'activation_date': { 'value': submission_inv.cdate },
+                    'due_date': { 'value': new_duedate }
+                }
+            )
+
+        # disable the Full_Submission invitation and its sub-invitations
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
+        for invitation_id in [f'{venue_id}/-/Full_Submission/Dates',f'{venue_id}/-/Full_Submission/Form_Fields', f'{venue_id}/-/Full_Submission']:
+            pc_client.post_invitation_edit(
+                invitations=f'{venue_id}/-/Edit',
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=invitation_id,
+                    ddate=now,
+                    signatures=[venue_id]
+                )
+            )
+
+        assert pc_client.get_invitation(f'{venue_id}/-/Full_Submission').ddate == now
+
+        # the same edit is now accepted, the preprocess ignores the disabled Full_Submission invitation
+        edit = pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Submission/Dates',
+            content={
+                'activation_date': { 'value': submission_inv.cdate },
+                'due_date': { 'value': new_duedate }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Message-0-1', count=4)
+
+        submission_inv = pc_client.get_invitation(f'{venue_id}/-/Submission')
+        assert submission_inv.duedate == new_duedate
+        assert submission_inv.expdate == new_duedate + (30*60*1000)
+        # the new expiration date is later than the activation date of the disabled Full_Submission invitation
+        assert submission_inv.expdate > full_submission_inv.cdate
+
+        submission_message_inv = pc_client.get_invitation(f'{venue_id}/Reviewers/-/Submission_Message')
+        assert submission_message_inv.cdate == new_duedate + (30*60*1000)
+        assert submission_message_inv.edit['invitation']['cdate'] == new_duedate + (30*60*1000)
+

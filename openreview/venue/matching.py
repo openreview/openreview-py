@@ -640,6 +640,26 @@ class Matching(object):
         except openreview.OpenReviewException as e:
             raise openreview.OpenReviewException('There was an error connecting with the expertise API: ' + str(e))
 
+    def _upload_scores_from_job(self, job_id, score_invitation_id, submissions):
+        client = self.client
+        matching_status = {
+            'no_profiles': [],
+            'no_publications': []
+        }
+
+        result = client.get_expertise_results(job_id, wait_for_complete=True, format='csv')
+        # CSV columns: entityA, entityB, score; downstream builders expect [entityB, entityA, score]
+        scores = [[row['entityB'], row['entityA'], row['score']] for row in result]
+
+        metadata = client.get_expertise_metadata(job_id)
+        matching_status['no_profiles'] = metadata.get('no_profile', [])
+        matching_status['no_publications'] = metadata.get('no_publications', [])
+
+        if self.alternate_matching_group:
+            return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
+
+        return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
+
     def _build_config_invitation(self, scores_specification):
         venue = self.venue
 
@@ -1028,12 +1048,19 @@ class Matching(object):
         type_affinity_scores = type(compute_affinity_scores)
 
         if type_affinity_scores == dict:
-            invitation, matching_status = self._compute_scores(
-                venue.get_affinity_score_id(self.match_group.id),
-                submissions,
-                compute_affinity_scores.get('model', 'specter2+scincl'),
-                compute_affinity_scores.get('percentile_selection', None)
-            )
+            if compute_affinity_scores.get('model'):
+                invitation, matching_status = self._compute_scores(
+                    venue.get_affinity_score_id(self.match_group.id),
+                    submissions,
+                    compute_affinity_scores.get('model', 'specter2+scincl'),
+                    compute_affinity_scores.get('percentile_selection', None)
+                )
+            if compute_affinity_scores.get('job_id'):
+                invitation, matching_status = self._upload_scores_from_job(
+                    compute_affinity_scores.get('job_id'),
+                    venue.get_affinity_score_id(self.match_group.id),
+                    submissions
+                )
 
         if type_affinity_scores == str:
             if compute_affinity_scores in ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']:
@@ -1041,7 +1068,7 @@ class Matching(object):
                     venue.get_affinity_score_id(self.match_group.id),
                     submissions,
                     compute_affinity_scores
-                )                
+                )
             else:
                 self._build_scores_from_file(
                     venue.get_affinity_score_id(self.match_group.id),
