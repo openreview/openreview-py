@@ -307,7 +307,9 @@ return {
         )
 
         ## Posted by support after reviewing a document proving institution affiliation:
-        ## confirms the institution, the position held, and — when the document carries
+        ## a document attests exactly one affiliation, so the edit asserts a single
+        ## history entry (keyed 'history' to match profile.content) with the
+        ## institution, the position held and — when the document carries
         ## them — the person's name and date of birth. Institution-issued documents
         ## vary: some show identity data and some do not even state the email domain,
         ## so every asserted field is optional. The record is public so anyone can see
@@ -372,8 +374,7 @@ return {
                             'history': {
                                 'value': {
                                     'param': {
-                                        'type': 'object{}',
-                                        'change': 'add',
+                                        'type': 'object',
                                         'optional': True,
                                         'properties': {
                                             'position': { 'param': { 'type': 'string', 'minLength': 1 } },

@@ -117,14 +117,12 @@ class TestProfileManagement():
                     'fullname': { 'value': 'Gwen Verified' },
                     'history': {
                         'value': {
-                            'add': [{
-                                'position': 'PhD Student',
-                                'start': 2017,
-                                'institution': {
-                                    'domain': 'profile.org',
-                                    'name': 'Profile Org'
-                                }
-                            }]
+                            'position': 'PhD Student',
+                            'start': 2017,
+                            'institution': {
+                                'domain': 'profile.org',
+                                'name': 'Profile Org'
+                            }
                         }
                     }
                 }
@@ -261,21 +259,19 @@ class TestProfileManagement():
                     'content': {
                         'history': {
                             'value': {
-                                'add': [{
-                                    'position': 'PhD Student',
-                                    'start': 2017,
-                                    'end': end_year,
-                                    'institution': {
-                                        'domain': 'profile.org',
-                                        'name': 'Profile Org'
-                                    }
-                                }]
+                                'position': 'PhD Student',
+                                'start': 2017,
+                                'end': end_year,
+                                'institution': {
+                                    'domain': 'profile.org',
+                                    'name': 'Profile Org'
+                                }
                             }
                         }
                     }
                 }
             )
-            assert edit['profile']['content']['history']['value']['add'][0]['end'] == end_year
+            assert edit['profile']['content']['history']['value']['end'] == end_year
 
         ## The profile still lists the position as Present
         profile = support_client.get_profile('~Gwen_Verified1')
@@ -283,7 +279,7 @@ class TestProfileManagement():
         assert profile.content['history'][0]['end'] is None
 
         ## A student ID may show only the institution name, not its email domain, so
-        ## the domain is optional in the asserted history.
+        ## the domain is optional in the asserted history entry.
         edit = support_client.post_profile_edit(
             invitation='openreview.net/Support/-/Affiliation_Verification',
             signatures=['openreview.net/Support'],
@@ -293,18 +289,16 @@ class TestProfileManagement():
                 'content': {
                     'history': {
                         'value': {
-                            'add': [{
-                                'position': 'PhD Student',
-                                'institution': {
-                                    'name': 'Profile Org'
-                                }
-                            }]
+                            'position': 'PhD Student',
+                            'institution': {
+                                'name': 'Profile Org'
+                            }
                         }
                     }
                 }
             }
         )
-        assert 'domain' not in edit['profile']['content']['history']['value']['add'][0]['institution']
+        assert 'domain' not in edit['profile']['content']['history']['value']['institution']
 
     def test_import_deprecated_dblp_notes(self, client, openreview_client, test_client, helpers):
 
