@@ -269,7 +269,7 @@ return {
                                 'param': {
                                     'type': 'string',
                                     'input': 'select',
-                                    'enum': ['Passport', 'Government ID', 'Driver License', 'Other']
+                                    'enum': ['Passport', 'Government ID', 'Driver License', 'Other', '.*']
                                 }
                             }
                         }
@@ -340,7 +340,7 @@ return {
                                 'param': {
                                     'type': 'string',
                                     'input': 'select',
-                                    'enum': ['Enrollment Letter', 'Employment Letter', 'Employee ID', 'Student ID', 'Other']
+                                    'enum': ['Enrollment Letter', 'Employment Letter', 'Employee ID', 'Student ID', 'Other', '.*']
                                 }
                             }
                         }

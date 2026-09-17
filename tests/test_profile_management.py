@@ -300,6 +300,28 @@ class TestProfileManagement():
         )
         assert 'domain' not in edit['profile']['content']['history']['value']['institution']
 
+        ## The document type enums end with a '.*' prefix option, so a document that
+        ## matches none of the named types can be recorded verbatim.
+        edit = support_client.post_profile_edit(
+            invitation='openreview.net/Support/-/Affiliation_Verification',
+            signatures=['openreview.net/Support'],
+            content={ 'source': { 'value': 'Notarized letter from the registrar' } },
+            profile={
+                'id': '~Gwen_Verified1',
+                'content': {
+                    'history': {
+                        'value': {
+                            'position': 'PhD Student',
+                            'institution': {
+                                'name': 'Profile Org'
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        assert edit['content']['source']['value'] == 'Notarized letter from the registrar'
+
     def test_import_deprecated_dblp_notes(self, client, openreview_client, test_client, helpers):
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
