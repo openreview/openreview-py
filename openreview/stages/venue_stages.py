@@ -276,10 +276,9 @@ class SubmissionStage(object):
         elif api_version == '2':
             content = deepcopy(default_content.submission_v2)
 
+            # all new UI venues uses the unified authors format
             if self.unified_authors:
-                del content['authors']
-                del content['authorids']
-                content['authors'] = deepcopy(default_content.submission_v2_unified_authors)
+                content = deepcopy(default_content.submission_v2_unified_authors)
 
             if self.subject_areas:
                 content['subject_areas'] = {
@@ -342,33 +341,14 @@ class SubmissionStage(object):
                         if field not in content:
                             content[field] = { 'delete': True }
 
-                if getattr(conference, 'is_template_related_workflow', None) and conference.is_template_related_workflow():
-                    content['email_sharing'] = {
-                        'order': 50,
-                        'description': 'Please confirm you are aware that all author emails will be shared with Program Chairs.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'enum': [
-                                    'We authorize the sharing of all author emails with Program Chairs.'
-                                ],
-                                'input': 'radio'
-                            }
-                        }
-                    }
-                    content['data_release'] = {
-                        'order': 51,
-                        'description': 'Please confirm you are aware that accepted submissions, along with their author names, will be released to the public after the conference is over.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'enum': [
-                                    'We authorize the release of our submission and author names to the public in the event of acceptance.'
-                                ],
-                                'input': 'radio'
-                            }
-                        }
-                    }
+                readers_mapping = {
+                    '{venue_id}': conference.get_id(),
+                    '{paper_authors_id}': conference.get_authors_id('${{4/id}/number}')
+                }
+
+                for field in content.keys():
+                    if 'readers' in content[field] and isinstance(content[field]['readers'], list):
+                        content[field]['readers'] = [readers_mapping.get(reader, reader) for reader in content[field]['readers']]
 
                 if venue_id:
                     content['venue'] = {
