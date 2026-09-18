@@ -2648,7 +2648,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert submission.content['number_of_reviewer_checklists']['value'] == 0
             assert submission.content['number_of_action_editor_checklists']['value'] == 0
 
-    def test_submitted_author_form(self, client, openreview_client, helpers, test_client, request_page, selenium):
+    def test_submitted_contributor_form(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -2676,14 +2676,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue()
-        submitted_author_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form')
+        submitted_author_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form')
         assert submitted_author_invitation
         assert 'has_valid_orcid_checksum' in submitted_author_invitation.preprocess
         submitted_author_fields = submitted_author_invitation.edit['note']['content']
         assert 'English' in submitted_author_fields['indicate_your_languages']['value']['param']['enum']
         assert 'other_languages' in submitted_author_fields
 
-        notes = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form_Form')
+        notes = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form_Form')
         assert len(notes) == 1
         replyto_note = notes[0]
         assert replyto_note.content['title']['value'] == 'Submitted Service Contributor Form'
@@ -2714,7 +2714,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         with pytest.raises(openreview.OpenReviewException, match=r'does not contain a DBLP link'):
             test_client.post_note_edit(
-                invitation='aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form',
+                invitation='aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(content=deepcopy(submitted_author_content))
             )
@@ -2726,7 +2726,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         test_client.post_profile(author_profile)
 
         test_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form',
+            invitation='aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form',
             signatures=['~SomeFirstName_User1'],
             note=openreview.api.Note(content=deepcopy(submitted_author_content))
         )
@@ -2750,10 +2750,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         helpers.await_queue()
 
-        # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form has expired"
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form has expired'):
+        # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form has expired"
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form has expired'):
             test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form",
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                     content={
@@ -2788,7 +2788,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             writers=['aclweb.org/ACL/ARR/2023/August'],
             signatures=['aclweb.org/ACL/ARR/2023/August'],
             invitation=openreview.api.Invitation(
-                id = f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
+                id = f"aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form",
                 edit = {
                     'note': {
                         'content': {
@@ -2830,7 +2830,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         helpers.await_queue()
 
-        invitation = openreview_client.get_invitation(f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form")
+        invitation = openreview_client.get_invitation(f"aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form")
         assert 'paper_type' in invitation.edit['note']['content']
 
     def test_post_submission(self, client, openreview_client, helpers, test_client, request_page, selenium):

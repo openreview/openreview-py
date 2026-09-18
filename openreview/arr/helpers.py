@@ -65,13 +65,13 @@ class ARRWorkflow(object):
             "required": False
         },
         "reviewer_nomination_start_date": {
-            "description": "When can authors start submitting forms for being a reviewer?",
+            "description": "When can designated service contributors start submitting registration forms?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 3,
             "required": False
         },
         "reviewer_nomination_end_date": {
-            "description": "What should be the displayed due date for the submitted author form?",
+            "description": "What should be the displayed due date for the submitted contributor form?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 4,
             "required": False
@@ -875,12 +875,12 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
-                group_id=venue.get_authors_id(),
+                group_id=venue.get_contributors_id(),
                 required_fields=['reviewer_nomination_start_date', 'reviewer_nomination_end_date'],
-                super_invitation_id=f"{venue.get_authors_id()}/-/{self.invitation_builder.SUBMITTED_AUTHORS_NAME}",
+                super_invitation_id=f"{venue.get_contributors_id()}/-/{self.invitation_builder.SUBMITTED_CONTRIBUTORS_NAME}",
                 stage_arguments={   
-                    'committee_id': venue.get_authors_id(),
-                    'name': self.invitation_builder.SUBMITTED_AUTHORS_NAME,
+                    'committee_id': venue.get_contributors_id(),
+                    'name': self.invitation_builder.SUBMITTED_CONTRIBUTORS_NAME,
                     'instructions': arr_submitted_contributor_forum['instructions'],
                     'title': arr_submitted_contributor_forum['title'],
                     'additional_fields': arr_submitted_contributor_content,
@@ -1861,6 +1861,36 @@ class ARRStage(object):
         return (
             datetime.utcnow() + timedelta(seconds=ARRStage.UPDATE_WAIT_TIME)
         ).strftime('%Y/%m/%d %H:%M')
+
+def update_contributors(client, submission):
+    """Synchronize a submission's nominated contributors with the cycle role."""
+    domain = client.get_group(submission.domain)
+    venue_id = domain.id
+    contributors_id = domain.content['contributors_id']['value']
+    submission_name = domain.content['submission_name']['value']
+    group_id = f'{venue_id}/{submission_name}{submission.number}/Contributors'
+    previous_group = openreview.tools.get_group(client, group_id)
+    previous_members = set(previous_group.members) if previous_group else set()
+    members = list(dict.fromkeys(submission.content.get('service_contributor', {}).get('value', [])))
+    client.post_group_edit(
+        invitation=domain.content['meta_invitation_id']['value'],
+        readers=[venue_id],
+        writers=[venue_id],
+        signatures=[venue_id],
+        group=openreview.api.Group(
+            id=group_id,
+            readers=[venue_id, group_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            signatories=[venue_id, group_id],
+            members=members
+        )
+    )
+    client.add_members_to_group(contributors_id, group_id)
+    # Replacing members only flushes the new members' caches in post_group_edit.
+    for member in previous_members - set(members):
+        client.flush_members_cache(member)
+
 
 def setup_arr_invitations(arr_invitation_builder):
     arr_invitation_builder.set_arr_configuration_invitation()
