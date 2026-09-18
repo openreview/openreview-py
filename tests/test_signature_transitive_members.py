@@ -10,7 +10,7 @@ from openreview.stages import SubmissionStage
 class TestSignatureTransitiveMembers():
     '''Reviewer identities are visible to the program chairs only, and an area chair is assigned to the same paper as a
     reviewer. The area chair can read the paper's Reviewers group but is not a reader of the reviewer's anonymous id.
-    The tests document two ways the area chair still learns which reviewer is on the paper.'''
+    The tests cover two ways the area chair used to learn which reviewer is on the paper.'''
 
     @pytest.fixture(scope="class")
     def venue(self, openreview_client):
@@ -94,10 +94,15 @@ class TestSignatureTransitiveMembers():
         openreview_client.add_members_to_group('TestIdentityVenue.cc/Submission1/Reviewers', ['~Reviewer_Identity_One1'])
         openreview_client.add_members_to_group('TestIdentityVenue.cc/Submission1/Area_Chairs', ['~AreaChair_Identity_One1'])
 
+        # The chairs are not writers of the paper's Reviewers group, since they are not allowed to see the identities
+        reviewers_group = openreview_client.get_group('TestIdentityVenue.cc/Submission1/Reviewers')
+        assert reviewers_group.readers == ['TestIdentityVenue.cc', 'TestIdentityVenue.cc/Submission1/Area_Chairs', 'TestIdentityVenue.cc/Submission1/Reviewers']
+        assert reviewers_group.writers == ['TestIdentityVenue.cc']
+
         anon_group = openreview_client.get_groups(prefix='TestIdentityVenue.cc/Submission1/Reviewer_')[0]
         assert anon_group.members == ['~Reviewer_Identity_One1']
         assert anon_group.readers == ['TestIdentityVenue.cc', 'TestIdentityVenue.cc/Program_Chairs', anon_group.id]
-        assert anon_group.writers == ['TestIdentityVenue.cc', 'TestIdentityVenue.cc/Submission1/Area_Chairs']
+        assert anon_group.writers == ['TestIdentityVenue.cc']
 
         openreview_client.flush_members_cache('~AreaChair_Identity_One1')
         ac_client = OpenReviewClient(username='identity_ac@mail.com', password=helpers.strong_password)
@@ -105,11 +110,12 @@ class TestSignatureTransitiveMembers():
         # The area chair is not a reader of the anonymous group, so it is not listed for them
         assert ac_client.get_groups(prefix='TestIdentityVenue.cc/Submission1/Reviewer_') == []
 
-        # Issue 1: the area chair is a writer of the anonymous group (the writers of the paper's Reviewers group are
-        # copied to it), and a group fetched by id is returned to its writers with its members, so the area chair
-        # reads the reviewer's identity even though reviewer_identity_readers excludes area chairs
-        group = ac_client.get_group(anon_group.id)
-        assert group.members == ['~Reviewer_Identity_One1']
+        # Issue 1: a group fetched by id is returned to its writers with its members, and the anonymous group copies
+        # the writers of the paper's Reviewers group. Those used to include the area chairs, so the area chair could
+        # read the reviewer's identity even though reviewer_identity_readers excludes area chairs. The chairs are
+        # writers of the paper's Reviewers group only when they can see the identities now
+        with pytest.raises(openreview.OpenReviewException, match=r'is not reader of'):
+            ac_client.get_group(anon_group.id)
 
     def test_area_chair_can_get_notes_signed_by_groups_of_the_reviewer(self, venue, openreview_client, helpers):
 
@@ -179,10 +185,8 @@ class TestSignatureTransitiveMembers():
         # Nothing is signed with the reviewer's profile id
         assert ac_client.get_notes(signature='~Reviewer_Identity_One1') == []
 
-        # Issue 2: with transitiveMembers the API expands the profile id to the groups the reviewer is a transitive
-        # member of and keeps the ones the area chair can read. The anonymous id is dropped, but the paper's Reviewers
-        # group, reached through it, is kept, so the note signed by that group is returned and tells the area chair
-        # that the reviewer is assigned to this paper
-        notes = ac_client.get_notes(signature='~Reviewer_Identity_One1', transitive_members=True)
-        assert [note.id for note in notes] == [group_note_edit['note']['id']]
-        assert notes[0].signatures == ['TestIdentityVenue.cc/Submission1/Reviewers']
+        # Issue 2: with transitiveMembers the API used to expand the profile id to the groups the reviewer is a
+        # transitive member of and keep the ones the area chair can read. The anonymous id was dropped, but the paper's
+        # Reviewers group, reached through it, was kept, so the note signed by that group was returned and told the
+        # area chair that the reviewer is assigned to this paper. The parameter is ignored now
+        assert ac_client.get_notes(signature='~Reviewer_Identity_One1', transitive_members=True) == []
