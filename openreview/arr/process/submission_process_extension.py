@@ -39,3 +39,6 @@
             }
         )
     )
+
+    from openreview.arr.helpers import update_contributors
+    update_contributors(client, note)
