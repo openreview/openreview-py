@@ -431,10 +431,6 @@ class Matching(object):
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
-        # Perform sanity check
-        edges_posted = self.client.get_edges_count(invitation=invitation_id, domain=self.venue.venue_id)
-        if edges_posted < len(edges):
-            raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
         return invitation
 
     def _build_custom_max_papers(self, user_profiles):
@@ -538,10 +534,7 @@ class Matching(object):
         self.client.delete_edges(invitation_id, wait_to_finish=True)
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
-        # Perform sanity check
-        edges_posted = self.client.get_edges_count(invitation=invitation_id, domain=self.venue.venue_id)
-        if edges_posted < len(edges):
-            raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
+
         return invitation
 
     def _build_note_scores(self, score_invitation_id, scores, submissions):
@@ -582,10 +575,7 @@ class Matching(object):
         self.client.delete_edges(invitation_id, wait_to_finish=True)
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
-        # Perform sanity check
-        edges_posted = self.client.get_edges_count(invitation=invitation_id, domain=self.venue.venue_id)
-        if edges_posted < len(edges):
-            raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
+
         return invitation
 
     def _compute_scores(self, score_invitation_id, submissions, model='specter2+scincl', percentile_selection=None):

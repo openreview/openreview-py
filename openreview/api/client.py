@@ -2512,6 +2512,8 @@ class OpenReviewClient(object):
         :type tail: str, optional
         :param wait_to_finish: True if execution should pause until deletion of edges is finished
         :type wait_to_finish: bool, optional
+        :param soft_delete: True if the edges should be soft deleted, False if they should be hard deleted
+        :type soft_delete: bool, optional
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
@@ -2526,12 +2528,64 @@ class OpenReviewClient(object):
         if id: 
             delete_query['id'] = id
 
-        delete_query['waitToFinish'] = wait_to_finish
+        ## The server deletes all the matching edges in a single operation that takes minutes when
+        ## the collection holds millions of edges. Holding the request open with waitToFinish runs
+        ## past the gateway timeout, and the session then retries the DELETE and starts a second
+        ## deletion while the first one is still running. Start the deletion in the background
+        ## instead and, when the caller wants to wait, poll until no matching edge is left:
+        ## edges posted while a deletion is still running get deleted too.
+        delete_query['waitToFinish'] = False
         delete_query['softDelete'] = soft_delete
 
         response = self.session.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
-        return response.json()
+        result = response.json()
+
+        if wait_to_finish:
+            self.__wait_for_edges_deletion(invitation=invitation, id=id, label=label, head=head, tail=tail)
+
+        return result
+
+    def __wait_for_edges_deletion(self, invitation, id, label, head, tail, wait_timeout=3600, max_poll_interval=60):
+        """
+        Polls the API until all the edges matching the filters are deleted.
+        """
+        ## Resolve the domain once: get_edges would otherwise fetch the invitation on every poll
+        try:
+            domain = self.get_invitation(invitation).domain
+        except:
+            domain = None
+
+        deadline = time.time() + wait_timeout
+        ## The wait between polls doubles up to max_poll_interval, so these are more than enough polls to cover wait_timeout
+        max_attempts = int(wait_timeout / max_poll_interval) + 10
+        poll_interval = 1
+        last_error = None
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                ## Ask for a single edge: counting all the edges of the invitation can take longer than the gateway timeout
+                pending_edges = self.get_edges(id=id, invitation=invitation, head=head, tail=tail, label=label, limit=1, domain=domain)
+                last_error = None
+                if not pending_edges:
+                    print(f'Deleting edges of {invitation}: all the edges were deleted')
+                    return
+                print(f'Deleting edges of {invitation}: edges pending to be deleted, attempt {attempt}/{max_attempts}')
+            except Exception as error:
+                ## The query can fail while the deletion is running, keep polling until the deadline
+                last_error = error
+                print(f'Deleting edges of {invitation}: edge query failed with "{error}", attempt {attempt}/{max_attempts}')
+
+            remaining = deadline - time.time()
+            if remaining <= 0:
+                break
+
+            time.sleep(min(poll_interval, remaining))
+            poll_interval = min(poll_interval * 2, max_poll_interval)
+
+        if last_error:
+            raise OpenReviewException(f'Failed to check the deletion of the edges of {invitation}: {last_error}')
+        raise OpenReviewException(f'Timeout waiting for the deletion of the edges of {invitation}')
     
     def delete_tags(self, invitation, id=None, label=None, wait_to_finish=False, soft_delete=False):
         """

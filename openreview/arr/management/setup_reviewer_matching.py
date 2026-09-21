@@ -148,7 +148,8 @@ def process(client, invitation):
         token=client.token
     )
 
-    if client.get_edges_count(invitation=f"{reviewers_id}/-/Affinity_Score", domain=venue_id) <= 0:
+    ## Ask for a single edge: counting all the affinity scores can take longer than the gateway timeout
+    if not client.get_edges(invitation=f"{reviewers_id}/-/Affinity_Score", limit=1, domain=venue_id):
         print(f"no affinity scores for {reviewers_id}")
         return
 
