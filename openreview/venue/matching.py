@@ -427,7 +427,7 @@ class Matching(object):
                     ))
 
         ## Delete previous conflicts
-        self.client.delete_edges(invitation_id, wait_to_finish=True)
+        self.client.delete_edges(invitation_id)
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
@@ -531,7 +531,7 @@ class Matching(object):
                 ))
 
         ## Delete previous scores
-        self.client.delete_edges(invitation_id, wait_to_finish=True)
+        self.client.delete_edges(invitation_id)
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
@@ -572,7 +572,7 @@ class Matching(object):
         print('deleted papers', deleted_papers)
 
         ## Delete previous scores
-        self.client.delete_edges(invitation_id, wait_to_finish=True)
+        self.client.delete_edges(invitation_id)
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
@@ -1265,7 +1265,7 @@ class Matching(object):
                 else:
                     print('assignment not found', paper.id)
             ## Delete current assignment edges with a ddate in case we need to do rollback
-            client.delete_edges(invitation=assignment_invitation_id, wait_to_finish=True, soft_delete=True)
+            client.delete_edges(invitation=assignment_invitation_id, soft_delete=True)
 
         def process_paper_assignments(paper):
             paper_assignment_edges = []
@@ -1368,7 +1368,7 @@ class Matching(object):
             for sac_assignment in sac_assignments:
                 assignment_edge_id = current_assignment_edges.get(head, {}).get(sac_assignment['tail'])
                 if assignment_edge_id:
-                    client.delete_edges(id=assignment_edge_id, invitation=assignment_invitation_id, wait_to_finish=True, soft_delete=True)
+                    client.delete_edges(id=assignment_edge_id, invitation=assignment_invitation_id, soft_delete=True)
 
     
     def deploy_sac_assignments(self, assignment_title, overwrite):
@@ -1449,7 +1449,7 @@ class Matching(object):
                     assigned_users.append(assigned_user)
                     assignment_edge_id = current_assignment_edges.get(paper.id, {}).get(assigned_user)
                     if assignment_edge_id:
-                        client.delete_edges(id=assignment_edge_id, invitation=assignment_invitation_id, wait_to_finish=True, soft_delete=True)
+                        client.delete_edges(id=assignment_edge_id, invitation=assignment_invitation_id, soft_delete=True)
                 client.remove_members_from_group(paper_committee_id, assigned_users)
             else:
                 print('assignment not found', paper.id)

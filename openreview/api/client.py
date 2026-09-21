@@ -2498,7 +2498,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
+    def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -2510,8 +2510,6 @@ class OpenReviewClient(object):
         :type head: str, optional
         :param tail: id of the edge tail (tail type defined by the edge invitation)
         :type tail: str, optional
-        :param wait_to_finish: True if execution should pause until deletion of edges is finished
-        :type wait_to_finish: bool, optional
         :param soft_delete: True if the edges should be soft deleted, False if they should be hard deleted
         :type soft_delete: bool, optional
 
@@ -2532,8 +2530,8 @@ class OpenReviewClient(object):
         ## the collection holds millions of edges. Holding the request open with waitToFinish runs
         ## past the gateway timeout, and the session then retries the DELETE and starts a second
         ## deletion while the first one is still running. Start the deletion in the background
-        ## instead and, when the caller wants to wait, poll until no matching edge is left:
-        ## edges posted while a deletion is still running get deleted too.
+        ## instead and wait until no matching edge is left: edges posted while a deletion is
+        ## still running get deleted too.
         delete_query['waitToFinish'] = False
         delete_query['softDelete'] = soft_delete
 
@@ -2541,8 +2539,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         result = response.json()
 
-        if wait_to_finish:
-            self.__wait_for_edges_deletion(invitation=invitation, id=id, label=label, head=head, tail=tail)
+        self.__wait_for_edges_deletion(invitation=invitation, id=id, label=label, head=head, tail=tail)
 
         return result
 

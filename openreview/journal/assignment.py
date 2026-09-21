@@ -18,7 +18,7 @@ class Assignment(object):
     def post_submission_edges(self, edges):
         if edges:
             ## Remove current edges if they exists
-            self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head, wait_to_finish=True)
+            self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head)
             tools.post_bulk_edges(self.client, edges)
 
     def setup_ae_assignment(self, note, job_id=None):
@@ -214,7 +214,7 @@ class Assignment(object):
         assignments_by_ae = { e['id']['tail']: [v for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail', domain=journal.venue_id) }
 
         ## Clear the quotas
-        self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
+        self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True)
 
         max_active_submissions = journal.get_ae_max_active_submissions()
         now = datetime.datetime.now()
