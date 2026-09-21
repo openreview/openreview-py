@@ -2526,28 +2526,31 @@ class OpenReviewClient(object):
         if id: 
             delete_query['id'] = id
 
-        ## The server deletes all the matching edges in a single operation that takes minutes when
-        ## the collection holds millions of edges. Holding the request open with waitToFinish runs
-        ## past the gateway timeout, and the session then retries the DELETE and starts a second
-        ## deletion while the first one is still running. Start the deletion in the background
-        ## instead and wait until no matching edge is left: edges posted while a deletion is
+        ## A deletion filtered by id, head or tail matches few edges and finishes well within the
+        ## gateway timeout, so the server can wait for it. An invitation wide deletion takes minutes
+        ## when the collection holds millions of edges: holding the request open with waitToFinish
+        ## runs past the gateway timeout, and the session then retries the DELETE and starts a
+        ## second deletion while the first one is still running. Start that one in the background
+        ## instead and wait until no matching edge is left, since edges posted while a deletion is
         ## still running get deleted too.
-        delete_query['waitToFinish'] = False
+        scoped_deletion = bool(id or head or tail)
+        delete_query['waitToFinish'] = scoped_deletion
         delete_query['softDelete'] = soft_delete
 
         response = self.session.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
         result = response.json()
 
-        self.__wait_for_edges_deletion(invitation=invitation, id=id, label=label, head=head, tail=tail)
+        if not scoped_deletion:
+            self.__wait_for_edges_deletion(invitation=invitation, label=label)
 
         return result
 
-    def __wait_for_edges_deletion(self, invitation, id, label, head, tail, wait_timeout=3600, max_poll_interval=60):
+    def __wait_for_edges_deletion(self, invitation, label, wait_timeout=3600, max_poll_interval=60):
         """
-        Polls the API until all the edges matching the filters are deleted.
+        Polls the API until all the edges of the invitation are deleted.
         """
-        ## Resolve the domain once: get_edges would otherwise fetch the invitation on every poll
+        ## Resolve the domain once: get_edges_count would otherwise fetch the invitation on every poll
         try:
             domain = self.get_invitation(invitation).domain
         except:
@@ -2561,17 +2564,23 @@ class OpenReviewClient(object):
 
         for attempt in range(1, max_attempts + 1):
             try:
-                ## Ask for a single edge: counting all the edges of the invitation can take longer than the gateway timeout
-                pending_edges = self.get_edges(id=id, invitation=invitation, head=head, tail=tail, label=label, limit=1, domain=domain)
+                ## GET /edges requires one of id, head, tail, groupBy, stream or signatures, so an
+                ## invitation wide deletion can only be checked with the count endpoint
+                pending = self.get_edges_count(invitation=invitation, label=label, domain=domain)
                 last_error = None
-                if not pending_edges:
+                if not pending:
                     print(f'Deleting edges of {invitation}: all the edges were deleted')
                     return
                 print(f'Deleting edges of {invitation}: edges pending to be deleted, attempt {attempt}/{max_attempts}')
             except Exception as error:
-                ## The query can fail while the deletion is running, keep polling until the deadline
+                ## The check can fail while the deletion is running, keep polling until the deadline,
+                ## but a rejected request keeps failing the same way, so raise it right away
+                details = error.args[0] if isinstance(error, OpenReviewException) and error.args else None
+                status = details.get('status') if isinstance(details, dict) else None
+                if status and status < 500 and status != 429:
+                    raise
                 last_error = error
-                print(f'Deleting edges of {invitation}: edge query failed with "{error}", attempt {attempt}/{max_attempts}')
+                print(f'Deleting edges of {invitation}: edge check failed with "{error}", attempt {attempt}/{max_attempts}')
 
             remaining = deadline - time.time()
             if remaining <= 0:
