@@ -56,8 +56,9 @@ class ARR(object):
         self.authors_name = 'Authors'
         self.recommendation_name = 'Recommendation'
         self.use_ethics_chairs = False
-        self.use_ethics_reviewers = False 
-        self.expertise_selection_stage = None       
+        self.use_ethics_reviewers = False
+        self.use_reviewers = True
+        self.expertise_selection_stage = None
         self.submission_stage = None
         self.review_stage = None
         self.review_rebuttal_stage = None
@@ -110,6 +111,8 @@ class ARR(object):
         self.venue.reviewers_name = self.reviewers_name
         self.venue.reviewer_roles = self.reviewer_roles
         self.venue.area_chair_roles = self.area_chair_roles
+        self.venue.submission_reviewer_roles = [self.reviewers_name]
+        self.venue.submission_area_chair_roles = [self.area_chairs_name]
         self.venue.senior_area_chair_roles = self.senior_area_chair_roles
         self.venue.area_chairs_name = self.area_chairs_name
         self.venue.secondary_area_chairs_name = self.secondary_area_chairs_name
@@ -130,6 +133,8 @@ class ARR(object):
         self.venue.senior_area_chair_roles = self.senior_area_chair_roles
         self.venue.area_chair_roles = self.area_chair_roles
         self.venue.reviewer_roles = self.reviewer_roles
+        self.venue.submission_reviewer_roles = [self.reviewers_name]
+        self.venue.submission_area_chair_roles = [self.area_chairs_name]
         self.venue.allow_gurobi_solver = self.allow_gurobi_solver
         self.venue.submission_license = self.submission_license
         self.venue.reviewer_identity_readers = self.reviewer_identity_readers
@@ -675,11 +680,23 @@ class ARR(object):
     def get_anon_area_chairs_name(self, pretty=True):
         return self.venue.get_anon_area_chairs_name(pretty)
 
-    def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        return self.venue.get_reviewers_id(number, anon, submitted)
+    def get_reviewers_id(self, number = None, anon=False, submitted=False, name=None):
+        return self.venue.get_reviewers_id(number, anon, submitted, name=name)
+
+    def get_reviewers_ids(self, submitted=False):
+        return self.venue.get_reviewers_ids(submitted=submitted)
+
+    def get_submission_reviewers_ids(self, number, submitted=False, anon=False):
+        return self.venue.get_submission_reviewers_ids(number, submitted=submitted, anon=anon)
+
+    def get_submission_area_chairs_ids(self, number, anon=False):
+        return self.venue.get_submission_area_chairs_ids(number, anon=anon)
 
     def get_authors_id(self, number = None):
         return self.venue.get_authors_id(number)
+
+    def get_contributors_id(self, number=None):
+        return self.get_committee_id('Contributors', number)
 
     def get_authors_accepted_id(self, number = None):
         return self.venue.get_authors_accepted_id(number)
@@ -687,8 +704,8 @@ class ARR(object):
     def get_program_chairs_id(self):
         return self.venue.get_program_chairs_id()
 
-    def get_area_chairs_id(self, number = None, anon=False):
-        return self.venue.get_area_chairs_id(number, anon)
+    def get_area_chairs_id(self, number = None, anon=False, name=None):
+        return self.venue.get_area_chairs_id(number, anon, name=name)
 
     def get_secondary_area_chairs_id(self, number = None, anon=False):
         return self.venue.get_secondary_area_chairs_id(number, anon)
@@ -767,6 +784,20 @@ class ARR(object):
 
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
+        contributors_id = self.get_contributors_id()
+        if not openreview.tools.get_group(self.client, contributors_id):
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=Group(
+                    id=contributors_id,
+                    readers=[self.venue_id, contributors_id],
+                    writers=[self.venue_id],
+                    signatures=[self.venue_id],
+                    signatories=[self.venue_id],
+                    members=[]
+                )
+            )
         self.prune_active_arr_venues()
 
         setup_arr_invitations(self.invitation_builder)
@@ -784,7 +815,8 @@ class ARR(object):
             group=openreview.api.Group(
                 id=self.venue_id,
                 content={
-                    'allow_gurobi_solver': { 'value': True }
+                    'allow_gurobi_solver': { 'value': True },
+                    'contributors_id': { 'value': contributors_id }
                 }
             )
         )

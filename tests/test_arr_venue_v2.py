@@ -216,7 +216,7 @@ class TestARRVenueV2():
                 'comment_notification_threshold': '3',
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                     'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
@@ -306,8 +306,8 @@ class TestARRVenueV2():
 
         withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
         assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
-        assert 'confirm_need_to_withdraw' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
-        assert 'confirm_penalty_rules' in withdrawal_invitation.edit['invitation']['edit']['note']['content']        
+        assert 'policy_confirmation' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'withdrawal_confirmation' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Expertise_Selection')
 
@@ -428,9 +428,19 @@ class TestARRVenueV2():
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
         assert 'existing_preprints' in submission_invitation.edit['note']['content']
-        assert 'A1_limitations_section' in submission_invitation.edit['note']['content']
+        assert 'A1_potential_risks' not in submission_invitation.edit['note']['content']
+        assert 'service_contributor' in submission_invitation.edit['note']['content']
+        assert 'country_of_origin' in submission_invitation.edit['note']['content']
         assert 'paper_type' in submission_invitation.edit['note']['content']
         assert 'keywords' not in submission_invitation.edit['note']['content']
+        language_options = submission_invitation.edit['note']['content']['languages_studied']['value']['param']['enum']
+        assert 'English' in language_options
+        assert 'Tagalog' in language_options
+        assert 'Filipino' not in language_options
+        assert 'en' not in language_options
+        assert len(language_options) == 184
+        assert submission_invitation.edit['note']['content']['languages_studied']['value']['param']['optional']
+        assert 'other_languages' in submission_invitation.edit['note']['content']
 
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
         assert 'overall_assessment' == domain.content['meta_review_recommendation']['value']
@@ -498,10 +508,20 @@ class TestARRVenueV2():
 
         helpers.await_queue()
 
-        # Check duedates for registration stages
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration').duedate > 0
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registration').duedate > 0
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Registration').duedate > 0
+        # Check duedates and profile link validation for registration stages
+        for registration_invitation_id in [
+            'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration',
+            'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registration',
+            'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Registration'
+        ]:
+            registration_invitation = openreview_client.get_invitation(registration_invitation_id)
+            assert registration_invitation.duedate > 0
+            assert 'has_valid_orcid_checksum' in registration_invitation.preprocess
+        registration_fields = openreview_client.get_invitation(
+            'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration'
+        ).edit['note']['content']
+        assert 'English' in registration_fields['indicate_your_languages']['value']['param']['enum']
+        assert 'other_languages' in registration_fields
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Recognition_Request').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Recognition_Request').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement').duedate > 0
@@ -598,7 +618,7 @@ class TestARRVenueV2():
                 'submission_license': ['CC BY-SA 4.0'],
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                     'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
@@ -717,7 +737,8 @@ class TestARRVenueV2():
                 'paper_type': { 'value': 'Short' },
                 'research_area': { 'value': 'NLP and Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
-                'languages_studied': { 'value': 'A language' },
+                'contribution_types': { 'value': 'NLP engineering experiment' },
+                'other_languages': { 'value': 'Klingon' },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
                 'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
                 'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
@@ -726,23 +747,11 @@ class TestARRVenueV2():
                 'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
                 'existing_preprints': { 'value': 'existing_preprints' },
                 'preferred_venue': { 'value': 'ACL' },
+                'visa_needs': { 'value': 'no' },
+                'country_of_origin': {'value': 'US'},
+                'service_contributor': {'value': ['~SomeFirstName_User1']},
                 'consent_to_share_data': { 'value': 'yes' },
                 'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-                "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
-                "A2_potential_risks": { 'value': 'Yes' },
-                "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-                "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
-                "B6_statistics_for_data": { 'value': 'Yes' },
-                "C_computational_experiments": { 'value': 'Yes' },
-                "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
-                "C3_descriptive_statistics": { 'value': 'Yes' },
-                "D_human_subjects_including_annotators": { 'value': 'Yes' },
-                "D1_instructions_given_to_participants": { 'value': 'Yes' },
-                "D2_recruitment_and_payment": { 'value': 'Yes' },
-                "D3_data_consent": { 'value': 'Yes' },
-                "D4_ethics_review_board_approval": { 'value': 'Yes' },
-                "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
-                "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                 "author_submission_checklist": { 'value': 'yes' },
                 "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
             }
@@ -904,7 +913,7 @@ class TestARRVenueV2():
         assert note.content['instructions']['value'] == '''Please complete this form to indicate your maximum load for voluntary meta-reviewing for this cycle, or your (un)availability for voluntary meta-reviewing. If you wish to change your maximum load, please delete your previous request using the trash icon, refresh the page and submit a new request.
 
 **This will be overridden with the mandatory meta-reviewing load if you submit at least one paper in this cycle and are qualified to meta-review.**'''
-
+        # Restore preprocess validation after creating historical registration stages
         # Add max load preprocess validation
         invitation_builder = openreview.arr.InvitationBuilder(venue)
         venue_roles = [
@@ -913,6 +922,16 @@ class TestARRVenueV2():
             venue.get_senior_area_chairs_id()
         ]
         for role in venue_roles:
+            openreview_client.post_invitation_edit(
+                invitations=venue.get_meta_invitation_id(),
+                readers=[venue.id],
+                writers=[venue.id],
+                signatures=[venue.id],
+                invitation=openreview.api.Invitation(
+                    id=f"{role}/-/{registration_name}",
+                    preprocess=invitation_builder.get_process_content('process/profile_link_preprocess.py')
+                )
+            )
             openreview_client.post_invitation_edit(
                 invitations=venue.get_meta_invitation_id(),
                 readers=[venue.id],
@@ -936,6 +955,80 @@ class TestARRVenueV2():
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@aclrollingreview.com', password=helpers.strong_password)
         sac_two_client = openreview.api.OpenReviewClient(username = 'sac2@aclrollingreview.com', password=helpers.strong_password)
         sac_three_client = openreview.api.OpenReviewClient(username = 'sac3@aclrollingreview.com', password=helpers.strong_password)
+
+        registration_content = {
+            'profile_confirmed': { 'value': 'Yes' },
+            'expertise_confirmed': { 'value': 'Yes' },
+            'are_you_a_student': { 'value': 'No, I am not a student.' },
+            'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+            'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+            'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+            'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+            'indicate_your_research_areas': { 'value': ['NLP and Code Models'] },
+            'contribution_types': { 'value': ['NLP engineering experiment'] },
+            'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+            'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'N/A: I have no publications in ACL Anthology.' },
+            'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'N/A: I do not have any publications or preprints.' },
+            'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'N/A: I do not have any publications or preprints.' },
+        }
+
+        with pytest.raises(openreview.OpenReviewException, match=r'does not contain a DBLP link'):
+            reviewer_three_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+                signatures=['~Reviewer_ARRThree1'],
+                note=openreview.api.Note(content=deepcopy(registration_content))
+            )
+
+        reviewer_three_profile = reviewer_three_client.get_profile('~Reviewer_ARRThree1')
+        reviewer_three_profile.content['dblp'] = 'https://dblp.org/pid/arr/reviewer-three'
+        reviewer_three_client.post_profile(reviewer_three_profile)
+
+        registration_content['confirm_your_openreview_profile_contains_an_ACL_anthology_URL']['value'] = 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.'
+        with pytest.raises(openreview.OpenReviewException, match=r'does not contain an ACL Anthology link'):
+            reviewer_three_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+                signatures=['~Reviewer_ARRThree1'],
+                note=openreview.api.Note(content=deepcopy(registration_content))
+            )
+
+        reviewer_three_profile.content['aclanthology'] = 'https://aclanthology.org/people/r/reviewer-arr-three/'
+        reviewer_three_client.post_profile(reviewer_three_profile)
+
+        registration_content['confirm_your_openreview_profile_contains_your_ORCID_ID']['value'] = 'My OpenReview profile contains a valid ORCID ID.'
+        with pytest.raises(openreview.OpenReviewException, match=r'does not contain an ORCID link'):
+            reviewer_three_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+                signatures=['~Reviewer_ARRThree1'],
+                note=openreview.api.Note(content=deepcopy(registration_content))
+            )
+
+        reviewer_three_profile.content['orcid'] = 'https://orcid.org/0000-0002-1825-0098'
+        reviewer_three_client.post_profile(reviewer_three_profile)
+        with pytest.raises(openreview.OpenReviewException, match=r'ORCID iD.*invalid checksum'):
+            reviewer_three_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+                signatures=['~Reviewer_ARRThree1'],
+                note=openreview.api.Note(content=deepcopy(registration_content))
+            )
+
+        reviewer_three_profile.content['orcid'] = 'https://orcid.org/0000-0000-0000-0036'
+        reviewer_three_client.post_profile(reviewer_three_profile)
+
+        profile_links = [
+            (reviewer_client, '~Reviewer_ARROne1', 'reviewer-one', '0000-0000-0000-001X'),
+            (reviewer_two_client, '~Reviewer_ARRTwo1', 'reviewer-two', '0000-0000-0000-0028'),
+            (ac_client, '~AC_ARROne1', 'ac-one', '0000-0000-0000-0044'),
+            (sac_client, '~SAC_ARROne1', 'sac-one', '0000-0000-0000-0052'),
+            (sac_two_client, '~SAC_ARRTwo1', 'sac-two', '0000-0000-0000-0060'),
+            (sac_three_client, '~SAC_ARRThree1', 'sac-three', '0000-0000-0000-0079')
+        ]
+        for profile_client, profile_id, link_id, orcid in profile_links:
+            profile = profile_client.get_profile(profile_id)
+            profile.content['dblp'] = f'https://dblp.org/pid/arr/{link_id}'
+            profile.content['aclanthology'] = f'https://aclanthology.org/people/a/{link_id}/'
+            profile.content['orcid'] = f'https://orcid.org/{orcid}'
+            profile_client.post_profile(profile)
+
         reviewer_client.post_note_edit(
             invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
             signatures=['~Reviewer_Alternate_ARROne1'],
@@ -943,11 +1036,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Information Extraction'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'Information Extraction'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -958,11 +1057,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models', 'Dialogue and Interactive Systems'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -975,11 +1080,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['Human-Centered NLP and Human-AI Interaction', 'NLP and Code Models'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'N/A: I have no publications listed in DBLP.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'N/A: I have no publications in ACL Anthology.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'N/A: I do not have any publications or preprints.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'N/A: I do not have any publications or preprints.' },
                 }
             )
         )
@@ -999,11 +1110,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'NLP Applications'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'NLP Applications'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -1014,11 +1131,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -1029,11 +1152,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -1044,11 +1173,17 @@ class TestARRVenueV2():
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
                     'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'are_you_a_student': { 'value': 'No, I am not a student.' },
+                    'what_is_your_highest_level_of_completed_education': { 'value': 'Doctorate' },
+                    'confirm_you_are_qualified_to_review': { 'value': 'Yes, I meet the ARR requirements to be a reviewer.' },
+                    'confirm_your_profile_has_past_domains': { 'value': 'Yes' },
+                    'confirm_your_profile_has_all_email_addresses': { 'value': 'Yes' },
+                    'indicate_your_research_areas': { 'value': ['NLP and Code Models', 'Human-Centered NLP and Human-AI Interaction', 'NLP Applications'] },
+                    'contribution_types': { 'value': ['NLP engineering experiment'] },
+                    'confirm_your_openreview_profile_contains_a_DBLP_link': { 'value': 'My OpenReview profile contains a link to my DBLP profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': { 'value': 'My OpenReview profile contains a link to an ACL Anthology profile with just my papers.' },
+                    'confirm_your_openreview_profile_contains_your_ORCID_ID': { 'value': 'My OpenReview profile contains a valid ORCID ID.' },
+                    'confirm_your_openreview_profile_contains_your_publication_record': { 'value': 'Yes, I maintain a full list of my publications in my OpenReview profile.' },
                 }
             )
         )
@@ -1413,7 +1548,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'paper_type': { 'value': 'Short' },
             'research_area': { 'value': 'NLP and Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
-            'languages_studied': { 'value': 'A language' },
+            'contribution_types': { 'value': 'NLP engineering experiment' },
+            'languages_studied': { 'value': ['English'] },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
             'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
             'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
@@ -1422,23 +1558,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL' },
+            'visa_needs': { 'value': 'no' },
+            'country_of_origin': {'value': 'US'},
+            'service_contributor': {'value': ['~SomeFirstName_User1']},
             'consent_to_share_data': { 'value': 'yes' },
             'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-            "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
-            "A2_potential_risks": { 'value': 'Yes' },
-            "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-            "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
-            "B6_statistics_for_data": { 'value': 'Yes' },
-            "C_computational_experiments": { 'value': 'Yes' },
-            "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
-            "C3_descriptive_statistics": { 'value': 'Yes' },
-            "D_human_subjects_including_annotators": { 'value': 'Yes' },
-            "D1_instructions_given_to_participants": { 'value': 'Yes' },
-            "D2_recruitment_and_payment": { 'value': 'Yes' },
-            "D3_data_consent": { 'value': 'Yes' },
-            "D4_ethics_review_board_approval": { 'value': 'Yes' },
-            "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
-            "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
             "author_submission_checklist": { 'value': 'yes' },
             "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
         }
@@ -1706,7 +1830,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'paper_type': { 'value': 'Short' },
             'research_area': { 'value': 'NLP and Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
-            'languages_studied': { 'value': 'A language' },
+            'contribution_types': { 'value': 'NLP engineering experiment' },
+            'languages_studied': { 'value': ['English'] },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
             'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
             'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
@@ -1715,23 +1840,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL' },
+            'visa_needs': { 'value': 'no' },
+            'country_of_origin': {'value': 'US'},
+            'service_contributor': {'value': ['~SomeFirstName_User1']},
             'consent_to_share_data': { 'value': 'yes' },
             'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-            "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
-            "A2_potential_risks": { 'value': 'Yes' },
-            "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-            "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
-            "B6_statistics_for_data": { 'value': 'Yes' },
-            "C_computational_experiments": { 'value': 'Yes' },
-            "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
-            "C3_descriptive_statistics": { 'value': 'Yes' },
-            "D_human_subjects_including_annotators": { 'value': 'Yes' },
-            "D1_instructions_given_to_participants": { 'value': 'Yes' },
-            "D2_recruitment_and_payment": { 'value': 'Yes' },
-            "D3_data_consent": { 'value': 'Yes' },
-            "D4_ethics_review_board_approval": { 'value': 'Yes' },
-            "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
-            "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
             "author_submission_checklist": { 'value': 'yes' },
             "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
         }
@@ -1748,6 +1861,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatures=['~SomeFirstName_User1'],
             note=openreview.api.Note(content=deleted_source_content)
         )
+        # Finish creating the Authors group before deleting the submission.
+        helpers.await_queue_edit(openreview_client, edit_id=deleted_submission_edit['id'])
         delete_edit = openreview_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/-/Edit',
             readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
@@ -2384,7 +2499,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'paper_type': { 'value': 'Short' },
                 'research_area': { 'value': 'NLP and Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
-                'languages_studied': { 'value': 'A language' },
+                'contribution_types': { 'value': 'NLP engineering experiment' },
+                'languages_studied': { 'value': ['English'] },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
                 'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
                 'previous_URL': { 'value': f'https://openreview.net/forum?id={submission.id}' },
@@ -2398,23 +2514,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
                 'existing_preprints': { 'value': 'existing_preprints' },
                 'preferred_venue': { 'value': 'ACL' },
+                'visa_needs': { 'value': 'no' },
+                'country_of_origin': {'value': 'US'},
+                'service_contributor': {'value': ['~SomeFirstName_User1']},
                 'consent_to_share_data': { 'value': 'yes' },
                 'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-                "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
-                "A2_potential_risks": { 'value': 'Yes' },
-                "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-                "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
-                "B6_statistics_for_data": { 'value': 'Yes' },
-                "C_computational_experiments": { 'value': 'Yes' },
-                "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
-                "C3_descriptive_statistics": { 'value': 'Yes' },
-                "D_human_subjects_including_annotators": { 'value': 'Yes' },
-                "D1_instructions_given_to_participants": { 'value': 'Yes' },
-                "D2_recruitment_and_payment": { 'value': 'Yes' },
-                "D3_data_consent": { 'value': 'Yes' },
-                "D4_ethics_review_board_approval": { 'value': 'Yes' },
-                "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
-                "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                 "author_submission_checklist": { 'value': 'yes' },
                 "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' }
             }
@@ -2544,7 +2648,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert submission.content['number_of_reviewer_checklists']['value'] == 0
             assert submission.content['number_of_action_editor_checklists']['value'] == 0
 
-    def test_submitted_author_form(self, client, openreview_client, helpers, test_client, request_page, selenium):
+    def test_submitted_contributor_form(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -2572,39 +2676,59 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue()
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form')
+        submitted_author_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form')
+        assert submitted_author_invitation
+        assert 'has_valid_orcid_checksum' in submitted_author_invitation.preprocess
+        submitted_author_fields = submitted_author_invitation.edit['note']['content']
+        assert 'English' in submitted_author_fields['indicate_your_languages']['value']['param']['enum']
+        assert 'other_languages' in submitted_author_fields
 
-        notes = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form_Form')
+        notes = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form_Form')
         assert len(notes) == 1
         replyto_note = notes[0]
-        assert replyto_note.content['title']['value'] == 'Submitted Author Profile Form'
+        assert replyto_note.content['title']['value'] == 'Submitted Service Contributor Form'
+
+        submitted_author_content = {
+            'confirm_you_are_willing_to_serve_as_a_reviewer_or_AC': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
+            'confirm_emergency_policy': {'value': 'I confirm that in case of unforeseen circumstances I will provide a replacement.'},
+            'confirm_endorsement': {'value': 'I confirm that the submission(s) for which I serve meet the expected quality level: ready for consideration for acceptance at a top-tier conference.'},
+            'serving_as_a_regular_or_emergency_reviewer_or_AC': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
+            'indicate_emergency_reviewer_load': {'value': "3"},
+            'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
+            'are_you_a_student': {'value': "Yes, I am a Masters student."},
+            'what_is_your_highest_level_of_completed_education': {'value': "Doctorate"},
+            'confirm_your_profile_has_past_domains': {'value': "Yes"},
+            'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
+            'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
+            'indicate_your_research_areas': {'value': ["NLP and Code Models"]},
+            'contribution_types': {'value': ["NLP engineering experiment"]},
+            'indicate_your_languages': {'value': ["English"]},
+            'other_languages': {'value': "Klingon"},
+            'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "My OpenReview profile contains a link to my DBLP profile with just my papers."},
+            'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': {'value': "My OpenReview profile contains a link to an ACL Anthology profile with just my papers."},
+            'confirm_your_openreview_profile_contains_your_ORCID_ID': {'value': "My OpenReview profile contains a valid ORCID ID."},
+            'confirm_your_openreview_profile_contains_your_publication_record': {'value': "Yes, I maintain a full list of my publications in my OpenReview profile."},
+            'attribution': {'value': "Yes, I wish to be attributed."},
+            'agreement': {'value': "I agree"},
+        }
+
+        with pytest.raises(openreview.OpenReviewException, match=r'does not contain a DBLP link'):
+            test_client.post_note_edit(
+                invitation='aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(content=deepcopy(submitted_author_content))
+            )
+
+        author_profile = test_client.get_profile('~SomeFirstName_User1')
+        author_profile.content['dblp'] = 'https://dblp.org/pid/arr/submitted-author'
+        author_profile.content['aclanthology'] = 'https://aclanthology.org/people/s/submitted-author/'
+        author_profile.content['orcid'] = 'https://orcid.org/0000-0002-1825-0097'
+        test_client.post_profile(author_profile)
 
         test_client.post_note_edit(
-            invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
+            invitation='aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form',
             signatures=['~SomeFirstName_User1'],
-            note=openreview.api.Note(
-                content={
-                    'confirm_you_are_willing_to_serve_as_a_reviewer_or_AC': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
-                    'details_of_reason_for_being_unable_to_serve_or_ARR_role': {'value': ""},
-                    'serving_as_a_regular_or_emergency_reviewer_or_AC': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
-                    'indicate_emergency_reviewer_load': {'value': "3"},
-                    'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
-                    'are_you_a_student': {'value': "Yes, I am a Masters student."},
-                    'what_is_your_highest_level_of_completed_education': {'value': "Doctorate"},
-                    'confirm_your_profile_has_past_domains': {'value': "Yes"},
-                    'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
-                    'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
-                    'indicate_your_research_areas': {'value': ["NLP and Code Models"]},
-                    'indicate_languages_you_study': {'value': "English"},
-                    'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
-                    'provide_your_DBLP_URL': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
-                    'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
-                    'provide_your_semantic_scholar_URL': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
-                    'provide_your_ACL_anthology_URL': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
-                    'attribution': {'value': "Yes, I wish to be attributed."},
-                    'agreement': {'value': "I agree"},
-                }
-            )
+            note=openreview.api.Note(content=deepcopy(submitted_author_content))
         )
         
         # Change dates
@@ -2626,15 +2750,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         helpers.await_queue()
 
-        # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form has expired"
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form has expired'):
+        # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form has expired"
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form has expired'):
             test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form",
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                     content={
                         'confirm_you_are_willing_to_serve_as_a_reviewer_or_AC': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
-                        'details_of_reason_for_being_unable_to_serve_or_ARR_role': {'value': ""},
+                        'confirm_emergency_policy': {'value': 'I confirm that in case of unforeseen circumstances I will provide a replacement.'},
+                        'confirm_endorsement': {'value': 'I confirm that the submission(s) for which I serve meet the expected quality level: ready for consideration for acceptance at a top-tier conference.'},
                         'serving_as_a_regular_or_emergency_reviewer_or_AC': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
                         'indicate_emergency_reviewer_load': {'value': '3'},
                         'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
@@ -2644,12 +2769,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
                         'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
                         'indicate_your_research_areas': {'value': ["Generation"]},
-                        'indicate_languages_you_study': {'value': "English"},
-                        'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
-                        'provide_your_DBLP_URL': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
-                        'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
-                        'provide_your_semantic_scholar_URL': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
-                        'provide_your_ACL_anthology_URL': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
+                        'contribution_types': {'value': ["NLP engineering experiment"]},
+                        'indicate_your_languages': {'value': ["English"]},
+                        'confirm_your_openreview_profile_contains_a_DBLP_link': {'value': "My OpenReview profile contains a link to my DBLP profile with just my papers."},
+                        'confirm_your_openreview_profile_contains_an_ACL_anthology_URL': {'value': "My OpenReview profile contains a link to an ACL Anthology profile with just my papers."},
+                        'confirm_your_openreview_profile_contains_your_ORCID_ID': {'value': "My OpenReview profile contains a valid ORCID ID."},
+                        'confirm_your_openreview_profile_contains_your_publication_record': {'value': "Yes, I maintain a full list of my publications in my OpenReview profile."},
                         'attribution': {'value': "Yes, I wish to be attributed."},
                         'agreement': {'value': "I agree"},
                     }
@@ -2663,7 +2788,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             writers=['aclweb.org/ACL/ARR/2023/August'],
             signatures=['aclweb.org/ACL/ARR/2023/August'],
             invitation=openreview.api.Invitation(
-                id = f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
+                id = f"aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form",
                 edit = {
                     'note': {
                         'content': {
@@ -2705,7 +2830,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         helpers.await_queue()
 
-        invitation = openreview_client.get_invitation(f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form")
+        invitation = openreview_client.get_invitation(f"aclweb.org/ACL/ARR/2023/August/Contributors/-/Submitted_Contributor_Form")
         assert 'paper_type' in invitation.edit['note']['content']
 
     def test_post_submission(self, client, openreview_client, helpers, test_client, request_page, selenium):
@@ -2762,8 +2887,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
         assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
-        assert 'confirm_need_to_withdraw' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
-        assert 'confirm_penalty_rules' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'policy_confirmation' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'withdrawal_confirmation' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
 
 
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Withdrawal')) == 101
@@ -2866,14 +2991,34 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
 
         assert submissions[1].readers == ['everyone']
+        public_field_readers = {
+            number: [
+                'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                f'aclweb.org/ACL/ARR/2023/August/Submission{number}/Senior_Area_Chairs',
+                f'aclweb.org/ACL/ARR/2023/August/Submission{number}/Area_Chairs',
+                f'aclweb.org/ACL/ARR/2023/August/Submission{number}/Reviewers',
+                f'aclweb.org/ACL/ARR/2023/August/Submission{number}/Authors'
+            ]
+            for number in (2, 4, 6)
+        }
+        assert 'service_contributor' in hide_fields_from_public
+        assert 'country_of_origin' in hide_fields_from_public
+        for index in (1, 3, 5):
+            submission = submissions[index]
+            assert submission.readers == ['everyone']
+            assert 'service_contributor' in submission.content
+            assert 'country_of_origin' in submission.content
+            for field in hide_fields_from_public:
+                if field in submission.content:
+                    assert submission.content[field]['readers'] == public_field_readers[submission.number], field
         assert submissions[1].content['TLDR']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['preprint']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['preprint']['readers'] == public_field_readers[2]
+        assert submissions[1].content['existing_preprints']['readers'] == public_field_readers[2]
+        assert submissions[1].content['preferred_venue']['readers'] == public_field_readers[2]
+        assert submissions[1].content['consent_to_share_data']['readers'] == public_field_readers[2]
+        assert submissions[1].content['consent_to_share_submission_details']['readers'] == public_field_readers[2]
         assert submissions[1].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['preprint_status']['readers'] == public_field_readers[2]
 
         # Assert authors and authorids are only readable by authors
         assert set(submissions[1].content['authors']['readers']) == {
@@ -2928,16 +3073,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }
 
-        responsible_checklist_fields = [field for field in hide_fields_from_public if len(field.split('_')[0]) <= 2] ## Any field that looks like A_, A1_, etc.
-        for field in responsible_checklist_fields:
-            assert set(submissions[1].content[field]['readers']) == {
-                "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
-                "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
-                "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-                "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
-                "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-            }
-
         assert submissions[3].readers == ['everyone']
         assert 'readers' in submissions[3].content['authors']
         assert 'readers' in submissions[3].content['authorids']
@@ -2949,18 +3084,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'aclweb.org/ACL/ARR/2023/August',
             f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
         ]
-        assert submissions[3].content['justification_for_author_changes']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
-        ]
-        assert submissions[3].content['preprint_status']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
-        ]
-        assert submissions[3].content['preferred_venue']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
-        ]
+        assert submissions[3].content['justification_for_author_changes']['readers'] == public_field_readers[4]
+        assert submissions[3].content['preprint_status']['readers'] == public_field_readers[4]
+        assert submissions[3].content['preferred_venue']['readers'] == public_field_readers[4]
 
         assert 'everyone' not in submissions[4].readers
 
@@ -2976,18 +3102,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'aclweb.org/ACL/ARR/2023/August', 
             'aclweb.org/ACL/ARR/2023/August/Submission6/Authors'
         ]
-        assert submissions[5].content['justification_for_author_changes']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
-        ]
-        assert submissions[5].content['preprint_status']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
-        ]
-        assert submissions[5].content['preferred_venue']['readers'] == [
-            'aclweb.org/ACL/ARR/2023/August',
-            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
-        ]
+        assert submissions[5].content['justification_for_author_changes']['readers'] == public_field_readers[6]
+        assert submissions[5].content['preprint_status']['readers'] == public_field_readers[6]
+        assert submissions[5].content['preferred_venue']['readers'] == public_field_readers[6]
 
         # Post comment as PCs for the first submission
         comment_edit = pc_client_v2.post_note_edit(
@@ -3106,7 +3223,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "paper_type": { "value": "Short" },
             "research_area": { "value": "NLP and Code Models" },
             "research_area_keywords": { "value": "A keyword" },
-            "languages_studied": { "value": "A language" },
+            "contribution_types": { "value": "NLP engineering experiment" },
+            "languages_studied": { "value": ["English"] },
             "reassignment_request_area_chair": { "value": "No, I want the same area chair from our previous submission (subject to their availability)." },
             "reassignment_request_reviewers": { "value": "Yes, I want a different set of reviewers" },
             "previous_URL": { "value": f"https://openreview.net/forum?id={june_submission.id}" },
@@ -3118,23 +3236,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "preprint_status": { "value": "There is no non-anonymous preprint and we do not intend to release one. (this option is binding)" },
             "existing_preprints": { "value": "existing_preprints" },
             "preferred_venue": { "value": "ACL" },
+            "visa_needs": { "value": "no" },
+            'country_of_origin': {'value': 'US'},
+            'service_contributor': {'value': ['~SomeFirstName_User1']},
             "consent_to_share_data": { "value": "yes" },
             "consent_to_share_submission_details": { "value": "On behalf of all authors, we agree to the terms above to share our submission details." },
-            "A1_limitations_section": { "value": "This paper has a limitations section." },
-            "A2_potential_risks": { "value": "Yes" },
-            "B_use_or_create_scientific_artifacts": { "value": "Yes" },
-            "B4_data_contains_personally_identifying_info_or_offensive_content": { "value": "Yes" },
-            "B6_statistics_for_data": { "value": "Yes" },
-            "C_computational_experiments": { "value": "Yes" },
-            "C2_experimental_setup_and_hyperparameters": { "value": "Yes" },
-            "C3_descriptive_statistics": { "value": "Yes" },
-            "D_human_subjects_including_annotators": { "value": "Yes" },
-            "D1_instructions_given_to_participants": { "value": "Yes" },
-            "D2_recruitment_and_payment": { "value": "Yes" },
-            "D3_data_consent": { "value": "Yes" },
-            "D4_ethics_review_board_approval": { "value": "Yes" },
-            "E_ai_assistants_in_research_or_writing": { "value": "Yes" },
-            "E1_information_about_use_of_ai_assistants": { "value": "Yes" },
             "author_submission_checklist": { "value": "yes" },
             "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { "value": "On behalf of all authors, I do not agree" }
         }
@@ -3651,11 +3757,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -3679,11 +3781,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -3714,11 +3812,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -3745,11 +3839,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -3808,7 +3898,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[1].id}'},
                     'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
-                    'reassignment_request_reviewers': { 'value': 'No, I want the same set of reviewers from our previous submission and understand that new reviewers may be assigned if any of the previous ones are unavailable' },
+                    'reassignment_request_reviewers': { 'value': 'No, I want the same set of reviewers from our previous submission (subject to their availability)' },
                 }
             )
         )
@@ -4650,6 +4740,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         violation_fields = ['appropriateness', 'formatting', 'length', 'anonymity', 'responsible_checklist', 'limitations'] # TODO: move to domain or somewhere?
+        format_field = {
+            'appropriateness': 'Appropriateness',
+            'formatting': 'Formatting',
+            'length': 'Length',
+            'anonymity': 'Anonymity',
+            'responsible_checklist': 'Responsible Checklist',
+            'limitations': 'Limitations'
+        }
         only_required_fields = ['number_of_assignments', 'diversity']
 
         default_fields = {field: True for field in violation_fields + only_required_fields}
@@ -4662,6 +4760,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'anonymity_justification': {'value': 'N/A - this paper is properly anonymized.'},
             'limitations_justification': {'value': "N/A - this paper has the 'Limitations' section."},
             'overall_level_justification': {'value': 'N/A - this seems like a good-faith submission worthy of full review.'},
+            'potential_violation_justification': {'value': 'N/A - no potential responsible checklist violation was identified.'},
             'ethics_review_justification': {'value': 'N/A - this paper does not need an ethics review.'}
         }
         test_submission = submissions[1]
@@ -4694,6 +4793,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 if tested_field:
                     ret_content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
                     ret_content['ethics_review_justification'] = {'value': 'There is an issue'}
+                    if tested_field in violation_fields:
+                        ret_content['potential_violation_justification'] = {'value': 'The submission may violate this requirement.'}
 
                 if 'Reviewer' in chk_inv:
                     for field in only_required_fields:
@@ -4708,6 +4809,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 if tested_field:
                     content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
                     content['ethics_review_justification'] = {'value': 'There is an issue'}
+                    if tested_field in violation_fields:
+                        content['potential_violation_justification'] = {'value': 'The submission may violate this requirement.'}
 
             if override_fields:
                 for field in override_fields.keys():
@@ -4738,21 +4841,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Test checklist pre-process
         force_justifications = {
+                'potential_violation_justification': {'value': 'N/A - no potential responsible checklist violation was identified.'},
                 'ethics_review_justification': {'value': 'N/A - this paper does not need an ethics review.'}
         }
         with pytest.raises(openreview.OpenReviewException, match=r'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging.'):
             post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', override_fields=force_justifications)
-        with pytest.raises(openreview.OpenReviewException, match=r'The property potential_violation_justification must NOT be present'):
-            post_checklist(
-                user_client,
-                checklist_inv,
-                user,
-                override_fields={
-                    'potential_violation_justification': {'value': 'This deprecated field should be rejected'}
-                }
-            )
-
-        # Post checklist with no ethics flag and no violation field - check that flags are not there
+        for field in violation_fields:
+            with pytest.raises(openreview.OpenReviewException, match=rf'You have indicated a potential violation with the following fields: {format_field[field]}. Please enter a brief explanation under \"Potential Violation Justification\"'):
+                post_checklist(user_client, checklist_inv, user, tested_field=field, override_fields=force_justifications)
+        # Post checklist with no ethics flag or potential violation - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' not in test_submission.content
@@ -4990,13 +5087,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
                     "needs_ethics_review": {'value': 'No'},
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
-                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
+                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"},
+                    "paper_matching_feedback": {"value": "This work aligns well with both my expertise and interests"}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
@@ -5035,9 +5129,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             time.sleep(2) ## Wait for flag process functions
 
             review = pc_client_v2.get_note(id=rev_edit['note']['id'])
-            assert 'readers' not in review.content['reviewer_certification']
+            assert 'readers' not in review.content['publication_ethics_policy_compliance']
             assert 'readers' in review.content['secondary_reviewer']
             assert review.content['secondary_reviewer']['readers'] == [
+                'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+                'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+                user
+            ]
+            assert review.content['paper_matching_feedback']['readers'] == [
                 'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
                 'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
                 'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
@@ -5176,6 +5276,37 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection_Reversion')
 
+        # Invitations with noteReaders must be restored, not deleted, and keep the flagged readers after the reversion
+        review_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert not review_invitation.ddate
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers' in review_invitation.edit['note']['readers']
+
+        rev_chk_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist')
+        assert not rev_chk_inv.ddate
+        assert rev_chk_inv.edit['note']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs'
+        ]
+
+        ae_chk_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist')
+        assert not ae_chk_inv.ddate
+        assert ae_chk_inv.edit['note']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs'
+        ]
+
+        comment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment')
+        assert not comment_invitation.ddate
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in comment_invitation.invitees
+
         # Delete review - check ethics flag is False
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=violation_edit['note'])
         assert 'flagged_for_ethics_review' in test_submission.content
@@ -5212,6 +5343,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "anonymity" : { "value" : "Yes" },
             "anonymity_justification" : { "value" : "N/A - this paper is properly anonymized." },
             "responsible_checklist" : { "value" : "Yes" },
+            "potential_violation_justification" : { "value" : "N/A - no potential responsible checklist violation was identified." },
             "limitations" : { "value" : "Yes" },
             "limitations_justification" : { "value" : "N/A - this paper has the 'Limitations' section." },
             "overall_level" : { "value" : "Yes" },
@@ -5288,7 +5420,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
-        assert 'readers' not in review.content['reviewer_certification']
+        assert 'readers' not in review.content['publication_ethics_policy_compliance']
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' not in review.content['paper_matching_feedback']['readers']
+        author_client = openreview.api.OpenReviewClient(token=test_client.token)
+        assert 'paper_matching_feedback' not in author_client.get_note(reviewer_edit['note']['id']).content
 
         ethics_review = openreview_client.get_note(ethics_review_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in ethics_review.readers
@@ -5859,11 +5994,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "datasets": { "value": 1 },
                     "software": { "value": 1 },
                     "needs_ethics_review": {'value': 'Yes'},
-                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                    "Knowledge_of_paper": {"value": "After the review process started"},
-                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                    "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"},
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                     "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
                     "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
@@ -6086,11 +6217,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "datasets": {"value": 1},
             "software": {"value": 1},
             "needs_ethics_review": {"value": 'No'},
-            "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-            "Knowledge_of_paper": {"value": "After the review process started"},
-            "Knowledge_of_paper_source": {"value": ["A research talk"]},
-            "impact_of_knowledge_of_paper": {"value": "A lot"},
-            "reviewer_certification": {"value": "Yes"},
+            "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
             "secondary_reviewer": {"value": ["~Reviewer_ARRFour1"]},
             "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
         }
@@ -6609,11 +6736,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         "datasets": {"value": 1},
                         "software": {"value": 1},
                         "needs_ethics_review": {'value': 'No'},
-                        "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
-                        "Knowledge_of_paper": {"value": "After the review process started"},
-                        "Knowledge_of_paper_source": {"value": ["A research talk"]},
-                        "impact_of_knowledge_of_paper": {"value": "A lot"},
-                        "reviewer_certification": {"value": "Yes"},
+                        "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No, I do not have even an educated guess about author identity"},
                         "secondary_reviewer": {"value": [reviewer]},
                         "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                     }
@@ -6885,6 +7008,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content={
                     'declaration': {'value': 'Medical'},
+                    'emergency_replacement': {'value': ['~Reviewer_ARRSix1']},
                     'explanation': {'value': 'I have been hospitalized and will be unable to complete my review for at least 2 weeks.'}
                 }
             )
@@ -7134,6 +7258,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "anonymity" : { "value" : "Yes" },
                     "anonymity_justification" : { "value" : "N/A - this paper is properly anonymized." },
                     "responsible_checklist" : { "value" : "Yes" },
+                    "potential_violation_justification" : { "value" : "N/A - no potential responsible checklist violation was identified." },
                     "limitations" : { "value" : "Yes" },
                     "limitations_justification" : { "value" : "N/A - this paper has the 'Limitations' section." },
                     "overall_level" : { "value" : "Yes" },
@@ -7204,6 +7329,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content={
                     'declaration': {'value': 'Medical'},
+                    'emergency_replacement': {'value': ['~AC_ARRSix1']},
                     'explanation': {'value': 'I have a medical emergency and need to step back from this assignment.'}
                 }
             )
@@ -7575,7 +7701,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'commitments_venue': 'Yes',
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                     'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',

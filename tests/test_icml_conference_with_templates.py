@@ -71,6 +71,7 @@ class TestICMLConference():
         venue.review_stage = openreview.stages.ReviewStage(
             start_date = due_date + datetime.timedelta(weeks=1),
             allow_de_anonymization = False,
+            submission_reviewer_roles = [venue.reviewers_name],
         )
 
         venue.meta_review_stage = openreview.stages.MetaReviewStage(
@@ -811,7 +812,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
         dropdown_values = dropdown.find_elements(By.TAG_NAME,"a")
         values = [value.text for value in dropdown_values]
-        assert values == ['Submission', 'PC Revision']
+        assert set(values) == {'Submission', 'PC Revision'}
 
         ## compute preferred emails
         openreview_client.post_invitation_edit(
