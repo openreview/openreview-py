@@ -20,7 +20,8 @@ def process(client, invitation):
     previous_url_field = 'previous_URL'
     reviewers_id = domain.content['reviewers_id']['value']
     senior_area_chairs_id = domain.content['senior_area_chairs_id']['value']
-    tracks_field_name = 'research_area'
+    submission_tracks_field_name = 'research_area'
+    registration_tracks_field_name = 'indicate_your_research_areas'
 
     tracks_inv_name = 'Research_Area'
     registration_name = 'Registration'
@@ -85,7 +86,7 @@ def process(client, invitation):
             if load_note is not None:
                 availability_string = load_note.content.get('availability_this_cycle', {}).get('value', 'will NOT be able to serve') ## Assume default not available
                 if 'I confirm that I will serve' in availability_string:
-                    for track in note.content[tracks_field_name]['value']:
+                    for track in note.content[registration_tracks_field_name]['value']:
                         track_to_ids[role_id][track].append(note_signature_id)
 
         # Build research area invitation
@@ -123,7 +124,7 @@ def process(client, invitation):
         track_edges_to_post = []
 
         for submission in submissions:
-            submission_track = submission.content[tracks_field_name]['value']
+            submission_track = submission.content[submission_tracks_field_name]['value']
             members = track_to_members[submission_track]
 
             for member in members:

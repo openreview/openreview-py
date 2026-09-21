@@ -53,12 +53,13 @@ class TestSimpleDualAnonymous():
                     'venue_organizer_agreement': { 
                         'value': [
                             'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                            'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                             'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                             'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                            'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                             ]
                     }
                 }
@@ -760,6 +761,38 @@ For more details, please check the following links:
         assert 'EFGH.cc/2025/Conference/Submission1/Action_Editors' in paper_conflicts[0].readers
         assert paper_conflicts[0].readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Action_Editors',  paper_conflicts[0].tail]
 
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score/Dates')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score/Model')
+
+        # select manual upload of affinity scores; invitation should stay active
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score/Model',
+            content={
+                'affinity_score_model': { 'value': 'I will upload my own affinity scores' }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score-0-1', count=2)
+
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score')
+        assert invitation.content['affinity_score_model']['value'] == 'I will upload my own affinity scores'
+        assert 'expertise_job_id' not in invitation.content
+
+        # trigger date process for reviewer affinity scores
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score-0-1', count=3)
+
+        # assert no *failure* status was posted to request form since PCs selected manual upload of affinity scores
+        venue = openreview_client.get_group('EFGH.cc/2025/Conference')
+        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
+        assert all(n.content.get('title', {}).get('value') != 'Action Editors Affinity Scores Computation Failed' for n in notes)
+
     def test_area_chairs_deployment(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
@@ -1122,7 +1155,7 @@ note={under review}
             '${3/signatures}'
         ]
 
-    def test_comment_stage(self, openreview_client, helpers):
+    def test_comment_stage(self, openreview_client, helpers, test_client):
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
 
@@ -1131,6 +1164,30 @@ note={under review}
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Comment/Form_Fields')
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Comment/Writers_and_Readers')
         assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Comment/Notifications')
+
+        # update Official_Comment invitations form
+        pc_client.post_invitation_edit(
+                    invitations='EFGH.cc/2025/Conference/-/Official_Comment/Form_Fields',
+                    content={
+                        'content': { 
+                            'value': {
+                                'discussion': {
+                                    'order': 1,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 6000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                },
+                                'comment': { 'delete': True}
+                            }
+                         }
+                    }
+                )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Official_Comment-0-1', count=2)
 
         # create child invitations
         now = datetime.datetime.now()
@@ -1144,7 +1201,7 @@ note={under review}
                 'expiration_date': { 'value': new_duedate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Official_Comment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Official_Comment-0-1', count=3)
 
         invitations = openreview_client.get_invitations(invitation='EFGH.cc/2025/Conference/-/Official_Comment')
         assert len(invitations) == 10
@@ -1179,6 +1236,38 @@ note={under review}
             "optional": True
           }
         ]
+
+        assert 'comment' not in invitation.edit['note']['content']
+        assert 'discussion' in invitation.edit['note']['content']
+
+        submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', number=1)
+
+        # post a comment to a submission as an author
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        official_comment_note = test_client.post_note_edit(
+            invitation='EFGH.cc/2025/Conference/Submission1/-/Official_Comment',
+            signatures=['EFGH.cc/2025/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                content={
+                    'title': {'value': 'Title'},
+                    'discussion': {'value': 'Author comment'}
+                },
+                readers=[
+                    'EFGH.cc/2025/Conference/Program_Chairs',
+                    'EFGH.cc/2025/Conference/Submission1/Action_Editors',
+                    'EFGH.cc/2025/Conference/Submission1/Reviewers',
+                    'EFGH.cc/2025/Conference/Submission1/Authors'
+                ]
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_comment_note['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[EFGH 2025] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        assert 'Comment:' not in messages[0]['content']['text']
 
     def test_review_release_stage(self, openreview_client, helpers):
 

@@ -241,7 +241,6 @@ class Templates():
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'expdate': '${2/content/activation_date/value}+1209600000',
                     'description': '${2/content/description/value}',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
@@ -265,7 +264,6 @@ class Templates():
                                             'readers': [
                                                 '${9/content/venue_id/value}/Program_Chairs',
                                                 '${9/content/additional_readers/value}',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/reviewers_name/value}',
                                                 '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/authors_name/value}'
                                             ],
                                             'nonreaders': []
@@ -1810,7 +1808,6 @@ If you would like to change your decision, please follow the link in the previou
                             'readers': [
                                 '${5/content/venue_id/value}',
                                 '${5/content/additional_readers/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/reviewers_name/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'writers': [

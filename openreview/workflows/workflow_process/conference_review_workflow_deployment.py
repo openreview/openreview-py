@@ -167,6 +167,11 @@ def process(client, edit, invitation):
         additional_readers.append(venue.get_area_chairs_id(number='${5/content/noteNumber/value}'))
         submission_release_additional_readers.append(venue.get_area_chairs_id(number='${{2/id}/number}'))
 
+    # the release templates no longer hardcode the per-submission reviewers group as a reader,
+    # so pass it explicitly; it goes last to keep the final reader order unchanged
+    additional_readers.append(venue.get_reviewers_id(number='${5/content/noteNumber/value}'))
+    submission_release_additional_readers.append(venue.get_reviewers_id(number='${{2/id}/number}'))
+
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Note_Release',
         signatures=[invitation_prefix],

@@ -30,12 +30,13 @@ class TestVenueDeployment():
                         'venue_organizer_agreement': {
                             'value': [
                                 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                                'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                                'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                                 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                                 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                                'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                             ]
                         }
                     }
@@ -60,12 +61,13 @@ class TestVenueDeployment():
                         'venue_organizer_agreement': {
                             'value': [
                                 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                                'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                                'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                                 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                                 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                                'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                             ]
                         }
                     }
@@ -91,12 +93,13 @@ class TestVenueDeployment():
                         'venue_organizer_agreement': {
                             'value': [
                                 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                                'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                                'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                                 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                                 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                                'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                             ]
                         }
                     }
@@ -131,12 +134,13 @@ class TestVenueDeployment():
                         'venue_organizer_agreement': {
                             'value': [
                                 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                                'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                                'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                                 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                                 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                                'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                             ]
                         }
                     }
@@ -166,12 +170,13 @@ class TestVenueDeployment():
                         'venue_organizer_agreement': {
                             'value': [
                                 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                                'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                                'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                                 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                                 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                                'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                             ]
                         }
                     }
@@ -201,12 +206,13 @@ class TestVenueDeployment():
                         'venue_organizer_agreement': {
                             'value': [
                                 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                                'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                                'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                                 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                                 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                                 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                                 'We will treat the OpenReview staff with kindness and consideration.',
                                 'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                                'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                             ]
                         }
                     }
@@ -240,12 +246,13 @@ class TestVenueDeployment():
                     'venue_organizer_agreement': {
                         'value': [
                             'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                            'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                             'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                             'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                            'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                         ]
                     }
                 }
@@ -323,12 +330,13 @@ class TestVenueDeployment():
                     'venue_organizer_agreement': {
                         'value': [
                             'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-                            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                            'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
                             'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                             'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                             'We will treat the OpenReview staff with kindness and consideration.',
                             'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                            'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
                         ]
                     }
                 }
@@ -369,6 +377,10 @@ class TestVenueDeployment():
                 'expiration_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52)) }
             })
         helpers.await_queue_edit(openreview_client, edit_id=dates_edit['id'])
+        # the dates edit updates the Withdrawal mdate, which re-schedules the -0-1 date process
+        # shortly after. Wait for it to finish before renaming: if it fires while the domain is
+        # frozen for the rename, it fails (and exhausts its retries) with a DomainError
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Withdrawal-0-1', count=2)
 
         # the -0-0 cdate process must be scheduled but not yet executed
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Withdrawal').cdate == activation_date
@@ -392,8 +404,9 @@ class TestVenueDeployment():
         assert renamed_venue_id in openreview_client.get_group('active_venues').members
         assert renamed_venue_id in openreview_client.get_group('venues').members
 
-        # 3. the date processes must be re-scheduled under the new domain
-        helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-1', count=1)
+        # 3. the finished -0-1 process logs (deployment + dates edit) are moved to the new domain,
+        #    and the invitations keep their date processes under the new domain
+        helpers.await_queue_edit(openreview_client, edit_id=f'{renamed_venue_id}/-/Withdrawal-0-1', count=2)
 
         assert openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Withdrawal')
         assert openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Withdrawal/Dates')
@@ -430,12 +443,13 @@ class TestVenueDeployment():
 
         agreement_value = [
             'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+            'We will ask authors and reviewers to create an OpenReview Profile well in advance of the paper submission deadlines.',
             'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
             'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
             'We will treat the OpenReview staff with kindness and consideration.',
             'We acknowledge that authors and reviewers will be required to share their preferred email.',
+            'We acknowledge that certain metadata for accepted papers, specifically the paper title, abstract and author list, will be publicly released on OpenReview.',
         ]
 
         def post_request(name):
