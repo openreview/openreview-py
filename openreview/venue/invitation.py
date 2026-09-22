@@ -56,7 +56,7 @@ def get_workflow_stage_order(venue):
     first to match the usual chronology.'''
     roles = []
     if venue.use_senior_area_chairs:
-        roles.append(venue.senior_area_chairs_name)
+        roles.extend(venue.senior_area_chair_roles)
     if venue.use_area_chairs:
         roles.extend(venue.area_chair_roles)
     roles.extend(venue.reviewer_roles)
