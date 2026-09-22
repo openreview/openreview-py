@@ -695,6 +695,9 @@ class ARR(object):
     def get_authors_id(self, number = None):
         return self.venue.get_authors_id(number)
 
+    def get_contributors_id(self, number=None):
+        return self.get_committee_id('Contributors', number)
+
     def get_authors_accepted_id(self, number = None):
         return self.venue.get_authors_accepted_id(number)
 
@@ -781,6 +784,20 @@ class ARR(object):
 
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
+        contributors_id = self.get_contributors_id()
+        if not openreview.tools.get_group(self.client, contributors_id):
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=Group(
+                    id=contributors_id,
+                    readers=[self.venue_id, contributors_id],
+                    writers=[self.venue_id],
+                    signatures=[self.venue_id],
+                    signatories=[self.venue_id],
+                    members=[]
+                )
+            )
         self.prune_active_arr_venues()
 
         setup_arr_invitations(self.invitation_builder)
@@ -798,7 +815,8 @@ class ARR(object):
             group=openreview.api.Group(
                 id=self.venue_id,
                 content={
-                    'allow_gurobi_solver': { 'value': True }
+                    'allow_gurobi_solver': { 'value': True },
+                    'contributors_id': { 'value': contributors_id }
                 }
             )
         )
