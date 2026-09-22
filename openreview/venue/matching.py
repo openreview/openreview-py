@@ -1580,7 +1580,8 @@ class Matching(object):
             cdate = tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3),
             date_processes = [{
                 'dates': ["#{4/cdate}", venue.invitation_builder.update_date_string],
-                'script': venue.invitation_builder.get_process_content('../workflows/process/compute_affinity_scores_process.py')
+                'script': venue.invitation_builder.get_process_content('../workflows/process/compute_affinity_scores_process.py'),
+                'timeout': tools.MAX_PROCESS_TIMEOUT
             }],
             content = content,
             edge = {
@@ -1662,7 +1663,8 @@ class Matching(object):
                 cdate = tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3),
                 date_processes = [{
                     'dates': ["#{4/cdate}", "#{4/mdate} + " + str(5000)],
-                    'script': venue.invitation_builder.get_process_content('../workflows/process/compute_conflicts_process.py')
+                    'script': venue.invitation_builder.get_process_content('../workflows/process/compute_conflicts_process.py'),
+                    'timeout': tools.MAX_PROCESS_TIMEOUT
                 }],
                 content = {
                     'committee_name': {
