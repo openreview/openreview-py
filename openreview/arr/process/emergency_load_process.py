@@ -11,14 +11,12 @@ def process(client, edit, invitation):
         invitation=f"{role}/-/Emergency_Load",
         head=role,
         tail=user,
-        wait_to_finish=True,
         soft_delete=True
     )
     client.delete_edges(
         invitation=f"{role}/-/Emergency_Area",
         head=role,
         tail=user,
-        wait_to_finish=True,
         soft_delete=True
     )
 
@@ -28,13 +26,11 @@ def process(client, edit, invitation):
         invitation=f"{role}/-/Registered_Load",
         head=role,
         tail=user,
-        wait_to_finish=True,
         soft_delete=True
     )
     client.delete_edges(
         invitation=f"{role}/-/Emergency_Score",
         tail=user,
-        wait_to_finish=True,
         soft_delete=True
     )
 
@@ -50,7 +46,6 @@ def process(client, edit, invitation):
             invitation=f"{role}/-/Custom_Max_Papers",
             head=role,
             tail=user,
-            wait_to_finish=True,
             soft_delete=True
         )
 
@@ -75,7 +70,6 @@ def process(client, edit, invitation):
         invitation=f"{role}/-/Custom_Max_Papers",
         head=role,
         tail=user,
-        wait_to_finish=True,
         soft_delete=True
     )
 
@@ -185,6 +179,5 @@ def process(client, edit, invitation):
     client.delete_edges(
         invitation=f"{role}/-/Reviewing_Resubmissions",
         tail=user,
-        wait_to_finish=True,
         soft_delete=True
     )

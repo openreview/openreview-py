@@ -67,7 +67,6 @@ def process(client, edit, invitation):
       invitation=CUSTOM_MAX_PAPERS_ID,
       head=role,
       tail=user,
-      wait_to_finish=True,
       soft_delete=True
     )
   
@@ -89,7 +88,6 @@ def process(client, edit, invitation):
       invitation=AVAILABILITY_ID,
       head=role,
       tail=user,
-      wait_to_finish=True,
       soft_delete=True
     )
 
