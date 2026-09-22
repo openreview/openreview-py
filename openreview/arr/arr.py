@@ -888,7 +888,7 @@ class ARR(object):
                 multiReply=True,
                 allow_author_reorder=stage.author_reorder_after_first_deadline,
                 allow_license_edition=True,
-                source={'venueid': self.get_submission_venue_id()}
+                source={'venueid': [self.get_submission_venue_id()]}
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)

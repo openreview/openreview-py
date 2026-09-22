@@ -443,7 +443,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             content = {
                 'source': {
                     'value': {
-                        'venueid': self.venue.get_submission_venue_id()
+                        'venueid': [self.venue.get_submission_venue_id()]
                     }
                 }
             },
@@ -5352,7 +5352,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             content = {
                 'source': {
                     'value': {
-                        'venueid': venue.get_submission_venue_id()
+                        'venueid': [venue.get_submission_venue_id()]
                     }
                 }
             },
