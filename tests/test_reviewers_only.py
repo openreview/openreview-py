@@ -548,7 +548,8 @@ Workflow timeline: https://openreview.net/group/edit?id={venue_id}'''
         content_keys = invitation_content.keys()
         assert all(field in content_keys for field in ['title', 'authors', 'TLDR', 'abstract', 'pdf'])
         assert 'authorids' not in content_keys
-        assert 'readers' in invitation_content['authors']
+        # readers not added to camera-ready invitation by default
+        assert 'readers' not in invitation_content['authors']
 
         notifications_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Notifications')
         assert notifications_inv
