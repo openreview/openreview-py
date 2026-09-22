@@ -2126,21 +2126,18 @@ def get_invitation_source(invitation, domain):
     meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
     rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
 
-    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else {}
+    source = invitation.content.get('source', { 'value': { 'venueid': [submission_venue_id] } }).get('value', { 'venueid': [submission_venue_id] }) if invitation.content else {}
 
     ## Deprecated, user source as dictionary
     if isinstance(source, str):
         if source == 'all_submissions':
-            source = { 'venueid': submission_venue_id }
+            source = { 'venueid': [submission_venue_id] }
         elif source == 'accepted_submissions':
             source = { 'venueid': [venue_id, submission_venue_id], 'with_decision_accept': True }
         elif source == 'public_submissions':
-            source = { 'venueid': submission_venue_id, 'readers': ['everyone'] }
+            source = { 'venueid': [submission_venue_id], 'readers': ['everyone'] }
         elif source == 'flagged_for_ethics_review':
-            source = { 'venueid': submission_venue_id, 'content': { 'flagged_for_ethics_review': True } }
-    ##        
-
-        
+            source = { 'venueid': [submission_venue_id], 'content': { 'flagged_for_ethics_review': True } }
 
     ## Deprecated, use source instead
     reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
@@ -2162,6 +2159,11 @@ def get_invitation_source(invitation, domain):
             source['content'] = {}
         source['content'][key] = value
     ##
+
+    ## venueid may be stored as a string in older invitations, normalize it to a list
+    ## so membership checks don't fall back to substring matching
+    if isinstance(source.get('venueid'), str):
+        source['venueid'] = [source['venueid']]
 
     return source
 
