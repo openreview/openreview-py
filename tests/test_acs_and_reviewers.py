@@ -1924,9 +1924,9 @@ url={https://openreview.net/forum?id='''
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
 
-        # the source venueid is stored as a string, it must not match released submissions by substring
+        # the source venueid is now stored as a list
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding')
-        assert invitation.content['source']['value']['venueid'] == 'EFGH.cc/2025/Conference/Submission'
+        assert invitation.content['source']['value']['venueid'] == ['EFGH.cc/2025/Conference/Submission']
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
         assert not [s for s in submissions if s.content['venueid']['value'] == 'EFGH.cc/2025/Conference/Submission']
