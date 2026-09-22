@@ -95,12 +95,16 @@ class GroupBuilder(object):
         return readers
 
     def get_reviewer_paper_group_writers(self, number):
-        readers=[self.venue.id]
-        if self.venue.use_senior_area_chairs:
-            readers.append(self.venue.get_senior_area_chairs_id(number))
-        if self.venue.use_area_chairs:
-            readers.append(self.venue.get_area_chairs_id(number))
-        return readers
+        # The API copies the writers of the paper's Reviewers group to its anonymous id groups, and a writer of a group
+        # can read it, members included. So the chairs are writers only when they are allowed to see the reviewer
+        # identities, otherwise they would learn who is behind each anonymous id.
+        identity_readers = self.venue.reviewer_identity_readers or []
+        writers=[self.venue.id]
+        if self.venue.use_senior_area_chairs and (openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS in identity_readers or openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers):
+            writers.append(self.venue.get_senior_area_chairs_id(number))
+        if self.venue.use_area_chairs and (openreview.stages.IdentityReaders.AREA_CHAIRS in identity_readers or openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED in identity_readers):
+            writers.append(self.venue.get_area_chairs_id(number))
+        return writers
 
 
     def get_area_chair_paper_group_readers(self, number, name=None):

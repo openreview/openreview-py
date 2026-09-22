@@ -1985,3 +1985,43 @@ url={https://openreview.net/forum?id='''
         assert len(tags) == 1 and tags[0].label == 'Poster'
         endorsement_tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Article_Endorsement', stream=True)
         assert endorsement_tags
+
+    def test_rerun_submission_change_stage(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+
+        # the source venueid is now stored as a list
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding')
+        assert invitation.content['source']['value']['venueid'] == ['EFGH.cc/2025/Conference/Submission']
+
+        submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert not [s for s in submissions if s.content['venueid']['value'] == 'EFGH.cc/2025/Conference/Submission']
+
+        edits = openreview_client.get_note_edits(invitation='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding')
+
+        # re-run the stage, no submission has the source venueid anymore
+        now = datetime.datetime.now()
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=4)
+
+        assert len(openreview_client.get_note_edits(invitation='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding')) == len(edits)
+
+        # accepted submissions keep their readers and their revealed author identities
+        submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert submissions[0].content['venueid']['value'] == 'EFGH.cc/2025/Conference'
+        assert submissions[0].readers == ['everyone']
+        assert 'readers' not in submissions[0].content['authors']
+        assert 'readers' not in submissions[0].content['pdf']
+
+        # rejected submissions keep their readers and their hidden author identities
+        assert submissions[2].content['venueid']['value'] == 'EFGH.cc/2025/Conference/Rejected_Submission'
+        assert submissions[2].readers == ['everyone']
+        assert submissions[2].content['authors']['readers'] == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Submission3/Authors'
+        ]
