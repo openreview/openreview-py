@@ -1845,12 +1845,11 @@ def test_ai_review_detection_review_reply(client, openreview_client, helpers):
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
     venue = openreview.venue.helpers.get_venue(pc_client, 'ICLR.cc/2026/Conference', support_user='openreview.net/Support')
-    venue.review_stage = openreview.stages.ReviewStage(name='Official_Review')
 
     now = datetime.datetime.now()
     due_date = now + datetime.timedelta(days=3)
     venue.custom_stage = openreview.stages.CustomStage(name='AI_Review_Detection',
-        reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+        reply_to='Official_Review',
         source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
         due_date=due_date,
         exp_date=due_date + datetime.timedelta(days=1),
