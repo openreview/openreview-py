@@ -524,7 +524,7 @@ class TestKDDConference():
                                 'extensions': ['pdf']
                             }
                         },
-                        "readers": { 'delete': True }
+                        "readers": { 'const': { 'delete': True } }
                     },
                 }
             }
@@ -547,13 +547,13 @@ class TestKDDConference():
         assert full_submission.edit['invitation']['edit']['note']['content']['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"]        
 
         assert 'pdf' in full_submission.edit['invitation']['edit']['note']['content']
-        assert 'readers' not in full_submission.edit['invitation']['edit']['note']['content']['pdf']      
+        assert full_submission.edit['invitation']['edit']['note']['content']['pdf']['readers'] == { 'const': { 'delete': True } }
 
         invitations = openreview_client.get_invitations(invitation='KDD.org/2026/Research_Track_August/-/Full_Submission', expired=True)
         assert len(invitations) == 5
         for invitation in invitations:
             assert 'readers' in invitation.edit['note']['content']['corresponding_author']
-            assert 'readers' not in invitation.edit['note']['content']['pdf']
+            assert invitation.edit['note']['content']['pdf']['readers'] == { 'const': { 'delete': True } }
 
         submissions = openreview_client.get_notes(invitation='KDD.org/2026/Research_Track_August/-/Submission', sort='number:asc')
         assert len(submissions) == 5

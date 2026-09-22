@@ -2398,9 +2398,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'input': 'radio'
                             }
                         },
-                        'readers': {
-                            "delete": True
-                        }
+                        'readers': { 'const': { 'delete': True } }
                     }
             },
             allow_de_anonymization=False)
@@ -2410,7 +2408,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=2)
         
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
-        assert 'readers' not in invitation.edit['note']['content']['final_review_rating']
+        assert 'readers' in invitation.edit['note']['content']['final_review_rating'] and invitation.edit['note']['content']['final_review_rating']['readers'] == { 'const': { 'delete': True } }
         
         anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
         anon_group_id = anon_groups[0].id
