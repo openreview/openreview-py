@@ -4887,12 +4887,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             date_processes=[{
                 'dates': ["#{4/cdate} + 3000"],
-                'script': self.get_process_content('process/preferred_emails_process.py'),
-                'timeout': tools.MAX_PROCESS_TIMEOUT
+                'script': self.get_process_content('process/preferred_emails_process.py')
             }, {
                 'cron': '0 0 * * *',
-                'script': self.get_process_content('process/preferred_emails_process.py'),
-                'timeout': tools.MAX_PROCESS_TIMEOUT
+                'script': self.get_process_content('process/preferred_emails_process.py')
             }]
         )
 

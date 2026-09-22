@@ -1662,7 +1662,7 @@ class Matching(object):
                 description = f'This step runs automatically at its "activation date", and creates "edges" between the {venue.get_committee_name(self.match_group.id, pretty=True)} group and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
                 cdate = tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3),
                 date_processes = [{
-                    'dates': ["#{4/cdate}", "#{4/mdate} + " + str(5000)],
+                    'dates': ["#{4/cdate}", venue.invitation_builder.update_date_string],
                     'script': venue.invitation_builder.get_process_content('../workflows/process/compute_conflicts_process.py'),
                     'timeout': tools.MAX_PROCESS_TIMEOUT
                 }],
