@@ -3133,11 +3133,17 @@ class Profile(object):
         return None
     
     def get_usernames(self):
-        usernames = set([self.id])
-        for name in self.content['names']:
-            if 'username' in name:
-                usernames.add(name['username'])
-        return list(usernames)
+        """
+        Returns the ids the profile is known by: the profile id first, then the username of each name in the order
+        they appear in the profile, with no duplicates. Safe on a profile loaded with an id only, which yields just
+        the id.
+
+        :return: List of usernames
+        :rtype: list[str]
+        """
+        names = (self.content or {}).get('names') or []
+        usernames = [self.id] + [name['username'] for name in names if name.get('username')]
+        return list(dict.fromkeys(username for username in usernames if username))
 
 
     def to_json(self):

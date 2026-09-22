@@ -1662,9 +1662,26 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_invitation_edits(self, invitation_id = None, invitation = None, with_count=None, sort=None):
+    def get_invitation_edits(self, invitation_id = None, invitation = None, with_count=None, sort=None, domain=None, signatures=None, mintcdate=None, limit=None):
         """
-        Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
+        Gets a list of edits for an invitation. The edits that will be returned match all the criteria passed in the parameters.
+
+        :param invitation_id: ID of the Invitation whose edits to retrieve.
+        :type invitation_id: str, optional
+        :param invitation: Invitation ID used to create the edits.
+        :type invitation: str, optional
+        :param with_count: If True, also returns the total count of matching edits.
+        :type with_count: bool, optional
+        :param sort: Field to sort results by (e.g., ``tcdate``, ``tmdate:desc``).
+        :type sort: str, optional
+        :param domain: Venue ID that the edits belong to.
+        :type domain: str, optional
+        :param signatures: Group IDs that signed the edits.
+        :type signatures: list[str] or str, optional
+        :param mintcdate: Minimum creation date (epoch milliseconds) of the edits.
+        :type mintcdate: int, optional
+        :param limit: Maximum number of edits to return.
+        :type limit: int, optional
 
         :return: List of edits
         :rtype: list[Edit]
@@ -1678,6 +1695,14 @@ class OpenReviewClient(object):
             params['sort'] = sort
         if with_count is not None:
             params['count'] = with_count
+        if domain:
+            params['domain'] = domain
+        if signatures:
+            params['signatures'] = signatures
+        if mintcdate is not None:
+            params['mintcdate'] = mintcdate
+        if limit is not None:
+            params['limit'] = limit
 
         response = self.session.get(self.invitation_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1948,7 +1973,7 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, note_id = None, invitation = None, with_count=None, sort=None, trash=None, limit=None):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=None, sort=None, trash=None, limit=None, domain=None, signatures=None, mintcdate=None):
         """Get a list of Edit objects for a Note matching the filters provided.
 
         Returns edits that match all the criteria passed in the parameters. When
@@ -1966,6 +1991,12 @@ class OpenReviewClient(object):
         :type trash: bool, optional
         :param limit: Maximum number of edits to return.
         :type limit: int, optional
+        :param domain: Venue ID that the edits belong to.
+        :type domain: str, optional
+        :param signatures: Group IDs that signed the edits.
+        :type signatures: list[str] or str, optional
+        :param mintcdate: Minimum creation date (epoch milliseconds) of the edits.
+        :type mintcdate: int, optional
 
         :return: List of Edit objects, or a tuple ``(list[Edit], int)`` when ``with_count`` is True.
         :rtype: list[Edit] | tuple[list[Edit], int]
@@ -1983,6 +2014,12 @@ class OpenReviewClient(object):
             params['count'] = with_count
         if limit is not None:
             params['limit'] = limit
+        if domain:
+            params['domain'] = domain
+        if signatures:
+            params['signatures'] = signatures
+        if mintcdate is not None:
+            params['mintcdate'] = mintcdate
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -2009,9 +2046,28 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_group_edits(self, group_id = None, invitation = None, with_count = False, sort = None, trash = None):
+    def get_group_edits(self, group_id = None, invitation = None, with_count = False, sort = None, trash = None, domain=None, signatures=None, mintcdate=None, limit=None):
         """
         Gets a list of edits for a group. The edits that will be returned match all the criteria passed in the parameters.
+
+        :param group_id: ID of the Group whose edits to retrieve.
+        :type group_id: str, optional
+        :param invitation: Invitation ID used to create the edits.
+        :type invitation: str, optional
+        :param with_count: If True, also returns the total count of matching edits.
+        :type with_count: bool, optional
+        :param sort: Field to sort results by (e.g., ``tcdate``, ``tmdate:desc``).
+        :type sort: str, optional
+        :param trash: If True, includes soft-deleted edits in the results.
+        :type trash: bool, optional
+        :param domain: Venue ID that the edits belong to.
+        :type domain: str, optional
+        :param signatures: Group IDs that signed the edits.
+        :type signatures: list[str] or str, optional
+        :param mintcdate: Minimum creation date (epoch milliseconds) of the edits.
+        :type mintcdate: int, optional
+        :param limit: Maximum number of edits to return.
+        :type limit: int, optional
 
         :return: List of edits
         :rtype: list[Edit]
@@ -2027,6 +2083,14 @@ class OpenReviewClient(object):
             params['trash'] = trash
         if with_count is not None:
             params['count'] = with_count
+        if domain:
+            params['domain'] = domain
+        if signatures:
+            params['signatures'] = signatures
+        if mintcdate is not None:
+            params['mintcdate'] = mintcdate
+        if limit is not None:
+            params['limit'] = limit
 
         response = self.session.get(self.group_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -2081,7 +2145,7 @@ class OpenReviewClient(object):
         #return response.json()
 
 
-    def get_tags(self, id = None, note = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None, domain=None):
+    def get_tags(self, id = None, note = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, signatures = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None, domain=None, sort=None):
         """Get a list of Tag objects based on the filters provided.
 
         Returns Tags matching all the criteria passed in the parameters. When
@@ -2102,6 +2166,10 @@ class OpenReviewClient(object):
         :type profile: str, optional
         :param signature: A group ID. If provided, returns Tags signed by this group.
         :type signature: str, optional
+        :param signatures: Group IDs. If provided, returns Tags signed by any of these groups.
+        :type signatures: list[str], optional
+        :param sort: Field to sort results by, optionally with the order (e.g., ``tmdate:desc``).
+        :type sort: str, optional
         :param tag: Tag value to filter by.
         :type tag: str, optional
         :param limit: Maximum number of Tags to return.
@@ -2136,6 +2204,10 @@ class OpenReviewClient(object):
             params['parentInvitations'] = parent_invitations
         if signature is not None:
             params['signature'] = signature
+        if signatures:
+            params['signatures'] = signatures
+        if sort:
+            params['sort'] = sort
         if tag is not None:
             params['tag'] = tag
         if limit is not None:
@@ -2160,7 +2232,7 @@ class OpenReviewClient(object):
 
         return tags
 
-    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, note = None, profile = None, signature = None, tag = None, domain=None):
+    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, note = None, profile = None, signature = None, signatures = None, tag = None, domain=None, sort=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -2182,6 +2254,8 @@ class OpenReviewClient(object):
             'note': note,
             'profile': profile,
             'signature': signature,
+            'signatures': signatures,
+            'sort': sort,
             'tag': tag,
             'domain': domain,
             'stream': True
@@ -2189,7 +2263,7 @@ class OpenReviewClient(object):
 
         return self.get_tags(**params)
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, select=None, stream=None, domain=None):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, select=None, stream=None, domain=None, signatures=None, sort=None):
         """Get a list of Edge objects based on the filters provided.
 
         Returns Edges matching all the criteria passed in the parameters. When
@@ -2220,6 +2294,10 @@ class OpenReviewClient(object):
         :type stream: bool, optional
         :param domain: Venue domain ID; improves query efficiency when the caller is a venue organizer.
         :type domain: str, optional
+        :param signatures: Group IDs. If provided, returns Edges signed by any of these groups.
+        :type signatures: list[str] or str, optional
+        :param sort: Field to sort results by, optionally with the order (e.g., ``tmdate:desc``).
+        :type sort: str, optional
 
         :return: List of Edge objects, or a tuple ``(list[Edge], int)`` when ``with_count`` is True and ``offset`` is None.
         :rtype: list[Edge] | tuple[list[Edge], int]
@@ -2242,6 +2320,10 @@ class OpenReviewClient(object):
             params['count'] = with_count
         if domain is not None:
             params['domain'] = domain
+        if signatures:
+            params['signatures'] = signatures
+        if sort:
+            params['sort'] = sort
 
         response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -2253,7 +2335,7 @@ class OpenReviewClient(object):
 
         return edges
 
-    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, trash=None, select=None, domain=None):
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, trash=None, select=None, domain=None, signatures=None):
         """Get all Edge objects matching the filters using server-side streaming.
 
         Convenience wrapper around :meth:`get_edges` with ``stream=True``, which
@@ -2288,6 +2370,7 @@ class OpenReviewClient(object):
             'trash': trash,
             'select': select,
             'domain': domain,
+            'signatures': signatures,
             'stream': True
         }
 
@@ -2908,9 +2991,9 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None):
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, domain = None, signature = None, sort = None):
         """
-        **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
+        Retrieves the messages sent to a list of usernames or emails and/or a particular e-mail subject. Venue organizers can read every message of their venue, other users only the messages sent to or by them.
 
         :param to: Tilde user names or emails
         :type to: list[str], optional
@@ -2918,12 +3001,19 @@ class OpenReviewClient(object):
         :type subject: str, optional
         :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
         :type status: str, optional
+        :param domain: Venue ID that the messages belong to
+        :type domain: str, optional
+        :param signature: Group ID(s) the messages were sent with
+        :type signature: list[str] or str, optional
+        :param sort: Field to sort results by, optionally with the order (e.g., ``cdate:desc``). Defaults to the delivery timestamp descending.
+        :type sort: str, optional
 
         :return: Messages that match the passed parameters
-        :rtype: dict
+        :rtype: list[dict]
         """
 
-        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
+        params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit, 'domain': domain, 'signature': signature, 'sort': sort }
+        response = self.session.get(self.messages_url, params = tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
 
