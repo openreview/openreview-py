@@ -164,6 +164,12 @@ class Venue(object):
             self.use_senior_area_chairs = True
             preferred_email_groups.append(self.get_senior_area_chairs_id())
 
+        if request_note.content.get('ethics_review_support',{}).get('value'):
+            self.use_ethics_chairs = True
+            self.use_ethics_reviewers = True
+            preferred_email_groups.append(self.get_ethics_chairs_id())
+            preferred_email_groups.append(self.get_ethics_reviewers_id())
+
         self.release_role_participation = request_note.content.get('release_role_participation', {}).get('value', True)
 
         self.preferred_emails_groups = preferred_email_groups
