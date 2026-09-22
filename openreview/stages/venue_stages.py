@@ -241,7 +241,7 @@ class SubmissionStage(object):
             content[key] = value
         return content
     
-    def get_content(self, api_version='1', conference=None, venue_id=None):
+    def get_content(self, api_version='1', conference=None, venue_id=None, include_field_readers=False):
 
         if api_version == '1':
             content = deepcopy(default_content.submission)
@@ -347,8 +347,14 @@ class SubmissionStage(object):
                 }
 
                 for field in content.keys():
-                    if 'readers' in content[field] and isinstance(content[field]['readers'], list):
-                        content[field]['readers'] = [readers_mapping.get(reader, reader) for reader in content[field]['readers']]
+                    field_readers = content[field].get('readers')
+                    if not isinstance(field_readers, list):
+                        continue
+                    if include_field_readers:
+                        content[field]['readers'] = [readers_mapping.get(reader, reader) for reader in field_readers]
+                    elif any(reader in readers_mapping for reader in field_readers):
+                        # default content readers belong only to the submission invitation
+                        del content[field]['readers']
 
                 if venue_id:
                     content['venue'] = {
@@ -541,7 +547,8 @@ class SubmissionRevisionStage():
                  allow_author_reorder=False, 
                  allow_license_edition=False, 
                  preprocess_path=None,
-                 revision_history_readers=None):
+                 revision_history_readers=None,
+                 include_field_readers=False):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -555,8 +562,9 @@ class SubmissionRevisionStage():
         self.preprocess_path = preprocess_path
         self.source = source
         self.revision_history_readers = revision_history_readers
+        self.include_field_readers = include_field_readers
 
-    
+
     def get_edit_readers(self, venue, number):
 
         if self.revision_history_readers:
@@ -564,10 +572,10 @@ class SubmissionRevisionStage():
 
         return [venue.id, venue.get_authors_id(number=number)]
 
-    
+
     def get_content(self, api_version='2', conference=None):
-        
-        content = deepcopy(conference.submission_stage.get_content(api_version, conference))
+
+        content = deepcopy(conference.submission_stage.get_content(api_version, conference, include_field_readers=self.include_field_readers))
 
         for field in self.remove_fields:
             if field in content:
