@@ -136,7 +136,7 @@ return {
     ],
     trackStatusConfig: {
       submissionTrackname: 'research_area',
-      registrationTrackName: 'research_area',
+      registrationTrackName: 'indicate_your_research_areas',
       registrationFormName: 'Registration',
       roles: ['Reviewers', 'Area_Chairs', 'Senior_Area_Chairs']
     },
@@ -152,7 +152,11 @@ return {
             'anonymity': ['No'],
             'responsible_checklist': ['No'],
             'limitations': ['No'],
-            'Knowledge_of_or_educated_guess_at_author_identity': ['Yes'],
+            'Knowledge_of_or_educated_guess_at_author_identity': [
+              'Yes, I learned it orthogonally to the review process ',
+              'Yes, I learned it during review process (e.g. checking literature)',
+              'I can guess from the content of the submission'
+            ],
             'author_identity_guess': [5]
         }
       }
