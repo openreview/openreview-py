@@ -2571,7 +2571,7 @@ class OpenReviewClient(object):
                 if not pending:
                     print(f'Deleting edges of {invitation}: all the edges were deleted')
                     return
-                print(f'Deleting edges of {invitation}: edges pending to be deleted, attempt {attempt}/{max_attempts}')
+                print(f'Deleting edges of {invitation}: {pending} edges pending to be deleted, attempt {attempt}/{max_attempts}')
             except Exception as error:
                 ## The check can fail while the deletion is running, keep polling until the deadline,
                 ## but a rejected request keeps failing the same way, so raise it right away
