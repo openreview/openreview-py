@@ -2128,10 +2128,6 @@ def get_invitation_source(invitation, domain):
             source = { 'venueid': [submission_venue_id], 'readers': ['everyone'] }
         elif source == 'flagged_for_ethics_review':
             source = { 'venueid': [submission_venue_id], 'content': { 'flagged_for_ethics_review': True } }
-        else:
-            ## unknown name, fall back to the default source so we don't return a string
-            source = { 'venueid': [submission_venue_id] }
-    ##        
 
     ## Deprecated, use source instead
     reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
