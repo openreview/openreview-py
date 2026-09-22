@@ -1843,6 +1843,52 @@ For more details, please check the following links:
         assert len(messages) == 1
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject='[ABCD 2025] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
 
+    def test_last_activity(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        reviewers = ['~ReviewerOne_ABCD1', '~ReviewerTwo_ABCD1', '~ReviewerThree_ABCD1']
+
+        reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Official_Review', sort='tcdate:asc')
+        assert len(reviews) == 2
+
+        # As a program chair: reviews signed with the anonymous ids are attributed to the reviewers
+        activity = openreview.tools.get_last_activity(pc_client, 'ABCD.cc/2025/Conference', reviewers)
+        assert set(activity.keys()) == set(reviewers)
+
+        assert activity['~ReviewerOne_ABCD1']['type'] == 'note_edit'
+        assert activity['~ReviewerOne_ABCD1']['invitation'] == 'ABCD.cc/2025/Conference/Submission1/-/Official_Review'
+        assert activity['~ReviewerOne_ABCD1']['signatures'] == reviews[0].signatures
+        assert activity['~ReviewerOne_ABCD1']['signatures'][0].startswith('ABCD.cc/2025/Conference/Submission1/Program_Committee_')
+        assert activity['~ReviewerOne_ABCD1']['tmdate'] >= reviews[0].tcdate
+
+        assert activity['~ReviewerTwo_ABCD1']['type'] == 'note_edit'
+        assert activity['~ReviewerTwo_ABCD1']['invitation'] == 'ABCD.cc/2025/Conference/Submission1/-/Official_Review'
+        assert activity['~ReviewerTwo_ABCD1']['signatures'] == reviews[1].signatures
+        assert activity['~ReviewerTwo_ABCD1']['tmdate'] > activity['~ReviewerOne_ABCD1']['tmdate']
+
+        # Reviewer three has not signed anything in the venue yet
+        assert activity['~ReviewerThree_ABCD1'] is None
+
+        # Actions before the window are ignored
+        activity = openreview.tools.get_last_activity(pc_client, 'ABCD.cc/2025/Conference', ['~ReviewerOne_ABCD1'], since=reviews[1].tcdate)
+        assert activity['~ReviewerOne_ABCD1'] is None
+
+        # Impersonating the venue gives the same result
+        venue_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        venue_client.impersonate('ABCD.cc/2025/Conference')
+        activity = openreview.tools.get_last_activity(venue_client, 'ABCD.cc/2025/Conference', reviewers)
+        assert activity['~ReviewerOne_ABCD1']['signatures'] == reviews[0].signatures
+        assert activity['~ReviewerTwo_ABCD1']['signatures'] == reviews[1].signatures
+        assert activity['~ReviewerThree_ABCD1'] is None
+
+        # A reviewer only sees actions they can read: their own recruitment response (the review edit is readable by
+        # the program chairs and the Submitted group only) and nothing about another reviewer's anonymous ids
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
+        activity = openreview.tools.get_last_activity(reviewer_client, 'ABCD.cc/2025/Conference', ['~ReviewerOne_ABCD1', '~ReviewerTwo_ABCD1'])
+        assert activity['~ReviewerOne_ABCD1']['type'] == 'note_edit'
+        assert set(activity['~ReviewerOne_ABCD1']['signatures']) <= {'~ReviewerOne_ABCD1', reviews[0].signatures[0]}
+        assert activity['~ReviewerTwo_ABCD1'] is None
+
     def test_LLM_PDF_response_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
