@@ -1055,6 +1055,21 @@ def test_reviewer_author_publications_during_bidding(client, openreview_client, 
     reviewer_notes = reviewer_client.get_notes(content={'authorids': '~SomeFirstName_User1'})
     assert not submission_ids.intersection({ note.id for note in reviewer_notes }), 'authors are hidden during bidding but the reviewer found the submissions by author'
 
+    ## the notes search by author goes through Elasticsearch and must not leak the hidden authors either
+    pc_notes = pc_client.search_notes(term='~Eddie_Fb1', content='authors', group='all', source='all')
+    assert [note.id for note in pc_notes] == [submission2.id]
+
+    pc_notes = pc_client.search_notes(term='Eddie Fb', content='authors', group='all', source='all')
+    assert [note.id for note in pc_notes] == [submission2.id]
+
+    author_notes = test_client.search_notes(term='~SomeFirstName_User1', content='authors', group='all', source='all')
+    assert submission_ids.issubset({ note.id for note in author_notes })
+
+    for term in ['~Eddie_Fb1', 'Eddie Fb', '~SomeFirstName_User1', 'SomeFirstName User']:
+        for content in ['authors', 'all']:
+            reviewer_notes = reviewer_client.search_notes(term=term, content=content, group='all', source='all')
+            assert not submission_ids.intersection({ note.id for note in reviewer_notes }), f'authors are hidden during bidding but the reviewer found the submissions searching "{term}" in {content}'
+
 def test_paper_committee_groups(client, openreview_client, helpers):
 
     pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
