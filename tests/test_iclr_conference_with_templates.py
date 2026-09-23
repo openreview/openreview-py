@@ -1059,8 +1059,9 @@ def test_reviewer_author_publications_during_bidding(client, openreview_client, 
     pc_notes = pc_client.search_notes(term='~Eddie_Fb1', content='authors', group='all', source='all')
     assert [note.id for note in pc_notes] == [submission2.id]
 
+    ## the name search is a full text match, so it also returns the papers of the other Eddies
     pc_notes = pc_client.search_notes(term='Eddie Fb', content='authors', group='all', source='all')
-    assert [note.id for note in pc_notes] == [submission2.id]
+    assert submission2.id in [note.id for note in pc_notes]
 
     author_notes = test_client.search_notes(term='~SomeFirstName_User1', content='authors', group='all', source='all')
     assert submission_ids.issubset({ note.id for note in author_notes })
