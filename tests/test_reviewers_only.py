@@ -1169,7 +1169,7 @@ For more details, please check the following links:
         helpers.create_user('newauthor@example.com', 'NewAuthor', 'Example')
         
         # Get the existing edit for this submission with the Submission invitation
-        edits = openreview_client.get_note_edits(note_id=submission.id, invitation='ABCD.cc/2025/Conference/-/Submission')
+        edits = openreview_client.get_note_edits(note_id=submission.id, invitation='ABCD.cc/2025/Conference/-/Submission', sort='tcdate:desc')
         assert len(edits) > 0
         existing_edit = edits[0]
         
@@ -1433,7 +1433,7 @@ For more details, please check the following links:
         assert notes[-1].content['title']['value'] == 'Program Committee Assignment Deployment Failed'
 
         last_note = notes[-1]
-        last_note_edit = openreview_client.get_note_edits(note_id=last_note.id)[0]
+        last_note_edit = openreview_client.get_note_edits(note_id=last_note.id, sort='tcdate:desc')[0]
 
         helpers.await_queue_edit(openreview_client, edit_id=last_note_edit.id)
         

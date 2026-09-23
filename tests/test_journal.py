@@ -2797,16 +2797,17 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert len(reviews) == 4
 
         ## Check permissions of the review revisions
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[0].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[0].id, sort='tcdate:desc')
         assert len(review_revisions) == 3
+        # review 1 was edited after it was released
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
-        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
+        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
-        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
+        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review_Release"
         assert review_revisions[2].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
         assert review_revisions[2].invitation == f"{venue_id}/Paper1/-/Review"
 
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[1].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[1].id, sort='tcdate:desc')
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
@@ -2814,12 +2815,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         # posted after reviews were released
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[2].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[2].id, sort='tcdate:desc')
         assert len(review_revisions) == 1
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", hugo_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review"
 
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[3].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[3].id, sort='tcdate:desc')
         assert len(review_revisions) == 1
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", antony_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review"
