@@ -117,6 +117,7 @@ class InvitationBuilder(object):
         self.set_eic_revision_invitation()
         self.set_expertise_selection_invitations()
         self.set_track_invitations()
+        self.set_ae_batch_invitation()
         self.set_review_rating_enabling_invitation()
         self.set_expertise_reviewer_invitation()
         self.set_reviewer_message_invitation()
@@ -173,6 +174,48 @@ class InvitationBuilder(object):
                         else 'process/regular_eligibility_pre_process.py')
                 artifact['preprocess'] = self.get_process_content(path)
             self.save_invitation(Invitation(**artifact))
+
+    def set_ae_batch_invitation(self):
+        if self.journal.settings.get('ae_batch_preparation_enabled') is not True:
+            if self.journal.settings.get('ae_batch_preparation_enabled') is False:
+                self.expire_invitation(self.journal.get_prepare_ae_batch_id())
+            return
+        eic = self.journal.get_editors_in_chief_id()
+        batch_settings = {key: self.journal.settings[key] for key in (
+            'tracks', 'ae_batch_preparation_enabled', 'skip_ac_recommendation',
+            'action_editors_max_papers', 'ae_max_active_submissions',
+            'resubmission_continuity_enabled', 'resubmission_continuity')
+            if key in self.journal.settings}
+        preflight = """def process(client, edit, invitation):
+    eic = EIC_ID
+    actor = getattr(edit, 'tauthor', None)
+    if edit.signatures != [eic] or (actor and not client.get_groups(id=eic, member=actor)):
+        raise openreview.OpenReviewException('Only Editors-in-Chief may prepare a batch.')
+""" + '\nEIC_ID = ' + repr(eic)
+        webfield_path = os.path.join(os.path.dirname(__file__), 'webfield',
+                                     'prepareAEBatchWebfield.js')
+        with open(webfield_path) as webfield:
+            web = webfield.read()
+        for key, value in {'PREPARE_AE_BATCH_ID': self.journal.get_prepare_ae_batch_id(),
+                           'EIC_ID': eic, 'VENUE_ID': self.journal.venue_id}.items():
+            marker = "var " + key + " = '';"
+            if web.count(marker) != 1:
+                raise ValueError('AE batch webfield binding changed: ' + key)
+            web = web.replace(marker, "var " + key + " = " + repr(value) + ";")
+        self.save_invitation(Invitation(id=self.journal.get_prepare_ae_batch_id(),
+            readers=[eic], writers=[self.journal.venue_id], invitees=[eic],
+            signatures=[self.journal.venue_id],
+            edit={'signatures': [eic], 'readers': [eic], 'writers': [self.journal.venue_id],
+                'note': {'signatures': [eic], 'readers': [eic],
+                    'writers': [self.journal.venue_id], 'content': {
+                        'batch_label': {'value': {'param': {'type': 'string',
+                            'regex': '[A-Za-z0-9][A-Za-z0-9_-]{0,79}'}}},
+                        'confirmation': {'value': {'param': {'type': 'string', 'enum': [
+                            'Desk triage is complete; prepare currently unassigned papers']}}},
+                        'status': {'value': 'Pending'}}}},
+            preprocess=preflight, process=self.get_process_content(
+                'process/ae_batch_process.py', batch_settings),
+            web=web))
 
     def get_super_process_content(self, field_name):
         return '''def process(client, edit, invitation):
