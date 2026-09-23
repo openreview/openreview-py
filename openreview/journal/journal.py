@@ -3,6 +3,7 @@ from . import group
 from .invitation import InvitationBuilder
 from .recruitment import Recruitment
 from .assignment import Assignment
+from .tracks import REGULAR, load_tracks, validate_tracks
 
 import re
 import csv
@@ -25,6 +26,13 @@ class Journal(object):
         self.website = website
         self.submission_name = submission_name
         self.settings = settings
+        self._tracks_enabled = isinstance(settings.get('tracks'), list)
+        configured_tracks = settings.get('tracks') or []
+        if self._tracks_enabled and not any(
+                track.get('id') == 'Regular' for track in configured_tracks):
+            configured_tracks = [REGULAR] + configured_tracks
+        self._tracks_seed = (validate_tracks(configured_tracks)
+                             if self._tracks_enabled else [])
         self.request_form_id = None
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
@@ -201,6 +209,37 @@ class Journal(object):
 
     def get_ae_affinity_score_id(self):
         return self.__get_invitation_id(name='Affinity_Score', prefix=self.get_action_editors_id())
+
+    def get_tracks_id(self):
+        return f'{self.venue_id}/Tracks'
+
+    def get_manage_tracks_id(self):
+        return f'{self.venue_id}/-/Manage_Tracks'
+
+    def get_manage_action_editors_id(self):
+        return f'{self.venue_id}/-/Manage_Action_Editors'
+
+    def get_add_action_editor_id(self):
+        return f'{self.venue_id}/-/Add_Action_Editor'
+
+    def get_regular_ineligible_id(self):
+        return f'{self.get_action_editors_id()}/-/Regular_Ineligible'
+
+    def get_track_eligibility_id(self):
+        return f'{self.get_action_editors_id()}/-/Track_Eligible'
+
+    def get_track_score_id(self):
+        return f'{self.get_action_editors_id()}/-/Track_Score'
+
+    def has_managed_tracks(self):
+        return self._tracks_enabled
+
+    def get_tracks(self):
+        if not self._tracks_enabled:
+            return []
+        group = openreview.tools.get_group(self.client, self.get_tracks_id())
+        return (load_tracks(self.client, self.get_tracks_id())
+                if group else list(self._tracks_seed))
 
     def get_ae_aggregate_score_id(self):
         return self.__get_invitation_id(name='Aggregate_Score', prefix=self.get_action_editors_id())
@@ -464,6 +503,12 @@ class Journal(object):
 
         self.invitation_builder.set_meta_invitation()
         self.group_builder.set_groups(support_role, editors)
+        if (self._tracks_enabled and
+                not openreview.tools.get_group(self.client, self.get_tracks_id())):
+            self.group_builder.post_group(openreview.api.Group(
+                id=self.get_tracks_id(), readers=['everyone'], writers=[self.venue_id],
+                signatures=[self.venue_id], signatories=[self.venue_id],
+                content={'tracks': {'value': self._tracks_seed}}))
         self.invitation_builder.set_invitations(assignment_delay)
         self.group_builder.set_group_variable(self.get_action_editors_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_action_editors_id() + '/Archived', 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())

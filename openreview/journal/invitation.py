@@ -1,3 +1,4 @@
+import copy
 import os
 import json
 import random
@@ -7,6 +8,8 @@ import openreview
 from openreview.api import Invitation
 from tqdm import tqdm
 from .. import tools
+from .tracks import (action_editor_eligibility_webfield, manage_tracks_webfield,
+    refresh_submission_track_field, track_context)
 
 class InvitationBuilder(object):
 
@@ -113,6 +116,7 @@ class InvitationBuilder(object):
         self.set_assignment_configuration_invitation()
         self.set_eic_revision_invitation()
         self.set_expertise_selection_invitations()
+        self.set_track_invitations()
         self.set_review_rating_enabling_invitation()
         self.set_expertise_reviewer_invitation()
         self.set_reviewer_message_invitation()
@@ -123,7 +127,53 @@ class InvitationBuilder(object):
         if self.journal.should_enable_ai_review():
             self.set_ai_review_invitation()
             self.set_survey_invitation()
-    
+
+    def set_track_invitations(self):
+        context = track_context(self.journal)
+        bindings = {'VENUE_ID': self.journal.venue_id,
+            'EIC_ID': self.journal.get_editors_in_chief_id(),
+            'TRACKS_ID': context['tracks_id'],
+            'MANAGE_TRACKS_ID': self.journal.get_manage_tracks_id(),
+            'ADD_ACTION_EDITOR_ID': self.journal.get_add_action_editor_id(),
+            'MANAGE_ACTION_EDITORS_ID': self.journal.get_manage_action_editors_id(),
+            'ACTION_EDITORS_ID': self.journal.get_action_editors_id(),
+            'SUBMISSION_ID': context['submission_id'],
+            'REGULAR_INELIGIBLE_ID': self.journal.get_regular_ineligible_id(),
+            'TRACK_ELIGIBILITY_ID': context['track_eligibility_id'],
+            'TRACK_SCORE_ID': self.journal.get_track_score_id()}
+        if not self.journal.has_managed_tracks():
+            if self.journal.settings.get('tracks') is False:
+                for name in ('MANAGE_TRACKS_ID', 'ADD_ACTION_EDITOR_ID',
+                        'MANAGE_ACTION_EDITORS_ID', 'REGULAR_INELIGIBLE_ID',
+                        'TRACK_ELIGIBILITY_ID', 'TRACK_SCORE_ID'):
+                    self.expire_invitation(bindings[name])
+            return
+        schema_path = os.path.join(os.path.dirname(__file__), 'schemas', 'managed_tracks.json')
+        with open(schema_path) as reader:
+            schema = reader.read()
+        for name, value in bindings.items():
+            schema = schema.replace('{' + name + '}', value)
+        for artifact in json.loads(schema):
+            if artifact['id'] == bindings['MANAGE_TRACKS_ID']:
+                artifact['web'] = manage_tracks_webfield(bindings)
+                artifact['preprocess'] = self.get_process_content(
+                    'process/manage_tracks_pre_process.py')
+                artifact['process'] = self.get_process_content(
+                    'process/manage_tracks_process.py')
+            elif artifact['id'] == bindings['MANAGE_ACTION_EDITORS_ID']:
+                artifact['web'] = action_editor_eligibility_webfield(self.journal.venue_id)
+                artifact['preprocess'] = self.get_process_content(
+                    'process/manage_action_editors_pre_process.py')
+                artifact['process'] = self.get_process_content(
+                    'process/manage_action_editors_process.py')
+            elif artifact['id'] in (bindings['REGULAR_INELIGIBLE_ID'],
+                                     bindings['TRACK_ELIGIBILITY_ID']):
+                path = ('process/track_eligibility_pre_process.py'
+                        if artifact['id'] == bindings['TRACK_ELIGIBILITY_ID']
+                        else 'process/regular_eligibility_pre_process.py')
+                artifact['preprocess'] = self.get_process_content(path)
+            self.save_invitation(Invitation(**artifact))
+
     def get_super_process_content(self, field_name):
         return '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -152,15 +202,39 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
     
-    def get_process_content(self, file_path):
-        process = None
+    def journal_source(self, settings=None):
+        if self.journal.request_form_id:
+            return ('openreview.journal.JournalRequest.get_journal(client, ' +
+                    repr(self.journal.request_form_id) + ')')
+        settings = {} if settings is None else settings
+        return ('openreview.journal.Journal(client, ' +
+            ', '.join(repr(value) for value in (self.journal.venue_id,
+                self.journal.secret_key, self.journal.contact_info,
+                self.journal.full_name, self.journal.short_name)) +
+            ', website=' + repr(self.journal.website) +
+            ', submission_name=' + repr(self.journal.submission_name) +
+            ', settings=' + repr(settings) + ')')
+
+    def get_process_content(self, file_path, settings=None):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            if self.journal.request_form_id:
-                return process.replace('openreview.journal.Journal()', f'openreview.journal.JournalRequest.get_journal(client, "{self.journal.request_form_id}")')
-            else:
-                return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
+        if settings is None:
+            settings = ({'tracks': self.journal.settings['tracks']}
+                        if self.journal.has_managed_tracks() else {})
+        return process.replace('openreview.journal.Journal()',
+                               self.journal_source(settings))
 
+    def track_submission_preprocess(self, existing):
+        owned = (isinstance(existing, str) and
+                 '# journal-track-preprocess-owner-v2' in existing)
+        if (isinstance(existing, str) and
+                '# journal-track-preprocess-owner-v1' in existing):
+            return existing
+        if not self.journal.has_managed_tracks():
+            return {'delete': True} if owned else existing
+        if existing and not owned:
+            raise ValueError('Managed tracks require ownership of the submission preprocess.')
+        return self.get_process_content('process/track_submission_pre_process.py')
 
     def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -1066,8 +1140,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
-        if existing_invitation and existing_invitation.preprocess:
-            invitation.preprocess=existing_invitation.preprocess
+        invitation.preprocess = self.track_submission_preprocess(
+            existing_invitation.preprocess if existing_invitation else None)
 
         if self.journal.enable_blocked_authors():
             invitation.post_processes = [
@@ -1104,6 +1178,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
                 invitation.edit['note']['content'][key] = value if value else { "delete": True }
+
+        if self.journal.has_managed_tracks():
+            existing_content = ((existing_invitation.edit or {}).get('note', {}).get(
+                'content', {}) if existing_invitation else {})
+            content = invitation.edit['note']['content']
+            if 'track_id' not in content and 'track_id' in existing_content:
+                content['track_id'] = copy.deepcopy(existing_content['track_id'])
+            refresh_submission_track_field(content, self.journal.get_tracks())
 
         submission_license = self.journal.get_submission_license()
         if isinstance(submission_license, str):
@@ -1446,6 +1528,28 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'script': self.get_process_content('process/ae_assignment_process.py')
             }]
         )
+
+        if self.journal.has_managed_tracks():
+            browse_ids = [self.journal.get_ae_assignment_id(archived=True),
+                self.journal.get_ae_affinity_score_id(),
+                self.journal.get_ae_recommendation_id(),
+                self.journal.get_ae_conflict_id()]
+            browse_ids.append(self.journal.get_track_score_id())
+            params = ('traverse=' + self.journal.get_ae_assignment_id() +
+                '&edit=' + self.journal.get_ae_assignment_id() + ';' +
+                self.journal.get_ae_custom_max_papers_id() + ',head:ignore;' +
+                self.journal.get_ae_availability_id() + ',head:ignore' +
+                '&browse=' + ';'.join(browse_ids) + '&version=2')
+            with open(os.path.join(os.path.dirname(__file__), 'webfield',
+                                   'assignAEWebfield.js')) as webfield:
+                content = webfield.read()
+            content = content.replace("var CONFERENCE_ID = '';",
+                "var CONFERENCE_ID = '" + venue_id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " +
+                json.dumps({'title': self.journal.short_name +
+                            ' Action Editor Assignment', 'instructions': ''}) + ";")
+            invitation.web = content.replace("var EDGE_BROWSER_PARAMS = '';",
+                "var EDGE_BROWSER_PARAMS = '" + params + "';")
 
         self.save_invitation(invitation)
 
