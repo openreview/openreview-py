@@ -1046,11 +1046,11 @@ def test_reviewer_author_publications_during_bidding(client, openreview_client, 
     reviewer_notes = reviewer_client.get_notes(content={'authors.username': '~Eddie_Fb1'})
     assert not submission_ids.intersection({ note.id for note in reviewer_notes }), 'authors are hidden during bidding but the reviewer found the submission by author'
 
-pc_notes = pc_client.get_notes(content={'authorids': '~Eddie_Fb1'})
-assert [note.id for note in pc_notes] == [submission2.id]
+    pc_notes = pc_client.get_notes(content={'authorids': '~Eddie_Fb1'})
+    assert [note.id for note in pc_notes] == [submission2.id]
 
-reviewer_notes = reviewer_client.get_notes(content={'authorids': '~Eddie_Fb1'})
-assert not submission_ids.intersection({ note.id for note in reviewer_notes }), 'authors are hidden during bidding but the reviewer found the submission by author'
+    reviewer_notes = reviewer_client.get_notes(content={'authorids': '~Eddie_Fb1'})
+    assert not submission_ids.intersection({ note.id for note in reviewer_notes }), 'authors are hidden during bidding but the reviewer found the submission by author'
 
     reviewer_notes = reviewer_client.get_notes(content={'authors.username': '~SomeFirstName_User1'})
     assert not submission_ids.intersection({ note.id for note in reviewer_notes }), 'authors are hidden during bidding but the reviewer found the submissions by author'
