@@ -466,8 +466,7 @@ return {
                             'relations': {
                                 'value': {
                                     'param': {
-                                        'type': 'object{}',
-                                        'change': 'add',
+                                        'type': 'object',
                                         'optional': True,
                                         'properties': {
                                             'relation': { 'param': { 'type': 'string', 'minLength': 1 } },

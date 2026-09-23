@@ -148,11 +148,9 @@ class TestProfileManagement():
                 'content': {
                     'relations': {
                         'value': {
-                            'add': [{
-                                'relation': 'Parent',
-                                'name': 'Gustavo Verified',
-                                'email': 'gustavo@profile.org'
-                            }]
+                            'relation': 'Parent',
+                            'name': 'Gustavo Verified',
+                            'email': 'gustavo@profile.org'
                         }
                     }
                 }
