@@ -28,8 +28,11 @@ def process(client, edit, invitation):
             client.post_group_edit(invitation=journal.get_meta_invitation_id(),
                 signatures=[venue_id],
                 group=openreview.api.Group(
-                    id=paper_action_editor_group.id, 
-                    readers=readers
+                    id=paper_action_editor_group.id,
+                    readers=readers,
+                    nonreaders=[reader for reader in (paper_action_editor_group.nonreaders or [])
+                        if (journal.settings.get('action_editor_paper_visibility') != 'assigned_only' or
+                            reader != journal.get_authors_id(submission.number))]
                 )
             )
 

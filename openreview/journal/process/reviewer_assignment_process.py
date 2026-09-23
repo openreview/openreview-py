@@ -8,7 +8,7 @@ def process_update(client, edge, invitation, existing_edge):
 
     venue_id = journal.venue_id
     note = client.get_note(edge.head)
-    assigned_action_editor = openreview.tools.get_profiles(client, ids_or_emails=[note.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
+    assigned_action_editor = openreview.tools.get_profiles(client, ids_or_emails=[journal.get_assigned_action_editor(note)], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
     group = client.get_group(journal.get_reviewers_id(number=note.number))
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
     tail_archived_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(archived=True), tail=edge.tail)
@@ -150,4 +150,3 @@ We thank you for your essential contribution to {journal.short_name}!
 The {journal.short_name} Editors-in-Chief
 '''
         client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=venue_id, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info, sender=journal.get_message_sender())
-
