@@ -2553,7 +2553,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, soft_delete=False):
+    def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
