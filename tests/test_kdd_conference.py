@@ -354,7 +354,7 @@ class TestKDDConference():
         assert submission.content['authorids']['value'] == ['~SomeFirstName_User1', 'peter@mail.com', '~Adriana_Mc1']
         assert submission.content['authorids']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission1/Authors"]
 
-        submissions_edits = openreview_client.get_note_edits(note_id=submission.id)
+        submissions_edits = openreview_client.get_note_edits(note_id=submission.id, sort='tcdate:desc')
         assert len(submissions_edits) == 4
         assert submissions_edits[0].invitation == 'KDD.org/2026/Research_Track_August/-/Edit'
         assert submissions_edits[0].note.content['authorids']['value'] == ['~SomeFirstName_User1', 'peter@mail.com', '~Adriana_Mc1']
