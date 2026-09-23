@@ -214,6 +214,36 @@ class TestProfileManagement():
         edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1', trash=True)
         assert len(edits) == 5
 
+        ## And restored with a ddate delete, so the verified relation stays visible in
+        ## the profile UI even though it is not listed in the profile itself. Updates
+        ## replace the record like the other edit endpoints, so the restore has to
+        ## carry the whole content: an undelete that omitted it would restore an
+        ## empty record.
+        support_client.post_edit(openreview.api.Edit(
+            id=parent_consent_edit['id'],
+            invitation='openreview.net/Support/-/Parent_Consent',
+            signatures=['openreview.net/Support'],
+            ddate={ 'delete': True },
+            content={ 'comment': { 'value': 'Consent form signed by the parent on file.' } },
+            profile={
+                'id': '~Gwen_Verified1',
+                'content': {
+                    'relations': {
+                        'value': {
+                            'relation': 'Parent',
+                            'name': 'Gustavo Verified',
+                            'email': 'gustavo@profile.org'
+                        }
+                    }
+                }
+            }
+        ))
+        edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1')
+        assert len(edits) == 5
+        restored = [edit for edit in edits if edit.invitation == 'openreview.net/Support/-/Parent_Consent'][0]
+        assert restored.profile['content']['relations']['value']['name'] == 'Gustavo Verified'
+        assert restored.content['comment']['value'] == 'Consent form signed by the parent on file.'
+
         ## None of the records modified the profile itself. The API always materializes
         ## content.relations on read, so an untouched profile has an empty list there.
         profile = support_client.get_profile('~Gwen_Verified1')
