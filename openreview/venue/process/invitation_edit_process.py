@@ -101,11 +101,11 @@ def process(client, invitation):
             invitation_content = paper_inv.edit['note']['content']
             for key in invitation_content.keys():
                 content_readers = invitation_content[key].get('readers', [])
+                ## The field readers of a note are only removed through the escaped delete
+                ## { 'const': { 'delete': True } }: an invitation that defines no readers for a
+                ## field leaves the readers the note already has as they are.
                 if not content_readers:
-                    # If no readers are specified for this content field, skip updating it.
                     continue
-                ## Field readers defined as a dict are the escaped delete { 'const': { 'delete': True } }
-                ## (or a bare { 'delete': True }): the field readers must be removed from the note.
                 if isinstance(content_readers, dict):
                     if note.content.get(key, {}).get('readers') is not None:
                         updated_content[key] = { 'readers': { 'delete': True } }

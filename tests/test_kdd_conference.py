@@ -568,3 +568,90 @@ class TestKDDConference():
             assert submission.content['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission{submission.number}/Authors"]
 
         assert 'readers' not in submissions[0].content['pdf']
+
+    def test_revision_omitting_field_readers(self, client, openreview_client, selenium, request_page, helpers):
+        ## Omitting the readers of a field in the invitation must not release the field: the
+        ## readers are removed from the invitation content but the field readers of the
+        ## submissions that already have them are left untouched. Only the escaped delete
+        ## { const: { delete: True } } removes the field readers from the notes.
+        pc_client=openreview.Client(username='pc@kdd.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
+        due_date = now - datetime.timedelta(days=3)
+        first_date = now - datetime.timedelta(days=7)
+
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision',
+            forum=request_form.id,
+            readers=['KDD.org/2026/Research_Track_August/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.id,
+            replyto=request_form.id,
+            signatures=['~Program_KDDChair1'],
+            writers=[],
+            content={
+                'title': 'KDD Research Track August',
+                'Official Venue Name': 'KDD Research Track August',
+                'Abbreviated Venue Name': 'KDD 2026',
+                'Official Website URL': 'https://kdd.org',
+                'program_chair_emails': ['pc@kdd.org', 'pc2@kdd.org'],
+                'contact_email': 'pc@kdd.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2026/08/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'homepage_override': {
+                    'instructions': '''**Authors**\nPlease see our [call for papers](https://kdd.org/Conferences/2026/CallForPapers) and read the [ethics guidelines](https://kdd.org/public/EthicsGuidelines)'''
+                },
+                'Additional Submission Options': {
+                    "corresponding_author": {
+                        "value": {
+                            "param": {
+                                "type": "group",
+                                "regex": "~.*",
+                                "optional": False
+                            }
+                        },
+                        "description": "Specify which author (only one) is designated as the corresponding author. ACM requires that every submitted and published Work be assigned a single Corresponding Author. This Corresponding Author will be responsible for all direct communication and correspondence with ACM. They will also be responsible for obtaining ORCIDs from all listed co-authors, collecting and communicating declarations of potential Conflicts of Interest in connection with their papers on behalf of all listed co-authors, and completing ACM’s Rights Assignment process for their Work. The Corresponding Author is often the first-named author on the Work, but this need not be the case. The co-authors determine which author shall be the Corresponding Author for the Work, but there may only be one Corresponding Author.",
+                        "order": 9
+                    },
+                    "pdf": {
+                        'order': 7,
+                        'description': 'Upload a PDF file that ends with .pdf.',
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'maxSize': 50,
+                                'extensions': ['pdf']
+                            }
+                        }
+                    },
+                }
+            }
+        ))
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'KDD.org/2026/Research_Track_August/-/Full_Submission-0-1', count=6)
+
+        full_submission =  openreview_client.get_invitation('KDD.org/2026/Research_Track_August/-/Full_Submission')
+
+        ## the readers are removed from the invitation content
+        assert 'corresponding_author' in full_submission.edit['invitation']['edit']['note']['content']
+        assert 'readers' not in full_submission.edit['invitation']['edit']['note']['content']['corresponding_author']
+
+        invitations = openreview_client.get_invitations(invitation='KDD.org/2026/Research_Track_August/-/Full_Submission', expired=True)
+        assert len(invitations) == 5
+        for invitation in invitations:
+            assert 'readers' not in invitation.edit['note']['content']['corresponding_author']
+
+        ## but the submissions keep the field readers they already had
+        submissions = openreview_client.get_notes(invitation='KDD.org/2026/Research_Track_August/-/Submission', sort='number:asc')
+        assert len(submissions) == 5
+        assert submissions[0].content['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission{submissions[0].number}/Authors"]
+        assert 'readers' not in submissions[0].content['pdf']
