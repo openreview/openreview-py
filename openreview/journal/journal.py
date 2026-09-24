@@ -27,6 +27,9 @@ class Journal(object):
         self.submission_name = submission_name
         self.settings = settings
         self._tracks_enabled = isinstance(settings.get('tracks'), list)
+        if (settings.get('ae_batch_preparation_enabled') is True
+                and not self._tracks_enabled):
+            raise ValueError('ae_batch_preparation_enabled requires tracks')
         configured_tracks = settings.get('tracks') or []
         if self._tracks_enabled and not any(
                 track.get('id') == 'Regular' for track in configured_tracks):
@@ -89,6 +92,9 @@ class Journal(object):
 
     def get_editors_in_chief_id(self):
         return f'{self.venue_id}/{self.editors_in_chief_name}'
+
+    def get_prepare_ae_batch_id(self):
+        return f'{self.venue_id}/-/Prepare_Action_Editor_Batch'
 
     def get_publication_chairs_id(self):
         return f'{self.venue_id}/Publication_Chairs'
