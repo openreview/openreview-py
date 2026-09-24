@@ -3,6 +3,7 @@ from . import group
 from .invitation import InvitationBuilder
 from .recruitment import Recruitment
 from .assignment import Assignment
+from .resubmission import validate_resubmission_settings
 
 import re
 import csv
@@ -59,6 +60,7 @@ class Journal(object):
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4  # weeks
         self.invite_assignment_reminder_period = 1  # week
+        validate_resubmission_settings(self)
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -81,6 +83,9 @@ class Journal(object):
 
     def get_editors_in_chief_id(self):
         return f'{self.venue_id}/{self.editors_in_chief_name}'
+
+    def get_resubmission_previous_submission_field(self):
+        return f'previous_{self.short_name}_submission_url'
 
     def get_publication_chairs_id(self):
         return f'{self.venue_id}/Publication_Chairs'
@@ -456,6 +461,7 @@ class Journal(object):
         :param assignment_delay: Number of minutes to delay before assignment process functions run.
         :type assignment_delay: int, optional
         """
+        validate_resubmission_settings(self)
         if not self.secret_key:
             ## create the secret key the first time the journal is set up; it is stored
             ## in the venue group content by the group builder, never edited and only
@@ -766,7 +772,16 @@ class Journal(object):
         return self.settings.get('action_editors_max_papers', 12)
 
     def get_submission_additional_fields(self):
-        return self.settings.get('submission_additional_fields', {})
+        fields = dict(self.settings.get('submission_additional_fields') or {})
+        if self.settings.get('resubmission_continuity_enabled') is True:
+            name = self.get_resubmission_previous_submission_field()
+            fields.setdefault(name, {
+                'order': 100,
+                'description': 'Optional OpenReview URL of the permitted previous submission.',
+                'value': {'param': {'type': 'string',
+                    'regex': r'^https://(?:openreview\.net|dev\.openreview\.net)/forum\?[^#\s]+$',
+                    'optional': True}}})
+        return fields
 
     def get_review_additional_fields(self):
         return self.settings.get('review_additional_fields', {})

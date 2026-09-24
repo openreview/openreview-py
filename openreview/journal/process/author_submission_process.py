@@ -42,3 +42,7 @@ def process(client, edit, invitation):
 
     if journal.should_enable_ai_review():
         journal.invitation_builder.set_note_ai_review_invitation(note)
+
+    if journal.settings.get('resubmission_continuity_enabled') is True:
+        from openreview.journal.resubmission import prepare_resubmission_continuity
+        prepare_resubmission_continuity(client, journal, note)
