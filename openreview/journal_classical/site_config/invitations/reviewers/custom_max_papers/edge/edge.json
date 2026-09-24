@@ -1,0 +1,86 @@
+{
+  "id": {
+    "param": {
+      "withInvitation": "JMLR/Reviewers/-/Custom_Max_Papers",
+      "optional": true
+    }
+  },
+  "ddate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "cdate": {
+    "param": {
+      "range": [
+        0,
+        9999999999999
+      ],
+      "optional": true,
+      "deletable": true
+    }
+  },
+  "readers": [
+    "JMLR/Editors_In_Chief",
+    "JMLR/Reviewers",
+    "${2/tail}"
+  ],
+  "nonreaders": [],
+  "writers": [
+    "JMLR/Editors_In_Chief",
+    "${2/tail}"
+  ],
+  "signatures": {
+    "param": {
+      "items": [
+        {
+          "value": "JMLR/Editors_In_Chief",
+          "optional": true
+        },
+        {
+          "value": "${3/tail}",
+          "optional": true
+        }
+      ]
+    }
+  },
+  "head": {
+    "param": {
+      "type": "group",
+      "const": "JMLR/Reviewers"
+    }
+  },
+  "tail": {
+    "param": {
+      "type": "profile",
+      "inGroup": "JMLR/Reviewers"
+    }
+  },
+  "weight": {
+    "param": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "default": {{REVIEWERS_MAX_PAPERS}}
+    }
+  }
+}

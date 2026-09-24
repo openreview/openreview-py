@@ -1,0 +1,6 @@
+{
+  "preprocess": "{{PYTHON_SCRIPT_JSON:invitations/venue/submission/preprocess.py}}",
+  "postprocesses": [
+    {"script": "{{PYTHON_SCRIPT_JSON:invitations/venue/submission/postprocess.py}}"}
+  ]
+}

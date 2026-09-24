@@ -1,0 +1,17 @@
+Hi {{{{fullname}}}},
+
+With this email, we request that you continue managing the review process for the revised {short_name} submission "{submission_number}: {submission_title}".
+
+This paper is linked to a previous {short_name} submission that you handled. When possible, {short_name} preserves Action Editor continuity across submission rounds.
+
+Your first task for this round is to complete Review Approval. Select "Appropriate for Review" to begin the normal reviewer-assignment workflow, or "Desk Reject" if the revised submission should not proceed.
+
+Open the Review Approval task here:
+
+{invitation_url}
+
+After selecting "Appropriate for Review", use the paper's reviewer-assignment page to inspect previous-round reviewer context and assign {number_of_reviewers} reviewers when OpenReview makes reviewer assignment available. If you cannot continue handling the paper, contact us at {contact_info}.
+
+Thank you for your continued contribution to {short_name}.
+
+The {short_name} Editors-in-Chief

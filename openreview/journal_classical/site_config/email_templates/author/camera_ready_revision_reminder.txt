@@ -1,0 +1,8 @@
+Hi {{{{fullname}}}},
+
+The Camera Ready Revision for your {short_name} submission {submission_number}: {submission_title} was due on {duedate}.
+
+Please upload the final PDF and any optional supplementary material as soon as possible:
+{paper_url}
+
+The {short_name} Editors-in-Chief

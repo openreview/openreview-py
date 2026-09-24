@@ -1,0 +1,13 @@
+{
+  "id": "JMLR/-/Manage_Tracks",
+  "readers": ["JMLR/Editors_In_Chief"],
+  "writers": ["JMLR"],
+  "invitees": ["JMLR/Editors_In_Chief"],
+  "signatures": ["JMLR"],
+  "preprocess": "{{PYTHON_SCRIPT_JSON:invitations/venue/tracks/manage_preprocess.py}}",
+  "process": "{{PYTHON_SCRIPT_JSON:invitations/venue/tracks/manage_process.py}}",
+  "web": "{{PYTHON_SCRIPT_JSON:invitations/venue/tracks/web.js}}",
+  "dateprocesses": [
+    {"dates": [9999999999998], "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/tracks/dateprocess_refresh.py}}"}
+  ]
+}
