@@ -2016,7 +2016,10 @@ url={https://openreview.net/forum?id='''
         assert submissions[0].content['venueid']['value'] == 'EFGH.cc/2025/Conference'
         assert submissions[0].readers == ['everyone']
         assert 'readers' not in submissions[0].content['authors']
-        assert 'readers' not in submissions[0].content['pdf']
+
+        # check last edit is still Submission_Change_After_Decision
+        last_edit = openreview_client.get_note_edits(note_id=submissions[0].id, sort='tcdate:desc')[0]
+        assert last_edit.invitation == 'EFGH.cc/2025/Conference/-/Accept_Oral_Submission_Change_After_Decision'
 
         # rejected submissions keep their readers and their hidden author identities
         assert submissions[2].content['venueid']['value'] == 'EFGH.cc/2025/Conference/Rejected_Submission'
@@ -2025,3 +2028,7 @@ url={https://openreview.net/forum?id='''
             'EFGH.cc/2025/Conference',
             'EFGH.cc/2025/Conference/Submission3/Authors'
         ]
+
+        # check last edit is still Submission_Change_After_Decision
+        last_edit = openreview_client.get_note_edits(note_id=submissions[2].id, sort='tcdate:desc')[0]
+        assert last_edit.invitation == 'EFGH.cc/2025/Conference/-/Reject_Submission_Change_After_Decision'
