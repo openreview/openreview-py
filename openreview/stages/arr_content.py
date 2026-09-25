@@ -198,7 +198,7 @@ arr_submission_content = {
                 "input": "radio",
                 "enum": contribution_types,
                 "optional": False,
-                "type": "string"
+                "type": "string[]"
             }
         },
         "description": "Which of the following types of contributions does your paper make? This will inform the reviewers and meta-reviewer about what to look for in your work. If there are several, select the type of the primary contribution.",
@@ -304,6 +304,35 @@ arr_submission_content = {
         "description": "Please specify reason for any reassignment request. Reasons may include clear lack of expertise in the area or dismissing the work without any concrete comments regarding correctness of the results or argumentation, limited perceived impact of the methods or findings, lack of clarity in exposition, or other valid criticisms. It is up to the discretion of the area chairs or editors in chief regarding whether to heed these requests.",
         "order": 19
     },
+    "concurrent_submissions": {
+        "order": 20,
+        "description": "If there are any related concurrent submissions from the same author(s) to the same ARR cycle or any other venue, you must disclose them. For each related submission, list its title, venue, and a brief description of how it is different from this submission. If the concurrent submission is to this ARR cycle, please also include its submission ID.",
+        "value": {
+            "param": {
+                "type": "string",
+                "maxLength": 5000,
+                "markdown": True,
+                "optional": True,
+                "input": "textarea"
+            }
+        }
+    },
+    "concurrent_submissions_files": {
+        "value": {
+            "param": {
+                "type": "file",
+                "maxSize": 200,
+                "optional": True,
+                "extensions": [
+                    "tgz",
+                    "zip"
+                ],
+                "optional": True
+            }
+        },
+        "description": "If you have any related concurrent submissions from the same author(s), please enclose **anonymized** pdf files here (as a.tgz or .zip archive).",
+        "order": 21
+    },
     "software": {
         "value": {
             "param": {
@@ -317,7 +346,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing software (max. 200MB).",
-        "order": 20
+        "order": 22
     },
     "data": {
         "value": {
@@ -332,7 +361,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB). Any anonymized concurrent submissions by the same authors, referenced within the paper, can also be provided in this field.",
-        "order": 21
+        "order": 23
     },
     "preprint": {
         "value": {
@@ -347,7 +376,7 @@ arr_submission_content = {
             }
         },
         "description": "Would the authors like ARR to release a public anonymous pre-print of the submission?",
-        "order": 22
+        "order": 24
     },
     "preprint_status": {
         "value": {
@@ -363,7 +392,7 @@ arr_submission_content = {
             }
         },
         "description": "Is there are a publicly available non-anonymous preprints of this paper, or do you plan to release one? Note, all options for this question are permitted under the updated ACL preprint policy. We are collecting this information to help inform the review process. The last option is binding, i.e. you cannot change your mind later in the cycle. \n\n NB: this category is about the possibility of deanonymization, rather than any specific publication channel such as arXiv. So e.g. withdrawn publications from other conferences also count as preprints, as long as they reveal the authors' names.",
-        "order": 23
+        "order": 25
     },
     "existing_preprints": {
         "value": {
@@ -374,7 +403,7 @@ arr_submission_content = {
             }
         },
         "description": "If there are any publicly available non-anonymous preprints of this paper, please list them here (provide the URLs please).",
-        "order": 24
+        "order": 26
     },
     "preferred_venue": {
         "value": {
@@ -393,7 +422,7 @@ arr_submission_content = {
             }
         },
         "description": "If you have a venue that you are hoping to submit this paper to, please enter it here. You must enter the designated acronym from this list: https://aclrollingreview.org/dates. Note that entering a preferred venue is not a firm commitment to submit your paper to this venue, but it will help ARR and the venue chairs in planning, so we highly recommend filling in your current intentions. Please enter only your first choice.",
-        "order": 25
+        "order": 27
     },
     "visa_needs": {
         "value": {
@@ -408,7 +437,7 @@ arr_submission_content = {
             }
         },
         "description": "If this submission is successfully reviewed, committed and accepted to your target venue specified above, will the presenting author need a visa to attend the conference? This question is only to assist the program chairs with estimating the visa needs of the prospective participants.",
-        "order": 26
+        "order": 28
     },
     "country_of_origin": {
         "value": {
@@ -420,7 +449,7 @@ arr_submission_content = {
             }
         },
         "description": "If this submission is successfully reviewed, committed and accepted to your target venue specified above, and the presenting author would need a visa to attend, what is the country of their origin? This question is only to assist the program chairs with estimating the visa needs of the prospective participants. Please specify the country with the two-letter country code, e.g. 'CN' for China (https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes)",
-        "order": 27
+        "order": 29
     },
     "consent_to_share_data": {
         "value": {
@@ -435,7 +464,7 @@ arr_submission_content = {
             }
         },
         "description": "I agree for the anonymized metadata associated with my submission to be included in a publicly available dataset. This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as acceptance decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc. Your decision to opt-in the data does not affect the reviewing of your submission in any way.",
-        "order": 28
+        "order": 30
     },
     "consent_to_share_submission_details": {
         "value": {
@@ -449,7 +478,7 @@ arr_submission_content = {
             }
         },
         "description": "Upon submitting this paper, authors agree to allow us to share their submission details (such as title, author names, and potentially abstract) with program committees from other conference venues for the purpose of verifying compliance with submission requirements.",
-        "order": 29
+        "order": 31
     },
     "author_submission_checklist": {
         "value": {
@@ -464,10 +493,10 @@ arr_submission_content = {
             }
         },
         "description": "On behalf of all authors, I confirm that this submission adheres to ARR requirements, and that the responsible NLP checklist accompanying this submission will be completed 48h after submission deadline at the latest (the checklist task is now separate, and it will appear in the author console after making a submission). I further confirm that all authors are aware of the duty to have complete and accurate OpenReview profiles, under penalty of desk rejection. The named service contributor, if any, is aware of their duties and will complete the registration form 48h after submission deadline at the latest.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist",
-        "order": 30
+        "order": 32
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
-        "order": 34,
+        "order": 33,
         "description": "Please read and decide whether to transfer the license to your blind submission draft and its associated peer reviewing data in the current and/or previous iterations of ARR.\n*** DISCLAIMER ***\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute your draft and associated peer reviews. In particular, we may include your draft with donated review texts and scores in research datasets. Please note, to attribute authors for their draft, the author names are explicitly listed along with the draft and its associated peer reviews. Only reviews for accepted papers will be eventually made publicly available. The reviewers have to agree to the release of the textual review data associated with your submission.\n\nThis Blind Submission License Agreement (\"Agreement\") is entered into between the Association for Computational Linguistics (\"ACL\") and the Authors listed in connection with Authors’ blind submission paper listed above (referred as \"Blind Submission Content\").\nIn exchange of adequate consideration, ACL and the Authors agree as follows:\n\nSection 1: Grant of License\nAfter the peer review process is concluded and upon acceptance of the paper, Authors grant ACL a worldwide, irrevocable, and royalty-free license to use the blind submission paper version and, if applicable, the associated amendment notes and author responses to reviewers’ inquiries  (referred as \"Content\"). The foregoing license grants ACL the right to reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Content, and to sub-license the Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\nNotwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Content, and that the Authors retain their respective ownership in and to the Content.\n\nSection 2: Permission to Publish Peer Reviewers Content\nAfter the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content, which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.\n\nSection 3: Attribution and Public Access License\nA. The Parties agree that for purpose of administering the public access license, ACL will be\nidentified as the licensor of the Content with the following copyright notice:\n\nCopyright © 2023 administered by the Association for Computational Linguistics (ACL) on behalf of the authors and content contributors. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\n\nB. The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\nSection 4: Effective Date\nThe grant of license pursuant to Section 1 and permission to publish peer reviewers content pursuant to Section 2 becomes effective in the event Authors’ blind submission paper has passed through this ACL Rolling Review cycle's peer review process and the cycle has ended; the end of a cycle is marked by the fact that authors received both the assigned peer review reports and the final meta-review report for this submission.\n\nSection 5: Warranty\nAuthors represent and warrant that the Content is Authors’ original work and does not infringe on the proprietary rights of others. Authors further warrant that they have\nobtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\nSection 6: Legal Relationship\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other.\n\nBy selecting 'On behalf of all authors, I agree' below, I confirm that all Authors have agreed to the above terms and that I am authorized to execute this Agreement on their behalf. Optionally, if you wish to transfer the license to the peer reviewing and blind submission data of all previous versions of this paper submitted to ARR, please select 'On behalf of all authors, I agree for all previous versions of this submission'.",
         "value": {
             "param": {
@@ -629,7 +658,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 45
+        "order": 43
     },
     "B5_documentation_of_artifacts": {
         "value": {
@@ -644,7 +673,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you provide documentation of the artifacts, e.g., coverage of domains, languages, and linguistic phenomena, demographic groups represented, etc.?",
-        "order": 46
+        "order": 45
     },
     "B5_elaboration": {
         "value": {
@@ -655,7 +684,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 47
+        "order": 46
     },
     "B6_statistics_for_data": {
         "value": {
@@ -670,7 +699,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report relevant statistics like the number of examples, details of train/test/dev splits, etc. for the data that you used/created?",
-        "order": 48
+        "order": 47
     },
     "B6_elaboration": {
         "value": {
@@ -681,7 +710,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 49
+        "order": 48
     },
     "C_computational_experiments": {
         "value": {
@@ -695,7 +724,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Is the main goal of this work to present results of computational experiments?",
-        "order": 50
+        "order": 49
     },
     "C1_model_size_and_budget": {
         "value": {
@@ -710,7 +739,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report the number of parameters in the models used, the total computational budget (e.g., GPU hours), and computing infrastructure used?",
-        "order": 51
+        "order": 50
     },
     "C1_elaboration": {
         "value": {
@@ -721,7 +750,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 52
+        "order": 51
     },
     "C2_experimental_setup_and_hyperparameters": {
         "value": {
@@ -736,7 +765,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you discuss the experimental setup, e.g. hyperparameter search, best-found hyperparameter values, number and selection of in-context examples?",
-        "order": 53
+        "order": 52
     },
     "C2_elaboration": {
         "value": {
@@ -747,7 +776,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 54
+        "order": 53
     },
     "C3_descriptive_statistics": {
         "value": {
@@ -762,7 +791,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report descriptive statistics about your results (e.g., error bars around results, summary statistics from sets of experiments), and is it transparent whether you are reporting the max, mean, etc. or just a single run?",
-        "order": 55
+        "order": 54
     },
     "C3_elaboration": {
         "value": {
@@ -773,7 +802,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 56
+        "order": 55
     },
     "C4_parameters_for_packages": {
         "value": {
@@ -788,7 +817,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation, such as NLTK, ROUGE, LM Evaluation Harness etc.), did you report the implementation, model, and parameter settings used?",
-        "order": 57
+        "order": 56
     },
     "C4_elaboration": {
         "value": {
@@ -799,7 +828,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 58
+        "order": 57
     },
     "D_human_subjects_including_annotators": {
         "value": {
@@ -813,7 +842,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you use human annotators (e.g., crowdworkers) or research with human participants?",
-        "order": 59
+        "order": 58
     },
     "D1_instructions_given_to_participants": {
         "value": {
@@ -828,7 +857,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report the full text of instructions given to participants, including e.g., screenshots, disclaimers of any risks to participants or annotators, etc.?",
-        "order": 60
+        "order": 59
     },
     "D1_elaboration": {
         "value": {
@@ -839,7 +868,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 61
+        "order": 60
     },
     "D2_recruitment_and_payment": {
         "value": {
@@ -854,7 +883,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report information about how you recruited (e.g., crowdsourcing platform, students), collected consent from, and paid the participants? If applicable, did you discuss if the payment was adequate and participation free of coercion? (except the case where all annotations were provided by the authors of the submission)",
-        "order": 62
+        "order": 61
     },
     "D2_elaboration": {
         "value": {
@@ -865,7 +894,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 63
+        "order": 62
     },
     "D3_data_consent": {
         "value": {
@@ -880,7 +909,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you discuss whether and how consent was obtained from people whose data you're using/curating? (except the case where all annotations were provided by the authors of the submission)",
-        "order": 64
+        "order": 63
     },
     "D3_elaboration": {
         "value": {
@@ -891,7 +920,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 65
+        "order": 64
     },
     "D4_ethics_review_board_approval": {
         "value": {
@@ -906,7 +935,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Was the data collection protocol approved (or determined exempt) by an ethics review board in the relevant institutional framework?",
-        "order": 66
+        "order": 65
     },
     "D4_elaboration": {
         "value": {
@@ -917,7 +946,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 67
+        "order": 66
     },
     "D5_annotator_population": {
         "value": {
@@ -932,7 +961,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report the relevant demographic and geographic characteristics of the annotator population that is the source of the data? (except the case where all annotations were provided by the authors of the submission)",
-        "order": 68
+        "order": 67
     },
     "D5_elaboration": {
         "value": {
@@ -943,7 +972,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 69
+        "order": 68
     },    
     "E_substantive_ai_assistance_in_research_or_writing": {
         "value": {
@@ -957,7 +986,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you use AI assistants (e.g., ChatGPT, Copilot) in your research (except as a research object), coding (beyond IDE autocomplete), or writing (beyond grammar or spell-checking)?",
-        "order": 70
+        "order": 69
     },
     "E1_information_about_substantive_ai_assistance": {
         "value": {
@@ -972,7 +1001,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "If you used any AI assistants for any substantive assistance in writing (beyond grammar or spell-checking), coding (beyond IDE autocomplete), or literature search, did you include information about your use? This question does NOT apply to LLMs used as research objects.",
-        "order": 71
+        "order": 70
     },
     "E1_elaboration": {
         "value": {
@@ -983,7 +1012,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number, or include your elaboration directly in the checklist response. For no, justify why not.",
-        "order": 72
+        "order": 71
     }    
 }
  
@@ -1047,8 +1076,10 @@ hide_fields = [
     "preprint",
     "existing_preprints",
     "preprint_status",
-    "service_contributor",
+    "service_contributor"
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement",
+    "concurrent_submissions",
+    "concurrent_submissions_files"
 ]
 
 hide_fields_from_public = [
@@ -1072,6 +1103,8 @@ hide_fields_from_public = [
     "existing_preprints",
     "preprint_status",
     "service_contributor",
+    "concurrent_submissions",
+    "concurrent_submissions_files"    
     # "A1_potential_risks",
     # "A1_elaboration",
     # "B_use_or_create_scientific_artifacts",
@@ -2479,7 +2512,7 @@ arr_desk_reject_verification = {
                 "input": "checkbox",
                 "enum": dr_types,
                 "optional": False,
-                "type": "string[]"
+                "type": "string"
             }
         },
         "description": "What kind(s) of issue is this case? Detailed description of possible DR types: \n\n - Administrative issues: e.g. missing or incomplete openreview profiles for authors, missing responsible NLP checklists \n - Anonymity: e.g. deanonymization in text or supplementary materials, preprint pledge violations \n - Authorship: e.g. late/unjustified author changes \n - Dual/multiple submission: e.g. submissions under review elsewhere, duplicate/overlapping submissions \n Ethics violations: e.g. non-consentual data collection (typically identified in ethics review) \n - Format: e.g. page limit circumvention, template violations, limitations missing) \n - Lottery: desk rejects due to insufficient service capacity \n - Overall level: e.g. incomplete, clearly below bar submissions  \n - Prior sanctions: e.g. resubmissions with prior meta-review score ≤ 1.5, authors under sanctions \n - Professional conduct: e.g. authors grossly violating the norms of professional communication with reviewers or chairs  \n - Publication ethics: e.g. plagiarism, thin slicing, undeclared/uncited concurrent related submissions, hallucinated citations, undisclosed AI-generated content, prompt injection, serious misrepresentation in the checklist  \n - Resubmission and withdrawal policy: e.g. undeclared resubmissions, no explanation of revisions, withdrawal policy violation  \n - Scope: out-of-scope submissions  \n - Service obligations: e.g. missing contributor registration forms, replacement contributor not provided after emergency, over-committed service contributor, over-submitting author \n - Others",
@@ -3884,7 +3917,8 @@ arr_emergency_declaration_content = {
                         "I confirm that the substitute service contributor has agreed to serve in my place, and will file a delay notification if necessary."
                     ],
                     "input": "radio",
-                    "optional": True
+                    "optional": True,
+                    "order": 4
                 }
             }
         }        
