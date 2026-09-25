@@ -531,7 +531,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                                                 "regex": ".{0,500}"
                                             }
                                         },
-                                        "readers": ['TestVenue.cc', "TestVenue.cc/提交${4/number}/Area_Chairs"]
+                                        "readers": ['TestVenue.cc', "TestVenue.cc/提交${7/content/noteNumber/value}/Area_Chairs"]
                                     },
                                 }
                             }
@@ -546,6 +546,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         invitation = openreview_client.get_invitation('TestVenue.cc/提交1/-/Official_Review')
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/提交1/Area_Chairs", "${3/signatures}", "TestVenue.cc/提交1/Authors"]
         assert 'private_comment_to_acs' in invitation.edit['note']['content']
+        assert invitation.edit['note']['content']['private_comment_to_acs']['readers'] == ['TestVenue.cc', "TestVenue.cc/提交1/Area_Chairs"]
 
     def test_review_rebuttal_stage(self, venue, openreview_client, helpers):
 
