@@ -173,14 +173,44 @@ class TestSimpleDualAnonymous():
         assert domain_content['sac_paper_assignments']['value'] == False
         assert domain_content['senior_area_chairs_conflict_id']['value'] == 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Conflict'
 
-        # add a reciprocal reviewing field to the submission form, the value must be a subset of the authors.
-        # the authors, pdf and reciprocal_reviewing fields are visible only to the venue and the paper
-        # authors starting from the first edit.
         field_readers = [
             'ICLR.cc/2026/Conference',
             'ICLR.cc/2026/Conference/Submission${{4/id}/number}/Authors'
         ]
-        pc_client.post_invitation_edit(
+
+        # the submission form hides the author identities, the pdf and the confirmation fields
+        # from everyone but the venue and the paper authors
+        submission_content = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Submission').edit['note']['content']
+        assert submission_content['authors']['readers'] == field_readers
+        assert submission_content['pdf']['readers'] == field_readers
+        assert submission_content['email_sharing']['readers'] == field_readers
+        assert submission_content['data_release']['readers'] == field_readers
+
+        # the second deadline revision form is the only revision form that repeats those readers
+        full_submission_content = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Full_Submission').edit['invitation']['edit']['note']['content']
+        assert full_submission_content['authors']['readers'] == field_readers
+        assert full_submission_content['pdf']['readers'] == field_readers
+        assert full_submission_content['email_sharing']['readers'] == field_readers
+        assert full_submission_content['data_release']['readers'] == field_readers
+
+        # the PC revision form does not set field readers
+        pc_revision_content = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/PC_Revision').edit['note']['content']
+        assert 'readers' not in pc_revision_content['authors']
+        assert 'readers' not in pc_revision_content['pdf']
+        assert 'readers' not in pc_revision_content['email_sharing']
+        assert 'readers' not in pc_revision_content['data_release']
+
+        # neither does the camera-ready revision form
+        camera_ready_content = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Camera_Ready_Revision').edit['invitation']['edit']['note']['content']
+        assert 'readers' not in camera_ready_content['authors']
+        assert 'readers' not in camera_ready_content['pdf']
+        assert 'email_sharing' not in camera_ready_content
+        assert 'data_release' not in camera_ready_content
+
+        # add a reciprocal reviewing field to the submission form, the value must be a subset of the authors.
+        # the authors, pdf and reciprocal_reviewing fields are visible only to the venue and the paper
+        # authors starting from the first edit.
+        form_fields_edit = pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Submission/Form_Fields',
             content={
                 'content': {
@@ -215,6 +245,15 @@ class TestSimpleDualAnonymous():
         assert submission_invitation.edit['note']['content']['authors']['readers'] == field_readers
         assert submission_invitation.edit['note']['content']['pdf']['readers'] == field_readers
         assert submission_invitation.edit['note']['content']['reciprocal_reviewing']['readers'] == field_readers
+
+        # the new field is copied to the PC revision form, but its readers are dropped
+        helpers.await_queue_edit(openreview_client, edit_id=form_fields_edit['id'])
+
+        pc_revision_content = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/PC_Revision').edit['note']['content']
+        assert 'reciprocal_reviewing' in pc_revision_content
+        assert 'readers' not in pc_revision_content['reciprocal_reviewing']
+        assert 'readers' not in pc_revision_content['authors']
+        assert 'readers' not in pc_revision_content['pdf']
 
         # create subinvitation to edit submission preprocess
         edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(openreview_client, 'ICLR.cc/2026/Conference')
@@ -443,8 +482,8 @@ For more details, please check the following links:
         # by default the authors field is locked so authors can only be re-ordered, not added or removed
         assert content['authors']['value'] == ['${{4/id}/content/authors/value}']
 
-        # make sure pdfs remain hidden when authors post revisions
-        content['pdf']['readers'] = [
+        # pdfs remain hidden when authors post revisions during the second deadline
+        assert content['pdf']['readers'] == [
             'ICLR.cc/2026/Conference',
             'ICLR.cc/2026/Conference/Submission${{4/id}/number}/Authors'
         ]

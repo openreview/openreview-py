@@ -71,7 +71,9 @@ class TestVenueSubmissionUnifiedAuthors():
                         ]
                     },
                     'keywords': { 'value': ['aa'] },
-                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
                 }
             ))
 
@@ -215,7 +217,9 @@ To view your submission, click here: https://openreview.net/forum?id={note_id}''
                         ]
                     },
                     'keywords': { 'value': ['aa'] },
-                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
                 }
             ))
 

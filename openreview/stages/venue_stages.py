@@ -241,7 +241,7 @@ class SubmissionStage(object):
             content[key] = value
         return content
     
-    def get_content(self, api_version='1', conference=None, venue_id=None):
+    def get_content(self, api_version='1', conference=None, venue_id=None, include_field_readers=False):
 
         if api_version == '1':
             content = deepcopy(default_content.submission)
@@ -276,10 +276,9 @@ class SubmissionStage(object):
         elif api_version == '2':
             content = deepcopy(default_content.submission_v2)
 
+            # all new UI venues uses the unified authors format
             if self.unified_authors:
-                del content['authors']
-                del content['authorids']
-                content['authors'] = deepcopy(default_content.submission_v2_unified_authors)
+                content = deepcopy(default_content.submission_v2_unified_authors)
 
             if self.subject_areas:
                 content['subject_areas'] = {
@@ -342,33 +341,20 @@ class SubmissionStage(object):
                         if field not in content:
                             content[field] = { 'delete': True }
 
-                if getattr(conference, 'is_template_related_workflow', None) and conference.is_template_related_workflow():
-                    content['email_sharing'] = {
-                        'order': 50,
-                        'description': 'Please confirm you are aware that all author emails will be shared with Program Chairs.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'enum': [
-                                    'We authorize the sharing of all author emails with Program Chairs.'
-                                ],
-                                'input': 'radio'
-                            }
-                        }
-                    }
-                    content['data_release'] = {
-                        'order': 51,
-                        'description': 'Please confirm you are aware that accepted submissions, along with their author names, will be released to the public after the conference is over.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'enum': [
-                                    'We authorize the release of our submission and author names to the public in the event of acceptance.'
-                                ],
-                                'input': 'radio'
-                            }
-                        }
-                    }
+                readers_mapping = {
+                    '{venue_id}': conference.get_id(),
+                    '{paper_authors_id}': conference.get_authors_id('${{4/id}/number}')
+                }
+
+                for field in content.keys():
+                    field_readers = content[field].get('readers')
+                    if not isinstance(field_readers, list):
+                        continue
+                    if include_field_readers:
+                        content[field]['readers'] = [readers_mapping.get(reader, reader) for reader in field_readers]
+                    elif any(reader in readers_mapping for reader in field_readers):
+                        # default content readers belong only to the submission invitation
+                        del content[field]['readers']
 
                 if venue_id:
                     content['venue'] = {
@@ -561,7 +547,8 @@ class SubmissionRevisionStage():
                  allow_author_reorder=False, 
                  allow_license_edition=False, 
                  preprocess_path=None,
-                 revision_history_readers=None):
+                 revision_history_readers=None,
+                 include_field_readers=False):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -575,8 +562,9 @@ class SubmissionRevisionStage():
         self.preprocess_path = preprocess_path
         self.source = source
         self.revision_history_readers = revision_history_readers
+        self.include_field_readers = include_field_readers
 
-    
+
     def get_edit_readers(self, venue, number):
 
         if self.revision_history_readers:
@@ -584,10 +572,10 @@ class SubmissionRevisionStage():
 
         return [venue.id, venue.get_authors_id(number=number)]
 
-    
+
     def get_content(self, api_version='2', conference=None):
-        
-        content = deepcopy(conference.submission_stage.get_content(api_version, conference))
+
+        content = deepcopy(conference.submission_stage.get_content(api_version, conference, include_field_readers=self.include_field_readers))
 
         for field in self.remove_fields:
             if field in content:
