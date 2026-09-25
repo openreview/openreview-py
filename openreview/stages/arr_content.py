@@ -306,7 +306,7 @@ arr_submission_content = {
     },
     "concurrent_submissions": {
         "order": 20,
-        "description": "If there are any related concurrent submissions from the same author(s) to the same ARR cycle or any other venue, you must disclose them. For each related submission, list its title, venue, and a brief description of how it is different from this submission. If the concurrent submission is to this ARR cycle, please also include its submission ID.",
+        "description": "If there are any related concurrent submissions from the same author(s) to the same ARR cycle or any other venue, you must disclose them. For each related submission, list its title, venue, and a brief description of how it is different from this submission. If the concurrent submission is to this ARR cycle, please also include its submission ID. Any concurrent submissions must also be discussed in the related work in the submission (see ARR cfp).",
         "value": {
             "param": {
                 "type": "string",
@@ -360,7 +360,7 @@ arr_submission_content = {
                 "optional": True
             }
         },
-        "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB). Any anonymized concurrent submissions by the same authors, referenced within the paper, can also be provided in this field.",
+        "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB).",
         "order": 23
     },
     "preprint": {
