@@ -1474,7 +1474,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             match_group_id = bid_stage.committee_id
 
             invitation_readers = bid_stage.get_invitation_readers(venue)
-            bid_readers = bid_stage.get_readers(venue, number='${{2/head}/number}')
+            bid_readers = bid_stage.get_readers(venue)
             bid_readers[-1] = bid_readers[-1].replace('{signatures}', '${2/tail}')
 
             head = {
@@ -1540,7 +1540,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         }
                     },
                     'readers':  bid_readers,
-                    'nonreaders': [venue.get_authors_id(number='${{2/head}/number}')],
                     'writers': [ venue_id, '${2/tail}' ],
                     'signatures': {
                         'param': {
