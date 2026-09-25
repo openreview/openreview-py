@@ -221,30 +221,30 @@ commands:
   start-apis:
     description: "Start and wait for API V1 and V2"
     steps:
+      # cleanStart opens the port before it finishes creating the setup invitations and
+      # only then prints "Setup Complete!", so the port alone does not mean ready.
       - run:
           name: Start API V1
           command: |
             cd ~/openreview
-            npm run cleanStart
+            npm run cleanStart 2>&1 | tee ~/openreview/logs/api-v1-cleanStart.log
           background: true
       - run:
-          name: Wait for API V1 to start
-          shell: /bin/sh
+          name: Wait for API V1 setup
           command: |
-            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3000
-            :
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            wait_for_line "Setup Complete!" ~/openreview/logs/api-v1-cleanStart.log 600
       - run:
           name: Start API V2
           command: |
             cd ~/openreview-v2
-            NODE_OPTIONS="--max-old-space-size=4096" npm run cleanStart
+            NODE_OPTIONS="--max-old-space-size=4096" npm run cleanStart 2>&1 | tee ~/openreview-v2/logs/api-v2-cleanStart.log
           background: true
       - run:
-          name: Wait for API V2 to start
-          shell: /bin/sh
+          name: Wait for API V2 setup
           command: |
-            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3001
-            :
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            wait_for_line "Setup Complete!" ~/openreview-v2/logs/api-v2-cleanStart.log 600
 
   start-openreview-web:
     description: "Start the openreview-web build produced by the build-web job"
