@@ -1011,6 +1011,69 @@ def test_bidding_stages(client, openreview_client, helpers):
     assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid', groupby='id')) == 1
     assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Bid', groupby='id')) == 1
 
+def test_reviewer_author_publications_during_bidding(client, openreview_client, helpers, test_client):
+
+    ## During bidding the submissions are visible to the reviewers but the authors field is hidden.
+    ## The profile page loads the publications of a profile with GET /notes?content.authorids=<profile id>
+    ## (and content.authors.username for the unified authors schema), so a reviewer must not be able
+    ## to use that query to find out which ICLR submissions were written by a given author.
+
+    pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+    reviewer_client = openreview.api.OpenReviewClient(username='reviewer_one@iclr.cc', password=helpers.strong_password)
+    test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+    submissions = openreview_client.get_notes(content={'venueid': 'ICLR.cc/2026/Conference/Submission'}, sort='number:asc')
+    assert len(submissions) == 10
+    submission_ids = { submission.id for submission in submissions }
+
+    ## ~Eddie_Fb1 is a co-author of submission 2 only
+    submission2 = submissions[1]
+    assert '~Eddie_Fb1' in [author['username'] for author in submission2.content['authors']['value']]
+
+    ## the reviewer can read the submission but not its authors
+    reviewer_submission = reviewer_client.get_note(submission2.id)
+    assert 'authors' not in reviewer_submission.content
+
+    ## the program chairs can find the submission by author
+    pc_notes = pc_client.get_notes(content={'authors.username': '~Eddie_Fb1'})
+    assert [note.id for note in pc_notes] == [submission2.id]
+
+    ## the author can find their own submissions
+    author_notes = test_client.get_notes(content={'authors.username': '~SomeFirstName_User1'})
+    assert submission_ids.issubset({ note.id for note in author_notes })
+
+    ## the reviewer must not find any ICLR submission by author, using either query the profile page sends
+    reviewer_notes = reviewer_client.get_notes(content={'authors.username': '~Eddie_Fb1'})
+    assert not submission_ids.intersection({ note.id for note in reviewer_notes }), 'authors are hidden during bidding but the reviewer found the submission by author'
+
+    pc_notes = pc_client.get_notes(content={'authorids': '~Eddie_Fb1'})
+    assert [note.id for note in pc_notes] == [submission2.id]
+
+    reviewer_notes = reviewer_client.get_notes(content={'authorids': '~Eddie_Fb1'})
+    assert not submission_ids.intersection({ note.id for note in reviewer_notes }), 'authors are hidden during bidding but the reviewer found the submission by author'
+
+    reviewer_notes = reviewer_client.get_notes(content={'authors.username': '~SomeFirstName_User1'})
+    assert not submission_ids.intersection({ note.id for note in reviewer_notes }), 'authors are hidden during bidding but the reviewer found the submissions by author'
+
+    reviewer_notes = reviewer_client.get_notes(content={'authorids': '~SomeFirstName_User1'})
+    assert not submission_ids.intersection({ note.id for note in reviewer_notes }), 'authors are hidden during bidding but the reviewer found the submissions by author'
+
+    ## the notes search by author goes through Elasticsearch and must not leak the hidden authors either
+    pc_notes = pc_client.search_notes(term='~Eddie_Fb1', content='authors', group='all', source='all')
+    assert [note.id for note in pc_notes] == [submission2.id]
+
+    ## the name search is a full text match, so it also returns the papers of the other Eddies
+    pc_notes = pc_client.search_notes(term='Eddie Fb', content='authors', group='all', source='all')
+    assert submission2.id in [note.id for note in pc_notes]
+
+    author_notes = test_client.search_notes(term='~SomeFirstName_User1', content='authors', group='all', source='all')
+    assert submission_ids.issubset({ note.id for note in author_notes })
+
+    for term in ['~Eddie_Fb1', 'Eddie Fb', '~SomeFirstName_User1', 'SomeFirstName User']:
+        for content in ['authors', 'all']:
+            reviewer_notes = reviewer_client.search_notes(term=term, content=content, group='all', source='all')
+            assert not submission_ids.intersection({ note.id for note in reviewer_notes }), f'authors are hidden during bidding but the reviewer found the submissions searching "{term}" in {content}'
+
 def test_paper_committee_groups(client, openreview_client, helpers):
 
     pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
