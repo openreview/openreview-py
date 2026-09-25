@@ -250,7 +250,7 @@ commands:
     description: "Start the openreview-web build produced by the build-web job"
     steps:
       - attach_workspace:
-          at: ~
+          at: ~/
       - run:
           name: Start openreview-web
           command: |
@@ -349,7 +349,7 @@ jobs:
             rm -rf ~/openreview-web/.next/cache ~/openreview-web/.git
             du -sh ~/openreview-web ~/openreview-web/node_modules ~/openreview-web/.next
       - persist_to_workspace:
-          root: ~
+          root: ~/
           paths:
             - openreview-web
   build-pr-tests:
