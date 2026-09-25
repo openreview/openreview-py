@@ -643,6 +643,11 @@ class SubmissionRevisionStage():
                     if field in ['authors', 'authorids'] and only_accepted and conference.use_publication_chairs:
                         content[field]['readers'].append(conference.get_publication_chairs_id())
                 if field not in hidden_field_names and not content[field].get('readers', []) and existing_invitation_content.get(field, {}).get('readers', []):
+                    ## The field is not hidden anymore: drop the stale readers from this invitation
+                    ## so a later revision does not stamp them again. This unescaped delete is
+                    ## consumed by the invitation edit, it does not touch the existing notes: the
+                    ## submissions are released by the Post_Submission invitation, and field readers
+                    ## are only removed from existing notes through the escaped { 'const': { 'delete': True } }.
                     content[field]['readers'] = { 'delete': True }                        
 
         return content

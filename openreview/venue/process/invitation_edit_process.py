@@ -9,9 +9,7 @@ def process(client, invitation):
     decision_name = domain.content.get('decision_name', {}).get('value', 'Decision')
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     accept_options = domain.content.get('accept_decision_options', {}).get('value')
-    review_name = domain.content.get('review_name', {}).get('value')
     meta_review_name = domain.content.get('meta_review_name', {}).get('value')
-    rebuttal_name = domain.content.get('rebuttal_name', {}).get('value')
     ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
     ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
@@ -103,8 +101,11 @@ def process(client, invitation):
             invitation_content = paper_inv.edit['note']['content']
             for key in invitation_content.keys():
                 content_readers = invitation_content[key].get('readers', [])
-                ## Field readers defined as a dict are the escaped delete { 'const': { 'delete': True } }
-                ## (or a bare { 'delete': True }): the field readers must be removed from the note.
+                ## The field readers of a note are only removed through the escaped delete
+                ## { 'const': { 'delete': True } }: an invitation that defines no readers for a
+                ## field leaves the readers the note already has as they are.
+                if not content_readers:
+                    continue
                 if isinstance(content_readers, dict):
                     if note.content.get(key, {}).get('readers') is not None:
                         updated_content[key] = { 'readers': { 'delete': True } }
@@ -112,7 +113,7 @@ def process(client, invitation):
                 final_content_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in content_readers]))
                 if note.content.get(key, {}).get('readers', []) != final_content_readers:
                     updated_content[key] = {
-                        'readers': final_content_readers if final_content_readers else { 'delete': True }
+                        'readers': final_content_readers
                     }
             return updated_content
 
