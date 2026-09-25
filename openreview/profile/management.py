@@ -469,8 +469,10 @@ return {
                                         'type': 'object',
                                         'optional': True,
                                         'properties': {
+                                            ## The relation type and the parent's name identify the
+                                            ## consent record, so both are mandatory.
                                             'relation': { 'param': { 'type': 'string', 'minLength': 1 } },
-                                            'name': { 'param': { 'type': 'string', 'optional': True } },
+                                            'name': { 'param': { 'type': 'string', 'minLength': 1 } },
                                             'email': { 'param': { 'type': 'string', 'regex': r'([a-z0-9_\-.]{1,}@[a-z0-9_\-.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-.]{1,}@[a-z0-9_\-.]{2,}\.[a-z]{2,})', 'optional': True } },
                                             'start': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } },
                                             'end': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } }
@@ -1267,7 +1269,9 @@ return {
                                         'type': 'author{}',
                                         'properties': {
                                             'fullname': { 'param': { 'type': 'string' } },
-                                            'username': { 'param': { 'type': 'string' } },
+                                            ## Imported records list authors without an
+                                            ## OpenReview profile, so username is optional.
+                                            'username': { 'param': { 'type': 'string', 'optional': True } },
                                         },
                                     }
                                 }
@@ -1452,7 +1456,9 @@ return {
                                         'type': 'author{}',
                                         'properties': {
                                             'fullname': { 'param': { 'type': 'string' } },
-                                            'username': { 'param': { 'type': 'string' } },
+                                            ## Imported records list authors without an
+                                            ## OpenReview profile, so username is optional.
+                                            'username': { 'param': { 'type': 'string', 'optional': True } },
                                         },
                                     }
                                 }
@@ -1627,7 +1633,9 @@ return {
                                         'type': 'author{}',
                                         'properties': {
                                             'fullname': { 'param': { 'type': 'string' } },
-                                            'username': { 'param': { 'type': 'string' } },
+                                            ## Imported records list authors without an
+                                            ## OpenReview profile, so username is optional.
+                                            'username': { 'param': { 'type': 'string', 'optional': True } },
                                         },
                                     }
                                 }

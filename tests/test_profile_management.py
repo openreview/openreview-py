@@ -159,6 +159,42 @@ class TestProfileManagement():
         assert parent_consent_edit['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
         assert parent_consent_edit['content']['comment']['value'] == 'Consent form signed by the parent on file.'
 
+        ## The relation type and the parent's name are mandatory in the consent record.
+        with pytest.raises(openreview.OpenReviewException):
+            support_client.post_profile_edit(
+                invitation='openreview.net/Support/-/Parent_Consent',
+                signatures=['openreview.net/Support'],
+                content={ 'comment': { 'value': 'Missing the parent name.' } },
+                profile={
+                    'id': '~Gwen_Verified1',
+                    'content': {
+                        'relations': {
+                            'value': {
+                                'relation': 'Parent',
+                                'email': 'gustavo@profile.org'
+                            }
+                        }
+                    }
+                }
+            )
+        with pytest.raises(openreview.OpenReviewException):
+            support_client.post_profile_edit(
+                invitation='openreview.net/Support/-/Parent_Consent',
+                signatures=['openreview.net/Support'],
+                content={ 'comment': { 'value': 'Missing the relation type.' } },
+                profile={
+                    'id': '~Gwen_Verified1',
+                    'content': {
+                        'relations': {
+                            'value': {
+                                'name': 'Gustavo Verified',
+                                'email': 'gustavo@profile.org'
+                            }
+                        }
+                    }
+                }
+            )
+
         ## The owner and support see all the records, other users only the public one.
         edits = gwen_client.get_profile_edits(profile_id='~Gwen_Verified1')
         assert len(edits) == 3
@@ -3784,9 +3820,9 @@ The OpenReview Team.
                                                 'param': {
                                                     'type': 'object{}',
                                                     'properties': {
-                                                        'name': { 'param': { 'type': 'string' } },
+                                                        'name': { 'param': { 'type': 'string', 'optional': True } },
                                                         'domain': { 'param': { 'type': 'string' } },
-                                                        'country': { 'param': { 'type': 'string' } },
+                                                        'country': { 'param': { 'type': 'string', 'optional': True } },
                                                     },
                                                     'optional': True
                                                 }
