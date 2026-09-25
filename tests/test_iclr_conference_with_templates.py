@@ -977,10 +977,12 @@ def test_bidding_stages(client, openreview_client, helpers):
             }
         )
 
-    bid_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Bid')
-    assert bid_invitation.duedate == new_duedate
-    bid_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Bid')
-    assert bid_invitation.duedate == new_duedate
+    rev_bid_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Bid')
+    assert rev_bid_invitation.duedate == new_duedate
+    assert rev_bid_invitation.humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
+    ac_bid_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Bid')
+    assert ac_bid_invitation.duedate == new_duedate
+    assert ac_bid_invitation.humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
 
     submissions = openreview_client.get_notes(content={'venueid': 'ICLR.cc/2026/Conference/Submission'}, sort='number:asc')
     assert len(submissions) == 10
@@ -992,10 +994,13 @@ def test_bidding_stages(client, openreview_client, helpers):
         head=submissions[1].id,
         tail='~Reviewer_ICLROne1',
         label='Very High',
-        readers=['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Senior_Area_Chairs', 'ICLR.cc/2026/Conference/Area_Chairs', '~Reviewer_ICLROne1'],
-        writers=['ICLR.cc/2026/Conference', '~Reviewer_ICLROne1'],
         signatures=['~Reviewer_ICLROne1']
     ))
+
+    edge = openreview_client.get_edges(invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid', head=submissions[1].id, tail='~Reviewer_ICLROne1')[0]
+    assert edge.label == 'Very High'
+    assert edge.readers == ['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs', 'ICLR.cc/2026/Conference/Submission2/Area_Chairs', '~Reviewer_ICLROne1']
+    assert edge.nonreaders == ['ICLR.cc/2026/Conference/Submission2/Authors']
 
     ac_client = openreview.api.OpenReviewClient(username='areachair_one@iclr.cc', password=helpers.strong_password)
     ac_client.post_edge(openreview.api.Edge(
@@ -1003,13 +1008,36 @@ def test_bidding_stages(client, openreview_client, helpers):
         head=submissions[1].id,
         tail='~AC_ICLROne1',
         label='Very High',
-        readers=['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Senior_Area_Chairs', '~AC_ICLROne1'],
-        writers=['ICLR.cc/2026/Conference', '~AC_ICLROne1'],
         signatures=['~AC_ICLROne1']
     ))
 
+    edge = openreview_client.get_edges(invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Bid', head=submissions[1].id, tail='~AC_ICLROne1')[0]
+    assert edge.readers == ['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs', '~AC_ICLROne1']
+    assert edge.nonreaders == ['ICLR.cc/2026/Conference/Submission2/Authors']
+
     assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid', groupby='id')) == 1
     assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Bid', groupby='id')) == 1
+
+    ## drop the limit below the number of bids the reviewer has already posted
+    openreview_client.post_invitation_edit(
+        invitations='ICLR.cc/2026/Conference/-/Edit',
+        signatures=['ICLR.cc/2026/Conference'],
+        invitation=openreview.api.Invitation(
+            id=rev_bid_invitation.id,
+            humanVerificationRequired={ 'limit': 1, 'windowMs': 300000 }
+        )
+    )
+
+    assert openreview_client.get_invitation(rev_bid_invitation.id).humanVerificationRequired == { 'limit': 1, 'windowMs': 300000 }
+
+    ## the reviewer is over the limit now, so the next bid must be challenged
+    with pytest.raises(openreview.OpenReviewException, match='Human verification required'):
+        reviewer_client.post_edge(openreview.api.Edge(invitation = rev_bid_invitation.id,
+            signatures = ['~Reviewer_ICLROne1'],
+            head = submissions[2].id,
+            tail = '~Reviewer_ICLROne1',
+            label = 'High'
+        ))
 
 def test_reviewer_author_publications_during_bidding(client, openreview_client, helpers, test_client):
 
