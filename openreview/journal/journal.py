@@ -3,6 +3,7 @@ from . import group
 from .invitation import InvitationBuilder
 from .recruitment import Recruitment
 from .assignment import Assignment
+from .reader_policy import action_editor_reader
 
 import re
 import csv
@@ -25,6 +26,9 @@ class Journal(object):
         self.website = website
         self.submission_name = submission_name
         self.settings = settings
+        visibility = settings.get('action_editor_paper_visibility', 'all')
+        if visibility not in ('all', 'assigned_only'):
+            raise ValueError('action_editor_paper_visibility must be all or assigned_only')
         self.request_form_id = None
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
@@ -123,6 +127,18 @@ class Journal(object):
 
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
+
+    def get_assigned_action_editor(self, submission):
+        if self.settings.get('action_editor_paper_visibility') != 'assigned_only':
+            return submission.content['assigned_action_editor']['value'].split(',')[0]
+        members = self.client.get_group(
+            self.get_action_editors_id(number=submission.number)).members
+        members = [member for member in members if not re.fullmatch(
+            rf'{re.escape(self.venue_id)}/Paper[0-9]+/Action_Editors', member)]
+        if len(members) != 1 or not members[0].startswith('~'):
+            raise openreview.OpenReviewException(
+                f'Expected exactly one assigned Action Editor for submission {submission.number}, found {len(members)}.')
+        return members[0]
 
     def get_meta_invitation_id(self):
         return self.__get_invitation_id(name='Edit')
@@ -799,22 +815,23 @@ class Journal(object):
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.venue_id, self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.venue_id, action_editor_reader(self, number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_review_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), action_editor_reader(self, number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_decision_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), action_editor_reader(self, number),
+                self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_authors_readers(self, number):
         if self.is_submission_public() or self.release_submission_after_acceptance():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), action_editor_reader(self, number), self.get_authors_id(number)]
 
     def get_official_comment_readers(self, number):
         readers = []
@@ -824,9 +841,12 @@ class Journal(object):
         readers.append(self.get_editors_in_chief_id())
 
         if not self.is_submission_public():
-            readers.append(self.get_action_editors_id())
+            readers.append(action_editor_reader(self, number))
 
-        return readers + [self.get_action_editors_id(number),
+        paper_action_editors = self.get_action_editors_id(number)
+        if paper_action_editors not in readers:
+            readers.append(paper_action_editors)
+        return readers + [
                           self.get_reviewers_id(number),
                           self.get_reviewers_id(number, anon=True) + '.*',
                           self.get_authors_id(number)]
@@ -1301,7 +1321,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
             cdate = self.get_due_date(weeks = self.get_discussion_period_length())
             duedate = cdate + datetime.timedelta(weeks=self.get_recommendation_period_length())
             self.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
-            assigned_action_editor = openreview.tools.get_profiles(self.client, ids_or_emails=[submission.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=self.get_preferred_emails_invitation_id())[0]
+            assigned_action_editor = openreview.tools.get_profiles(self.client, ids_or_emails=[self.get_assigned_action_editor(submission)], with_preferred_emails=self.get_preferred_emails_invitation_id())[0]
 
             if self.should_enable_ai_review():
                 ai_review = self.client.get_notes(invitation=self.get_ai_review_id(number=submission.number))
