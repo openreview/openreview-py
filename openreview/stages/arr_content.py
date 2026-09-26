@@ -658,7 +658,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 43
+        "order": 45
     },
     "B5_documentation_of_artifacts": {
         "value": {
@@ -673,7 +673,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you provide documentation of the artifacts, e.g., coverage of domains, languages, and linguistic phenomena, demographic groups represented, etc.?",
-        "order": 45
+        "order": 46
     },
     "B5_elaboration": {
         "value": {
@@ -684,7 +684,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 46
+        "order": 47
     },
     "B6_statistics_for_data": {
         "value": {
@@ -699,7 +699,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report relevant statistics like the number of examples, details of train/test/dev splits, etc. for the data that you used/created?",
-        "order": 47
+        "order": 48
     },
     "B6_elaboration": {
         "value": {
@@ -710,7 +710,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 48
+        "order": 49
     },
     "C_computational_experiments": {
         "value": {
@@ -724,7 +724,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Is the main goal of this work to present results of computational experiments?",
-        "order": 49
+        "order": 50
     },
     "C1_model_size_and_budget": {
         "value": {
@@ -739,7 +739,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report the number of parameters in the models used, the total computational budget (e.g., GPU hours), and computing infrastructure used?",
-        "order": 50
+        "order": 51
     },
     "C1_elaboration": {
         "value": {
@@ -750,7 +750,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 51
+        "order": 52
     },
     "C2_experimental_setup_and_hyperparameters": {
         "value": {
@@ -765,7 +765,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you discuss the experimental setup, e.g. hyperparameter search, best-found hyperparameter values, number and selection of in-context examples?",
-        "order": 52
+        "order": 53
     },
     "C2_elaboration": {
         "value": {
@@ -776,7 +776,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 53
+        "order": 54
     },
     "C3_descriptive_statistics": {
         "value": {
@@ -791,7 +791,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report descriptive statistics about your results (e.g., error bars around results, summary statistics from sets of experiments), and is it transparent whether you are reporting the max, mean, etc. or just a single run?",
-        "order": 54
+        "order": 55
     },
     "C3_elaboration": {
         "value": {
@@ -802,7 +802,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 55
+        "order": 56
     },
     "C4_parameters_for_packages": {
         "value": {
@@ -817,7 +817,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation, such as NLTK, ROUGE, LM Evaluation Harness etc.), did you report the implementation, model, and parameter settings used?",
-        "order": 56
+        "order": 57
     },
     "C4_elaboration": {
         "value": {
@@ -828,7 +828,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 57
+        "order": 58
     },
     "D_human_subjects_including_annotators": {
         "value": {
@@ -842,7 +842,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you use human annotators (e.g., crowdworkers) or research with human participants?",
-        "order": 58
+        "order": 59
     },
     "D1_instructions_given_to_participants": {
         "value": {
@@ -857,7 +857,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report the full text of instructions given to participants, including e.g., screenshots, disclaimers of any risks to participants or annotators, etc.?",
-        "order": 59
+        "order": 60
     },
     "D1_elaboration": {
         "value": {
@@ -868,7 +868,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 60
+        "order": 61
     },
     "D2_recruitment_and_payment": {
         "value": {
@@ -883,7 +883,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report information about how you recruited (e.g., crowdsourcing platform, students), collected consent from, and paid the participants? If applicable, did you discuss if the payment was adequate and participation free of coercion? (except the case where all annotations were provided by the authors of the submission)",
-        "order": 61
+        "order": 62
     },
     "D2_elaboration": {
         "value": {
@@ -894,7 +894,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 62
+        "order": 63
     },
     "D3_data_consent": {
         "value": {
@@ -909,7 +909,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you discuss whether and how consent was obtained from people whose data you're using/curating? (except the case where all annotations were provided by the authors of the submission)",
-        "order": 63
+        "order": 64
     },
     "D3_elaboration": {
         "value": {
@@ -920,7 +920,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 64
+        "order": 65
     },
     "D4_ethics_review_board_approval": {
         "value": {
@@ -935,7 +935,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Was the data collection protocol approved (or determined exempt) by an ethics review board in the relevant institutional framework?",
-        "order": 65
+        "order": 66
     },
     "D4_elaboration": {
         "value": {
@@ -946,7 +946,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 66
+        "order": 67
     },
     "D5_annotator_population": {
         "value": {
@@ -961,7 +961,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you report the relevant demographic and geographic characteristics of the annotator population that is the source of the data? (except the case where all annotations were provided by the authors of the submission)",
-        "order": 67
+        "order": 68
     },
     "D5_elaboration": {
         "value": {
@@ -972,7 +972,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
-        "order": 68
+        "order": 69
     },    
     "E_substantive_ai_assistance_in_research_or_writing": {
         "value": {
@@ -986,7 +986,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "Did you use AI assistants (e.g., ChatGPT, Copilot) in your research (except as a research object), coding (beyond IDE autocomplete), or writing (beyond grammar or spell-checking)?",
-        "order": 69
+        "order": 70
     },
     "E1_information_about_substantive_ai_assistance": {
         "value": {
@@ -1001,7 +1001,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "If you used any AI assistants for any substantive assistance in writing (beyond grammar or spell-checking), coding (beyond IDE autocomplete), or literature search, did you include information about your use? This question does NOT apply to LLMs used as research objects.",
-        "order": 70
+        "order": 71
     },
     "E1_elaboration": {
         "value": {
@@ -1012,7 +1012,7 @@ responsible_nlp_checklist = {
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number, or include your elaboration directly in the checklist response. For no, justify why not.",
-        "order": 71
+        "order": 72
     }    
 }
  
