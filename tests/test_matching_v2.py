@@ -195,7 +195,7 @@ class TestMatching():
         ))
 
         r1_client.post_edge(Edge(invitation = venue.get_bid_id(venue.get_reviewers_id()),
-            readers = [venue.id, 'VenueV2.cc/Senior_Program_Committee', '~Reviewer_Venue1'],
+            readers = [venue.id, venue.get_area_chairs_id(number=notes[0].number), '~Reviewer_Venue1'],
             writers = [venue.id, '~Reviewer_Venue1'],
             signatures = ['~Reviewer_Venue1'],
             head = notes[0].id,
@@ -203,7 +203,7 @@ class TestMatching():
             label = 'Neutral'
         ))
         r1_client.post_edge(Edge(invitation = venue.get_bid_id(venue.get_reviewers_id()),
-            readers = [venue.id, 'VenueV2.cc/Senior_Program_Committee', '~Reviewer_Venue1'],
+            readers = [venue.id, venue.get_area_chairs_id(number=notes[1].number), '~Reviewer_Venue1'],
             writers = [venue.id, '~Reviewer_Venue1'],
             signatures = ['~Reviewer_Venue1'],
             head = notes[1].id,
@@ -211,7 +211,7 @@ class TestMatching():
             label = 'Very High'
         ))
         r1_client.post_edge(Edge(invitation = venue.get_bid_id(venue.get_reviewers_id()),
-            readers = [venue.id, 'VenueV2.cc/Senior_Program_Committee', '~Reviewer_Venue1'],
+            readers = [venue.id, venue.get_area_chairs_id(number=notes[2].number), '~Reviewer_Venue1'],
             writers = [venue.id, '~Reviewer_Venue1'],
             signatures = ['~Reviewer_Venue1'],
             head = notes[2].id,
@@ -238,7 +238,7 @@ class TestMatching():
         ## the reviewer is over the limit now, so the next bid must be challenged
         with pytest.raises(openreview.OpenReviewException, match='Human verification required'):
             r1_client.post_edge(Edge(invitation = reviewer_bid_id,
-                readers = [venue.id, 'VenueV2.cc/Senior_Program_Committee', '~Reviewer_Venue1'],
+                readers = [venue.id, venue.get_area_chairs_id(number=notes[0].number), '~Reviewer_Venue1'],
                 writers = [venue.id, '~Reviewer_Venue1'],
                 signatures = ['~Reviewer_Venue1'],
                 head = notes[0].id,

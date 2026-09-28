@@ -396,14 +396,27 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         bid_edge = reviewer_client.post_edge(Edge(invitation = venue.id + '/Reviewers/-/Bid',
             head = submissions[0].id,
             tail = '~Reviewer_Venue_One1',
-            readers = ['TestVenue.cc', 'TestVenue.cc/Area_Chairs', '~Reviewer_Venue_One1'],
-            writers = ['TestVenue.cc', '~Reviewer_Venue_One1'],
             signatures = ['~Reviewer_Venue_One1'],
             label = 'High'
         ))
 
+        ## bids are visible to the venue, the committee assigned to the paper and the bidder, but never to the authors
+        assert bid_edge.readers == ['TestVenue.cc', f'TestVenue.cc/提交{submissions[0].number}/Area_Chairs', '~Reviewer_Venue_One1']
+        assert bid_edge.nonreaders == [f'TestVenue.cc/提交{submissions[0].number}/Authors']
+        assert bid_edge.writers == ['TestVenue.cc', '~Reviewer_Venue_One1']
+
         bid_edges = openreview_client.get_edges_count(invitation=venue.id + '/Reviewers/-/Bid')
         assert bid_edges == 1
+
+        ## a committee member can not bid on behalf of another user
+        with pytest.raises(openreview.OpenReviewException):
+            reviewer_client.post_edge(Edge(invitation = venue.id + '/Reviewers/-/Bid',
+                head = submissions[0].id,
+                tail = '~PC_Venue_One1',
+                signatures = ['~Reviewer_Venue_One1'],
+                label = 'High'
+            ))
+        assert openreview_client.get_edges_count(invitation=venue.id + '/Reviewers/-/Bid') == 1
 
         ## after bidding stage the submissions should be visible to the assigned committee
         venue.submission_stage.readers = [SubmissionStage.Readers.EVERYONE]

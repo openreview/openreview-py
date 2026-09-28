@@ -677,6 +677,26 @@ class TestJournal():
             weight=8
         ))
 
+        ## a reviewer can not change the quota or the availability of another reviewer
+        with pytest.raises(openreview.OpenReviewException):
+            javier_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Custom_Max_Papers',
+                signatures=['~Javier_Burroni1'],
+                head='TMLR/Reviewers',
+                tail='~David_Belanger1',
+                weight=1
+            ))
+
+        with pytest.raises(openreview.OpenReviewException):
+            javier_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment_Availability',
+                signatures=['~Javier_Burroni1'],
+                head='TMLR/Reviewers',
+                tail='~David_Belanger1',
+                label='Unavailable'
+            ))
+
+        assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Custom_Max_Papers', tail='~David_Belanger1') == 1
+        assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Assignment_Availability', tail='~David_Belanger1') == 0
+
         peter_client=helpers.create_user('petersnow@yahoo.com', 'Peter', 'Snow')
 
         guest_client=OpenReviewClient()
