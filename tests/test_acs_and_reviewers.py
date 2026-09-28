@@ -214,7 +214,10 @@ class TestSimpleDualAnonymous():
         ]
 
         invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Reviewers/-/Submission_Group')
-        assert invitation and invitation.edit['group']['deanonymizers'] == ['EFGH.cc/2025/Conference']
+        assert invitation and invitation.edit['group']['deanonymizers'] == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Submission${3/content/noteNumber/value}/Action_Editors'
+        ]
         assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Reviewers/-/Submission_Group/Dates')
         assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Reviewers/-/Submission_Group/Deanonymizers')
         invitation =  openreview_client.get_invitation('EFGH.cc/2025/Conference/Reviewers/-/Recruitment_Request')
