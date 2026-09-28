@@ -6,12 +6,12 @@ def process(client, edit, invitation):
 
     submission = client.get_note(edit.note.forum)
 
-    ## Make the retraction public
-    print('Make retraction public')
-    invitation = journal.invitation_builder.set_note_retraction_release_invitation(submission)
-    author_readers = submission.content['authors'].get('readers', [])
-
     if edit.note.content['approval']['value'] == 'Yes':
+        ## Release the retraction request to the paper readers
+        print('Release retraction request')
+        journal.invitation_builder.set_note_retraction_release_invitation(submission)
+
+        author_readers = submission.content['authors'].get('readers', [])
         client.post_note_edit(invitation= journal.get_retracted_id(),
                                 signatures=[venue_id],
                                 note=openreview.api.Note(id=submission.id,
