@@ -987,29 +987,90 @@ def test_bidding_stages(client, openreview_client, helpers):
 
     # a reviewer and an area chair place their bids
     reviewer_client = openreview.api.OpenReviewClient(username='reviewer_one@iclr.cc', password=helpers.strong_password)
-    reviewer_client.post_edge(openreview.api.Edge(
+    reviewer_bid = reviewer_client.post_edge(openreview.api.Edge(
         invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid',
         head=submissions[1].id,
         tail='~Reviewer_ICLROne1',
         label='Very High',
-        readers=['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Senior_Area_Chairs', 'ICLR.cc/2026/Conference/Area_Chairs', '~Reviewer_ICLROne1'],
-        writers=['ICLR.cc/2026/Conference', '~Reviewer_ICLROne1'],
         signatures=['~Reviewer_ICLROne1']
     ))
 
+    ## bids are visible to the venue, the committee assigned to the paper and the bidder, but never to the authors
+    assert reviewer_bid.readers == [
+        'ICLR.cc/2026/Conference',
+        f'ICLR.cc/2026/Conference/Submission{submissions[1].number}/Senior_Area_Chairs',
+        f'ICLR.cc/2026/Conference/Submission{submissions[1].number}/Area_Chairs',
+        '~Reviewer_ICLROne1'
+    ]
+    assert reviewer_bid.nonreaders == [f'ICLR.cc/2026/Conference/Submission{submissions[1].number}/Authors']
+    assert reviewer_bid.writers == ['ICLR.cc/2026/Conference', '~Reviewer_ICLROne1']
+
     ac_client = openreview.api.OpenReviewClient(username='areachair_one@iclr.cc', password=helpers.strong_password)
-    ac_client.post_edge(openreview.api.Edge(
+    ac_bid = ac_client.post_edge(openreview.api.Edge(
         invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Bid',
         head=submissions[1].id,
         tail='~AC_ICLROne1',
         label='Very High',
-        readers=['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Senior_Area_Chairs', '~AC_ICLROne1'],
-        writers=['ICLR.cc/2026/Conference', '~AC_ICLROne1'],
         signatures=['~AC_ICLROne1']
     ))
 
+    assert ac_bid.readers == [
+        'ICLR.cc/2026/Conference',
+        f'ICLR.cc/2026/Conference/Submission{submissions[1].number}/Senior_Area_Chairs',
+        '~AC_ICLROne1'
+    ]
+    assert ac_bid.nonreaders == [f'ICLR.cc/2026/Conference/Submission{submissions[1].number}/Authors']
+
     assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid', groupby='id')) == 1
     assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Bid', groupby='id')) == 1
+
+    ## area chairs not assigned to the paper can not see the reviewer bids
+    assert ac_client.get_edges_count(invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid') == 0
+
+    ## a committee member can not bid on behalf of another member
+    with pytest.raises(openreview.OpenReviewException):
+        reviewer_client.post_edge(openreview.api.Edge(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid',
+            head=submissions[1].id,
+            tail='~Reviewer_ICLRTwo1',
+            label='Very High',
+            signatures=['~Reviewer_ICLROne1']
+        ))
+    assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid', groupby='id')) == 1
+
+    ## the venue can post bids on behalf of a committee member
+    venue_bid = openreview_client.post_edge(openreview.api.Edge(
+        invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid',
+        head=submissions[2].id,
+        tail='~Reviewer_ICLRTwo1',
+        label='High',
+        signatures=['ICLR.cc/2026/Conference']
+    ))
+    assert venue_bid.readers[-1] == '~Reviewer_ICLRTwo1'
+    assert len(openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Reviewers/-/Bid', groupby='id')) == 2
+
+    ## a committee member can only select expertise for themselves
+    expertise_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Expertise_Selection')
+    expertise_label = expertise_invitation.edit['label']['param']['enum'][0]
+    expertise_edge = reviewer_client.post_edge(openreview.api.Edge(
+        invitation='ICLR.cc/2026/Conference/Reviewers/-/Expertise_Selection',
+        head=submissions[0].id,
+        tail='~Reviewer_ICLROne1',
+        label=expertise_label,
+        signatures=['~Reviewer_ICLROne1']
+    ))
+    assert expertise_edge.readers == ['ICLR.cc/2026/Conference', '~Reviewer_ICLROne1']
+    assert expertise_edge.writers == ['ICLR.cc/2026/Conference', '~Reviewer_ICLROne1']
+
+    with pytest.raises(openreview.OpenReviewException):
+        reviewer_client.post_edge(openreview.api.Edge(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Expertise_Selection',
+            head=submissions[0].id,
+            tail='~Reviewer_ICLRTwo1',
+            label=expertise_label,
+            signatures=['~Reviewer_ICLROne1']
+        ))
+    assert openreview_client.get_edges_count(invitation='ICLR.cc/2026/Conference/Reviewers/-/Expertise_Selection') == 1
 
 def test_reviewer_author_publications_during_bidding(client, openreview_client, helpers, test_client):
 
