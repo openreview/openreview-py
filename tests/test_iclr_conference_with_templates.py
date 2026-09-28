@@ -976,6 +976,14 @@ For more details, please check the following links:
                 }
             )
 
+        bid_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Bid')
+        assert bid_invitation.duedate == new_duedate
+        bid_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Bid')
+        assert bid_invitation.duedate == new_duedate
+
+        submissions = openreview_client.get_notes(content={'venueid': 'ICLR.cc/2026/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 10
+
         # a reviewer and an area chair place their bids
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer_one@iclr.cc', password=helpers.strong_password)
         reviewer_bid = reviewer_client.post_edge(openreview.api.Edge(
