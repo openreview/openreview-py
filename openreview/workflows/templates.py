@@ -567,7 +567,7 @@ class Templates():
                 'group': {
                     'id': '${2/content/committee_id/value}/Invited',
                     'description': 'Group consisting of the users who have been invited to serve as ${2/content/committee_pretty_name/value} for the venue.',
-                    'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Invited'],
+                    'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
@@ -622,7 +622,7 @@ class Templates():
                 'group': {
                     'id': '${2/content/committee_id/value}/Declined',
                     'description': 'Group consisting of the users who have been invited to serve as ${2/content/committee_pretty_name/value} for the venue and have declined the invitation.',
-                    'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Declined'],
+                    'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}']

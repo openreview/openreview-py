@@ -773,29 +773,29 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                             members=[]
                             ))
 
+        ## the invited and declined lists contain raw emails, so the invitees must not be able to read
+        ## these groups nor sign as them
         committee_declined_group = tools.get_group(self.client, committee_declined_id)
-        if not committee_declined_group:
+        if not committee_declined_group or committee_declined_id in (committee_declined_group.readers or []) + (committee_declined_group.signatories or []):
             committee_declined_group=self.post_group(Group(id=committee_declined_id,
-                            readers=[venue_id, committee_declined_id],
+                            readers=[venue_id],
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
-                            signatories=[venue_id, committee_declined_id],
-                            members=[]
+                            signatories=[venue_id]
                             ))
 
-        invited_group_readers = [venue_id, committee_invited_id]
+        invited_group_readers = [venue_id]
         if committee_name == self.venue.ethics_reviewers_name:
             invited_group_readers.append(self.venue.get_ethics_chairs_id())
         committee_invited_group = tools.get_group(self.client, committee_invited_id)
-        if not committee_invited_group:
+        if not committee_invited_group or committee_invited_id in (committee_invited_group.readers or []) + (committee_invited_group.signatories or []):
             committee_invited_group=self.post_group(Group(id=committee_invited_id,
                             readers=invited_group_readers,
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
-                            signatories=[venue_id, committee_invited_id],
-                            members=[]
+                            signatories=[venue_id]
                             ))
-           
+
 
     def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False, is_ethics_reviewer=False):
 
