@@ -7,7 +7,7 @@ def process(client, invitation):
 
     ## send email to reviewers
     print('send email to reviewers')
-    assigned_action_editor = openreview.tools.get_profiles(client, ids_or_emails=[submission.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
+    assigned_action_editor = openreview.tools.get_profiles(client, ids_or_emails=[journal.get_assigned_action_editor(submission)], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
 
     reviewer_group = client.get_group(journal.get_reviewers_id())
     message=reviewer_group.content['official_recommendation_starts_email_template_script']['value'].format(

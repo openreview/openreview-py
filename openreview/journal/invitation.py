@@ -152,14 +152,30 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
     
+    def journal_source(self, settings=None):
+        if self.journal.request_form_id:
+            return ('openreview.journal.JournalRequest.get_journal(client, ' +
+                    repr(self.journal.request_form_id) + ')')
+        settings = {} if settings is None else settings
+        return ('openreview.journal.Journal(client, ' +
+            ', '.join(repr(value) for value in (self.journal.venue_id,
+                self.journal.secret_key, self.journal.contact_info,
+                self.journal.full_name, self.journal.short_name)) +
+            ', website=' + repr(self.journal.website) +
+            ', submission_name=' + repr(self.journal.submission_name) +
+            ', settings=' + repr(settings) + ')')
+
     def get_process_content(self, file_path):
-        process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            if self.journal.request_form_id:
-                return process.replace('openreview.journal.Journal()', f'openreview.journal.JournalRequest.get_journal(client, "{self.journal.request_form_id}")')
-            else:
-                return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
+            enabled = (self.journal.settings.get(
+                'action_editor_paper_visibility') == 'assigned_only')
+            settings = ({key: self.journal.settings[key] for key in (
+                    'submission_public', 'release_submission_after_acceptance',
+                    'action_editor_paper_visibility') if key in self.journal.settings}
+                if enabled else {})
+            return process.replace('openreview.journal.Journal()',
+                                   self.journal_source(settings))
 
 
     def post_invitation_edit(self, invitation, replacement=None):
@@ -1412,7 +1428,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },                
                 'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
-                'nonreaders': [],
+                'nonreaders': ([self.journal.get_authors_id(number='${{2/head}/number}')]
+                    if self.journal.settings.get(
+                        'action_editor_paper_visibility') == 'assigned_only' else []),
                 'writers': [venue_id, editor_in_chief_id],
                 'signatures': [editor_in_chief_id],
                 'head': {
@@ -1480,7 +1498,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },                
                 'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
-                'nonreaders': [],
+                'nonreaders': ([self.journal.get_authors_id(number='${{2/head}/number}')]
+                    if self.journal.settings.get(
+                        'action_editor_paper_visibility') == 'assigned_only' else []),
                 'writers': [venue_id, editor_in_chief_id],
                 'signatures': [editor_in_chief_id],
                 'head': {

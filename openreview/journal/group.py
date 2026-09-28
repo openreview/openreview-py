@@ -507,6 +507,8 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         if not action_editors_group:
             action_editors_group=self.post_group(Group(id=action_editors_group_id,
                 readers=[venue_id, action_editors_group_id, reviewers_group_id],
+                nonreaders=([authors_group_id] if self.journal.settings.get(
+                    'action_editor_paper_visibility') == 'assigned_only' else []),
                 writers=[venue_id],
                 signatures=[venue_id],
                 signatories=[venue_id],
