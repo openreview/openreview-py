@@ -1667,7 +1667,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
+                            { 'value': '${3/tail}', 'optional': True }
                         ]
                     }
                 },
@@ -1786,7 +1786,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
+                            { 'value': '${3/tail}', 'optional': True }
                         ]
                     }
                 },
@@ -2138,8 +2138,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
-                        ]                   
+                            { 'value': '${3/tail}', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -2257,8 +2257,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
-                        ]                    
+                            { 'value': '${3/tail}', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -6689,13 +6689,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'deletable': True
                         }
                     },
-                    'readers': [ venue_id, '${2/signatures}' ],
-                    'writers': [ venue_id, '${2/signatures}' ],
-                    'signatures': {
-                        'param': {
-                            'regex': '~.*' 
-                        }
-                    },
+                    'readers': [ venue_id, '${2/tail}' ],
+                    'writers': [ venue_id, '${2/tail}' ],
+                    'signatures': [ '${2/tail}' ],
                     'head': {
                         'param': {
                             'type': 'note'
