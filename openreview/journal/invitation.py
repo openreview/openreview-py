@@ -3000,7 +3000,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [ venue_id],
                 'note': {
                     'id': { 'param': { 'withInvitation': self.journal.get_retraction_id(number='${6/content/noteNumber/value}') }},
-                    'readers': [ 'everyone' ],
+                    'readers': self.journal.get_release_decision_readers('${5/content/noteNumber/value}'),
                     'nonreaders': []
                 }
             }
@@ -3296,7 +3296,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures=[venue_id],
             edit={
                 'signatures': [venue_id],
-                'readers': [ 'everyone' ],
+                'readers': self.journal.get_under_review_submission_readers('${{2/note/id}/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 

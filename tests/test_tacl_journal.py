@@ -677,6 +677,57 @@ note={Featured Certification, Reproducibility Certification}
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
+    def test_retraction(self, journal, openreview_client, helpers):
+
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
+
+        ## Authors request the retraction of the accepted paper
+        retraction_note = test_client.post_note_edit(invitation='TACL/Paper1/-/Retraction',
+                            signatures=['TACL/Paper1/Authors'],
+                            note=Note(
+                                signatures=['TACL/Paper1/Authors'],
+                                content= {
+                                    'retraction_confirmation': { 'value': 'I have read and agree with the venue\'s retraction policy on behalf of myself and my co-authors.' }
+                                 }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=retraction_note['id'])
+
+        note = openreview_client.get_note(retraction_note['note']['id'])
+        assert note.readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
+
+        assert openreview_client.get_invitation('TACL/Paper1/-/Retraction_Approval')
+
+        ## EIC approves the retraction
+        approval_note = brian_client.post_note_edit(invitation='TACL/Paper1/-/Retraction_Approval',
+                            signatures=['TACL/Editors_In_Chief'],
+                            note=Note(
+                                signatures=['TACL/Editors_In_Chief'],
+                                content= {
+                                    'approval': { 'value': 'Yes' }
+                                 }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+
+        ## The retraction request is released to the paper readers only, the journal is not public
+        note = openreview_client.get_note(retraction_note['note']['id'])
+        assert note.readers == ['TACL/Editors_In_Chief', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert note.nonreaders == []
+
+        note = openreview_client.get_note(note_id_1)
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted', 'TACL/-/Retracted']
+        assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert note.content['venue']['value'] == 'Retracted by Authors'
+        assert note.content['venueid']['value'] == 'TACL/Retracted_Acceptance'
+
+        ## The retracted edit is not public either
+        edits = openreview_client.get_note_edits(note.id, invitation='TACL/-/Retracted')
+        assert len(edits) == 1
+        assert edits[0].readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+
     def test_withdrawn_submission(self, journal, openreview_client, test_client, helpers):
 
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
