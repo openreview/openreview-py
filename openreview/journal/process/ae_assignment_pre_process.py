@@ -4,6 +4,11 @@ def process(client, edge, invitation):
 
     submission = client.get_note(edge.head)
 
+    if journal.settings.get('resubmission_continuity_enabled') is True and not edge.ddate:
+        from openreview.journal.resubmission import validate_ae_continuity_assignment
+        if validate_ae_continuity_assignment(client, journal, edge, submission):
+            return
+
     ## authors should not be able to edit assignments
     authors_group_id = journal.get_authors_id(number=submission.number)
     if client.get_groups(id=authors_group_id, member=edge.tauthor):
@@ -32,4 +37,3 @@ def process(client, edge, invitation):
         edges = client.get_edges(invitation=journal.get_ae_availability_id(), tail=edge.tail)
         if edges and edges[0].label == 'Unavailable':
            raise openreview.OpenReviewException(f'Action Editor {edge.tail} is currently unavailable.')
-

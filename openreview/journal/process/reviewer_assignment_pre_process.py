@@ -59,10 +59,19 @@ def process(client, edge, invitation):
            raise openreview.OpenReviewException(f'Reviewer {edge.tail} is currently unavailable.')           
 
         ## Check resubmission assignments
-        if f'previous_{journal.short_name}_submission_url' in submission.content:
-            previous_forum_url = submission.content[f'previous_{journal.short_name}_submission_url']['value']
-            previous_forum_id = previous_forum_url.replace('https://openreview.net/forum?id=', '')
-            previous_assignments = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head = previous_forum_id, tail = edge.tail)
+        previous_field = f'previous_{journal.short_name}_submission_url'
+        if previous_field in submission.content:
+            previous_forum_url = submission.content[previous_field]['value']
+            if journal.settings.get('resubmission_continuity_enabled') is True:
+                from openreview.journal.resubmission import parse_forum_id
+                previous_forum_id = parse_forum_id(previous_forum_url)
+            else:
+                previous_forum_id = previous_forum_url.replace(
+                    'https://openreview.net/forum?id=', '')
+            previous_assignments = (client.get_edges(
+                invitation=journal.get_reviewer_assignment_id(),
+                head=previous_forum_id, tail=edge.tail)
+                if previous_forum_id else [])
             if previous_assignments:
                 return ## don't check pending reviews
 
@@ -71,5 +80,3 @@ def process(client, edge, invitation):
             pending_review_edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
             if pending_review_edges and pending_review_edges[0].weight >= 1:
                 raise openreview.OpenReviewException(f'Can not add assignment, reviewer {edge.tail} has {pending_review_edges[0].weight} pending reviews.')
-
-

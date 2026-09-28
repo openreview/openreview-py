@@ -1,3 +1,4 @@
+import copy
 import os
 import json
 import random
@@ -152,15 +153,96 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
     
-    def get_process_content(self, file_path):
-        process = None
+    def journal_source(self, settings=None):
+        if self.journal.request_form_id:
+            return ('openreview.journal.JournalRequest.get_journal(client, ' +
+                    repr(self.journal.request_form_id) + ')')
+        settings = {} if settings is None else settings
+        return ('openreview.journal.Journal(client, ' +
+            ', '.join(repr(value) for value in (self.journal.venue_id,
+                self.journal.secret_key, self.journal.contact_info,
+                self.journal.full_name, self.journal.short_name)) +
+            ', website=' + repr(self.journal.website) +
+            ', submission_name=' + repr(self.journal.submission_name) +
+            ', settings=' + repr(settings) + ')')
+
+    def track_submission_preprocess(self, existing):
+        owned = (isinstance(existing, str) and
+                 '# journal-resubmission-preprocess-owner-v2' in existing)
+        if (isinstance(existing, str) and
+                '# journal-track-preprocess-owner-v1' in existing):
+            return existing
+        continuity = self.resubmission_submission_preprocess()
+        if not continuity:
+            return {'delete': True} if owned else existing
+        if existing and not owned:
+            raise ValueError(
+                'Resubmission continuity requires ownership of the submission preprocess.')
+        return continuity
+
+    def resubmission_submission_preprocess(self):
+        if self.journal.settings.get('resubmission_continuity_enabled') is True:
+            settings = {key: self.journal.settings[key] for key in (
+                'submission_public', 'release_submission_after_acceptance',
+                'resubmission_continuity_enabled', 'resubmission_continuity')
+                if key in self.journal.settings}
+            return self.get_process_content(
+                'process/resubmission_submission_pre_process.py', settings)
+
+    def revision_preprocess_fields(self, existing):
+        """Install one owned revision callback without arbitrary script dispatch."""
+        invitation = (getattr(existing, 'edit', None) or {}).get(
+            'invitation', {}) if existing else {}
+        dispatcher = invitation.get('preprocess')
+        field = (copy.deepcopy(existing.content.get('preprocess_script'))
+                 if existing else None)
+        script = field.get('value') if isinstance(field, dict) else field
+        continuity = self.resubmission_submission_preprocess()
+        if not continuity:
+            if (isinstance(script, str) and
+                    '# journal-resubmission-preprocess-owner-v2' in script):
+                return {'delete': True}, {'delete': True}
+            return field, dispatcher
+        owned = (isinstance(script, str) and
+                 '# journal-resubmission-preprocess-owner-v2' in script)
+        if script and not owned:
+            raise ValueError(
+                'Resubmission continuity requires ownership of the revision preprocess field.')
+        if dispatcher and dispatcher != self.preprocess_script:
+            raise ValueError(
+                'Resubmission continuity does not compose custom revision dispatchers.')
+        return {'value': continuity}, self.preprocess_script
+
+    def set_revision_preprocess(self, invitation_content, invitation, invitation_id):
+        field, dispatcher = self.revision_preprocess_fields(
+            openreview.tools.get_invitation(self.client, invitation_id))
+        if field is not None:
+            invitation_content['preprocess_script'] = field
+        if dispatcher is not None:
+            invitation['preprocess'] = dispatcher
+
+    def get_process_content(self, file_path, settings=None):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            if self.journal.request_form_id:
-                return process.replace('openreview.journal.Journal()', f'openreview.journal.JournalRequest.get_journal(client, "{self.journal.request_form_id}")')
+            if settings is None and self.journal.settings.get(
+                    'resubmission_continuity_enabled') is True:
+                settings = {key: self.journal.settings[key] for key in (
+                    'submission_public', 'release_submission_after_acceptance',
+                    'resubmission_continuity_enabled', 'resubmission_continuity')
+                    if key in self.journal.settings}
+            if settings is not None:
+                source = self.journal_source(settings)
+            elif self.journal.request_form_id:
+                source = ('openreview.journal.JournalRequest.get_journal(client, "' +
+                          self.journal.request_form_id + '")')
             else:
-                return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
-
+                source = ('openreview.journal.Journal(client, "' + self.journal.venue_id +
+                    '", "' + self.journal.secret_key + '", contact_info="' +
+                    self.journal.contact_info + '", full_name="' + self.journal.full_name +
+                    '", short_name="' + self.journal.short_name + '", website="' +
+                    self.journal.website + '", submission_name="' +
+                    self.journal.submission_name + '")')
+            return process.replace('openreview.journal.Journal()', source)
 
     def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -991,7 +1073,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             "order": 7,
                             'readers': [ venue_id, action_editors_value, reviewers_value, authors_value]
                         },
-                        f'previous_{short_name}_submission_url': {
+                        self.journal.get_resubmission_previous_submission_field(): {
                             'value': {
                                 'param': {
                                     'type': "string",
@@ -1066,8 +1148,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
-        if existing_invitation and existing_invitation.preprocess:
-            invitation.preprocess=existing_invitation.preprocess
+        invitation.preprocess = self.track_submission_preprocess(
+            existing_invitation.preprocess if existing_invitation else None)
 
         if self.journal.enable_blocked_authors():
             invitation.post_processes = [
@@ -4745,7 +4827,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             "order": 7,
                             'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
                         },
-                        f'previous_{short_name}_submission_url': {
+                        self.journal.get_resubmission_previous_submission_field(): {
                             'value': {
                                 'param': {
                                     'type': "string",
@@ -4801,10 +4883,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process': self.process_script                    
         }
 
-        existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_revision_id())
-        if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
-            invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
-            invitation['preprocess'] = existing_super_invitation.edit['invitation']['preprocess']
+        self.set_revision_preprocess(
+            invitation_content, invitation, self.journal.get_revision_id())
 
         submission_length = self.journal.get_submission_length()
         if submission_length:
@@ -5870,7 +5950,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             "order": 6,
                             'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
                         },
-                        f'previous_{short_name}_submission_url': {
+                        self.journal.get_resubmission_previous_submission_field(): {
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -5955,10 +6035,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             for key, value in self.journal.get_submission_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
-        existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_camera_ready_revision_id())
-        if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
-            invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
-            invitation['preprocess'] = existing_super_invitation.edit['invitation']['preprocess']
+        self.set_revision_preprocess(
+            invitation_content, invitation,
+            self.journal.get_camera_ready_revision_id())
 
         self.save_super_invitation(self.journal.get_camera_ready_revision_id(), invitation_content, edit_content, invitation)
 
@@ -6175,7 +6254,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                             "order": 6
                         },
-                        f'previous_{short_name}_submission_url': {
+                        self.journal.get_resubmission_previous_submission_field(): {
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -6273,7 +6352,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value if value else { "delete": True }                        
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
+        self.set_revision_preprocess(
+            invitation_content, invitation, self.journal.get_eic_revision_id())
 
         self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
 
