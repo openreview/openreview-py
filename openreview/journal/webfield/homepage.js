@@ -48,7 +48,7 @@ tabs.push({
     invitation: submissionInvitationId,
     'content.venueid': [underReviewId, decisionPendingId].join(','),
     details: 'replyCount,presentation',
-    sort: 'mdate:desc'    
+    sort: 'tmdate:desc'
   }
 })
 
@@ -57,7 +57,7 @@ tabs.push({
   query: {
     invitation: submissionInvitationId,
     details: 'replyCount,presentation',
-    sort: 'mdate:desc'    
+    sort: 'tmdate:desc'
   }
 })
 
