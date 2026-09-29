@@ -1275,7 +1275,7 @@ For more details, please check the following links:
         # allow author to edit institution
         author_client=openreview.api.OpenReviewClient(username='senioractioneditor_one@iclr.cc', password=helpers.strong_password)
 
-        author_client.post_note_edit(
+        revision_note = author_client.post_note_edit(
             invitation='ICLR.cc/2026/Conference/Submission1/-/Institution_Revision',
             signatures=['ICLR.cc/2026/Conference/Submission1/Authors'],
             note=openreview.api.Note(
@@ -1302,6 +1302,82 @@ For more details, please check the following links:
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        submission = submissions[0]
+        submission_authors = submission.content['authors']['value']
+        submission_authors.append({
+            'fullname': 'Eddie Umass',
+            'username': '~Eddie_Umass1',
+            'institutions': [{'domain': 'umass.edu', 'country': 'US'}]
+        })
+
+        # edit the submission authors as a PC, check the Institution_Revision invitation gets updated
+        pc_revision = pc_client.post_note_edit(
+            invitation='ICLR.cc/2026/Conference/-/PC_Revision',
+            signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                id = submission.id,
+                license = 'CC BY 4.0',
+                content = {
+                    'title': submission.content['title'],
+                    'abstract': submission.content['abstract'],
+                    'authors': { 'value': submission.content['authors']['value'] },
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                    'reciprocal_reviewing': submission.content['reciprocal_reviewing'],
+                    'email_sharing': submission.content['email_sharing'],
+                    'data_release': submission.content['data_release'],
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=pc_revision['id'])
+
+        inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission1/-/Institution_Revision')
+        assert any(field not in inv.edit['note']['content'] for field in ['title', 'authorids', 'abstract', 'TLDR', 'keywords', 'pdf', 'email_sharing', 'data_release'])
+        assert 'authors' in inv.edit['note']['content'] and inv.edit['note']['content']['authors'] == {
+            "value": {
+                "param": {
+                    "type": "author{}",
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "properties": {
+                        "fullname": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "SomeFirstName User",
+                                    "Eddie Amazon",
+                                    "SAE ICLROne",
+                                    "Eddie Umass"
+                                ]
+                            }
+                        },
+                        "username": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "~SomeFirstName_User1",
+                                    "~Eddie_Amazon1",
+                                    "~SAE_ICLROne1",
+                                    "~Eddie_Umass1"
+                                ]
+                            }
+                        },
+                        "institutions": {
+                            "param": {
+                                "type": "object{}",
+                                "properties": {
+                                    'name': { 'param': { 'type': 'string' } },
+                                    'domain': { 'param': { 'type': 'string' } },
+                                    'country': { 'param': { 'type': 'string' } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
     def test_paper_committee_groups(self, client, openreview_client, helpers):
 
@@ -3020,7 +3096,7 @@ note={under review}
         valid_bibtex = '''@inproceedings{
 user'''+str(year)+'''paper,
 title={Paper title 1 license revision},
-author={SomeFirstName User and Eddie Amazon and SAE ICLROne},
+author={SomeFirstName User and Eddie Amazon and SAE ICLROne and Eddie Umass},
 booktitle={International Conference on Learning Representations},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
