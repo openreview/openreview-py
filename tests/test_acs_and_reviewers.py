@@ -129,17 +129,11 @@ class TestSimpleDualAnonymous():
 
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/Invited')
         assert group.domain == 'EFGH.cc/2025/Conference'
-        assert group.readers == [
-            'EFGH.cc/2025/Conference',
-            'EFGH.cc/2025/Conference/Reviewers/Invited'
-        ]
+        assert group.readers == ['EFGH.cc/2025/Conference']
 
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/Declined')
         assert group.domain == 'EFGH.cc/2025/Conference'
-        assert group.readers == [
-            'EFGH.cc/2025/Conference',
-            'EFGH.cc/2025/Conference/Reviewers/Declined'
-        ]
+        assert group.readers == ['EFGH.cc/2025/Conference']
 
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Authors')
         assert group.domain == 'EFGH.cc/2025/Conference'
@@ -156,17 +150,11 @@ class TestSimpleDualAnonymous():
         assert 'enable_reviewers_reassignment' not in group.content
 
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Invited')
-        assert group.readers == [
-            'EFGH.cc/2025/Conference',
-            'EFGH.cc/2025/Conference/Action_Editors/Invited'
-        ]
+        assert group.readers == ['EFGH.cc/2025/Conference']
         assert group.domain == 'EFGH.cc/2025/Conference'
 
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Declined')
-        assert group.readers == [
-            'EFGH.cc/2025/Conference',
-            'EFGH.cc/2025/Conference/Action_Editors/Declined'
-        ]
+        assert group.readers == ['EFGH.cc/2025/Conference']
         assert group.domain == 'EFGH.cc/2025/Conference'
 
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Message')
