@@ -632,19 +632,19 @@ class SubmissionRevisionStage():
                 'value': {
                     'param': {
                         'type': 'author{}',
-                        'minItems': '${{3/id}/content/authors/value/length}',
-                        'maxItems': '${{3/id}/content/authors/value/length}',
+                        'minItems': '${{8/content/noteId/value}/content/authors/value/length}',
+                        'maxItems': '${{8/content/noteId/value}/content/authors/value/length}',
                         'properties': {
                             'fullname': {
                                 'param': {
                                     'type': 'string',
-                                    'enum': ['${...{5/id}/content/authors/value/*/fullname}']
+                                    'enum': ['${...{12/content/noteId/value}/content/authors/value/*/fullname}']
                                 }
                             },
                             'username': {
                                 'param': {
                                     'type': 'string',
-                                    'enum': ['${...{5/id}/content/authors/value/*/username}']
+                                    'enum': ['${...{12/content/noteId/value}/content/authors/value/*/username}']
                                 }
                             },
                             'institutions': {
@@ -653,7 +653,7 @@ class SubmissionRevisionStage():
                                     'properties': {
                                         'name': { 'param': { 'type': 'string' } },
                                         'domain': { 'param': { 'type': 'string' } },
-                                        'country': { 'param': { 'type': 'string' } },
+                                        'country': { 'param': { 'type': 'string' } }
                                     }
                                 }
                             }

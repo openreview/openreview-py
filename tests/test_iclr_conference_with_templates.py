@@ -19,7 +19,7 @@ class TestSimpleDualAnonymous():
         helpers.create_user('reviewer_three@iclr.cc', 'Reviewer', 'ICLRThree')
         helpers.create_user('areachair_one@iclr.cc', 'AC', 'ICLROne')
         helpers.create_user('areachair_two@iclr.cc', 'AC', 'ICLRTwo')
-        helpers.create_user('senioractioneditor_one@iclr.cc', 'SAE', 'ICLROne')
+        helpers.create_user('senioractioneditor_one@iclr.cc', 'SAE', 'ICLROne', institution=['iclr.cc', 'smith.edu'])
         helpers.create_user('senioractioneditor_two@iclr.cc', 'SAE', 'ICLRTwo')
         pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
 
@@ -1182,6 +1182,32 @@ For more details, please check the following links:
             'ICLR.cc/2026/Conference/Submission1/Authors'
         ]
         assert submissions[0].content['pdf']['readers'] == ['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Submission1/Authors']
+        assert submissions[0].content['authors']['value'] == [
+            {
+                'fullname': 'SomeFirstName User',
+                'username': '~SomeFirstName_User1',
+                'institutions': [{
+                    'domain': 'mail.com',
+                    'country': 'US'
+                }]
+            },
+            {
+                'fullname': 'Eddie Amazon',
+                'username': '~Eddie_Amazon1',
+                'institutions': [{
+                    'domain': 'amazon.com',
+                    'country': 'US'
+                }]
+            },
+            {
+                'fullname': 'SAE ICLROne',
+                'username': '~SAE_ICLROne1',
+                'institutions': [{
+                    'domain': 'iclr.cc',
+                    'country': 'US'
+                }]
+            }
+        ]
 
         # create submission revision invitation that allows re-order and institution edition
         venue = openreview.venue.helpers.get_venue(pc_client, 'ICLR.cc/2026/Conference', support_user='openreview.net/Support')
@@ -1197,7 +1223,85 @@ For more details, please check the following links:
         )
         venue.create_submission_revision_stage()
 
-        # To-do: check authors can edit institutions
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Institution_Revision-0-1', count=1)
+
+        invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Institution_Revision', )
+        assert len(invitations) == 10
+
+        inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission1/-/Institution_Revision')
+        assert any(field not in inv.edit['note']['content'] for field in ['title', 'authorids', 'abstract', 'TLDR', 'keywords', 'pdf', 'email_sharing', 'data_release'])
+        assert 'authors' in inv.edit['note']['content'] and inv.edit['note']['content']['authors'] == {
+            "value": {
+                "param": {
+                    "type": "author{}",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "properties": {
+                        "fullname": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "SomeFirstName User",
+                                    "Eddie Amazon",
+                                    "SAE ICLROne"  
+                                ]
+                            }
+                        },
+                        "username": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "~SomeFirstName_User1",
+                                    "~Eddie_Amazon1",
+                                    "~SAE_ICLROne1"
+                                ]
+                            }
+                        },
+                        "institutions": {
+                            "param": {
+                                "type": "object{}",
+                                "properties": {
+                                    'name': { 'param': { 'type': 'string' } },
+                                    'domain': { 'param': { 'type': 'string' } },
+                                    'country': { 'param': { 'type': 'string' } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        # allow author to edit institution
+        author_client=openreview.api.OpenReviewClient(username='senioractioneditor_one@iclr.cc', password=helpers.strong_password)
+
+        author_client.post_note_edit(
+            invitation='ICLR.cc/2026/Conference/Submission1/-/Institution_Revision',
+            signatures=['ICLR.cc/2026/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'authors': {
+                        'value': [
+                            {
+                                'fullname': 'SomeFirstName User',
+                                'username': '~SomeFirstName_User1',
+                                'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': f'Eddie Amazon',
+                                'username': f'~Eddie_Amazon1',
+                                'institutions': [{ 'domain': 'amazon.com', 'country': 'US' }]
+                            },
+                            {
+                                'fullname': 'SAE ICLROne',
+                                'username': '~SAE_ICLROne1',
+                                'institutions': [{ 'domain': 'iclr.cc', 'country': 'US' }, { 'domain': 'smith.edu', 'country': 'US' }]
+                            }
+                        ]
+                    }
+                }
+            )
+        )
 
     def test_paper_committee_groups(self, client, openreview_client, helpers):
 
