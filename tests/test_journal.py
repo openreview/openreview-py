@@ -6160,6 +6160,23 @@ note={Expert Certification}
         sammy_paper14_anon_group = sammy_paper14_anon_groups[0]
         assert sammy_paper14_anon_group.readers == ['everyone', sammy_paper14_anon_group.id]
 
+        ## An AE can not invite a reviewer for a submission they are not the AE of
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
+        joelle_paper13_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper13/Action_Editor_.*', signatory='~Joelle_Pineau1')
+        assert len(joelle_paper13_anon_groups) == 1
+        joelle_paper13_anon_group = joelle_paper13_anon_groups[0]
+
+        with pytest.raises(openreview.OpenReviewException, match=re.escape(f'signatures can only contain the allowed values: {venue_id}, {venue_id}/Editors_In_Chief, {venue_id}/Paper{submission.number}/Action_Editor_')):
+            joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
+                signatures=[joelle_paper13_anon_group.id],
+                head=note_id_14,
+                tail='melisa@mailten.com',
+                weight=1,
+                label='Invitation Sent'
+            ))
+
+        assert not openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~Melisa_Bok1')
+
         ## Invite external reviewer with profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
             signatures=[sammy_paper14_anon_group.id],
