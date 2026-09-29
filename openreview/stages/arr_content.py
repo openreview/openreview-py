@@ -213,7 +213,7 @@ arr_submission_content = {
                 "enum": iso_639_1_languages
             }
         },
-        "description": "Please select the natural languages studied in your submission. This form supports languages in the ISO 639-1 standard.",
+        "description": "Please select the **natural languages** (not programming languages!) studied in your submission. This form supports languages in the ISO 639-1 standard.",
         "order": 12
     },
     "other_languages": {
@@ -223,7 +223,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "If a language studied in your submission is not listed above, list it here.",
+        "description": "If a **natural** language studied in your submission is not listed above, list it here. This does NOT refer to programming languages.",
         "order": 13
     },
     "previous_URL": {
@@ -492,7 +492,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "On behalf of all authors, I confirm that this submission adheres to ARR requirements, and that the responsible NLP checklist accompanying this submission will be completed 48h after submission deadline at the latest (the checklist task is now separate, and it will appear in the author console after making a submission). I further confirm that all authors are aware of the duty to have complete and accurate OpenReview profiles, under penalty of desk rejection. The named service contributor, if any, is aware of their duties and will complete the registration form 48h after submission deadline at the latest.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist",
+        "description": "On behalf of all authors, I confirm that this submission adheres to ARR requirements, and that **the responsible NLP checklist accompanying this submission will be completed 48h after submission deadline at the latest** (the checklist task is now separate, and it will appear in the author console after making a submission). I further confirm that **all authors are aware of the duty to have complete and accurate OpenReview profiles**, under penalty of desk rejection. The named **service contributor, if any, is aware of their duties and will complete the registration form 48h after submission deadline at the latest**. The form becomes available after a submission, so it is possible to fill it as soon as a submission is made, even if the submission file is not yet final.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist",
         "order": 32
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
