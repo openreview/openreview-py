@@ -683,6 +683,10 @@ note={Featured Certification, Reproducibility Certification}
         brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
 
+        ## The retraction invitation is created by the Accepted edit process
+        helpers.await_queue_edit(openreview_client, invitation='TACL/-/Accepted')
+        assert openreview_client.get_invitation('TACL/Paper1/-/Retraction')
+
         ## Authors request the retraction of the accepted paper
         retraction_note = test_client.post_note_edit(invitation='TACL/Paper1/-/Retraction',
                             signatures=['TACL/Paper1/Authors'],
