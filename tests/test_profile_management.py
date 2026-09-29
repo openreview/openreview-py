@@ -1682,6 +1682,100 @@ computation and memory.
         assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': '~Sarah_Racz1'}
 
 
+    def test_import_acl_anthology_notes(self, client, openreview_client, test_client, helpers):
+
+        phuc_client = helpers.create_user('phuc@profile.org', 'Phuc', 'Nguyen')
+
+        ## what openreview.profile.acl_anthology.import_publications posts for an author's paper
+        edit = phuc_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/ACL_Anthology.org/-/Record',
+            signatures = ['~Phuc_Nguyen1'],
+            content = {
+                'json': {
+                    'value': {
+                        'id': '2023.acl-long.48',
+                        'bibkey': 'mccallum-etal-2023-example',
+                        'title': 'An Example Paper',
+                        'abstract': 'We present an example.',
+                        'authors': [
+                            { 'first': 'Andrew', 'last': 'McCallum', 'full': 'Andrew McCallum', 'id': 'andrew-mccallum' },
+                            { 'first': 'Phuc', 'last': 'Nguyen', 'full': 'Phuc Nguyen', 'id': 'phuc-nguyen' }
+                        ],
+                        'editors': [
+                            { 'first': 'Anna', 'last': 'Rogers', 'full': 'Anna Rogers' }
+                        ],
+                        'year': '2023',
+                        'month': 'July',
+                        'venueIds': ['acl'],
+                        'booktitle': 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)',
+                        'publisher': 'Association for Computational Linguistics',
+                        'address': 'Toronto, Canada',
+                        'pages': '352-360',
+                        'doi': '10.18653/v1/2023.acl-long.48',
+                        'url': 'https://aclanthology.org/2023.acl-long.48/',
+                        'pdf': 'https://aclanthology.org/2023.acl-long.48.pdf',
+                        'bibtex': '@inproceedings{mccallum-etal-2023-example,\n    title = "An Example Paper"\n}'
+                    }
+                }
+            },
+            note = openreview.api.Note(
+                external_id = 'acl:2023.acl-long.48',
+                content = {
+                    'title': {
+                        'value': 'An Example Paper'
+                    },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'Andrew McCallum', 'username': ''},
+                            {'fullname': 'Phuc Nguyen', 'username': '~Phuc_Nguyen1'}
+                        ]
+                    },
+                    'venue': {
+                        'value': 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)'
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        note = phuc_client.get_note(edit['note']['id'])
+        assert note.invitations == ['openreview.net/Public_Article/ACL_Anthology.org/-/Record', 'openreview.net/Public_Article/-/Edit']
+        assert note.external_ids == ['acl:2023.acl-long.48']
+        assert note.pdate == openreview.tools.datetime_millis(datetime.datetime(2023, 7, 1))
+        assert note.content['title']['value'] == 'An Example Paper'
+        assert note.content['abstract']['value'] == 'We present an example.'
+        assert note.content['venue']['value'] == 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)'
+        assert note.content['venueid']['value'] == 'openreview.net/Public_Article'
+        assert note.content['html']['value'] == 'https://aclanthology.org/2023.acl-long.48/'
+        assert note.content['pdf']['value'] == 'https://aclanthology.org/2023.acl-long.48.pdf'
+        assert '_bibtex' in note.content
+
+        ## the poster keeps the profile id they claimed, everybody else is linked to their Anthology page
+        assert note.content['authors']['value'] == [
+            {'fullname': 'Andrew McCallum', 'username': 'https://aclanthology.org/people/andrew-mccallum/'},
+            {'fullname': 'Phuc Nguyen', 'username': '~Phuc_Nguyen1'}
+        ]
+
+        ## an author can claim a publication imported from the Anthology
+        mccallum_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+        edit = mccallum_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+                'author_name': { 'value': 'Andrew McCallum' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = phuc_client.get_note(note.id)
+        assert note.content['authors']['value'][0] == {'fullname': 'Andrew McCallum', 'username': '~Andrew_McCallum1'}
+
+
     def test_remove_alternate_name(self, openreview_client, support_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
