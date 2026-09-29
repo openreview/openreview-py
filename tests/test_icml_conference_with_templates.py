@@ -309,7 +309,7 @@ class TestICMLConference():
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Senior_Area_Chairs').members) == 0
         group = openreview_client.get_group('ICML.cc/2025/Conference/Senior_Area_Chairs/Invited')
         assert len(group.members) == 2
-        assert group.readers == ['ICML.cc/2025/Conference', 'ICML.cc/2025/Conference/Senior_Area_Chairs/Invited']
+        assert group.readers == ['ICML.cc/2025/Conference']
 
         messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Senior Area Chair')
         assert len(messages) == 2
