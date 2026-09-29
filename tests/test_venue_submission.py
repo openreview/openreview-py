@@ -158,9 +158,9 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert 'overlap_committee_name' not in recruitment_inv.content
         assert 'reduced_load' not in recruitment_inv.edit['note']['content']
 
-        messages = openreview_client.get_messages(to='reviewer_venue_one@mail.com')
-        assert messages
-        invitation_url = re.search('https://.*\n', messages[1]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
+        messages = openreview_client.get_messages(to='reviewer_venue_one@mail.com', subject='[TV 22] Invitation to serve as Reviewer')
+        assert len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=1)
 
         helpers.await_queue_edit(openreview_client, invitation = 'TestVenue.cc/Reviewers/-/Recruitment', count=2)
@@ -396,14 +396,27 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         bid_edge = reviewer_client.post_edge(Edge(invitation = venue.id + '/Reviewers/-/Bid',
             head = submissions[0].id,
             tail = '~Reviewer_Venue_One1',
-            readers = ['TestVenue.cc', 'TestVenue.cc/Area_Chairs', '~Reviewer_Venue_One1'],
-            writers = ['TestVenue.cc', '~Reviewer_Venue_One1'],
             signatures = ['~Reviewer_Venue_One1'],
             label = 'High'
         ))
 
+        ## bids are visible to the venue, the committee assigned to the paper and the bidder, but never to the authors
+        assert bid_edge.readers == ['TestVenue.cc', f'TestVenue.cc/提交{submissions[0].number}/Area_Chairs', '~Reviewer_Venue_One1']
+        assert bid_edge.nonreaders == [f'TestVenue.cc/提交{submissions[0].number}/Authors']
+        assert bid_edge.writers == ['TestVenue.cc', '~Reviewer_Venue_One1']
+
         bid_edges = openreview_client.get_edges_count(invitation=venue.id + '/Reviewers/-/Bid')
         assert bid_edges == 1
+
+        ## a committee member can not bid on behalf of another user
+        with pytest.raises(openreview.OpenReviewException):
+            reviewer_client.post_edge(Edge(invitation = venue.id + '/Reviewers/-/Bid',
+                head = submissions[0].id,
+                tail = '~PC_Venue_One1',
+                signatures = ['~Reviewer_Venue_One1'],
+                label = 'High'
+            ))
+        assert openreview_client.get_edges_count(invitation=venue.id + '/Reviewers/-/Bid') == 1
 
         ## after bidding stage the submissions should be visible to the assigned committee
         venue.submission_stage.readers = [SubmissionStage.Readers.EVERYONE]
@@ -531,7 +544,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                                                 "regex": ".{0,500}"
                                             }
                                         },
-                                        "readers": ['TestVenue.cc', "TestVenue.cc/提交${4/number}/Area_Chairs"]
+                                        "readers": ['TestVenue.cc', "TestVenue.cc/提交${7/content/noteNumber/value}/Area_Chairs"]
                                     },
                                 }
                             }
@@ -546,6 +559,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         invitation = openreview_client.get_invitation('TestVenue.cc/提交1/-/Official_Review')
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/提交1/Area_Chairs", "${3/signatures}", "TestVenue.cc/提交1/Authors"]
         assert 'private_comment_to_acs' in invitation.edit['note']['content']
+        assert invitation.edit['note']['content']['private_comment_to_acs']['readers'] == ['TestVenue.cc', 'TestVenue.cc/提交1/Area_Chairs']
 
     def test_review_rebuttal_stage(self, venue, openreview_client, helpers):
 
@@ -887,14 +901,15 @@ Please note that responding to this email will direct your reply to testvenue@co
         assert note.content['venue']['value'] == 'TestVenue 提交'
         assert note.content['venueid']['value'] == 'TestVenue.cc/提交'
 
+        withdrawal_restored_text = f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
+        desk_rejection_restored_text = f'The desk-rejected TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
+
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 restored by venue organizers')
-        assert len(messages) == 2
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
-        assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
+        assert sorted(m['content']['text'] for m in messages) == sorted([withdrawal_restored_text, desk_rejection_restored_text])
+        assert all(m['content']['replyTo'] == 'testvenue@contact.com' for m in messages)
 
         messages = openreview_client.get_messages(to='venue_pc@mail.com', subject='[TV 22]: Paper #2 restored by venue organizers')
-        assert len(messages) == 2
-        assert messages[1]['content']['text'] == f'The desk-rejected TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
+        assert sorted(m['content']['text'] for m in messages) == sorted([withdrawal_restored_text, desk_rejection_restored_text])
 
         authors_group = openreview_client.get_group('TestVenue.cc/Authors')
         assert 'TestVenue.cc/提交2/Authors' in authors_group.members

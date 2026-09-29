@@ -2595,6 +2595,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
+        # Reject: previous URL pointing to a submission the submitter is not an author of
+        not_author_client = openreview.api.OpenReviewClient(username='reviewer3@aclrollingreview.com', password=helpers.strong_password)
+        not_author_note = openreview.api.Note(
+            content = _generate_valid_content(102, domains, june_submission)
+        )
+        not_author_note.content['authors']['value'] = ['Reviewer ARRThree']
+        not_author_note.content['authorids']['value'] = ['~Reviewer_ARRThree1']
+        with pytest.raises(openreview.OpenReviewException, match=r'.*does not correspond to an ARR submission you are an author of.*'):
+            not_author_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+                signatures=['~Reviewer_ARRThree1'],
+                note=not_author_note)
+
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', count=101)
 
         submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc', details='replies')
