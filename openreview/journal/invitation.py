@@ -2330,7 +2330,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*', anon=True)
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${{3/head}/number}', anon=True), 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -5955,6 +5959,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             for key, value in self.journal.get_submission_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
+        ## Authors are still anonymous at camera ready time, keep the author fields restricted like the submission
+        author_submission_readers = self.journal.get_author_submission_readers('${7/content/noteNumber/value}')
+        if author_submission_readers:
+            invitation['edit']['note']['content']['authors']['readers'] = author_submission_readers
+            invitation['edit']['note']['content']['authorids']['readers'] = author_submission_readers
+
         existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_camera_ready_revision_id())
         if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
             invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
@@ -6274,6 +6284,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }                        
+
+        ## The Accepted edit releases the authors before this invitation exists, so only keep them
+        ## restricted when the journal never releases them
+        if not self.journal.release_submission_after_acceptance():
+            author_submission_readers = self.journal.get_author_submission_readers('${7/content/noteNumber/value}')
+            if author_submission_readers:
+                invitation['edit']['note']['content']['authors']['readers'] = author_submission_readers
+                invitation['edit']['note']['content']['authorids']['readers'] = author_submission_readers
 
         self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
 

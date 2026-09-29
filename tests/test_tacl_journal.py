@@ -590,7 +590,9 @@ Please note that responding to this email will direct your reply to graham@mails
     def test_camera_ready_revision(self, journal, openreview_client, helpers):
 
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
         graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
+        david_client = OpenReviewClient(username='david@taclone.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
         assert openreview_client.get_invitation("TACL/Paper1/-/Camera_Ready_Revision")
 
@@ -613,6 +615,24 @@ Please note that responding to this email will direct your reply to graham@mails
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        ## the camera ready edit must not expose the anonymous authors
+        edits = openreview_client.get_note_edits(note_id_1, invitation='TACL/Paper1/-/Camera_Ready_Revision')
+        assert len(edits) == 1
+        assert edits[0].note.content['authors']['readers'] == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
+        assert edits[0].note.content['authorids']['readers'] == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
+
+        ## a reviewer can read the edit but not the author fields
+        edits = david_client.get_note_edits(note_id_1, invitation='TACL/Paper1/-/Camera_Ready_Revision')
+        assert len(edits) == 1
+        assert edits[0].note.content['title']['value'] == 'Paper title VERSION 2'
+        assert 'authors' not in edits[0].note.content
+        assert 'authorids' not in edits[0].note.content
+
+        ## the assigned action editor can read them
+        edits = graham_client.get_note_edits(note_id_1, invitation='TACL/Paper1/-/Camera_Ready_Revision')
+        assert len(edits) == 1
+        assert edits[0].note.content['authorids']['value'] == ['~Melisa_Andersen1', '~SomeFirstName_User1']
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -677,11 +697,55 @@ note={Featured Certification, Reproducibility Certification}
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
+        ## the EICs revise the accepted paper, the authors are never released so they must stay hidden
+        helpers.await_queue_edit(openreview_client, invitation='TACL/-/Accepted')
+        assert openreview_client.get_invitation('TACL/Paper1/-/EIC_Revision')
+        eic_revision_note = brian_client.post_note_edit(invitation='TACL/Paper1/-/EIC_Revision',
+            signatures=['TACL/Editors_In_Chief'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title VERSION 2' },
+                    'authors': { 'value': ['Melisa Andersen', 'SomeFirstName User'] },
+                    'authorids': { 'value': ['~Melisa_Andersen1', '~SomeFirstName_User1'] },
+                    'abstract': { 'value': 'Paper abstract UPDATED' },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=eic_revision_note['id'])
+
+        note = openreview_client.get_note(note_id_1)
+        assert note.content['abstract']['value'] == 'Paper abstract UPDATED'
+        assert note.content['authorids']['readers'] == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
+        assert note.content['authors']['readers'] == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
+
+        edits = openreview_client.get_note_edits(note_id_1, invitation='TACL/Paper1/-/EIC_Revision')
+        assert len(edits) == 1
+        assert edits[0].readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert edits[0].note.content['authors']['readers'] == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
+        assert edits[0].note.content['authorids']['readers'] == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
+
+        ## a reviewer can read the edit but not the author fields
+        edits = david_client.get_note_edits(note_id_1, invitation='TACL/Paper1/-/EIC_Revision')
+        assert len(edits) == 1
+        assert edits[0].note.content['abstract']['value'] == 'Paper abstract UPDATED'
+        assert 'authors' not in edits[0].note.content
+        assert 'authorids' not in edits[0].note.content
+
     def test_retraction(self, journal, openreview_client, helpers):
 
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
+
+        ## The retraction invitation is created by the Accepted edit process
+        helpers.await_queue_edit(openreview_client, invitation='TACL/-/Accepted')
+        assert openreview_client.get_invitation('TACL/Paper1/-/Retraction')
 
         ## Authors request the retraction of the accepted paper
         retraction_note = test_client.post_note_edit(invitation='TACL/Paper1/-/Retraction',
@@ -718,7 +782,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note.nonreaders == []
 
         note = openreview_client.get_note(note_id_1)
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted', 'TACL/-/Retracted']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted', 'TACL/Paper1/-/EIC_Revision', 'TACL/-/Retracted']
         assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.content['venue']['value'] == 'Retracted by Authors'
         assert note.content['venueid']['value'] == 'TACL/Retracted_Acceptance'

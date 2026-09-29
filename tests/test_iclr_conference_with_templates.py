@@ -106,17 +106,11 @@ class TestSimpleDualAnonymous():
         assert group.domain == 'ICLR.cc/2026/Conference'
 
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Invited')
-        assert group.readers == [
-            'ICLR.cc/2026/Conference',
-            'ICLR.cc/2026/Conference/Senior_Area_Chairs/Invited'
-        ]
+        assert group.readers == ['ICLR.cc/2026/Conference']
         assert group.domain == 'ICLR.cc/2026/Conference'
 
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Declined')
-        assert group.readers == [
-            'ICLR.cc/2026/Conference',
-            'ICLR.cc/2026/Conference/Senior_Area_Chairs/Declined'
-        ]
+        assert group.readers == ['ICLR.cc/2026/Conference']
         assert group.domain == 'ICLR.cc/2026/Conference'
 
         assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Message')
@@ -153,16 +147,10 @@ class TestSimpleDualAnonymous():
         ]
 
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Invited')
-        assert group.readers == [
-            'ICLR.cc/2026/Conference',
-            'ICLR.cc/2026/Conference/Senior_Area_Chairs/Invited'
-        ]
+        assert group.readers == ['ICLR.cc/2026/Conference']
 
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Declined')
-        assert group.readers == [
-            'ICLR.cc/2026/Conference',
-            'ICLR.cc/2026/Conference/Senior_Area_Chairs/Declined'
-        ]
+        assert group.readers == ['ICLR.cc/2026/Conference']
 
         domain_content = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference').content
         assert domain_content['senior_area_chair_roles']['value'] == ['Senior_Area_Chairs']
