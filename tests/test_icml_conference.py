@@ -3661,6 +3661,35 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
+
+        # submissions are private, so ethics reviews cannot be released to the public
+        assert 'Everyone (submissions are public)' not in request_form.content['submission_readers']
+        assert 'Make accepted submissions public and hide rejected submissions' not in request_form.content['submission_readers']
+
+        public_stage_note = openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'Yes, ethics reviews should be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers',
+                'compute_conflicts': 'No'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Ethics reviews cannot be released to the public since all papers are private'):
+            pc_client.post_note(public_stage_note)
+
+        # the stage note was rejected by the preprocess, so no ethics review invitation was built
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Ethics_Review') is None
+
         stage_note = pc_client.post_note(openreview.Note(
             content={
                 'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
