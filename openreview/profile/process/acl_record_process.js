@@ -11,6 +11,11 @@ async function process(client, edit, invitation) {
   if (existingAuthors) {
     note.content.authors.value = note.content.authors.value.map((author, index) => {
       const existing = existingAuthors[index];
+      if (existing?.username?.startsWith('~')) {
+        // A profile id is only valid next to a name that profile answers to, and the
+        // Anthology does not always spell a name the way its owner's profile does.
+        return { fullname: existing.fullname, username: existing.username };
+      }
       if (existing?.username) {
         return { ...author, username: existing.username };
       }
