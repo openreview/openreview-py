@@ -233,10 +233,10 @@ class TestARRCommitmentWorkflow():
         arr_submission = arr_submissions[0]
         arr_submission_2 = arr_submissions[1]
 
-        def post_commitment(paper_link, paper_type='Long'):
-            return author_client.post_note_edit(
+        def post_commitment(paper_link, paper_type='Long', client=author_client, signature='~ARRAuthor_One1'):
+            return client.post_note_edit(
                 invitation=f'{venue_id}/-/Submission',
-                signatures=['~ARRAuthor_One1'],
+                signatures=[signature],
                 note=Note(
                     license='CC BY 4.0',
                     content={
@@ -271,6 +271,14 @@ class TestARRCommitmentWorkflow():
         # invalid: paper type does not match the ARR submission paper type
         with pytest.raises(openreview.OpenReviewException, match=r'.*does not match the paper type of the ARR submission.*'):
             post_commitment(f'https://openreview.net/forum?id={arr_submission.id}', paper_type='Short')
+
+        # invalid: the committing user is not an author of the ARR submission
+        helpers.create_user('not_author@arrtest.cc', 'NotAn', 'ARRAuthor')
+        not_author_client = OpenReviewClient(username='not_author@arrtest.cc', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match=r'.*does not correspond to an ARR submission you are an author of.*'):
+            post_commitment(f'https://openreview.net/forum?id={arr_submission.id}', client=not_author_client, signature='~NotAn_ARRAuthor1')
+        with pytest.raises(openreview.OpenReviewException, match=r'.*does not correspond to an ARR submission you are an author of.*'):
+            post_commitment(arr_submission_2.id, client=not_author_client, signature='~NotAn_ARRAuthor1')
 
         # valid: full URL
         edit = post_commitment(f'https://openreview.net/forum?id={arr_submission.id}')
