@@ -1379,6 +1379,102 @@ For more details, please check the following links:
             }
         }
 
+        eddie_client = openreview.api.OpenReviewClient(username='eddie@amazon.com', password=helpers.strong_password)
+        profile = eddie_client.get_profile('~Eddie_Amazon1')
+        # add another name to the profile and set as preferred
+        profile.content['names'].append({
+            'first': 'Eddie',
+            'middle': '',
+            'last': 'New',
+            'preferred': True
+        })
+        eddie_client.post_profile(profile)
+
+        ## Request to remove the alternate name
+        request_note = eddie_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~Eddie_Amazon1'],
+            note=openreview.api.Note(
+                content={
+                    'name': { 'value': 'Eddie Amazon' },
+                    'usernames': { 'value': ['~Eddie_Amazon1'] },
+                    'comment': { 'value': 'typo in my name' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, request_note['id'])
+
+        ## The name appears in a publication, so the request is sent for manual review
+        messages = openreview_client.get_messages(to='eddie@amazon.com', subject='Profile name removal request has been received')
+        assert len(messages) == 1
+
+        ## Support accepts the request
+        decision_note = openreview_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            signatures=['openreview.net/Support'],
+            note=openreview.api.Note(
+                id=request_note['note']['id'],
+                content={
+                    'status': { 'value': 'Accepted' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, decision_note['id'])
+
+        note = openreview_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+        ## The username (and display name) is replaced with the preferred name in the unified author object
+        note = openreview_client.get_note(submission.id)
+        assert note.content['authors']['value'][1]['username'] == '~Eddie_New1'
+        assert note.content['authors']['value'][1]['fullname'] == 'Eddie New'
+
+        # check Institution_Revision invitation has been updated
+        inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission1/-/Institution_Revision')
+        assert 'authors' in inv.edit['note']['content'] and inv.edit['note']['content']['authors'] == {
+            "value": {
+                "param": {
+                    "type": "author{}",
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "properties": {
+                        "fullname": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "SomeFirstName User",
+                                    "Eddie New",
+                                    "SAE ICLROne",
+                                    "Eddie Umass"
+                                ]
+                            }
+                        },
+                        "username": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "~SomeFirstName_User1",
+                                    "~Eddie_New1",
+                                    "~SAE_ICLROne1",
+                                    "~Eddie_Umass1"
+                                ]
+                            }
+                        },
+                        "institutions": {
+                            "param": {
+                                "type": "object{}",
+                                "properties": {
+                                    'name': { 'param': { 'type': 'string' } },
+                                    'domain': { 'param': { 'type': 'string' } },
+                                    'country': { 'param': { 'type': 'string' } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     def test_paper_committee_groups(self, client, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -3096,7 +3192,7 @@ note={under review}
         valid_bibtex = '''@inproceedings{
 user'''+str(year)+'''paper,
 title={Paper title 1 license revision},
-author={SomeFirstName User and Eddie Amazon and SAE ICLROne and Eddie Umass},
+author={SomeFirstName User and Eddie New and SAE ICLROne and Eddie Umass},
 booktitle={International Conference on Learning Representations},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
