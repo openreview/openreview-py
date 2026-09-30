@@ -1669,6 +1669,9 @@ note={under review}
             }
         )
 
+        domain = openreview_client.get_group('ICLR.cc/2026/Conference')
+        assert domain.content['withdrawn_submission_reveal_authors']['value'] == False
+
         reveal_edit = pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Withdrawn_Submission/Reveal_Authors',
             content={
@@ -1680,6 +1683,10 @@ note={under review}
         withdrawn_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Withdrawn_Submission')
         assert withdrawn_invitation.edit['note']['readers'] == ['everyone']
         assert withdrawn_invitation.edit['note']['content']['authors']['readers'] == { 'param': { 'const': { 'delete': True } } }
+
+        # the Reveal_Authors invitation also updates the flag stored in the domain
+        domain = openreview_client.get_group('ICLR.cc/2026/Conference')
+        assert domain.content['withdrawn_submission_reveal_authors']['value'] == True
 
         withdraw_note = test_client.post_note_edit(invitation='ICLR.cc/2026/Conference/Submission10/-/Withdrawal',
                                     signatures=['ICLR.cc/2026/Conference/Submission10/Authors'],
@@ -1700,6 +1707,19 @@ note={under review}
         assert note.readers == ['everyone']
         assert 'readers' not in note.content['authors']
 
+        # the bibtex is deanonymized when the author identities are revealed
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@misc{
+user'''+str(year)+'''paper,
+title={Paper title 10},
+author={SomeFirstName User and Eddie Umass and SAE ICLROne},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + note.forum + '''}
+}'''
+        assert note.content['_bibtex']['value'] == valid_bibtex
+
         # reverse the withdrawal
         withdrawal_reversion_note = pc_client.post_note_edit(invitation='ICLR.cc/2026/Conference/Submission10/-/Withdrawal_Reversion',
                                     signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
@@ -1719,6 +1739,20 @@ note={under review}
         # author identities are hidden again after the reversion
         assert 'readers' in note.content['authors'] and note.content['authors']['readers'] == ['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Submission10/Authors']
 
+        # the bibtex is anonymous again after the reversion
+        valid_bibtex = '''@inproceedings{
+anonymous'''+str(year)+'''paper,
+title={Paper title 10},
+author={Anonymous},
+booktitle={Submitted to International Conference on Learning Representations},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + note.forum + '''},
+note={under review}
+}'''
+        assert note.content['_bibtex']['value'] == valid_bibtex
+
     def test_desk_rejection_and_custom_stage(self, client, openreview_client, helpers, test_client):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
@@ -1732,6 +1766,9 @@ note={under review}
             }
         )
 
+        domain = openreview_client.get_group('ICLR.cc/2026/Conference')
+        assert domain.content['desk_rejected_submission_reveal_authors']['value'] == False
+
         reveal_edit = pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Desk_Rejected_Submission/Reveal_Authors',
             content={
@@ -1743,6 +1780,10 @@ note={under review}
         desk_rejected_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Desk_Rejected_Submission')
         assert desk_rejected_invitation.edit['note']['readers'] == ['everyone']
         assert desk_rejected_invitation.edit['note']['content']['authors']['readers'] == { 'param': { 'const': { 'delete': True } } }
+
+        # the Reveal_Authors invitation also updates the flag stored in the domain
+        domain = openreview_client.get_group('ICLR.cc/2026/Conference')
+        assert domain.content['desk_rejected_submission_reveal_authors']['value'] == True
 
         # desk-reject a paper
         desk_reject_note = pc_client.post_note_edit(invitation='ICLR.cc/2026/Conference/Submission10/-/Desk_Rejection',
@@ -1763,6 +1804,19 @@ note={under review}
         assert note.content['venue']['value'] == 'ICLR 2026 Conference Desk Rejected Submission'
         assert note.readers == ['everyone']
         assert 'readers' not in note.content['authors']
+
+        # the bibtex is deanonymized when the author identities are revealed
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@misc{
+user'''+str(year)+'''paper,
+title={Paper title 10},
+author={SomeFirstName User and Eddie Umass and SAE ICLROne},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + note.forum + '''}
+}'''
+        assert note.content['_bibtex']['value'] == valid_bibtex
 
         # add a custom stage for desk-rejected submissions
         venue = openreview.venue.helpers.get_venue(pc_client, 'ICLR.cc/2026/Conference', support_user='openreview.net/Support')
@@ -1876,6 +1930,20 @@ note={under review}
         assert note.readers == ['everyone']
         # author identities are hidden again after the reversion
         assert 'readers' in note.content['authors'] and note.content['authors']['readers'] == ['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Submission10/Authors']
+
+        # the bibtex is anonymous again after the reversion
+        valid_bibtex = '''@inproceedings{
+anonymous'''+str(year)+'''paper,
+title={Paper title 10},
+author={Anonymous},
+booktitle={Submitted to International Conference on Learning Representations},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + note.forum + '''},
+note={under review}
+}'''
+        assert note.content['_bibtex']['value'] == valid_bibtex
 
         # the custom stage invitation is expired after the reversion
         invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission10/-/Desk_Rejection_Challenge')
