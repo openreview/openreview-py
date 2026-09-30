@@ -90,7 +90,6 @@ def process(client, invitation):
             client.delete_edges(
                 invitation=edge_inv,
                 id=existing_edge['id'],
-                wait_to_finish=True,
                 soft_delete=True
             )
         if submission_id:
@@ -135,7 +134,8 @@ def process(client, invitation):
     area_chairs_id = domain.content['area_chairs_id']['value']
     #area_chairs_group = client.get_group(area_chairs_id).members
     senior_area_chairs_id = domain.content['senior_area_chairs_id']['value']
-    tracks_field_name = 'research_area'
+    submission_tracks_field_name = 'research_area'
+    registration_tracks_field_name = 'indicate_your_research_areas'
 
     tracks_inv_name = 'Research_Area'
     registration_name = 'Registration'
@@ -198,7 +198,7 @@ def process(client, invitation):
             if note.signatures[0] not in name_to_id:
                 continue
             note_signature_id = name_to_id[note.signatures[0]]
-            for track in note.content[tracks_field_name]['value']:
+            for track in note.content[registration_tracks_field_name]['value']:
                 track_to_ids[role_id][track].append(note_signature_id)
 
         # Build research area invitation
@@ -261,7 +261,6 @@ def process(client, invitation):
         client.delete_edges(
             invitation=role_cmp_inv,
             soft_delete=True,
-            wait_to_finish=True
         )
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
     
@@ -434,7 +433,7 @@ def process(client, invitation):
         track_edges_to_post = []
 
         for submission in submissions:
-            submission_track = submission.content[tracks_field_name]['value']
+            submission_track = submission.content[submission_tracks_field_name]['value']
             members = track_to_members[submission_track]
 
             for member in members:
@@ -456,7 +455,6 @@ def process(client, invitation):
 
         client.delete_edges(
             invitation=f"{role_id}/-/{tracks_inv_name}",
-            wait_to_finish=True
         )
         openreview.tools.post_bulk_edges(client=client, edges=track_edges_to_post)
 
@@ -469,7 +467,6 @@ def process(client, invitation):
                 invitation=status_inv,
                 tail=edge_info['tail'],
                 head=submission.id,
-                wait_to_finish=True,
                 soft_delete=True
             )
             client.post_edge(
@@ -501,5 +498,5 @@ def process(client, invitation):
                     signatures=[venue_id]
                 )
             )
-    client.delete_edges(invitation=seniority_inv, wait_to_finish=True, soft_delete=True)
+    client.delete_edges(invitation=seniority_inv, soft_delete=True)
     openreview.tools.post_bulk_edges(client, seniority_edges)

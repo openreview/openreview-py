@@ -22,7 +22,7 @@ class InvitationBuilder(object):
     REVIEWER_LICENSE_NAME = 'License_Agreement'
     METAREVIEWER_LICENSE_NAME = 'Metareview_License_Agreement'
     RECOGNITION_NAME = 'Recognition_Request'
-    SUBMITTED_AUTHORS_NAME = 'Submitted_Author_Form'
+    SUBMITTED_CONTRIBUTORS_NAME = 'Submitted_Contributor_Form'
 
     def __init__(self, venue, update_wait_time=5000):
         self.client = venue.client
@@ -212,7 +212,7 @@ class InvitationBuilder(object):
     def set_post_submission_invitation(self, source=None):
         if source is None:
             source = {
-                'venueid': self.venue.get_submission_venue_id(),
+                'venueid': [self.venue.get_submission_venue_id()],
                 'content':{
                     'preprint': 'no'
                 }
@@ -231,7 +231,7 @@ class InvitationBuilder(object):
         submission_id = submission_stage.get_submission_id(self.venue)
         invitation_id = self.venue.get_preprint_post_submission_id()
         source = {
-            'venueid': self.venue.get_submission_venue_id(),
+            'venueid': [self.venue.get_submission_venue_id()],
             'content': {
                 'preprint': 'yes'
             }
@@ -395,7 +395,7 @@ class InvitationBuilder(object):
 
         revision_stage = openreview.stages.SubmissionRevisionStage(
             name='Submission_Metadata_Revision',
-            source={'venueid': self.venue.get_submission_venue_id()},
+            source={'venueid': [self.venue.get_submission_venue_id()]},
             start_date=arr_stage.start_date,
             due_date=arr_stage.due_date,
             exp_date=arr_stage.exp_date,
@@ -465,6 +465,7 @@ class InvitationBuilder(object):
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
                     'cdate': revision_cdate,
                     'process': '''def process(client, edit, invitation):
+    from openreview.arr.helpers import update_contributors
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['revision_process_script']['value']
     funcs = {
@@ -473,6 +474,7 @@ class InvitationBuilder(object):
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
+    update_contributors(client, client.get_note(edit.note.id))
 ''',
                     'edit': {
                         'ddate': {

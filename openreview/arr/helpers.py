@@ -38,8 +38,8 @@ from openreview.stages.arr_content import (
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
-    arr_submitted_author_forum,
-    arr_submitted_author_content,
+    arr_submitted_contributor_forum,
+    arr_submitted_contributor_content,
     arr_delay_notification_content,
     arr_emergency_declaration_content,
     arr_great_or_irresponsible_ac_content,
@@ -65,13 +65,13 @@ class ARRWorkflow(object):
             "required": False
         },
         "reviewer_nomination_start_date": {
-            "description": "When can authors start submitting forms for being a reviewer?",
+            "description": "When can designated service contributors start submitting registration forms?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 3,
             "required": False
         },
         "reviewer_nomination_end_date": {
-            "description": "What should be the displayed due date for the submitted author form?",
+            "description": "What should be the displayed due date for the submitted contributor form?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 4,
             "required": False
@@ -664,7 +664,8 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -711,7 +712,8 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -758,7 +760,8 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -872,20 +875,21 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
-                group_id=venue.get_authors_id(),
+                group_id=venue.get_contributors_id(),
                 required_fields=['reviewer_nomination_start_date', 'reviewer_nomination_end_date'],
-                super_invitation_id=f"{venue.get_authors_id()}/-/{self.invitation_builder.SUBMITTED_AUTHORS_NAME}",
+                super_invitation_id=f"{venue.get_contributors_id()}/-/{self.invitation_builder.SUBMITTED_CONTRIBUTORS_NAME}",
                 stage_arguments={   
-                    'committee_id': venue.get_authors_id(),
-                    'name': self.invitation_builder.SUBMITTED_AUTHORS_NAME,
-                    'instructions': arr_submitted_author_forum['instructions'],
-                    'title': arr_submitted_author_forum['title'],
-                    'additional_fields': arr_submitted_author_content,
+                    'committee_id': venue.get_contributors_id(),
+                    'name': self.invitation_builder.SUBMITTED_CONTRIBUTORS_NAME,
+                    'instructions': arr_submitted_contributor_forum['instructions'],
+                    'title': arr_submitted_contributor_forum['title'],
+                    'additional_fields': arr_submitted_contributor_content,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
                 due_date=self.configuration_note.content.get('reviewer_nomination_end_date'),
-                exp_date=self.configuration_note.content.get('reviewer_nomination_end_date')
+                exp_date=self.configuration_note.content.get('reviewer_nomination_end_date'),
+                preprocess='process/profile_link_preprocess.py'
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
@@ -1453,6 +1457,11 @@ class ARRStage(object):
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                     Participants.AREA_CHAIRS_ASSIGNED,
                     Participants.SIGNATURE
+                ],
+                'paper_matching_feedback': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.SIGNATURE
                 ]
             }
         },
@@ -1853,6 +1862,36 @@ class ARRStage(object):
             datetime.utcnow() + timedelta(seconds=ARRStage.UPDATE_WAIT_TIME)
         ).strftime('%Y/%m/%d %H:%M')
 
+def update_contributors(client, submission):
+    """Synchronize a submission's nominated contributors with the cycle role."""
+    domain = client.get_group(submission.domain)
+    venue_id = domain.id
+    contributors_id = domain.content['contributors_id']['value']
+    submission_name = domain.content['submission_name']['value']
+    group_id = f'{venue_id}/{submission_name}{submission.number}/Contributors'
+    previous_group = openreview.tools.get_group(client, group_id)
+    previous_members = set(previous_group.members) if previous_group else set()
+    members = list(dict.fromkeys(submission.content.get('service_contributor', {}).get('value', [])))
+    client.post_group_edit(
+        invitation=domain.content['meta_invitation_id']['value'],
+        readers=[venue_id],
+        writers=[venue_id],
+        signatures=[venue_id],
+        group=openreview.api.Group(
+            id=group_id,
+            readers=[venue_id, group_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            signatories=[venue_id, group_id],
+            members=members
+        )
+    )
+    client.add_members_to_group(contributors_id, group_id)
+    # Replacing members only flushes the new members' caches in post_group_edit.
+    for member in previous_members - set(members):
+        client.flush_members_cache(member)
+
+
 def setup_arr_invitations(arr_invitation_builder):
     arr_invitation_builder.set_arr_configuration_invitation()
 
@@ -1881,6 +1920,7 @@ def flag_submission(
             'length': 'Yes',
             'anonymity': 'Yes',
             'responsible_checklist': 'Yes',
+            'overall_level': 'Yes',
             'limitations': 'Yes'
         },
         'Meta_Review': {

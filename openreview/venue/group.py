@@ -95,12 +95,16 @@ class GroupBuilder(object):
         return readers
 
     def get_reviewer_paper_group_writers(self, number):
-        readers=[self.venue.id]
-        if self.venue.use_senior_area_chairs:
-            readers.append(self.venue.get_senior_area_chairs_id(number))
-        if self.venue.use_area_chairs:
-            readers.append(self.venue.get_area_chairs_id(number))
-        return readers
+        # The API copies the writers of the paper's Reviewers group to its anonymous id groups, and a writer of a group
+        # can read it, members included. So the chairs are writers only when they are allowed to see the reviewer
+        # identities, otherwise they would learn who is behind each anonymous id.
+        identity_readers = self.venue.reviewer_identity_readers or []
+        writers=[self.venue.id]
+        if self.venue.use_senior_area_chairs and (openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS in identity_readers or openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers):
+            writers.append(self.venue.get_senior_area_chairs_id(number))
+        if self.venue.use_area_chairs and (openreview.stages.IdentityReaders.AREA_CHAIRS in identity_readers or openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED in identity_readers):
+            writers.append(self.venue.get_area_chairs_id(number))
+        return writers
 
 
     def get_area_chair_paper_group_readers(self, number, name=None):
@@ -769,17 +773,19 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                             members=[]
                             ))
 
+        ## the invited and declined lists contain raw emails, so the invitees must not be able to read
+        ## these groups nor sign as them
         committee_declined_group = tools.get_group(self.client, committee_declined_id)
         if not committee_declined_group:
             committee_declined_group=self.post_group(Group(id=committee_declined_id,
-                            readers=[venue_id, committee_declined_id],
+                            readers=[venue_id],
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
-                            signatories=[venue_id, committee_declined_id],
+                            signatories=[venue_id],
                             members=[]
                             ))
 
-        invited_group_readers = [venue_id, committee_invited_id]
+        invited_group_readers = [venue_id]
         if committee_name == self.venue.ethics_reviewers_name:
             invited_group_readers.append(self.venue.get_ethics_chairs_id())
         committee_invited_group = tools.get_group(self.client, committee_invited_id)
@@ -788,10 +794,10 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                             readers=invited_group_readers,
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
-                            signatories=[venue_id, committee_invited_id],
+                            signatories=[venue_id],
                             members=[]
                             ))
-           
+
 
     def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False, is_ethics_reviewer=False):
 

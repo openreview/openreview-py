@@ -1265,12 +1265,12 @@ class EditInvitationsBuilder(object):
                         }
                     },
                     'accept_decision_options': {
-                        'description': 'List all decision options that signify acceptance. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive"',
+                        'description': 'Select the decision options that signify acceptance. Must be a subset of the decision options listed above.',
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'regex': r'^[\w ()]+$',
-                                'mismatchError': 'can only contain letters, numbers, spaces, underscores and parentheses'
+                                'enum': ['${3/decision_options/value}'],
+                                'input': 'select'
                             }
                         }
                     }
@@ -1698,49 +1698,6 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_release_source_invitation(self, super_invitation_id, due_date=None):
-
-        venue_id = self.venue_id
-        invitation_id = super_invitation_id + '/Which_Submissions'
-
-        invitation = Invitation(
-            id = invitation_id,
-            invitees = [venue_id],
-            signatures = [venue_id],
-            readers = [venue_id],
-            writers = [venue_id],
-            edit = {
-                'signatures': [venue_id],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'content' :{
-                    'source_submissions': {
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'enum': ['accepted_submissions', 'all_submissions']
-                            }
-                        }
-                    }
-                },
-                'invitation': {
-                    'id': super_invitation_id,
-                    'signatures': [venue_id],
-                    'content': {
-                        'source': {
-                            'value': '${4/content/source_submissions/value}'
-                        }
-                    }
-                }
-            }
-        )
-
-        if due_date:
-            invitation.duedate = due_date
-
-        self.save_invitation(invitation, replacement=False)
-        return invitation
-    
     def set_edit_committee_recruitment_invitation(self, super_invitation_id, process_file=None, due_date=None):
 
         venue_id = self.venue_id
