@@ -5336,14 +5336,20 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
         }
 
+        # Without a submission number the readers are the venue-level committee
+        # groups, so use the top-level roles: the per-submission role names can
+        # merge several top-level roles and have no venue-level group.
+        area_chair_roles = venue.submission_area_chair_roles if number else venue.area_chair_roles
+        reviewer_roles = venue.submission_reviewer_roles if number else venue.reviewer_roles
+
         readers = [venue_id]
         if venue.use_senior_area_chairs:
             readers.append(venue.get_senior_area_chairs_id(number))
         if venue.use_area_chairs:
-            for ac_name in venue.submission_area_chair_roles:
+            for ac_name in area_chair_roles:
                 readers.append(venue.get_area_chairs_id(number, name=ac_name))
         if venue.use_reviewers:
-            for reviewers_name in venue.submission_reviewer_roles:
+            for reviewers_name in reviewer_roles:
                 readers.append(venue.get_reviewers_id(number, name=reviewers_name))
         readers.append(venue.get_authors_id('${{2/id}/number}'))
 
