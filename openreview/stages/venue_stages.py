@@ -468,18 +468,21 @@ class BidStage(object):
         readers.append(self.committee_id)
         return readers
 
-    def get_readers(self, conference):
+    def get_readers(self, conference, number=None):
         values_copied = [conference.get_id()]
         if self.committee_id == conference.get_reviewers_id():
             if conference.use_senior_area_chairs:
-                values_copied.append(conference.get_senior_area_chairs_id())
+                values_copied.append(conference.get_senior_area_chairs_id(number))
             if conference.use_area_chairs:
-                values_copied.append(conference.get_area_chairs_id())
+                values_copied.append(conference.get_area_chairs_id(number))
         if self.committee_id == conference.get_area_chairs_id():
             if conference.use_senior_area_chairs:
-                values_copied.append(conference.get_senior_area_chairs_id())
+                values_copied.append(conference.get_senior_area_chairs_id(number))
         values_copied.append('{signatures}')
         return values_copied
+
+    def get_nonreaders(self, conference, number=None):
+        return [conference.get_authors_id(number)]
 
     def get_bid_options(self):
         options = ['Very High', 'High', 'Neutral', 'Low', 'Very Low']

@@ -936,16 +936,13 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        messages = openreview_client.get_messages(to='reviewer_one_tilde_v2@mail.com')
-        assert messages and len(messages) == 2
+        messages = openreview_client.get_messages(to='reviewer_one_tilde_v2@mail.com', subject="[TestVenue@OR'2030V2] Invitation to serve as Reviewer")
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Dear Reviewer OneTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('Dear Reviewer OneTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
-
-        messages = openreview_client.get_messages(to='reviewer_two_tilde_v2@mail.com')
-        assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('Dear Reviewer TwoTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
+        messages = openreview_client.get_messages(to='reviewer_two_tilde_v2@mail.com', subject="[TestVenue@OR'2030V2] Invitation to serve as Reviewer")
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Dear Reviewer TwoTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)

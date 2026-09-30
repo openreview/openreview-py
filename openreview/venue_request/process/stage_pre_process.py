@@ -20,6 +20,10 @@ def process(client, note, invitation):
         if 'Everyone (submissions are public)' not in forum_note.content.get('submission_readers', '') and 'Make accepted submissions public and hide rejected submissions' not in forum_note.content.get('submission_readers', ''):
             raise openreview.OpenReviewException('Decisions cannot be released to the public since all papers are private')
 
+    if 'Yes' in note.content.get('make_ethics_reviews_public', ''):
+        if 'Everyone (submissions are public)' not in forum_note.content.get('submission_readers', '') and 'Make accepted submissions public and hide rejected submissions' not in forum_note.content.get('submission_readers', ''):
+            raise openreview.OpenReviewException('Ethics reviews cannot be released to the public since all papers are private')
+
     if 'review_expiration_date' in note.content and 'review_deadline' in note.content:
         review_due_date = note.content.get('review_deadline', '').strip()
         review_exp_date = note.content.get('review_expiration_date', '').strip()
