@@ -157,6 +157,40 @@ class TestMergedCommitteeRoles():
             if role not in submission_area_chair_roles:
                 assert assigned_value(role) is None, f'Unexpected per-submission reader option for merged area chair role {role}'
 
+        # The submission change /Readers edit invitations should offer an "All X"
+        # option for every top-level role. Before_Reviewing also offers "Assigned X"
+        # options, but only for the shared per-submission groups.
+        submission_group_id = 'MRG.cc/2025/Conference/Submission${{2/id}/number}'
+
+        # Before bidding, submissions should be readable by every top-level reviewer/area chair role so that all of them can bid -- not by the
+        # merged per-submission names, which have no venue-level group.
+        before_bidding_invitation = openreview_client.get_invitation('MRG.cc/2025/Conference/-/Submission_Change_Before_Bidding')
+        assert before_bidding_invitation.edit['note']['readers'] == [
+            'MRG.cc/2025/Conference',
+            'MRG.cc/2025/Conference/Area_Chairs',
+            'MRG.cc/2025/Conference/Technical_Area_Chairs',
+            'MRG.cc/2025/Conference/Expert_Reviewers',
+            'MRG.cc/2025/Conference/Technical_Reviewers',
+            f'{submission_group_id}/Authors'
+        ]
+
+        readers_invitation =openreview_client.get_invitation('MRG.cc/2025/Conference/-/Submission_Change_Before_Bidding/Readers')
+        values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+        for role in reviewer_roles + area_chair_roles:
+            assert f'MRG.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option'
+        assert not any(value.startswith(submission_group_id) and not value.endswith('/Authors') for value in values), 'Unexpected "Assigned" reader option before bidding'
+
+        readers_invitation = openreview_client.get_invitation('MRG.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Readers')
+        values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+        for role in reviewer_roles + area_chair_roles:
+            assert f'MRG.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option'
+        for role in submission_reviewer_roles + submission_area_chair_roles:
+            assert f'{submission_group_id}/{role}' in values, f'Missing "Assigned {role}" reader option'
+        for role in reviewer_roles + area_chair_roles:
+            if role not in submission_reviewer_roles + submission_area_chair_roles:
+                assert f'{submission_group_id}/{role}' not in values, f'Unexpected "Assigned {role}" reader option for merged role'
+        assert not any(value.endswith('/Submitted') for value in values), 'Unexpected "Submitted" reader option'
+
         # Populate committee groups
         openreview_client.post_group_edit(
             invitation='MRG.cc/2025/Conference/Expert_Reviewers/-/Members',
