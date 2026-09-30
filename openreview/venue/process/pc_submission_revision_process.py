@@ -73,16 +73,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     )
             elif 'authors' in invitation_content:
                 authors_value = invitation_content.get('authors', {}).get('value', {})
-                if '${{4/id}/content/authors/value}' in authors_value:
-                    print('post invitation edit: ', venue_invitation.id)
-                    client.post_invitation_edit(invitations=venue_invitation.id,
-                        content={
-                            'noteId': { 'value': submission.id },
-                            'noteNumber': { 'value': submission.number }
-                        },
-                        invitation=openreview.api.Invitation()
-                    )
-                elif '${{8/content/noteId/value}/content/authors/value/length}' == authors_value.get('param', {}).get('minItems', ''):
+                should_update = '${{4/id}/content/authors/value}' in authors_value or '${{8/content/noteId/value}/content/authors/value/length}' == authors_value.get('param', {}).get('minItems', '')
+                if should_update:
                     print('post invitation edit: ', venue_invitation.id)
                     client.post_invitation_edit(invitations=venue_invitation.id,
                         content={
