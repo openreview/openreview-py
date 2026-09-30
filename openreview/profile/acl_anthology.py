@@ -11,6 +11,8 @@ job needs it. Install it in the environment that runs the job:
 '''
 
 import re
+import warnings
+from contextlib import contextmanager
 
 import openreview
 
@@ -38,6 +40,21 @@ def get_author_id(url):
     return match.group(1)
 
 
+@contextmanager
+def _quiet_ambiguous_names():
+    '''
+    Silences the Anthology's warning about several names on one paper resolving to the same
+    person. A paper with two different Min Zhangs on it raises one for every name it cannot
+    tell apart, which buries the output of a long import -- and this module answers that
+    case deliberately, by linking neither of them. Drop this context manager to see them.
+    '''
+    from acl_anthology.exceptions import NameSpecResolutionWarning
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', NameSpecResolutionWarning)
+        yield
+
+
 def _person_id(namespec):
     '''
     The Anthology person id behind a name on a paper.
@@ -53,7 +70,8 @@ def _person_id(namespec):
     from acl_anthology.exceptions import NameSpecResolutionError
 
     try:
-        return namespec.resolve().id
+        with _quiet_ambiguous_names():
+            return namespec.resolve().id
     except NameSpecResolutionError:
         ## the Anthology's own data cannot place this name; one such author should not
         ## abort the import
@@ -161,7 +179,8 @@ def load_anthology(path=None):
             "Install it with 'pip install acl-anthology' (requires Python 3.11+)."
         ) from error
 
-    return Anthology.from_repo(path=path)
+    with _quiet_ambiguous_names():
+        return Anthology.from_repo(path=path)
 
 
 def _profiles_by_username(client, candidate_ids):
@@ -315,15 +334,16 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
     if anthology is None:
         anthology = load_anthology()
 
-    person = anthology.get_person(author_id)
-    if person is None:
-        raise ValueError(f'{author_id} is not an author in the ACL Anthology')
+    with _quiet_ambiguous_names():
+        person = anthology.get_person(author_id)
+        if person is None:
+            raise ValueError(f'{author_id} is not an author in the ACL Anthology')
+
+        ## frontmatter is not a publication, and a retracted or removed paper should not be imported
+        papers = [paper for paper in person.papers() if not (paper.is_frontmatter or paper.is_deleted)]
 
     acl_group_id = f'{super_user}/Public_Article/ACL_Anthology.org'
     signature = profile_id if profile_id else f'{acl_group_id}/Uploader'
-
-    ## frontmatter is not a publication, and a retracted or removed paper should not be imported
-    papers = [paper for paper in person.papers() if not (paper.is_frontmatter or paper.is_deleted)]
 
     ## resolved once for the whole run instead of per paper: coauthors repeat across papers
     candidate_ids = {
@@ -352,30 +372,30 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
         ## trash included: deleting a note keeps its external id reserved, so a paper whose
         ## note was deleted can never be posted again
         existing_notes = client.get_notes(external_id=external_id, trash=True)
-        if existing_notes:
-            claim = _claim_authorship(client, existing_notes[0], metadata, author_id, profile_id, super_user)
-            if claim:
-                claimed.append(claim)
-            else:
-                skipped += 1
+
+        if not existing_notes:
+            try:
+                created.append(_post_record(client, acl_group_id, signature, external_id, metadata,
+                                            imported_index, profile_id, profiles_by_username))
+                continue
+            except openreview.OpenReviewException as error:
+                ## The client retries an edit post on a server fault, and a retry whose first
+                ## attempt did reach the server is rejected by the unique index on externalId.
+                ## The publication is in OpenReview either way, so carry on as if the check
+                ## above had found it.
+                if 'externalIds already exists' not in str(error):
+                    raise
+                existing_notes = client.get_notes(external_id=external_id, trash=True)
+
+        if not existing_notes:
+            skipped += 1
             continue
 
-        created.append(client.post_note_edit(
-            invitation=f'{acl_group_id}/-/Record',
-            signatures=[signature],
-            content={ 'json': { 'value': metadata } },
-            note=openreview.api.Note(
-                external_id=external_id,
-                content={
-                    'title': { 'value': metadata.get('title') },
-                    'authors': { 'value': [
-                        _author_value(paper_author, index == imported_index, profile_id, profiles_by_username)
-                        for index, paper_author in enumerate(metadata.get('authors', []))
-                    ] },
-                    'venue': { 'value': _venue_value(metadata) }
-                }
-            )
-        ))
+        claim = _claim_authorship(client, existing_notes[0], metadata, author_id, profile_id, super_user)
+        if claim:
+            claimed.append(claim)
+        else:
+            skipped += 1
 
     return {
         'created': len(created),
@@ -383,3 +403,23 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
         'skipped': skipped,
         'edits': created + claimed
     }
+
+
+def _post_record(client, acl_group_id, signature, external_id, metadata, imported_index, profile_id, profiles_by_username):
+    '''Posts the Record edit that brings a publication into OpenReview.'''
+    return client.post_note_edit(
+        invitation=f'{acl_group_id}/-/Record',
+        signatures=[signature],
+        content={ 'json': { 'value': metadata } },
+        note=openreview.api.Note(
+            external_id=external_id,
+            content={
+                'title': { 'value': metadata.get('title') },
+                'authors': { 'value': [
+                    _author_value(paper_author, index == imported_index, profile_id, profiles_by_username)
+                    for index, paper_author in enumerate(metadata.get('authors', []))
+                ] },
+                'venue': { 'value': _venue_value(metadata) }
+            }
+        )
+    )
