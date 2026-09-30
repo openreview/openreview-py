@@ -70,7 +70,7 @@ class TestProfileManagement():
             profile={
                 'id': '~Gwen_Verified1',
                 'content': {
-                    'fullname': { 'value': 'Gwen Verified' },
+                    'names': { 'value': { 'add': [{ 'fullname': 'Gwen Verified' }] } },
                     'dob': { 'value': helpers.default_dob() }
                 }
             }
@@ -85,7 +85,7 @@ class TestProfileManagement():
                 profile={
                     'id': '~Gwen_Verified1',
                     'content': {
-                        'fullname': { 'value': 'Gwen Verified' }
+                        'names': { 'value': { 'add': [{ 'fullname': 'Gwen Verified' }] } }
                     }
                 }
             )
@@ -95,7 +95,7 @@ class TestProfileManagement():
         assert len(edits) == 1
         assert edits[0].invitation == 'openreview.net/Support/-/Identity_Verification'
         assert edits[0].content['source']['value'] == 'Passport'
-        assert edits[0].profile['content']['fullname']['value'] == 'Gwen Verified'
+        assert edits[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Gwen Verified'
         assert edits[0].profile['content']['dob']['value'] == helpers.default_dob()
 
         ## Other users cannot see the identity verification record.
@@ -114,15 +114,17 @@ class TestProfileManagement():
             profile={
                 'id': '~Gwen_Verified1',
                 'content': {
-                    'fullname': { 'value': 'Gwen Verified' },
+                    'names': { 'value': { 'add': [{ 'fullname': 'Gwen Verified' }] } },
                     'history': {
                         'value': {
-                            'position': 'PhD Student',
-                            'start': 2017,
-                            'institution': {
-                                'domain': 'profile.org',
-                                'name': 'Profile Org'
-                            }
+                            'add': [{
+                                'position': 'PhD Student',
+                                'start': 2017,
+                                'institution': {
+                                    'domain': 'profile.org',
+                                    'name': 'Profile Org'
+                                }
+                            }]
                         }
                     }
                 }
@@ -148,9 +150,11 @@ class TestProfileManagement():
                 'content': {
                     'relations': {
                         'value': {
-                            'relation': 'Parent',
-                            'name': 'Gustavo Verified',
-                            'email': 'gustavo@profile.org'
+                            'add': [{
+                                'relation': 'Parent',
+                                'name': 'Gustavo Verified',
+                                'email': 'gustavo@profile.org'
+                            }]
                         }
                     }
                 }
@@ -170,8 +174,10 @@ class TestProfileManagement():
                     'content': {
                         'relations': {
                             'value': {
-                                'relation': 'Parent',
-                                'email': 'gustavo@profile.org'
+                                'add': [{
+                                    'relation': 'Parent',
+                                    'email': 'gustavo@profile.org'
+                                }]
                             }
                         }
                     }
@@ -187,8 +193,10 @@ class TestProfileManagement():
                     'content': {
                         'relations': {
                             'value': {
-                                'name': 'Gustavo Verified',
-                                'email': 'gustavo@profile.org'
+                                'add': [{
+                                    'name': 'Gustavo Verified',
+                                    'email': 'gustavo@profile.org'
+                                }]
                             }
                         }
                     }
@@ -237,13 +245,28 @@ class TestProfileManagement():
         assert state_edits[1].profile['state'] == 'Inactive'
         assert not (state_edits[1].content or {}).get('reason')
 
-        ## A verification record can be retracted with a soft delete.
+        ## A verification record can be retracted with a soft delete. The consent record is
+        ## mandatory in a Parent_Consent edit, so the delete carries it like any other
+        ## update: an edit is validated against the invitation whether or not it has a ddate.
         support_client.post_edit(openreview.api.Edit(
             id=parent_consent_edit['id'],
             invitation='openreview.net/Support/-/Parent_Consent',
             signatures=['openreview.net/Support'],
             ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
-            profile={ 'id': '~Gwen_Verified1' }
+            profile={
+                'id': '~Gwen_Verified1',
+                'content': {
+                    'relations': {
+                        'value': {
+                            'add': [{
+                                'relation': 'Parent',
+                                'name': 'Gustavo Verified',
+                                'email': 'gustavo@profile.org'
+                            }]
+                        }
+                    }
+                }
+            }
         ))
         edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1')
         assert len(edits) == 4
@@ -266,9 +289,11 @@ class TestProfileManagement():
                 'content': {
                     'relations': {
                         'value': {
-                            'relation': 'Parent',
-                            'name': 'Gustavo Verified',
-                            'email': 'gustavo@profile.org'
+                            'add': [{
+                                'relation': 'Parent',
+                                'name': 'Gustavo Verified',
+                                'email': 'gustavo@profile.org'
+                            }]
                         }
                     }
                 }
@@ -277,7 +302,7 @@ class TestProfileManagement():
         edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1')
         assert len(edits) == 5
         restored = [edit for edit in edits if edit.invitation == 'openreview.net/Support/-/Parent_Consent'][0]
-        assert restored.profile['content']['relations']['value']['name'] == 'Gustavo Verified'
+        assert restored.profile['content']['relations']['value']['add'][0]['name'] == 'Gustavo Verified'
         assert restored.content['comment']['value'] == 'Consent form signed by the parent on file.'
 
         ## None of the records modified the profile itself. The API always materializes
@@ -325,19 +350,21 @@ class TestProfileManagement():
                     'content': {
                         'history': {
                             'value': {
-                                'position': 'PhD Student',
-                                'start': 2017,
-                                'end': end_year,
-                                'institution': {
-                                    'domain': 'profile.org',
-                                    'name': 'Profile Org'
-                                }
+                                'add': [{
+                                    'position': 'PhD Student',
+                                    'start': 2017,
+                                    'end': end_year,
+                                    'institution': {
+                                        'domain': 'profile.org',
+                                        'name': 'Profile Org'
+                                    }
+                                }]
                             }
                         }
                     }
                 }
             )
-            assert edit['profile']['content']['history']['value']['end'] == end_year
+            assert edit['profile']['content']['history']['value']['add'][0]['end'] == end_year
 
         ## The profile still lists the position as Present
         profile = support_client.get_profile('~Gwen_Verified1')
@@ -355,16 +382,18 @@ class TestProfileManagement():
                 'content': {
                     'history': {
                         'value': {
-                            'position': 'PhD Student',
-                            'institution': {
-                                'name': 'Profile Org'
-                            }
+                            'add': [{
+                                'position': 'PhD Student',
+                                'institution': {
+                                    'name': 'Profile Org'
+                                }
+                            }]
                         }
                     }
                 }
             }
         )
-        assert 'domain' not in edit['profile']['content']['history']['value']['institution']
+        assert 'domain' not in edit['profile']['content']['history']['value']['add'][0]['institution']
 
         ## The document type enums end with a '.*' prefix option, so a document that
         ## matches none of the named types can be recorded verbatim. Support can also
@@ -381,10 +410,12 @@ class TestProfileManagement():
                 'content': {
                     'history': {
                         'value': {
-                            'position': 'PhD Student',
-                            'institution': {
-                                'name': 'Profile Org'
-                            }
+                            'add': [{
+                                'position': 'PhD Student',
+                                'institution': {
+                                    'name': 'Profile Org'
+                                }
+                            }]
                         }
                     }
                 }
@@ -5306,7 +5337,7 @@ The OpenReview Team.
             profile={
                 'id': '~Rita_Identity1',
                 'content': {
-                    'fullname': { 'value': 'Rita Identity' }
+                    'names': { 'value': { 'add': [{ 'fullname': 'Rita Identity' }] } }
                 }
             }
         )
@@ -5314,7 +5345,7 @@ The OpenReview Team.
         edits = support_client.get_profile_edits(profile_id='~Rita_Identity1', invitation='openreview.net/Support/-/Identity_Verification')
         assert len(edits) == 1
         assert edits[0].content['source']['value'] == 'Government ID'
-        assert edits[0].profile['content']['fullname']['value'] == 'Rita Identity'
+        assert edits[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Rita Identity'
 
         ## The verification record and the state history recorded by moderate_profile
         ## are visible to the profile owner

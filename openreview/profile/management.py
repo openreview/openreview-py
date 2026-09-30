@@ -292,12 +292,17 @@ return {
                             }
                         },
                         'content': {
-                            'fullname': {
+                            'names': {
                                 'value': {
                                     'param': {
-                                        'type': 'string',
-                                        'minLength': 1,
-                                        'optional': True
+                                        'type': 'object{}',
+                                        'change': 'add',
+                                        'optional': True,
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string', 'minLength': 1 } },
+                                            'preferred': { 'param': { 'type': 'boolean', 'optional': True } },
+                                            'username': { 'param': { 'type': 'string', 'regex': '^~.+$', 'optional': True } }
+                                        }
                                     }
                                 }
                             },
@@ -317,12 +322,13 @@ return {
         )
 
         ## Posted by support after reviewing a document proving institution affiliation:
-        ## a document attests exactly one affiliation, so the edit asserts a single
-        ## history entry (keyed 'history' to match profile.content) with the
-        ## institution, the position held and — when the document carries
-        ## them — the person's name and date of birth. Institution-issued documents
+        ## the edit asserts the institution, the position held and — when the document
+        ## carries them — the person's name and date of birth. Every asserted field is
+        ## keyed and shaped like its profile.content counterpart, so a record can be
+        ## compared to the profile field by field. Institution-issued documents
         ## vary: some show identity data and some do not even state the email domain,
-        ## so every asserted field is optional. The record is public so anyone can see
+        ## so the identity fields and the institution domain are optional -- only the
+        ## affiliation itself is required. The record is public so anyone can see
         ## the affiliation was verified.
         self.client.post_invitation_edit(
             invitations=self.meta_invitation_id,
@@ -373,12 +379,17 @@ return {
                             }
                         },
                         'content': {
-                            'fullname': {
+                            'names': {
                                 'value': {
                                     'param': {
-                                        'type': 'string',
-                                        'minLength': 1,
-                                        'optional': True
+                                        'type': 'object{}',
+                                        'change': 'add',
+                                        'optional': True,
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string', 'minLength': 1 } },
+                                            'preferred': { 'param': { 'type': 'boolean', 'optional': True } },
+                                            'username': { 'param': { 'type': 'string', 'regex': '^~.+$', 'optional': True } }
+                                        }
                                     }
                                 }
                             },
@@ -394,8 +405,8 @@ return {
                             'history': {
                                 'value': {
                                     'param': {
-                                        'type': 'object',
-                                        'optional': True,
+                                        'type': 'object{}',
+                                        'change': 'add',
                                         'properties': {
                                             'position': { 'param': { 'type': 'string', 'minLength': 1 } },
                                             'start': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } },
@@ -466,13 +477,12 @@ return {
                             'relations': {
                                 'value': {
                                     'param': {
-                                        'type': 'object',
-                                        'optional': True,
+                                        'type': 'object{}',
+                                        'change': 'add',
                                         'properties': {
-                                            ## The relation type and the parent's name identify the
-                                            ## consent record, so both are mandatory.
                                             'relation': { 'param': { 'type': 'string', 'minLength': 1 } },
                                             'name': { 'param': { 'type': 'string', 'minLength': 1 } },
+                                            'username': { 'param': { 'type': 'string', 'regex': '^~.+$', 'optional': True } },
                                             'email': { 'param': { 'type': 'string', 'regex': r'([a-z0-9_\-.]{1,}@[a-z0-9_\-.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-.]{1,}@[a-z0-9_\-.]{2,}\.[a-z]{2,})', 'optional': True } },
                                             'start': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } },
                                             'end': { 'param': { 'type': 'integer', 'range': [ 1900, 2100 ], 'optional': True } }
