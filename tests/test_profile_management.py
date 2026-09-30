@@ -1707,6 +1707,7 @@ computation and memory.
                         'year': '2023',
                         'month': 'July',
                         'venueIds': ['acl'],
+                        'venueAcronyms': ['ACL'],
                         'booktitle': 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)',
                         'publisher': 'Association for Computational Linguistics',
                         'address': 'Toronto, Canada',
@@ -1731,7 +1732,7 @@ computation and memory.
                         ]
                     },
                     'venue': {
-                        'value': 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)'
+                        'value': 'ACL 2023'
                     }
                 }
             )
@@ -1745,7 +1746,7 @@ computation and memory.
         assert note.pdate == openreview.tools.datetime_millis(datetime.datetime(2023, 7, 1))
         assert note.content['title']['value'] == 'An Example Paper'
         assert note.content['abstract']['value'] == 'We present an example.'
-        assert note.content['venue']['value'] == 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)'
+        assert note.content['venue']['value'] == 'ACL 2023'
         assert note.content['venueid']['value'] == 'openreview.net/Public_Article'
         assert note.content['html']['value'] == 'https://aclanthology.org/2023.acl-long.48/'
         assert note.content['pdf']['value'] == 'https://aclanthology.org/2023.acl-long.48.pdf'

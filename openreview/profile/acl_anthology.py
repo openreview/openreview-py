@@ -82,6 +82,25 @@ def _without_empty_values(values):
     return { key: value for key, value in values.items() if value }
 
 
+def _venue_acronyms(paper):
+    '''
+    How the Anthology abbreviates the venues a paper appeared in, e.g. ['ACL'].
+
+    The volume title is a full sentence, so the acronym is what makes a readable venue
+    name on a publication list.
+    '''
+    venues = paper.root.venues if paper.parent else None
+    if venues is None:
+        return []
+
+    acronyms = []
+    for venue_id in paper.venue_ids:
+        venue = venues.get(venue_id)
+        if venue:
+            acronyms.append(venue.acronym)
+    return acronyms
+
+
 def paper_to_json(paper):
     '''
     Serializes an acl_anthology Paper into the metadata posted to the ACL Anthology
@@ -106,6 +125,7 @@ def paper_to_json(paper):
         'year': paper.year,
         'month': paper.month,
         'venueIds': list(paper.venue_ids),
+        'venueAcronyms': _venue_acronyms(paper),
         'booktitle': paper.parent.title.as_text() if paper.parent and paper.parent.title else None,
         'journal': paper.journal_title,
         'publisher': paper.publisher,
@@ -188,11 +208,7 @@ def _claim_authorship(client, note, metadata, author_id, profile_id, super_user)
     if not profile_id or note.ddate:
         return None
 
-    author_index = next(
-        (index for index, paper_author in enumerate(metadata.get('authors', []))
-         if paper_author.get('id') == author_id),
-        None
-    )
+    author_index = _imported_author_index(metadata, author_id)
     if author_index is None:
         return None
 
@@ -218,7 +234,34 @@ def _claim_authorship(client, note, metadata, author_id, profile_id, super_user)
     )
 
 
-def _author_value(author, author_id, profile_id, profiles_by_username):
+def _venue_value(metadata):
+    '''
+    The venue name a note is created with. Tools.convertACLJsonToNote names it the same way
+    when it rewrites the note, so a paper reads the same whether or not that has run yet.
+    '''
+    acronyms = ' '.join(metadata.get('venueAcronyms', []))
+    if acronyms:
+        return f"{acronyms} {metadata.get('year', '')}".strip()
+    return metadata.get('journal') or metadata.get('booktitle') or ''
+
+
+def _imported_author_index(metadata, author_id):
+    '''
+    Where the author being imported sits in a paper's author list, or None when that cannot
+    be told apart.
+
+    Two authors of one paper can resolve to the same Anthology person when neither is
+    established as a distinct person -- a paper with two different Min Zhangs on it, say.
+    Leaving both unlinked is better than linking a profile to the wrong one.
+    '''
+    indexes = [
+        index for index, paper_author in enumerate(metadata.get('authors', []))
+        if paper_author.get('id') == author_id
+    ]
+    return indexes[0] if len(indexes) == 1 else None
+
+
+def _author_value(author, is_imported_author, profile_id, profiles_by_username):
     '''
     An entry of the note's author list. The username links the author to an OpenReview
     profile: the Anthology's own OpenReview id when it has one, and the profile being
@@ -231,7 +274,7 @@ def _author_value(author, author_id, profile_id, profiles_by_username):
     the profile ~Andrew_McCallum1 does not answer to.
     '''
     username = author.get('openreview')
-    if not username and profile_id and author.get('id') == author_id:
+    if not username and profile_id and is_imported_author:
         username = profile_id
 
     fullname = author['full']
@@ -300,6 +343,7 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
         external_id = f'acl:{paper.full_id}'
         metadata = paper_to_json(paper)
         _drop_unknown_profile_ids(metadata, profiles_by_username)
+        imported_index = _imported_author_index(metadata, author_id)
 
         ## trash included: deleting a note keeps its external id reserved, so a paper whose
         ## note was deleted can never be posted again
@@ -318,8 +362,11 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
                 external_id=external_id,
                 content={
                     'title': { 'value': metadata.get('title') },
-                    'authors': { 'value': [_author_value(paper_author, author_id, profile_id, profiles_by_username) for paper_author in metadata.get('authors', [])] },
-                    'venue': { 'value': metadata.get('journal') or metadata.get('booktitle') or '' }
+                    'authors': { 'value': [
+                        _author_value(paper_author, index == imported_index, profile_id, profiles_by_username)
+                        for index, paper_author in enumerate(metadata.get('authors', []))
+                    ] },
+                    'venue': { 'value': _venue_value(metadata) }
                 }
             )
         ))
