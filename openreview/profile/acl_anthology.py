@@ -306,8 +306,9 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
     :param super_user: The super user id, which the Public_Article invitations hang off
     :type super_user: str, optional
 
-    :return: The posted edits
-    :rtype: list[dict]
+    :return: How many publications were created, how many had an authorship claim posted,
+        how many were left alone, and the edits posted for the first two
+    :rtype: dict
     '''
     author_id = get_author_id(author) if '://' in author else author
 
@@ -338,7 +339,10 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
     if profile_id and profile_id not in profiles_by_username:
         raise ValueError(f'{profile_id} is not an OpenReview profile')
 
-    edits = []
+    created = []
+    claimed = []
+    skipped = 0
+
     for paper in papers:
         external_id = f'acl:{paper.full_id}'
         metadata = paper_to_json(paper)
@@ -351,10 +355,12 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
         if existing_notes:
             claim = _claim_authorship(client, existing_notes[0], metadata, author_id, profile_id, super_user)
             if claim:
-                edits.append(claim)
+                claimed.append(claim)
+            else:
+                skipped += 1
             continue
 
-        edits.append(client.post_note_edit(
+        created.append(client.post_note_edit(
             invitation=f'{acl_group_id}/-/Record',
             signatures=[signature],
             content={ 'json': { 'value': metadata } },
@@ -371,4 +377,9 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
             )
         ))
 
-    return edits
+    return {
+        'created': len(created),
+        'claimed': len(claimed),
+        'skipped': skipped,
+        'edits': created + claimed
+    }
