@@ -1474,13 +1474,13 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     )
                     self.client.post_edge(archived_edge)
                     # avoid process function execution
-                    self.client.delete_edges(invitation=ae_assignment_edge.invitation, head=ae_assignment_edge.head, tail=ae_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
+                    self.client.delete_edges(invitation=ae_assignment_edge.invitation, head=ae_assignment_edge.head, tail=ae_assignment_edge.tail, soft_delete=True)
 
-                self.client.delete_edges(invitation=self.get_ae_affinity_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
-                self.client.delete_edges(invitation=self.get_ae_recommendation_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
-                self.client.delete_edges(invitation=self.get_ae_conflict_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
-                self.client.delete_edges(invitation=self.get_ae_aggregate_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
-                self.client.delete_edges(invitation=self.get_ae_resubmission_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_ae_affinity_score_id(), head=submission.id, soft_delete=True)
+                self.client.delete_edges(invitation=self.get_ae_recommendation_id(), head=submission.id, soft_delete=True)
+                self.client.delete_edges(invitation=self.get_ae_conflict_id(), head=submission.id, soft_delete=True)
+                self.client.delete_edges(invitation=self.get_ae_aggregate_score_id(), head=submission.id, soft_delete=True)
+                self.client.delete_edges(invitation=self.get_ae_resubmission_score_id(), head=submission.id, soft_delete=True)
 
                 submission_reviewer_assignments = reviewer_assignments.get(submission.id, [])
                 for reviewer_assignment in submission_reviewer_assignments:
@@ -1496,11 +1496,11 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     )
                     self.client.post_edge(archived_edge)
                     # avoid process function execution
-                    self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
+                    self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True)
 
-                self.client.delete_edges(invitation=self.get_reviewer_affinity_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
-                self.client.delete_edges(invitation=self.get_reviewer_conflict_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
-                self.client.delete_edges(invitation=self.get_reviewer_invite_assignment_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_reviewer_affinity_score_id(), head=submission.id, soft_delete=True)
+                self.client.delete_edges(invitation=self.get_reviewer_conflict_id(), head=submission.id, soft_delete=True)
+                self.client.delete_edges(invitation=self.get_reviewer_invite_assignment_id(), head=submission.id, soft_delete=True)
 
     @classmethod
     def update_affinity_scores(Journal, client, support_group_id='OpenReview.net/Support'):

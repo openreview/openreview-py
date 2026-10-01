@@ -338,10 +338,10 @@ class TestReviewersOnly():
             'ABCD.cc/2025/Conference/Program_Committee',
             'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Authors'
         ]
-        assert post_submission_inv.content['source']['value']['venueid'] == 'ABCD.cc/2025/Conference/Submission'
+        assert post_submission_inv.content['source']['value']['venueid'] == ['ABCD.cc/2025/Conference/Submission']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
-        assert invitation and invitation.content['source']['value']['venueid'] == 'ABCD.cc/2025/Conference/Submission'
+        assert invitation and invitation.content['source']['value']['venueid'] == ['ABCD.cc/2025/Conference/Submission']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Restrict_Field_Visibility')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review_Release')
@@ -1317,7 +1317,7 @@ For more details, please check the following links:
         helpers.create_user('newauthor@example.com', 'NewAuthor', 'Example')
         
         # Get the existing edit for this submission with the Submission invitation
-        edits = openreview_client.get_note_edits(note_id=submission.id, invitation='ABCD.cc/2025/Conference/-/Submission')
+        edits = openreview_client.get_note_edits(note_id=submission.id, invitation='ABCD.cc/2025/Conference/-/Submission', sort='tcdate:desc')
         assert len(edits) > 0
         existing_edit = edits[0]
         
@@ -1581,7 +1581,7 @@ For more details, please check the following links:
         assert notes[-1].content['title']['value'] == 'Program Committee Assignment Deployment Failed'
 
         last_note = notes[-1]
-        last_note_edit = openreview_client.get_note_edits(note_id=last_note.id)[0]
+        last_note_edit = openreview_client.get_note_edits(note_id=last_note.id, sort='tcdate:desc')[0]
 
         helpers.await_queue_edit(openreview_client, edit_id=last_note_edit.id)
         
@@ -2458,6 +2458,15 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             )
 
         # edit decision options
+        with pytest.raises(openreview.OpenReviewException, match=r'accept_decision_options value/1 must be equal to one of the allowed values: Accept, Revision Needed, Reject'):
+            edit = pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Decision/Decision_Options',
+                content={
+                    'decision_options': { 'value': ['Accept', 'Revision Needed', 'Reject'] },
+                    'accept_decision_options': { 'value': ['Accept', 'Accept (Oral)'] }
+                }
+            )
+
         edit = pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Decision/Decision_Options',
             content={

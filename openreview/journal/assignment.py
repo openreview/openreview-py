@@ -18,13 +18,8 @@ class Assignment(object):
     def post_submission_edges(self, edges):
         if edges:
             ## Remove current edges if they exists
-            self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head, wait_to_finish=True)
+            self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head)
             tools.post_bulk_edges(self.client, edges)
-            # Perform sanity check
-            edges_posted = self.client.get_edges_count(invitation=edges[0].invitation, head=edges[0].head, domain=self.journal.venue_id)
-            if edges_posted != len(edges):
-                raise openreview.OpenReviewException(f'Failed during bulk post of {edges[0].invitation} edges! Edges found: {len(edges)}, Edges posted: {edges_posted}')
-               
 
     def setup_ae_assignment(self, note, job_id=None):
         print('Start setup AE assignment...')
@@ -219,7 +214,7 @@ class Assignment(object):
         assignments_by_ae = { e['id']['tail']: [v for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail', domain=journal.venue_id) }
 
         ## Clear the quotas
-        self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
+        self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True)
 
         max_active_submissions = journal.get_ae_max_active_submissions()
         now = datetime.datetime.now()

@@ -19,7 +19,6 @@ def process(client, invitation):
             client.delete_edges(
                 invitation=edge_inv,
                 id=existing_edge['id'],
-                wait_to_finish=True,
                 soft_delete=True
             )
         if submission_id:
@@ -165,7 +164,6 @@ def process(client, invitation):
         client.delete_edges(
             invitation=role_cmp_inv,
             soft_delete=True,
-            wait_to_finish=True
         )
         print(f"posting {len(cmp_to_post)} custom max papers for {role_id}")
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
@@ -303,7 +301,6 @@ def process(client, invitation):
 
         client.delete_edges(
             invitation=f"{role_id}/-/{tracks_inv_name}",
-            wait_to_finish=True
         )
         openreview.tools.post_bulk_edges(client=client, edges=track_edges_to_post)
 
@@ -316,7 +313,6 @@ def process(client, invitation):
                 invitation=status_inv,
                 tail=edge_info['tail'],
                 head=submission.id,
-                wait_to_finish=True,
                 soft_delete=True
             )
             client.post_edge(

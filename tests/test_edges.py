@@ -100,10 +100,10 @@ class TestEdges:
     def test_delete_edges(self, client, openreview_client):
         edges_count_before = openreview_client.get_edges_count(invitation='openreview.net/-/Affinity', label='High')
         assert edges_count_before == 1000
-        openreview_client.delete_edges(invitation='openreview.net/-/Affinity', label='High', wait_to_finish=True)
+        openreview_client.delete_edges(invitation='openreview.net/-/Affinity', label='High')
         edges_count_after = openreview_client.get_edges_count(invitation='openreview.net/-/Affinity', label='High')
         assert edges_count_after == 0
 
-        openreview_client.delete_edges(invitation='openreview.net/-/Affinity', wait_to_finish=True)
+        openreview_client.delete_edges(invitation='openreview.net/-/Affinity')
         edges_count_after = openreview_client.get_edges_count(invitation='openreview.net/-/Affinity')
         assert edges_count_after == 0    

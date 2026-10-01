@@ -63,7 +63,6 @@ var DECISION_NAME = 'Decision';
 var DECISION_APPROVAL_NAME = 'Decision_Approval';
 var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
-var RETRACTION_NAME = 'Retraction';
 var RETRACTION_APPROVAL_NAME = 'Retraction_Approval';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
@@ -96,23 +95,131 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Brow
   '<li><a href="/forum?id=' + REVIEWER_REPORT_ID + '&referrer=' + referrerUrl + '">Reviewers Report</a></li></ul>';
 var institutionDomains = [];
 
+// ---------------------------------------------------------------------------
+// Temporary performance instrumentation.
+// Every message is prefixed with [EIC perf] so it can be filtered in the browser
+// console. Set PERF_ENABLED to false (or run with ?perf=0) to silence it.
+// ---------------------------------------------------------------------------
+var PERF_ENABLED = !(args && args.perf === '0');
+
+// The webfield sandbox declares `var window = null`, so `performance` has to be
+// reached as a bare global rather than off window.
+var perfNow = function() {
+  return (typeof performance !== 'undefined' && performance && performance.now) ? performance.now() : Date.now();
+};
+
+// Describes a resolved API payload so each request line shows how much came back.
+var perfSize = function(result) {
+  if (Array.isArray(result)) {
+    return result.length + ' items';
+  }
+  if (result && typeof result === 'object') {
+    if (Array.isArray(result.members)) {
+      return result.members.length + ' members';
+    }
+    return Object.keys(result).length + ' keys';
+  }
+  return '';
+};
+
+var perfLog = function(label, elapsed, detail) {
+  console.log('[EIC perf] ' + label + ': ' + elapsed.toFixed(1) + ' ms' + (detail ? '  (' + detail + ')' : ''));
+};
+
+// perfStart returns the "stop" function: var done = perfStart('x'); ...; done();
+var perfStart = function(label) {
+  if (!PERF_ENABLED) {
+    return function() {};
+  }
+  var t0 = perfNow();
+  return function(detail) {
+    perfLog(label, perfNow() - t0, detail);
+  };
+};
+
+// Times a promise without changing what it resolves to.
+var perfTrack = function(label, promise) {
+  if (!PERF_ENABLED) {
+    return promise;
+  }
+  var t0 = perfNow();
+  return promise.then(function(result) {
+    perfLog(label, perfNow() - t0, perfSize(result));
+    return result;
+  });
+};
+
+// Blocks that run once per submission are accumulated instead of logged 11k times.
+var perfCounters = {};
+var perfAccumulate = function(key, t0) {
+  if (!PERF_ENABLED) {
+    return;
+  }
+  var counter = perfCounters[key];
+  if (!counter) {
+    counter = perfCounters[key] = { calls: 0, ms: 0 };
+  }
+  counter.calls += 1;
+  counter.ms += perfNow() - t0;
+};
+
+var perfReport = function(title) {
+  if (!PERF_ENABLED || !Object.keys(perfCounters).length) {
+    return;
+  }
+  var rows = Object.keys(perfCounters).map(function(key) {
+    var counter = perfCounters[key];
+    return {
+      block: key,
+      calls: counter.calls,
+      'total ms': Number(counter.ms.toFixed(1)),
+      'ms per call': Number((counter.ms / counter.calls).toFixed(4))
+    };
+  }).sort(function(a, b) {
+    return b['total ms'] - a['total ms'];
+  });
+  console.log('[EIC perf] ---- ' + title + ' ----');
+  (console.table || console.log)(rows);
+  perfCounters = {};
+};
+
 // Helpers
 var getInvitationId = function(number, name, prefix) {
   return Webfield2.utils.getInvitationId(VENUE_ID, number, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME })
 };
 
 var getReplies = function(submission, name, prefix) {
-  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME });
+  var t0 = perfNow();
+  var replies = Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME });
+  perfAccumulate('getReplies (scans submission.details.replies)', t0);
+  return replies;
 };
 
-var getRatingInvitations = function(invitationsById, number) {
-  var invitations = [];
+// Index the per-reviewer Rating invitations by paper number in a single pass. Scanning all
+// invitation ids once per submission is quadratic and does not scale to thousands of papers.
+var groupRatingInvitationsByNumber = function(invitationsById) {
+  var paperPrefix = VENUE_ID + '/' + SUBMISSION_GROUP_NAME;
+  var ratingSuffix = '/-/Rating';
+  var ratingInvitationsByNumber = {};
   Object.keys(invitationsById).forEach(function(invitationId) {
-    if (invitationId.match(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Reviewer_.*/-/Rating')) {
-      invitations.push(invitationsById[invitationId]);
+    if (invitationId.indexOf(paperPrefix) !== 0 || !invitationId.endsWith(ratingSuffix)) {
+      return;
     }
+    var path = invitationId.slice(paperPrefix.length, -ratingSuffix.length).split('/');
+    if (path.length < 2 || path[1].indexOf('Reviewer_') !== 0) {
+      return;
+    }
+    var number = path[0];
+    if (!(number in ratingInvitationsByNumber)) {
+      ratingInvitationsByNumber[number] = [];
+    }
+    ratingInvitationsByNumber[number].push(invitationsById[invitationId]);
   })
-  return invitations;
+  return ratingInvitationsByNumber;
+}
+
+var getRatingInvitations = function(ratingInvitationsByNumber, number) {
+  return ratingInvitationsByNumber[number] || [];
 }
 
 var getRatingReplies = function(submission, ratingInvitations) {
@@ -124,6 +231,7 @@ var getRatingReplies = function(submission, ratingInvitations) {
 
 // Main function is the entry point to the webfield code
 var main = function() {
+  var doneSetup = perfStart('ui.setup');
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
@@ -142,18 +250,51 @@ var main = function() {
     referrer: args && args.referrer,
     fullWidth: true
   });
-  
+  doneSetup();
+
   if (!user || user.isGuest) {
     Webfield2.ui.errorMessage('You must be logged in to access this page.');
     return;
   }  
 
+  var doneTotal = perfStart('TOTAL (load + format + render)');
   loadData()
     .then(formatData)
     .then(renderData)
+    .then(function(result) {
+      doneTotal();
+      return result;
+    })
     .then(Webfield2.ui.done)
     .fail(Webfield2.ui.errorMessage);
 };
+
+// Only the fields formatData reads. Without this, `details=replies` returns every
+// reply in full — including the review bodies, which are ~88% of the payload — and on
+// a journal the size of TMLR the untrimmed fetch runs to hundreds of MB of JSON.
+//
+// Two properties of the API's `select` matter here:
+//  - a select that omits the `details.replies[*]` entries drops details.replies from
+//    the response entirely, and does so silently;
+//  - `content` is omitted from a reply altogether when none of the selected content
+//    fields exist on it, so every reply content access below has to be null-safe.
+var SUBMISSION_SELECT = [
+  'id', 'forum', 'number', 'cdate', 'mdate', 'tcdate', 'tmdate', 'invitations', 'content',
+  'details.replies[*].id',
+  'details.replies[*].forum',
+  'details.replies[*].replyto',
+  'details.replies[*].tcdate',
+  'details.replies[*].invitations',
+  'details.replies[*].signatures',
+  'details.replies[*].readers',
+  'details.replies[*].content.rating',
+  'details.replies[*].content.recommendation',
+  'details.replies[*].content.certifications',
+  'details.replies[*].content.decision_recommendation',
+  'details.replies[*].content.certification_recommendations',
+  'details.replies[*].content.comment',
+  'details.replies[*].content.title'
+].join(',');
 
 var getGroupMembersCount = function(groupId) {
   if (!groupId) {
@@ -170,13 +311,82 @@ var getGroupMembersCount = function(groupId) {
     });
 };
 
+// The per-paper invitations the console actually indexes, keyed by the super
+// invitation that creates them. Fetching by parent instead of by the
+// `<venue>/Paper` prefix leaves behind Public_Comment / Official_Comment /
+// Moderation, which expire_paper_invitations() deliberately exempts, so they
+// accumulate one set per submission for the life of the journal and make up
+// roughly 60% of the prefix query's payload.
+var getPaperInvitationsById = function() {
+  var parentInvitationIds = [
+    VENUE_ID + '/-/' + REVIEW_APPROVAL_NAME,
+    VENUE_ID + '/-/' + DESK_REJECTION_APPROVAL_NAME,
+    VENUE_ID + '/-/' + REVIEW_NAME,
+    VENUE_ID + '/-/' + OFFICIAL_RECOMMENDATION_NAME,
+    VENUE_ID + '/-/' + DECISION_NAME,
+    VENUE_ID + '/-/' + DECISION_APPROVAL_NAME,
+    VENUE_ID + '/-/' + CAMERA_READY_REVISION_NAME,
+    VENUE_ID + '/-/' + CAMERA_READY_VERIFICATION_NAME,
+    VENUE_ID + '/-/' + RETRACTION_APPROVAL_NAME,
+    VENUE_ID + '/-/Rating'
+  ];
+
+  var requests = parentInvitationIds.map(function(parentInvitationId) {
+    return Webfield2.api.get('/invitations', {
+      invitation: parentInvitationId,
+      type: 'all',
+      select: 'id,cdate,duedate,expdate',
+      domain: VENUE_ID,
+      stream: true
+    }).then(function(result) { return result.invitations; });
+  });
+
+  // `<venue>/Paper<N>/Reviewers/-/Assignment` and `.../Action_Editors/-/Recommendation`
+  // are posted directly rather than from a per-name super invitation, so their only
+  // parent is the venue meta invitation, which every invitation carries. They are the
+  // only per-paper edge invitations, so type=edge isolates them without pulling the
+  // comment invitations back in.
+  requests.push(Webfield2.api.get('/invitations', {
+    prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
+    type: 'edge',
+    select: 'id,cdate,duedate,expdate',
+    domain: VENUE_ID,
+    stream: true
+  }).then(function(result) { return result.invitations; }));
+
+  return $.when.apply($, requests).then(function() {
+    var invitationsById = {};
+    Array.prototype.slice.call(arguments).forEach(function(invitations) {
+      (invitations || []).forEach(function(invitation) {
+        invitationsById[invitation.id] = invitation;
+      });
+    });
+    return invitationsById;
+  });
+};
+
 var loadData = function() {
-  return $.when(
-    Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
-    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
-    Webfield2.api.getAllSubmissions(SUBMISSION_ID, { domain: VENUE_ID }),
-    Webfield2.api.get('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID, stream: true }).then(function(result) { return result.notes; }),
-    Webfield2.api.get('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID, stream: true })
+  var doneLoad = perfStart('loadData TOTAL (all requests run in parallel)');
+  var allData = $.when(
+    perfTrack('  groups: action editors by number', Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME)),
+    perfTrack('  groups: reviewers by number (+profiles)', Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true})),
+    perfTrack('  notes: all submissions (+details=replies)', Webfield2.api.getAllSubmissions(SUBMISSION_ID, { domain: VENUE_ID, select: SUBMISSION_SELECT })
+    .then(function(submissions) {
+      // A selected request omits `details` altogether for a submission with no replies,
+      // where an unselected one returns details.replies: []. Normalize it back so the
+      // reply helpers here and in Webfield2.utils can assume the array exists.
+      submissions.forEach(function(submission) {
+        if (!submission.details) {
+          submission.details = {};
+        }
+        if (!submission.details.replies) {
+          submission.details.replies = [];
+        }
+      });
+      return submissions;
+    })),
+    perfTrack('  notes: responsibility acknowledgements', Webfield2.api.get('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID, stream: true }).then(function(result) { return result.notes; })),
+    perfTrack('  notes: reviewer report', Webfield2.api.get('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID, stream: true })
     .then(function(result) {
       return result.notes.reduce(function(content, currentValue) {
         var reviewer_id = currentValue.content.reviewer_id;
@@ -188,25 +398,17 @@ var loadData = function() {
         }
         return content;
       }, {})
-    }),
-    Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
-    Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME + '/Archived', { withProfiles: true}),
-    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
-    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true}),
-    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true}),
-    Webfield2.api.get('/invitations', {
-      prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
-      type: 'all',
-      select: 'id,cdate,duedate,expdate',
-      domain: VENUE_ID,
-      stream: true
-    }).then(function(result) {
-      return _.keyBy(result.invitations, 'id');
-    }),
-    Webfield2.api.get('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
-    Webfield2.api.get('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
-    Webfield2.api.get('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
-    Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count', domain: VENUE_ID})
+    })),
+    perfTrack('  group: action editors', Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true})),
+    perfTrack('  group: action editors archived', Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME + '/Archived', { withProfiles: true})),
+    perfTrack('  group: reviewers', Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true})),
+    perfTrack('  group: reviewers archived', Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true})),
+    perfTrack('  group: reviewers volunteers', Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true})),
+    perfTrack('  invitations: per-paper (by parent invitation)', getPaperInvitationsById()),
+    perfTrack('  invitations: venue super', Webfield2.api.get('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; })),
+    perfTrack('  invitations: reviewers', Webfield2.api.get('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; })),
+    perfTrack('  invitations: action editors', Webfield2.api.get('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; })),
+    perfTrack('  edges: AE recommendation counts', Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count', domain: VENUE_ID})
     .then(function(response) {
       var groupedEdges = response.groupedEdges;
       var recommendationCount = {};
@@ -214,11 +416,19 @@ var loadData = function() {
         recommendationCount[group.id.head] = group.count;
       })
       return recommendationCount;
-    }),
-    Webfield2.api.get('/settings/institutiondomains').then(function(result) {
+    })),
+    perfTrack('  settings: institution domains', Webfield2.api.get('/settings/institutiondomains').then(function(result) {
       institutionDomains = result;
-    })
+    }))
   );
+
+  // Attached as a side effect so the original multi-value resolution is passed
+  // through to formatData untouched.
+  allData.then(function() {
+    doneLoad(arguments.length + ' payloads');
+  });
+
+  return allData;
 };
 
 var updateEarlyLateTaskDuedate = function(earlylateTaskDueDate, task) {
@@ -246,6 +456,9 @@ var formatData = function(
   aeRecommendations
 ) {
   var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
+
+  var doneFormat = perfStart('formatData TOTAL');
+  var donePhase = perfStart('  formatData: build reviewer status map');
 
   var reviewerStatusById = {};
   var getReviewerStatus = function(reviewer, index, isOfficial, isArchived, isVolunteer) {
@@ -307,6 +520,9 @@ var formatData = function(
     reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, officialReviewerIds.has(reviewer.id), archivedReviewerIds.has(reviewer.id), true);
   });  
 
+  donePhase(Object.keys(reviewerStatusById).length + ' reviewers');
+  donePhase = perfStart('  formatData: build action editor status map');
+
   var actionEditorStatusById = {};
   actionEditors.members.forEach(function(actionEditor, index) {
     actionEditorStatusById[actionEditor.id] = {
@@ -365,12 +581,21 @@ var formatData = function(
     };
   });  
 
+  donePhase(Object.keys(actionEditorStatusById).length + ' action editors');
+  donePhase = perfStart('  formatData: index rating invitations by paper number');
+
+  var ratingInvitationsByNumber = groupRatingInvitationsByNumber(invitationsById);
+
+  donePhase(Object.keys(invitationsById).length + ' invitations scanned once');
+  donePhase = perfStart('  formatData: main submissions loop');
+
   var paperStatusRows = [];
   var authorSubmissionsCount = {};
   var incompleteEicTasks = [];
   var overdueTasks = [];
   submissions.forEach(function(submission) {
     var number = submission.number;
+    var tBlock = perfNow();
     var formattedSubmission = {
       id: submission.id,
       forum: submission.forum,
@@ -386,6 +611,8 @@ var formatData = function(
       }, {}),
       referrerUrl: referrerUrl
     };
+    perfAccumulate('loop: flatten submission content', tBlock);
+
     var paperActionEditors = aeByNumber[number] || [];
     var actionEditor = { id: 'No Action Editor' };
     if (paperActionEditors.length && actionEditorStatusById[paperActionEditors[0].id]) {
@@ -404,6 +631,7 @@ var formatData = function(
       });
     }
 
+    tBlock = perfNow();
     // Build array of tasks
     var tasks = [];
     // AE Recommendation by Authors
@@ -423,7 +651,7 @@ var formatData = function(
     var officialRecommendationInvitation = invitationsById[getInvitationId(number, OFFICIAL_RECOMMENDATION_NAME)];
     var officialRecommendationNotes = getReplies(submission, OFFICIAL_RECOMMENDATION_NAME);
     // Reviewer Rating by AE
-    var reviewerRatingInvitations = getRatingInvitations(invitationsById, number);
+    var reviewerRatingInvitations = getRatingInvitations(ratingInvitationsByNumber, number);
     var reviewerRatingReplies = getRatingReplies(submission, reviewerRatingInvitations);
     // Decision by AE
     var decisionInvitation = invitationsById[getInvitationId(number, DECISION_NAME)];
@@ -438,9 +666,6 @@ var formatData = function(
     var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
     var cameraReadyTask = null;
     var cameraReadyVerificationTask = null;
-    // Retraction by Authors
-    var retractionInvitation = invitationsById[getInvitationId(number, RETRACTION_NAME)];
-    var retractionNotes = getReplies(submission, RETRACTION_NAME);
     // Retraction Approval by EIC
     var retractionApprovalInvitation = invitationsById[getInvitationId(number, RETRACTION_APPROVAL_NAME)];
     var retractionApprovalNotes = getReplies(submission, RETRACTION_APPROVAL_NAME);
@@ -621,6 +846,9 @@ var formatData = function(
       }
     }    
 
+    perfAccumulate('loop: build task list (invitation lookups + getReplies)', tBlock);
+
+    tBlock = perfNow();
     var reviews = reviewNotes;
     var recommendations = officialRecommendationNotes;
     var recommendationByReviewer = {};
@@ -632,6 +860,9 @@ var formatData = function(
     var paperReviewerStatus = {};
     var completedReviews = reviews.length && (reviews.length == paperReviewers.length);
 
+    perfAccumulate('loop: recommendation-by-reviewer map', tBlock);
+
+    tBlock = perfNow();
     paperReviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
       var assignmentAcknowledgement = getReplies(submission, reviewer.id + '/' + ASSIGNMENT_ACKNOWLEDGEMENT_NAME, REVIEWERS_NAME);
@@ -649,13 +880,13 @@ var formatData = function(
       if (completedReview) {
         reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
         if (reviewerRecommendation) {
-          status.Recommendation = reviewerRecommendation.content.decision_recommendation?.value || 'Yes';
-          status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
+          status.Recommendation = reviewerRecommendation.content?.decision_recommendation?.value || 'Yes';
+          status.Certifications = reviewerRecommendation.content?.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
         }
         var reviewerRating = reviewerRatingReplies.find(function (p) {
           return p.replyto === completedReview.id;
         });
-        if(reviewerRating){
+        if (reviewerRating && reviewerRating.content?.rating) {
           status.Rating = reviewerRating.content.rating.value;
           if(reviewerStatus){
             var rating = reviewerRating.content.rating.value;
@@ -707,7 +938,9 @@ var formatData = function(
         }
       }
     });
+    perfAccumulate('loop: per-reviewer progress + rating rollup', tBlock);
 
+    tBlock = perfNow();
     paperActionEditors.forEach(function(actionEditor) {
       var completedDecision = decisions.find(function(decision) { return decision.signatures[0].startsWith(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editor'); });
       var actionEditorStatus = actionEditorStatusById[actionEditor.id];
@@ -727,10 +960,11 @@ var formatData = function(
         });
         actionEditorStatus.decisionProgressData.papers.push({
           note: formattedSubmission,
-          metaReview: completedDecision && { id: completedDecision.id, forum: submission.id, content: { recommendation: completedDecision.content.recommendation.value }}
+          metaReview: completedDecision && { id: completedDecision.id, forum: submission.id, content: { recommendation: completedDecision.content?.recommendation?.value }}
         });
       }
     });
+    perfAccumulate('loop: per-action-editor progress rollup', tBlock);
 
     var metaReview = null;
     var decision = decisions.length > 0 ? decisions[0] : null;
@@ -739,14 +973,23 @@ var formatData = function(
         id: decision.id,
         forum: submission.id,
         content: {
-          recommendation: decision.content.recommendation.value,
-          certification: (decision.content.certifications && decision.content.certifications.value) || []
+          recommendation: decision.content?.recommendation?.value,
+          certification: (decision.content?.certifications && decision.content.certifications.value) || []
         }
       };
     }
 
     overdueTasks.concat(tasks.filter(function(inv) { return !inv.complete; }));
 
+    tBlock = perfNow();
+    var eicComments = submission.details.replies.filter(function(r) {
+      return r.readers.length == 1 && r.readers[0] == EDITORS_IN_CHIEF_ID;
+    }).sort(function(a, b) {
+      return a.tcdate - b.tcdate;
+    });
+    perfAccumulate('loop: EIC comments filter + sort', tBlock);
+
+    tBlock = perfNow();
     var aeActions = [UNDER_REVIEW_STATUS, SUBMITTED_STATUS, ASSIGNED_AE_STATUS, ASSIGNING_AE_STATUS].includes(submission.content.venueid.value) ? [
       {
         name: 'Edit Assignments',
@@ -817,15 +1060,16 @@ var formatData = function(
       },
       tasks: { invitations: tasks, forumId: submission.id },
       eicComments: {
-        comments: submission.details.replies.filter(function(r) {
-          return r.readers.length == 1 && r.readers[0] == EDITORS_IN_CHIEF_ID;
-        }).sort(function(a, b) {
-          return a.tcdate - b.tcdate;
-        })
+        comments: eicComments
       },
       status: submission.content.venue?.value
     });
+    perfAccumulate('loop: build paper status row (URLs, reminder data)', tBlock);
   });
+
+  donePhase(submissions.length + ' submissions');
+  perfReport('formatData: blocks accumulated across all submissions');
+  donePhase = perfStart('  formatData: per-tab row filters');
 
   var submittedStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === SUBMITTED_STATUS
@@ -868,6 +1112,9 @@ var formatData = function(
       || row.submission.content.venueid === DESK_REJECTED_STATUS;
   });
 
+  donePhase(paperStatusRows.length + ' rows filtered 10x');
+  donePhase = perfStart('  formatData: journal stats (author counts, task sorts)');
+
   // Generate journal stats for overview tab
   var journalStats = {
     numReviewers: reviewers.members.length,
@@ -897,7 +1144,9 @@ var formatData = function(
     ).slice(0, 20),
   };
 
-  return {
+  donePhase();
+
+  var formattedData = {
     submittedStatusRows: submittedStatusRows,
     submissionStatusRows: submissionStatusRows,
     underReviewStatusRows: underReviewStatusRows,
@@ -909,10 +1158,14 @@ var formatData = function(
     actionEditorStatusRows: Object.values(actionEditorStatusById),
     journalStats: journalStats,
   };
+
+  doneFormat(submissions.length + ' submissions');
+  return formattedData;
 };
 
 // Render functions
 var renderTable = function(container, rows) {
+  var doneRender = perfStart('  renderTable #' + container);
   Webfield2.ui.renderTable('#' + container, rows, {
     headings: [
       '<input type="checkbox" class="select-all-papers">',
@@ -946,8 +1199,8 @@ var renderTable = function(container, rows) {
           return (
             '<li class="mb-3">' +
               '<p class="text-muted mb-1">' + view.forumDate(c.tcdate) + ': </p>' +
-              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + (c.content.title?.value ?? 'Comment') + '</a></strong></p>' +
-              '<p style="word-break: break-word;">' + c.content.comment.value + '</p>' +
+              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + (c.content?.title?.value ?? 'Comment') + '</a></strong></p>' +
+              '<p style="word-break: break-word;">' + (c.content?.comment?.value ?? '') + '</p>' +
             '</li>'
           );
         });
@@ -1109,6 +1362,7 @@ var renderTable = function(container, rows) {
     },
     preferredEmailsInvitationId: PREFERRED_EMAILS_ID
   });
+  doneRender(rows.length + ' rows');
 };
 
 var renderOverviewTab = function(conferenceStats) {
@@ -1135,7 +1389,8 @@ var renderOverviewTab = function(conferenceStats) {
     return '';
   };
 
-  var renderCombinedTasksList = function(invPairs) {
+  var renderCombinedTasksList = function(invPairs, perfLabel) {
+    var doneList = perfStart('    renderCombinedTasksList: ' + perfLabel);
     var resultHtml = '';
     if (invPairs.length > 0) {
       resultHtml += '<ul class="list-unstyled submissions-list task-list eic-task-list mt-0 mb-0">'
@@ -1166,6 +1421,7 @@ var renderOverviewTab = function(conferenceStats) {
     } else {
       resultHtml += '<p class="empty-message mb-3">No tasks to complete.</p>';
     }
+    doneList(invPairs.length + ' entries, ' + resultHtml.length + ' chars of HTML');
     return resultHtml;
   }
 
@@ -1266,19 +1522,25 @@ var renderOverviewTab = function(conferenceStats) {
 
   html += '<div class="col-md-4 col-xs-6">';
   html += '<h4>Pending Editors-in-Chief Tasks:</h4>';
-  html += renderCombinedTasksList(conferenceStats.incompleteEicTasks);
+  html += renderCombinedTasksList(conferenceStats.incompleteEicTasks, 'pending EIC tasks');
 
   html += '<h4>Overdue Tasks:</h4>';
-  html += renderCombinedTasksList(conferenceStats.overdueTasks);
+  html += renderCombinedTasksList(conferenceStats.overdueTasks, 'overdue tasks');
   html += '</div>';
 
   html += '</div></div>';
 
+  var doneInsert = perfStart('    overview DOM insert');
   $('#overview').html(html);
+  doneInsert(html.length + ' chars of HTML');
 };
 
 var renderData = function(venueStatusData) {
+  var doneRenderAll = perfStart('renderData TOTAL');
+
+  var doneOverview = perfStart('  renderOverviewTab');
   renderOverviewTab(venueStatusData.journalStats);
+  doneOverview();
 
   renderTable('submitted', venueStatusData.submittedStatusRows);
   renderTable('under-review', venueStatusData.underReviewStatusRows);
@@ -1288,6 +1550,7 @@ var renderData = function(venueStatusData) {
   renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('all-submissions', venueStatusData.submissionStatusRows);
 
+  var doneReviewerTable = perfStart('  renderTable #reviewer-status');
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
     headings: ['#', 'Reviewer', 'Review Progress', 'Rating <span id="rating-info" class="glyphicon glyphicon-info-sign"></span>', 'Status'],
     renders: [
@@ -1361,7 +1624,9 @@ var renderData = function(venueStatusData) {
       });
     }
   });
+  doneReviewerTable(venueStatusData.reviewerStatusRows.length + ' rows');
 
+  var doneAeTable = perfStart('  renderTable #action-editor-status');
   Webfield2.ui.renderTable('#action-editor-status', venueStatusData.actionEditorStatusRows, {
     headings: ['#', 'Action Editor', 'Review Progress', 'Status'],
     renders: [
@@ -1389,7 +1654,9 @@ var renderData = function(venueStatusData) {
     extraClasses: 'console-table',
     pageSize: 10
   });
+  doneAeTable(venueStatusData.actionEditorStatusRows.length + ' rows');
 
+  doneRenderAll();
 };
 
 main();

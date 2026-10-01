@@ -44,6 +44,20 @@ def process(client, edit, invitation):
         if arr_submission_v1 and 'aclweb.org/ACL/ARR' in arr_submission_v1.invitation and not arr_submission_v1.invitation.endswith('Submission'):
             raise openreview.OpenReviewException('Provided paper link does not point to a blind submission. Make sure you get the url to your submission from the browser')
 
+        # Only authors of the previous ARR submission may link it: linking grants access to its reviews.
+        # The edit signature is the verified identity of the submitter; group signatures (paper authors, program chairs) are trusted.
+        signature = edit.signatures[0]
+        if signature.startswith('~'):
+            if arr_submission_v2:
+                author_submissions = client.get_notes(invitation=arr_submission_v2.invitations[0], content={'authorids': signature})
+                is_author = arr_submission_v2.id in [note.id for note in author_submissions]
+            else:
+                author_submissions = client_v1.get_notes(invitation=arr_submission_v1.invitation.replace('/-/Blind_Submission', '/-/Submission'), content={'authorids': signature})
+                is_author = (arr_submission_v1.original or arr_submission_v1.id) in [note.id for note in author_submissions]
+
+            if not is_author:
+                raise openreview.OpenReviewException('Provided previous URL does not correspond to an ARR submission you are an author of. Only authors of the previous submission can link it.')
+
         # If provided previous URL but left a reassignment request blank
         if (not editor_reassignment_request or not reviewer_reassignment_request):
             raise openreview.OpenReviewException('Since you are re-submitting, please indicate if you would like the same editors/reviewers as your indicated previous submission')
