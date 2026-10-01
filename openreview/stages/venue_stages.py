@@ -656,8 +656,8 @@ class SubmissionRevisionStage():
                                         'name': { 'param': { 'type': 'string' } },
                                         'domain': { 'param': { 'type': 'string' } },
                                         'country': { 'param': { 'type': 'string' } }
-                                    }
-                                }
+                                    },
+                                    'optional': True
                             }
                         }
                     }
