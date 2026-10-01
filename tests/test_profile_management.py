@@ -1684,25 +1684,28 @@ computation and memory.
 
     def test_import_acl_anthology_notes(self, client, openreview_client, test_client, helpers):
 
-        phuc_client = helpers.create_user('phuc@profile.org', 'Phuc', 'Nguyen')
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
 
-        ## what openreview.profile.acl_anthology.import_publications posts for an author's paper
-        edit = phuc_client.post_note_edit(
+        ## the ACL Anthology record for the paper already imported from DBLP earlier in this
+        ## file, which is how a publication ends up grouped under both sources on a profile
+        edit = andrew_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/ACL_Anthology.org/-/Record',
-            signatures = ['~Phuc_Nguyen1'],
+            signatures = ['~Andrew_McCallum1'],
             content = {
                 'json': {
                     'value': {
                         'id': '2023.acl-long.48',
-                        'bibkey': 'mccallum-etal-2023-example',
-                        'title': 'An Example Paper',
-                        'abstract': 'We present an example.',
+                        'bibkey': 'chang-etal-2023-multi',
+                        'title': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling',
+                        'abstract': 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint.',
                         'authors': [
-                            { 'first': 'Andrew', 'last': 'McCallum', 'full': 'Andrew McCallum', 'id': 'andrew-mccallum' },
-                            { 'first': 'Phuc', 'last': 'Nguyen', 'full': 'Phuc Nguyen', 'id': 'phuc-nguyen' }
+                            { 'first': 'Haw-Shiuan', 'last': 'Chang', 'full': 'Haw-Shiuan Chang', 'id': 'haw-shiuan-chang' },
+                            { 'first': 'Ruei-Yao', 'last': 'Sun', 'full': 'Ruei-Yao Sun', 'id': 'ruei-yao-sun' },
+                            { 'first': 'Kathryn', 'last': 'Ricci', 'full': 'Kathryn Ricci', 'id': 'kathryn-ricci' },
+                            { 'first': 'Andrew', 'last': 'McCallum', 'full': 'Andrew McCallum', 'id': 'andrew-mccallum' }
                         ],
                         'editors': [
-                            { 'first': 'Anna', 'last': 'Rogers', 'full': 'Anna Rogers' }
+                            { 'first': 'Anna', 'last': 'Rogers', 'full': 'Anna Rogers', 'id': 'anna-rogers' }
                         ],
                         'year': '2023',
                         'month': 'July',
@@ -1711,11 +1714,11 @@ computation and memory.
                         'booktitle': 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)',
                         'publisher': 'Association for Computational Linguistics',
                         'address': 'Toronto, Canada',
-                        'pages': '352-360',
+                        'pages': '821-854',
                         'doi': '10.18653/v1/2023.acl-long.48',
                         'url': 'https://aclanthology.org/2023.acl-long.48/',
                         'pdf': 'https://aclanthology.org/2023.acl-long.48.pdf',
-                        'bibtex': '@inproceedings{mccallum-etal-2023-example,\n    title = "An Example Paper"\n}'
+                        'bibtex': '@inproceedings{chang-etal-2023-multi,\n    title = "Multi-{CLS} {BERT}: An Efficient Alternative to Traditional Ensembling"\n}'
                     }
                 }
             },
@@ -1723,12 +1726,14 @@ computation and memory.
                 external_id = 'acl:2023.acl-long.48',
                 content = {
                     'title': {
-                        'value': 'An Example Paper'
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
                     },
                     'authors': {
                         'value': [
-                            {'fullname': 'Andrew McCallum', 'username': ''},
-                            {'fullname': 'Phuc Nguyen', 'username': '~Phuc_Nguyen1'}
+                            {'fullname': 'Haw-Shiuan Chang', 'username': ''},
+                            {'fullname': 'Ruei-Yao Sun', 'username': ''},
+                            {'fullname': 'Kathryn Ricci', 'username': ''},
+                            {'fullname': 'Andrew McCallum', 'username': '~Andrew_McCallum1'}
                         ]
                     },
                     'venue': {
@@ -1740,41 +1745,48 @@ computation and memory.
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
-        note = phuc_client.get_note(edit['note']['id'])
+        note = andrew_client.get_note(edit['note']['id'])
         assert note.invitations == ['openreview.net/Public_Article/ACL_Anthology.org/-/Record', 'openreview.net/Public_Article/-/Edit']
         assert note.external_ids == ['acl:2023.acl-long.48']
         assert note.pdate == openreview.tools.datetime_millis(datetime.datetime(2023, 7, 1))
-        assert note.content['title']['value'] == 'An Example Paper'
-        assert note.content['abstract']['value'] == 'We present an example.'
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['abstract']['value'].startswith('Ensembling BERT models')
         assert note.content['venue']['value'] == 'ACL 2023'
         assert note.content['venueid']['value'] == 'openreview.net/Public_Article'
         assert note.content['html']['value'] == 'https://aclanthology.org/2023.acl-long.48/'
         assert note.content['pdf']['value'] == 'https://aclanthology.org/2023.acl-long.48.pdf'
         assert '_bibtex' in note.content
 
-        ## the poster keeps the profile id they claimed, everybody else is linked to their Anthology page
+        ## the poster keeps the profile id they claimed, everybody else is linked to their
+        ## Anthology page. The names match the DBLP note, so a profile groups the two.
         assert note.content['authors']['value'] == [
-            {'fullname': 'Andrew McCallum', 'username': 'https://aclanthology.org/people/andrew-mccallum/'},
-            {'fullname': 'Phuc Nguyen', 'username': '~Phuc_Nguyen1'}
+            {'fullname': 'Haw-Shiuan Chang', 'username': 'https://aclanthology.org/people/haw-shiuan-chang/'},
+            {'fullname': 'Ruei-Yao Sun', 'username': 'https://aclanthology.org/people/ruei-yao-sun/'},
+            {'fullname': 'Kathryn Ricci', 'username': 'https://aclanthology.org/people/kathryn-ricci/'},
+            {'fullname': 'Andrew McCallum', 'username': '~Andrew_McCallum1'}
         ]
 
         ## an author can claim a publication imported from the Anthology
-        mccallum_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
-        edit = mccallum_client.post_note_edit(
+        haw_shiuan_client = openreview.api.OpenReviewClient(username='haw@profile.org', password=helpers.strong_password)
+        haw_shiuan_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
-            signatures = ['~Andrew_McCallum1'],
+            signatures = ['~Haw-Shiuan_Chang1'],
             content = {
                 'author_index': { 'value': 0 },
-                'author_id': { 'value': '~Andrew_McCallum1' },
-                'author_name': { 'value': 'Andrew McCallum' },
+                'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+                'author_name': { 'value': 'Haw-Shiuan Chang' },
             },
             note = openreview.api.Note(
                 id = note.id
             )
         )
 
-        note = phuc_client.get_note(note.id)
-        assert note.content['authors']['value'][0] == {'fullname': 'Andrew McCallum', 'username': '~Andrew_McCallum1'}
+        note = andrew_client.get_note(note.id)
+        assert note.content['authors']['value'][0] == {'fullname': 'Haw-Shiuan Chang', 'username': '~Haw-Shiuan_Chang1'}
+
+        ## the same publication is now on the profile from both sources
+        dblp_notes = openreview_client.get_notes(content={ 'authorids': '~Andrew_McCallum1' }, invitation='DBLP.org/-/Record')
+        assert any(n.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling' for n in dblp_notes)
 
 
     def test_remove_alternate_name(self, openreview_client, support_client, helpers):
