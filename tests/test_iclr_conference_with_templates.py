@@ -1229,7 +1229,7 @@ For more details, please check the following links:
         assert len(invitations) == 10
 
         inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission1/-/Institution_Revision')
-        assert any(field not in inv.edit['note']['content'] for field in ['title', 'authorids', 'abstract', 'TLDR', 'keywords', 'pdf', 'email_sharing', 'data_release'])
+        assert all(field not in inv.edit['note']['content'] for field in ['title', 'authorids', 'abstract', 'TLDR', 'keywords', 'pdf', 'email_sharing', 'data_release'])
         assert 'authors' in inv.edit['note']['content'] and inv.edit['note']['content']['authors'] == {
             "value": {
                 "param": {

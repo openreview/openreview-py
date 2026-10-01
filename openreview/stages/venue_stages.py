@@ -628,6 +628,8 @@ class SubmissionRevisionStage():
             if 'authorids' in content:
                 del content['authorids']
         elif self.allow_author_reorder == AuthorReorder.ALLOW_INSTITUTION_EDIT:
+            if not conference.submission_stage.unified_authors:
+                raise ValueError('ALLOW_INSTITUTION_EDIT requires unified authors')
             content['authors'] = {
                 'value': {
                     'param': {
