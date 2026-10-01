@@ -21,6 +21,11 @@ class TestSimpleDualAnonymous():
         helpers.create_user('areachair_two@iclr.cc', 'AC', 'ICLRTwo')
         helpers.create_user('senioractioneditor_one@iclr.cc', 'SAE', 'ICLROne', institution=['iclr.cc', 'smith.edu'])
         helpers.create_user('senioractioneditor_two@iclr.cc', 'SAE', 'ICLRTwo')
+        helpers.create_user('rejected_author@iclr.cc', 'Rejected', 'Author')
+
+        # Reject author profile
+        openreview_client.moderate_profile('~Rejected_Author1', 'reject')
+
         pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
@@ -1256,7 +1261,8 @@ For more details, please check the following links:
                                     'name': { 'param': { 'type': 'string' } },
                                     'domain': { 'param': { 'type': 'string' } },
                                     'country': { 'param': { 'type': 'string' } }
-                                }
+                                },
+                                'optional': True
                             }
                         }
                     }
