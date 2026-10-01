@@ -488,6 +488,7 @@ note={under review}
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Withdrawn_Submission')
 
         note = test_client.get_note(withdraw_note['note']['forum'])
         assert note
