@@ -37,23 +37,3 @@ def process(client, edit, invitation):
             }
         )
     )
-
-    # keep the domain in sync, the bibtex is generated from the flag stored there
-    reveal_authors_field = {
-        domain.get_content_value('withdrawn_submission_id'): 'withdrawn_submission_reveal_authors',
-        domain.get_content_value('desk_rejected_submission_id'): 'desk_rejected_submission_reveal_authors'
-    }.get(edit.invitation.id)
-
-    if reveal_authors_field:
-        client.post_group_edit(
-            invitation=meta_invitation_id,
-            signatures=[venue_id],
-            group=openreview.api.Group(
-                id=venue_id,
-                content={
-                    reveal_authors_field: {
-                        'value': reveal_authors
-                    }
-                }
-            )
-        )

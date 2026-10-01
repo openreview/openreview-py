@@ -4090,6 +4090,8 @@ Best,
         authors_accepted_group = openreview_client.get_group('V2.cc/2030/Conference/Authors/Accepted')
         assert 'V2.cc/2030/Conference/Submission1/Authors' not in authors_accepted_group.members
 
+        
+
         pc_openreview_client = openreview.api.OpenReviewClient(username='tom_venue@mail.com', password=helpers.strong_password)
 
         # reverse withdrawal

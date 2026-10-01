@@ -491,7 +491,7 @@ note={under review}
 
         note = test_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['ICLR.cc/2024/Conference/-/Submission', 'ICLR.cc/2024/Conference/-/Post_Submission', 'ICLR.cc/2024/Conference/-/Withdrawn_Submission']
+        assert note.invitations == ['ICLR.cc/2024/Conference/-/Submission', 'ICLR.cc/2024/Conference/-/Post_Submission', 'ICLR.cc/2024/Conference/-/Withdrawn_Submission', 'ICLR.cc/2024/Conference/-/Edit']
         assert note.readers == ['everyone']
         assert note.writers == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
         assert note.signatures == ['ICLR.cc/2024/Conference/Submission11/Authors']
@@ -532,7 +532,8 @@ note={under review}
         assert note
         assert note.invitations == ['ICLR.cc/2024/Conference/-/Submission', 
                                     'ICLR.cc/2024/Conference/-/Post_Submission', 
-                                    'ICLR.cc/2024/Conference/-/Withdrawn_Submission', 
+                                    'ICLR.cc/2024/Conference/-/Withdrawn_Submission',
+                                    'ICLR.cc/2024/Conference/-/Edit',
                                     'ICLR.cc/2024/Conference/-/Desk_Rejected_Submission']
         assert note.readers == [
             'ICLR.cc/2024/Conference/Program_Chairs', 
@@ -647,6 +648,7 @@ note={under review}
         assert note.invitations == ['ICLR.cc/2024/Conference/-/Submission', 
                                     'ICLR.cc/2024/Conference/-/Post_Submission', 
                                     'ICLR.cc/2024/Conference/-/Withdrawn_Submission', 
+                                    'ICLR.cc/2024/Conference/-/Edit',
                                     'ICLR.cc/2024/Conference/-/Desk_Rejected_Submission']
         assert note.readers == ['everyone']
         assert note.writers == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']

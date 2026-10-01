@@ -731,7 +731,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交']
+        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交', 'TestVenue.cc/-/Edit']
         assert note.readers == ['everyone']
         assert note.writers == ['TestVenue.cc', 'TestVenue.cc/提交2/Authors']
         assert note.signatures == ['TestVenue.cc/提交2/Authors']
@@ -805,7 +805,7 @@ Please note that responding to this email will direct your reply to testvenue@co
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交']
+        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交', 'TestVenue.cc/-/Edit']
         assert note.content['venue']['value'] == 'TestVenue 提交'
         assert note.content['venueid']['value'] == 'TestVenue.cc/提交'
 
@@ -834,7 +834,7 @@ Please note that responding to this email will direct your reply to testvenue@co
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交', 'TestVenue.cc/-/Desk_Rejected_提交']
+        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交', 'TestVenue.cc/-/Edit', 'TestVenue.cc/-/Desk_Rejected_提交']
         assert note.readers == ['everyone']
         assert note.writers == ['TestVenue.cc', 'TestVenue.cc/提交2/Authors']
         assert note.signatures == ['TestVenue.cc/提交2/Authors']
@@ -897,7 +897,7 @@ Please note that responding to this email will direct your reply to testvenue@co
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交', 'TestVenue.cc/-/Desk_Rejected_提交']
+        assert note.invitations == ['TestVenue.cc/-/提交', 'TestVenue.cc/-/Post_提交', 'TestVenue.cc/-/Withdrawn_提交', 'TestVenue.cc/-/Edit', 'TestVenue.cc/-/Desk_Rejected_提交']
         assert note.content['venue']['value'] == 'TestVenue 提交'
         assert note.content['venueid']['value'] == 'TestVenue.cc/提交'
 

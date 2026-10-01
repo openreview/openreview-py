@@ -1669,9 +1669,6 @@ note={under review}
             }
         )
 
-        domain = openreview_client.get_group('ICLR.cc/2026/Conference')
-        assert domain.content['withdrawn_submission_reveal_authors']['value'] == False
-
         reveal_edit = pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Withdrawn_Submission/Reveal_Authors',
             content={
@@ -1683,10 +1680,6 @@ note={under review}
         withdrawn_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Withdrawn_Submission')
         assert withdrawn_invitation.edit['note']['readers'] == ['everyone']
         assert withdrawn_invitation.edit['note']['content']['authors']['readers'] == { 'param': { 'const': { 'delete': True } } }
-
-        # the Reveal_Authors invitation also updates the flag stored in the domain
-        domain = openreview_client.get_group('ICLR.cc/2026/Conference')
-        assert domain.content['withdrawn_submission_reveal_authors']['value'] == True
 
         withdraw_note = test_client.post_note_edit(invitation='ICLR.cc/2026/Conference/Submission10/-/Withdrawal',
                                     signatures=['ICLR.cc/2026/Conference/Submission10/Authors'],
@@ -1766,9 +1759,6 @@ note={under review}
             }
         )
 
-        domain = openreview_client.get_group('ICLR.cc/2026/Conference')
-        assert domain.content['desk_rejected_submission_reveal_authors']['value'] == False
-
         reveal_edit = pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Desk_Rejected_Submission/Reveal_Authors',
             content={
@@ -1780,10 +1770,6 @@ note={under review}
         desk_rejected_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Desk_Rejected_Submission')
         assert desk_rejected_invitation.edit['note']['readers'] == ['everyone']
         assert desk_rejected_invitation.edit['note']['content']['authors']['readers'] == { 'param': { 'const': { 'delete': True } } }
-
-        # the Reveal_Authors invitation also updates the flag stored in the domain
-        domain = openreview_client.get_group('ICLR.cc/2026/Conference')
-        assert domain.content['desk_rejected_submission_reveal_authors']['value'] == True
 
         # desk-reject a paper
         desk_reject_note = pc_client.post_note_edit(invitation='ICLR.cc/2026/Conference/Submission10/-/Desk_Rejection',
