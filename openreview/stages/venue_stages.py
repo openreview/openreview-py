@@ -658,6 +658,7 @@ class SubmissionRevisionStage():
                                         'country': { 'param': { 'type': 'string' } }
                                     },
                                     'optional': True
+                                }
                             }
                         }
                     }
