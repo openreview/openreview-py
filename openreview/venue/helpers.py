@@ -62,7 +62,7 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
     submission_invitation = client.get_invitation(f'{venue.id}/-/{submission_name}')
     venue.submission_stage = stages.SubmissionStage(
-        name=domain.content.get('submission_name', {}).get('value', 'Submission'),
+        name=submission_name,
         unified_authors='authorids' not in submission_invitation.edit['note']['content']
     )
     return venue
