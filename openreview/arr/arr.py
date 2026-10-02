@@ -1069,7 +1069,7 @@ class ARR(object):
                 )            
             )    
 
-        def create_readers_group(submission, original_submission):
+        def create_readers_group(submission, commitment_submission):
             domain = submission.domain
 
             commitment_readers_group_id = f'{domain}/Submission{submission.number}/Commitment_Readers'
@@ -1078,7 +1078,7 @@ class ARR(object):
 
             members_to_add = [venue_id]
             for additional_reader in additional_readers:
-                members_to_add.append(f'{venue_id}/Submission{original_submission.number}/{additional_reader}')
+                members_to_add.append(f'{venue_id}/Submission{commitment_submission.number}/{additional_reader}')
 
             if commitment_readers_group:
                 if not set(members_to_add).issubset(set(commitment_readers_group.members)):
@@ -1144,14 +1144,14 @@ class ARR(object):
                     if invitation_reply_id in reply.invitations[0]:
                         add_readers_to_note(reply, [commitment_readers_group_id])
 
-        def process_previous_url(arr_submission):
+        def process_previous_url(arr_submission, commitment_submission):
             previous_url = arr_submission.content.get('previous_URL', {}).get('value')
             if previous_url:
                 try:
                     previous_url_id = previous_url.split('=')[-1]
                     previous_url_submission = openreview.tools.get_note(client, previous_url_id)
                     if previous_url_submission:
-                        create_readers_group(previous_url_submission, arr_submission)
+                        create_readers_group(previous_url_submission, commitment_submission)
                         add_readers_to_arr_submission(previous_url_submission)
                 except openreview.OpenReviewException as e:
                     print(f"Error retrieving note for previous_URL: {e}. This note may not be an API 2 note or may not exist.")
@@ -1176,7 +1176,7 @@ class ARR(object):
                     create_readers_group(arr_submission, note)
                     add_readers_to_arr_submission(arr_submission)
                     if get_previous_url_submission:  # Trigger process_previous_url if the parameter is True
-                        process_previous_url(arr_submission)
+                        process_previous_url(arr_submission, note)
                     return True
             return False
 
