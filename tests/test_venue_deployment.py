@@ -359,8 +359,23 @@ class TestVenueDeployment():
         helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Withdrawal-0-1', count=1)
 
         assert openreview.tools.get_group(openreview_client, venue_id)
-        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Withdrawal').date_processes
-        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Preferred_Emails').date_processes
+
+        # the venue's date processes sweep every submission or committee member at once, so they
+        # declare the maximum timeout the API accepts and the server must store it as posted
+        withdrawal_invitation = openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Withdrawal')
+        assert withdrawal_invitation.date_processes
+        assert withdrawal_invitation.date_processes[0]['timeout'] == openreview.tools.MAX_PROCESS_TIMEOUT
+
+        # Preferred_Emails is short-running and declares no timeout on either of its entries; the
+        # server must store them as posted and not fill in a default
+        preferred_emails_invitation = openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Preferred_Emails')
+        assert preferred_emails_invitation.date_processes
+        assert not any('timeout' in p for p in preferred_emails_invitation.date_processes)
+
+        # group building date processes carry it too
+        reviewer_group_invitation = openreview.tools.get_invitation(openreview_client, f'{venue_id}/Reviewers/-/Submission_Group')
+        assert reviewer_group_invitation.date_processes
+        assert reviewer_group_invitation.date_processes[0]['timeout'] == openreview.tools.MAX_PROCESS_TIMEOUT
 
         # Schedule the Withdrawal cdate date process (-0-0) to run a few minutes from now,
         # so it is still a pending (in-flight) job when we rename. This lets us verify the
@@ -414,6 +429,10 @@ class TestVenueDeployment():
         renamed_preferred_emails = openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Preferred_Emails')
         assert renamed_preferred_emails
         assert renamed_preferred_emails.date_processes
+
+        # the rename re-schedules the date processes under the new domain, timeout included
+        renamed_withdrawal = openreview.tools.get_invitation(openreview_client, f'{renamed_venue_id}/-/Withdrawal')
+        assert renamed_withdrawal.date_processes[0]['timeout'] == openreview.tools.MAX_PROCESS_TIMEOUT
 
         # 4. nothing must be left pointing at the old domain: the invitation is gone and
         #    no process logs remain under the old name (they were moved to the new domain)

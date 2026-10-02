@@ -48,6 +48,22 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
 
+        ## The date process almost every stage invitation runs: re-stamp the sub-invitations when
+        ## the stage's cdate is reached and again shortly after any edit to the stage itself. Shared
+        ## by reference across invitations, so it must never be mutated in place.
+        self.invitation_edit_date_process = {
+            'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+            'script': self.invitation_edit_process,
+            'timeout': tools.MAX_PROCESS_TIMEOUT
+        }
+
+        ## Same thing for the invitations that rebuild groups instead of invitations.
+        self.group_edit_date_process = {
+            'dates': ["#{4/cdate}", self.update_date_string],
+            'script': self.group_edit_process,
+            'timeout': tools.MAX_PROCESS_TIMEOUT
+        }
+
     def _should_update_meta_invitation(self, invitation):
         if 'invitation_edit_script' not in invitation.content or 'group_edit_script' not in invitation.content:
             return True
@@ -285,10 +301,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=deletion_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content={
                 'deletion_process_script': {
                     'value': self.get_process_content('process/submission_deletion_process.py')
@@ -438,7 +451,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             cdate=post_submission_cdate,
             date_processes=[{
                 'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.get_process_content('process/post_submission_process.py')
+                'script': self.get_process_content('process/post_submission_process.py'),
+                'timeout': tools.MAX_PROCESS_TIMEOUT
             }],
             content = {
                 'source': {
@@ -585,10 +599,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=review_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content={
                 'source': {
                     'value': review_stage.get_submission_source(self.venue)
@@ -929,10 +940,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=review_rebuttal_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content = {
                 'review_rebuttal_process_script': {
                     'value': self.get_process_content('process/review_rebuttal_process.py')
@@ -1088,10 +1096,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=meta_review_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content = {
                 'source': {
                     'value': {
@@ -1265,10 +1270,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers=[venue_id],
                 signatures=[venue_id],
                 cdate=meta_review_cdate,
-                date_processes=[{
-                    'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                    'script': self.invitation_edit_process
-                }],
+                date_processes=[self.invitation_edit_date_process],
                 content = {
                     'source': {
                         'value': {
@@ -1642,10 +1644,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content={
                 'comment_preprocess_script': {
                     'value': self.get_process_content(comment_stage.preprocess_path)
@@ -1814,10 +1813,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content={
                 'comment_process_script': {
                     'value': self.get_process_content('process/comment_process.py')
@@ -1977,10 +1973,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content={
                 'chat_process_script': {
                     'value': self.get_process_content('process/chat_comment_process.py')
@@ -2116,10 +2109,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content={
                 'source': {
                     'value': {
@@ -2215,10 +2205,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=decision_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content={
                 'decision_process_script': {
                     'value': self.get_process_content('process/decision_process.py')
@@ -2356,7 +2343,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             cdate=cdate,
             date_processes=[{
                 'dates': [self.update_date_string],
-                'script': self.invitation_edit_process
+                'script': self.invitation_edit_process,
+                'timeout': tools.MAX_PROCESS_TIMEOUT
             }],
             content={
                 'process_script': {
@@ -2424,10 +2412,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         if cdate:
             invitation.edit['invitation']['cdate'] = cdate
-            invitation.date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }]
+            invitation.date_processes=[self.invitation_edit_date_process]
 
         if self.venue.is_template_related_workflow():
             invitation.description = 'Configure the time frame during which authors can withdraw their submission.'
@@ -2670,7 +2655,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             cdate=cdate,
             date_processes=[{
                 'dates': [self.update_date_string],
-                'script': self.invitation_edit_process
+                'script': self.invitation_edit_process,
+                'timeout': tools.MAX_PROCESS_TIMEOUT
             }],
             content={
                 'process_script': {
@@ -2736,10 +2722,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         if cdate:
             invitation.edit['invitation']['cdate'] = cdate
-            invitation.date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }]
+            invitation.date_processes=[self.invitation_edit_date_process]
 
         if self.venue.is_template_related_workflow():
             invitation.description = 'Configure the time frame during which program organizers can desk-reject submissions.'
@@ -2955,10 +2938,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=revision_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content={
                 'revision_process_script': {
                     'value': self.get_process_content('process/submission_revision_process.py')
@@ -3172,10 +3152,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=custom_stage_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content = invitation_content,
             edit={
                 'signatures': [venue_id],
@@ -3840,10 +3817,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            date_processes=[{
-                'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.group_edit_process
-            }],
+            date_processes=[self.group_edit_date_process],
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -3903,10 +3877,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            date_processes=[{
-                'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.group_edit_process
-            }],
+            date_processes=[self.group_edit_date_process],
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -3963,10 +3934,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            date_processes=[{
-                'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.group_edit_process
-            }],
+            date_processes=[self.group_edit_date_process],
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -4021,10 +3989,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=tools.datetime_millis(datetime.datetime.now()),
-            date_processes=[{
-                'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.group_edit_process
-            }],
+            date_processes=[self.group_edit_date_process],
             content = {
                 'source': {
                     'value': {
@@ -4090,10 +4055,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             writers=[venue_id],
             signatures=[venue_id],
             cdate=ethics_review_cdate,
-            date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-            }],
+            date_processes=[self.invitation_edit_date_process],
             content={
                 'source': {
                     'value': {
@@ -4290,10 +4252,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers=[venue_id],
                 signatures=[venue_id],
                 cdate=cdate,
-                date_processes=[{
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process
-                }],
+                date_processes=[self.invitation_edit_date_process],
                 content={
                     'sac_ethics_flag_script': {
                         'value': self.get_process_content('process/sac_ethics_flag_process.py')
@@ -4716,10 +4675,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers=[venue_id],
                 signatures=[venue_id],                                
                 cdate=cdate,
-                date_processes=[{
-                    'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                    'script': self.invitation_edit_process
-                }],
+                date_processes=[self.invitation_edit_date_process],
                 edit={
                     'signatures': [venue_id],
                     'readers': [venue_id],
@@ -4784,10 +4740,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers=[venue_id],
                 signatures=[venue_id],                                
                 cdate=cdate,
-                date_processes=[{
-                    'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                    'script': self.invitation_edit_process
-                }],
+                date_processes=[self.invitation_edit_date_process],
                 edit={
                     'signatures': [venue_id],
                     'readers': [venue_id],
@@ -4978,11 +4931,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             type='Edge',
             date_processes=[{
                 'dates': ['#{4/cdate} + 10000'],
-                'script': process_function
+                'script': process_function,
+                'timeout': tools.MAX_PROCESS_TIMEOUT
             }, 
             {
                 'cron': "0 0 * * *",
-                'script': process_function
+                'script': process_function,
+                'timeout': tools.MAX_PROCESS_TIMEOUT
             }],
             edit={
                 'id': {
@@ -5364,7 +5319,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             date_processes = [{
                 'dates': ["#{4/cdate}", self.update_date_string],
-                    'script': self.get_process_content('../venue/process/post_submission_process.py')
+                'script': self.get_process_content('../venue/process/post_submission_process.py'),
+                'timeout': tools.MAX_PROCESS_TIMEOUT
             }],
             edit = {
                 'signatures': [venue_id],
