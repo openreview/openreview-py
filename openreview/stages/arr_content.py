@@ -114,6 +114,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "type": "profile{}",
+                "optional": True,
                 "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})"
             }
         }
@@ -213,7 +214,7 @@ arr_submission_content = {
                 "enum": iso_639_1_languages
             }
         },
-        "description": "Please select the **natural languages** (not programming languages!) studied in your submission. This form supports languages in the ISO 639-1 standard.",
+        "description": "Please select the **human languages** (not formal/programming languages!) studied in your submission. This form supports languages in the ISO 639-3 standard.",
         "order": 12
     },
     "other_languages": {
@@ -223,7 +224,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "If a **natural** language studied in your submission is not listed above, list it here. This does NOT refer to programming languages.",
+        "description": "If a **human** language studied in your submission is not listed above, list it here. This does NOT refer to formal languages.",
         "order": 13
     },
     "previous_URL": {
