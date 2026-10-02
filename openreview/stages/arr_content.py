@@ -322,7 +322,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "type": "file",
-                "maxSize": 200,
+                "maxSize": 50,
                 "optional": True,
                 "extensions": [
                     "tgz",
@@ -353,7 +353,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "type": "file",
-                "maxSize": 50,
+                "maxSize": 200,
                 "extensions": [
                     "tgz",
                     "zip"
