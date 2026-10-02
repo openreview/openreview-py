@@ -17,6 +17,7 @@ class ProfileManagement():
         self.dblp_group_id = f'{self.public_article_group_id}/DBLP.org'
         self.arxiv_group_id = f'{self.public_article_group_id}/arXiv.org'
         self.orcid_group_id = f'{self.public_article_group_id}/ORCID.org'
+        self.acl_group_id = f'{self.public_article_group_id}/ACL_Anthology.org'
 
 
     def setup(self):
@@ -30,6 +31,7 @@ class ProfileManagement():
         self.set_deprecated_dblp_ivitations()
         self.set_arxiv_invitations()
         self.set_orcid_invitations()
+        self.set_acl_invitations()
         self.set_anonymous_preprint_invitations()
         self.set_news_article_invitations()
 
@@ -255,8 +257,8 @@ return {
             signatures = [self.super_user],
             invitation = openreview.api.Invitation(
                 id=self.public_article_meta_invitation_id,
-                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
-                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
+                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.acl_group_id, self.support_group_id],
+                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.acl_group_id, self.support_group_id],
                 signatures=[self.public_article_group_id],
                 edit=True
             )
@@ -273,7 +275,7 @@ return {
                 readers=['everyone'],
                 writers=[self.public_article_group_id],
                 signatures=[self.public_article_group_id],
-                invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.support_group_id],
+                invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.acl_group_id, self.support_group_id],
                 preprocess=self.get_process_content('process/author_coreference_pre_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -284,7 +286,8 @@ return {
                                 { 'value': self.support_group_id, 'optional': True },
                                 { 'value': self.dblp_group_id, 'optional': True },
                                 { 'value': self.arxiv_group_id, 'optional': True },
-                                { 'value': self.orcid_group_id, 'optional': True }
+                                { 'value': self.orcid_group_id, 'optional': True },
+                                { 'value': self.acl_group_id, 'optional': True }
                             ]
                         } 
                     },
@@ -360,7 +363,7 @@ return {
                 readers=['everyone'],
                 writers=[self.public_article_group_id],
                 signatures=[self.public_article_group_id],
-                invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.support_group_id],
+                invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.acl_group_id, self.support_group_id],
                 preprocess=self.get_process_content('process/author_removal_pre_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -371,7 +374,8 @@ return {
                                 { 'value': self.support_group_id, 'optional': True },
                                 { 'value': self.dblp_group_id, 'optional': True },
                                 { 'value': self.arxiv_group_id, 'optional': True },
-                                { 'value': self.orcid_group_id, 'optional': True }
+                                { 'value': self.orcid_group_id, 'optional': True },
+                                { 'value': self.acl_group_id, 'optional': True }
                             ]
                         }
                     },
@@ -1440,6 +1444,143 @@ return {
             )
         )    
     
+    def set_acl_invitations(self):
+
+        acl_uploader_group_id = f'{self.acl_group_id}/Uploader'
+
+        acl_group = openreview.tools.get_group(self.client, self.acl_group_id)
+        if acl_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.support_group_id],
+                group = openreview.api.Group(
+                    id = self.acl_group_id,
+                    readers = ['everyone'],
+                    writers = [self.acl_group_id],
+                    nonreaders = [],
+                    signatures = [self.support_group_id],
+                    signatories = [self.acl_group_id],
+                    members = []
+                )
+            )
+
+        acl_uploader_group = openreview.tools.get_group(self.client, acl_uploader_group_id)
+        if acl_uploader_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.acl_group_id],
+                group = openreview.api.Group(
+                    id = acl_uploader_group_id,
+                    readers = [acl_uploader_group_id],
+                    writers = [self.acl_group_id],
+                    nonreaders = [],
+                    signatures = [self.acl_group_id],
+                    signatories = [self.acl_group_id],
+                    members = []
+                )
+            )
+
+        record_invitation_id = f'{self.acl_group_id}/-/Record'
+
+        ## no Abstract invitation and no abstract extraction process: the Anthology
+        ## gives the abstract with the record
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.acl_group_id],
+            replacement=True,
+            invitation = openreview.api.Invitation(
+                id=record_invitation_id,
+                readers=['everyone'],
+                writers=[self.acl_group_id],
+                signatures=[self.acl_group_id],
+                invitees=['~'],
+                post_processes=[
+                    {
+                        'script': self.get_process_content('process/acl_record_process.js'),
+                    }
+                ],
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': {
+                        'param': {
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': acl_uploader_group_id, 'optional': True }
+                            ]
+                        }
+                    },
+                    'writers':  [acl_uploader_group_id],
+                    'content': {
+                        'json': {
+                            'value': {
+                                'param': {
+                                    'type': 'json',
+                                    'input': 'textarea',
+                                }
+                            }
+                        }
+                    },
+                    'note': {
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '~', self.acl_group_id, self.support_group_id],
+                        'license': 'CC BY-SA 4.0',
+                        'externalId': {
+                            'param': {
+                                'regex': 'acl:.*'
+                            }
+                        },
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'description': 'Authors of paper.',
+                                'value': {
+                                    'param': {
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                        },
+                                    }
+                                }
+                            },
+                            'venue': {
+                                'order': 3,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': self.public_article_group_id,
+                                        'hidden': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
     def set_remove_name_invitations(self):
 
         content = {
