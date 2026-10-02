@@ -1796,6 +1796,7 @@ For more details, please check the following links:
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Reviewers_Assignment_Deployment-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2026/Conference/-/Submission_Change_Before_Reviewing-0-1', count=3)
 
         grouped_edges = openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Reviewers/-/Assignment', groupby='id')
         assert len(grouped_edges) == 10
