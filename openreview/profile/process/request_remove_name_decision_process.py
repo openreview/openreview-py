@@ -223,6 +223,55 @@ The OpenReview Team.
                                 )
                             )
 
+                    elif 'param' in inv_authors_value:
+                        author_object_username_enum = inv_authors_value.get('param', {}).get('properties', {}).get('username', {}).get('param', {}).get('enum', [])
+                        author_object_fullname_enum = inv_authors_value.get('param', {}).get('properties', {}).get('fullname', {}).get('param', {}).get('enum', [])
+
+                        if author_object_username_enum and username in author_object_username_enum:
+
+                            new_usernames = []
+                            new_fullnames = []
+                            for name, profile_id in zip(author_object_fullname_enum, author_object_username_enum):
+                                if profile_id == username:
+                                    new_usernames.append(preferred_id)
+                                    new_fullnames.append(preferred_name)
+                                    needs_change = True
+                                else:
+                                    new_usernames.append(profile_id)
+                                    new_fullnames.append(name)
+
+                            print('Updating invitation', invitation.id)
+                            authors_param = invitation.edit['note']['content']['authors']['value']['param']
+                            authors_param['minItems'] = len(new_usernames)
+                            authors_param['maxItems'] = len(new_usernames)
+                            authors_param['properties']['fullname']['param']['enum'] = new_fullnames
+                            authors_param['properties']['username']['param']['enum'] = new_usernames
+                            client.post_invitation_edit(
+                                invitations = publication.domain + '/-/Edit',
+                                readers = [publication.domain],
+                                signatures = [SUPPORT_USER_ID],
+                                content = {
+                                    "origin": {
+                                        "value": "remove name process function",
+                                        "readers": [SUPPORT_USER_ID]
+                                    },
+                                },
+                                invitation = openreview.api.Invitation(
+                                    id=invitation.id,
+                                    edit={
+                                        'note': {
+                                            'content': {
+                                                'authors': {
+                                                    'value': {
+                                                        'param': authors_param
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                )
+                            )
+
         print('Change all the notes that contain the name to remove as signatures')
         signed_notes = client_v1.get_all_notes(signature=username)
         for note in signed_notes:

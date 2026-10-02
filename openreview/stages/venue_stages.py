@@ -38,7 +38,7 @@ class AuthorReorder(Enum):
         ALLOW_REORDER = 0
         ALLOW_EDIT = 1
         DISALLOW_EDIT = 2
-
+        ALLOW_INSTITUTION_EDIT = 3
 
 class SubmissionType(Enum):
     ACTIVE = 0
@@ -627,6 +627,40 @@ class SubmissionRevisionStage():
                 del content['authors']
             if 'authorids' in content:
                 del content['authorids']
+        elif self.allow_author_reorder == AuthorReorder.ALLOW_INSTITUTION_EDIT:
+            content['authors'] = {
+                'value': {
+                    'param': {
+                        'type': 'author{}',
+                        'minItems': '${{8/content/noteId/value}/content/authors/value/length}',
+                        'maxItems': '${{8/content/noteId/value}/content/authors/value/length}',
+                        'properties': {
+                            'fullname': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['${...{12/content/noteId/value}/content/authors/value/*/fullname}']
+                                }
+                            },
+                            'username': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['${...{12/content/noteId/value}/content/authors/value/*/username}']
+                                }
+                            },
+                            'institutions': {
+                                'param': {
+                                    'type': 'object{}',
+                                    'properties': {
+                                        'name': { 'param': { 'type': 'string' } },
+                                        'domain': { 'param': { 'type': 'string' } },
+                                        'country': { 'param': { 'type': 'string' } }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
