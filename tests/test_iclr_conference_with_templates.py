@@ -1156,6 +1156,11 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=2)
 
+        # the paper SAC groups are not anonymous, so there are no deanonymizers to configure
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Submission_Group/Deanonymizers')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Area_Chairs/-/Submission_Group/Deanonymizers')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group/Deanonymizers')
+
         submission_groups = openreview_client.get_all_groups(prefix='ICLR.cc/2026/Conference/Submission')
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
         assert len(reviewer_groups) == 10
@@ -1163,6 +1168,38 @@ For more details, please check the following links:
         assert len(area_chair_groups) == 10
         senior_area_chair_groups = [group for group in submission_groups if group.id.endswith('/Senior_Area_Chairs')]
         assert len(senior_area_chair_groups) == 10
+
+        # the program chairs and the assigned committee members can see each other's identities
+        paper_committee = [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Reviewers'
+        ]
+
+        group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Reviewers')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Reviewers'
+        ]
+        assert group.deanonymizers == ['ICLR.cc/2026/Conference'] + paper_committee
+        assert group.writers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Area_Chairs'
+        ]
+        assert group.nonreaders == ['ICLR.cc/2026/Conference/Submission2/Authors']
+
+        group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Area_Chairs')
+        assert group.readers == ['ICLR.cc/2026/Conference'] + paper_committee
+        assert group.deanonymizers == ['ICLR.cc/2026/Conference'] + paper_committee
+        assert group.nonreaders == ['ICLR.cc/2026/Conference/Submission2/Authors']
+
+        group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs')
+        assert group.readers == ['ICLR.cc/2026/Conference'] + paper_committee
+        assert group.nonreaders == ['ICLR.cc/2026/Conference/Submission2/Authors']
 
     def test_ac_assignments(self, client, openreview_client, helpers):
 
@@ -1257,6 +1294,17 @@ For more details, please check the following links:
         assert group.members == ['~AC_ICLROne1']
         group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs')
         assert group.members == ['~SAE_ICLROne1']
+
+        # the assigned SAC can see the paper SAC group and the identity of the assigned AC
+        sac_client = openreview.api.OpenReviewClient(username='senioractioneditor_one@iclr.cc', password=helpers.strong_password)
+        assert sac_client.get_group('ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs').members == ['~SAE_ICLROne1']
+        anon_area_chairs = sac_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission2/Area_Chair_')
+        assert len(anon_area_chairs) == 1
+        assert anon_area_chairs[0].members == ['~AC_ICLROne1']
+
+        # the assigned AC can see the identity of the assigned SAC
+        ac_client = openreview.api.OpenReviewClient(username='areachair_one@iclr.cc', password=helpers.strong_password)
+        assert ac_client.get_group('ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs').members == ['~SAE_ICLROne1']
 
     def test_reviewer_assignments(self, client, openreview_client, helpers):
 
@@ -1358,6 +1406,13 @@ For more details, please check the following links:
         # the paper reviewer groups are populated with the assigned reviewers
         group = openreview_client.get_group('ICLR.cc/2026/Conference/Submission2/Reviewers')
         assert set(group.members) == {'~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'}
+
+        # the assigned SAC and AC can see the identities of the assigned reviewers
+        for username in ['senioractioneditor_one@iclr.cc', 'areachair_one@iclr.cc']:
+            committee_client = openreview.api.OpenReviewClient(username=username, password=helpers.strong_password)
+            anon_reviewers = committee_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission2/Reviewer_')
+            assert len(anon_reviewers) == 3
+            assert {anon_reviewer.members[0] for anon_reviewer in anon_reviewers} == {'~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'}
 
     def test_review_stage(self, client, openreview_client, helpers):
 

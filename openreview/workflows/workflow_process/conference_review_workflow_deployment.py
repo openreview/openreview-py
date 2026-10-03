@@ -10,6 +10,17 @@ def process(client, edit, invitation):
     venue = openreview.venue.Venue(client, venue_id, support_user=support_user)
     venue.set_main_settings(note)
 
+    # the program chairs and the assigned committee members of a submission can see each other's identities
+    identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS]
+    if venue.use_senior_area_chairs:
+        identity_readers.append(openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED)
+    if venue.use_area_chairs:
+        identity_readers.append(openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED)
+    identity_readers.append(openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED)
+    venue.reviewer_identity_readers = identity_readers
+    venue.area_chair_identity_readers = identity_readers
+    venue.senior_area_chair_identity_readers = identity_readers
+
     submission_cdate = datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000)
     submission_duedate = datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000)
 
