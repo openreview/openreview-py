@@ -348,7 +348,7 @@ To view the submission, click here: https://openreview.net/forum?id={submission_
 
 author_official_recommendation_starts_email_template = '''Hi {{{{fullname}}}},
 
-The discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.
+This email is to let you know that the reviewers for your {short_name} submission, "{submission_number}: {submission_title}", are now asked to submit their official recommendation within the next {recommendation_period_length} weeks ({recommendation_duedate}). They have received a separate email from us, informing them of this task. Subsequent to that, the AE will be asked to make a decision, following which the Editors-in-Chief will iterate with the AE if necessary on the decision.
 
 The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.
