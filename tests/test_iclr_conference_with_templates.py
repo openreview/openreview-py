@@ -432,8 +432,39 @@ For more details, please check the following links:
         full_submission_inv = openreview_client.get_invitation(id='ICLR.cc/2026/Conference/-/Full_Submission')
         content = full_submission_inv.edit['invitation']['edit']['note']['content']
 
-        # by default the authors field is locked so authors can only be re-ordered, not added or removed
-        assert content['authors']['value'] == ['${{4/id}/content/authors/value}']
+        # by default the authors field is locked so authors can only be re-ordered as well as institutions
+        assert 'authors' in content and content['authors']['value'] == {
+            "param": {
+                "type": "author{}",
+                "minItems": '${{3/id}/content/authors/value/length}',
+                "maxItems": '${{3/id}/content/authors/value/length}',
+                "properties": {
+                    "fullname": {
+                        "param": {
+                            "type": "string",
+                            "enum": ['${...{5/id}/content/authors/value/*/fullname}']
+                        }
+                    },
+                    "username": {
+                        "param": {
+                            "type": "string",
+                            "enum": ['${...{5/id}/content/authors/value/*/username}']
+                        }
+                    },
+                    "institutions": {
+                        "param": {
+                            "type": "object{}",
+                            "properties": {
+                                'name': { 'param': { 'type': 'string' } },
+                                'domain': { 'param': { 'type': 'string' } },
+                                'country': { 'param': { 'type': 'string' } }
+                            },
+                            'optional': True
+                        }
+                    }
+                }
+            }
+        }
 
         # make sure pdfs remain hidden when authors post revisions
         content['pdf']['readers'] = [
@@ -3094,7 +3125,43 @@ note={under review}
         pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
-        assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Camera_Ready_Revision')
+        camera_ready_inv = openreview_client.get_invitation(id='ICLR.cc/2026/Conference/-/Camera_Ready_Revision')
+        content = camera_ready_inv.edit['invitation']['edit']['note']['content']
+
+        # by default the authors field is locked so authors can only be re-ordered as well as institutions
+        assert 'authors' in content and content['authors']['value'] == {
+            "param": {
+                "type": "author{}",
+                "minItems": '${{3/id}/content/authors/value/length}',
+                "maxItems": '${{3/id}/content/authors/value/length}',
+                "properties": {
+                    "fullname": {
+                        "param": {
+                            "type": "string",
+                            "enum": ['${...{5/id}/content/authors/value/*/fullname}']
+                        }
+                    },
+                    "username": {
+                        "param": {
+                            "type": "string",
+                            "enum": ['${...{5/id}/content/authors/value/*/username}']
+                        }
+                    },
+                    "institutions": {
+                        "param": {
+                            "type": "object{}",
+                            "properties": {
+                                'name': { 'param': { 'type': 'string' } },
+                                'domain': { 'param': { 'type': 'string' } },
+                                'country': { 'param': { 'type': 'string' } }
+                            },
+                            'optional': True
+                        }
+                    }
+                }
+            }
+        }
+
         assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Camera_Ready_Revision/Dates')
         assert pc_client.get_invitation('ICLR.cc/2026/Conference/-/Camera_Ready_Revision/Form_Fields')
 
