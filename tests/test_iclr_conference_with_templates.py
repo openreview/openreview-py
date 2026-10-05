@@ -167,6 +167,25 @@ class TestSimpleDualAnonymous():
             'ICLR.cc/2026/Conference/Area_Chairs'
         ]
 
+        # by default, the venue, program chairs, assigned senior area chairs and assigned area chairs can see reviewer identities
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Reviewers/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.edit['group']['readers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Reviewers'
+        ]
+        assert submission_group_inv and submission_group_inv.edit['group']['deanonymizers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+        ]
+        assert submission_group_inv.edit['group']['nonreaders'] == [
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Authors'
+        ]
+
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Area_Chairs')
         assert group.readers == [
             'ICLR.cc/2026/Conference',

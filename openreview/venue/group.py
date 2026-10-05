@@ -86,7 +86,7 @@ class GroupBuilder(object):
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.senior_area_chair_identity_readers)
 
     def get_reviewer_paper_group_readers(self, number, name=None):
-        readers=[self.venue.id]
+        readers=[self.venue.id, self.venue.get_program_chairs_id()]
         if self.venue.use_senior_area_chairs:
             readers.append(self.venue.get_senior_area_chairs_id(number))
         if self.venue.use_area_chairs:
