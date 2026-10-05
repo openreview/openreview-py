@@ -2194,3 +2194,41 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_edit_max_reviewers_assigned_invitation(self, group_id):
+
+        venue_id = self.venue_id
+
+        invitation_id = f'{group_id}/-/Submission_Max_Reviewers'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'submission_assignment_max_reviewers': {
+                        'order': 1,
+                        'description': 'What is the maximum number of reviewers that can be assigned to a submission?',
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': group_id,
+                    'content': {
+                        'submission_assignment_max_reviewers': { 'value': '${4/content/submission_assignment_max_reviewers/value}'}
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)

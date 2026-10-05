@@ -518,6 +518,7 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
         venue_id = self.venue.id
 
         if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue.id)
             for index, role in enumerate(self.venue.reviewer_roles):
 
                 additional_readers = []
@@ -530,7 +531,7 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
                     additional_readers.append(area_chairs_id)
 
-                self.client.post_group_edit(
+                edit = self.client.post_group_edit(
                     invitation=f'{self.openreview_template}/-/Committee_Group',
                     signatures=[self.openreview_template],
                     content={
@@ -544,6 +545,10 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     },
                     await_process=True
                 )
+
+                # create invitation to let the program chairs set the maximum number of
+                # reviewers of this role that can be assigned to a submission
+                edit_invitations_builder.set_edit_max_reviewers_assigned_invitation(edit['group']['id'])
 
             return            
 

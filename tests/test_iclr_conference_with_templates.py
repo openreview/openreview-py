@@ -1361,9 +1361,33 @@ For more details, please check the following links:
         )
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2026/Conference/Reviewers/-/Assignment_Configuration')
 
+        # the quota set in the reviewers group takes precedence over the venue-wide quota
+        openreview_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/-/Edit',
+            signatures=['ICLR.cc/2026/Conference'],
+            group=openreview.api.Group(
+                id='ICLR.cc/2026/Conference',
+                content={
+                    'submission_assignment_max_reviewers': { 'value': 5 }
+                }
+            )
+        )
+
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Submission_Max_Reviewers')
+
+        ## Submission_Max_Reviewers has no process function, the edit writes the
+        ## group content directly
+        pc_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Submission_Max_Reviewers',
+            content={ 'submission_assignment_max_reviewers': { 'value': 2 } }
+        )
+
+        reviewers_group = openreview_client.get_group('ICLR.cc/2026/Conference/Reviewers')
+        assert reviewers_group.content['submission_assignment_max_reviewers']['value'] == 2
+
         # assign the three reviewers to Submission2 and spread them over the other non-conflicted papers
         reviewers = ['~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1']
-        for reviewer in reviewers:
+        for reviewer in reviewers[:2]:
             openreview_client.post_edge(openreview.api.Edge(
                 invitation='ICLR.cc/2026/Conference/Reviewers/-/Proposed_Assignment',
                 head=submissions[1].id,
@@ -1372,6 +1396,32 @@ For more details, please check the following links:
                 weight=1,
                 label='reviewer-matching-1'
             ))
+
+        # the third proposed assignment exceeds the quota of the reviewers group
+        with pytest.raises(openreview.OpenReviewException, match=r'You cannot assign more than 2 reviewers to this paper'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='ICLR.cc/2026/Conference/Reviewers/-/Proposed_Assignment',
+                head=submissions[1].id,
+                tail=reviewers[2],
+                signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+                weight=1,
+                label='reviewer-matching-1'
+            ))
+
+        # raise the quota of the reviewers group to fit the three reviewers
+        pc_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Submission_Max_Reviewers',
+            content={ 'submission_assignment_max_reviewers': { 'value': 3 } }
+        )
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Proposed_Assignment',
+            head=submissions[1].id,
+            tail=reviewers[2],
+            signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+            weight=1,
+            label='reviewer-matching-1'
+        ))
 
         for idx, submission in enumerate(submissions[2:9]):
             openreview_client.post_edge(openreview.api.Edge(
