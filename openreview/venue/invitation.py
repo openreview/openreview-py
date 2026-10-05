@@ -5293,6 +5293,86 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             )
         )
 
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            signatures=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Homepage_Tabs',
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitees=[venue_id],
+                edit={
+                    'content': {
+                        'show_active_submissions': {
+                            'order': 1,
+                            'description': 'Select whether to show active submissions on the homepage',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'show_withdrawn_submissions': {
+                            'order': 2,
+                            'description': 'Select whether to show withdrawn submissions on the homepage',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'show_desk_rejected_submissions': {
+                            'order': 3,
+                            'description': 'Select whether to show desk rejected submissions on the homepage',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'show_recent_activity_tab': {
+                            'order': 4,
+                            'description': 'Select whether to show the recent activity tab on the homepage',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'
+                                }
+                            }
+                        }
+                    },
+                    'signatures' : {
+                        'param': {
+                            'items': [
+                                { 'value': venue_id, 'optional': True }
+                            ]
+                        }
+                    },
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'group': {
+                        'id': venue_id,
+                        'content': {
+                            'show_active_submissions': { 'value': '${4/content/show_active_submissions/value}'},
+                            'show_withdrawn_submissions': { 'value': '${4/content/show_withdrawn_submissions/value}'},
+                            'show_desk_rejected_submissions': { 'value': '${4/content/show_desk_rejected_submissions/value}'},
+                            'show_recent_activity_tab': { 'value': '${4/content/show_recent_activity_tab/value}'}
+                        }
+                    }
+                }
+            )
+        )
+
     def set_submission_change_invitation(self, name, activation_date):
 
         venue_id = self.venue_id

@@ -153,10 +153,10 @@ class GroupBuilder(object):
             'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id() },
             'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
             'rejected_venue_id': { 'value': self.venue.get_rejected_submission_venue_id() },
-            'public_submissions': { 'value': self.venue.submission_stage.public },
+            'show_active_submissions': { 'value': self.venue.submission_stage.public },
             'commitments_venue': { 'value': self.venue.submission_stage.commitments_venue },
-            'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
-            'public_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
+            'show_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
+            'show_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
             'submission_email_template': { 'value': self.venue.submission_stage.submission_email if self.venue.submission_stage.submission_email else '' },
             'submission_email_pcs': { 'value': self.venue.submission_stage.email_pcs },
             'title': { 'value': self.venue.name if self.venue.name else '' },
@@ -205,7 +205,8 @@ class GroupBuilder(object):
             'decision_heading_map': { 'value': self.venue.decision_heading_map },
             'reviewers_message_submission_id': { 'value': self.venue.get_message_id(number='{number}') },
             'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) },
-            'article_endorsement_id': { 'value': self.venue.get_article_endorsement_id() }
+            'article_endorsement_id': { 'value': self.venue.get_article_endorsement_id() },
+            'show_recent_activity_tab': { 'value': True }
         }
 
         if self.venue.submission_stage.second_due_date:

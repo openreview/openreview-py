@@ -1715,7 +1715,7 @@ note={under review}
             'ICLR.cc/2026/Conference/Submission1/Area_Chairs'
         ]
 
-    def test_withdrawal_stage(self, client, openreview_client, helpers, test_client):
+    def test_withdrawal_stage(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -1750,6 +1750,42 @@ note={under review}
 
         helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2026/Conference/-/Withdrawn_Submission')
+
+        # only the recent activity tab is shown in the homepage by default
+        venue_group = openreview_client.get_group('ICLR.cc/2026/Conference')
+        assert venue_group.content['show_active_submissions']['value'] == False
+        assert venue_group.content['show_withdrawn_submissions']['value'] == False
+        assert venue_group.content['show_desk_rejected_submissions']['value'] == False
+        assert venue_group.content['show_recent_activity_tab']['value'] == True
+
+        ## request the page as the PC, guest requests are cached by the API and would not reflect the changes below
+        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2026/Conference', pc_client, by=By.LINK_TEXT, wait_for_element='Recent Activity')
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        assert [tab.text for tab in tabs] == ['Your Consoles', 'Recent Activity']
+
+        # PCs show the submission tabs and hide the recent activity tab
+        pc_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/-/Homepage_Tabs',
+            signatures=['ICLR.cc/2026/Conference'],
+            content={
+                'show_active_submissions': { 'value': True },
+                'show_withdrawn_submissions': { 'value': True },
+                'show_desk_rejected_submissions': { 'value': True },
+                'show_recent_activity_tab': { 'value': False }
+            }
+        )
+
+        venue_group = openreview_client.get_group('ICLR.cc/2026/Conference')
+        assert venue_group.content['show_active_submissions']['value'] == True
+        assert venue_group.content['show_withdrawn_submissions']['value'] == True
+        assert venue_group.content['show_desk_rejected_submissions']['value'] == True
+        assert venue_group.content['show_recent_activity_tab']['value'] == False
+
+        ## wait for the withdrawn submissions tab, it is only shown once its submissions are loaded
+        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2026/Conference', pc_client, by=By.LINK_TEXT, wait_for_element='Withdrawn Submissions')
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        ## the desk rejected submissions tab is hidden because there are no desk rejected submissions yet
+        assert [tab.text for tab in tabs] == ['Your Consoles', 'Active Submissions', 'Withdrawn Submissions']
 
         note = test_client.get_note(withdraw_note['note']['forum'])
         assert note

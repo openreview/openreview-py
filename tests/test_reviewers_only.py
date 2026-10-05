@@ -320,6 +320,7 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Settings')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Homepage_Tabs')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification')
