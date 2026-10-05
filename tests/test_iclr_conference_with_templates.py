@@ -105,6 +105,40 @@ class TestSimpleDualAnonymous():
         ]
         assert group.domain == 'ICLR.cc/2026/Conference'
 
+        # by default, only the venue, program chairs, and assigned senior area chairs can read the submission group
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.edit['group']['readers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs'
+        ]
+        assert submission_group_inv.edit['group']['nonreaders'] == [
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Authors'
+        ]
+
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group/Deanonymizers',
+            content={
+                'identity_visibility': {
+                    'value': [
+                        'ICLR.cc/2026/Conference',
+                        'ICLR.cc/2026/Conference/Program_Chairs',
+                        'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+                        'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+                    ]
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=2)
+
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.edit['group']['readers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+        ]
+
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Invited')
         assert group.readers == ['ICLR.cc/2026/Conference']
         assert group.domain == 'ICLR.cc/2026/Conference'
@@ -1154,7 +1188,7 @@ For more details, please check the following links:
             }
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=3)
 
         submission_groups = openreview_client.get_all_groups(prefix='ICLR.cc/2026/Conference/Submission')
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]

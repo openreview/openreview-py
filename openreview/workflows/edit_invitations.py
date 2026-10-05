@@ -1371,7 +1371,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_group_deanonymizers_invitation(self, super_invitation_id):
+    def set_edit_group_deanonymizers_invitation(self, super_invitation_id, readers_only=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id+ '/Deanonymizers'
@@ -1380,7 +1380,8 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
         deanonymizers = [
-            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
+            {'value': venue_id, 'optional': False, 'description': 'Venue'},
+            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
@@ -1402,6 +1403,15 @@ class EditInvitationsBuilder(object):
             {'value': f'{venue_id}/{submission_name}' + '${3/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
         ])
 
+        if not readers_only:
+            group_edit = {
+                'deanonymizers': ['${5/content/identity_visibility/value}']
+            }
+        else:
+            group_edit = {
+                'readers': ['${5/content/identity_visibility/value}']
+            }
+
         invitation = Invitation(
             id = invitation_id,
             invitees = [venue_id],
@@ -1413,7 +1423,7 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'reviewer_identity_visibility': {
+                    'identity_visibility': {
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -1427,9 +1437,7 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'edit': {
-                        'group': {
-                            'deanonymizers': ['${5/content/reviewer_identity_visibility/value}']
-                        }
+                        'group': group_edit
                     }
                 }
             }

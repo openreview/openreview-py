@@ -163,6 +163,7 @@ class Venue(object):
                 self.senior_area_chairs_name = self.senior_area_chair_roles[0]
             self.use_senior_area_chairs = True
             preferred_email_groups.append(self.get_senior_area_chairs_id())
+            self.senior_area_chair_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED]
 
         self.release_role_participation = request_note.content.get('release_role_participation', {}).get('value', True)
 
