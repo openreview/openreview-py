@@ -174,17 +174,23 @@ class TestSimpleDualAnonymous():
             'ICLR.cc/2026/Conference/Senior_Area_Chairs'
         ]
 
-        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs')
-        assert group.readers == [
+        # by default, the venue, program chairs, assigned senior area chairs and assigned area chairs can see ac identities
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Area_Chairs/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.edit['group']['readers'] == [
             'ICLR.cc/2026/Conference',
-            'ICLR.cc/2026/Conference/Senior_Area_Chairs'
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
         ]
-
-        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Invited')
-        assert group.readers == ['ICLR.cc/2026/Conference']
-
-        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Declined')
-        assert group.readers == ['ICLR.cc/2026/Conference']
+        assert submission_group_inv and submission_group_inv.edit['group']['deanonymizers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+        ]
+        assert submission_group_inv.edit['group']['nonreaders'] == [
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Authors'
+        ]
 
         domain_content = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference').content
         assert domain_content['senior_area_chair_roles']['value'] == ['Senior_Area_Chairs']

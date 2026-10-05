@@ -20,14 +20,16 @@ class IdentityReaders(Enum):
         readers = [conference.id]
         if self.PROGRAM_CHAIRS in identity_readers:
             readers.append(conference.get_program_chairs_id())
-        if self.SENIOR_AREA_CHAIRS in identity_readers:
-            readers.append(conference.get_senior_area_chairs_id())
-        if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
-            readers.append(conference.get_senior_area_chairs_id(number))
-        if self.AREA_CHAIRS in identity_readers:
-            readers.append(conference.get_area_chairs_id(name=area_chairs_name))
-        if self.AREA_CHAIRS_ASSIGNED in identity_readers:
-            readers.append(conference.get_area_chairs_id(number, name=area_chairs_name))
+        if conference.use_senior_area_chairs:
+            if self.SENIOR_AREA_CHAIRS in identity_readers:
+                readers.append(conference.get_senior_area_chairs_id())
+            if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
+                readers.append(conference.get_senior_area_chairs_id(number))
+        if conference.use_area_chairs:
+            if self.AREA_CHAIRS in identity_readers:
+                readers.append(conference.get_area_chairs_id(name=area_chairs_name))
+            if self.AREA_CHAIRS_ASSIGNED in identity_readers:
+                readers.append(conference.get_area_chairs_id(number, name=area_chairs_name))
         if self.REVIEWERS in identity_readers:
             readers.append(conference.get_reviewers_id(name=reviewers_name))
         if self.REVIEWERS_ASSIGNED in identity_readers:

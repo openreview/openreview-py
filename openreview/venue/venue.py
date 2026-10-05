@@ -156,6 +156,7 @@ class Venue(object):
             self.submission_area_chair_roles = request_note.content.get('submission_area_chair_group_names', {}).get('value') or [self.area_chairs_name]
             self.use_area_chairs = True
             preferred_email_groups.append(self.get_area_chairs_id())
+            self.area_chair_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS,  openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
         if request_note.content.get('senior_area_chairs_support',{}).get('value'):
             if request_note.content.get('senior_area_chair_groups_names', {}).get('value'):
