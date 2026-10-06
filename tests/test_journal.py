@@ -677,6 +677,26 @@ class TestJournal():
             weight=8
         ))
 
+        ## a reviewer can not change the quota or the availability of another reviewer
+        with pytest.raises(openreview.OpenReviewException):
+            javier_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Custom_Max_Papers',
+                signatures=['~Javier_Burroni1'],
+                head='TMLR/Reviewers',
+                tail='~David_Belanger1',
+                weight=1
+            ))
+
+        with pytest.raises(openreview.OpenReviewException):
+            javier_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment_Availability',
+                signatures=['~Javier_Burroni1'],
+                head='TMLR/Reviewers',
+                tail='~David_Belanger1',
+                label='Unavailable'
+            ))
+
+        assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Custom_Max_Papers', tail='~David_Belanger1') == 1
+        assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Assignment_Availability', tail='~David_Belanger1') == 0
+
         peter_client=helpers.create_user('petersnow@yahoo.com', 'Peter', 'Snow')
 
         guest_client=OpenReviewClient()
@@ -2797,16 +2817,17 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert len(reviews) == 4
 
         ## Check permissions of the review revisions
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[0].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[0].id, sort='tcdate:desc')
         assert len(review_revisions) == 3
+        # review 1 was edited after it was released
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
-        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
+        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
-        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
+        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review_Release"
         assert review_revisions[2].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
         assert review_revisions[2].invitation == f"{venue_id}/Paper1/-/Review"
 
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[1].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[1].id, sort='tcdate:desc')
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
@@ -2814,12 +2835,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         # posted after reviews were released
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[2].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[2].id, sort='tcdate:desc')
         assert len(review_revisions) == 1
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", hugo_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review"
 
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[3].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[3].id, sort='tcdate:desc')
         assert len(review_revisions) == 1
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", antony_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review"
@@ -3047,6 +3068,25 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
+        ## the camera ready edit must not expose the anonymous authors
+        edits = openreview_client.get_note_edits(note_id_1, invitation='TMLR/Paper1/-/Camera_Ready_Revision')
+        assert len(edits) == 1
+        assert edits[0].note.content['authors']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
+        assert edits[0].note.content['authorids']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
+
+        ## reviewers and anonymous users can read the edit but not the author fields
+        for reader_client in [david_client, guest_client]:
+            edits = reader_client.get_note_edits(note_id_1, invitation='TMLR/Paper1/-/Camera_Ready_Revision')
+            assert len(edits) == 1
+            assert edits[0].note.content['title']['value'] == 'Paper title VERSION 2'
+            assert 'authors' not in edits[0].note.content
+            assert 'authorids' not in edits[0].note.content
+
+        ## the assigned action editor can read them
+        edits = joelle_client.get_note_edits(note_id_1, invitation='TMLR/Paper1/-/Camera_Ready_Revision')
+        assert len(edits) == 1
+        assert edits[0].note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Andrew_McCallumm1']
+
         ## check camera ready reminder
         raia_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
@@ -3267,6 +3307,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        ## the authors were released by the Accepted edit, the EIC revision must keep them public
+        edits = guest_client.get_note_edits(note_id_1, invitation='TMLR/Paper1/-/EIC_Revision')
+        assert len(edits) == 1
+        assert 'readers' not in edits[0].note.content['authors']
+        assert 'readers' not in edits[0].note.content['authorids']
+        assert edits[0].note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1', '~Andrew_McCallumm1']
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -6138,6 +6185,23 @@ note={Expert Certification}
         assert len(sammy_paper14_anon_groups) == 1
         sammy_paper14_anon_group = sammy_paper14_anon_groups[0]
         assert sammy_paper14_anon_group.readers == ['everyone', sammy_paper14_anon_group.id]
+
+        ## An AE can not invite a reviewer for a submission they are not the AE of
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
+        joelle_paper13_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper13/Action_Editor_.*', signatory='~Joelle_Pineau1')
+        assert len(joelle_paper13_anon_groups) == 1
+        joelle_paper13_anon_group = joelle_paper13_anon_groups[0]
+
+        with pytest.raises(openreview.OpenReviewException, match=re.escape(f'signatures can only contain the allowed values: {venue_id}, {venue_id}/Editors_In_Chief, {venue_id}/Paper{submission.number}/Action_Editor_')):
+            joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
+                signatures=[joelle_paper13_anon_group.id],
+                head=note_id_14,
+                tail='melisa@mailten.com',
+                weight=1,
+                label='Invitation Sent'
+            ))
+
+        assert not openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~Melisa_Bok1')
 
         ## Invite external reviewer with profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
