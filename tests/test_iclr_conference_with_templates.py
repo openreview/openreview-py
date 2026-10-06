@@ -110,6 +110,40 @@ class TestSimpleDualAnonymous():
         ]
         assert group.domain == 'ICLR.cc/2026/Conference'
 
+        # by default, only the venue, program chairs, and assigned senior area chairs can read the submission group
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.edit['group']['readers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs'
+        ]
+        assert submission_group_inv.edit['group']['nonreaders'] == [
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Authors'
+        ]
+
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group/Deanonymizers',
+            content={
+                'identity_visibility': {
+                    'value': [
+                        'ICLR.cc/2026/Conference',
+                        'ICLR.cc/2026/Conference/Program_Chairs',
+                        'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+                        'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+                    ]
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=2)
+
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.edit['group']['readers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+        ]
+
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Invited')
         assert group.readers == ['ICLR.cc/2026/Conference']
         assert group.domain == 'ICLR.cc/2026/Conference'
@@ -138,6 +172,25 @@ class TestSimpleDualAnonymous():
             'ICLR.cc/2026/Conference/Area_Chairs'
         ]
 
+        # by default, the venue, program chairs, assigned senior area chairs and assigned area chairs can see reviewer identities
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Reviewers/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.edit['group']['readers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Reviewers'
+        ]
+        assert submission_group_inv and submission_group_inv.edit['group']['deanonymizers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+        ]
+        assert submission_group_inv.edit['group']['nonreaders'] == [
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Authors'
+        ]
+
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Area_Chairs')
         assert group.readers == [
             'ICLR.cc/2026/Conference',
@@ -145,17 +198,23 @@ class TestSimpleDualAnonymous():
             'ICLR.cc/2026/Conference/Senior_Area_Chairs'
         ]
 
-        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs')
-        assert group.readers == [
+        # by default, the venue, program chairs, assigned senior area chairs and assigned area chairs can see ac identities
+        submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Area_Chairs/-/Submission_Group')
+        assert submission_group_inv and submission_group_inv.edit['group']['readers'] == [
             'ICLR.cc/2026/Conference',
-            'ICLR.cc/2026/Conference/Senior_Area_Chairs'
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
         ]
-
-        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Invited')
-        assert group.readers == ['ICLR.cc/2026/Conference']
-
-        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/Declined')
-        assert group.readers == ['ICLR.cc/2026/Conference']
+        assert submission_group_inv and submission_group_inv.edit['group']['deanonymizers'] == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+        ]
+        assert submission_group_inv.edit['group']['nonreaders'] == [
+            'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Authors'
+        ]
 
         domain_content = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference').content
         assert domain_content['senior_area_chair_roles']['value'] == ['Senior_Area_Chairs']
@@ -1630,7 +1689,7 @@ For more details, please check the following links:
             }
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=3)
 
         submission_groups = openreview_client.get_all_groups(prefix='ICLR.cc/2026/Conference/Submission')
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
@@ -1778,9 +1837,33 @@ For more details, please check the following links:
         )
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2026/Conference/Reviewers/-/Assignment_Configuration')
 
+        # the quota set in the reviewers group takes precedence over the venue-wide quota
+        openreview_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/-/Edit',
+            signatures=['ICLR.cc/2026/Conference'],
+            group=openreview.api.Group(
+                id='ICLR.cc/2026/Conference',
+                content={
+                    'submission_assignment_max_reviewers': { 'value': 5 }
+                }
+            )
+        )
+
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Submission_Max_Reviewers')
+
+        ## Submission_Max_Reviewers has no process function, the edit writes the
+        ## group content directly
+        pc_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Submission_Max_Reviewers',
+            content={ 'submission_assignment_max_reviewers': { 'value': 2 } }
+        )
+
+        reviewers_group = openreview_client.get_group('ICLR.cc/2026/Conference/Reviewers')
+        assert reviewers_group.content['submission_assignment_max_reviewers']['value'] == 2
+
         # assign the three reviewers to Submission2 and spread them over the other non-conflicted papers
         reviewers = ['~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1']
-        for reviewer in reviewers:
+        for reviewer in reviewers[:2]:
             openreview_client.post_edge(openreview.api.Edge(
                 invitation='ICLR.cc/2026/Conference/Reviewers/-/Proposed_Assignment',
                 head=submissions[1].id,
@@ -1789,6 +1872,32 @@ For more details, please check the following links:
                 weight=1,
                 label='reviewer-matching-1'
             ))
+
+        # the third proposed assignment exceeds the quota of the reviewers group
+        with pytest.raises(openreview.OpenReviewException, match=r'You cannot assign more than 2 reviewers to this paper'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='ICLR.cc/2026/Conference/Reviewers/-/Proposed_Assignment',
+                head=submissions[1].id,
+                tail=reviewers[2],
+                signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+                weight=1,
+                label='reviewer-matching-1'
+            ))
+
+        # raise the quota of the reviewers group to fit the three reviewers
+        pc_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Submission_Max_Reviewers',
+            content={ 'submission_assignment_max_reviewers': { 'value': 3 } }
+        )
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation='ICLR.cc/2026/Conference/Reviewers/-/Proposed_Assignment',
+            head=submissions[1].id,
+            tail=reviewers[2],
+            signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+            weight=1,
+            label='reviewer-matching-1'
+        ))
 
         for idx, submission in enumerate(submissions[2:9]):
             openreview_client.post_edge(openreview.api.Edge(
@@ -2086,7 +2195,7 @@ note={under review}
             'ICLR.cc/2026/Conference/Submission1/Area_Chairs'
         ]
 
-    def test_withdrawal_stage(self, client, openreview_client, helpers, test_client):
+    def test_withdrawal_stage(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -2121,6 +2230,42 @@ note={under review}
 
         helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2026/Conference/-/Withdrawn_Submission')
+
+        # only the recent activity tab is shown in the homepage by default
+        venue_group = openreview_client.get_group('ICLR.cc/2026/Conference')
+        assert venue_group.content['show_active_submissions']['value'] == False
+        assert venue_group.content['show_withdrawn_submissions']['value'] == False
+        assert venue_group.content['show_desk_rejected_submissions']['value'] == False
+        assert venue_group.content['show_recent_activity_tab']['value'] == True
+
+        ## request the page as the PC, guest requests are cached by the API and would not reflect the changes below
+        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2026/Conference', pc_client, by=By.LINK_TEXT, wait_for_element='Recent Activity')
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        assert [tab.text for tab in tabs] == ['Your Consoles', 'Recent Activity']
+
+        # PCs show the submission tabs and hide the recent activity tab
+        pc_client.post_group_edit(
+            invitation='ICLR.cc/2026/Conference/-/Homepage_Tabs',
+            signatures=['ICLR.cc/2026/Conference'],
+            content={
+                'show_active_submissions': { 'value': True },
+                'show_withdrawn_submissions': { 'value': True },
+                'show_desk_rejected_submissions': { 'value': True },
+                'show_recent_activity_tab': { 'value': False }
+            }
+        )
+
+        venue_group = openreview_client.get_group('ICLR.cc/2026/Conference')
+        assert venue_group.content['show_active_submissions']['value'] == True
+        assert venue_group.content['show_withdrawn_submissions']['value'] == True
+        assert venue_group.content['show_desk_rejected_submissions']['value'] == True
+        assert venue_group.content['show_recent_activity_tab']['value'] == False
+
+        ## wait for the withdrawn submissions tab, it is only shown once its submissions are loaded
+        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2026/Conference', pc_client, by=By.LINK_TEXT, wait_for_element='Withdrawn Submissions')
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        ## the desk rejected submissions tab is hidden because there are no desk rejected submissions yet
+        assert [tab.text for tab in tabs] == ['Your Consoles', 'Active Submissions', 'Withdrawn Submissions']
 
         note = test_client.get_note(withdraw_note['note']['forum'])
         assert note

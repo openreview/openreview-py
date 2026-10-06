@@ -320,12 +320,24 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Settings')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Homepage_Tabs')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reject_Decision_Notification')
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
-        assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference']
+        assert invitation and invitation.edit['group']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission${3/content/noteNumber/value}/Program_Committee'
+        ]
+        assert invitation and invitation.edit['group']['deanonymizers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Program_Chairs'
+        ]
+        assert invitation and invitation.edit['group']['nonreaders'] == [
+            'ABCD.cc/2025/Conference/Submission${3/content/noteNumber/value}/Authors'
+        ]
         assert invitation.cdate == submission_inv.expdate
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Deanonymizers')

@@ -1254,6 +1254,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Area_Chairs').nonreaders == ['NeurIPS.cc/2023/Conference/Submission4/Authors']
 
         assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Reviewers').readers == ['NeurIPS.cc/2023/Conference',
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
             'NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs',
             'NeurIPS.cc/2023/Conference/Submission4/Area_Chairs',
             'NeurIPS.cc/2023/Conference/Submission4/Reviewers']
