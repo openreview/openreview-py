@@ -886,7 +886,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_dates_one_level_invitation(self, super_invitation_id, include_due_date=False, include_exp_date=False, due_date=None):
+    def set_edit_dates_one_level_invitation(self, super_invitation_id, include_due_date=False, include_exp_date=False, due_date=None, include_pdate=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Dates'
@@ -942,6 +942,21 @@ class EditInvitationsBuilder(object):
                 }
             }
             invitation.edit['invitation']['expdate'] = '${2/content/expiration_date/value}'
+
+        if include_pdate:
+            invitation.edit['content']['publication_date'] = {
+                'value': {
+                    'param': {
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ]
+                    }
+                }
+            }
+            invitation.edit['invitation']['edit'] = {
+                'note': {
+                    'pdate': '${4/content/publication_date/value}'
+                }
+            }
 
         if due_date:
             invitation.duedate = due_date
@@ -1375,7 +1390,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_group_deanonymizers_invitation(self, super_invitation_id):
+    def set_edit_group_deanonymizers_invitation(self, super_invitation_id, readers_only=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id+ '/Deanonymizers'
@@ -1384,7 +1399,8 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
         deanonymizers = [
-            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
+            {'value': venue_id, 'optional': False, 'description': 'Venue'},
+            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
@@ -1406,6 +1422,15 @@ class EditInvitationsBuilder(object):
             {'value': f'{venue_id}/{submission_name}' + '${3/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
         ])
 
+        if not readers_only:
+            group_edit = {
+                'deanonymizers': ['${5/content/identity_visibility/value}']
+            }
+        else:
+            group_edit = {
+                'readers': ['${5/content/identity_visibility/value}']
+            }
+
         invitation = Invitation(
             id = invitation_id,
             invitees = [venue_id],
@@ -1417,7 +1442,7 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'reviewer_identity_visibility': {
+                    'identity_visibility': {
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -1431,9 +1456,7 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'edit': {
-                        'group': {
-                            'deanonymizers': ['${5/content/reviewer_identity_visibility/value}']
-                        }
+                        'group': group_edit
                     }
                 }
             }
@@ -2190,3 +2213,42 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_edit_max_reviewers_assigned_invitation(self, group_id):
+
+        venue_id = self.venue_id
+
+        invitation_id = f'{group_id}/-/Submission_Max_Reviewers'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'submission_assignment_max_reviewers': {
+                        'order': 1,
+                        'description': 'What is the maximum number of reviewers that can be assigned to a submission?',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'minimum': 0
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': group_id,
+                    'content': {
+                        'submission_assignment_max_reviewers': { 'value': '${4/content/submission_assignment_max_reviewers/value}'}
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)

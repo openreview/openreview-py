@@ -215,8 +215,7 @@ class TestSubmissionAuthorsEmail():
                             },
                             {
                                 'fullname': 'Unregistered Author',
-                                'username': 'unregistered_author@eauth.cc',
-                                'institutions': [{ 'domain': 'eauth.cc', 'country': 'US' }]
+                                'username': 'unregistered_author@eauth.cc'
                             }
                         ]
                     },
