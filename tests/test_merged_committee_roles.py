@@ -112,14 +112,8 @@ class TestMergedCommitteeRoles():
         assert venue_group.content['review_names']['value'] == ['Official_Review']
         assert openreview_client.get_invitation('MRG.cc/2025/Conference/-/Official_Review')
 
-        # The /Readers edit invitation for Official_Review should offer an "All X"
-        # reader option for every top-level reviewer/area chair role (recruitment
-        # still tracks Expert_Reviewers and Technical_Reviewers, Area_Chairs and
-        # Technical_Area_Chairs, separately) -- but only ONE "Assigned X" option
-        # per committee type, since both roles are merged into a single
-        # per-submission group here. There is no per-submission
-        # Expert_Reviewers/Technical_Reviewers or Technical_Area_Chairs subgroup
-        # to point to, unlike in the two-separate-submission-groups scenario.
+        # The /Readers edit invitation for Official_Review should offer an "All X" reader option for every top-level reviewer/area chair role 
+        # but only ONE "Assigned X" option per committee type, since both roles are merged into a single per-submission group here. 
         reviewer_roles = venue_group.content['reviewer_roles']['value']
         submission_reviewer_roles = venue_group.content['submission_reviewer_roles']['value']
         area_chair_roles = venue_group.content['area_chair_roles']['value']
@@ -142,8 +136,7 @@ class TestMergedCommitteeRoles():
         for role in area_chair_roles:
             assert f'MRG.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option'
 
-        # "Assigned X": only the shared per-submission group name(s) should
-        # appear as an option -- not the individual roles merged into them.
+        # "Assigned X": only the shared per-submission group name(s) should appear as an option -- not the individual roles merged into them.
         for role in submission_reviewer_roles:
             assert assigned_value(role) is not None, f'Missing "Assigned {role}" reader option'
             assert any(value.endswith(f'/{role}/Submitted') for value in values), f'Missing "Assigned {role} Submitted" reader option'
@@ -157,8 +150,7 @@ class TestMergedCommitteeRoles():
             if role not in submission_area_chair_roles:
                 assert assigned_value(role) is None, f'Unexpected per-submission reader option for merged area chair role {role}'
 
-        # The submission change /Readers edit invitations should offer an "All X"
-        # option for every top-level role. Before_Reviewing also offers "Assigned X"
+        # The submission change /Readers edit invitations should offer an "All X" option for every top-level role. Before_Reviewing also offers "Assigned X"
         # options, but only for the shared per-submission groups.
         submission_group_id = 'MRG.cc/2025/Conference/Submission${{2/id}/number}'
 
@@ -200,6 +192,28 @@ class TestMergedCommitteeRoles():
             if role not in submission_reviewer_roles + submission_area_chair_roles:
                 assert f'{submission_group_id}/{role}' not in values, f'Unexpected "Assigned {role}" reader option for merged role'
         assert not any(value.endswith('/Submitted') for value in values), 'Unexpected "Submitted" reader option'
+
+        # Withdrawn and desk rejected submissions should be readable by the shared per-submission committee groups, and their /Readers edit invitations
+        # should offer an "All X" option for every top-level role and an "Assigned X" option only for the shared per-submission groups.
+        for invitation_name in ['Withdrawn_Submission', 'Desk_Rejected_Submission']:
+            invitation = openreview_client.get_invitation(f'MRG.cc/2025/Conference/-/{invitation_name}')
+            assert invitation.edit['note']['readers'] == [
+                'MRG.cc/2025/Conference/Program_Chairs',
+                f'{submission_group_id}/Area_Chairs',
+                f'{submission_group_id}/Reviewers',
+                f'{submission_group_id}/Authors'
+            ], f'Unexpected readers in {invitation_name}'
+
+            readers_invitation = openreview_client.get_invitation(f'MRG.cc/2025/Conference/-/{invitation_name}/Readers')
+            values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+            for role in reviewer_roles + area_chair_roles:
+                assert f'MRG.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option in {invitation_name}/Readers'
+            for role in submission_reviewer_roles + submission_area_chair_roles:
+                assert f'{submission_group_id}/{role}' in values, f'Missing "Assigned {role}" reader option in {invitation_name}/Readers'
+            for role in reviewer_roles + area_chair_roles:
+                if role not in submission_reviewer_roles + submission_area_chair_roles:
+                    assert f'{submission_group_id}/{role}' not in values, f'Unexpected "Assigned {role}" reader option for merged role in {invitation_name}/Readers'
+            assert not any(value.endswith('/Submitted') for value in values), f'Unexpected "Submitted" reader option in {invitation_name}/Readers'
 
         # Populate committee groups
         openreview_client.post_group_edit(

@@ -123,9 +123,8 @@ class TestTwoSubmissionCommitteeRoles():
         assert venue_group.content['area_chair_roles']['value'] == ['Area_Chairs', 'Technical_Area_Chairs']
         assert venue_group.content['submission_area_chair_roles']['value'] == ['Area_Chairs', 'Technical_Area_Chairs']
 
-        # The submission change /Readers edit invitations should offer an "All X"
-        # option for every reviewer/area chair role. Before_Reviewing also offers
-        # an "Assigned X" option for every per-submission role.
+        # The submission change /Readers edit invitations should offer an "All X" option for every reviewer/area chair role. 
+        # Before_Reviewing also offers an "Assigned X" option for every per-submission role.
         roles = ['Expert_Reviewers', 'Technical_Reviewers', 'Area_Chairs', 'Technical_Area_Chairs']
         submission_group_id = 'XYZW.cc/2025/Conference/Submission${{2/id}/number}'
 
@@ -140,8 +139,7 @@ class TestTwoSubmissionCommitteeRoles():
             f'{submission_group_id}/Authors'
         ]
 
-        # Before reviewing, submissions should be readable by every per-submission
-        # reviewer/area chair group.
+        # Before reviewing, submissions should be readable by every per-submission reviewer/area chair group.
         before_reviewing_invitation = openreview_client.get_invitation('XYZW.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
         assert before_reviewing_invitation.edit['note']['readers'] == [
             'XYZW.cc/2025/Conference',
@@ -164,6 +162,26 @@ class TestTwoSubmissionCommitteeRoles():
             assert f'XYZW.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option'
             assert f'{submission_group_id}/{role}' in values, f'Missing "Assigned {role}" reader option'
         assert not any(value.endswith('/Submitted') for value in values), 'Unexpected "Submitted" reader option'
+
+        # Withdrawn and desk rejected submissions should be readable by every per-submission reviewer/area chair group, and their /Readers edit
+        # invitations should offer "All X" and "Assigned X" options for every role.
+        for invitation_name in ['Withdrawn_Submission', 'Desk_Rejected_Submission']:
+            invitation = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/-/{invitation_name}')
+            assert invitation.edit['note']['readers'] == [
+                'XYZW.cc/2025/Conference/Program_Chairs',
+                f'{submission_group_id}/Area_Chairs',
+                f'{submission_group_id}/Technical_Area_Chairs',
+                f'{submission_group_id}/Expert_Reviewers',
+                f'{submission_group_id}/Technical_Reviewers',
+                f'{submission_group_id}/Authors'
+            ], f'Unexpected readers in {invitation_name}'
+
+            readers_invitation = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/-/{invitation_name}/Readers')
+            values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+            for role in roles:
+                assert f'XYZW.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option in {invitation_name}/Readers'
+                assert f'{submission_group_id}/{role}' in values, f'Missing "Assigned {role}" reader option in {invitation_name}/Readers'
+            assert not any(value.endswith('/Submitted') for value in values), f'Unexpected "Submitted" reader option in {invitation_name}/Readers'
 
         # Populate committee groups
         openreview_client.post_group_edit(
@@ -567,10 +585,8 @@ class TestTwoSubmissionCommitteeRoles():
             assert any('Technical_Reviewer_' in item.get('prefix', '') for item in signatures_items)
             assert not any('Expert_Reviewer_' in item.get('prefix', '') for item in signatures_items)
 
-        # The /Readers edit invitation for each review form should offer a reader
-        # option for every reviewer/area chair role configured on the venue (both
-        # the "primary" role and any additional roles added via reviewer_groups_names
-        # / area_chair_groups_names), not just the primary role of each committee type.
+        # The /Readers edit invitation for each review form should offer a reader option for every reviewer/area chair role configured on the venue (both
+        # the "primary" role and any additional roles added via reviewer_groups_names/area_chair_groups_names), not just the primary role of each committee type.
         venue_group = openreview_client.get_group('XYZW.cc/2025/Conference')
         reviewer_roles = venue_group.content['reviewer_roles']['value']
         area_chair_roles = venue_group.content['area_chair_roles']['value']
