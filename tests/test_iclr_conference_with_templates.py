@@ -1537,14 +1537,14 @@ For more details, please check the following links:
                 id = submission.id,
                 license = 'CC BY 4.0',
                 content = {
-                    'title': submission.content['title'],
-                    'abstract': submission.content['abstract'],
+                    'title': {'value': submission.content['title']['value']},
+                    'abstract': {'value': submission.content['abstract']['value']},
                     'authors': { 'value': submission.content['authors']['value'] },
-                    'keywords': submission.content['keywords'],
-                    'pdf': submission.content['pdf'],
-                    'reciprocal_reviewing': submission.content['reciprocal_reviewing'],
-                    'email_sharing': submission.content['email_sharing'],
-                    'data_release': submission.content['data_release'],
+                    'keywords': {'value': submission.content['keywords']['value']},
+                    'pdf': {'value': submission.content['pdf']['value']},
+                    'reciprocal_reviewing': {'value': submission.content['reciprocal_reviewing']['value']},
+                    'email_sharing': {'value': submission.content['email_sharing']['value']},
+                    'data_release': {'value': submission.content['data_release']['value']}
                 }
             ))
 

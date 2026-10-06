@@ -75,6 +75,9 @@ class TestTwoSubmissionCommitteeRoles():
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
+        request = openreview_client.get_note(request.id)
+        assert 'submission_reviewer_group_names' in request.content and 'readers' in request.content['submission_reviewer_group_names']
+
         venue_group = openreview_client.get_group('XYZW.cc/2025/Conference')
         assert venue_group
         assert venue_group.content['reviewers_name']['value'] == 'Expert_Reviewers'
