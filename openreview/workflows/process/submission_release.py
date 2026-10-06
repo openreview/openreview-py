@@ -5,6 +5,7 @@ def process(client, invitation):
     venue_id = domain.id
     title = domain.content['title']['value']
     short_name = domain.content['subtitle']['value']
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
@@ -21,7 +22,6 @@ def process(client, invitation):
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
     accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
-    meta_invitation_id = domain.content['meta_invitation_id']['value']
     decision_option = invitation.get_content_value('decision_option')
     release_accepted = openreview.tools.is_accept_decision(decision_option, accept_options)
 
