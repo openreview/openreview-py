@@ -139,6 +139,8 @@ class GroupBuilder(object):
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
+            if self.journal.get_reviewer_roles():
+                content = content.replace("var REVIEWERS_ROLE_ID = '';", "var REVIEWERS_ROLE_ID = '" + self.journal.get_reviewer_role_id() + "';")
 
             editor_in_chief_group.web = content
             self.post_group(editor_in_chief_group)
@@ -229,6 +231,8 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
+            if self.journal.get_reviewer_roles():
+                content = content.replace("var REVIEWERS_ROLE_ID = '';", "var REVIEWERS_ROLE_ID = '" + self.journal.get_reviewer_role_id() + "';")
 
             action_editor_group.web = content
             self.post_group(action_editor_group)
@@ -291,6 +295,8 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
+            if self.journal.get_reviewer_roles():
+                content = content.replace("var REVIEWERS_ROLE_ID = '';", "var REVIEWERS_ROLE_ID = '" + self.journal.get_reviewer_role_id() + "';")
 
             action_editor_archived_group.web = content
             self.post_group(action_editor_archived_group)            

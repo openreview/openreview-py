@@ -263,7 +263,7 @@ As a reminder, reviewers are **expected to accept all assignments** for submissi
 
 To submit your review, please follow this link: {invitation_url} or check your tasks in the Reviewers Console: https://openreview.net/group?id={venue_id}/Reviewers#reviewer-tasks
 
-Once submitted, your review will become privately visible to the authors and AE. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}. For more details and guidelines on performing your review, visit {website}.
+Once submitted, your review will become privately visible to {review_readers_before_release}. Then, as soon as {review_release_event}, all reviews will become {review_visibility}. For more details and guidelines on performing your review, visit {website}.
 
 We thank you for your essential contribution to {short_name}!
 

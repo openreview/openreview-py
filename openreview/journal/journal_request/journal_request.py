@@ -140,10 +140,13 @@ class JournalRequest():
                             'author_anonymity': True,
                             'AE_anonymity': False,
                             'reviewer_to_reviewer_anonymity': False,
+                            'review_release': 'all_reviews_posted',
+                            'release_reviews_to_authors_when_posted': True,
                             'release_submission_after_acceptance': True,
                             'expertise_model': 'specter2+scincl',
                             'external_reviewers': True,
                             'expert_reviewers': False,
+                            'reviewer_roles': [],
                             'archived_action_editors': False,
                             'archived_reviewers': False,
                             'number_of_reviewers': 3,
@@ -533,13 +536,29 @@ Cheers!'''.replace('{short_name}', short_name)
                 self.post_invitation_edit(invitation = invitation)
 
         #setup rev recruitment
-        if reviewer_template:
-            recruitment_content['email_content']['value']['param']['default'] = reviewer_template
-
         invitation_id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Reviewer_Recruitment'
         existing_invitation = openreview.tools.get_invitation(self.client, invitation_id)
+        existing_content = existing_invitation.edit['note']['content'] if existing_invitation else {}
+        existing_template = existing_content.get('email_content', {}).get('value', {}).get('param', {}).get('default')
+        existing_reviewer_roles = existing_content.get('reviewer_role', {}).get('value', {}).get('param', {}).get('enum', [])
+        reviewer_roles = note.content.get('settings', {}).get('value', {}).get('reviewer_roles', [])
 
-        if not existing_invitation or (reviewer_template and reviewer_template != existing_invitation.edit['note']['content']['email_content']['value']['param']['default']):
+        recruitment_content['email_content']['value']['param']['default'] = reviewer_template or existing_template or default_recruitment_template
+
+        if reviewer_roles:
+            recruitment_content['reviewer_role'] = {
+                'description': 'Role of the invited reviewers. Action Editors see the role of each reviewer when they assign reviewers to submissions.',
+                'order': 2,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': reviewer_roles,
+                        'input': 'radio'
+                    }
+                }
+            }
+
+        if not existing_invitation or (reviewer_template and reviewer_template != existing_template) or reviewer_roles != existing_reviewer_roles:
             with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as f:
                 content = f.read()
                 content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")

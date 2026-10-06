@@ -30,6 +30,7 @@ def process(client, edit, invitation):
 
     subject = recruitment_note.content['email_subject']['value']
     content = recruitment_note.content['email_content']['value']
+    reviewer_role = None
     if 'Action_Editor' in invitation.id:
         role = 'Action Editor'
         subject = subject.replace('{{role}}', role)
@@ -39,7 +40,8 @@ def process(client, edit, invitation):
         role = 'Reviewer'
         subject = subject.replace('{{role}}', role)
         content = content.replace('{{role}}', role)
-        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
+        reviewer_role = recruitment_note.content.get('reviewer_role', {}).get('value')
+        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names, reviewer_role=reviewer_role)
 
     non_invited_status = f'''No recruitment invitation was sent to the following users because they have already been invited as {role}:
 {status.get('already_invited')}''' if status.get('already_invited') else ''
@@ -51,8 +53,12 @@ def process(client, edit, invitation):
 
 {status.get('errors')}''' if status.get('errors') else ''
 
+    reviewer_role_status = f'''**Reviewer role**: {reviewer_role}. It is set for the invited reviewers and for the listed reviewers who are already members of the Reviewer group.''' if reviewer_role else ''
+
     comment_content = f'''
 **Invited**: {len(status.get('invited'))} {role}(s).
+
+{reviewer_role_status}
 
 {non_invited_status}
 
