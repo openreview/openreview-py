@@ -140,6 +140,18 @@ class TestTwoSubmissionCommitteeRoles():
             f'{submission_group_id}/Authors'
         ]
 
+        # Before reviewing, submissions should be readable by every per-submission
+        # reviewer/area chair group.
+        before_reviewing_invitation = openreview_client.get_invitation('XYZW.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        assert before_reviewing_invitation.edit['note']['readers'] == [
+            'XYZW.cc/2025/Conference',
+            f'{submission_group_id}/Area_Chairs',
+            f'{submission_group_id}/Technical_Area_Chairs',
+            f'{submission_group_id}/Expert_Reviewers',
+            f'{submission_group_id}/Technical_Reviewers',
+            f'{submission_group_id}/Authors'
+        ]
+
         readers_invitation =openreview_client.get_invitation('XYZW.cc/2025/Conference/-/Submission_Change_Before_Bidding/Readers')
         values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
         for role in roles:

@@ -174,6 +174,16 @@ class TestMergedCommitteeRoles():
             f'{submission_group_id}/Authors'
         ]
 
+        # Before reviewing, submissions should be readable by the shared
+        # per-submission committee groups only.
+        before_reviewing_invitation = openreview_client.get_invitation('MRG.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        assert before_reviewing_invitation.edit['note']['readers'] == [
+            'MRG.cc/2025/Conference',
+            f'{submission_group_id}/Area_Chairs',
+            f'{submission_group_id}/Reviewers',
+            f'{submission_group_id}/Authors'
+        ]
+
         readers_invitation =openreview_client.get_invitation('MRG.cc/2025/Conference/-/Submission_Change_Before_Bidding/Readers')
         values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
         for role in reviewer_roles + area_chair_roles:
