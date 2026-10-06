@@ -2217,7 +2217,8 @@ class EditInvitationsBuilder(object):
                         'description': 'What is the maximum number of reviewers that can be assigned to a submission?',
                         'value': {
                             'param': {
-                                'type': 'integer'
+                                'type': 'integer',
+                                'minimum': 0
                             }
                         }
                     }
