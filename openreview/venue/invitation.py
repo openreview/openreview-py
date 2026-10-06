@@ -1474,8 +1474,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             match_group_id = bid_stage.committee_id
 
             invitation_readers = bid_stage.get_invitation_readers(venue)
-            bid_readers = bid_stage.get_readers(venue)
+
+            paper_number = '${{2/head}/number}'
+            bid_readers = bid_stage.get_readers(venue, number=paper_number)
             bid_readers[-1] = bid_readers[-1].replace('{signatures}', '${2/tail}')
+            bid_nonreaders = bid_stage.get_nonreaders(venue, number=paper_number)
 
             head = {
                 'param': {
@@ -1492,6 +1495,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         }
                     }
                 }
+                bid_readers = [venue_id, '${2/tail}']
+                bid_nonreaders = None
 
             bid_score_spec = bid_stage.default_scores_spec
 
@@ -1543,8 +1548,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'writers': [ venue_id, '${2/tail}' ],
                     'signatures': {
                         'param': {
-                            'items': [ 
-                                { 'prefix': '~.*', 'optional': True },
+                            'items': [
+                                { 'value': '${3/tail}', 'optional': True },
                                 { 'value': venue_id, 'optional': True }
                             ]
                         }
@@ -1553,6 +1558,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'tail': {
                         'param': {
                             'type': 'profile',
+                            'inGroup': match_group_id,
                             'options': {
                                 'group': match_group_id
                             }
@@ -1566,6 +1572,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 }
             )
+
+            if bid_nonreaders:
+                bid_invitation.edge['nonreaders'] = bid_nonreaders
 
             if self.venue.is_template_related_workflow():
                 bid_invitation.description = f'Configure the settings for reviewer bidding, set the number of bids reviewers are expected to complete, select the bid labels, and set the date/time when the bidding is available to reviewers, when bids are due, and when bidding is no longer available to reviewers.'
@@ -2437,17 +2446,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             'venueid': {
                 'value': self.venue.get_withdrawn_submission_venue_id()
-            },
-            '_bibtex': {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'maxLength': 200000,
-                        'input': 'textarea',
-                        'optional': True,
-                        'deletable': True
-                    }
-                }
             }
         }
         if not submission_stage.unified_authors:
@@ -2746,17 +2744,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             'venueid': {
                 'value': self.venue.get_desk_rejected_submission_venue_id()
-            },
-            '_bibtex': {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'maxLength': 200000,
-                        'input': 'textarea',
-                        'optional': True,
-                        'deletable': True
-                    }
-                }
             }
         }
         if not submission_stage.unified_authors:
@@ -3585,13 +3572,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                             'deletable': True
                         }
                     },
-                    'readers': [ venue_id, '${2/signatures}' ],
-                    'writers': [ venue_id, '${2/signatures}' ],
-                    'signatures': {
-                        'param': {
-                            'regex': '~.*'
-                        }
-                    },
+                    'readers': [ venue_id, '${2/tail}' ],
+                    'writers': [ venue_id, '${2/tail}' ],
+                    'signatures': [ '${2/tail}' ],
                     'head': {
                         'param': {
                             'type': 'note'
@@ -3600,6 +3583,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'tail': {
                         'param': {
                             'type': 'profile',
+                            'inGroup': committee_id,
                             'options': {
                                 'group': committee_id
                             }

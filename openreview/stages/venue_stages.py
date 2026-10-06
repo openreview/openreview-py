@@ -468,18 +468,21 @@ class BidStage(object):
         readers.append(self.committee_id)
         return readers
 
-    def get_readers(self, conference):
+    def get_readers(self, conference, number=None):
         values_copied = [conference.get_id()]
         if self.committee_id == conference.get_reviewers_id():
             if conference.use_senior_area_chairs:
-                values_copied.append(conference.get_senior_area_chairs_id())
+                values_copied.append(conference.get_senior_area_chairs_id(number))
             if conference.use_area_chairs:
-                values_copied.append(conference.get_area_chairs_id())
+                values_copied.append(conference.get_area_chairs_id(number))
         if self.committee_id == conference.get_area_chairs_id():
             if conference.use_senior_area_chairs:
-                values_copied.append(conference.get_senior_area_chairs_id())
+                values_copied.append(conference.get_senior_area_chairs_id(number))
         values_copied.append('{signatures}')
         return values_copied
+
+    def get_nonreaders(self, conference, number=None):
+        return [conference.get_authors_id(number)]
 
     def get_bid_options(self):
         options = ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
@@ -643,6 +646,11 @@ class SubmissionRevisionStage():
                     if field in ['authors', 'authorids'] and only_accepted and conference.use_publication_chairs:
                         content[field]['readers'].append(conference.get_publication_chairs_id())
                 if field not in hidden_field_names and not content[field].get('readers', []) and existing_invitation_content.get(field, {}).get('readers', []):
+                    ## The field is not hidden anymore: drop the stale readers from this invitation
+                    ## so a later revision does not stamp them again. This unescaped delete is
+                    ## consumed by the invitation edit, it does not touch the existing notes: the
+                    ## submissions are released by the Post_Submission invitation, and field readers
+                    ## are only removed from existing notes through the escaped { 'const': { 'delete': True } }.
                     content[field]['readers'] = { 'delete': True }                        
 
         return content

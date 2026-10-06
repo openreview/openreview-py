@@ -192,14 +192,12 @@ class GroupBuilder(object):
             'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'withdrawal_name': { 'value': 'Withdrawal'},
             'withdrawal_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_withdraw },
-            'withdrawn_submission_reveal_authors': { 'value': self.venue.submission_stage.withdrawn_submission_reveal_authors },
             'desk_rejected_submission_id': { 'value': self.venue.get_desk_rejected_id() },
             'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
             'desk_rejection_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_desk_reject },
-            'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
             'deletion_expiration_id': { 'value': self.venue.get_invitation_id('Deletion_Expiration') },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map },
@@ -773,17 +771,19 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                             members=[]
                             ))
 
+        ## the invited and declined lists contain raw emails, so the invitees must not be able to read
+        ## these groups nor sign as them
         committee_declined_group = tools.get_group(self.client, committee_declined_id)
         if not committee_declined_group:
             committee_declined_group=self.post_group(Group(id=committee_declined_id,
-                            readers=[venue_id, committee_declined_id],
+                            readers=[venue_id],
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
-                            signatories=[venue_id, committee_declined_id],
+                            signatories=[venue_id],
                             members=[]
                             ))
 
-        invited_group_readers = [venue_id, committee_invited_id]
+        invited_group_readers = [venue_id]
         if committee_name == self.venue.ethics_reviewers_name:
             invited_group_readers.append(self.venue.get_ethics_chairs_id())
         committee_invited_group = tools.get_group(self.client, committee_invited_id)
@@ -792,10 +792,10 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                             readers=invited_group_readers,
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
-                            signatories=[venue_id, committee_invited_id],
+                            signatories=[venue_id],
                             members=[]
                             ))
-           
+
 
     def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False, is_ethics_reviewer=False):
 

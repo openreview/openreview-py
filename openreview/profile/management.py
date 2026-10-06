@@ -1488,6 +1488,7 @@ return {
                 
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
+                pre_file_content = pre_file_content.replace("SUPPORT_USER_ID = ''", "SUPPORT_USER_ID = '" + self.support_group_id + "'")
                 self.client.post_invitation_edit(
                     invitations=f'{self.super_user}/-/Edit',
                     signatures=[self.super_user],
