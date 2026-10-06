@@ -40,7 +40,7 @@ class AuthorReorder(Enum):
         ALLOW_REORDER = 0
         ALLOW_EDIT = 1
         DISALLOW_EDIT = 2
-
+        ALLOW_INSTITUTION_EDIT = 3
 
 class SubmissionType(Enum):
     ACTIVE = 0
@@ -629,6 +629,43 @@ class SubmissionRevisionStage():
                 del content['authors']
             if 'authorids' in content:
                 del content['authorids']
+        elif self.allow_author_reorder == AuthorReorder.ALLOW_INSTITUTION_EDIT:
+            if not conference.submission_stage.unified_authors:
+                raise ValueError('ALLOW_INSTITUTION_EDIT requires unified authors')
+            content['authors'] = {
+                'value': {
+                    'param': {
+                        'type': 'author{}',
+                        'minItems': '${{3/id}/content/authors/value/length}',
+                        'maxItems': '${{3/id}/content/authors/value/length}',
+                        'properties': {
+                            'fullname': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['${...{5/id}/content/authors/value/*/fullname}']
+                                }
+                            },
+                            'username': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['${...{5/id}/content/authors/value/*/username}']
+                                }
+                            },
+                            'institutions': {
+                                'param': {
+                                    'type': 'object{}',
+                                    'properties': {
+                                        'name': { 'param': { 'type': 'string' } },
+                                        'domain': { 'param': { 'type': 'string' } },
+                                        'country': { 'param': { 'type': 'string' } }
+                                    },
+                                    'optional': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
