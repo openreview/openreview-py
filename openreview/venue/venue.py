@@ -145,6 +145,7 @@ class Venue(object):
             self.reviewer_roles = [self.reviewers_name]
         self.submission_reviewer_roles = request_note.content.get('submission_reviewer_group_names', {}).get('value') or [self.reviewers_name]
         preferred_email_groups = ([self.get_reviewers_id()] if self.use_reviewers else []) + [self.get_authors_id()]
+        self.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
         if request_note.content.get('area_chairs_support',{}).get('value'):
             if request_note.content.get('area_chair_groups_names', {}).get('value'):
@@ -156,6 +157,7 @@ class Venue(object):
             self.submission_area_chair_roles = request_note.content.get('submission_area_chair_group_names', {}).get('value') or [self.area_chairs_name]
             self.use_area_chairs = True
             preferred_email_groups.append(self.get_area_chairs_id())
+            self.area_chair_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS,  openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
         if request_note.content.get('senior_area_chairs_support',{}).get('value'):
             if request_note.content.get('senior_area_chair_groups_names', {}).get('value'):
@@ -163,6 +165,7 @@ class Venue(object):
                 self.senior_area_chairs_name = self.senior_area_chair_roles[0]
             self.use_senior_area_chairs = True
             preferred_email_groups.append(self.get_senior_area_chairs_id())
+            self.senior_area_chair_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED]
 
         self.release_role_participation = request_note.content.get('release_role_participation', {}).get('value', True)
 
@@ -779,7 +782,8 @@ class Venue(object):
                 multiReply=True,
                 allow_author_reorder=stage.author_reorder_after_first_deadline,
                 allow_license_edition=True,
-                source = {'venueid': [self.get_submission_venue_id()]}
+                source = {'venueid': [self.get_submission_venue_id()]},
+                include_field_readers=True
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
