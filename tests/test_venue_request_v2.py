@@ -4065,6 +4065,7 @@ Best,
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/-/Withdrawn_Submission')
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
