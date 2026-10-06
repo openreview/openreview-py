@@ -2130,6 +2130,17 @@ class EditInvitationsBuilder(object):
                                 'input': 'textarea'
                             }
                         }
+                    },
+                    'llm_token_limit': {
+                        'order': 5,
+                        'description': 'Maximum number of tokens the assistant can use in each chat, one committee member on one submission.',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'minimum': 0,
+                                'default': 1000000
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -2148,6 +2159,9 @@ class EditInvitationsBuilder(object):
                         },
                         'llm_prompt': {
                             'value': '${4/content/llm_prompt/value}'
+                        },
+                        'llm_token_limit': {
+                            'value': '${4/content/llm_token_limit/value}'
                         }
                     }
                 }

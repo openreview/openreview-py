@@ -1,8 +1,53 @@
+import base64
 import datetime
+import json
 import os
+import re
+import threading
+import time
 import openreview
 import pytest
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from selenium.webdriver.common.by import By
+
+@pytest.fixture(scope='module')
+def llm_mock():
+    # stands in for the LLM gateway: records the requests of the chat process and answers in the Anthropic format;
+    # the API process runner reaches it on localhost because the services share the network
+    received = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+            received.append({ 'path': self.path, 'authorization': self.headers.get('Authorization'), 'body': body })
+            question = body['messages'][-1]['content']
+            if isinstance(question, list):
+                question = question[-1]['text']
+            # keeps the question pending for a while
+            if '[slow]' in question:
+                time.sleep(5)
+            answer = json.dumps({
+                'id': 'msg_mock',
+                'type': 'message',
+                'role': 'assistant',
+                'model': body['model'],
+                'stop_reason': 'end_turn',
+                'content': [{ 'type': 'text', 'text': f'Answer from the LLM mock to: {question}' }],
+                'usage': { 'input_tokens': 100, 'output_tokens': 20 }
+            }).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(answer)))
+            self.end_headers()
+            self.wfile.write(answer)
+
+        def log_message(self, format, *args):
+            pass
+
+    server = ThreadingHTTPServer(('0.0.0.0', 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    yield { 'url': f'http://localhost:{server.server_port}', 'requests': received }
+    server.shutdown()
 
 class TestCVPRConferenceWithTemplates():
 
@@ -391,6 +436,101 @@ class TestCVPRConferenceWithTemplates():
         assert set(openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Submission3/Reviewers').members) == {'~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'}
         assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Submission10/Reviewers').members == ['~Reviewer_CVPRSeven1']
 
+    def test_area_chair_assignments(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
+
+        submissions = pc_client.get_notes(content={'venueid': 'thecvf.com/CVPR/2027/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 10
+
+        config_note = openreview_client.post_note_edit(
+            invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/Assignment_Configuration',
+            readers=['thecvf.com/CVPR/2027/Conference'],
+            writers=['thecvf.com/CVPR/2027/Conference'],
+            signatures=['thecvf.com/CVPR/2027/Conference'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'area-chairs-matching'},
+                    'user_demand': { 'value': '1'},
+                    'max_papers': { 'value': '5'},
+                    'min_papers': { 'value': '0'},
+                    'alternates': { 'value': '2'},
+                    'paper_invitation': { 'value': 'thecvf.com/CVPR/2027/Conference/-/Submission&content.venueid=thecvf.com/CVPR/2027/Conference/Submission'},
+                    'match_group': { 'value': 'thecvf.com/CVPR/2027/Conference/Area_Chairs'},
+                    'scores_specification': {
+                        'value': {
+                            'thecvf.com/CVPR/2027/Conference/Area_Chairs/-/Bid': {
+                                'weight': 1,
+                                'default': 0,
+                                'translate_map': {
+                                    'Very High': 1.0,
+                                    'High': 0.5,
+                                    'Neutral': 0.0,
+                                    'Low': -0.5,
+                                    'Very Low': -1.0
+                                }
+                            }
+                        }
+                    },
+                    'aggregate_score_invitation': { 'value': 'thecvf.com/CVPR/2027/Conference/Area_Chairs/-/Aggregate_Score'},
+                    'conflicts_invitation': { 'value': 'thecvf.com/CVPR/2027/Conference/Area_Chairs/-/Conflict'},
+                    'solver': { 'value': 'FairFlow'},
+                    'status': { 'value': 'Initialized'},
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/Assignment_Configuration')
+
+        # the papers 1 and 10 are co-authored by SAC CVPROne, the cvpr.cc area chairs oversee the papers 2 to 9
+        area_chairs = ['~AC_CVPROne1', '~AC_CVPRTwo1']
+        for idx, submission in enumerate(submissions[1:9]):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/Proposed_Assignment',
+                head=submission.id,
+                tail=area_chairs[idx % 2],
+                signatures=['thecvf.com/CVPR/2027/Conference/Program_Chairs'],
+                weight=1,
+                label='area-chairs-matching'
+            ))
+
+        # mark the configuration as complete and deploy the assignments
+        openreview_client.post_note_edit(
+            invitation='thecvf.com/CVPR/2027/Conference/-/Edit',
+            signatures=['thecvf.com/CVPR/2027/Conference'],
+            note=openreview.api.Note(
+                id=config_note['note']['id'],
+                content={ 'status': { 'value': 'Complete' } }
+            )
+        )
+
+        openreview_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2027/Conference/-/Area_Chairs_Assignment_Deployment/Match',
+            content={
+                'match_name': { 'value': 'area-chairs-matching' }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/-/Area_Chairs_Assignment_Deployment-0-1', count=2)
+
+        # activate the deployment
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
+        openreview_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2027/Conference/-/Area_Chairs_Assignment_Deployment/Dates',
+            content={
+                'activation_date': { 'value': now }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/-/Area_Chairs_Assignment_Deployment-0-1', count=3)
+
+        # the deployment moves the Submission_Change_Before_Reviewing activation date again
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2027/Conference/-/Submission_Change_Before_Reviewing-0-1', count=3)
+
+        grouped_edges = openreview_client.get_grouped_edges(invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/Assignment', groupby='id')
+        assert len(grouped_edges) == 8
+
+        assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Submission2/Area_Chairs').members == ['~AC_CVPROne1']
+        assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Submission3/Area_Chairs').members == ['~AC_CVPRTwo1']
+        assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Submission1/Area_Chairs').members == []
+
     def test_release_submissions_to_assigned_committee(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
@@ -403,7 +543,7 @@ class TestCVPRConferenceWithTemplates():
             }
         )
 
-        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2027/Conference/-/Submission_Change_Before_Reviewing-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2027/Conference/-/Submission_Change_Before_Reviewing-0-1', count=4)
 
         submissions = pc_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/-/Submission', sort='number:asc')
         assert submissions[1].readers == [
@@ -443,21 +583,23 @@ class TestCVPRConferenceWithTemplates():
 
         assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/AI_Review_Assistant')
 
-        # super invitation of the chats, one per reviewer anonymous group: its date process creates them and
-        # they run the process_script stored in its content
         edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(openreview_client, 'thecvf.com/CVPR/2027/Conference')
         llm_chat_process_script = edit_invitations_builder.get_process_content('workflow_process/llm_chat_process.py')
+
+        # super invitation of the reviewer chats, one per reviewer anonymous group: its date process creates them and
+        # they run the process_script stored in its content
         openreview_client.post_invitation_edit(
             invitations='thecvf.com/CVPR/2027/Conference/-/Edit',
             readers=['thecvf.com/CVPR/2027/Conference'],
             writers=['thecvf.com/CVPR/2027/Conference'],
             signatures=['thecvf.com/CVPR/2027/Conference'],
             invitation=openreview.api.Invitation(
-                id='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction',
+                id='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction',
                 invitees=['thecvf.com/CVPR/2027/Conference'],
                 readers=['thecvf.com/CVPR/2027/Conference'],
                 writers=['thecvf.com/CVPR/2027/Conference'],
                 signatures=['thecvf.com/CVPR/2027/Conference'],
+                description='This step runs automatically at its "activation date", and creates a private chat with an AI assistant for every reviewer assigned to a submission. Configure the LLM gateway and the prompt in "Settings" and the code that answers the messages in "Process".',
                 # not active yet, without a cdate the date process would run right away
                 cdate=openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days=30)),
                 date_processes=[{
@@ -466,7 +608,7 @@ class TestCVPRConferenceWithTemplates():
                 }],
                 content={
                     'process_script': {
-                        'value': llm_chat_process_script
+                        'value': edit_invitations_builder.get_process_content('workflow_process/llm_chat_process.py')
                     },
                     'llm_prompt': {
                         'value': '''You are an AI assistant that helps a reviewer of CVPR 2027 understand the submission they were assigned to review. The submission PDF and its metadata are attached to the first message of the conversation.
@@ -479,6 +621,9 @@ class TestCVPRConferenceWithTemplates():
                     },
                     'llm_base_url': {
                         'value': 'https://litellm.openreview.net'
+                    },
+                    'llm_token_limit': {
+                        'value': 1000000
                     }
                 },
                 edit={
@@ -510,6 +655,8 @@ class TestCVPRConferenceWithTemplates():
                     },
                     'invitation': {
                         'id': '${2/content/anonGroupId/value}/-/LLM_Interaction',
+                        # one message at a time: a new message waits for the answer to the previous one
+                        'preprocess': edit_invitations_builder.get_process_content('workflow_process/llm_chat_preprocess.py'),
                         'process': '''def process(client, edit, invitation):
     import base64
     import requests
@@ -551,6 +698,28 @@ class TestCVPRConferenceWithTemplates():
                                 '${4/content/anonGroupId/value}'
                             ],
                             'writers': ['thecvf.com/CVPR/2027/Conference'],
+                            # the LLM usage of each answer, readable by the venue only
+                            'content': {
+                                'tokens': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'integer',
+                                            'minimum': 0,
+                                            'optional': True
+                                        }
+                                    },
+                                    'readers': ['thecvf.com/CVPR/2027/Conference']
+                                },
+                                'usage': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'json',
+                                            'optional': True
+                                        }
+                                    },
+                                    'readers': ['thecvf.com/CVPR/2027/Conference']
+                                }
+                            },
                             'note': {
                                 'forum': '${4/content/noteId/value}',
                                 'replyto': {
@@ -585,32 +754,44 @@ class TestCVPRConferenceWithTemplates():
             )
         )
 
-        llm_super_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/-/LLM_Interaction')
+        llm_super_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
         assert llm_super_invitation.content['process_script']['value'] == llm_chat_process_script
         default_prompt = llm_super_invitation.content['llm_prompt']['value']
         assert default_prompt.startswith('You are an AI assistant that helps a reviewer of CVPR 2027')
         assert 'llm_api_key' not in llm_super_invitation.content
         assert llm_super_invitation.content['llm_base_url']['value'] == 'https://litellm.openreview.net'
+        assert llm_super_invitation.content['llm_token_limit']['value'] == 1000000
+        # the reviewers do not get the forum replies
+        assert 'llm_reply_invitations' not in llm_super_invitation.content
+
+        # the super invitations of both committees and their edit invitations are not filtered out of the workflow timeline
+        domain = openreview_client.get_group('thecvf.com/CVPR/2027/Conference')
+        for invitation_id in [f'thecvf.com/CVPR/2027/Conference/{committee}/-/LLM_Interaction{suffix}' for committee in ['Reviewers', 'Area_Chairs'] for suffix in ['', '/Dates', '/Settings', '/Process']]:
+            for pattern in domain.content['exclusion_workflow_invitations']['value']:
+                if pattern.startswith('/') and pattern.endswith('/'):
+                    assert not re.search(pattern[1:-1], invitation_id), f'{invitation_id} is excluded from the timeline by {pattern}'
+                else:
+                    assert pattern != invitation_id
 
         # the chats are created when the super invitation is activated
-        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction')) == 0
+        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')) == 0
 
         # the program chairs activate the chats through the dates invitation; the date process only runs for an
         # activation date in the future, a past date is never scheduled
-        edit_invitations_builder.set_edit_dates_one_level_invitation('thecvf.com/CVPR/2027/Conference/-/LLM_Interaction')
+        edit_invitations_builder.set_edit_dates_one_level_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
 
         pc_client = openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
         activation_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(seconds=5))
         pc_client.post_invitation_edit(
-            invitations='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction/Dates',
+            invitations='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Dates',
             content={
                 'activation_date': { 'value': activation_date }
             }
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction-0-0', count=1)
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction-0-0', count=1)
 
-        assert openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/-/LLM_Interaction').cdate == activation_date
+        assert openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction').cdate == activation_date
 
         # every assigned reviewer of every submission has a chat
         submissions = openreview_client.get_notes(content={'venueid': 'thecvf.com/CVPR/2027/Conference/Submission'}, sort='number:asc')
@@ -625,23 +806,27 @@ class TestCVPRConferenceWithTemplates():
                 chat_invitation = openreview_client.get_invitation(f'{anon_group.id}/-/LLM_Interaction')
                 assert chat_invitation.edit['note']['forum'] == submission.id
                 assert chat_invitation.edit['note']['content']['message']['value']['param']['markdown'] == True
+                # the LLM usage stored in the edit of each answer is readable by the venue only
+                assert chat_invitation.edit['content']['tokens']['readers'] == ['thecvf.com/CVPR/2027/Conference']
+                assert chat_invitation.edit['content']['usage']['readers'] == ['thecvf.com/CVPR/2027/Conference']
 
-        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction')) == 26
+        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')) == 26
 
         # the program chairs configure the LLM gateway through the settings invitation, keeping the default prompt
-        edit_invitations_builder.set_edit_llm_chat_settings_invitation('thecvf.com/CVPR/2027/Conference/-/LLM_Interaction')
+        edit_invitations_builder.set_edit_llm_chat_settings_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
 
         pc_client.post_invitation_edit(
-            invitations='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction/Settings',
+            invitations='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Settings',
             content={
                 'llm_api_key': { 'value': 'sk-test-key' },
                 'llm_base_url': { 'value': 'https://litellm.openreview.net' },
                 'llm_model': { 'value': 'claude-sonnet-4-6' },
-                'llm_prompt': { 'value': default_prompt }
+                'llm_prompt': { 'value': default_prompt },
+                'llm_token_limit': { 'value': 1000000 }
             }
         )
 
-        llm_super_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/-/LLM_Interaction')
+        llm_super_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
         assert llm_super_invitation.content['llm_api_key'] == { 'value': 'sk-test-key', 'readers': ['thecvf.com/CVPR/2027/Conference'] }
         assert llm_super_invitation.content['llm_base_url']['value'] == 'https://litellm.openreview.net'
         assert llm_super_invitation.content['llm_model']['value'] == 'claude-sonnet-4-6'
@@ -651,7 +836,7 @@ class TestCVPRConferenceWithTemplates():
         # every setting is required, an omitted one would be saved as an unresolved reference
         with pytest.raises(openreview.OpenReviewException, match=r'.*llm_api_key.*'):
             pc_client.post_invitation_edit(
-                invitations='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction/Settings',
+                invitations='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Settings',
                 content={
                     'llm_prompt': { 'value': 'Another prompt.' }
                 }
@@ -660,46 +845,277 @@ class TestCVPRConferenceWithTemplates():
         # only the gateway models can be selected
         with pytest.raises(openreview.OpenReviewException, match=r'.*must be equal to one of the allowed values.*'):
             pc_client.post_invitation_edit(
-                invitations='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction/Settings',
+                invitations='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Settings',
                 content={
                     'llm_api_key': { 'value': 'sk-test-key' },
                     'llm_base_url': { 'value': 'https://litellm.openreview.net' },
                     'llm_model': { 'value': 'gpt-4o' },
-                    'llm_prompt': { 'value': 'Another prompt.' }
+                    'llm_prompt': { 'value': 'Another prompt.' },
+                    'llm_token_limit': { 'value': 1000000 }
                 }
             )
 
         # reviewers can not read the settings
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@cvpr.cc', password=helpers.strong_password)
-        assert not openreview.tools.get_invitation(reviewer_client, 'thecvf.com/CVPR/2027/Conference/-/LLM_Interaction')
+        assert not openreview.tools.get_invitation(reviewer_client, 'thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
 
         # the program chairs edit the process script of the chats through the process invitation, the chats
         # read it from the super invitation every time they run
-        edit_invitations_builder.set_edit_process_script_invitation('thecvf.com/CVPR/2027/Conference/-/LLM_Interaction')
+        edit_invitations_builder.set_edit_process_script_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
 
         assert 'MAX_TOKENS = 16000' in llm_chat_process_script
         edited_process_script = llm_chat_process_script.replace('MAX_TOKENS = 16000', 'MAX_TOKENS = 8000')
         pc_client.post_invitation_edit(
-            invitations='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction/Process',
+            invitations='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Process',
             content={
                 'process_script': { 'value': edited_process_script }
             }
         )
 
-        llm_super_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/-/LLM_Interaction')
+        llm_super_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
         assert llm_super_invitation.content['process_script']['value'] == edited_process_script
         assert llm_super_invitation.content['llm_prompt']['value'] == default_prompt
 
         # restore the original process script
         pc_client.post_invitation_edit(
-            invitations='thecvf.com/CVPR/2027/Conference/-/LLM_Interaction/Process',
+            invitations='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Process',
             content={
                 'process_script': { 'value': llm_chat_process_script }
             }
         )
-        assert openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/-/LLM_Interaction').content['process_script']['value'] == llm_chat_process_script
+        assert openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction').content['process_script']['value'] == llm_chat_process_script
 
-        # show the chat in its own forum tab
+        # super invitation of the area chair chats: the area chairs chat about the submission and the reviews,
+        # rebuttals and comments of the forum
+        openreview_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2027/Conference/-/Edit',
+            readers=['thecvf.com/CVPR/2027/Conference'],
+            writers=['thecvf.com/CVPR/2027/Conference'],
+            signatures=['thecvf.com/CVPR/2027/Conference'],
+            invitation=openreview.api.Invitation(
+                id='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction',
+                invitees=['thecvf.com/CVPR/2027/Conference'],
+                readers=['thecvf.com/CVPR/2027/Conference'],
+                writers=['thecvf.com/CVPR/2027/Conference'],
+                signatures=['thecvf.com/CVPR/2027/Conference'],
+                description='This step runs automatically at its "activation date", and creates a private chat with an AI assistant for every area chair assigned to a submission. Besides the submission, the assistant gets the reviews, rebuttals and comments of the forum that the area chair can read. Configure the LLM gateway and the prompt in "Settings" and the code that answers the messages in "Process".',
+                # not active yet, without a cdate the date process would run right away
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days=30)),
+                date_processes=[{
+                    'dates': ['#{4/cdate}'],
+                    'script': edit_invitations_builder.get_process_content('workflow_process/llm_chat_invitations_process.py')
+                }],
+                content={
+                    'process_script': {
+                        'value': edit_invitations_builder.get_process_content('workflow_process/llm_chat_process.py')
+                    },
+                    'llm_prompt': {
+                        'value': '''You are an AI assistant that helps an area chair of CVPR 2027 assess a submission they oversee and its review record. The submission PDF, its metadata and the reviews, rebuttals and comments of the forum are attached to the first message of the conversation.
+
+- Explain the main strengths and weaknesses raised by each review, and where the reviews agree or disagree.
+- Take into account how the authors' rebuttal and the discussion address each critique.
+- When reviews disagree, weigh each competing critique against the paper, pointing to the sections, figures, tables or pages that support or contradict it.
+- Distinguish factual errors in a review from differences of opinion or emphasis, and say when a criticism is not supported by the paper or when the paper does not address it.
+- Point out issues in the submission that none of the reviews mention, if any.
+- Be concise and format your answers with Markdown.
+- Do not try to identify the authors of the submission or the reviewers.
+- Support the area chair's assessment, but do not write the meta-review or recommend a decision on their behalf.'''
+                    },
+                    'llm_base_url': {
+                        'value': 'https://litellm.openreview.net'
+                    },
+                    'llm_token_limit': {
+                        'value': 1000000
+                    },
+                    # the forum replies of these invitations are sent to the LLM too
+                    'llm_reply_invitations': {
+                        'value': ['Official_Review', 'Author_Rebuttal', 'Official_Comment']
+                    }
+                },
+                edit={
+                    'signatures': ['thecvf.com/CVPR/2027/Conference'],
+                    'readers': ['thecvf.com/CVPR/2027/Conference'],
+                    'writers': ['thecvf.com/CVPR/2027/Conference'],
+                    'content': {
+                        'noteId': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        },
+                        'noteNumber': {
+                            'value': {
+                                'param': {
+                                    'type': 'integer'
+                                }
+                            }
+                        },
+                        'anonGroupId': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        }
+                    },
+                    'invitation': {
+                        'id': '${2/content/anonGroupId/value}/-/LLM_Interaction',
+                        # one message at a time: a new message waits for the answer to the previous one
+                        'preprocess': edit_invitations_builder.get_process_content('workflow_process/llm_chat_preprocess.py'),
+                        'process': '''def process(client, edit, invitation):
+    import base64
+    import requests
+
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+        'base64': base64,
+        'requests': requests
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                        'invitees': [
+                            'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
+                            '${3/content/anonGroupId/value}'
+                        ],
+                        'readers': [
+                            'thecvf.com/CVPR/2027/Conference',
+                            'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
+                            '${3/content/anonGroupId/value}'
+                        ],
+                        'writers': ['thecvf.com/CVPR/2027/Conference'],
+                        'signatures': ['thecvf.com/CVPR/2027/Conference'],
+                        'edit': {
+                            'signatures': {
+                                'param': {
+                                    'items': [
+                                        {'value': '${7/content/anonGroupId/value}', 'optional': True},
+                                        {'value': 'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant', 'optional': True}
+                                    ]
+                                }
+                            },
+                            'readers': [
+                                'thecvf.com/CVPR/2027/Conference',
+                                'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
+                                '${4/content/anonGroupId/value}'
+                            ],
+                            'writers': ['thecvf.com/CVPR/2027/Conference'],
+                            # the LLM usage of each answer, readable by the venue only
+                            'content': {
+                                'tokens': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'integer',
+                                            'minimum': 0,
+                                            'optional': True
+                                        }
+                                    },
+                                    'readers': ['thecvf.com/CVPR/2027/Conference']
+                                },
+                                'usage': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'json',
+                                            'optional': True
+                                        }
+                                    },
+                                    'readers': ['thecvf.com/CVPR/2027/Conference']
+                                }
+                            },
+                            'note': {
+                                'forum': '${4/content/noteId/value}',
+                                'replyto': {
+                                    'param': {
+                                        'withForum': '${6/content/noteId/value}'
+                                    }
+                                },
+                                'signatures': ['${3/signatures}'],
+                                'readers': [
+                                    'thecvf.com/CVPR/2027/Conference',
+                                    'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
+                                    '${5/content/anonGroupId/value}'
+                                ],
+                                'writers': ['thecvf.com/CVPR/2027/Conference'],
+                                'content': {
+                                    'message': {
+                                        'order': 1,
+                                        'description': 'Message',
+                                        'value': {
+                                            'param': {
+                                                'type': 'string',
+                                                'input': 'textarea',
+                                                'markdown': True
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        ac_llm_super_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
+        assert ac_llm_super_invitation.content['process_script']['value'] == llm_chat_process_script
+        ac_default_prompt = ac_llm_super_invitation.content['llm_prompt']['value']
+        assert ac_default_prompt.startswith('You are an AI assistant that helps an area chair of CVPR 2027')
+        assert ac_llm_super_invitation.content['llm_reply_invitations']['value'] == ['Official_Review', 'Author_Rebuttal', 'Official_Comment']
+        assert ac_llm_super_invitation.content['llm_base_url']['value'] == 'https://litellm.openreview.net'
+        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')) == 0
+
+        edit_invitations_builder.set_edit_dates_one_level_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
+        edit_invitations_builder.set_edit_llm_chat_settings_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
+        edit_invitations_builder.set_edit_process_script_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
+
+        activation_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(seconds=5))
+        pc_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction/Dates',
+            content={
+                'activation_date': { 'value': activation_date }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction-0-0', count=1)
+
+        # every assigned area chair of every submission has a chat
+        for submission in submissions:
+            area_chairs_group = openreview_client.get_group(f'thecvf.com/CVPR/2027/Conference/Submission{submission.number}/Area_Chairs')
+            anon_groups = openreview_client.get_groups(prefix=f'thecvf.com/CVPR/2027/Conference/Submission{submission.number}/Area_Chair_')
+            assert sorted([anon_group.members[0] for anon_group in anon_groups]) == sorted(area_chairs_group.members)
+
+            for anon_group in anon_groups:
+                chat_invitation = openreview_client.get_invitation(f'{anon_group.id}/-/LLM_Interaction')
+                assert chat_invitation.edit['note']['forum'] == submission.id
+                assert chat_invitation.edit['note']['readers'] == [
+                    'thecvf.com/CVPR/2027/Conference',
+                    'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
+                    anon_group.id
+                ]
+
+        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')) == 8
+
+        pc_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction/Settings',
+            content={
+                'llm_api_key': { 'value': 'sk-test-key' },
+                'llm_base_url': { 'value': 'https://litellm.openreview.net' },
+                'llm_model': { 'value': 'claude-sonnet-4-6' },
+                'llm_prompt': { 'value': ac_default_prompt },
+                'llm_token_limit': { 'value': 1000000 }
+            }
+        )
+
+        ac_llm_super_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
+        assert ac_llm_super_invitation.content['llm_api_key'] == { 'value': 'sk-test-key', 'readers': ['thecvf.com/CVPR/2027/Conference'] }
+        assert ac_llm_super_invitation.content['llm_prompt']['value'] == ac_default_prompt
+
+        # show the chats in their own forum tab
+
         openreview_client.post_invitation_edit(
             invitations='thecvf.com/CVPR/2027/Conference/-/Edit',
             signatures=['thecvf.com/CVPR/2027/Conference'],
@@ -709,7 +1125,7 @@ class TestCVPRConferenceWithTemplates():
                     {
                         'id': 'discussion',
                         'label': 'Discussion',
-                        'filter': '-invitations:thecvf.com/CVPR/2027/Conference/Submission${note.number}/Reviewer_.*/-/LLM_Interaction',
+                        'filter': '-invitations:thecvf.com/CVPR/2027/Conference/Submission${note.number}/.*/-/LLM_Interaction',
                         'nesting': 3,
                         'sort': 'date-desc',
                         'layout': 'default',
@@ -718,12 +1134,12 @@ class TestCVPRConferenceWithTemplates():
                     {
                         'id': 'llm_interaction',
                         'label': 'LLM Interaction Chat',
-                        'filter': 'invitations:thecvf.com/CVPR/2027/Conference/Submission${note.number}/Reviewer_.*/-/LLM_Interaction',
+                        'filter': 'invitations:thecvf.com/CVPR/2027/Conference/Submission${note.number}/.*/-/LLM_Interaction',
                         'nesting': 1,
                         'sort': 'date-asc',
                         'layout': 'chat',
                         'live': True,
-                        'expandedInvitations': ['thecvf.com/CVPR/2027/Conference/Submission${note.number}/Reviewer_.*/-/LLM_Interaction']
+                        'expandedInvitations': ['thecvf.com/CVPR/2027/Conference/Submission${note.number}/.*/-/LLM_Interaction']
                     }
                 ]
             )
@@ -760,16 +1176,165 @@ class TestCVPRConferenceWithTemplates():
             '${3/signatures}'
         ]
 
+    def test_submit_reviews(self, openreview_client, helpers):
+
+        # the reviewers of submission 2 disagree, so the area chair chat has competing critiques to assess
+        reviews = [
+            ('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 'Clear contribution', 'The method is well motivated and the experiments support the main claims.', 8, 4),
+            ('reviewer2@cvpr.cc', '~Reviewer_CVPRTwo1', 'Limited evaluation', 'The evaluation only covers small datasets and the baselines are outdated.', 4, 3),
+            ('reviewer3@cvpr.cc', '~Reviewer_CVPRThree1', 'Sound but incremental', 'The approach is sound but the novelty over prior work is limited.', 5, 4)
+        ]
+        for email, profile_id, title, text, rating, confidence in reviews:
+            reviewer_client = openreview.api.OpenReviewClient(username=email, password=helpers.strong_password)
+            anon_group_id = reviewer_client.get_groups(prefix='thecvf.com/CVPR/2027/Conference/Submission2/Reviewer_', signatory=profile_id)[0].id
+            review_edit = reviewer_client.post_note_edit(
+                invitation='thecvf.com/CVPR/2027/Conference/Submission2/-/Official_Review',
+                signatures=[anon_group_id],
+                note=openreview.api.Note(
+                    content={
+                        'title': { 'value': title },
+                        'review': { 'value': text },
+                        'rating': { 'value': rating },
+                        'confidence': { 'value': confidence }
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        assert len(openreview_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/Submission2/-/Official_Review')) == 3
+
+        # the area chair of the submission can read the reviews, so they are passed to the area chair chat
+        ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
+        assert len(ac_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/Submission2/-/Official_Review')) == 3
+
+    def test_llm_chat_messages(self, openreview_client, helpers, llm_mock):
+
+        pc_client = openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
+
+        def save_settings(committee_name, base_url, token_limit):
+            settings = openreview_client.get_invitation(f'thecvf.com/CVPR/2027/Conference/{committee_name}/-/LLM_Interaction').content
+            pc_client.post_invitation_edit(
+                invitations=f'thecvf.com/CVPR/2027/Conference/{committee_name}/-/LLM_Interaction/Settings',
+                content={
+                    'llm_api_key': { 'value': settings['llm_api_key']['value'] },
+                    'llm_base_url': { 'value': base_url },
+                    'llm_model': { 'value': settings['llm_model']['value'] },
+                    'llm_prompt': { 'value': settings['llm_prompt']['value'] },
+                    'llm_token_limit': { 'value': token_limit }
+                }
+            )
+
+        def ask(email, profile_id, number, anon_name, question):
+            committee_client = openreview.api.OpenReviewClient(username=email, password=helpers.strong_password)
+            submission = committee_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/-/Submission', number=number)[0]
+            anon_group_id = committee_client.get_groups(prefix=f'thecvf.com/CVPR/2027/Conference/Submission{number}/{anon_name}', signatory=profile_id)[0].id
+            message_edit = committee_client.post_note_edit(
+                invitation=f'{anon_group_id}/-/LLM_Interaction',
+                signatures=[anon_group_id],
+                note=openreview.api.Note(
+                    replyto=submission.id,
+                    content={
+                        'message': { 'value': question }
+                    }
+                )
+            )
+            return committee_client, anon_group_id, message_edit
+
+        def get_answer(anon_group_id, message_edit):
+            helpers.await_queue_edit(openreview_client, edit_id=message_edit['id'])
+            answers = [note for note in openreview_client.get_notes(invitation=f'{anon_group_id}/-/LLM_Interaction') if note.replyto == message_edit['note']['id']]
+            assert len(answers) == 1
+            assert answers[0].signatures == ['thecvf.com/CVPR/2027/Conference/AI_Review_Assistant']
+            return answers[0]
+
+        # the chats talk to the LLM mock during the test
+        save_settings('Reviewers', llm_mock['url'], 1000000)
+        save_settings('Area_Chairs', llm_mock['url'], 1000000)
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/openreview.pdf'), 'rb') as pdf_file:
+            pdf_bytes = pdf_file.read()
+
+        # a reviewer asks about the submission
+        reviewer_client, anon_group_id, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'What are the main contributions of this paper?')
+        answer = get_answer(anon_group_id, message_edit)
+        assert answer.content['message']['value'] == 'Answer from the LLM mock to: What are the main contributions of this paper?'
+
+        # the LLM gets the prompt, the PDF, the metadata visible to the reviewer and the question, but not the forum replies
+        request = llm_mock['requests'][-1]
+        assert request['path'] == '/v1/messages'
+        assert request['authorization'] == 'Bearer sk-test-key'
+        assert request['body']['model'] == 'claude-sonnet-4-6'
+        assert request['body']['system'].startswith('You are an AI assistant that helps a reviewer of CVPR 2027')
+        assert len(request['body']['messages']) == 1
+        pdf_block, metadata_block, question_block = request['body']['messages'][0]['content']
+        assert base64.b64decode(pdf_block['source']['data']) == pdf_bytes
+        assert 'Title: Paper title 2' in metadata_block['text']
+        assert 'SomeFirstName' not in metadata_block['text']
+        assert 'Kai' not in metadata_block['text']
+        assert question_block['text'] == 'What are the main contributions of this paper?'
+
+        # the edit of the answer stores the LLM usage, readable by the venue only
+        answer_edit = openreview_client.get_note_edits(note_id=answer.id)[0]
+        assert answer_edit.content['tokens']['value'] == 120
+        assert answer_edit.content['usage']['value']['model'] == 'claude-sonnet-4-6'
+        assert answer_edit.content['usage']['value']['input_tokens'] == 100
+        assert answer_edit.content['usage']['value']['output_tokens'] == 20
+        assert reviewer_client.get_note_edits(note_id=answer.id)[0].content is None
+
+        # one message at a time: a new message has to wait for the answer to the previous one
+        _, _, slow_message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'Explain the method step by step [slow]')
+        with pytest.raises(openreview.OpenReviewException, match=r'Please wait for the answer to your previous message'):
+            ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'And the limitations?')
+        get_answer(anon_group_id, slow_message_edit)
+
+        # the chat history goes with the new message
+        assert [message['role'] for message in llm_mock['requests'][-1]['body']['messages']] == ['user', 'assistant', 'user']
+
+        # the chat reaches its token limit after the two answers
+        save_settings('Reviewers', llm_mock['url'], 240)
+        requests_count = len(llm_mock['requests'])
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'And the limitations?')
+        answer = get_answer(anon_group_id, message_edit)
+        assert answer.content['message']['value'] == 'You have reached the usage limit of the AI assistant for this submission. Please contact the program chairs if you need to continue.'
+        assert len(llm_mock['requests']) == requests_count
+
+        # the limit is per chat, the reviewer can still ask about another submission
+        _, other_anon_group_id, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', 'What are the main contributions of this paper?')
+        answer = get_answer(other_anon_group_id, message_edit)
+        assert answer.content['message']['value'] == 'Answer from the LLM mock to: What are the main contributions of this paper?'
+        save_settings('Reviewers', llm_mock['url'], 1000000)
+
+        # the area chair gets the reviews of the forum too
+        _, ac_anon_group_id, message_edit = ask('ac1@cvpr.cc', '~AC_CVPROne1', 2, 'Area_Chair_', 'Which critique is best supported by the paper?')
+        answer = get_answer(ac_anon_group_id, message_edit)
+        assert answer.content['message']['value'] == 'Answer from the LLM mock to: Which critique is best supported by the paper?'
+
+        request = llm_mock['requests'][-1]
+        assert request['body']['system'].startswith('You are an AI assistant that helps an area chair of CVPR 2027')
+        pdf_block, metadata_block, replies_block, question_block = request['body']['messages'][0]['content']
+        assert base64.b64decode(pdf_block['source']['data']) == pdf_bytes
+        assert replies_block['text'].startswith('Forum replies:')
+        assert replies_block['text'].count('Official Review by Reviewer_') == 3
+        assert 'Limited evaluation' in replies_block['text']
+        # the chats of the reviewers are not part of the forum replies
+        assert 'Answer from the LLM mock' not in replies_block['text']
+        assert 'cache_control' in replies_block
+        assert question_block['text'] == 'Which critique is best supported by the paper?'
+
+        # point the chats back to the LLM gateway
+        save_settings('Reviewers', 'https://litellm.openreview.net', 1000000)
+        save_settings('Area_Chairs', 'https://litellm.openreview.net', 1000000)
+
     def test_llm_chat_tab_visible(self, openreview_client, helpers, selenium, request_page):
 
-        for email in ['reviewer1@cvpr.cc', 'reviewer2@cvpr.cc', 'reviewer3@cvpr.cc', 'reviewer4@cvpr.cc', 'reviewer5@cvpr.cc', 'reviewer6@cvpr.cc', 'reviewer7@gmail.com']:
-            reviewer_client = openreview.api.OpenReviewClient(username=email, password=helpers.strong_password)
-            submission = reviewer_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/-/Submission', sort='number:asc')[0]
+        for email in ['reviewer1@cvpr.cc', 'reviewer2@cvpr.cc', 'reviewer3@cvpr.cc', 'reviewer4@cvpr.cc', 'reviewer5@cvpr.cc', 'reviewer6@cvpr.cc', 'reviewer7@gmail.com', 'ac1@cvpr.cc', 'ac2@cvpr.cc']:
+            committee_client = openreview.api.OpenReviewClient(username=email, password=helpers.strong_password)
+            submission = committee_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/-/Submission', sort='number:asc')[0]
 
             request_page(
                 selenium,
                 'http://localhost:3030/forum?id=' + submission.id,
-                reviewer_client,
+                committee_client,
                 by=By.LINK_TEXT,
                 wait_for_element='LLM Interaction Chat'
             )

@@ -1,13 +1,19 @@
 def process(client, edit, invitation):
-    '''Answers a reviewer message posted to a `<venue>/Submission<N>/Reviewer_<id>/-/LLM_Interaction` invitation.
+    '''Answers a message posted to a chat invitation, e.g. `<venue>/Submission<N>/Reviewer_<id>/-/LLM_Interaction`.
 
-    Sends the prompt, the submission PDF, the submission metadata visible to reviewers and the chat history
-    to the LLM gateway and posts the answer as a reply signed by `<venue>/AI_Review_Assistant`.
+    Sends the prompt, the submission PDF, the submission metadata visible to the committee and the chat history
+    to the LLM gateway and posts the answer as a reply signed by `<venue>/AI_Review_Assistant`. When the super
+    invitation lists reply invitation names in llm_reply_invitations, e.g. the reviews, rebuttals and comments for
+    the area chairs, the forum replies of those invitations that the committee member can read are sent too.
 
-    The settings are read from the content of the `<venue>/-/LLM_Interaction` super invitation, edited by
-    the program chairs with the `<venue>/-/LLM_Interaction/Settings` invitation: llm_api_key, llm_base_url and
+    The settings are read from the content of the committee super invitation, e.g. `<venue>/Reviewers/-/LLM_Interaction`,
+    edited by the program chairs with its `/Settings` invitation: llm_api_key, llm_base_url and
     llm_prompt (required, the gateway URL and the default prompt are set when the super invitation is created)
     and llm_model.
+
+    The edit of each answer stores the tokens used and the gateway usage in its content, readable by the venue
+    only. Once the answers in a chat, one committee member on one submission, add up to llm_token_limit
+    tokens, the assistant stops calling the LLM in that chat.
 
     This is the `process_script` of the super invitation. The process of the child invitations execs it with
     the `openreview`, `datetime`, `base64` and `requests` modules.
@@ -20,6 +26,8 @@ def process(client, edit, invitation):
 
     THINKING_MESSAGE = 'Thinking...'
     ERROR_MESSAGE = 'Sorry, I could not answer this message. Please try again later.'
+    LIMIT_MESSAGE = 'You have reached the usage limit of the AI assistant for this submission. Please contact the program chairs if you need to continue.'
+    UNAVAILABLE_MESSAGE = 'The submission is not available to you yet, so the AI assistant cannot answer questions about it.'
 
     # never sent to the LLM: the author identities, the files, the author consent checkboxes and the venue bookkeeping fields
     EXCLUDED_FIELDS = ['authors', 'authorids', 'pdf', 'supplementary_material', 'email_sharing', 'data_release', 'venue', 'venueid']
@@ -41,12 +49,31 @@ def process(client, edit, invitation):
         print('not the first edit of the message, exiting...')
         return
 
-    def update_reply(reply_edit_id, message):
+    def count_tokens(usage):
+        # all the input, cache and output tokens reported by the gateway
+        return sum(value for key, value in usage.items() if key.endswith('_tokens') and isinstance(value, int))
+
+    def update_reply(reply_edit_id, message, usage=None):
         reply_edit = client.get_note_edit(reply_edit_id)
         reply_edit.note.content['message']['value'] = message
+        if usage:
+            # the invitation makes the usage readable by the venue only
+            reply_edit.content = {
+                'tokens': { 'value': count_tokens(usage) },
+                'usage': { 'value': usage }
+            }
         # re-post the same edit so the reply note keeps its id
         reply_edit.note.id = None
         client.post_edit(reply_edit)
+
+    def get_used_tokens():
+        # the tokens of the answers in this chat, the committee member's chat about the submission; the edits
+        # without usage, like the placeholder, have the content fields without a value
+        return sum(
+            (chat_edit.content or {}).get('tokens', {}).get('value') or 0
+            for chat_edit in client.get_note_edits(invitation=invitation.id)
+            if chat_edit.signatures[0] == assistant_id
+        )
 
     def get_answer():
         super_invitation = client.get_invitation(invitation.invitations[0])
@@ -54,23 +81,39 @@ def process(client, edit, invitation):
         base_url = super_invitation.get_content_value('llm_base_url')
         model = super_invitation.get_content_value('llm_model', 'claude-sonnet-4-6')
         prompt = super_invitation.get_content_value('llm_prompt')
+        token_limit = super_invitation.get_content_value('llm_token_limit')
         if not api_key or not base_url or not prompt:
             raise openreview.OpenReviewException('The LLM key, URL or prompt is missing, set them with the LLM_Interaction/Settings invitation')
 
+        if token_limit is not None:
+            used_tokens = get_used_tokens()
+            print(f'tokens used in the chat: {used_tokens} of {token_limit}')
+            if used_tokens >= token_limit:
+                return LIMIT_MESSAGE, None
+
         submission = client.get_note(edit.note.forum)
         submission_name = domain.get_content_value('submission_name', 'Submission')
-        reviewers_name = domain.get_content_value('reviewers_name', 'Reviewers')
+        # the super invitation belongs to the committee that chats, e.g. <venue>/Reviewers/-/LLM_Interaction
+        committee_name = super_invitation.id.split('/-/')[0].split('/')[-1]
 
-        # the groups that make a submission field visible to the reviewer asking the questions
-        reviewer_readers = {
+        # the groups that make a note or a field visible to the committee member asking the questions; the context
+        # is built with the venue client, so every note and field is checked against them
+        member_readers = {
             'everyone',
-            f'{venue_id}/{reviewers_name}',
-            f'{venue_id}/{submission_name}{submission.number}/{reviewers_name}',
+            f'{venue_id}/{committee_name}',
+            f'{venue_id}/{submission_name}{submission.number}/{committee_name}',
             edit.signatures[0]
         }
 
+        def can_read(note):
+            return bool(member_readers.intersection(note.readers)) and not member_readers.intersection(note.nonreaders or [])
+
         def is_visible(field):
-            return 'readers' not in field or bool(reviewer_readers.intersection(field['readers']))
+            return 'readers' not in field or bool(member_readers.intersection(field['readers']))
+
+        # e.g. the chats were activated before the submissions were released to the committee
+        if not can_read(submission):
+            return UNAVAILABLE_MESSAGE, None
 
         context = []
 
@@ -92,23 +135,49 @@ def process(client, edit, invitation):
             except Exception as e:
                 print('Could not load the submission PDF:', e)
 
-        metadata = [f'Submission number: {submission.number}']
-        for field_name, field in submission.content.items():
-            if field_name in EXCLUDED_FIELDS or field_name.startswith('_') or not is_visible(field):
-                continue
-            value = field.get('value')
-            if isinstance(value, list):
-                value = ', '.join(str(item) for item in value)
-            if value in (None, ''):
-                continue
-            metadata.append(f'{field_name.replace("_", " ").capitalize()}: {value}')
+        def format_fields(content, excluded_fields=[]):
+            lines = []
+            for field_name, field in content.items():
+                if field_name in excluded_fields or field_name.startswith('_') or not is_visible(field):
+                    continue
+                value = field.get('value')
+                if isinstance(value, list):
+                    value = ', '.join(str(item) for item in value)
+                if value in (None, ''):
+                    continue
+                lines.append(f'{field_name.replace("_", " ").capitalize()}: {value}')
+            return lines
+
+        metadata = [f'Submission number: {submission.number}'] + format_fields(submission.content, EXCLUDED_FIELDS)
 
         if not context:
             metadata.append('The submission PDF is not available, answer based on the metadata only.')
 
         context.append({ 'type': 'text', 'text': 'Submission metadata:\n\n' + '\n\n'.join(metadata) })
+
+        # the forum replies of the invitations listed by the super invitation, e.g. the reviews, rebuttals and
+        # comments for the area chairs, that the committee member can read
+        reply_invitation_names = super_invitation.get_content_value('llm_reply_invitations', [])
+        if reply_invitation_names:
+
+            def label(note):
+                return f'{note.invitations[0].split("/-/")[-1].replace("_", " ")} by {note.signatures[0].split("/")[-1]}'
+
+            forum_notes = { note.id: note for note in client.get_all_notes(forum=submission.id, sort='tcdate:asc') }
+            replies = []
+            for note in forum_notes.values():
+                if note.id == submission.id or note.invitations[0].split('/-/')[-1] not in reply_invitation_names or not can_read(note):
+                    continue
+                header = label(note)
+                parent = forum_notes.get(note.replyto)
+                if parent and parent.id != submission.id and can_read(parent):
+                    header += f', in reply to the {label(parent)}'
+                replies.append(f'{header}:\n\n' + '\n\n'.join(format_fields(note.content)))
+
+            context.append({ 'type': 'text', 'text': 'Forum replies:\n\n' + ('\n\n---\n\n'.join(replies) if replies else 'There are no replies in the forum yet.') })
+
         if model.startswith('claude'):
-            # every message of the chat resends the same PDF and metadata, cache them
+            # every message of the chat resends the same context, cache it
             context[-1]['cache_control'] = { 'type': 'ephemeral' }
 
         # the conversation up to and including the message being answered, oldest first
@@ -117,7 +186,7 @@ def process(client, edit, invitation):
             text = note.content.get('message', {}).get('value', '')
             if note.signatures[0] == assistant_id:
                 # skip the replies that were never completed
-                if text not in (THINKING_MESSAGE, ERROR_MESSAGE):
+                if text not in (THINKING_MESSAGE, ERROR_MESSAGE, LIMIT_MESSAGE, UNAVAILABLE_MESSAGE):
                     messages.append({ 'role': 'assistant', 'content': text })
             else:
                 messages.append({ 'role': 'user', 'content': text })
@@ -153,15 +222,16 @@ def process(client, edit, invitation):
             raise openreview.OpenReviewException(f'LLM gateway error {response.status_code}: {response.text}')
 
         result = response.json()
-        print('LLM usage:', result.get('usage'), 'cost:', response.headers.get('x-litellm-response-cost'))
+        usage = { 'model': result.get('model', model), **(result.get('usage') or {}) }
+        print('LLM usage:', usage, 'cost:', response.headers.get('x-litellm-response-cost'))
 
         if result.get('stop_reason') == 'refusal':
-            return 'Sorry, I cannot help with this request.'
+            return 'Sorry, I cannot help with this request.', usage
 
         answer = '\n\n'.join(block['text'] for block in result.get('content', []) if block.get('type') == 'text').strip()
         if result.get('stop_reason') == 'max_tokens':
             answer += '\n\n_The answer was cut off because it reached the maximum length._'
-        return answer
+        return answer, usage
 
     reply_edit = client.post_note_edit(
         invitation=invitation.id,
@@ -175,9 +245,9 @@ def process(client, edit, invitation):
     )
 
     try:
-        answer = get_answer()
+        answer, usage = get_answer()
     except Exception:
         update_reply(reply_edit['id'], ERROR_MESSAGE)
         raise
 
-    update_reply(reply_edit['id'], answer)
+    update_reply(reply_edit['id'], answer, usage)

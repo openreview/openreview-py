@@ -368,7 +368,7 @@ class GroupBuilder(object):
             # every reviewer role has its own message and matching invitations
             for role in self.venue.reviewer_roles:
                 exclusion_workflow_invitations.append(f'{venue_id}/{role}/-/Message') # TODO: parametrize invitation names
-                exclusion_workflow_invitations.append(f'/{venue_id}/{role}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration).*/') # matching invitations
+                exclusion_workflow_invitations.append(f'/{venue_id}/{role}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration|LLM_Interaction).*/') # matching invitations
 
             exclusion_workflow_invitations.extend([
                 f'{venue_id}/Authors/-/Message',
