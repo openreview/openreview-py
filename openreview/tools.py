@@ -1500,6 +1500,108 @@ def create_hash_seed():
     characters = string.ascii_letters + string.digits  # Includes uppercase, lowercase letters, and digits
     return ''.join(random.choices(characters, k=16))
 
+def get_user_signatures(client, profile, domain=None):
+    """
+    Returns the ids a user signs with in a venue: the usernames of the profile and the groups the user is a signatory
+    of. Signatory is what the user can actually sign as, so a reviewer contributes their per-paper anonymous ids but
+    not the role or per-paper groups the venue signs with. The groups are the ones the client can read, so a venue
+    organizer gets the anonymous ids of its committee members while other users do not.
+
+    :param client: API v2 client
+    :type client: openreview.api.OpenReviewClient
+    :param profile: The user's profile. Passed in rather than fetched so that callers with many users load all the
+        profiles in one :func:`get_profiles` call. A profile built from the id alone contributes just the id
+    :type profile: openreview.Profile
+    :param domain: Venue id, used as the prefix of the group ids
+    :type domain: str, optional
+
+    :return: List of ids, the usernames first
+    :rtype: list[str]
+    """
+    signatures = profile.get_usernames()
+    signatures.extend(group.id for group in client.get_all_groups(prefix=domain, signatory=profile.id))
+    return [signature for signature in dict.fromkeys(signatures) if signature not in ['everyone', '~', '(anonymous)', 'guest']]
+
+def get_last_activity(client, venue_id, user_ids, since=None, max_workers=None):
+    """
+    Returns the most recent action each user signed in a venue: a note edit, an edge, a tag or a message whose
+    domain is the venue. The signatures looked up are the ones :func:`get_user_signatures` returns: the venue groups
+    the user is a signatory of, including the anonymous ids (for example a review signed as
+    ``Venue/Submission1/Reviewer_abcd``), plus the usernames of the profile. The groups are the ones the client can
+    read, so the client has to be authenticated as a venue organizer (a program chair or the venue itself) to see
+    anonymous activity.
+
+    Actions performed on behalf of a user by the venue (assignments, group membership changes, process functions) are
+    not signed by the user and are not counted, and neither are group and invitation edits, which committee members
+    do not sign. The profiles are loaded in one request for all the users; then each user takes one request for the
+    groups they can sign as and one per source, sorted by date and limited to one result, backed by the signature
+    indexes of each collection.
+
+    :param client: API v2 client authenticated as a venue organizer
+    :type client: openreview.api.OpenReviewClient
+    :param venue_id: Venue id, used as the domain of the actions
+    :type venue_id: str
+    :param user_ids: Profile ids to look up
+    :type user_ids: list[str]
+    :param since: Epoch milliseconds, actions created before this timestamp are ignored
+    :type since: int, optional
+    :param max_workers: Number of concurrent requests, see :func:`concurrent_requests`
+    :type max_workers: int, optional
+
+    :return: A dict keyed by user id. The value is None when the user has no action in the venue, otherwise a dict
+        with ``tmdate`` (epoch milliseconds of the action), ``type`` (``note_edit``, ``edge``, ``tag`` or
+        ``message``), ``id`` (id of the action), ``invitation`` and ``signatures``.
+    :rtype: dict[str, dict or None]
+    """
+    if isinstance(user_ids, str):
+        user_ids = [user_ids]
+
+    profiles = get_profiles(client, user_ids, as_dict=True)
+
+    def activity(entity, activity_type):
+        if activity_type == 'message':
+            return {
+                'tmdate': entity.get('cdate'),
+                'type': activity_type,
+                'id': entity.get('id'),
+                'invitation': entity.get('invitation'),
+                'signatures': [entity.get('signature')],
+                'tcdate': entity.get('cdate')
+            }
+        return {
+            'tmdate': entity.tmdate,
+            'type': activity_type,
+            'id': entity.id,
+            'invitation': entity.invitation,
+            'signatures': [entity.signature] if activity_type == 'tag' else entity.signatures,
+            'tcdate': entity.tcdate
+        }
+
+    def latest(getter, activity_type, **params):
+        results = getter(limit=1, **params)
+        if not results:
+            return None
+        result = activity(results[0], activity_type)
+        # The results are sorted by date descending, so when the newest one is older than the window nothing is
+        if since is not None and (result['tcdate'] or 0) < since:
+            return None
+        del result['tcdate']
+        return result
+
+    def user_activity(user_id):
+        signatures = get_user_signatures(client, profiles.get(user_id) or openreview.Profile(id=user_id), domain=venue_id)
+        candidates = [
+            latest(client.get_note_edits, 'note_edit', domain=venue_id, signatures=signatures, sort='tmdate:desc', mintcdate=since),
+            latest(client.get_edges, 'edge', invitation=f'{venue_id}/.*', signatures=signatures, sort='tmdate:desc'),
+            latest(client.get_tags, 'tag', domain=venue_id, signatures=signatures, sort='tmdate:desc'),
+            latest(client.get_messages, 'message', domain=venue_id, signature=signatures, sort='cdate:desc')
+        ]
+        candidates = [candidate for candidate in candidates if candidate]
+        return max(candidates, key=lambda candidate: candidate['tmdate']) if candidates else None
+
+    results = concurrent_requests(user_activity, user_ids, desc='Getting last activity', max_workers=max_workers)
+    return dict(zip(user_ids, results))
+
 def get_all_venues(client):
     """
     Returns a list of all the venues
@@ -2012,7 +2114,7 @@ def get_own_reviews(client):
     if profile_id == 'Guest':
         notes_v2 = []
     else:
-        notes_v2 = client_v2.get_all_notes(signature=profile_id, transitive_members=True)
+        notes_v2 = client_v2.get_all_notes(signatures=get_user_signatures(client_v2, client_v2.get_profile(profile_id)))
 
     # TMLR was created before the invitation names were added to the
     # group content, so we need to hardcode it
