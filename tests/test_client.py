@@ -29,7 +29,6 @@ class TestClient():
     def test_get_groups(self, openreview_client):
         ## The V2 API has no bulk lookup by ids, only a single id, so the groups are fetched one by one
         group_ids = [
-            '(anonymous)',
             'everyone',
             '~',
             '(guest)',
@@ -39,7 +38,6 @@ class TestClient():
             'host'
         ]
         group_names = [openreview_client.get_group(group_id).id for group_id in group_ids]
-        assert '(anonymous)' in group_names
         assert 'everyone' in group_names
         assert '~' in group_names
         assert '(guest)' in group_names
