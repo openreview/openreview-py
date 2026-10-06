@@ -1018,7 +1018,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['ICML.cc/2025/Conference/-/Submission', 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding', 'ICML.cc/2025/Conference/-/Desk_Rejected_Submission']
+        assert note.invitations == ['ICML.cc/2025/Conference/-/Submission', 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding', 'ICML.cc/2025/Conference/-/Desk_Rejected_Submission', 'ICML.cc/2025/Conference/-/Edit']
 
         assert desk_reject_note['readers'] == [
             "ICML.cc/2025/Conference/Program_Chairs",

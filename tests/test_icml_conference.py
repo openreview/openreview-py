@@ -1086,7 +1086,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         note = pc_openreview_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['ICML.cc/2023/Conference/-/Submission', 'ICML.cc/2023/Conference/-/Post_Submission', 'ICML.cc/2023/Conference/-/Desk_Rejected_Submission']
+        assert note.invitations == ['ICML.cc/2023/Conference/-/Submission', 'ICML.cc/2023/Conference/-/Post_Submission', 'ICML.cc/2023/Conference/-/Desk_Rejected_Submission', 'ICML.cc/2023/Conference/-/Edit']
 
         assert desk_reject_note['readers'] == [
             "ICML.cc/2023/Conference/Program_Chairs",
@@ -3308,6 +3308,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission6/Official_Review1/-/Rating')
 
+        # the submission is not public, so it has no bibtex
+        submission = openreview_client.get_note(review_edit['note']['forum'])
+        assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Submission'
+        assert '_bibtex' not in submission.content
+
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         withdrawal_note = test_client.post_note_edit(invitation=f'ICML.cc/2023/Conference/Submission6/-/Withdrawal',
             signatures=[f'ICML.cc/2023/Conference/Submission6/Authors'],
@@ -3339,6 +3344,23 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
 
+        withdrawn_submission = openreview_client.get_note(withdrawal_note['note']['forum'])
+        assert withdrawn_submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Withdrawn_Submission'
+
+        # author identities are not revealed, so the bibtex is anonymous
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@misc{
+anonymous'''+str(year)+'''paper,
+title={Paper title 6},
+author={Anonymous},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + withdrawn_submission.forum + '''}
+}'''
+
+        assert '_bibtex' in withdrawn_submission.content and withdrawn_submission.content['_bibtex']['value'] == valid_bibtex
+
         withdrawal_reversion_note = openreview_client.post_note_edit(invitation='ICML.cc/2023/Conference/Submission6/-/Withdrawal_Reversion',
                                     signatures=['ICML.cc/2023/Conference/Program_Chairs'],
                                     note=openreview.api.Note(
@@ -3348,6 +3370,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])                
+
+        # the submission is not public, so the bibtex is deleted after the reversion
+        submission = openreview_client.get_note(withdrawal_note['note']['forum'])
+        assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Submission'
+        assert '_bibtex' not in submission.content
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 5
 

@@ -2446,17 +2446,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             'venueid': {
                 'value': self.venue.get_withdrawn_submission_venue_id()
-            },
-            '_bibtex': {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'maxLength': 200000,
-                        'input': 'textarea',
-                        'optional': True,
-                        'deletable': True
-                    }
-                }
             }
         }
         if not submission_stage.unified_authors:
@@ -2755,17 +2744,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             'venueid': {
                 'value': self.venue.get_desk_rejected_submission_venue_id()
-            },
-            '_bibtex': {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'maxLength': 200000,
-                        'input': 'textarea',
-                        'optional': True,
-                        'deletable': True
-                    }
-                }
             }
         }
         if not submission_stage.unified_authors:
