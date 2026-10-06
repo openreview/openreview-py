@@ -713,15 +713,6 @@ class TestCVPRConferenceWithTemplates():
                                     },
                                     'readers': ['thecvf.com/CVPR/2027/Conference']
                                 },
-                                'usage': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'json',
-                                            'optional': True
-                                        }
-                                    },
-                                    'readers': ['thecvf.com/CVPR/2027/Conference']
-                                },
                                 'cost': {
                                     'value': {
                                         'param': {
@@ -819,9 +810,8 @@ class TestCVPRConferenceWithTemplates():
                 chat_invitation = openreview_client.get_invitation(f'{anon_group.id}/-/LLM_Interaction')
                 assert chat_invitation.edit['note']['forum'] == submission.id
                 assert chat_invitation.edit['note']['content']['message']['value']['param']['markdown'] == True
-                # the LLM usage stored in the edit of each answer is readable by the venue only
+                # the tokens and the cost stored in the edit of each answer are readable by the venue only
                 assert chat_invitation.edit['content']['tokens']['readers'] == ['thecvf.com/CVPR/2027/Conference']
-                assert chat_invitation.edit['content']['usage']['readers'] == ['thecvf.com/CVPR/2027/Conference']
                 assert chat_invitation.edit['content']['cost']['readers'] == ['thecvf.com/CVPR/2027/Conference']
 
         assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')) == 26
@@ -1025,15 +1015,6 @@ class TestCVPRConferenceWithTemplates():
                                         'param': {
                                             'type': 'integer',
                                             'minimum': 0,
-                                            'optional': True
-                                        }
-                                    },
-                                    'readers': ['thecvf.com/CVPR/2027/Conference']
-                                },
-                                'usage': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'json',
                                             'optional': True
                                         }
                                     },
@@ -1297,14 +1278,13 @@ class TestCVPRConferenceWithTemplates():
         assert 'Kai' not in metadata_block['text']
         assert question_block['text'] == 'What are the main contributions of this paper?'
 
-        # the edit of the answer stores the LLM usage and cost, readable by the venue only
+        # the edit of the answer stores the tokens and the cost, readable by the venue only
         answer_edit = openreview_client.get_note_edits(note_id=answer.id)[0]
         assert answer_edit.content['tokens']['value'] == 120
-        assert answer_edit.content['usage']['value']['model'] == 'claude-sonnet-4-6'
-        assert answer_edit.content['usage']['value']['input_tokens'] == 100
-        assert answer_edit.content['usage']['value']['output_tokens'] == 20
         # the cost in USD reported by the gateway headers
         assert answer_edit.content['cost']['value'] == 0.0021
+        # the usage details stay in the process logs
+        assert 'usage' not in answer_edit.content
         assert reviewer_client.get_note_edits(note_id=answer.id)[0].content is None
 
         # one message at a time: a new message has to wait for the answer to the previous one

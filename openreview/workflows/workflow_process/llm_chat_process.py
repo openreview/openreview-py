@@ -1,18 +1,19 @@
 def process(client, edit, invitation):
     '''Answers a message posted to a chat invitation, e.g. `<venue>/Submission<N>/Reviewer_<id>/-/LLM_Interaction`.
 
-    Sends the prompt, the submission PDF, the submission metadata visible to the committee and the chat history
-    to the LLM gateway and posts the answer as a reply signed by `<venue>/AI_Review_Assistant`. When the super
-    invitation lists reply invitation names in llm_reply_invitations, e.g. the reviews, rebuttals and comments for
-    the area chairs, the forum replies of those invitations that the committee member can read are sent too.
+    Sends the prompt, the submission PDF, the submission metadata and the chat history to the LLM gateway and posts
+    the answer as a reply signed by `<venue>/AI_Review_Assistant`. When the super invitation lists reply invitation
+    names in llm_reply_invitations, e.g. the reviews, rebuttals and comments for the area chairs, the forum replies
+    of those invitations are sent too. The context is read impersonating the anonymous group of the chat, so it
+    only has what the committee member can read; this needs an API that lets process functions impersonate.
 
     The settings are read from the content of the committee super invitation, e.g. `<venue>/Reviewers/-/LLM_Interaction`,
     edited by the program chairs with its `/Settings` invitation: llm_api_key, llm_base_url and
     llm_prompt (required, the gateway URL and the default prompt are set when the super invitation is created)
     and llm_model.
 
-    The edit of each answer stores the tokens used, the gateway usage and the cost in USD in its content, readable
-    by the venue only. Once the answers in a chat, one committee member on one submission, add up to llm_token_limit
+    The edit of each answer stores the tokens used and the cost in USD in its content, readable by the venue only;
+    the usage details reported by the gateway are printed in the process logs. Once the answers in a chat, one committee member on one submission, add up to llm_token_limit
     tokens, the assistant stops calling the LLM in that chat.
 
     This is the `process_script` of the super invitation. The process of the child invitations execs it with
@@ -65,10 +66,10 @@ def process(client, edit, invitation):
         reply_edit = client.get_note_edit(reply_edit_id)
         reply_edit.note.content['message']['value'] = message
         if usage:
-            # the invitation makes the usage readable by the venue only
+            # the invitation makes the tokens and the cost readable by the venue only, the usage details are in the
+            # process logs
             reply_edit.content = {
-                'tokens': { 'value': count_tokens(usage) },
-                'usage': { 'value': usage }
+                'tokens': { 'value': count_tokens(usage) }
             }
             if cost is not None:
                 reply_edit.content['cost'] = { 'value': cost }
@@ -101,36 +102,23 @@ def process(client, edit, invitation):
             if used_tokens >= token_limit:
                 return LIMIT_MESSAGE, None, None
 
-        submission = client.get_note(edit.note.forum)
-        submission_name = domain.get_content_value('submission_name', 'Submission')
-        # the super invitation belongs to the committee that chats, e.g. <venue>/Reviewers/-/LLM_Interaction
-        committee_name = super_invitation.id.split('/-/')[0].split('/')[-1]
+        # the context is read as the committee member: impersonating the anonymous group of the chat, the API only
+        # returns the notes and fields the member can read; the venue client keeps posting the answer
+        member_client = openreview.api.OpenReviewClient(baseurl=client.baseurl, token=client.token)
+        member_client.impersonate(edit.signatures[0])
 
-        # the groups that make a note or a field visible to the committee member asking the questions; the context
-        # is built with the venue client, so every note and field is checked against them
-        member_readers = {
-            'everyone',
-            f'{venue_id}/{committee_name}',
-            f'{venue_id}/{submission_name}{submission.number}/{committee_name}',
-            edit.signatures[0]
-        }
-
-        def can_read(note):
-            return bool(member_readers.intersection(note.readers)) and not member_readers.intersection(note.nonreaders or [])
-
-        def is_visible(field):
-            return 'readers' not in field or bool(member_readers.intersection(field['readers']))
-
-        # e.g. the chats were activated before the submissions were released to the committee
-        if not can_read(submission):
+        try:
+            submission = member_client.get_note(edit.note.forum)
+        except openreview.OpenReviewException as e:
+            # e.g. the chats were activated before the submissions were released to the committee
+            print('The committee member can not read the submission:', e)
             return UNAVAILABLE_MESSAGE, None, None
 
         context = []
 
-        pdf_field = submission.content.get('pdf')
-        if pdf_field and is_visible(pdf_field):
+        if submission.content.get('pdf', {}).get('value'):
             try:
-                pdf = client.get_attachment('pdf', id=submission.id)
+                pdf = member_client.get_attachment('pdf', id=submission.id)
                 if len(pdf) > MAX_PDF_BYTES:
                     print(f'The submission PDF is too large to attach: {len(pdf)} bytes')
                 else:
@@ -148,7 +136,7 @@ def process(client, edit, invitation):
         def format_fields(content, excluded_fields=[]):
             lines = []
             for field_name, field in content.items():
-                if field_name in excluded_fields or field_name.startswith('_') or not is_visible(field):
+                if field_name in excluded_fields or field_name.startswith('_'):
                     continue
                 value = field.get('value')
                 if isinstance(value, list):
@@ -166,21 +154,21 @@ def process(client, edit, invitation):
         context.append({ 'type': 'text', 'text': 'Submission metadata:\n\n' + '\n\n'.join(metadata) })
 
         # the forum replies of the invitations listed by the super invitation, e.g. the reviews, rebuttals and
-        # comments for the area chairs, that the committee member can read
+        # comments for the area chairs
         reply_invitation_names = super_invitation.get_content_value('llm_reply_invitations', [])
         if reply_invitation_names:
 
             def label(note):
                 return f'{note.invitations[0].split("/-/")[-1].replace("_", " ")} by {note.signatures[0].split("/")[-1]}'
 
-            forum_notes = { note.id: note for note in client.get_all_notes(forum=submission.id, sort='tcdate:asc') }
+            forum_notes = { note.id: note for note in member_client.get_all_notes(forum=submission.id, sort='tcdate:asc') }
             replies = []
             for note in forum_notes.values():
-                if note.id == submission.id or note.invitations[0].split('/-/')[-1] not in reply_invitation_names or not can_read(note):
+                if note.id == submission.id or note.invitations[0].split('/-/')[-1] not in reply_invitation_names:
                     continue
                 header = label(note)
                 parent = forum_notes.get(note.replyto)
-                if parent and parent.id != submission.id and can_read(parent):
+                if parent and parent.id != submission.id:
                     header += f', in reply to the {label(parent)}'
                 replies.append(f'{header}:\n\n' + '\n\n'.join(format_fields(note.content)))
 
