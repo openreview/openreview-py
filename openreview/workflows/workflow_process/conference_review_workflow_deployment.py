@@ -25,7 +25,8 @@ def process(client, edit, invitation):
         withdraw_submission_exp_date=submission_deadline_datetime + datetime.timedelta(weeks=52),
         double_blind=True,
         force_profiles=True,
-        unified_authors=True
+        unified_authors=True,
+        author_reorder_after_first_deadline=openreview.stages.AuthorReorder.ALLOW_INSTITUTION_EDIT
     )
 
     authors_name = venue.authors_name
@@ -108,6 +109,7 @@ def process(client, edit, invitation):
         start_date=submission_deadline_datetime + datetime.timedelta(weeks=7),
         due_date=submission_deadline_datetime + datetime.timedelta(weeks=9),
         only_accepted=True,
+        allow_author_reorder=openreview.stages.AuthorReorder.ALLOW_INSTITUTION_EDIT,
         remove_fields=['email_sharing', 'data_release']
     )
 
