@@ -342,11 +342,11 @@ def process(client, edit, invitation):
         'full_submission_deadline',
         'reviewers_name',
         'reviewer_groups_names',
-        'submission_reviewer_group_names'
+        'submission_reviewer_group_names',
         'area_chairs_support',
         'area_chairs_name',
         'area_chair_groups_names',
-        'submission_area_chair_group_names'
+        'submission_area_chair_group_names',
         'senior_area_chairs_support',
         'senior_area_chair_groups_names',
         'release_role_participation',
