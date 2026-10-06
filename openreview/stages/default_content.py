@@ -544,33 +544,133 @@ submission_v2 = {
 }
 
 submission_v2_unified_authors = {
-    'order': 2,
-    'description': 'Search author profile by name or profile ID. All authors must have an OpenReview profile prior to submitting a paper.',
-    'value': {
-        'param': {
-            'type': 'author{}',
-            'properties': {
-                'fullname': { 'param': { 'type': 'string' } },
-                'username': {
-                    'param': {
-                        'type': 'string',
-                        'regex': r'^~\S+$',
-                        'mismatchError': 'must be a valid profile ID'
-                    }
-                },
-                'institutions': {
-                    'param': {
-                        'type': 'object{}',
-                        'properties': {
-                            'name': { 'param': { 'type': 'string' } },
-                            'domain': { 'param': { 'type': 'string' } },
-                            'country': { 'param': { 'type': 'string' } },
-                        },
-                        'optional': True
+    'title': {
+        'order': 1,
+        'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'regex': '^.{1,250}$'
+            }
+        }
+    },
+    'authors': {
+        'order': 2,
+        'description': 'Search author profile by name or profile ID. All authors must have an OpenReview profile prior to submitting a paper.',
+        'value': {
+            'param': {
+                'type': 'author{}',
+                'properties': {
+                    'fullname': { 'param': { 'type': 'string' } },
+                    'username': {
+                        'param': {
+                            'type': 'string',
+                            'regex': r'^~\S+$',
+                            'mismatchError': 'must be a valid profile ID'
+                        }
+                    },
+                    'institutions': {
+                        'param': {
+                            'type': 'object{}',
+                            'properties': {
+                                'name': { 'param': { 'type': 'string' } },
+                                'domain': { 'param': { 'type': 'string' } },
+                                'country': { 'param': { 'type': 'string' } },
+                            },
+                            'optional': True
+                        }
                     }
                 }
             }
+        },
+        'readers': [
+            '{venue_id}',
+            '{paper_authors_id}'
+        ]
+    },
+    'keywords': {
+        'description': 'Comma separated list of keywords.',
+        'order': 4,
+        'value': {
+            'param': {
+                'type': 'string[]',
+                'regex': '.+'
+            }
         }
+    },
+    'TLDR': {
+        'order': 5,
+        'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+        'value': {
+            'param': {
+                'fieldName': 'TL;DR',
+                'type': 'string',
+                'maxLength': 250,
+                'optional': True,
+                'deletable': True
+            }
+        }
+    },
+    'abstract': {
+        'order': 6,
+        'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 5000,
+                'markdown': True,
+                'input': 'textarea'
+            }
+        }
+    },
+    'pdf': {
+        'order': 7,
+        'description': 'Upload a PDF file that ends with .pdf.',
+        'value': {
+            'param': {
+                'type': 'file',
+                'maxSize': 50,
+                'extensions': ['pdf']
+            }
+        },
+        'readers': [
+            '{venue_id}',
+            '{paper_authors_id}'
+        ]
+    },
+    'email_sharing': {
+        'order': 50,
+        'description': 'Please confirm you are aware that all author emails will be shared with Program Chairs.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    'We authorize the sharing of all author emails with Program Chairs.'
+                ],
+                'input': 'radio'
+            }
+        },
+        'readers': [
+            '{venue_id}',
+            '{paper_authors_id}'
+        ]
+    },
+    'data_release': {
+        'order': 51,
+        'description': 'Please confirm you are aware that accepted submissions, along with their author names, will be released to the public after the conference is over.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    'We authorize the release of our submission and author names to the public in the event of acceptance.'
+                ],
+                'input': 'radio'
+            }
+        },
+        'readers': [
+            '{venue_id}',
+            '{paper_authors_id}'
+        ]
     }
 }
 
