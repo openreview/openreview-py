@@ -363,8 +363,8 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
         assert ae_group.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers']
 
         note = openreview_client.get_note(note_id_1)
-        assert 'assigned_action_editor' in note.content and note.content['assigned_action_editor']['value'] == '~Andrew_Ng1'
-        assert 'readers' in note.content['assigned_action_editor'] and note.content['assigned_action_editor']['readers'] == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers']
+        assert 'assigned_action_editor' not in note.content
+        assert journal.get_assigned_action_editor(note) == '~Andrew_Ng1'
 
         messages = journal.client.get_messages(to = 'andrew@dmlrzero.com', subject = '[DMLR] Assignment to new DMLR submission 1: Paper title')
         assert len(messages) == 1
@@ -404,15 +404,15 @@ Please note that responding to this email will direct your reply to dmlr@jmlr.or
 
         note = andrew_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Edit', 'DMLR/-/Under_Review']
-        assert note.readers == ['DMLR', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Under_Review']
+        assert note.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert note.writers == ['DMLR', 'DMLR/Paper1/Authors']
         assert note.signatures == ['DMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Ane1']
         assert note.content['venue']['value'] == 'Under review for DMLR'
         assert note.content['venueid']['value'] == 'DMLR/Under_Review'
-        assert note.content['assigned_action_editor']['value'] == '~Andrew_Ng1'
-        assert 'readers' not in note.content['assigned_action_editor']
+        assert 'assigned_action_editor' not in note.content
+        assert journal.get_assigned_action_editor(note) == '~Andrew_Ng1'
         assert note.content['_bibtex']['value'] == '''@article{
 anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title},
@@ -445,9 +445,9 @@ note={Under review}
         assert "DMLR/Paper1/-/Moderation" not in [i.id for i in invitations]
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 3
+        assert len(edits) == 2
         for edit in edits:
-            assert edit.readers == ['DMLR', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+            assert edit.readers == ['DMLR', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
 
     def test_review(self, journal, openreview_client, helpers):
 
@@ -573,9 +573,9 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='DMLR/Paper1/-/Review', sort= 'number:asc')
         assert len(reviews) == 2
-        assert reviews[0].readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+        assert reviews[0].readers == ['DMLR/Editors_In_Chief', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert reviews[0].signatures == [david_anon_groups[0].id]
-        assert reviews[1].readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+        assert reviews[1].readers == ['DMLR/Editors_In_Chief', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert reviews[1].signatures == [carlos_anon_groups[0].id]
 
         ## Post a review edit
@@ -601,7 +601,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
 
         review_note = carlos_client.get_note(carlos_review_note['note']['id'])
         assert review_note.content['summary_of_contributions']['value'] == 'summary_of_contributions VERSION 2'
-        assert review_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+        assert review_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1, prefix='DMLR/Paper1')
         assert len(invitations) == 6
@@ -616,10 +616,6 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert official_comment_invitation.edit['note']['readers']['param']['items'] == [
             {
                 "value": "DMLR/Editors_In_Chief",
-                "optional": True
-            },
-            {
-                "value": "DMLR/Action_Editors",
                 "optional": True
             },
             {
@@ -645,7 +641,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 signatures=[carlos_anon_groups[0].id],
-                readers=['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', carlos_anon_groups[0].id],
+                readers=['DMLR/Editors_In_Chief', 'DMLR/Paper1/Action_Editors', carlos_anon_groups[0].id],
                 forum=note_id_1,
                 replyto=note_id_1,
                 content={
@@ -744,7 +740,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             )
             helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
 
-            assert rating_note['note']['readers'] == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors']
+            assert rating_note['note']['readers'] == ['DMLR/Editors_In_Chief', 'DMLR/Paper1/Action_Editors']
 
         decision_note = andrew_client.post_note_edit(invitation='DMLR/Paper1/-/Decision',
             signatures=[andrew_paper1_anon_group.id],
@@ -788,7 +784,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
 
 
         decision_note = ce_client.get_note(decision_note.id)
-        assert decision_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+        assert decision_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert decision_note.nonreaders == []
 
         helpers.await_queue_edit(openreview_client, invitation='DMLR/-/Accepted')
@@ -798,7 +794,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert note.forum == note_id_1
         assert note.replyto is None
         assert note.pdate
-        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Edit', 'DMLR/-/Under_Review', 'DMLR/-/Accepted']
+        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Under_Review', 'DMLR/-/Edit', 'DMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['DMLR']
         assert note.signatures == ['DMLR/Paper1/Authors']

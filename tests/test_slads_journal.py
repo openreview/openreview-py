@@ -273,8 +273,8 @@ Thanks,
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         note = openreview_client.get_note(note_id_1)
-        assert note.content['assigned_action_editor']['value'] == '~Jiashun_Jin1'
-        assert note.content['assigned_action_editor']['readers'] == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+        assert 'assigned_action_editor' not in note.content
+        assert journal.get_assigned_action_editor(note) == '~Jiashun_Jin1'
 
         ae_group = ce_client.get_group('SLADS/Paper1/Action_Editors')
         assert ae_group.members == ['~Jiashun_Jin1']
@@ -318,15 +318,15 @@ Please note that responding to this email will direct your reply to slads@scichi
 
         note = andrew_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['SLADS/-/Submission', 'SLADS/-/Edit', 'SLADS/-/Under_Review']
+        assert note.invitations == ['SLADS/-/Submission', 'SLADS/-/Under_Review']
         assert note.readers == ['everyone']
         assert note.writers == ['SLADS', 'SLADS/Paper1/Authors']
         assert note.signatures == ['SLADS/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Amex1']
         assert note.content['venue']['value'] == 'Under review for SLADS'
         assert note.content['venueid']['value'] == 'SLADS/Under_Review'
-        assert note.content['assigned_action_editor']['value'] == '~Jiashun_Jin1'
-        assert note.content['assigned_action_editor']['readers'] == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+        assert 'assigned_action_editor' not in note.content
+        assert journal.get_assigned_action_editor(note) == '~Jiashun_Jin1'
         assert note.content['_bibtex']['value'] == '''@article{
 anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title},
@@ -339,8 +339,8 @@ note={Under review}
 
         # after approval, AE is still anonymous to authors
         note = openreview_client.get_note(note_id_1)
-        assert note.content['assigned_action_editor']['value'] == '~Jiashun_Jin1'
-        assert note.content['assigned_action_editor']['readers'] == ['SLADS', 'SLADS/Paper1/Action_Editors', 'SLADS/Paper1/Reviewers']
+        assert 'assigned_action_editor' not in note.content
+        assert journal.get_assigned_action_editor(note) == '~Jiashun_Jin1'
 
         ae_group = ce_client.get_group('SLADS/Paper1/Action_Editors')
         assert ae_group.members == ['~Jiashun_Jin1']

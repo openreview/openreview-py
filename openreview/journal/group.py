@@ -133,6 +133,10 @@ class GroupBuilder(object):
             content = content.replace("var EDITORS_IN_CHIEF_EMAIL = '';", "var EDITORS_IN_CHIEF_EMAIL = '" + self.journal.get_editors_in_chief_email() + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
+            if (self.journal.settings.get('action_editor_paper_visibility', 'assigned_only') == 'assigned_only'
+                    and self.journal.is_action_editor_anonymous()):
+                content = content.replace('var HIDE_AUTHORED_PAPERS = false;',
+                                          'var HIDE_AUTHORED_PAPERS = true;')
             content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
             content = content.replace("var PREFERRED_EMAILS_ID = '';", "var PREFERRED_EMAILS_ID = '" + self.journal.get_preferred_emails_invitation_id() + "';")
             if self.journal.request_form_id:
@@ -507,6 +511,8 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         if not action_editors_group:
             action_editors_group=self.post_group(Group(id=action_editors_group_id,
                 readers=[venue_id, action_editors_group_id, reviewers_group_id],
+                nonreaders=([authors_group_id] if self.journal.settings.get(
+                    'action_editor_paper_visibility', 'assigned_only') == 'assigned_only' else []),
                 writers=[venue_id],
                 signatures=[venue_id],
                 signatories=[venue_id],

@@ -14,6 +14,7 @@ Contents
    About OpenReview <https://openreview.net/about>
    How to Setup <https://docs.openreview.net/getting-started/using-the-api/installing-and-instantiating-the-python-client>
    api
+   journal_action_editor_visibility
    help
 
 

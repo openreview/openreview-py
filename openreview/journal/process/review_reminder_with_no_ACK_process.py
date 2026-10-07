@@ -3,7 +3,6 @@ def process(client, invitation):
     journal = openreview.journal.Journal()
 
     submission = client.get_note(invitation.edit['note']['forum'])
-    assigned_action_editor = submission.content.get('assigned_action_editor', {}).get('value')
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
     now = datetime.datetime.now()
     task = invitation.pretty_id()

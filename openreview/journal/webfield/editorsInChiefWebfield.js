@@ -14,6 +14,7 @@ var EDITORS_IN_CHIEF_NAME = '';
 var EDITORS_IN_CHIEF_EMAIL = '';
 var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
+var HIDE_AUTHORED_PAPERS = false;
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
 var NUMBER_OF_REVIEWERS = 3;
@@ -93,6 +94,24 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Brow
   '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
   '<li><a href="/forum?id=' + REVIEWER_REPORT_ID + '&referrer=' + referrerUrl + '">Reviewers Report</a></li></ul>';
+var editorialPaperIds = [];
+var proposedPaperIds = [];
+var assignmentStorageKey = 'journal-editorial-papers-' + VENUE_ID + '-' +
+  Date.now() + '-' + Math.random().toString(36).slice(2);
+if (HIDE_AUTHORED_PAPERS) {
+  var scopedStart = '&maxColumns=2&start=' + encodeURIComponent(
+    'staticList,type:head,storageKey:' + assignmentStorageKey);
+  HEADER.instructions = HEADER.instructions
+    .replace('href="' + ae_url + '"',
+      'class="journal-scoped-assignments" href="' + ae_url + scopedStart + '"')
+    .replace('href="' + reviewers_url + '"',
+      'class="journal-scoped-assignments" href="' + reviewers_url + scopedStart + '"')
+    .replace('href="/assignments?group=' + ACTION_EDITOR_ID + '"',
+      'class="journal-scoped-assignments journal-proposed-assignments" href="/edges/browse?traverse=' +
+      ACTION_EDITOR_ID + '/-/Proposed_Assignment&edit=' + ACTION_EDITOR_ID +
+      '/-/Proposed_Assignment&version=2' + scopedStart + '"');
+  HEADER.instructions += '<p>Your authored papers are omitted from this editorial console and its assignment browsers. Use the Author Console for those papers.</p>';
+}
 var institutionDomains = [];
 
 // ---------------------------------------------------------------------------
@@ -251,6 +270,21 @@ var main = function() {
     fullWidth: true
   });
   doneSetup();
+
+  if (HIDE_AUTHORED_PAPERS) {
+    $('.journal-scoped-assignments').on('click', function(event) {
+      try {
+        // The edge browser consumes this list on navigation. Write afresh on
+        // every click, including before loading completes, to avoid stale IDs.
+        localStorage.setItem(assignmentStorageKey, JSON.stringify({
+          data: $(this).hasClass('journal-proposed-assignments') ? proposedPaperIds : editorialPaperIds
+        }));
+      } catch (error) {
+        event.preventDefault();
+        Webfield2.ui.errorMessage('Could not open the scoped assignment browser.');
+      }
+    });
+  }
 
   if (!user || user.isGuest) {
     Webfield2.ui.errorMessage('You must be logged in to access this page.');
@@ -438,6 +472,18 @@ var updateEarlyLateTaskDuedate = function(earlylateTaskDueDate, task) {
   return earlylateTaskDueDate;
 }
 
+var editableSubmissions = function(submissions, sessionUser) {
+  if (!HIDE_AUTHORED_PAPERS) return submissions;
+  var profile = sessionUser && sessionUser.profile || {};
+  var identities = [profile.id, sessionUser && sessionUser.id]
+    .concat(profile.emails || [])
+    .concat((profile.names || []).map(function(name) { return name.username; }));
+  return submissions.filter(function(submission) {
+    var authorIds = submission.content.authorids && submission.content.authorids.value || [];
+    return !authorIds.some(function(authorId) { return identities.indexOf(authorId) !== -1; });
+  });
+};
+
 var formatData = function(
   aeByNumber,
   reviewersByNumber,
@@ -455,6 +501,16 @@ var formatData = function(
   aeInvitationIds,
   aeRecommendations
 ) {
+  // EICs retain administrator API access. Omit their authored papers before
+  // constructing any editorial rows, tasks, or per-paper progress lists so
+  // ordinary console use does not reveal the handling AE by accident.
+  if (HIDE_AUTHORED_PAPERS) {
+    submissions = editableSubmissions(submissions, user);
+    editorialPaperIds = submissions.map(function(submission) { return submission.id; });
+    proposedPaperIds = submissions.filter(function(submission) {
+      return submission.content.venueid.value === ASSIGNING_AE_STATUS;
+    }).map(function(submission) { return submission.id; });
+  }
   var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   var doneFormat = perfStart('formatData TOTAL');
@@ -997,7 +1053,7 @@ var formatData = function(
         '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
         '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
         '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + 
-        '&version=2'
+        '&version=2' + (HIDE_AUTHORED_PAPERS ? '&maxColumns=2' : '')
       }
     ] : [];
     if (submission.content['previous_' + VENUE_ID + '_submission_url']) {
@@ -1029,7 +1085,7 @@ var formatData = function(
             '&traverse='+ REVIEWERS_ASSIGNMENT_ID +
             '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
-            '&version=2' +
+            '&version=2' + (HIDE_AUTHORED_PAPERS ? '&maxColumns=2' : '') +
             '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0'
           }
         ] : [],
