@@ -3,30 +3,39 @@ def process_update(client, edge, invitation, existing_edge):
     if latest_edge.ddate and not edge.ddate:
         # edge has been removed
         return
-
     journal = openreview.journal.Journal()
 
     ae_group = client.get_group(journal.get_action_editors_id())
 
     note=client.get_note(edge.head)
     group=client.get_group(journal.get_action_editors_id(number=note.number))
-    if edge.ddate and edge.tail in group.members:
-        print(f'Remove member {edge.tail} from {group.id}')
+    immediate_continuity = False
+    if journal.settings.get('resubmission_continuity_enabled') is True and not edge.ddate:
+        from openreview.journal.resubmission import ensure_resubmission_ae_access
+        previous = ensure_resubmission_ae_access(client, journal, note)
+        immediate_continuity = (previous is not None and
+            journal.settings.get('resubmission_continuity') == 'immediate_previous_ae' and
+            getattr(edge, 'label', None) == 'Resubmission continuity')
+    if edge.ddate and (edge.tail in group.members or
+            journal.settings.get('resubmission_continuity_enabled') is True):
+        if edge.tail in group.members:
+            print(f'Remove member {edge.tail} from {group.id}')
 
-        recipients=[edge.tail]
-        subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.number}: {note.content["title"]["value"]}'
+            recipients=[edge.tail]
+            subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.number}: {note.content["title"]["value"]}'
 
-        message=ae_group.content['unassignment_email_template_script']['value'].format(
-            short_name=journal.short_name,
-            submission_number=note.number,
-            submission_title=note.content['title']['value'],
-            contact_info=journal.contact_info,
-        )
+            message=ae_group.content['unassignment_email_template_script']['value'].format(
+                short_name=journal.short_name,
+                submission_number=note.number,
+                submission_title=note.content['title']['value'],
+                contact_info=journal.contact_info,
+            )
 
-        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
+            client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
-        client.remove_members_from_group(group.id, edge.tail)
+            client.remove_members_from_group(group.id, edge.tail)
 
+        # Retry cleanup even when an enabled removal already persisted.
         ## update assigned_action_editor if exists in the submission
         content = {}
         if 'assigned_action_editor' in note.content and note.content['assigned_action_editor']['value'] == edge.tail:
@@ -43,7 +52,11 @@ def process_update(client, edge, invitation, existing_edge):
                                 content = content 
             ))
 
-        return       
+        if journal.settings.get('resubmission_continuity_enabled') is True:
+            # Anonymous removal flushes the anonymous ID; also invalidate the
+            # profile's cached transitive access to the predecessor paper.
+            client.flush_members_cache(edge.tail)
+        return
 
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
@@ -78,7 +91,9 @@ def process_update(client, edge, invitation, existing_edge):
         if journal.is_action_editor_anonymous() or note.content.get('venueid', {}).get('value') in [journal.submitted_venue_id, journal.assigning_AE_venue_id, journal.assigned_AE_venue_id]:
             content['assigned_action_editor']['readers'] = [journal.venue_id, journal.get_action_editors_id(number=note.number), journal.get_reviewers_id(number=note.number)]
 
-        if journal.assigning_AE_venue_id == note.content['venueid']['value']:
+        if (journal.assigning_AE_venue_id == note.content['venueid']['value'] or
+                immediate_continuity and
+                journal.submitted_venue_id == note.content['venueid']['value']):
             content['venueid'] = { 'value': journal.assigned_AE_venue_id }
             content['venue'] = { 'value': f'{journal.short_name} Assigned AE' }
 

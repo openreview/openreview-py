@@ -2,11 +2,36 @@ from .. import openreview
 from .. import tools
 
 from openreview.api import Edge
+from .resubmission import get_previous_assignments, resolve_resubmission_predecessor
 
 import random
 import time
 import datetime
 from tqdm import tqdm
+
+
+def iter_resubmission_score_assignments(client, journal, submission):
+    if journal.settings.get('resubmission_continuity_enabled') is True:
+        if journal.settings.get('resubmission_continuity', 'score') != 'score':
+            return
+        previous = resolve_resubmission_predecessor(client, journal, submission)
+        if previous:
+            yield from get_previous_assignments(client, journal, previous)
+        return
+    field = f'previous_{journal.short_name}_submission_url'
+    if field not in submission.content:
+        return
+    previous_id = submission.content[field]['value'].replace(
+        'https://openreview.net/forum?id=', '').split('&')[0]
+    for archived in (False, True):
+        yield from client.get_edges(
+            invitation=journal.get_ae_assignment_id(archived=archived),
+            head=previous_id)
+
+
+def resubmission_score_assignments(client, journal, submission):
+    return list(iter_resubmission_score_assignments(client, journal, submission))
+
 
 class Assignment(object):
 
@@ -184,28 +209,15 @@ class Assignment(object):
                         )
 
                     ## Compute resubmission scores, TMLR/Action_Editors/-/Resubmission_Score with weigth = 10 in the matching system
-                    if f'previous_{journal.short_name}_submission_url' in submitted_submission.content:
-                        previous_forum_url = submitted_submission.content[f'previous_{journal.short_name}_submission_url']['value']
-                        previous_forum_url = previous_forum_url.replace('https://openreview.net/forum?id=', '')
-                        previous_forum_id = previous_forum_url.split('&')[0]
-                        previous_assignments = self.client.get_edges(invitation=journal.get_ae_assignment_id(), head = previous_forum_id)
-                        for assignment in previous_assignments:
-                            if assignment.tail in action_editors and not self.client.get_edges(invitation=journal.get_ae_resubmission_score_id(), head=submitted_submission.id, tail=assignment.tail):
-                                self.client.post_edge(openreview.api.Edge(
-                                    invitation=journal.get_ae_resubmission_score_id(),
-                                    head=submitted_submission.id,
-                                    tail=assignment.tail,
-                                    weight=1
-                                ))
-                        previous_archived_assignments = self.client.get_edges(invitation=journal.get_ae_assignment_id(archived=True), head = previous_forum_id)
-                        for assignment in previous_archived_assignments:
-                            if assignment.tail in action_editors and not self.client.get_edges(invitation=journal.get_ae_resubmission_score_id(), head=submitted_submission.id, tail=assignment.tail):
-                                self.client.post_edge(openreview.api.Edge(
-                                    invitation=journal.get_ae_resubmission_score_id(),
-                                    head=submitted_submission.id,
-                                    tail=assignment.tail,
-                                    weight=1
-                                ))                        
+                    for assignment in iter_resubmission_score_assignments(
+                            self.client, journal, submitted_submission):
+                        if assignment.tail in action_editors and not self.client.get_edges(
+                                invitation=journal.get_ae_resubmission_score_id(),
+                                head=submitted_submission.id, tail=assignment.tail):
+                            self.client.post_edge(openreview.api.Edge(
+                                invitation=journal.get_ae_resubmission_score_id(),
+                                head=submitted_submission.id,
+                                tail=assignment.tail, weight=1))
 
         ## Compute the AE quota and use invitation: TMLR/Action_Editors/-/Local_Custom_Max_Papers:
         all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= journal.get_author_submission_id(), details='directReplies', domain=journal.venue_id) }
@@ -310,4 +322,3 @@ class Assignment(object):
                 to_delete_assignments.append(edge)
 
         openreview.tools.concurrent_requests(self.client.post_edge, to_delete_assignments)                                   
-
