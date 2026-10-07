@@ -60,8 +60,11 @@ New-paper workflow
 4. Removing or replacing an assignment updates paper-group membership through
    the normal assignment process. An editor removed from the group loses access
    conferred by that membership; other independently granted roles still apply.
-   In ``assigned_only`` mode, removal also flushes the editor profile's cached
-   memberships, including when the paper AE group uses anonymous IDs.
+   In both visibility modes, removal flushes the editor profile's cached
+   memberships, including when the paper AE group uses anonymous IDs. A retry
+   after persisted membership removal completes matching metadata cleanup and
+   cache invalidation without sending duplicate unassignment mail. Cleanup
+   preserves another editor's assignment and independently granted role access.
    Existing decision and conflict checks continue to govern assignment changes.
 5. EICs oversee the workflow. In ``assigned_only`` mode with ``AE_anonymity``
    enabled, their authored papers are omitted from the editorial console's

@@ -364,7 +364,7 @@ note={Under review}
         assert "SLADS/Paper1/-/Moderation" in [i.id for i in invitations]
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 3
+        assert len(edits) == 2  # Submission and Under Review; no identity-only edit.
         for edit in edits:
             assert edit.readers == ['everyone']
 

@@ -318,8 +318,7 @@ def test_unassignment_preserves_default_guard_and_rolls_back_after_last_hidden_a
         None,
     )
 
-    assert events == ([('remove', '~Assigned1'), ('flush', '~Assigned1')]
-                      if assigned_only else [('remove', '~Assigned1')])
+    assert events == [('remove', '~Assigned1'), ('flush', '~Assigned1')]
     assert len(posted) == int(expect_state_change or stored_assignment == "~Assigned1")
     if posted:
         content = posted[0]["note"].content
@@ -575,7 +574,7 @@ def test_identity_check_does_not_swallow_validation_errors():
 
 
 @pytest.mark.parametrize('failure_stage', ['metadata', 'cache'])
-@pytest.mark.parametrize('visibility', [None, 'assigned_only'])
+@pytest.mark.parametrize('visibility', [None, 'assigned_only', 'all'])
 def test_removal_retry_finishes_cleanup_without_duplicate_mail(monkeypatch, failure_stage, visibility):
     journal = make_journal({} if visibility is None else {
         'action_editor_paper_visibility': visibility})
@@ -623,6 +622,35 @@ def test_removal_retry_finishes_cleanup_without_duplicate_mail(monkeypatch, fail
     assert 'assigned_action_editor' not in paper.content
     assert events.count('mail') == events.count('remove') == events.count('metadata') == 1
     assert events[-1] == 'cache'
+
+
+@pytest.mark.parametrize('visibility', [None, 'assigned_only', 'all'])
+def test_removal_retry_preserves_replacement_editor(monkeypatch, visibility):
+    journal = make_journal({} if visibility is None else {
+        'action_editor_paper_visibility': visibility})
+    paper = SimpleNamespace(id='paper', number=7, content={
+        'title': {'value': 'Title'},
+        'venueid': {'value': journal.assigned_AE_venue_id},
+        'assigned_action_editor': {'value': '~Replacement1'}})
+    group = SimpleNamespace(id=journal.get_action_editors_id(7), members=['~Replacement1'])
+    events = []
+    client = SimpleNamespace(
+        get_edge=lambda *_args: SimpleNamespace(ddate=1),
+        get_note=lambda _id: paper,
+        get_group=lambda _id: group,
+        post_message=lambda *_args, **_kwargs: events.append('mail'),
+        remove_members_from_group=lambda *_args: events.append('remove'),
+        post_note_edit=lambda **_kwargs: events.append('metadata'),
+        flush_members_cache=lambda member: events.append(('cache', member)),
+    )
+    monkeypatch.setattr(ae_assignment_process, 'openreview', openreview, raising=False)
+    monkeypatch.setattr(openreview.journal, 'Journal', lambda: journal)
+    edge = SimpleNamespace(id='edge', head=paper.id, tail='~Assigned1', ddate=1)
+    ae_assignment_process.process_update(client, edge, None, None)
+    assert events == [('cache', '~Assigned1')]
+    assert group.members == ['~Replacement1']
+    assert paper.content['assigned_action_editor']['value'] == '~Replacement1'
+    assert paper.content['venueid']['value'] == journal.assigned_AE_venue_id
 
 
 @pytest.mark.parametrize('visibility', [None, 'assigned_only', 'all'])

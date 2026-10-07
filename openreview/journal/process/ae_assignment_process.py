@@ -10,8 +10,7 @@ def process_update(client, edge, invitation, existing_edge):
 
     note=client.get_note(edge.head)
     group=client.get_group(journal.get_action_editors_id(number=note.number))
-    assigned_only = journal.settings.get('action_editor_paper_visibility', 'assigned_only') == 'assigned_only'
-    if edge.ddate and (edge.tail in group.members or assigned_only):
+    if edge.ddate:
         if edge.tail in group.members:
             print(f'Remove member {edge.tail} from {group.id}')
 
@@ -48,10 +47,9 @@ def process_update(client, edge, invitation, existing_edge):
                                 content = content
             ))
 
-        if assigned_only:
-            # Retry must finish cleanup and revoke cached profile membership even
-            # when the membership deletion persisted in an earlier attempt.
-            client.flush_members_cache(edge.tail)
+        # Retry must finish cleanup and revoke cached profile membership even
+        # when the membership deletion persisted in an earlier attempt.
+        client.flush_members_cache(edge.tail)
         return
 
     if not edge.ddate and edge.tail not in group.members:
