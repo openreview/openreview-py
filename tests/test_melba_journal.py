@@ -12,6 +12,14 @@ from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
 
+def assert_note_hidden(client, note_id):
+    with pytest.raises(openreview.OpenReviewException) as caught:
+        client.get_note(note_id)
+    details = caught.value.args[0]
+    assert isinstance(details, dict), details
+    assert (details.get('status') in (403, 404) or
+            details.get('name') in ('ForbiddenError', 'NotFoundError')), details
+
 class TestJournal():
 
 
@@ -240,6 +248,10 @@ Please note that responding to this email will direct your reply to editors@melb
         aasa_client = OpenReviewClient(username='aasa@mailtwo.com', password=helpers.strong_password)
         eic_client = OpenReviewClient(username='adalca@mit.edu', password=helpers.strong_password)
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        unassigned_ae_client = OpenReviewClient(username='hoel@mail.com', password=helpers.strong_password)
+        assert 'action_editor_paper_visibility' not in journal.settings
+        assert '~Hoel_Hervadec1' in openreview_client.get_group('MELBA/Action_Editors').members
+        assert '~Hoel_Hervadec1' not in openreview_client.get_group('MELBA/Paper1/Authors').members
         
         note = openreview_client.get_notes(invitation='MELBA/-/Submission')[0]
         note_id_1 = note.id
@@ -279,10 +291,20 @@ Please note that responding to this email will direct your reply to editors@melb
 
         note = aasa_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['MELBA/-/Submission', 'MELBA/-/Edit', 'MELBA/-/Under_Review']
 
         edits = openreview_client.get_note_edits(note.id, invitation='MELBA/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)        
+
+        note = openreview_client.get_note(note_id_1)
+        assert note.invitations == ['MELBA/-/Submission', 'MELBA/-/Under_Review']
+        assert note.readers == ['MELBA', 'MELBA/Paper1/Action_Editors',
+                                'MELBA/Paper1/Reviewers', 'MELBA/Paper1/Authors']
+        assert 'assigned_action_editor' not in note.content
+        assert journal.get_assigned_action_editor(note) == '~Aasa_Feragen1'
+        for role, actor in [('assigned AE', aasa_client), ('author', test_client),
+                            ('EIC', eic_client)]:
+            assert actor.get_note(note_id_1).id == note_id_1, role
+        assert_note_hidden(unassigned_ae_client, note_id_1)
 
         assert aasa_client.get_invitation('MELBA/Paper1/Reviewers/-/Assignment')
 
@@ -296,6 +318,7 @@ Please note that responding to this email will direct your reply to editors@melb
             tail='~MELBARev_One1',
             weight=1
         ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
         
         # Assign reviewer 2
         paper_assignment_edge = aasa_client.post_edge(openreview.Edge(invitation='MELBA/Reviewers/-/Assignment',
@@ -307,6 +330,7 @@ Please note that responding to this email will direct your reply to editors@melb
             tail='~MELBARev_Two1',
             weight=1
         ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         # Assign reviewer 3
         paper_assignment_edge = aasa_client.post_edge(openreview.Edge(invitation='MELBA/Reviewers/-/Assignment',
@@ -318,6 +342,7 @@ Please note that responding to this email will direct your reply to editors@melb
             tail='~MELBARev_Three1',
             weight=1
         ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Post a review edit
         reviewer_one_client = OpenReviewClient(username='rev1@mailone.com', password=helpers.strong_password)
@@ -374,7 +399,7 @@ Please note that responding to this email will direct your reply to editors@melb
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], process_index=1)
 
         reviewer_three_client = OpenReviewClient(username='rev3@mailthree.com', password=helpers.strong_password)
-        reviewer_three_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Three1')
+        reviewer_three_anon_groups=reviewer_three_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Three1')
 
         review_note = reviewer_three_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[reviewer_three_anon_groups[0].id],
@@ -396,9 +421,14 @@ Please note that responding to this email will direct your reply to editors@melb
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 3
-        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        for review in reviews:
+            assert review.readers == [f'{venue_id}/Editors_In_Chief',
+                                      f'{venue_id}/Paper1/Action_Editors',
+                                      f'{venue_id}/Paper1/Reviewers', f'{venue_id}/Paper1/Authors']
+            for role, actor in [('assigned AE', aasa_client), ('author', test_client),
+                                ('reviewer', reviewer_one_client), ('EIC', eic_client)]:
+                assert actor.get_note(review.id).id == review.id, role
+            assert_note_hidden(unassigned_ae_client, review.id)
 
         invitation = eic_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
@@ -489,6 +519,8 @@ Please note that responding to this email will direct your reply to editors@melb
 
         decision_note = aasa_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
+        assert_note_hidden(test_client, decision_note.id)
+        assert_note_hidden(unassigned_ae_client, decision_note.id)
 
         ## EIC approves the decision
         approval_note = eic_client.post_note_edit(invitation='MELBA/Paper1/-/Decision_Approval',
@@ -503,8 +535,12 @@ Please note that responding to this email will direct your reply to editors@melb
         helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
         decision_note = eic_client.get_note(decision_note.id)
-        assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
         assert decision_note.nonreaders == []
+        for role, actor in [('assigned AE', aasa_client), ('author', test_client),
+                            ('reviewer', reviewer_one_client), ('EIC', eic_client)]:
+            assert actor.get_note(decision_note.id).id == decision_note.id, role
+        assert_note_hidden(unassigned_ae_client, decision_note.id)
 
         ## post a revision
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
