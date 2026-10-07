@@ -253,6 +253,10 @@ For more details and guidelines on the {short_name} review process, visit {websi
 The {short_name} Editors-in-Chief
 '''
 
+reviewer_assignment_email_legacy_release_text = 'Once submitted, your review will become privately visible to the authors and AE. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}.'
+
+reviewer_assignment_email_release_text = 'Once submitted, your review will become privately visible to {review_readers_before_release}. Then, as soon as {review_release_event}, all reviews will become {review_visibility}.'
+
 reviewer_assignment_email_template = '''Hi {{{{fullname}}}},
 
 With this email, we request that you submit, within {review_period_length} weeks ({review_duedate}) a review for your newly assigned {short_name} submission "{submission_number}: {submission_title}".{submission_length}
@@ -263,7 +267,7 @@ As a reminder, reviewers are **expected to accept all assignments** for submissi
 
 To submit your review, please follow this link: {invitation_url} or check your tasks in the Reviewers Console: https://openreview.net/group?id={venue_id}/Reviewers#reviewer-tasks
 
-Once submitted, your review will become privately visible to {review_readers_before_release}. Then, as soon as {review_release_event}, all reviews will become {review_visibility}. For more details and guidelines on performing your review, visit {website}.
+''' + reviewer_assignment_email_release_text + ''' For more details and guidelines on performing your review, visit {website}.
 
 We thank you for your essential contribution to {short_name}!
 

@@ -24,6 +24,7 @@ class TestRLJJournal():
     def test_setup(self, openreview_client, helpers, journal_request):
 
         helpers.create_user('paula@rlj.org', 'Paula', 'Torres')
+        helpers.create_user('iris@rljnine.com', 'Iris', 'Bauer')
 
         with pytest.raises(openreview.OpenReviewException, match=r'Invalid review_release setting: decision. Valid values are: all_reviews_posted, decision_posted'):
             Journal(openreview_client, 'RLJ', None, 'editors@rlj.org', 'Reinforcement Learning Journal', 'RLJ', settings={ 'review_release': 'decision' }).setup('~Paula_Torres1')
@@ -40,7 +41,7 @@ class TestRLJJournal():
                     'abbreviated_venue_name' : {'value': 'RLJ'},
                     'contact_info': {'value': 'editors@rlj.org'},
                     'support_role': {'value': '~Paula_Torres1' },
-                    'editors': {'value': ['~Paula_Torres1'] },
+                    'editors': {'value': ['~Paula_Torres1', '~Iris_Bauer1'] },
                     'website': {'value': 'rlj.org' },
                     'settings': {
                         'value': {
@@ -346,6 +347,46 @@ class TestRLJJournal():
         invitation = openreview_client.get_invitation(f'openreview.net/Support/Journal_Request{request_note.number}/-/Action_Editor_Recruitment')
         assert 'reviewer_role' not in invitation.edit['note']['content']
 
+        assignment_email_template = openreview_client.get_group('RLJ/Reviewers').content['assignment_email_template_script']['value']
+        assert 'privately visible to {review_readers_before_release}. Then, as soon as {review_release_event},' in assignment_email_template
+
+        openreview_client.post_group_edit(
+            invitation='RLJ/-/Edit',
+            signatures=['RLJ'],
+            group=openreview.api.Group(
+                id='RLJ/Reviewers',
+                content={
+                    'assignment_email_template_script': {
+                        'value': assignment_email_template.replace(
+                            'privately visible to {review_readers_before_release}. Then, as soon as {review_release_event},',
+                            'privately visible to the authors and AE. Then, as soon as {number_of_reviewers} reviews have been submitted,'
+                        )
+                    }
+                }
+            )
+        )
+
+        revision_edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Journal_Request{request_note.number}/-/Revision',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id = request_note.id,
+                signatures = ['openreview.net/Support'],
+                content = {
+                    'official_venue_name': {'value': 'Reinforcement Learning Journal'},
+                    'abbreviated_venue_name' : {'value': 'RLJ'},
+                    'contact_info': {'value': 'editors@rlj.org'},
+                    'support_role': {'value': '~Paula_Torres1' },
+                    'editors': {'value': ['~Paula_Torres1', '~Iris_Bauer1'] },
+                    'website': {'value': 'rlj.org' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, revision_edit['id'])
+
+        assignment_email_template = openreview_client.get_group('RLJ/Reviewers').content['assignment_email_template_script']['value']
+        assert 'privately visible to {review_readers_before_release}. Then, as soon as {review_release_event},' in assignment_email_template
+        assert 'privately visible to the authors and AE' not in assignment_email_template
+
         helpers.create_user('mateo@rljone.com', 'Mateo', 'Rivas')
         openreview_client.add_members_to_group('RLJ/Action_Editors', '~Mateo_Rivas1')
 
@@ -456,8 +497,8 @@ class TestRLJJournal():
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Mia Grant']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Mia_Grant1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Mia Grant', 'Iris Bauer']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Mia_Grant1', '~Iris_Bauer1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'is_revision': { 'value': 'No' },
@@ -559,6 +600,17 @@ class TestRLJJournal():
         assert review.readers == ['RLJ/Editors_In_Chief', 'RLJ/Paper1/Action_Editors', tomas_anon_group.id]
         assert review.nonreaders == ['RLJ/Paper1/Authors']
 
+        paula_client = OpenReviewClient(username='paula@rlj.org', password=helpers.strong_password)
+        review_edits = paula_client.get_note_edits(note_id=review.id)
+        assert len(review_edits) == 1
+        assert review_edits[0].readers == ['RLJ', 'RLJ/Paper1/Action_Editors', tomas_anon_group.id]
+        assert review_edits[0].nonreaders == ['RLJ/Paper1/Authors']
+        assert review_edits[0].note.content['for_technical_reviewer_claimed_contributions']['value'] == 'The paper claims a new exploration bonus and the experiments support the claim.'
+
+        iris_client = OpenReviewClient(username='iris@rljnine.com', password=helpers.strong_password)
+        assert iris_client.get_note_edits(note_id=review.id) == []
+        assert len(self.get_reviews(iris_client, note_id_1)) == 0
+
         elena_client = OpenReviewClient(username='elena@rljfour.com', password=helpers.strong_password)
         assert len(self.get_reviews(mateo_client, note_id_1)) == 1
         assert len(self.get_reviews(tomas_client, note_id_1)) == 1
@@ -649,6 +701,7 @@ class TestRLJJournal():
 
         assert len(self.get_reviews(test_client, note_id_1)) == 2
         assert len(self.get_reviews(tomas_client, note_id_1)) == 2
+        assert len(self.get_reviews(OpenReviewClient(username='iris@rljnine.com', password=helpers.strong_password), note_id_1)) == 2
 
         invitation = openreview_client.get_invitation('RLJ/Paper1/-/Review')
         assert invitation.edit['note']['readers'] == ['RLJ/Editors_In_Chief', 'RLJ/Action_Editors', 'RLJ/Paper1/Reviewers', 'RLJ/Paper1/Authors']
@@ -677,8 +730,8 @@ class TestRLJJournal():
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Mia Grant']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Mia_Grant1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Mia Grant', 'Iris Bauer']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Mia_Grant1', '~Iris_Bauer1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'is_revision': { 'value': 'No' },

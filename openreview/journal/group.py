@@ -319,6 +319,9 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                             members=[],
                             content=content
                             )
+        elif reviewer_assignment_email_legacy_release_text in (reviewer_group.content or {}).get('assignment_email_template_script', {}).get('value', ''):
+            assignment_email_template = reviewer_group.content['assignment_email_template_script']['value']
+            reviewer_group.content['assignment_email_template_script'] = { 'value': assignment_email_template.replace(reviewer_assignment_email_legacy_release_text, reviewer_assignment_email_release_text) }
         with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")

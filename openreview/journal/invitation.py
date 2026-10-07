@@ -4013,11 +4013,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             for key, value in self.journal.get_review_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
-        paper_authors_id = self.journal.get_authors_id(number='${5/content/noteNumber/value}')
         if self.journal.should_release_reviews_to_authors_when_posted():
-            invitation['edit']['note']['readers'].append(paper_authors_id)
+            invitation['edit']['note']['readers'].append(self.journal.get_authors_id(number='${5/content/noteNumber/value}'))
         else:
-            invitation['edit']['note']['nonreaders'] = [paper_authors_id]
+            invitation['edit']['nonreaders'] = [self.journal.get_authors_id(number='${4/content/noteNumber/value}')]
+            invitation['edit']['note']['nonreaders'] = [self.journal.get_authors_id(number='${5/content/noteNumber/value}')]
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
