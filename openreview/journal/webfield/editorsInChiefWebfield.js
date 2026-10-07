@@ -21,6 +21,7 @@ var PREFERRED_EMAILS_ID = '';
 var MANAGE_TRACKS_ID = '';
 var MANAGE_ACTION_EDITORS_ID = '';
 var ACTION_EDITORS_TRACK_SCORE_ID = '';
+var PREPARE_AE_BATCH_ID = '';
 var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
@@ -95,7 +96,7 @@ var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
   '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li>' +
-  '<li><a href="/assignments?group=' + ACTION_EDITOR_ID + '">Action Editor Proposed Assignments</a></li></ul>' +
+  (PREPARE_AE_BATCH_ID ? '' : '<li><a href="/assignments?group=' + ACTION_EDITOR_ID + '">Action Editor Proposed Assignments</a></li>') + '</ul>' +
   '<ul class="list-inline mb-0"><li><strong>Journal Request Forum:</strong></li>' +
   '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
@@ -104,6 +105,11 @@ if (MANAGE_TRACKS_ID) {
   HEADER.instructions += '<ul class="list-inline mb-0"><li><strong>Track Management:</strong></li>' +
     '<li><a href="/invitation?id=' + encodeURIComponent(MANAGE_ACTION_EDITORS_ID) + '">Manage Action Editor Eligibility</a></li>' +
     '<li><a href="/invitation?id=' + encodeURIComponent(MANAGE_TRACKS_ID) + '">Manage Tracks</a></li></ul>';
+}
+if (PREPARE_AE_BATCH_ID) {
+  HEADER.instructions += '<ul class="list-inline mb-0"><li><strong>Batch AE Assignment:</strong></li>' +
+    '<li><a href="/invitation?id=' + encodeURIComponent(PREPARE_AE_BATCH_ID) + '">Prepare Batch</a></li>' +
+    '<li><a href="/assignments?group=' + ACTION_EDITOR_ID + '">Run / Inspect / Deploy Batch</a></li></ul>';
 }
 var institutionDomains = [];
 

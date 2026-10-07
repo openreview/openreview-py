@@ -77,6 +77,9 @@ class GroupBuilder(object):
             'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },
             'preferred_emails_invitation_id': { 'value': self.journal.get_preferred_emails_invitation_id() }
         }
+        batch_enabled = self.journal.settings.get('ae_batch_preparation_enabled') is True
+        if batch_enabled or 'ae_batch_preparation_enabled' in (venue_group.content or {}):
+            content['ae_batch_preparation_enabled'] = {'value': batch_enabled}
 
         if self.journal.get_certifications():
             content['certifications'] = { 'value': self.journal.get_certifications() }
@@ -142,6 +145,9 @@ class GroupBuilder(object):
                     "var MANAGE_ACTION_EDITORS_ID = '" + self.journal.get_manage_action_editors_id() + "';")
                 content = content.replace("var ACTION_EDITORS_TRACK_SCORE_ID = '';",
                     "var ACTION_EDITORS_TRACK_SCORE_ID = '" + self.journal.get_track_score_id() + "';")
+            if self.journal.settings.get('ae_batch_preparation_enabled') is True:
+                content = content.replace("var PREPARE_AE_BATCH_ID = '';",
+                    "var PREPARE_AE_BATCH_ID = '" + self.journal.get_prepare_ae_batch_id() + "';")
             if self.journal.request_form_id:
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:

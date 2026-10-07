@@ -67,7 +67,7 @@ class TestJournalTracksAPI:
 
     @pytest.fixture
     def create_journal(self, actors, helpers, openreview_client, journal_request):
-        def create(tracks=(OSS, AWARD), direct=False):
+        def create(tracks=(OSS, AWARD), direct=False, extra_settings=None):
             venue = 'TracksAPI' + uuid4().hex[:12]
             settings = {'submission_public': False, 'author_anonymity': True,
                         'AE_anonymity': True, 'assignment_delay': 0,
@@ -75,6 +75,7 @@ class TestJournalTracksAPI:
                         'skip_ac_recommendation': True}
             if tracks is not None:
                 settings['tracks'] = list(tracks) if isinstance(tracks, (list, tuple)) else tracks
+            settings.update(extra_settings or {})
             request = openreview_client.post_note_edit(
                 invitation='openreview.net/Support/-/Journal_Request',
                 signatures=['openreview.net/Support'], note=openreview.api.Note(content={

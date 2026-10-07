@@ -16,6 +16,7 @@ Contents
    api
    help
    journal_managed_tracks
+   journal_ae_batch
 
 
 Indices and Tables

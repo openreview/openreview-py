@@ -168,7 +168,11 @@ class Assignment(object):
             if not self.client.get_group(journal.get_action_editors_id(submitted_submission.number)).members:
                 ## Get AE recommendations
                 ae_recommendations = self.client.get_edges(invitation=journal.get_ae_recommendation_id(), head=submitted_submission.id)
-                if len(ae_recommendations) >= 3:
+                recommendation_eligible = (
+                    (journal.settings.get('ae_batch_preparation_enabled') is True and
+                     journal.should_skip_ac_recommendation()) or
+                    len(ae_recommendations) >= 3)
+                if recommendation_eligible:
                     ## Mark the papers that needs assignments. use venue: "TMLR Assigning AE" and venueid: 'TMLR/Assign_AE'
                     if journal.assigning_AE_venue_id not in submitted_submission.invitations:
                         self.client.post_note_edit(
@@ -310,4 +314,3 @@ class Assignment(object):
                 to_delete_assignments.append(edge)
 
         openreview.tools.concurrent_requests(self.client.post_edge, to_delete_assignments)                                   
-
