@@ -1603,38 +1603,18 @@ class EditInvitationsBuilder(object):
         submission_name = self.get_content_value('submission_name', 'Submission')
         program_chairs_id = self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
-        reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
         reply_readers = [
             {'value': program_chairs_id, 'optional': True, 'description': 'Program Chairs'}
         ]
-
-        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
-        if senior_area_chairs_name:
-            reply_readers.extend([
-                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
-            ])
-
-        area_chairs_name = self.get_content_value('area_chairs_name')
-        if area_chairs_name:
-            reply_readers.extend([
-                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
-            ])
-
-        reply_readers.extend([
-            {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
-            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
-            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'}
-        ])
+        reply_readers.extend(self.get_committee_reader_options(f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}'))
 
         if include_signatures:
             reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
 
         reply_readers.extend([
             {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
-            {'value': 'everyone', 'optional': True, 'description': 'Public'}                  
+            {'value': 'everyone', 'optional': True, 'description': 'Public'}
         ])
 
         invitation = Invitation(
