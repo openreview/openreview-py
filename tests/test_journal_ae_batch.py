@@ -20,7 +20,7 @@ from openreview.journal.ae_batch import (
     validate_batch_configuration,
 )
 from openreview.journal.invitation import InvitationBuilder
-from tests.test_journal_tracks_api import TestJournalTracksAPI as _TracksAPI, denied, invalid
+from test_journal_tracks_api import TestJournalTracksAPI as _TracksAPI, denied, invalid
 
 
 REGULAR = {"id": "Regular", "name": "Regular", "open": True}
