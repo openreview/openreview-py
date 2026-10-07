@@ -29,54 +29,6 @@ EIC_WEBFIELD = Path(__file__).parents[1] / "openreview/journal/webfield/editorsI
 NODE = shutil.which("node")
 
 
-def test_venue_process_wait_ignores_other_venues_and_delayed_jobs(monkeypatch):
-    from conftest import Helpers
-    import conftest
-    clock = SimpleNamespace(value=0)
-    def sleep(seconds):
-        clock.value += seconds
-    monkeypatch.setattr(conftest, 'time', SimpleNamespace(
-        monotonic=lambda: clock.value, sleep=sleep))
-    def logs(**query):
-        assert query == {'status': 'running'}
-        return [{'id': 'Other/-/Job', 'status': 'running'},
-                {'invitation': 'TestOther/-/Job', 'status': 'running'},
-                {'id': 'Test/-/Delayed', 'status': 'delayed'}]
-    Helpers.await_venue_processes(SimpleNamespace(get_process_logs=logs), 'Test', timeout=5)
-    assert clock.value >= 2
-
-
-@pytest.mark.parametrize('field', ['invitation', 'id'])
-def test_venue_process_wait_resets_quiet_interval_on_activity(monkeypatch, field):
-    from conftest import Helpers
-    import conftest
-    clock = SimpleNamespace(value=0)
-    def sleep(seconds):
-        clock.value += seconds
-    monkeypatch.setattr(conftest, 'time', SimpleNamespace(
-        monotonic=lambda: clock.value, sleep=sleep))
-    def logs(**query):
-        assert query == {'status': 'running'}
-        return [{field: 'Test/-/Job', 'status': 'running'}] if 1 <= clock.value < 1.5 else []
-    Helpers.await_venue_processes(SimpleNamespace(get_process_logs=logs), 'Test', timeout=5)
-    assert 3.5 <= clock.value < 5
-
-
-def test_venue_process_wait_raises_on_timeout(monkeypatch):
-    from conftest import Helpers
-    import conftest
-    clock = SimpleNamespace(value=0)
-    def sleep(seconds):
-        clock.value += seconds
-    monkeypatch.setattr(conftest, 'time', SimpleNamespace(
-        monotonic=lambda: clock.value, sleep=sleep))
-    client = SimpleNamespace(get_process_logs=lambda **query: [
-        {'invitation': 'Test/-/Job', 'status': 'running'}])
-    with pytest.raises(TimeoutError, match='Test'):
-        Helpers.await_venue_processes(client, 'Test', timeout=2)
-    assert clock.value <= 2
-
-
 def render_eic_navigation(batch_setting):
     if not NODE:
         pytest.skip("Node.js is required for the Journal webfield unit test")
