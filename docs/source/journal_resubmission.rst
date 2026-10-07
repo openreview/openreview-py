@@ -69,7 +69,11 @@ AE continuity and access
 * **Private access:** the immediate predecessor's paper AE group includes the
   successor's paper AE group. Its current assigned AEs inherit protected
   predecessor access; unrelated AEs gain no membership from the link. Removal
-  and replacement operate through ordinary successor group membership. The grant
+  and replacement operate through ordinary successor group membership. On removal,
+  the continuity callback also invalidates the removed profile's membership cache
+  so anonymous membership changes revoke inherited access. If cleanup or cache
+  invalidation fails after removal, a retry finishes cleanup and invalidation
+  without repeating the unassignment message. The grant
   does not rewrite note readers or override existing broader venue access.
 * **Older rounds:** only immediate-predecessor access is promised. Existing nested
   memberships may be transitive; this feature does not implement arbitrary

@@ -1242,3 +1242,77 @@ def test_generated_resubmission_callback_keeps_all_explicit_settings_and_context
     assert observed[0].settings == journal.settings
     assert observed[0].full_name == journal.full_name
     assert "    import openreview" not in generated
+
+
+@pytest.mark.parametrize('settings,cache_error', [
+    ({}, False),
+    ({'resubmission_continuity_enabled': False}, False),
+    ({'resubmission_continuity_enabled': True}, False),
+    ({'resubmission_continuity_enabled': True}, True),
+])
+def test_continuity_removal_invalidates_profile_cache_after_membership_removal(
+        monkeypatch, settings, cache_error):
+    journal, client, current, _previous = fixture()
+    journal.settings = settings
+    journal.contact_info = 'contact@example.org'
+    journal.get_message_sender = lambda: None
+    journal.get_meta_invitation_id = lambda: journal.venue_id + '/-/Edit'
+    journal.assigned_AE_venue_id = journal.venue_id + '/Assigned_AE'
+    journal.assigning_AE_venue_id = journal.venue_id + '/Assigning_AE'
+    current.content.update(title={'value': 'Linked paper'},
+        assigned_action_editor={'value': '~AE2'},
+        venueid={'value': journal.assigned_AE_venue_id})
+    group_id = journal.get_action_editors_id(current.number)
+    client.groups[group_id] = SimpleNamespace(id=group_id, members=['~AE2'])
+    client.groups[journal.get_action_editors_id()].content = {
+        'unassignment_email_template_script': {'value': 'Unassigned'}}
+    edge = SimpleNamespace(id='removed', head=current.id, tail='~AE2', ddate=1)
+    client.get_edge = lambda *_args: edge
+    cached = {'access': True, 'flushed': [], 'fail': cache_error,
+        'messages': 0, 'removals': 0}
+    def message(*_args, **_kwargs):
+        cached['messages'] += 1
+    client.post_message = message
+    def post_note_edit(note=None, **_kwargs):
+        for key, value in note.content.items():
+            if value == {'delete': True}:
+                current.content.pop(key, None)
+            else:
+                current.content[key] = value
+    client.post_note_edit = post_note_edit
+    def remove(group, member):
+        cached['removals'] += 1
+        client.groups[group].members.remove(member)
+    client.remove_members_from_group = remove
+    def flush(member):
+        # Anonymous membership removal alone does not invalidate profile cache.
+        assert client.groups[group_id].members == []
+        cached['flushed'].append(member)
+        if cached['fail']:
+            raise RuntimeError('Cache invalidation failed')
+        cached['access'] = False
+    client.flush_members_cache = flush
+    builder = InvitationBuilder.__new__(InvitationBuilder)
+    builder.journal = SimpleNamespace(request_form_id='Neutral/Request', settings=settings)
+    monkeypatch.setattr(openreview.journal.JournalRequest, 'get_journal',
+        staticmethod(lambda *_args: journal))
+    namespace = {'openreview': openreview, 'datetime': datetime}
+    exec(compile(builder.get_process_content('process/ae_assignment_process.py'),
+        'ae-removal-process.py', 'exec'), namespace)
+    if cache_error:
+        with pytest.raises(RuntimeError, match='Cache invalidation failed'):
+            namespace['process_update'](client, edge, None, None)
+    else:
+        namespace['process_update'](client, edge, None, None)
+    assert client.groups[group_id].members == []
+    enabled = settings.get('resubmission_continuity_enabled') is True
+    assert cached['flushed'] == (['~AE2'] if enabled else [])
+    assert cached['access'] == (not enabled or cache_error)
+    assert 'assigned_action_editor' not in current.content
+    assert current.content['venueid']['value'] == journal.assigning_AE_venue_id
+    if cache_error:
+        cached['fail'] = False
+        namespace['process_update'](client, edge, None, None)
+        assert cached['flushed'] == ['~AE2', '~AE2']
+        assert cached['access'] is False
+    assert cached['messages'] == cached['removals'] == 1

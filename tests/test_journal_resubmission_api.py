@@ -311,7 +311,12 @@ class TestJournalResubmissionAPI:
         wait_new_process(openreview_client, removed.id, since)
         assert actors[assigned_role].id not in openreview_client.get_group(current_group).members
         if assigned_role != 'ae':
-            denied(lambda: actors[assigned_role].client.get_note(previous.note.id), 'removed successor AE')
+            removed_group = openreview_client.get_group(current_group)
+            context = ('removed successor AE', {'members': removed_group.members,
+                'anonymous_members': removed_group.anon_members,
+                'predecessor_readers': openreview_client.get_note(previous.note.id).readers})
+            denied(lambda: actors[assigned_role].client.get_note(previous.note.id), context)
+            denied(lambda: actors[assigned_role].client.get_note(previous.review_approval_id), context)
         self.assign(journal, note, actors, helpers, openreview_client, 'thirdae')
         assert actors['thirdae'].client.get_note(previous.note.id).content['authorids']['value'] == [actors['author'].id]
 

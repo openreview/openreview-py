@@ -16,23 +16,26 @@ def process_update(client, edge, invitation, existing_edge):
         immediate_continuity = (previous is not None and
             journal.settings.get('resubmission_continuity') == 'immediate_previous_ae' and
             getattr(edge, 'label', None) == 'Resubmission continuity')
-    if edge.ddate and edge.tail in group.members:
-        print(f'Remove member {edge.tail} from {group.id}')
+    if edge.ddate and (edge.tail in group.members or
+            journal.settings.get('resubmission_continuity_enabled') is True):
+        if edge.tail in group.members:
+            print(f'Remove member {edge.tail} from {group.id}')
 
-        recipients=[edge.tail]
-        subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.number}: {note.content["title"]["value"]}'
+            recipients=[edge.tail]
+            subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.number}: {note.content["title"]["value"]}'
 
-        message=ae_group.content['unassignment_email_template_script']['value'].format(
-            short_name=journal.short_name,
-            submission_number=note.number,
-            submission_title=note.content['title']['value'],
-            contact_info=journal.contact_info,
-        )
+            message=ae_group.content['unassignment_email_template_script']['value'].format(
+                short_name=journal.short_name,
+                submission_number=note.number,
+                submission_title=note.content['title']['value'],
+                contact_info=journal.contact_info,
+            )
 
-        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
+            client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
-        client.remove_members_from_group(group.id, edge.tail)
+            client.remove_members_from_group(group.id, edge.tail)
 
+        # Retry cleanup even when an enabled removal already persisted.
         ## update assigned_action_editor if exists in the submission
         content = {}
         if 'assigned_action_editor' in note.content and note.content['assigned_action_editor']['value'] == edge.tail:
@@ -49,7 +52,11 @@ def process_update(client, edge, invitation, existing_edge):
                                 content = content 
             ))
 
-        return       
+        if journal.settings.get('resubmission_continuity_enabled') is True:
+            # Anonymous removal flushes the anonymous ID; also invalidate the
+            # profile's cached transitive access to the predecessor paper.
+            client.flush_members_cache(edge.tail)
+        return
 
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
