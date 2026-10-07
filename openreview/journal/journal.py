@@ -723,6 +723,21 @@ class Journal(object):
     def should_enable_ai_review(self):
         return self.settings.get('enable_ai_review', False)
 
+    def has_ai_review(self, submission):
+        if not self.should_enable_ai_review():
+            return False
+        return len(self.client.get_notes(invitation=self.get_ai_review_id(number=submission.number), limit=1)) > 0
+
+    def get_email_template(self, group, key, has_ai_review=False):
+        ## Use the AI review variant of the template (e.g. official_recommendation_starts_ai_review_email_template_script)
+        ## when the submission has an AI review and the venue defined that variant in the group content
+        content = group.content or {}
+        if has_ai_review:
+            ai_review_key = key.replace('_email_template_script', '_ai_review_email_template_script')
+            if ai_review_key in content:
+                return content[ai_review_key]['value']
+        return content.get(key, {}).get('value')
+
     def get_certifications(self):
         return self.settings.get('certifications', [])
 
@@ -1301,6 +1316,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
         print('Release reviews...')
         invitation = self.invitation_builder.set_note_release_review_invitation(submission)
 
+        ai_reviews = None
         if self.should_enable_ai_review():
             ai_reviews = self.client.get_notes(invitation=self.get_ai_review_id(number=submission.number))
             if ai_reviews:
@@ -1319,16 +1335,15 @@ Your {lower_formatted_invitation} on a submission has been {action}
             assigned_action_editor = openreview.tools.get_profiles(self.client, ids_or_emails=[submission.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=self.get_preferred_emails_invitation_id())[0]
 
             if self.should_enable_ai_review():
-                ai_review = self.client.get_notes(invitation=self.get_ai_review_id(number=submission.number))
-                if ai_review:
-                    self.invitation_builder.set_note_survey_invitation(submission, ai_review[0], cdate, duedate)
+                if ai_reviews:
+                    self.invitation_builder.set_note_survey_invitation(submission, ai_reviews[0], cdate, duedate)
 
             review_visibility = 'public' if self.is_submission_public() else 'visible to all the reviewers'
 
             ## Send email notifications to authors
             print('Send emails to authors')
             author_group = self.client.get_group(self.get_authors_id())
-            message=author_group.content['discussion_starts_email_template_script']['value'].format(
+            message = self.get_email_template(author_group, 'discussion_starts_email_template_script', bool(ai_reviews)).format(
                 short_name=self.short_name,
                 submission_id=submission.id,
                 submission_number=submission.number,
