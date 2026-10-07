@@ -182,12 +182,8 @@ class InvitationBuilder(object):
 
     def resubmission_submission_preprocess(self):
         if self.journal.settings.get('resubmission_continuity_enabled') is True:
-            settings = {key: self.journal.settings[key] for key in (
-                'submission_public', 'release_submission_after_acceptance',
-                'resubmission_continuity_enabled', 'resubmission_continuity')
-                if key in self.journal.settings}
             return self.get_process_content(
-                'process/resubmission_submission_pre_process.py', settings)
+                'process/resubmission_submission_pre_process.py')
 
     def revision_preprocess_fields(self, existing):
         """Install one owned revision callback without arbitrary script dispatch."""
@@ -224,24 +220,8 @@ class InvitationBuilder(object):
     def get_process_content(self, file_path, settings=None):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            if settings is None and self.journal.settings.get(
-                    'resubmission_continuity_enabled') is True:
-                settings = {key: self.journal.settings[key] for key in (
-                    'submission_public', 'release_submission_after_acceptance',
-                    'resubmission_continuity_enabled', 'resubmission_continuity')
-                    if key in self.journal.settings}
-            if settings is not None:
-                source = self.journal_source(settings)
-            elif self.journal.request_form_id:
-                source = ('openreview.journal.JournalRequest.get_journal(client, "' +
-                          self.journal.request_form_id + '")')
-            else:
-                source = ('openreview.journal.Journal(client, "' + self.journal.venue_id +
-                    '", "' + self.journal.secret_key + '", contact_info="' +
-                    self.journal.contact_info + '", full_name="' + self.journal.full_name +
-                    '", short_name="' + self.journal.short_name + '", website="' +
-                    self.journal.website + '", submission_name="' +
-                    self.journal.submission_name + '")')
+            source = self.journal_source(
+                self.journal.settings if settings is None else settings)
             return process.replace('openreview.journal.Journal()', source)
 
     def post_invitation_edit(self, invitation, replacement=None):

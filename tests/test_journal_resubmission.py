@@ -1161,3 +1161,84 @@ def test_disabled_score_iteration_preserves_active_then_archived_error_order():
     with pytest.raises(RuntimeError, match="archived lookup failed"):
         next(assignments)
     assert events[-1] == (journal.get_ae_assignment_id(archived=True), "prior")
+
+
+def test_venue_process_wait_ignores_other_venues_and_delayed_jobs(monkeypatch):
+    from conftest import Helpers
+    import conftest
+    clock = SimpleNamespace(value=0)
+    def sleep(seconds):
+        clock.value += seconds
+    monkeypatch.setattr(conftest, 'time', SimpleNamespace(
+        monotonic=lambda: clock.value, sleep=sleep))
+    def logs(**query):
+        assert query == {'status': 'running'}
+        return [{'id': 'Other/-/Job', 'status': 'running'},
+                {'invitation': 'TestOther/-/Job', 'status': 'running'},
+                {'id': 'Test/-/Delayed', 'status': 'delayed'}]
+    Helpers.await_venue_processes(SimpleNamespace(get_process_logs=logs), 'Test', timeout=5)
+    assert clock.value >= 2
+
+
+@pytest.mark.parametrize('field', ['invitation', 'id'])
+def test_venue_process_wait_resets_quiet_interval_on_activity(monkeypatch, field):
+    from conftest import Helpers
+    import conftest
+    clock = SimpleNamespace(value=0)
+    def sleep(seconds):
+        clock.value += seconds
+    monkeypatch.setattr(conftest, 'time', SimpleNamespace(
+        monotonic=lambda: clock.value, sleep=sleep))
+    def logs(**query):
+        assert query == {'status': 'running'}
+        return [{field: 'Test/-/Job', 'status': 'running'}] if 1 <= clock.value < 1.5 else []
+    Helpers.await_venue_processes(SimpleNamespace(get_process_logs=logs), 'Test', timeout=5)
+    assert 3.5 <= clock.value < 5
+
+
+def test_venue_process_wait_raises_on_timeout(monkeypatch):
+    from conftest import Helpers
+    import conftest
+    clock = SimpleNamespace(value=0)
+    def sleep(seconds):
+        clock.value += seconds
+    monkeypatch.setattr(conftest, 'time', SimpleNamespace(
+        monotonic=lambda: clock.value, sleep=sleep))
+    client = SimpleNamespace(get_process_logs=lambda **query: [
+        {'invitation': 'Test/-/Job', 'status': 'running'}])
+    with pytest.raises(TimeoutError, match='Test'):
+        Helpers.await_venue_processes(client, 'Test', timeout=2)
+    assert clock.value <= 2
+
+
+@pytest.mark.parametrize("request_id", [None, "Neutral/Request"])
+@pytest.mark.parametrize("enabled", [False, True])
+def test_generated_resubmission_callback_keeps_all_explicit_settings_and_context(
+        monkeypatch, request_id, enabled):
+    from openreview.journal import Journal
+    client = SimpleNamespace()
+    journal = Journal(client, "Neutral/Venue", "secret", "contact@example.org",
+        'Neutral "Journal"', "NV", settings={
+            "resubmission_continuity_enabled": enabled,
+            "resubmission_continuity": "score", "AE_anonymity": True,
+            "submission_public": False, "skip_ac_recommendation": True,
+            "submission_additional_fields": None})
+    journal.request_form_id = request_id
+    generated = journal.invitation_builder.get_process_content(
+        "process/resubmission_submission_pre_process.py")
+    observed = []
+    def validate(actual_client, actual_journal, edit, invitation):
+        assert actual_client is client
+        observed.append(actual_journal)
+    monkeypatch.setattr(openreview.journal.resubmission,
+        "validate_resubmission_submission_edit", validate)
+    monkeypatch.setattr(openreview.journal.JournalRequest, "get_journal",
+        lambda actual_client, actual_id: journal
+        if actual_client is client and actual_id == request_id else None)
+    namespace = {"openreview": openreview}
+    exec(generated, namespace)
+    namespace["process"](client, SimpleNamespace(), None)
+    assert len(observed) == 1
+    assert observed[0].settings == journal.settings
+    assert observed[0].full_name == journal.full_name
+    assert "    import openreview" not in generated

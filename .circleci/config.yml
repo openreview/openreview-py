@@ -39,7 +39,8 @@ commands:
       - run:
           name: Generate GitHub App token
           command: |
-            pip install PyJWT==2.12.1 cryptography==46.0.7 --quiet
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            retry env PIP_DEFAULT_TIMEOUT=120 pip install PyJWT==2.12.1 cryptography==46.0.7 --quiet
 
             cat > /tmp/get_token.py \<< 'PYEOF'
             import jwt, time, json, os, urllib.request
@@ -158,7 +159,8 @@ commands:
       - run:
           name: Install openreview-py
           command: |
-            pip install -c ~/openreview-py-repo/requirements.txt ~/openreview-py-repo
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            retry env PIP_DEFAULT_TIMEOUT=120 pip install -c ~/openreview-py-repo/requirements.txt ~/openreview-py-repo
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
@@ -282,8 +284,9 @@ commands:
           name: Install pytest dependencies
           command: |
             cd ~/openreview-py-repo
+            source .circleci/ci-utils.sh
             mkdir -p test-reports
-            pip install -c requirements-dev.txt -e '.[test]'
+            retry env PIP_DEFAULT_TIMEOUT=120 pip install -c requirements-dev.txt -e '.[test]'
 
   copy-logs-on-failure:
     description: "Copy API logs to artifacts on failure"
@@ -428,12 +431,20 @@ jobs:
             
             if [ -n "$MODIFIED_TESTS" ]; then
               echo "Running tests from modified files: $MODIFIED_TESTS"
-              pytest $MODIFIED_TESTS --durations=0 -v -o junit_family=legacy \
+              # Override pytest.ini's -x so this focused run reports all failures.
+              pytest $MODIFIED_TESTS --maxfail=0 --durations=0 -v -o junit_family=legacy \
                 --junitxml=test-reports/junit-pr-tests.xml \
                 --driver Firefox --driver-path tests/drivers/geckodriver
             else
               echo "No test files to run"
             fi
+      - run:
+          name: Summarize PR test results
+          when: always
+          command: |
+            cd ~/openreview-py-repo
+            python .circleci/summarize_pr_tests.py test-reports/junit-pr-tests.xml \
+              --output test-reports/pr-test-summary.txt
       - copy-logs-on-failure
       - store-test-artifacts
   build:
@@ -483,6 +494,8 @@ jobs:
               TEST_FILES=$(circleci tests glob "tests/test_*.py" | grep -v "test_journal.py\|test_arr_venue_v2.py")
               echo "$TEST_FILES" | circleci tests run \
                 --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" \
+                --total="$((CIRCLE_NODE_TOTAL - 2))" \
+                --index="$((CIRCLE_NODE_INDEX - 2))" \
                 --verbose --split-by=timings
             fi
       - copy-logs-on-failure
