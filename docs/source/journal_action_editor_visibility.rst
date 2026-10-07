@@ -1,134 +1,85 @@
 Paper-scoped Action Editor visibility
 =====================================
 
-Journal restricts confidential records to the Action Editors (AEs) handling
-that paper while retaining Editors-in-Chief (EIC) oversight and configured author
-and reviewer access. This is useful for large editorial boards whose members
-also submit papers. The setting changes API readership, including edit histories;
-console filtering alone cannot enforce paper readership. EIC administrators
-retain their existing API privileges; console protection for their own authored
-papers prevents accidental identity exposure during ordinary editorial use.
+Journal defaults private editorial readership to the Action Editors (AEs)
+handling each paper. Initial submissions already use paper AE groups; this
+setting also scopes later private manuscripts, reviews, decisions and comments.
+Editors-in-Chief (EICs) retain administrator API access.
 
 Configuration
 -------------
 
-Set the following in the Journal Request's ``settings`` object before accepting
-submissions, or pass it in ``Journal(..., settings=...)``::
+Set these options in the Journal Request settings before accepting submissions,
+or pass them to ``Journal(..., settings=...)``::
 
-    {
-        "action_editor_paper_visibility": "assigned_only",
-        "submission_public": false,
-        "release_submission_after_acceptance": false,
-        "AE_anonymity": true
-    }
+    {"action_editor_paper_visibility": "assigned_only",
+     "submission_public": false,
+     "release_submission_after_acceptance": false,
+     "AE_anonymity": true}
 
-* ``action_editor_paper_visibility`` defaults to ``assigned_only`` when omitted.
-  Explicit ``all`` retains venue-wide AE readership for later private workflow records.
-  ``assigned_only`` uses the paper's ``Action_Editors`` group. Other values are
-  rejected when constructing the Journal.
-* For every directly configured Journal, generated
-  callbacks preserve the complete settings object, including workflow switches
-  such as ``skip_official_recommendation``. Omitted settings use ordinary Journal
-  defaults. Journal Request callbacks load settings from the request.
-* ``submission_public`` controls manuscript publication independently. A public
-  manuscript remains public in ``assigned_only`` mode. Anonymous author fields
-  continue to use their configured field readership.
-* ``release_submission_after_acceptance`` controls public release after
-  acceptance independently of AE scoping. Set it to ``false`` when accepted
-  submissions must remain private.
-* ``AE_anonymity`` controls whether authors see the handling editor's identity.
-  It is independent of whether unrelated editors can read the manuscript.
-  With ``false``, Review Approval can reveal the paper AE group to authors;
-  with ``true``, real member identities remain hidden from ordinary authors.
-  Venue administrators retain their existing privileged API access.
+* **AE readership:** omitted or ``assigned_only`` uses the paper AE group.
+  Explicit ``all`` retains venue-wide AE readership for later private records.
+  Other values are rejected during Journal construction.
+* **Publication:** ``submission_public`` and
+  ``release_submission_after_acceptance`` independently control public release.
+  Public records remain public; anonymous author fields retain field readership.
+* **Identity:** ``AE_anonymity`` independently controls author access to the
+  handling editor's identity. Review Approval reveals the paper AE group for
+  named editors; anonymous member identities remain hidden from ordinary authors.
+* **Callbacks:** directly configured Journals preserve complete settings,
+  including workflow switches. Journal Request callbacks load request settings.
+  Omitted options use native Journal defaults.
 
-New-paper workflow
-------------------
+Workflow and identity protection
+--------------------------------
 
-1. An author submits through the Journal submission invitation. Journal creates
-   paper-specific Authors, Action Editors, and Reviewers groups. Initial
-   submission readership and anonymous author-field readership are already
-   paper-scoped in ordinary Journal behavior.
-2. An EIC assigns an AE through the normal assignment invitation. Journal adds
-   that editor to the paper AE group, enables Review Approval, and sends the
-   assignment message. In ``assigned_only`` mode, it resolves the handling AE
-   from that group instead of storing a new ``assigned_action_editor`` identity
-   on the author-readable submission.
-3. The assigned AE performs Review Approval and assigns reviewers normally.
-   Later private submission/release readers use the paper AE group; unrelated
-   board members do not gain access merely by belonging to the journal AE role.
-4. Removing or replacing an assignment updates paper-group membership through
-   the normal assignment process. An editor removed from the group loses access
-   conferred by that membership; other independently granted roles still apply.
-   In both visibility modes, removal flushes the editor profile's cached
-   memberships, including when the paper AE group uses anonymous IDs. A retry
-   after persisted membership removal completes matching metadata cleanup and
-   cache invalidation without sending duplicate unassignment mail. Cleanup
-   preserves another editor's assignment and independently granted role access.
-   Existing decision and conflict checks continue to govern assignment changes.
-5. EICs oversee the workflow. In ``assigned_only`` mode with ``AE_anonymity``
-   enabled, their authored papers are omitted from the editorial console's
-   paper rows, tasks, and per-paper progress lists. Console links to AE, reviewer,
-   and proposed-AE assignment browsers start from the remaining paper IDs;
-   authored papers are omitted there as well. The proposed-AE link opens the
-   scoped edge browser rather than the global matching-configuration page.
-   Scoped browsers use two columns so following an editor cannot reopen an
-   unrestricted paper list. Per-paper assignment links use the same limit.
-   They use the Author Console
-   for those papers. Other EICs continue to handle them normally. This prevents
-   accidental exposure of the handling AE during console use; it does not
-   revoke administrator access or prevent deliberate API/group lookups.
-   Assignment edges and AE identity groups still exclude ordinary authors.
+1. Submission creates paper Authors, Action Editors and Reviewers groups.
+   Assignment adds the handling editor, enables Review Approval and sends the
+   normal assignment message. In assigned-only mode, paper membership supplies
+   identity; no new ``assigned_action_editor`` field is stored on the submission.
+2. Review Approval and reviewer assignment follow the native workflow. Later
+   private records use the paper AE group, excluding unrelated board members.
+   Publication and conflict-of-interest controls remain independent.
+3. Removal revokes paper-group membership and flushes the editor's profile cache
+   in both policies, including anonymous groups. A retry completes matching
+   metadata cleanup and cache invalidation after persisted removal without
+   duplicate unassignment mail. Replacement assignments and independently
+   granted role access remain intact; native decision/conflict checks still apply.
+4. With assigned-only readership and AE anonymity enabled, the EIC console omits
+   the EIC's authored papers from rows, tasks and progress. AE, reviewer and
+   proposed-AE navigation uses the remaining paper IDs. Scoped assignment
+   browsers use two columns to prevent reopening unrestricted paper lists.
+   EICs use the Author Console for their papers; other EICs handle those papers.
+   This prevents accidental identity exposure, not deliberate administrator
+   API/group lookups. Ordinary authors cannot read assignment edges or identities.
 
-Scoped reminders resolve the current handling AE from paper membership. Reviewer
-reminders retain AE Reply-To; author reminders use it only when AE anonymity is
-disabled. Unassigned papers retain the venue-contact fallback, while
-ambiguous assignments and failed lookups remain errors.
+Scoped reminders resolve the current AE from paper membership. Reviewer Reply-To
+uses the AE; author Reply-To does so only for named editors. Unassigned papers use
+venue contact; ambiguous assignments and failed lookups remain errors.
+Asynchronous requests require a completed process result and fresh record reads
+before consumers rely on their side effects.
 
-Asynchronous assignment and Review Approval requests must finish processing
-before their side effects are considered complete. A successful request response
-alone does not establish group membership or new invitations. Consumers should
-check the process result and freshly read the affected records.
+Existing papers and validation
+------------------------------
 
-Existing papers
----------------
+Settings govern current/future workflow; they do not repair stored historical
+readers, identities, groups, edges, invitations or histories. Historical conversion
+belongs to separately authorized private maintenance with explicit targets,
+preview, preflight and fresh readback; this SDK has no historical synchronizer.
+Existing copies cannot be recalled. Explicit ``all`` does not broaden previously
+narrowed records. This default changes no installed journal configuration and
+requires no JMLR tracks, batching or resubmission features.
 
-Settings govern current and future workflow behavior. Changing the setting does
-not repair stored historical readers, identity fields, groups, edges, invitations
-or histories. Historical conversion belongs to separately authorized private
-venue maintenance with explicit targets, preview, preflight and fresh readback;
-this SDK exposes no historical synchronizer. Existing copies cannot be recalled.
-Explicit ``all`` also does not broaden previously narrowed historical records.
-No installed journal configuration is changed by selecting this SDK default.
+``tests/test_journal.py`` and ``tests/test_jmlr_journal.py`` set policy during
+shared setup and assert readers and actual role access through later transitions.
+Supplementary ``tests/test_journal_action_editor_visibility.py`` and
+``tests/test_action_editor_visibility_api.py`` cover defaults, explicit all,
+anonymity/publication, denied access, removal retries and EIC-author console/API
+boundaries. Run the complete affected list against CI API/browser services;
+collection and mocks alone do not qualify permissions.
 
-Reuse and validation
---------------------
-
-This feature does not require JMLR tracks, AE batching, resubmission continuity,
-or a particular production workflow. Set ``action_editor_paper_visibility`` to
-``all`` when all board members should see private editorial records. Paper
-scoping suits shared editorial boards that require separation between handling editors; it does not
-introduce a guest-editor role or replace conflict-of-interest policy.
-
-``tests/test_journal.py`` and ``tests/test_jmlr_journal.py`` establish the
-assigned-only setting during shared workflow setup and assert readers and role
-access on their existing papers through later transitions. Supplemental
-``tests/test_journal_action_editor_visibility.py`` and
-``tests/test_action_editor_visibility_api.py`` cover omitted defaults, explicit
-``all``, anonymity/publication, negative cases, removal failure/retry, and
-EIC-author console protection while retaining administrator API access.
-Run the complete affected list against the CI API and browser services::
-
-    pytest tests/test_journal.py tests/test_jmlr_journal.py \
-        tests/test_journal_action_editor_visibility.py \
-        tests/test_action_editor_visibility_api.py --maxfail=0
-
-Historical repair tests belong to private maintenance and are not upstream
-feature-runtime evidence. Collection or mocked clients alone do not qualify
-server permissions.
-
-The focused CircleCI PR job runs all selected cases even if one fails. Its
-``Summarize PR test results`` step prints counts by suite and failing case names;
-``test-reports/pr-test-summary.txt`` is also stored as an artifact. The JUnit XML
-and API logs retain full failure details. A missing report indicates that test
-setup or execution did not produce JUnit results; it does not indicate success.
+CircleCI runs all affected files with ``--maxfail=0``, preserves failure status,
+and stores JUnit XML and ``test-reports/pr-test-summary.txt``. The summary step
+lists suite counts and failing cases. Missing reports mean unavailable results,
+not success. Full regression qualification also requires every allocated test
+file to execute, including the dedicated Journal and ARR suites.

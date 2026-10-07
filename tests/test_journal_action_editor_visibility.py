@@ -139,8 +139,6 @@ def test_direct_opt_in_callback_keeps_defaults_for_omitted_workflow_settings():
 
 
 
-
-
 @pytest.mark.parametrize("assigned_only,anonymous,expected", [
     (True, False, ["Test/Unrelated"]),
     (True, True, None),
@@ -257,25 +255,10 @@ def test_explicit_all_assignment_identity_remains_unchanged():
 def test_unassignment_preserves_default_guard_and_rolls_back_after_last_hidden_ae(
         monkeypatch, assigned_only, initial_members, stored_assignment,
         expect_state_change):
-    class AssignmentJournal:
-        short_name = "TJ"
-        contact_info = "editors@example.org"
-        venue_id = "Test"
-        settings = {}
-        assigned_AE_venue_id = "Test/Assigned_AE"
-        assigning_AE_venue_id = "Test/Assigning_AE"
-
-        def get_action_editors_id(self, number=None):
-            return "Test/Action_Editors" if number is None else f"Test/Paper{number}/Action_Editors"
-
-        def get_meta_invitation_id(self):
-            return "Test/-/Edit"
-
-        def get_message_sender(self):
-            return None
-
-    AssignmentJournal.settings = ({"action_editor_paper_visibility": "assigned_only"}
-                                  if assigned_only else {"action_editor_paper_visibility": "all"})
+    journal = make_journal({'action_editor_paper_visibility':
+                            'assigned_only' if assigned_only else 'all'})
+    journal.assigned_AE_venue_id = 'Test/Assigned_AE'
+    journal.assigning_AE_venue_id = 'Test/Assigning_AE'
 
     note_content = {
         "title": {"value": "Title"},
@@ -309,7 +292,7 @@ def test_unassignment_preserves_default_guard_and_rolls_back_after_last_hidden_a
     )
     posted = []
     monkeypatch.setattr(ae_assignment_process, "openreview", openreview, raising=False)
-    monkeypatch.setattr(openreview.journal, "Journal", AssignmentJournal)
+    monkeypatch.setattr(openreview.journal, "Journal", lambda: journal)
 
     ae_assignment_process.process_update(
         client,
@@ -327,28 +310,13 @@ def test_unassignment_preserves_default_guard_and_rolls_back_after_last_hidden_a
 
 
 def test_assigned_only_remove_then_reassign_keeps_group_as_identity_source(monkeypatch):
-    class AssignmentJournal:
-        short_name = "TJ"
-        contact_info = "editors@example.org"
-        venue_id = "Test"
-        settings = {"action_editor_paper_visibility": "assigned_only"}
-        assigned_AE_venue_id = "Test/Assigned_AE"
-        assigning_AE_venue_id = "Test/Assigning_AE"
-        invitation_builder = SimpleNamespace(
-            set_note_review_approval_invitation=lambda *_args: None,
-            expire_invitation=lambda *_args: None,
-        )
-        def get_action_editors_id(self, number=None):
-            return "Test/Action_Editors" if number is None else f"Test/Paper{number}/Action_Editors"
-        def get_editors_in_chief_id(self): return "Test/Editors_In_Chief"
-        def get_meta_invitation_id(self): return "Test/-/Edit"
-        def get_message_sender(self): return None
-        def get_due_date(self, **_kwargs): return datetime.datetime(2026, 1, 1)
-        def get_under_review_approval_period_length(self): return 1
-        def get_review_approval_id(self, number=None): return f"Test/Paper{number}/-/Review_Approval"
-        def get_ae_recommendation_id(self, number=None): return f"Test/Paper{number}/-/Recommendation"
-        def get_number_of_reviewers(self): return 3
-        def is_action_editor_anonymous(self): return False
+    journal = make_journal({'action_editor_paper_visibility': 'assigned_only'})
+    journal.assigned_AE_venue_id = 'Test/Assigned_AE'
+    journal.assigning_AE_venue_id = 'Test/Assigning_AE'
+    journal.invitation_builder = SimpleNamespace(
+        set_note_review_approval_invitation=lambda *_args: None,
+        expire_invitation=lambda *_args: None,
+    )
 
     note = SimpleNamespace(id="paper", number=7, content={
         "title": {"value": "Title"}, "venueid": {"value": "Test/Assigned_AE"}})
@@ -378,7 +346,7 @@ def test_assigned_only_remove_then_reassign_keeps_group_as_identity_source(monke
         post_note_edit=post_edit, get_groups=lambda **_kwargs: [],
     )
     monkeypatch.setattr(ae_assignment_process, "openreview", openreview, raising=False)
-    monkeypatch.setattr(openreview.journal, "Journal", AssignmentJournal)
+    monkeypatch.setattr(openreview.journal, "Journal", lambda: journal)
 
     current_edge = SimpleNamespace(id="remove", head="paper", tail="~Assigned1", ddate=1)
     ae_assignment_process.process_update(client, current_edge, None, None)
@@ -569,8 +537,6 @@ def test_identity_check_does_not_swallow_validation_errors():
         raise openreview.OpenReviewException({'name': 'ValidationError', 'status': 400})
     with pytest.raises(AssertionError):
         assert_group_identity_hidden(SimpleNamespace(get_group=invalid), 'group')
-
-
 
 
 @pytest.mark.parametrize('failure_stage', ['metadata', 'cache'])
