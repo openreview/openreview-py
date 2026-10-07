@@ -206,7 +206,7 @@ class InvitationBuilder(object):
         if self.journal.request_form_id:
             return ('openreview.journal.JournalRequest.get_journal(client, ' +
                     repr(self.journal.request_form_id) + ')')
-        settings = {} if settings is None else settings
+        settings = dict(self.journal.settings) if settings is None else settings
         return ('openreview.journal.Journal(client, ' +
             ', '.join(repr(value) for value in (self.journal.venue_id,
                 self.journal.secret_key, self.journal.contact_info,
@@ -218,9 +218,6 @@ class InvitationBuilder(object):
     def get_process_content(self, file_path, settings=None):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-        if settings is None:
-            settings = ({'tracks': self.journal.settings['tracks']}
-                        if self.journal.has_managed_tracks() else {})
         return process.replace('openreview.journal.Journal()',
                                self.journal_source(settings))
 
