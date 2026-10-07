@@ -12,15 +12,39 @@ from openreview.journal import JournalRequest
 PERMISSION = 'The authors may consider submitting a major revision at a later time.'
 
 
-def denied(operation, role):
+def denied(operation, role, *, write=False):
     with pytest.raises(openreview.OpenReviewException) as caught:
         operation()
     detail = caught.value.args[0]
+    names = {'ForbiddenError', 'NotFoundError'}
+    if write:
+        names.update(('NotInviteeError', 'NotSignatoryError'))
     def permission(error):
         return isinstance(error, dict) and (error.get('status') in (403, 404) or
-            error.get('name') in ('ForbiddenError', 'NotFoundError') or
+            error.get('name') in names or
             any(permission(child) for child in error.get('errors', [])))
     assert permission(detail), (role, detail)
+
+
+
+@pytest.mark.parametrize('detail,write,accepted', [
+    ({'status': 403}, False, True),
+    ({'status': 404}, False, True),
+    ({'status': 400, 'name': 'NotInviteeError'}, True, True),
+    ({'status': 400, 'name': 'NotSignatoryError'}, True, True),
+    ({'status': 400, 'errors': [{'status': 400, 'name': 'NotSignatoryError'}]}, True, True),
+    ({'status': 400, 'name': 'NotSignatoryError'}, False, False),
+    ({'status': 400, 'name': 'ValidationError'}, True, False),
+    ({'status': 500, 'name': 'InternalError'}, True, False),
+])
+def test_permission_denial_requires_explicit_permission_error(detail, write, accepted):
+    def operation():
+        raise openreview.OpenReviewException(detail)
+    if accepted:
+        denied(operation, 'test role', write=write)
+    else:
+        with pytest.raises(AssertionError):
+            denied(operation, 'test role', write=write)
 
 
 def invalid(operation, *words):
@@ -243,7 +267,9 @@ class TestJournalResubmissionAPI:
             self.assign(journal, note, actors, helpers, openreview_client, 'otherae')
         denied(lambda: actors['author'].client.post_edge(openreview.api.Edge(
             invitation=journal.get_ae_assignment_id(), signatures=[journal.get_editors_in_chief_id()],
-            head=note.id, tail=actors['thirdae'].id, weight=1)), 'author assignment')
+            head=note.id, tail=actors['thirdae'].id, weight=1)), 'author assignment', write=True)
+        assert openreview_client.get_edges(invitation=journal.get_ae_assignment_id(),
+            head=note.id, tail=actors['thirdae'].id) == []
         assigned_role = 'ae' if mode == 'immediate_previous_ae' else 'otherae'
         assert current_group in openreview_client.get_group(
             journal.get_action_editors_id(previous.note.number)).members
@@ -260,7 +286,12 @@ class TestJournalResubmissionAPI:
         assert revised.content[field]['value'] == url
         invalid(lambda: self.revise(journal, revised, actors, helpers, openreview_client,
             previous='https://openreview.net/forum?id=' + previous.note.id), 'immutable')
-        denied(lambda: self.revise(journal, revised, actors, helpers, openreview_client, role='outsider'), 'outsider')
+        before = len(openreview_client.get_note_edits(note_id=note.id,
+            invitation=journal.get_revision_id(note.number)))
+        denied(lambda: self.revise(journal, revised, actors, helpers, openreview_client,
+            role='outsider'), 'outsider', write=True)
+        assert len(openreview_client.get_note_edits(note_id=note.id,
+            invitation=journal.get_revision_id(note.number))) == before
         # Admission is once-only; a later predecessor decision change must not
         # retroactively prevent unrelated successor author or EIC revisions.
         openreview_client.post_note_edit(invitation=journal.get_meta_invitation_id(),
