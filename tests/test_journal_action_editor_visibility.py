@@ -590,32 +590,48 @@ def test_removal_retry_finishes_cleanup_without_duplicate_mail(monkeypatch, fail
     assert events[-1] == 'cache'
 
 
-@pytest.mark.parametrize('visibility', [None, 'assigned_only', 'all'])
-def test_removal_retry_preserves_replacement_editor(monkeypatch, visibility):
+@pytest.mark.parametrize('visibility,stored_assignment', [
+    pytest.param(None, '~Replacement1', id='None'),
+    pytest.param('assigned_only', '~Replacement1', id='assigned_only'),
+    pytest.param('all', '~Replacement1', id='all'),
+    pytest.param(None, '~Assigned1', id='retry-stale-default'),
+    pytest.param('assigned_only', '~Assigned1', id='retry-stale-assigned_only'),
+])
+def test_removal_retry_preserves_replacement_editor(monkeypatch, visibility, stored_assignment):
     journal = make_journal({} if visibility is None else {
         'action_editor_paper_visibility': visibility})
     paper = SimpleNamespace(id='paper', number=7, content={
         'title': {'value': 'Title'},
         'venueid': {'value': journal.assigned_AE_venue_id},
-        'assigned_action_editor': {'value': '~Replacement1'}})
+        'assigned_action_editor': {'value': stored_assignment}})
     group = SimpleNamespace(id=journal.get_action_editors_id(7), members=['~Replacement1'])
     events = []
+
+    def post_edit(**kwargs):
+        for key, value in kwargs['note'].content.items():
+            if value.get('delete'): paper.content.pop(key, None)
+            else: paper.content[key] = value
+        events.append('metadata')
+
     client = SimpleNamespace(
         get_edge=lambda *_args: SimpleNamespace(ddate=1),
         get_note=lambda _id: paper,
         get_group=lambda _id: group,
         post_message=lambda *_args, **_kwargs: events.append('mail'),
         remove_members_from_group=lambda *_args: events.append('remove'),
-        post_note_edit=lambda **_kwargs: events.append('metadata'),
+        post_note_edit=post_edit,
         flush_members_cache=lambda member: events.append(('cache', member)),
     )
     monkeypatch.setattr(ae_assignment_process, 'openreview', openreview, raising=False)
     monkeypatch.setattr(openreview.journal, 'Journal', lambda: journal)
     edge = SimpleNamespace(id='edge', head=paper.id, tail='~Assigned1', ddate=1)
     ae_assignment_process.process_update(client, edge, None, None)
-    assert events == [('cache', '~Assigned1')]
+    assert events == (['metadata'] if stored_assignment == '~Assigned1' else []) + [('cache', '~Assigned1')]
     assert group.members == ['~Replacement1']
-    assert paper.content['assigned_action_editor']['value'] == '~Replacement1'
+    if stored_assignment == '~Assigned1':
+        assert 'assigned_action_editor' not in paper.content
+    else:
+        assert paper.content['assigned_action_editor']['value'] == '~Replacement1'
     assert paper.content['venueid']['value'] == journal.assigned_AE_venue_id
 
 

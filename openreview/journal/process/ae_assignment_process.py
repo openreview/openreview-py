@@ -10,6 +10,7 @@ def process_update(client, edge, invitation, existing_edge):
 
     note=client.get_note(edge.head)
     group=client.get_group(journal.get_action_editors_id(number=note.number))
+    assigned_only = journal.settings.get('action_editor_paper_visibility', 'assigned_only') == 'assigned_only'
     if edge.ddate:
         if edge.tail in group.members:
             print(f'Remove member {edge.tail} from {group.id}')
@@ -34,9 +35,8 @@ def process_update(client, edge, invitation, existing_edge):
             content['assigned_action_editor'] = { 'delete': True }
 
         if (journal.assigned_AE_venue_id == note.content['venueid']['value'] and
-                ('assigned_action_editor' in content or
-                 journal.settings.get('action_editor_paper_visibility', 'assigned_only') == 'assigned_only'
-                 and not client.get_group(group.id).members)):
+                ((assigned_only and not client.get_group(group.id).members) or
+                 (not assigned_only and 'assigned_action_editor' in content))):
             content['venueid'] = { 'value': journal.assigning_AE_venue_id }
             content['venue'] = { 'value': f'{journal.short_name} Assigning AE' }
 
@@ -77,7 +77,6 @@ def process_update(client, edge, invitation, existing_edge):
         journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))
 
         ## add assigned_action_editor
-        assigned_only = journal.settings.get('action_editor_paper_visibility', 'assigned_only') == 'assigned_only'
         content = {} if assigned_only else {
             'assigned_action_editor': { 'value': edge.tail }}
         if assigned_only and 'assigned_action_editor' in note.content:
