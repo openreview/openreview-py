@@ -22,8 +22,13 @@ def denied(operation, role, *, edge_not_found=False):
     if edge_not_found and detail == 'Edge not found':
         return
     assert isinstance(detail, dict), (role, detail)
-    assert detail.get('status') in (403, 404) or detail.get('name') in (
-        'ForbiddenError', 'NotFoundError'), (role, detail)
+    def permission_error(error):
+        return (error.get('status') in (403, 404) or error.get('name') in
+                ('ForbiddenError', 'NotFoundError') or
+                any(permission_error(child) for child in error.get('errors', [])))
+    # Edge validation can wrap an explicit permission error together with a
+    # signature-schema error. A generic 400/MultiError alone is not denial.
+    assert permission_error(detail), (role, detail)
 
 
 def invalid(operation, *expected):
@@ -137,8 +142,8 @@ class TestJournalTracksAPI:
             assert journal.get_tracks() == [REGULAR]
             note = self.submit(journal, actors, helpers, openreview_client, 'Regular')
             assert note.content['track_id']['value'] == 'Regular'
-            default = self.submit(journal, actors, helpers, openreview_client, None)
-            assert default.content['track_id']['value'] == 'Regular'
+            assert invitation.edit['note']['content']['track_id']['value']['param']['default'] == 'Regular'
+            invalid(lambda: self.submit(journal, actors, helpers, openreview_client, None), 'track_id')
         else:
             note = self.submit(journal, actors, helpers, openreview_client, None)
             assert 'track_id' not in note.content
@@ -160,12 +165,16 @@ class TestJournalTracksAPI:
             invalid(lambda: self.submit(journal, actors, helpers, openreview_client, track), 'track', 'enum')
         invalid(lambda: self.manage(journal, [REGULAR, AWARD], actors, openreview_client), 'Referenced tracks')
         revision = journal.get_revision_id(note.number)
+        content = {key: {'value': note.content[key]['value']} for key in (
+            'title', 'abstract', 'pdf',
+            'competing_interests', 'human_subjects_reporting')}
+        content['title'] = {'value': 'Revised'}
         invalid(lambda: actors['author'].client.post_note_edit(invitation=revision,
             signatures=[journal.get_authors_id(note.number)], note=openreview.api.Note(
-                id=note.id, content={'title': {'value': 'Revised'}, 'track_id': {'value': 'Award'}})), 'track_id')
+                id=note.id, content={**content, 'track_id': {'value': 'Award'}})), 'track_id')
         edit = actors['author'].client.post_note_edit(invitation=revision,
             signatures=[journal.get_authors_id(note.number)], note=openreview.api.Note(
-                id=note.id, content={'title': {'value': 'Revised'}}))
+                id=note.id, content=content))
         helpers.await_queue_edit(openreview_client, edit['id'])
         assert openreview_client.get_note(note.id).content['track_id']['value'] == 'OSS'
         assert openreview_client.get_note(note.id).content['title']['value'] == 'Revised'

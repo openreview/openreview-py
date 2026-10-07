@@ -15,7 +15,8 @@ Configuration and defaults
 * Additional entries contain exactly ``id``, ``name``, and Boolean ``open``.
   Identifiers are unique and stable; names are nonempty display labels.
 * The public Tracks group stores the ordered registry. Submission choices list
-  open tracks in registry order; the default is Regular.
+  open tracks in registry order; the form default is Regular. Raw API callers
+  must provide ``track_id`` explicitly.
 
 Track management and submissions
 --------------------------------
