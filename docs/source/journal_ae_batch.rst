@@ -14,6 +14,9 @@ Configuration and actors
 * Only Editors-in-Chief can submit the preparation form. The callback uses the
   current Journal Request settings, or complete explicit settings for a Journal
   constructed directly, and checks the current venue activation flag.
+* Labels contain 1-80 letters, digits, underscores, or hyphens and start with a
+  letter or digit. The server rejects invalid labels and missing/incorrect desk
+  triage confirmation before saving a request.
 * ``skip_ac_recommendation=True`` admits unassigned papers without author AE
   recommendations in this enabled workflow. Otherwise at least three native
   recommendation edges are required. Existing matching quotas remain in force.

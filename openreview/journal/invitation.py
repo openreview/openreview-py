@@ -182,10 +182,17 @@ class InvitationBuilder(object):
             return
         eic = self.journal.get_editors_in_chief_id()
         preflight = """def process(client, edit, invitation):
+    import re
     eic = EIC_ID
     actor = getattr(edit, 'tauthor', None)
     if edit.signatures != [eic] or (actor and not client.get_groups(id=eic, member=actor)):
         raise openreview.OpenReviewException('Only Editors-in-Chief may prepare a batch.')
+    content = edit.note.content or {}
+    label = content.get('batch_label', {}).get('value')
+    if not isinstance(label, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,79}', label):
+        raise openreview.OpenReviewException('Invalid batch_label: use 1-80 letters, digits, underscores or hyphens, starting with a letter or digit.')
+    if content.get('confirmation', {}).get('value') != 'Desk triage is complete; prepare currently unassigned papers':
+        raise openreview.OpenReviewException('Invalid confirmation: desk triage must be confirmed before preparation.')
 """ + '\nEIC_ID = ' + repr(eic)
         webfield_path = os.path.join(os.path.dirname(__file__), 'webfield',
                                      'prepareAEBatchWebfield.js')

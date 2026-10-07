@@ -138,6 +138,31 @@ def test_direct_batch_callback_preserves_complete_journal_settings():
         assert repr(key) + ': ' + repr(journal.settings[key]) in source
 
 
+@pytest.mark.parametrize('label,confirmation,field', [
+    ('bad label', 'Desk triage is complete; prepare currently unassigned papers', 'batch_label'),
+    ('', 'Desk triage is complete; prepare currently unassigned papers', 'batch_label'),
+    ('-first', 'Desk triage is complete; prepare currently unassigned papers', 'batch_label'),
+    ('a' * 81, 'Desk triage is complete; prepare currently unassigned papers', 'batch_label'),
+    ('valid_label-1', 'not confirmed', 'confirmation'),
+    ('valid_label-1', 'Desk triage is complete; prepare currently unassigned papers', None),
+])
+def test_batch_preflight_enforces_label_and_confirmation(label, confirmation, field):
+    journal = Journal(SimpleNamespace(), 'Test', 'secret', 'editors@example.org',
+        'Test Journal', 'TJ', settings={'tracks': [], 'ae_batch_preparation_enabled': True})
+    saved = []
+    journal.invitation_builder.save_invitation = saved.append
+    journal.invitation_builder.set_ae_batch_invitation()
+    preflight = execute_callback(saved[0].preprocess)
+    edit = SimpleNamespace(signatures=[journal.get_editors_in_chief_id()],
+        note=SimpleNamespace(content={'batch_label': {'value': label},
+            'confirmation': {'value': confirmation}}))
+    if field:
+        with pytest.raises(openreview.OpenReviewException, match=field):
+            preflight(SimpleNamespace(), edit, None)
+    else:
+        assert preflight(SimpleNamespace(), edit, None) is None
+
+
 @pytest.mark.parametrize("request_form_id", [None, "Test/Request"])
 def test_batch_callback_uses_matching_nondefault_quotas(monkeypatch, request_form_id):
     settings = {"tracks": [], "ae_batch_preparation_enabled": True,
@@ -790,7 +815,7 @@ class TestJournalAEBatchAPI:
             invitation=journal.get_ae_assignment_id(), signatures=[journal.get_editors_in_chief_id()],
             head=assigned.id, tail=actors['ae'].id, weight=1))
         helpers.await_queue_edit(openreview_client, edge.id)
-        before_assignments = {e.id for e in openreview_client.get_edges(invitation=journal.get_ae_assignment_id())}
+        before_assignments = {e.id for e in openreview_client.get_all_edges(invitation=journal.get_ae_assignment_id())}
         request = self.prepare(journal, actors, helpers, openreview_client)
         selected = {p.id for p in papers}
         assert set(request.content['paper_ids']['value']) == selected
@@ -806,10 +831,10 @@ class TestJournalAEBatchAPI:
             journal.get_author_submission_id() + '&content.venueid=' + journal.assigning_AE_venue_id,
             expected_scores)
         assert configuration.content['custom_max_papers_invitation']['value'] == journal.get_ae_local_custom_max_papers_id()
-        quotas = {e.tail: e.weight for e in openreview_client.get_edges(
+        quotas = {e.tail: e.weight for e in openreview_client.get_all_edges(
             invitation=journal.get_ae_local_custom_max_papers_id())}
         assert quotas == {actors['ae'].id: 6, actors['otherae'].id: 7}
-        matrix = openreview_client.get_edges(invitation=journal.get_track_score_id())
+        matrix = openreview_client.get_all_edges(invitation=journal.get_track_score_id())
         assert {(e.head, e.tail): e.weight for e in matrix} == {
             (p.id, actors[role].id): int((p.id == regular.id) == (role == 'ae'))
             for p in papers for role in ('ae', 'otherae')}
@@ -821,8 +846,8 @@ class TestJournalAEBatchAPI:
             assert not openreview_client.get_group(journal.get_action_editors_id(p.number)).members
             for role in ('ae', 'otherae'):
                 denied(lambda: actors[role].client.get_note(p.id), 'unassigned ' + role)
-        assert not openreview_client.get_edges(invitation=journal.get_ae_assignment_id(proposed=True))
-        assert {e.id for e in openreview_client.get_edges(invitation=journal.get_ae_assignment_id())} == before_assignments
+        assert not openreview_client.get_all_edges(invitation=journal.get_ae_assignment_id(proposed=True))
+        assert {e.id for e in openreview_client.get_all_edges(invitation=journal.get_ae_assignment_id())} == before_assignments
         assert not openreview_client.get_edges(invitation=journal.get_track_score_id(), head=assigned.id)
 
     def test_native_recommendation_admission(self, create_batch_journal, actors,
@@ -847,7 +872,7 @@ class TestJournalAEBatchAPI:
         journal = create_batch_journal()
         self.prepare(journal, actors, helpers, openreview_client, error='no active unassigned papers')
         assert not openreview_client.get_notes(invitation=journal.get_ae_assignment_configuration_id())
-        assert not openreview_client.get_edges(invitation=journal.get_track_score_id())
+        assert not openreview_client.get_all_edges(invitation=journal.get_track_score_id())
 
     @pytest.mark.parametrize('existing', ['reused-label', 'unresolved'])
     def test_existing_configuration_rejected(self, existing, create_batch_journal,
@@ -861,12 +886,12 @@ class TestJournalAEBatchAPI:
             content['status'] = {'value': 'Cancelled'}
             journal.client.post_note_edit(invitation=journal.get_ae_assignment_configuration_id(),
                 signatures=[journal.venue_id], note=openreview.api.Note(id=config.id, content=content))
-        matrix = {e.id for e in openreview_client.get_edges(invitation=journal.get_track_score_id())}
+        matrix = {e.id for e in openreview_client.get_all_edges(invitation=journal.get_track_score_id())}
         self.prepare(journal, actors, helpers, openreview_client,
             label='first' if existing == 'reused-label' else 'second',
             error='already used' if existing == 'reused-label' else 'Resolve the existing')
         assert len(openreview_client.get_notes(invitation=journal.get_ae_assignment_configuration_id())) == 1
-        assert {e.id for e in openreview_client.get_edges(invitation=journal.get_track_score_id())} == matrix
+        assert {e.id for e in openreview_client.get_all_edges(invitation=journal.get_track_score_id())} == matrix
         assert not openreview_client.get_group(journal.get_action_editors_id(paper.number)).members
 
     @pytest.mark.parametrize('state', ['group-edge-mismatch', 'ineligible-assigning'])
@@ -883,7 +908,7 @@ class TestJournalAEBatchAPI:
                     content={'venueid': {'value': journal.assigning_AE_venue_id}}))
             expected = 'query includes ineligible papers'
         self.prepare(journal, actors, helpers, openreview_client, error=expected)
-        assert not openreview_client.get_edges(invitation=journal.get_track_score_id())
+        assert not openreview_client.get_all_edges(invitation=journal.get_track_score_id())
         assert not openreview_client.get_notes(invitation=journal.get_ae_assignment_configuration_id())
 
     def test_preparation_permissions_and_validation(self, create_batch_journal,
