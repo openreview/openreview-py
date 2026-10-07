@@ -181,11 +181,6 @@ class InvitationBuilder(object):
                 self.expire_invitation(self.journal.get_prepare_ae_batch_id())
             return
         eic = self.journal.get_editors_in_chief_id()
-        batch_settings = {key: self.journal.settings[key] for key in (
-            'tracks', 'ae_batch_preparation_enabled', 'skip_ac_recommendation',
-            'action_editors_max_papers', 'ae_max_active_submissions',
-            'resubmission_continuity_enabled', 'resubmission_continuity')
-            if key in self.journal.settings}
         preflight = """def process(client, edit, invitation):
     eic = EIC_ID
     actor = getattr(edit, 'tauthor', None)
@@ -214,7 +209,7 @@ class InvitationBuilder(object):
                             'Desk triage is complete; prepare currently unassigned papers']}}},
                         'status': {'value': 'Pending'}}}},
             preprocess=preflight, process=self.get_process_content(
-                'process/ae_batch_process.py', batch_settings),
+                'process/ae_batch_process.py'),
             web=web))
 
     def get_super_process_content(self, field_name):
