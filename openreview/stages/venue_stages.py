@@ -20,14 +20,16 @@ class IdentityReaders(Enum):
         readers = [conference.id]
         if self.PROGRAM_CHAIRS in identity_readers:
             readers.append(conference.get_program_chairs_id())
-        if self.SENIOR_AREA_CHAIRS in identity_readers:
-            readers.append(conference.get_senior_area_chairs_id())
-        if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
-            readers.append(conference.get_senior_area_chairs_id(number))
-        if self.AREA_CHAIRS in identity_readers:
-            readers.append(conference.get_area_chairs_id(name=area_chairs_name))
-        if self.AREA_CHAIRS_ASSIGNED in identity_readers:
-            readers.append(conference.get_area_chairs_id(number, name=area_chairs_name))
+        if conference.use_senior_area_chairs:
+            if self.SENIOR_AREA_CHAIRS in identity_readers:
+                readers.append(conference.get_senior_area_chairs_id())
+            if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
+                readers.append(conference.get_senior_area_chairs_id(number))
+        if conference.use_area_chairs:
+            if self.AREA_CHAIRS in identity_readers:
+                readers.append(conference.get_area_chairs_id(name=area_chairs_name))
+            if self.AREA_CHAIRS_ASSIGNED in identity_readers:
+                readers.append(conference.get_area_chairs_id(number, name=area_chairs_name))
         if self.REVIEWERS in identity_readers:
             readers.append(conference.get_reviewers_id(name=reviewers_name))
         if self.REVIEWERS_ASSIGNED in identity_readers:
@@ -38,7 +40,7 @@ class AuthorReorder(Enum):
         ALLOW_REORDER = 0
         ALLOW_EDIT = 1
         DISALLOW_EDIT = 2
-
+        ALLOW_INSTITUTION_EDIT = 3
 
 class SubmissionType(Enum):
     ACTIVE = 0
@@ -241,7 +243,7 @@ class SubmissionStage(object):
             content[key] = value
         return content
     
-    def get_content(self, api_version='1', conference=None, venue_id=None):
+    def get_content(self, api_version='1', conference=None, venue_id=None, include_field_readers=False):
 
         if api_version == '1':
             content = deepcopy(default_content.submission)
@@ -276,10 +278,9 @@ class SubmissionStage(object):
         elif api_version == '2':
             content = deepcopy(default_content.submission_v2)
 
+            # all new UI venues uses the unified authors format
             if self.unified_authors:
-                del content['authors']
-                del content['authorids']
-                content['authors'] = deepcopy(default_content.submission_v2_unified_authors)
+                content = deepcopy(default_content.submission_v2_unified_authors)
 
             if self.subject_areas:
                 content['subject_areas'] = {
@@ -342,33 +343,20 @@ class SubmissionStage(object):
                         if field not in content:
                             content[field] = { 'delete': True }
 
-                if getattr(conference, 'is_template_related_workflow', None) and conference.is_template_related_workflow():
-                    content['email_sharing'] = {
-                        'order': 50,
-                        'description': 'Please confirm you are aware that all author emails will be shared with Program Chairs.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'enum': [
-                                    'We authorize the sharing of all author emails with Program Chairs.'
-                                ],
-                                'input': 'radio'
-                            }
-                        }
-                    }
-                    content['data_release'] = {
-                        'order': 51,
-                        'description': 'Please confirm you are aware that accepted submissions, along with their author names, will be released to the public after the conference is over.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'enum': [
-                                    'We authorize the release of our submission and author names to the public in the event of acceptance.'
-                                ],
-                                'input': 'radio'
-                            }
-                        }
-                    }
+                readers_mapping = {
+                    '{venue_id}': conference.get_id(),
+                    '{paper_authors_id}': conference.get_authors_id('${{4/id}/number}')
+                }
+
+                for field in content.keys():
+                    field_readers = content[field].get('readers')
+                    if not isinstance(field_readers, list):
+                        continue
+                    if include_field_readers:
+                        content[field]['readers'] = [readers_mapping.get(reader, reader) for reader in field_readers]
+                    elif any(reader in readers_mapping for reader in field_readers):
+                        # default content readers belong only to the submission invitation
+                        del content[field]['readers']
 
                 if venue_id:
                     content['venue'] = {
@@ -468,18 +456,21 @@ class BidStage(object):
         readers.append(self.committee_id)
         return readers
 
-    def get_readers(self, conference):
+    def get_readers(self, conference, number=None):
         values_copied = [conference.get_id()]
         if self.committee_id == conference.get_reviewers_id():
             if conference.use_senior_area_chairs:
-                values_copied.append(conference.get_senior_area_chairs_id())
+                values_copied.append(conference.get_senior_area_chairs_id(number))
             if conference.use_area_chairs:
-                values_copied.append(conference.get_area_chairs_id())
+                values_copied.append(conference.get_area_chairs_id(number))
         if self.committee_id == conference.get_area_chairs_id():
             if conference.use_senior_area_chairs:
-                values_copied.append(conference.get_senior_area_chairs_id())
+                values_copied.append(conference.get_senior_area_chairs_id(number))
         values_copied.append('{signatures}')
         return values_copied
+
+    def get_nonreaders(self, conference, number=None):
+        return [conference.get_authors_id(number)]
 
     def get_bid_options(self):
         options = ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
@@ -561,7 +552,8 @@ class SubmissionRevisionStage():
                  allow_author_reorder=False, 
                  allow_license_edition=False, 
                  preprocess_path=None,
-                 revision_history_readers=None):
+                 revision_history_readers=None,
+                 include_field_readers=False):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -575,8 +567,9 @@ class SubmissionRevisionStage():
         self.preprocess_path = preprocess_path
         self.source = source
         self.revision_history_readers = revision_history_readers
+        self.include_field_readers = include_field_readers
 
-    
+
     def get_edit_readers(self, venue, number):
 
         if self.revision_history_readers:
@@ -584,10 +577,10 @@ class SubmissionRevisionStage():
 
         return [venue.id, venue.get_authors_id(number=number)]
 
-    
+
     def get_content(self, api_version='2', conference=None):
-        
-        content = deepcopy(conference.submission_stage.get_content(api_version, conference))
+
+        content = deepcopy(conference.submission_stage.get_content(api_version, conference, include_field_readers=self.include_field_readers))
 
         for field in self.remove_fields:
             if field in content:
@@ -624,6 +617,43 @@ class SubmissionRevisionStage():
                 del content['authors']
             if 'authorids' in content:
                 del content['authorids']
+        elif self.allow_author_reorder == AuthorReorder.ALLOW_INSTITUTION_EDIT:
+            if not conference.submission_stage.unified_authors:
+                raise ValueError('ALLOW_INSTITUTION_EDIT requires unified authors')
+            content['authors'] = {
+                'value': {
+                    'param': {
+                        'type': 'author{}',
+                        'minItems': '${{3/id}/content/authors/value/length}',
+                        'maxItems': '${{3/id}/content/authors/value/length}',
+                        'properties': {
+                            'fullname': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['${...{5/id}/content/authors/value/*/fullname}']
+                                }
+                            },
+                            'username': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['${...{5/id}/content/authors/value/*/username}']
+                                }
+                            },
+                            'institutions': {
+                                'param': {
+                                    'type': 'object{}',
+                                    'properties': {
+                                        'name': { 'param': { 'type': 'string' } },
+                                        'domain': { 'param': { 'type': 'string' } },
+                                        'country': { 'param': { 'type': 'string' } }
+                                    },
+                                    'optional': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
@@ -643,6 +673,11 @@ class SubmissionRevisionStage():
                     if field in ['authors', 'authorids'] and only_accepted and conference.use_publication_chairs:
                         content[field]['readers'].append(conference.get_publication_chairs_id())
                 if field not in hidden_field_names and not content[field].get('readers', []) and existing_invitation_content.get(field, {}).get('readers', []):
+                    ## The field is not hidden anymore: drop the stale readers from this invitation
+                    ## so a later revision does not stamp them again. This unescaped delete is
+                    ## consumed by the invitation edit, it does not touch the existing notes: the
+                    ## submissions are released by the Post_Submission invitation, and field readers
+                    ## are only removed from existing notes through the escaped { 'const': { 'delete': True } }.
                     content[field]['readers'] = { 'delete': True }                        
 
         return content

@@ -454,7 +454,7 @@ class TestICMLConference():
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs').members) == 0
         group = openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs/Invited')
         assert len(group.members) == 2
-        assert group.readers == ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Senior_Area_Chairs/Invited']
+        assert group.readers == ['ICML.cc/2023/Conference']
 
         messages = openreview_client.get_messages(subject = '[ICML 2023] Invitation to serve as Senior Area Chair')
         assert len(messages) == 2
@@ -1086,7 +1086,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         note = pc_openreview_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['ICML.cc/2023/Conference/-/Submission', 'ICML.cc/2023/Conference/-/Post_Submission', 'ICML.cc/2023/Conference/-/Desk_Rejected_Submission']
+        assert note.invitations == ['ICML.cc/2023/Conference/-/Submission', 'ICML.cc/2023/Conference/-/Post_Submission', 'ICML.cc/2023/Conference/-/Desk_Rejected_Submission', 'ICML.cc/2023/Conference/-/Edit']
 
         assert desk_reject_note['readers'] == [
             "ICML.cc/2023/Conference/Program_Chairs",
@@ -3308,6 +3308,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission6/Official_Review1/-/Rating')
 
+        # the submission is not public, so it has no bibtex
+        submission = openreview_client.get_note(review_edit['note']['forum'])
+        assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Submission'
+        assert '_bibtex' not in submission.content
+
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         withdrawal_note = test_client.post_note_edit(invitation=f'ICML.cc/2023/Conference/Submission6/-/Withdrawal',
             signatures=[f'ICML.cc/2023/Conference/Submission6/Authors'],
@@ -3339,6 +3344,23 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
 
+        withdrawn_submission = openreview_client.get_note(withdrawal_note['note']['forum'])
+        assert withdrawn_submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Withdrawn_Submission'
+
+        # author identities are not revealed, so the bibtex is anonymous
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@misc{
+anonymous'''+str(year)+'''paper,
+title={Paper title 6},
+author={Anonymous},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + withdrawn_submission.forum + '''}
+}'''
+
+        assert '_bibtex' in withdrawn_submission.content and withdrawn_submission.content['_bibtex']['value'] == valid_bibtex
+
         withdrawal_reversion_note = openreview_client.post_note_edit(invitation='ICML.cc/2023/Conference/Submission6/-/Withdrawal_Reversion',
                                     signatures=['ICML.cc/2023/Conference/Program_Chairs'],
                                     note=openreview.api.Note(
@@ -3348,6 +3370,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])                
+
+        # the submission is not public, so the bibtex is deleted after the reversion
+        submission = openreview_client.get_note(withdrawal_note['note']['forum'])
+        assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Submission'
+        assert '_bibtex' not in submission.content
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 5
 
@@ -3661,6 +3688,35 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
+
+        # submissions are private, so ethics reviews cannot be released to the public
+        assert 'Everyone (submissions are public)' not in request_form.content['submission_readers']
+        assert 'Make accepted submissions public and hide rejected submissions' not in request_form.content['submission_readers']
+
+        public_stage_note = openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'Yes, ethics reviews should be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers',
+                'compute_conflicts': 'No'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Ethics reviews cannot be released to the public since all papers are private'):
+            pc_client.post_note(public_stage_note)
+
+        # the stage note was rejected by the preprocess, so no ethics review invitation was built
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Ethics_Review') is None
+
         stage_note = pc_client.post_note(openreview.Note(
             content={
                 'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
