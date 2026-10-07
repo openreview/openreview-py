@@ -54,6 +54,17 @@ class TestJournalResubmissionAPI:
             client = helpers.create_user(email, 'Continuity', role.title() + letters)
             profile = openreview.tools.get_profile(openreview_client, email)
             actors[role] = SimpleNamespace(client=client, email=email, id=profile.id)
+        # Native Journal submissions require tilde IDs, including profile aliases.
+        author = actors['author']
+        profile = author.client.get_profile(author.id)
+        profile.content['names'].append({
+            'first': 'Continuity', 'middle': 'Alternate', 'last': 'Author' + letters})
+        author.client.post_profile(profile)
+        profile = openreview_client.get_profile(author.id)
+        author.alias = profile.content['names'][-1]['username']
+        assert author.alias != author.id
+        assert openreview_client.get_profile(author.alias).id == author.id
+        assert author.email in openreview_client.get_group(author.alias).members
         return actors
 
     @pytest.fixture
@@ -216,8 +227,8 @@ class TestJournalResubmissionAPI:
         self.restrict_predecessor(journal, previous, openreview_client)
         denied(lambda: actors['otherae'].client.get_note(previous.note.id), 'unassigned successor AE')
         url = 'https://dev.openreview.net/forum?id=' + previous.note.id + '&referrer=%5BHomepage%5D'
-        # Email author alias and copied DEV URL exercise actual API admission.
-        note = self.submit(journal, actors, helpers, openreview_client, url, authors=[actors['author'].email])
+        # Alternate tilde author ID and copied DEV URL exercise actual API admission.
+        note = self.submit(journal, actors, helpers, openreview_client, url, authors=[actors['author'].alias])
         field = journal.get_resubmission_previous_submission_field()
         assert note.content[field]['value'] == url
         current_group = journal.get_action_editors_id(note.number)

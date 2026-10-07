@@ -32,8 +32,10 @@ Author submission and admission
 1. The author submits through the ordinary Author Submission invitation.
 2. Before persistence, the server resolves a live top-level Author Submission
    in the same journal. At least one author must be shared; an authenticated
-   submitter must be a current and previous author. Supported profile/email
-   aliases resolve through OpenReview profiles.
+   submitter must be a current and previous author. Profile aliases resolve
+   through OpenReview profiles. The native Author Submission schema requires
+   tilde profile IDs in incoming ``authorids``. The admission helper also resolves
+   email aliases in existing author records; it does not relax that schema.
 3. The previous paper must have a released rejection and its latest active AE
    decision must recommend ``Reject`` and permit resubmission. Native permission
    text, ``Reject with encouragement to resubmit``, and boolean ``True`` are
