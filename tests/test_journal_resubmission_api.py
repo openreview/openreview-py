@@ -217,14 +217,18 @@ class TestJournalResubmissionAPI:
     def revise(self, journal, note, actors, helpers, admin, *, role='author', previous=None):
         content = {key: {'value': note.content[key]['value']} for key in
             ('title', 'abstract', 'pdf', 'competing_interests', 'human_subjects_reporting')}
-        content['title'] = {'value': 'Revised linked paper'}
+        # Each successful call must change content; no-op edits queue no callback.
+        content['title'] = {'value': 'Revised linked paper ' + uuid4().hex}
         if previous is not None:
             content[journal.get_resubmission_previous_submission_field()] = {'value': previous}
         signature = journal.get_editors_in_chief_id() if role == 'eic' else journal.get_authors_id(note.number)
         edit = actors[role].client.post_note_edit(invitation=journal.get_revision_id(note.number),
             signatures=[signature], note=openreview.api.Note(id=note.id, content=content))
         helpers.await_queue_edit(admin, edit['id'])
-        return admin.get_note(note.id)
+        fresh = admin.get_note(note.id)
+        assert fresh.content['title']['value'] == content['title']['value']
+        assert admin.get_group(journal.get_authors_id(note.number)).members == fresh.content['authorids']['value']
+        return fresh
 
     @pytest.mark.parametrize('enabled', [None, False], ids=['missing', 'false'])
     def test_default_preserves_unvalidated_link_and_ordinary_assignment(self, enabled,
