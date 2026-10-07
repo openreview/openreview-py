@@ -2234,6 +2234,73 @@ note={under review}
             'ICLR.cc/2026/Conference/Submission1/Area_Chairs'
         ]
 
+
+    def test_official_comment_individual_readers(self, client, openreview_client, helpers, test_client):
+
+        ## the comment invitation lets the poster pick an individual assigned reviewer as a reader,
+        ## and every participant of the submission, the authors included, can post a comment
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission3/-/Official_Comment')
+        assert 'ICLR.cc/2026/Conference/Submission3/Authors' in invitation.invitees
+        assert { 'inGroup': 'ICLR.cc/2026/Conference/Submission3/Reviewers', 'optional': True } in invitation.edit['note']['readers']['param']['items']
+
+        ## Submission3 has a single assigned reviewer and Submission4 a different one
+        assert openreview_client.get_group('ICLR.cc/2026/Conference/Submission3/Reviewers').members == ['~Reviewer_ICLROne1']
+        assert openreview_client.get_group('ICLR.cc/2026/Conference/Submission4/Reviewers').members == ['~Reviewer_ICLRTwo1']
+
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', sort='number:asc')
+        author_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        def post_comment(reader):
+            return author_client.post_note_edit(
+                invitation='ICLR.cc/2026/Conference/Submission3/-/Official_Comment',
+                signatures=['ICLR.cc/2026/Conference/Submission3/Authors'],
+                note=openreview.api.Note(
+                    replyto=submissions[2].id,
+                    content={
+                        'title': { 'value': 'test comment title' },
+                        'comment': { 'value': 'test comment' }
+                    },
+                    readers=[
+                        'ICLR.cc/2026/Conference/Program_Chairs',
+                        'ICLR.cc/2026/Conference/Submission3/Senior_Area_Chairs',
+                        reader
+                    ]
+                )
+            )
+
+        ## the authors can not read the group the individual readers are validated against
+        with pytest.raises(openreview.OpenReviewException, match=r'.*is not reader of ICLR.cc/2026/Conference/Submission3/Reviewers.*'):
+            author_client.get_group('ICLR.cc/2026/Conference/Submission3/Reviewers')
+
+        ## a reviewer that is not assigned to the submission can not be added as an individual reader
+        with pytest.raises(openreview.OpenReviewException, match=r'.*readers can only contain the allowed values.*'):
+            post_comment('~Reviewer_ICLRTwo1')
+
+        ## the assigned reviewer is rejected too: the paper reviewers group is an anonymous group and
+        ## keeps the anonymous ids as members, so a profile id never matches the inGroup validation and
+        ## the response does not tell an assigned reviewer apart from an unassigned one
+        with pytest.raises(openreview.OpenReviewException, match=r'.*readers can only contain the allowed values.*'):
+            post_comment('~Reviewer_ICLROne1')
+
+        ## the anonymous id of a reviewer assigned to another submission is rejected
+        other_anon_group_id = openreview_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission4/Reviewer_')[0].id
+        with pytest.raises(openreview.OpenReviewException, match=r'.*readers can only contain the allowed values.*'):
+            post_comment(other_anon_group_id)
+
+        ## the anonymous id of the assigned reviewer is the only individual reader that is accepted
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer_one@iclr.cc', password=helpers.strong_password)
+        anon_group_id = reviewer_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission3/Reviewer_', signatory='~Reviewer_ICLROne1')[0].id
+
+        comment_edit = post_comment(anon_group_id)
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        comment = openreview_client.get_note(comment_edit['note']['id'])
+        assert comment.readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission3/Senior_Area_Chairs',
+            anon_group_id
+        ]
+
     def test_withdrawal_stage(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)

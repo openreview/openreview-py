@@ -1077,9 +1077,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             ]
 
-        existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
         if existing_invitation and existing_invitation.post_processes:
             invitation.post_processes=existing_invitation.post_processes
+
+        if existing_invitation and existing_invitation.content:
+            invitation.content = existing_invitation.content
 
         author_submission_readers = self.journal.get_author_submission_readers('${4/number}')
         if author_submission_readers:
