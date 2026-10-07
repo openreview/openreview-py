@@ -2595,6 +2595,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
+        # Reject: previous URL pointing to a submission the submitter is not an author of
+        not_author_client = openreview.api.OpenReviewClient(username='reviewer3@aclrollingreview.com', password=helpers.strong_password)
+        not_author_note = openreview.api.Note(
+            content = _generate_valid_content(102, domains, june_submission)
+        )
+        not_author_note.content['authors']['value'] = ['Reviewer ARRThree']
+        not_author_note.content['authorids']['value'] = ['~Reviewer_ARRThree1']
+        with pytest.raises(openreview.OpenReviewException, match=r'.*does not correspond to an ARR submission you are an author of.*'):
+            not_author_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+                signatures=['~Reviewer_ARRThree1'],
+                note=not_author_note)
+
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', count=101)
 
         submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc', details='replies')
@@ -7896,8 +7908,111 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         notes = pc_client_v2.get_notes(forum=submssion3.id, domain='aclweb.org/ACL/ARR/2023/August')
         assert len(notes) == 5 # submission + review + 3 reports
-        
+
+        ## the reviewers and area chairs assigned to a commitment submission should be able to
+        ## read the ARR submission it commits, not only the Program Chairs
+        commitment_venue_id = 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment'
+
+        helpers.create_user('reviewer_c3nlp@c3nlp.org', 'Reviewer', 'Commitment')
+        helpers.create_user('ac_c3nlp@c3nlp.org', 'AreaChair', 'Commitment')
+
+        ## the commitment submission that links ARR August submission #3
+        commitment_submissions = openreview_client.get_all_notes(invitation=f'{commitment_venue_id}/-/Submission')
+        commitment_submission = [s for s in commitment_submissions if s.content['paper_link']['value'].endswith(august_submissions[2].id)][0]
+
+        ## activate the paper committee groups, in production this runs at the submission deadline
+        now_ms = openreview.tools.datetime_millis(datetime.datetime.now())
+        for role in ['Reviewers', 'Area_Chairs']:
+            openreview_client.post_invitation_edit(
+                invitations=f'{commitment_venue_id}/-/Edit',
+                readers=[commitment_venue_id],
+                writers=[commitment_venue_id],
+                signatures=[commitment_venue_id],
+                invitation=openreview.api.Invitation(
+                    id=f'{commitment_venue_id}/{role}/-/Submission_Group',
+                    cdate=now_ms,
+                    signatures=[commitment_venue_id]
+                )
+            )
+
+        helpers.await_queue_edit(openreview_client, edit_id=f'{commitment_venue_id}/Reviewers/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{commitment_venue_id}/Area_Chairs/-/Submission_Group-0-1', count=2)
+
+        assert openreview_client.get_group(f'{commitment_venue_id}/Submission{commitment_submission.number}/Reviewers')
+        assert openreview_client.get_group(f'{commitment_venue_id}/Submission{commitment_submission.number}/Area_Chairs')
+
+        openreview_client.add_members_to_group(f'{commitment_venue_id}/Reviewers', '~Reviewer_Commitment1')
+        openreview_client.add_members_to_group(f'{commitment_venue_id}/Area_Chairs', '~AreaChair_Commitment1')
+        openreview_client.add_members_to_group(f'{commitment_venue_id}/Submission{commitment_submission.number}/Reviewers', '~Reviewer_Commitment1')
+        openreview_client.add_members_to_group(f'{commitment_venue_id}/Submission{commitment_submission.number}/Area_Chairs', '~AreaChair_Commitment1')
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer_c3nlp@c3nlp.org', password=helpers.strong_password)
+        ac_client = openreview.api.OpenReviewClient(username='ac_c3nlp@c3nlp.org', password=helpers.strong_password)
+
+        ## only the venue was given access, so the assigned committee can not read the ARR submission yet
+        for committee_client in [reviewer_client, ac_client]:
+            with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+                committee_client.get_note(august_submissions[2].id)
+
+        openreview.arr.ARR.process_commitment_venue(openreview_client, commitment_venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=['Reviewers', 'Area_Chairs'], get_previous_url_submission=True)
+
+        openreview_client.flush_members_cache('reviewer_c3nlp@c3nlp.org')
+        openreview_client.flush_members_cache('ac_c3nlp@c3nlp.org')
+
+        ## the paper committee groups of the commitment submission are members of the Commitment_Readers group
+        commitment_readers_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers')
+        assert f'{commitment_venue_id}/Submission{commitment_submission.number}/Reviewers' in commitment_readers_group.members
+        assert f'{commitment_venue_id}/Submission{commitment_submission.number}/Area_Chairs' in commitment_readers_group.members
+
+        august_review = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')[0]
+
+        for committee_client in [reviewer_client, ac_client]:
+            assert committee_client.get_note(august_submissions[2].id).number == 3
+            assert committee_client.get_note(august_review.id).id == august_review.id
+
+        ## and the previous submission linked in the previous_URL field of the ARR submission
+        previous_url = august_submissions[2].content['previous_URL']['value']
+        previous_submission = openreview_client.get_note(previous_url.split('=')[-1])
+
+        previous_readers_group = openreview_client.get_group(f'aclweb.org/ACL/ARR/2023/June/Submission{previous_submission.number}/Commitment_Readers')
+        assert f'{commitment_venue_id}/Submission{commitment_submission.number}/Reviewers' in previous_readers_group.members
+        assert f'{commitment_venue_id}/Submission{commitment_submission.number}/Area_Chairs' in previous_readers_group.members
+
+        previous_review = openreview_client.get_notes(invitation=f'aclweb.org/ACL/ARR/2023/June/Submission{previous_submission.number}/-/Official_Review')[0]
+
+        for committee_client in [reviewer_client, ac_client]:
+            assert committee_client.get_note(previous_submission.id).number == previous_submission.number
+            assert committee_client.get_note(previous_review.id).id == previous_review.id
+
+        ## a user that is not assigned to any commitment submission can not read the ARR submission
+        helpers.create_user('reviewer2_c3nlp@c3nlp.org', 'ReviewerTwo', 'Commitment')
+        openreview_client.add_members_to_group(f'{commitment_venue_id}/Reviewers', '~ReviewerTwo_Commitment1')
+        openreview_client.flush_members_cache('reviewer2_c3nlp@c3nlp.org')
+
+        unassigned_reviewer_client = openreview.api.OpenReviewClient(username='reviewer2_c3nlp@c3nlp.org', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            unassigned_reviewer_client.get_note(august_submissions[2].id)
+
+        ## the PCs of the commitment venue are impersonators of the commitment venue, so they can
+        ## impersonate its reviewers. The impersonated session is scoped to the commitment venue:
+        ## it can not read the ARR submission, because the PCs are not impersonators of ARR
         venue = openreview.helpers.get_conference(client, request_form_note.forum)
+        venue.set_impersonators(impersonators=['~Program_NLPChair1'])
+
+        assert '~Program_NLPChair1' in openreview_client.get_group(commitment_venue_id).impersonators
+
+        impersonated_client = openreview.api.OpenReviewClient(username='pc@c3nlp.org', password=helpers.strong_password)
+        result = impersonated_client.impersonate('~Reviewer_Commitment1')
+        assert result.get('token')
+        assert result.get('user', {}).get('id') == '~Reviewer_Commitment1'
+
+        ## the impersonation is effective: the session reads the paper group it is assigned to
+        assert impersonated_client.get_group(f'{commitment_venue_id}/Submission{commitment_submission.number}/Reviewers')
+
+        ## but not the ARR submission that commitment links, even though the reviewer itself can
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            impersonated_client.get_note(august_submissions[2].id)
+
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Senior_Area_Chairs/-/Submission_Group')
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Area_Chairs/-/Submission_Group')
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Reviewers/-/Submission_Group')        

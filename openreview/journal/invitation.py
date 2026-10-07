@@ -249,7 +249,7 @@ class InvitationBuilder(object):
         if self.journal.request_form_id:
             return ('openreview.journal.JournalRequest.get_journal(client, ' +
                     repr(self.journal.request_form_id) + ')')
-        settings = {} if settings is None else settings
+        settings = dict(self.journal.settings) if settings is None else settings
         return ('openreview.journal.Journal(client, ' +
             ', '.join(repr(value) for value in (self.journal.venue_id,
                 self.journal.secret_key, self.journal.contact_info,
@@ -261,9 +261,6 @@ class InvitationBuilder(object):
     def get_process_content(self, file_path, settings=None):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-        if settings is None:
-            settings = ({'tracks': self.journal.settings['tracks']}
-                        if self.journal.has_managed_tracks() else {})
         return process.replace('openreview.journal.Journal()',
                                self.journal_source(settings))
 
@@ -1193,9 +1190,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             ]
 
-        existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
         if existing_invitation and existing_invitation.post_processes:
             invitation.post_processes=existing_invitation.post_processes
+
+        if existing_invitation and existing_invitation.content:
+            invitation.content = existing_invitation.content
 
         author_submission_readers = self.journal.get_author_submission_readers('${4/number}')
         if author_submission_readers:
@@ -1814,7 +1813,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
+                            { 'value': '${3/tail}', 'optional': True }
                         ]
                     }
                 },
@@ -1933,7 +1932,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
+                            { 'value': '${3/tail}', 'optional': True }
                         ]
                     }
                 },
@@ -2285,8 +2284,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
-                        ]                   
+                            { 'value': '${3/tail}', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -2404,8 +2403,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
-                        ]                    
+                            { 'value': '${3/tail}', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -2477,7 +2476,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*', anon=True)
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${{3/head}/number}', anon=True), 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -3147,7 +3150,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [ venue_id],
                 'note': {
                     'id': { 'param': { 'withInvitation': self.journal.get_retraction_id(number='${6/content/noteNumber/value}') }},
-                    'readers': [ 'everyone' ],
+                    'readers': self.journal.get_release_decision_readers('${5/content/noteNumber/value}'),
                     'nonreaders': []
                 }
             }
@@ -3443,7 +3446,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures=[venue_id],
             edit={
                 'signatures': [venue_id],
-                'readers': [ 'everyone' ],
+                'readers': self.journal.get_under_review_submission_readers('${{2/note/id}/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -3809,7 +3812,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         score_ids = [f'{action_editors_id}/-/Affinity_Score', f'{action_editors_id}/-/Custom_Max_Papers,head:ignore', f'{action_editors_id}/-/Assignment_Availability,head:ignore', f'{action_editors_id}/-/Assignment,head:count']
         edit_param = f'{action_editors_id}/-/Recommendation'
         browse_param = ';'.join(score_ids)
-        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&maxColumns=2&showCounter=false&version=2&filter={action_editors_id}/-/Assignment_Availability == Available AND {action_editors_id}/-/Custom_Max_Papers > {action_editors_id}/-/Assignment&referrer=[Instructions](/invitation?id={invitation.id})'
+        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&maxColumns=2&showCounter=false&version=2&filter={action_editors_id}/-/Assignment_Availability == Available AND {action_editors_id}/-/Custom_Max_Papers > {action_editors_id}/-/Assignment&check_quota=false&referrer=[Instructions](/invitation?id={invitation.id})'
         with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
@@ -6102,6 +6105,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             for key, value in self.journal.get_submission_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
+        ## Authors are still anonymous at camera ready time, keep the author fields restricted like the submission
+        author_submission_readers = self.journal.get_author_submission_readers('${7/content/noteNumber/value}')
+        if author_submission_readers:
+            invitation['edit']['note']['content']['authors']['readers'] = author_submission_readers
+            invitation['edit']['note']['content']['authorids']['readers'] = author_submission_readers
+
         existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_camera_ready_revision_id())
         if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
             invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
@@ -6421,6 +6430,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }                        
+
+        ## The Accepted edit releases the authors before this invitation exists, so only keep them
+        ## restricted when the journal never releases them
+        if not self.journal.release_submission_after_acceptance():
+            author_submission_readers = self.journal.get_author_submission_readers('${7/content/noteNumber/value}')
+            if author_submission_readers:
+                invitation['edit']['note']['content']['authors']['readers'] = author_submission_readers
+                invitation['edit']['note']['content']['authorids']['readers'] = author_submission_readers
 
         self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
 
@@ -6836,13 +6853,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'deletable': True
                         }
                     },
-                    'readers': [ venue_id, '${2/signatures}' ],
-                    'writers': [ venue_id, '${2/signatures}' ],
-                    'signatures': {
-                        'param': {
-                            'regex': '~.*' 
-                        }
-                    },
+                    'readers': [ venue_id, '${2/tail}' ],
+                    'writers': [ venue_id, '${2/tail}' ],
+                    'signatures': [ '${2/tail}' ],
                     'head': {
                         'param': {
                             'type': 'note'

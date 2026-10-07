@@ -936,16 +936,13 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        messages = openreview_client.get_messages(to='reviewer_one_tilde_v2@mail.com')
-        assert messages and len(messages) == 2
+        messages = openreview_client.get_messages(to='reviewer_one_tilde_v2@mail.com', subject="[TestVenue@OR'2030V2] Invitation to serve as Reviewer")
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Dear Reviewer OneTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('Dear Reviewer OneTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
-
-        messages = openreview_client.get_messages(to='reviewer_two_tilde_v2@mail.com')
-        assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('Dear Reviewer TwoTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
+        messages = openreview_client.get_messages(to='reviewer_two_tilde_v2@mail.com', subject="[TestVenue@OR'2030V2] Invitation to serve as Reviewer")
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Dear Reviewer TwoTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
@@ -2398,9 +2395,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'input': 'radio'
                             }
                         },
-                        'readers': {
-                            "delete": True
-                        }
+                        'readers': { 'const': { 'delete': True } }
                     }
             },
             allow_de_anonymization=False)
@@ -2410,7 +2405,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=2)
         
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
-        assert 'readers' not in invitation.edit['note']['content']['final_review_rating']
+        assert 'readers' in invitation.edit['note']['content']['final_review_rating'] and invitation.edit['note']['content']['final_review_rating']['readers'] == { 'const': { 'delete': True } }
         
         anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
         anon_group_id = anon_groups[0].id
@@ -4070,6 +4065,7 @@ Best,
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/-/Withdrawn_Submission')
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note

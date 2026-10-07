@@ -398,7 +398,7 @@ def track_artifacts(enabled=True):
 def test_generated_track_callback_preserves_journal_settings(monkeypatch, tracks, request_id):
     client = SimpleNamespace()
     journal = Journal(client, "Test", "secret", "editors@example.org",
-        'Test "Journal"', "TJ", settings={"tracks": tracks})
+        'Test "Journal"', "TJ", settings={"tracks": tracks, "AE_anonymity": True, "submission_public": False})
     journal.request_form_id = request_id
     source = journal.invitation_builder.get_process_content(
         "process/track_submission_pre_process.py")
@@ -414,11 +414,12 @@ def test_generated_track_callback_preserves_journal_settings(monkeypatch, tracks
             if actual_client is client and actual_id == request_id else None)
     monkeypatch.setattr(openreview.journal.tracks, "validate_track_submission",
         lambda *_args: None)
-    namespace = {}
+    namespace = {"openreview": openreview}
     exec(source, namespace)
     namespace["process"](client, SimpleNamespace(), None)
     assert len(reconstructed) == 1
     assert reconstructed[0].settings.get("tracks", False) == tracks
+    assert reconstructed[0].settings == journal.settings
     assert reconstructed[0].full_name == journal.full_name
 
 

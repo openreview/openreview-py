@@ -1755,6 +1755,21 @@ computation and memory.
                     }
                 )
             )
+
+        ## Try to remove a name from another user's profile and get an error
+        intruder_client = helpers.create_user('intruder@profile.org', 'Ivan', 'Intruder', alternates=[], institution='google.com')
+        with pytest.raises(openreview.OpenReviewException, match=r'You can only remove names from your own profile, ~John_Alternate_Last1 does not belong to ~Ivan_Intruder1'):
+            request_note = intruder_client.post_note_edit(
+                invitation='openreview.net/Support/-/Profile_Name_Removal',
+                signatures=['~Ivan_Intruder1'],
+                note = openreview.api.Note(
+                    content={
+                        'name': { 'value': 'John Alternate Last' },
+                        'usernames': { 'value': ['~John_Alternate_Last1'] },
+                        'comment': { 'value': 'not my name' }
+                    }
+                )
+            )
                     
         ## Archive Direct_Upload gets the default human verification rate limit
         direct_upload_invitation = john_client.get_invitation('openreview.net/Archive/-/Direct_Upload')
@@ -3330,7 +3345,9 @@ The OpenReview Team.
                         ]
                     },
                     'keywords': { 'value': ['name', 'removal'] },
-                    'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' }
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 + '.pdf' },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
                 }
             ))
 
@@ -3526,7 +3543,9 @@ The OpenReview Team.
                         ]
                     },
                     'keywords': { 'value': ['email', 'replacement'] },
-                    'pdf': { 'value': '/pdf/' + 'q' * 40 + '.pdf' }
+                    'pdf': { 'value': '/pdf/' + 'q' * 40 + '.pdf' },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
                 }
             ))
 
