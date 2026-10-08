@@ -96,9 +96,7 @@ class TestJMLRJournal():
         assert 'weight' not in invitation.edit
         assert openreview_client.get_invitation('JMLR/Action_Editors/-/Track_Score')
 
-        editors_in_chief_web = openreview_client.get_group('JMLR/Editors_In_Chief').web
-        assert "var ACTION_EDITORS_TRACK_ID = 'JMLR/Action_Editors/-/Track';" in editors_in_chief_web
-        assert 'var ACTION_EDITORS_DEFAULT_TRACK = "Regular";' in editors_in_chief_web
+        assert "var ACTION_EDITORS_TRACK_ID = 'JMLR/Action_Editors/-/Track';" in openreview_client.get_group('JMLR/Editors_In_Chief').web
 
         invitation = openreview_client.get_invitation('JMLR/Action_Editors/-/Assignment_Configuration')
         assert invitation.edit['note']['content']['scores_specification']['value']['param']['default']['JMLR/Action_Editors/-/Track_Score'] == { 'weight': 10, 'default': 0 }

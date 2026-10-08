@@ -20,7 +20,6 @@ var NUMBER_OF_REVIEWERS = 3;
 var PREFERRED_EMAILS_ID = '';
 var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITORS_TRACK_ID = '';
-var ACTION_EDITORS_DEFAULT_TRACK = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME;
@@ -536,7 +535,7 @@ var formatData = function(
   donePhase = perfStart('  formatData: build action editor status map');
 
   var getActionEditorTrackStatus = function(actionEditor) {
-    return ACTION_EDITORS_TRACK_ID ? { Track: aeTrackById[actionEditor.id] || ACTION_EDITORS_DEFAULT_TRACK } : {};
+    return aeTrackById[actionEditor.id] ? { Track: aeTrackById[actionEditor.id] } : {};
   };
 
   var actionEditorStatusById = {};
