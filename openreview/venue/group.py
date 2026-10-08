@@ -87,7 +87,7 @@ class GroupBuilder(object):
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.senior_area_chair_identity_readers)
 
     def get_reviewer_paper_group_readers(self, number, name=None):
-        readers=[self.venue.id]
+        readers=[self.venue.id, self.venue.get_program_chairs_id()]
         if self.venue.use_senior_area_chairs:
             readers.append(self.venue.get_senior_area_chairs_id(number))
         if self.venue.use_area_chairs:
@@ -154,10 +154,10 @@ class GroupBuilder(object):
             'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id() },
             'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
             'rejected_venue_id': { 'value': self.venue.get_rejected_submission_venue_id() },
-            'public_submissions': { 'value': self.venue.submission_stage.public },
+            'show_active_submissions': { 'value': self.venue.submission_stage.public },
             'commitments_venue': { 'value': self.venue.submission_stage.commitments_venue },
-            'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
-            'public_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
+            'show_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
+            'show_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
             'submission_email_template': { 'value': self.venue.submission_stage.submission_email if self.venue.submission_stage.submission_email else '' },
             'submission_email_pcs': { 'value': self.venue.submission_stage.email_pcs },
             'title': { 'value': self.venue.name if self.venue.name else '' },
@@ -193,20 +193,19 @@ class GroupBuilder(object):
             'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'withdrawal_name': { 'value': 'Withdrawal'},
             'withdrawal_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_withdraw },
-            'withdrawn_submission_reveal_authors': { 'value': self.venue.submission_stage.withdrawn_submission_reveal_authors },
             'desk_rejected_submission_id': { 'value': self.venue.get_desk_rejected_id() },
             'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
             'desk_rejection_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_desk_reject },
-            'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
             'deletion_expiration_id': { 'value': self.venue.get_invitation_id('Deletion_Expiration') },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map },
             'reviewers_message_submission_id': { 'value': self.venue.get_message_id(number='{number}') },
             'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) },
-            'article_endorsement_id': { 'value': self.venue.get_article_endorsement_id() }
+            'article_endorsement_id': { 'value': self.venue.get_article_endorsement_id() },
+            'show_recent_activity_tab': { 'value': True }
         }
 
         if self.venue.submission_stage.second_due_date:
@@ -530,6 +529,7 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
         venue_id = self.venue.id
 
         if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue.id)
             for index, role in enumerate(self.venue.reviewer_roles):
 
                 additional_readers = []
@@ -542,7 +542,7 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
                     additional_readers.append(area_chairs_id)
 
-                self.client.post_group_edit(
+                edit = self.client.post_group_edit(
                     invitation=f'{self.openreview_template}/-/Committee_Group',
                     signatures=[self.openreview_template],
                     content={
@@ -556,6 +556,10 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                     },
                     await_process=True
                 )
+
+                # create invitation to let the program chairs set the maximum number of
+                # reviewers of this role that can be assigned to a submission
+                edit_invitations_builder.set_edit_max_reviewers_assigned_invitation(edit['group']['id'])
 
             return            
 

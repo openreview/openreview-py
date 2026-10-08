@@ -221,8 +221,8 @@ class TestARRCommitmentWorkflow():
 
         # release steps are grouped under their timeline stage
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision_Release').content['workflow_stage_name']['value'] == 'decision'
-        assert openreview_client.get_invitation(f'{venue_id}/-/Accepted_Submission_Release').content['workflow_stage_name']['value'] == 'public_release'
-        assert openreview_client.get_invitation(f'{venue_id}/-/Rejected_Submission_Release').content['workflow_stage_name']['value'] == 'decision'
+        assert openreview_client.get_invitation(f'{venue_id}/-/Accept_Submission_Change_After_Decision').content['workflow_stage_name']['value'] == 'public_release'
+        assert openreview_client.get_invitation(f'{venue_id}/-/Reject_Submission_Change_After_Decision').content['workflow_stage_name']['value'] == 'decision'
         assert openreview_client.get_invitation(f'{venue_id}/Area_Chairs/-/Assignment')
         assert openreview_client.get_invitation(f'{venue_id}/Area_Chairs/-/Submission_Group')
 

@@ -55,7 +55,8 @@ class Templates():
         self.setup_reviewer_matching_template_invitation()
         self.setup_email_decisions_template_invitation()
         self.setup_email_reviews_template_invitation()
-        self.set_paper_release_template_invitation()
+        self.set_accept_paper_release_template_invitation()
+        self.set_reject_paper_release_template_invitation()
         self.setup_article_endorsement_template_invitation()
         self.setup_reviewers_review_count_template_invitation()
         self.setup_reviewers_review_assignment_count_template_invitation()
@@ -1642,9 +1643,26 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*'
                             }
                         }
+                    },
+                    'message': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100000,
+                                'input': 'textarea'
+                            }
+                        }
+                    },
+                    'source': {
+                        'value': {
+                            'param': {
+                                'type': 'json'
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
+                'replacement': True,
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
@@ -1666,6 +1684,12 @@ If you would like to change your decision, please follow the link in the previou
                         },
                         'decision_option': {
                             'value': '${4/content/decision/value}'
+                        },
+                        'message': {
+                            'value': '${4/content/message/value}'
+                        },
+                        'source': {
+                            'value': '${4/content/source/value}'
                         }
                     },
                     'message': {
@@ -1800,9 +1824,9 @@ If you would like to change your decision, please follow the link in the previou
         )
         self.post_invitation_edit(invitation)
 
-    def set_paper_release_template_invitation(self):
+    def set_accept_paper_release_template_invitation(self):
 
-        invitation = Invitation(id=f'{self.template_domain}/-/Submission_Release',
+        invitation = Invitation(id=f'{self.template_domain}/-/Accept_Submission_Release',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -1812,7 +1836,7 @@ If you would like to change your decision, please follow the link in the previou
                 'signatures' : {
                     'param': {
                         'items': [
-                            { 'prefix': '~.*', 'optional': True },
+                            { 'prefix': '.*', 'optional': True },
                             { 'value': self.template_domain, 'optional': True }
                         ]
                     }
@@ -1891,7 +1915,17 @@ If you would like to change your decision, please follow the link in the previou
                         'value': {
                             'param': {
                                 'type': "string",
-                                'enum': ['Accepted', 'Rejected']
+                                'regex': '.*'
+                            }
+                        }
+                    },
+                    'decision_option_id': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
                             }
                         }
                     },
@@ -1904,38 +1938,46 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'workflow_stage_name': {
-                        'description': 'Timeline stage this release step is grouped under',
+                    'decision_venue': {
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
-                                'regex': '.*',
-                                'optional': True,
-                                'default': 'public_release'
+                                'regex': '.*'
+                            }
+                        }
+                    },
+                    'source': {
+                        'value': {
+                            'param': {
+                                'type': 'json'
                             }
                         }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
+                'replacement': True,
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option/value}_${2/content/submission_name/value}_Release',
+                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option_id/value}_${2/content/submission_name/value}_Change_After_Decision',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'This step releases ${2/content/decision_option/value} submissions to the specified readers, as well as author identities if this option is selected.',
+                    'description': 'This step releases ${2/content/decision_option/value} submissions and author identities to the public and marks the submissions as accepted. By default, all fields remain hidden from the public except for the title, abstract and author names.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')
                     }],
                     'content': {
                         'workflow_stage_name': {
-                            'value': '${4/content/workflow_stage_name/value}'
+                            'value': 'public_release'
                         },
                         'decision_option': {
                             'value': '${4/content/decision_option/value}'
+                        },
+                        'source': {
+                            'value': '${4/content/source/value}'
                         }
                     },
                     'edit': {
@@ -1956,7 +1998,264 @@ If you would like to change your decision, please follow the link in the previou
                                     'deletable': True
                                 }
                             },
-                            'pdate': {
+                            'pdate': '${4/content/activation_date/value}',
+                            'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
+                            'readers': [ 'everyone' ],
+                            'writers': [
+                                '${5/content/venue_id/value}',
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
+                            ],
+                            'content': {
+                                'title': {
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
+                                'authors': {
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
+                                'abstract': {
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
+                                'pdf': {
+                                    'readers': [
+                                        '${7/content/venue_id/value}',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
+                                    ]
+                                },
+                                '*': {
+                                    'readers': [
+                                        '${7/content/venue_id/value}',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
+                                    ]
+                                },
+                                'venue': {
+                                    'value': {
+                                        'param': {
+                                            'const': '${8/content/decision_venue/value}'
+                                        }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'param': {
+                                            'const': '${8/content/decision_venue_id/value}'
+                                        }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
+                                '_bibtex': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def set_reject_paper_release_template_invitation(self):
+
+        invitation = Invitation(id=f'{self.template_domain}/-/Reject_Submission_Release',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/submission_release_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '.*', 'optional': True },
+                            { 'value': self.template_domain, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 2,
+                        'description': 'When would you like to have your OpenReview submission portal opened?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'description': 'Author\'s group name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True,
+                                'default': 'Authors'
+                            }
+                        }
+                    },
+                    'additional_readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'decision_option': {
+                        'value': {
+                            'param': {
+                                'type': "string",
+                                'regex': '.*'
+                            }
+                        }
+                    },
+                    'decision_option_id': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'decision_venue_id': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*'
+                            }
+                        }
+                    },
+                    'decision_venue': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*'
+                            }
+                        }
+                    },
+                    'source': {
+                        'value': {
+                            'param': {
+                                'type': 'json'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'replacement': True,
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/decision_option_id/value}_${2/content/submission_name/value}_Change_After_Decision',
+                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'This step releases ${2/content/decision_option/value} submissions to the specified readers and marks the submissions as rejected. By default, all fields remain hidden from submission readers except for the title and abstract.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.get_process_content('process/submission_release.py')
+                    }],
+                    'content': {
+                        'workflow_stage_name': {
+                            'value': 'decision'
+                        },
+                        'decision_option': {
+                            'value': '${4/content/decision_option/value}'
+                        },
+                        'source': {
+                            'value': '${4/content/source/value}'
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/note/id}/number}/${4/content/authors_name/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': '${6/content/venue_id/value}/-/${6/content/submission_name/value}',
+                                    'optional': True
+                                }
+                            },
+                            'odate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
                                     'optional': True,
@@ -1974,19 +2273,47 @@ If you would like to change your decision, please follow the link in the previou
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'content': {
-                                'authors': {
+                                'title': {
                                     'readers': {
-                                        'param': {
-                                            'regex': '.*',
-                                            'deletable': True
+                                        'const': {
+                                            'delete': True
                                         }
                                     }
+                                },
+                                'abstract': {
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
+                                        }
+                                    }
+                                },
+                                'authors': {
+                                    'readers': [
+                                        '${7/content/venue_id/value}',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
+                                    ]
+                                },
+                                'pdf': {
+                                    'readers': [
+                                        '${7/content/venue_id/value}',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
+                                    ]
+                                },
+                                '*': {
+                                    'readers': [
+                                        '${7/content/venue_id/value}',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}'
+                                    ]
                                 },
                                 'venue': {
                                     'value': {
                                         'param': {
-                                            'type': 'string',
-                                            'regex': '.*'
+                                            'const': '${8/content/decision_venue/value}'
+                                        }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
                                         }
                                     }
                                 },
@@ -1994,6 +2321,11 @@ If you would like to change your decision, please follow the link in the previou
                                     'value': {
                                         'param': {
                                             'const': '${8/content/decision_venue_id/value}'
+                                        }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
                                         }
                                     }
                                 },
@@ -2005,6 +2337,11 @@ If you would like to change your decision, please follow the link in the previou
                                             'input': 'textarea',
                                             'optional': True,
                                             'deletable': True
+                                        }
+                                    },
+                                    'readers': {
+                                        'const': {
+                                            'delete': True
                                         }
                                     }
                                 }
