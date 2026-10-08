@@ -534,10 +534,6 @@ var formatData = function(
   donePhase(Object.keys(reviewerStatusById).length + ' reviewers');
   donePhase = perfStart('  formatData: build action editor status map');
 
-  var getActionEditorTrackStatus = function(actionEditor) {
-    return aeTrackById[actionEditor.id] ? { Track: aeTrackById[actionEditor.id] } : {};
-  };
-
   var actionEditorStatusById = {};
   actionEditors.members.forEach(function(actionEditor, index) {
     actionEditorStatusById[actionEditor.id] = {
@@ -546,10 +542,11 @@ var formatData = function(
         id: actionEditor.id,
         name: actionEditor.name,
         email: actionEditor.email,
-        status: Object.assign(getActionEditorTrackStatus(actionEditor), {
+        status: {
           Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
-          Publications: '-'
-        }),
+          Publications: '-',
+          Track: aeTrackById[actionEditor.id] || '-'
+        },
         hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
       },
       reviewProgressData: {
@@ -574,11 +571,12 @@ var formatData = function(
         id: actionEditor.id,
         name: actionEditor.name,
         email: actionEditor.email,
-        status: Object.assign(getActionEditorTrackStatus(actionEditor), {
+        status: {
           Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-',
+          Track: aeTrackById[actionEditor.id] || '-',
           Archived: 'Yes'
-        }),
+        },
         hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
       },
       reviewProgressData: {
