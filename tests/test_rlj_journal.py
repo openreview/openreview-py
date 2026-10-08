@@ -424,11 +424,9 @@ class TestRLJJournal():
 
         recruitment_status = recruit('tomas@rljtwo.com, Tomas Lind\n~Tara_Novak1\nnora@rljseven.com, Nora Quinn', 'Technical Reviewer')
         assert '**Invited**: 3 Reviewer(s).' in recruitment_status
-        assert '**Reviewer role**: Technical Reviewer.' in recruitment_status
 
         recruitment_status = recruit('~Elena_Moss1\n~Ethan_Park1\n~Omar_Haddad1', 'Senior Reviewer')
         assert '**Invited**: 3 Reviewer(s).' in recruitment_status
-        assert '**Reviewer role**: Senior Reviewer.' in recruitment_status
 
         role_edges = openreview_client.get_all_edges(invitation='RLJ/Reviewers/-/Role')
         assert { edge.tail: edge.label for edge in role_edges } == {
@@ -455,7 +453,6 @@ class TestRLJJournal():
 
         recruitment_status = recruit('~Tara_Novak1', 'Senior Reviewer')
         assert '**Invited**: 0 Reviewer(s).' in recruitment_status
-        assert '**Reviewer role**: Senior Reviewer.' in recruitment_status
         assert "No recruitment invitation was sent to the following users because they are already members of the Reviewer group:\n['~Tara_Novak1']" in recruitment_status
         assert len(openreview_client.get_messages(to='tara@rljthree.com', subject='[RLJ] Invitation to serve as Reviewer for RLJ')) == 1
 

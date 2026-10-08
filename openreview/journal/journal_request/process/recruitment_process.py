@@ -30,7 +30,6 @@ def process(client, edit, invitation):
 
     subject = recruitment_note.content['email_subject']['value']
     content = recruitment_note.content['email_content']['value']
-    reviewer_role = None
     if 'Action_Editor' in invitation.id:
         role = 'Action Editor'
         subject = subject.replace('{{role}}', role)
@@ -53,12 +52,8 @@ def process(client, edit, invitation):
 
 {status.get('errors')}''' if status.get('errors') else ''
 
-    reviewer_role_status = f'''**Reviewer role**: {reviewer_role}. It is set for the invited reviewers and for the listed reviewers who are already members of the Reviewer group.''' if reviewer_role else ''
-
     comment_content = f'''
 **Invited**: {len(status.get('invited'))} {role}(s).
-
-{reviewer_role_status}
 
 {non_invited_status}
 
