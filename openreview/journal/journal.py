@@ -680,7 +680,7 @@ class Journal(object):
     def is_submission_public(self):
         return self.get_submission_visibility() == 'public'
 
-    def get_submission_action_editors_id(self, number):
+    def get_action_editors_reader_id(self, number):
         if self.get_submission_visibility() == 'assigned_action_editor':
             return self.get_action_editors_id(number=number)
         return self.get_action_editors_id()
@@ -827,22 +827,22 @@ class Journal(object):
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.venue_id, self.get_submission_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.venue_id, self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_review_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_submission_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_decision_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_submission_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_authors_readers(self, number):
         if self.is_submission_public() or self.release_submission_after_acceptance():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_submission_action_editors_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_authors_id(number)]
 
     def get_official_comment_readers(self, number):
         readers = []
