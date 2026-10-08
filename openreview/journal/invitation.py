@@ -90,6 +90,7 @@ class InvitationBuilder(object):
         self.set_event_certificate_invitation()
         self.set_authors_release_invitation()
         self.set_ae_assignment(assignment_delay)
+        self.set_ae_track_invitations()
         self.set_reviewer_assignment(assignment_delay)
         self.set_reviewer_assignment_acknowledgement_invitation()
         self.set_review_invitation()
@@ -1103,6 +1104,21 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'order': 6                
             }
 
+        tracks = self.journal.get_tracks()
+        if tracks:
+            invitation.edit['note']['content']['track'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': tracks,
+                        'default': tracks[0],
+                        'input': 'select'
+                    }
+                },
+                'description': 'Select the track of your submission.',
+                'order': 6
+            }
+
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
                 invitation.edit['note']['content'][key] = value if value else { "delete": True }
@@ -1819,6 +1835,135 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             ]
         )
         self.save_invitation(invitation)         
+
+    def set_ae_track_invitations(self):
+
+        tracks = self.journal.get_tracks()
+        if not tracks:
+            return
+
+        venue_id = self.journal.venue_id
+        author_submission_id = self.journal.get_author_submission_id()
+        editor_in_chief_id = self.journal.get_editors_in_chief_id()
+        action_editors_id = self.journal.get_action_editors_id()
+        authors_id = self.journal.get_authors_id()
+
+        invitation = Invitation(
+            id=self.journal.get_ae_track_id(),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_track_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'value': venue_id, 'optional': True }
+                        ]
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'group',
+                        'const': action_editors_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'options': { 'group': action_editors_id }
+                    }
+                },
+                'label': {
+                    'param': {
+                        'enum': tracks
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_ae_track_score_id(),
+            invitees=[venue_id],
+            readers=[venue_id, authors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_track_score_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'enum': [1]
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)
 
     def set_reviewer_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
@@ -3651,6 +3796,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             date_processes=[self.author_edge_reminder_process]
         )
 
+        track_instructions = f'<li>Your submission is in the {note.content["track"]["value"]} track. AEs who handle this track have a track score of 1.</li>' if self.journal.get_tracks() and 'track' in note.content else ''
+
         header = {
             'title': f'{self.journal.short_name} Action Editor Suggestion',
             'instructions': f'<p class="dark"><strong>Instructions:</strong></p>\
@@ -3658,6 +3805,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     <li>For your submission, please select at least 3 AEs to recommend.</li>\
                     <li>AEs who have conflicts with your submission are not shown.</li>\
                     <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
+                    {track_instructions}\
                     <li>See <a href="{self.journal.get_website_url("editorial_board")}" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
                     <li>To get started click the button below.</li>\
                 </ul>\
@@ -3666,6 +3814,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         conflict_id = f'{action_editors_id}/-/Conflict'
         score_ids = [f'{action_editors_id}/-/Affinity_Score', f'{action_editors_id}/-/Custom_Max_Papers,head:ignore', f'{action_editors_id}/-/Assignment_Availability,head:ignore', f'{action_editors_id}/-/Assignment,head:count']
+        if self.journal.get_tracks():
+            score_ids.insert(1, self.journal.get_ae_track_score_id())
         edit_param = f'{action_editors_id}/-/Recommendation'
         browse_param = ';'.join(score_ids)
         params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&maxColumns=2&showCounter=false&version=2&filter={action_editors_id}/-/Assignment_Availability == Available AND {action_editors_id}/-/Custom_Max_Papers > {action_editors_id}/-/Assignment&check_quota=false&referrer=[Instructions](/invitation?id={invitation.id})'
@@ -6395,6 +6545,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'weight': 1,
             'default': 0
         }
+        if self.journal.get_tracks():
+            scores_specification[self.journal.get_ae_track_score_id()] = {
+                'weight': 10,
+                'default': 0
+            }
 
         invitation = Invitation(
             id = self.journal.get_ae_assignment_configuration_id(),

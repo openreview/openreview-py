@@ -139,6 +139,9 @@ class GroupBuilder(object):
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
+            if self.journal.get_tracks():
+                content = content.replace("var ACTION_EDITORS_TRACK_ID = '';", "var ACTION_EDITORS_TRACK_ID = '" + self.journal.get_ae_track_id() + "';")
+                content = content.replace("var ACTION_EDITORS_DEFAULT_TRACK = '';", "var ACTION_EDITORS_DEFAULT_TRACK = " + json.dumps(self.journal.get_tracks()[0]) + ";")
 
             editor_in_chief_group.web = content
             self.post_group(editor_in_chief_group)

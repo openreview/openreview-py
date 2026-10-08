@@ -208,6 +208,12 @@ class Journal(object):
     def get_ae_resubmission_score_id(self):
         return self.__get_invitation_id(name='Resubmission_Score', prefix=self.get_action_editors_id())
 
+    def get_ae_track_id(self):
+        return self.__get_invitation_id(name='Track', prefix=self.get_action_editors_id())
+
+    def get_ae_track_score_id(self):
+        return self.__get_invitation_id(name='Track_Score', prefix=self.get_action_editors_id())
+
     def get_ae_assignment_configuration_id(self):
         return self.__get_invitation_id(name='Assignment_Configuration', prefix=self.get_action_editors_id())
 
@@ -456,6 +462,10 @@ class Journal(object):
         :param assignment_delay: Number of minutes to delay before assignment process functions run.
         :type assignment_delay: int, optional
         """
+        tracks = self.get_tracks()
+        if not isinstance(tracks, list) or not all(isinstance(track, str) and track.strip() for track in tracks) or len(set(tracks)) != len(tracks):
+            raise openreview.OpenReviewException(f'Invalid tracks setting: {tracks}. It must be a list of unique track names, the first one is the default track.')
+
         if not self.secret_key:
             ## create the secret key the first time the journal is set up; it is stored
             ## in the venue group content by the group builder, never edited and only
@@ -779,6 +789,9 @@ class Journal(object):
 
     def get_ae_max_papers(self):
         return self.settings.get('action_editors_max_papers', 12)
+
+    def get_tracks(self):
+        return self.settings.get('tracks', [])
 
     def get_submission_additional_fields(self):
         return self.settings.get('submission_additional_fields', {})
