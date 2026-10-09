@@ -186,6 +186,40 @@ class TestWebConfTracks():
             group = openreview_client.get_group(f'{VENUE_ID}/{role}')
             assert 'track' not in group.content
 
+        # each track gets its own submission change invitations, scoped to the track's
+        # submissions and released only to the track's committee
+        for track, _ in TRACKS:
+            before_bidding_invitation = openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding')
+            assert before_bidding_invitation.content['source']['value'] == { 'venueid': [f'{VENUE_ID}/Submission'], 'content': { 'track': track } }
+            assert before_bidding_invitation.edit['note']['readers'] == [
+                VENUE_ID,
+                f'{VENUE_ID}/{track}_Senior_Area_Chairs',
+                f'{VENUE_ID}/{track}_Area_Chairs',
+                f'{VENUE_ID}/{track}_Reviewers',
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Authors'
+            ]
+            assert openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding/Dates')
+            assert openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding/Restrict_Field_Visibility')
+            readers_invitation = openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding/Readers')
+            reader_options = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+            assert f'{VENUE_ID}/{track}_Reviewers' in reader_options
+            assert f'{VENUE_ID}/Reviewers' not in reader_options
+
+            before_reviewing_invitation = openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Reviewing')
+            assert before_reviewing_invitation.content['source']['value'] == { 'venueid': [f'{VENUE_ID}/Submission'], 'content': { 'track': track } }
+            assert before_reviewing_invitation.edit['note']['readers'] == [
+                VENUE_ID,
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Senior_Area_Chairs',
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Area_Chairs',
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Reviewers',
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Authors'
+            ]
+
+        # the per-track invitations replace the venue-wide ones
+        for name in ['Submission_Change_Before_Bidding', 'Submission_Change_Before_Reviewing']:
+            venue_invitation = openreview.tools.get_invitation(openreview_client, f'{VENUE_ID}/-/{name}')
+            assert venue_invitation is None or venue_invitation.ddate
+
     def test_post_submissions(self, openreview_client, test_client, helpers):
         """Post one submission per sampled track."""
 
@@ -223,6 +257,36 @@ class TestWebConfTracks():
         assert len(submissions) == len(SAMPLED_TRACKS)
         for submission, track in zip(submissions, SAMPLED_TRACKS):
             assert submission.content['track']['value'] == track
+
+    def test_release_submissions_per_track(self, openreview_client, helpers):
+        """Running a track's Submission_Change_Before_Bidding releases only
+        that track's submissions, and only to that track's committee."""
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@webconf.cc', password=helpers.strong_password)
+        now = datetime.datetime.now()
+
+        for track in SAMPLED_TRACKS:
+            invitation_id = f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding'
+            pc_client.post_invitation_edit(
+                invitations=f'{invitation_id}/Dates',
+                content={
+                    'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+                }
+            )
+            ## saved by the track's Reviewers, Area_Chairs and Senior_Area_Chairs Track edits (each adds
+            ## a reader), then by the Dates edit; each save queues the date process once
+            helpers.await_queue_edit(openreview_client, edit_id=f'{invitation_id}-0-1', count=4)
+
+        submissions = openreview_client.get_notes(invitation=f'{VENUE_ID}/-/Submission', sort='number:asc')
+        for submission in submissions:
+            track = submission.content['track']['value']
+            assert submission.readers == [
+                VENUE_ID,
+                f'{VENUE_ID}/{track}_Senior_Area_Chairs',
+                f'{VENUE_ID}/{track}_Area_Chairs',
+                f'{VENUE_ID}/{track}_Reviewers',
+                f'{VENUE_ID}/Submission{submission.number}/Authors'
+            ]
 
     def test_matching_invitations_are_track_scoped(self, openreview_client, helpers):
         """Affinity_Score, Conflict, Proposed_Assignment and
