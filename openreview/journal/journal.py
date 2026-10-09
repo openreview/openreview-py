@@ -701,8 +701,21 @@ class Journal(object):
         if not self.should_skip_official_recommendation():
             self.invitation_builder.set_note_official_recommendation_enabling_invitation(note)
 
+    def get_submission_visibility(self):
+        submission_visibility = self.settings.get('submission_visibility')
+        if submission_visibility is None:
+            return 'public' if self.settings.get('submission_public', True) else 'all_action_editors'
+        if submission_visibility not in ['public', 'all_action_editors', 'assigned_action_editor']:
+            raise openreview.OpenReviewException(f'Invalid submission_visibility setting: {submission_visibility}. Valid values are public, all_action_editors and assigned_action_editor.')
+        return submission_visibility
+
     def is_submission_public(self):
-        return self.settings.get('submission_public', True)
+        return self.get_submission_visibility() == 'public'
+
+    def get_action_editors_reader_id(self, number):
+        if self.get_submission_visibility() == 'assigned_action_editor':
+            return self.get_action_editors_id(number=number)
+        return self.get_action_editors_id()
 
     def get_issn(self):
         return self.settings.get('issn', None)
@@ -858,22 +871,22 @@ class Journal(object):
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.venue_id, self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.venue_id, self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_review_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_decision_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_authors_readers(self, number):
         if self.is_submission_public() or self.release_submission_after_acceptance():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_authors_id(number)]
 
     def get_official_comment_readers(self, number):
         readers = []
@@ -882,7 +895,7 @@ class Journal(object):
 
         readers.append(self.get_editors_in_chief_id())
 
-        if not self.is_submission_public():
+        if self.get_submission_visibility() == 'all_action_editors':
             readers.append(self.get_action_editors_id())
 
         return readers + [self.get_action_editors_id(number),

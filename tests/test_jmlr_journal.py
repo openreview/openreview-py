@@ -44,7 +44,7 @@ class TestJMLRJournal():
                     'website': {'value': 'jmlr.org' },
                     'settings': {
                         'value': {
-                            'submission_public': False,
+                            'submission_visibility': 'assigned_action_editor',
                             'author_anonymity': False,
                             'assignment_delay': 0,
                             'skip_official_recommendation': True
@@ -167,6 +167,13 @@ class TestJMLRJournal():
 
         edits = openreview_client.get_note_edits(note.id, invitation='JMLR/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        note = openreview_client.get_note(note_id_1)
+        assert note.readers == ['JMLR', 'JMLR/Paper1/Action_Editors', 'JMLR/Paper1/Reviewers', 'JMLR/Paper1/Authors']
+
+        xukun_client = OpenReviewClient(username='xukun@jmlrone.com', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            xukun_client.get_note(note_id_1)
 
         assert celeste_client.get_invitation('JMLR/Paper1/Reviewers/-/Assignment')
 
@@ -344,9 +351,21 @@ Please note that responding to this email will direct your reply to editor@jmlr.
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 3
-        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            xukun_client.get_note(reviews[0].id)
+
+        official_comment_invitation = openreview_client.get_invitation(f'{venue_id}/Paper1/-/Official_Comment')
+        assert official_comment_invitation.edit['note']['readers']['param']['items'] == [
+            { 'value': f'{venue_id}/Editors_In_Chief', 'optional': True },
+            { 'value': f'{venue_id}/Paper1/Action_Editors', 'optional': True },
+            { 'value': f'{venue_id}/Paper1/Reviewers', 'optional': True },
+            { 'inGroup': f'{venue_id}/Paper1/Reviewers', 'optional': True },
+            { 'value': f'{venue_id}/Paper1/Authors', 'optional': True }
+        ]
 
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation JMLR/Paper1/-/Official_Recommendation was not found'):
             invitation = eic_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
@@ -405,6 +424,7 @@ Please note that responding to this email will direct your reply to editor@jmlr.
                 )
             )
             helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+            assert rating_note['note']['readers'] == [f'{venue_id}/Editors_In_Chief', f'{venue_id}/Paper1/Action_Editors']
             process_logs = openreview_client.get_process_logs(id = rating_note['id'])
             assert len(process_logs) == 1
             assert process_logs[0]['status'] == 'ok'
