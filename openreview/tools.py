@@ -2248,21 +2248,26 @@ def should_match_invitation_source(client, invitation, submission, note=None, do
     return True
 
 def is_forum_invitation(invitation):
+    """
+    Checks if the invitation creates one invitation per submission forum.
 
-    if invitation.edit:
+    Its edit must declare the ``noteId`` and ``noteNumber`` content fields that
+    ``create_forum_invitations`` passes in, and must not declare ``replyto``, which
+    belongs to the invitations created by ``create_replyto_invitations``.
+    """
 
-        content_keys = invitation.edit.get('content', {}).keys()
+    content_keys = invitation.edit.get('content', {}).keys() if invitation.edit else []
 
-        if 'noteId' not in content_keys:
-            return False
+    if 'noteId' not in content_keys:
+        return False
 
-        if 'noteNumber' not in content_keys:
-            return False
+    if 'noteNumber' not in content_keys:
+        return False
 
-        if 'replyto' in content_keys:
-            return False
+    if 'replyto' in content_keys:
+        return False
 
-    return True    
+    return True
 
 
 def create_replyto_invitations(client, submission, note):
@@ -2305,7 +2310,9 @@ def create_forum_invitations(client, submission):
     ethics_reviewers_name = domain.get_content_value('ethics_reviewers_name')
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
 
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active() and i.date_processes]
+    ## Only invitations that declare the noteId/noteNumber content fields can create a per forum
+    ## invitation, the rest of the invitations do not accept the content posted below.
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active() and i.date_processes and is_forum_invitation(i)]
 
     for invitation in invitation_invitations:
         print('processing invitation: ', invitation.id)
