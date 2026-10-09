@@ -91,6 +91,7 @@ class InvitationBuilder(object):
         self.set_authors_release_invitation()
         self.set_ae_assignment(assignment_delay)
         self.set_reviewer_assignment(assignment_delay)
+        self.set_reviewer_role_invitation()
         self.set_reviewer_assignment_acknowledgement_invitation()
         self.set_review_invitation()
         self.set_official_recommendation_invitation()
@@ -2506,7 +2507,82 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             web = web
         )
 
-        self.save_invitation(invitation)                       
+        self.save_invitation(invitation)
+
+    def set_reviewer_role_invitation(self):
+
+        reviewer_roles = self.journal.get_reviewer_roles()
+        if not reviewer_roles:
+            return
+
+        venue_id = self.journal.venue_id
+        editor_in_chief_id = self.journal.get_editors_in_chief_id()
+        action_editors_id = self.journal.get_action_editors_id()
+        reviewers_id = self.journal.get_reviewers_id()
+        additional_committee = [self.journal.get_action_editors_archived_id()] if self.journal.has_archived_action_editors() else []
+
+        invitation = Invitation(
+            id=self.journal.get_reviewer_role_id(),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, action_editors_id] + additional_committee,
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_role_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, action_editors_id] + additional_committee,
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'value': venue_id, 'optional': True }
+                        ]
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'group',
+                        'const': reviewers_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'options': { 'group': reviewers_id }
+                    }
+                },
+                'label': {
+                    'param': {
+                        'enum': reviewer_roles
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
 
     def set_review_approval_invitation(self):
         venue_id = self.journal.venue_id
@@ -3753,8 +3829,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 <br>'
         }
 
-        edit_param = f'{self.journal.get_reviewer_assignment_id()};{self.journal.get_reviewer_invite_assignment_id()}'
+        edit_ids = [self.journal.get_reviewer_assignment_id()]
+        if self.journal.has_external_reviewers():
+            edit_ids.append(self.journal.get_reviewer_invite_assignment_id())
+        edit_param = ';'.join(edit_ids)
         score_ids = [self.journal.get_reviewer_affinity_score_id(), self.journal.get_reviewer_conflict_id(), self.journal.get_reviewer_custom_max_papers_id() + ',head:ignore', self.journal.get_reviewer_pending_review_id() + ',head:ignore', self.journal.get_reviewer_availability_id() + ',head:ignore']
+        if self.journal.get_reviewer_roles():
+            score_ids.append(self.journal.get_reviewer_role_id() + ',head:ignore')
         browse_param = ';'.join(score_ids)
         filter_param = f'{self.journal.get_reviewer_pending_review_id()} == 0 AND {self.journal.get_reviewer_availability_id()} == Available AND {self.journal.get_reviewer_conflict_id()} == 0'
         params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&filter={filter_param}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={invitation.id})'
@@ -3852,7 +3933,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         }
                     },
                     'signatures': ['${3/signatures}'],
-                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}', self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'content': {
                         'summary_of_contributions': {
@@ -3934,6 +4015,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             for key, value in self.journal.get_review_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
+        if self.journal.should_release_reviews_to_authors_when_posted():
+            invitation['edit']['note']['readers'].append(self.journal.get_authors_id(number='${5/content/noteNumber/value}'))
+        else:
+            invitation['edit']['nonreaders'] = [self.journal.get_authors_id(number='${4/content/noteNumber/value}')]
+            invitation['edit']['note']['nonreaders'] = [self.journal.get_authors_id(number='${5/content/noteNumber/value}')]
+
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
         invitation = {
@@ -3954,6 +4041,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         }
                     },
                     'readers': self.journal.get_release_review_readers(number='${5/content/noteNumber/value}'),
+                    'nonreaders': []
                 }
             }
         }
@@ -3986,7 +4074,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 signatures=[self.journal.venue_id],
                 edit={
                     'note': {
-                        'readers': self.journal.get_release_review_readers(number=note.number)
+                        'readers': self.journal.get_release_review_readers(number=note.number),
+                        'nonreaders': []
                     }
                 }
         ))

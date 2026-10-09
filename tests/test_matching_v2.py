@@ -332,6 +332,8 @@ class TestMatching():
 
     def test_set_assigments(self, venue, openreview_client, pc_client, test_client, helpers):
 
+        pc_client = OpenReviewClient(username='pc1_venue@mail.com', password=helpers.strong_password)
+        pc_client.impersonate(venue.id)
         venue.client = pc_client
 
         notes = venue.get_submissions(sort='number:asc')
