@@ -75,6 +75,10 @@ class OpenReviewClient(object):
         self.tags_url = self.baseurl + '/tags'
         self.bulk_tags_url = self.baseurl + '/tags/bulk'
         self.tags_rename = self.baseurl + '/tags/rename'
+        self.payments_url = self.baseurl + '/payments'
+        self.payment_edits_url = self.baseurl + '/payments/edits'
+        self.payments_checkout_url = self.baseurl + '/payments/checkout'
+        self.payments_checkout_bulk_url = self.baseurl + '/payments/checkout/bulk'
         self.edges_url = self.baseurl + '/edges'
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
         self.edges_count_url = self.baseurl + '/edges/count'
@@ -2188,6 +2192,288 @@ class OpenReviewClient(object):
         }
 
         return self.get_tags(**params)
+
+    def get_payments(self, id = None, note = None, profile = None, group = None, invitation = None, status = None, signatures = None, transaction_id = None, domain = None, limit = None, offset = None, sort = None, with_count = None):
+        """Get a list of Payment objects based on the filters provided.
+
+        Returns Payments matching all the criteria passed in the parameters. When
+        ``with_count`` is True and ``offset`` is not set, returns a tuple of
+        ``(payments, count)``.
+
+        :param id: A Payment ID. If provided, returns the Payment whose ID matches.
+        :type id: str, optional
+        :param note: A Note ID. If provided, returns the Payments made for this Note, e.g. a submission fee.
+        :type note: str, optional
+        :param profile: A Profile ID. If provided, returns the Payments made for this Profile.
+        :type profile: str, optional
+        :param group: A Group ID. If provided, returns the Payments made for this Group.
+        :type group: str, optional
+        :param invitation: An Invitation ID. If provided, returns Payments posted through this Invitation.
+        :type invitation: str, optional
+        :param status: Payment status: ``pending``, ``paid``, ``waived``, ``refunded``, ``disputed`` or ``expired``.
+        :type status: str, optional
+        :param signatures: Group IDs. If provided, returns the Payments signed by any of them, e.g. made by a payer.
+        :type signatures: list[str], optional
+        :param transaction_id: A Transaction ID. If provided, returns the Payments covered by this Transaction.
+        :type transaction_id: str, optional
+        :param domain: Venue domain ID; improves query efficiency when the caller is a venue organizer.
+        :type domain: str, optional
+        :param limit: Maximum number of Payments to return.
+        :type limit: int, optional
+        :param offset: Number of Payments to skip (for pagination).
+        :type offset: int, optional
+        :param sort: Field to sort results by.
+        :type sort: str, optional
+        :param with_count: If True, also returns the total count of matching Payments.
+        :type with_count: bool, optional
+
+        :return: List of Payment objects, or a tuple ``(list[Payment], int)`` when ``with_count`` is True and ``offset`` is None.
+        :rtype: list[Payment] | tuple[list[Payment], int]
+        """
+        params = {}
+
+        if id is not None:
+            params['id'] = id
+        if note is not None:
+            params['note'] = note
+        if profile is not None:
+            params['profile'] = profile
+        if group is not None:
+            params['group'] = group
+        if invitation is not None:
+            params['invitation'] = invitation
+        if status is not None:
+            params['status'] = status
+        if signatures is not None:
+            params['signatures'] = signatures
+        if transaction_id is not None:
+            params['transactionId'] = transaction_id
+        if domain is not None:
+            params['domain'] = domain
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if sort is not None:
+            params['sort'] = sort
+        if with_count is not None:
+            params['count'] = with_count
+
+        response = self.session.get(self.payments_url, params=tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+
+        payments = [Payment.from_json(p) for p in response.json()['payments']]
+        if with_count and params.get('offset') is None:
+            return payments, response.json()['count']
+
+        return payments
+
+    def get_all_payments(self, note = None, profile = None, group = None, invitation = None, status = None, signatures = None, transaction_id = None, domain = None):
+        """Get all the Payment objects matching the filters provided, paging through the results.
+
+        Takes the same filters as :meth:`get_payments`.
+
+        :return: List of Payment objects
+        :rtype: list[Payment]
+        """
+        params = {
+            'note': note,
+            'profile': profile,
+            'group': group,
+            'invitation': invitation,
+            'status': status,
+            'signatures': signatures,
+            'transaction_id': transaction_id,
+            'domain': domain
+        }
+
+        payments = []
+        batch = self.get_payments(**params, limit=self.limit, offset=0)
+        while batch:
+            payments.extend(batch)
+            if len(batch) < self.limit:
+                break
+            batch = self.get_payments(**params, limit=self.limit, offset=len(payments))
+
+        return payments
+
+    def get_payment_edits(self, payment_id = None, invitation = None, limit = None, offset = None):
+        """Get the edits of a Payment, each one a status transition or a correction.
+
+        **Only for OpenReview support.**
+
+        :param payment_id: ID of the Payment whose edits to retrieve.
+        :type payment_id: str, optional
+        :param invitation: Invitation ID to filter edits by.
+        :type invitation: str, optional
+        :param limit: Maximum number of edits to return.
+        :type limit: int, optional
+        :param offset: Number of edits to skip (for pagination).
+        :type offset: int, optional
+
+        :return: List of edit dictionaries, each with a singular ``signature`` and a ``payment``.
+        :rtype: list[dict]
+        """
+        params = {}
+        if payment_id is not None:
+            params['payment.id'] = payment_id
+        if invitation is not None:
+            params['invitation'] = invitation
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+
+        response = self.session.get(self.payment_edits_url, params=tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()['edits']
+
+    def post_payment_edit(self, invitation, signature, payment=None, readers=None, writers=None, nonreaders=None, content=None):
+        """Create or update a Payment via the edit system.
+
+        **Only for OpenReview support.** Authors never post payment edits: they pay through
+        :meth:`checkout_payment`, and the API writes the payment on their behalf. Support uses
+        this to record payments it asserts, like a ``waived`` fee, and to correct one.
+
+        :param invitation: Invitation ID that defines the schema of this edit, e.g. ``venue/Submission1/-/Submission_Fee_Payment``.
+        :type invitation: str
+        :param signature: Group ID signing this edit. A payment edit has exactly one signatory.
+        :type signature: str
+        :param payment: Payment object containing the fields to create or update. Use ``payment.id`` to target an existing Payment.
+        :type payment: Payment, optional
+        :param readers: List of group IDs that can read this edit.
+        :type readers: list[str], optional
+        :param writers: List of group IDs that can modify this edit.
+        :type writers: list[str], optional
+        :param nonreaders: List of group IDs excluded from reading this edit.
+        :type nonreaders: list[str], optional
+        :param content: Additional content fields for the edit itself (not the Payment).
+        :type content: dict, optional
+
+        :return: Dictionary containing the posted edit, including the ``payment`` with its ``id``.
+        :rtype: dict
+        """
+        edit_json = {
+            'invitation': invitation,
+            'signature': signature,
+            'payment': payment.to_json() if payment else {}
+        }
+
+        if readers is not None:
+            edit_json['readers'] = readers
+
+        if writers is not None:
+            edit_json['writers'] = writers
+
+        if nonreaders is not None:
+            edit_json['nonreaders'] = nonreaders
+
+        if content is not None:
+            edit_json['content'] = content
+
+        response = self.session.post(self.payment_edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def checkout_payment(self, invitation, payment=None, gateway=None, cancel_url=None):
+        """Start the checkout of one payment invitation and return the payment gateway URL.
+
+        The body is a partial payment edit for the invitation, e.g. ``Payment(note=submission_id)``
+        for a submission fee. The API completes it: the amount and currency come from the
+        invitation, never from the caller, and the caller is recorded as the payer. A ``pending``
+        Payment exists from this call on, until the gateway confirms or expires it.
+
+        :param invitation: ID of the payment invitation, e.g. ``venue/Submission1/-/Submission_Fee_Payment``.
+        :type invitation: str
+        :param payment: Partial Payment naming its target, e.g. ``Payment(note=submission_id)``.
+        :type payment: Payment, optional
+        :param gateway: Name of the payment gateway; the API default is used when omitted.
+        :type gateway: str, optional
+        :param cancel_url: URL the gateway sends the payer back to when the checkout is abandoned.
+        :type cancel_url: str, optional
+
+        :return: Dictionary with the gateway checkout ``url``, the ``paymentId`` and the ``transactionId``.
+        :rtype: dict
+        """
+        body = {
+            'invitation': invitation,
+            'payment': payment.to_json() if payment else {}
+        }
+
+        if gateway is not None:
+            body['gateway'] = gateway
+
+        if cancel_url is not None:
+            body['cancelUrl'] = cancel_url
+
+        response = self.session.post(self.payments_checkout_url, json = body, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def checkout_payments(self, payments, gateway=None, cancel_url=None):
+        """Start one checkout covering several payment invitations, e.g. the fees of several submissions.
+
+        The payments are created by an asynchronous job: poll :meth:`get_payments_checkout` with the
+        returned ``jobId`` to get the gateway URL once it completes.
+
+        :param payments: List of ``(invitation_id, Payment)`` pairs, one per fee to pay.
+        :type payments: list[tuple[str, Payment]]
+        :param gateway: Name of the payment gateway; the API default is used when omitted.
+        :type gateway: str, optional
+        :param cancel_url: URL the gateway sends the payer back to when the checkout is abandoned.
+        :type cancel_url: str, optional
+
+        :return: Dictionary with the ``jobId``, the number of payments and the job ``status``.
+        :rtype: dict
+        """
+        body = {
+            'payments': [{ 'invitation': invitation, 'payment': payment.to_json() } for invitation, payment in payments]
+        }
+
+        if gateway is not None:
+            body['gateway'] = gateway
+
+        if cancel_url is not None:
+            body['cancelUrl'] = cancel_url
+
+        response = self.session.post(self.payments_checkout_bulk_url, json = body, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def get_payments_checkout(self, job_id):
+        """Get the status of a checkout started with :meth:`checkout_payments`.
+
+        :param job_id: The ``jobId`` returned by :meth:`checkout_payments`.
+        :type job_id: str
+
+        :return: Dictionary with the job ``status`` and, once it is ``ok``, the gateway ``url`` and the ``paymentIds``.
+        :rtype: dict
+        """
+        response = self.session.get(f'{self.payments_checkout_url}/{job_id}', headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def cancel_payment(self, payment_id):
+        """Cancel an outstanding checkout so the fee can be paid again.
+
+        Any invitee of the payment invitation may cancel it, not only whoever started it.
+        The ``pending`` Payment becomes ``expired``.
+
+        :param payment_id: ID of the ``pending`` Payment.
+        :type payment_id: str
+
+        :return: Dictionary with the ``paymentId`` and its new ``status``.
+        :rtype: dict
+        """
+        response = self.session.post(f'{self.payments_url}/{payment_id}/cancel', headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
 
     def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, select=None, stream=None, domain=None):
         """Get a list of Edge objects based on the filters provided.
@@ -4822,3 +5108,147 @@ class Tag(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))            
 
+class Payment(object):
+    """
+    A payment made for an OpenReview product, e.g. a submission fee. Exactly one of ``note``,
+    ``profile`` or ``group`` is set, according to what the payment was for. ``invitations[0]`` is
+    the product invitation the payment was created through.
+
+    :param note: Note ID the payment was made for, e.g. the submission of a submission fee
+    :type note: str, optional
+    :param profile: Profile ID the payment was made for
+    :type profile: str, optional
+    :param group: Group ID the payment was made for
+    :type group: str, optional
+    :param amount: Amount in the minor unit of the currency, e.g. 2000 is 20.00 USD
+    :type amount: int, optional
+    :param currency: Three-letter ISO currency code, e.g. USD
+    :type currency: str, optional
+    :param status: ``pending``, ``paid``, ``waived``, ``refunded``, ``disputed`` or ``expired``
+    :type status: str, optional
+    :param signatures: The payer for ``pending`` and ``paid`` payments, the support group for the statuses support asserts
+    :type signatures: list[str], optional
+    :param id: Payment id
+    :type id: str, optional
+    :param invitations: Invitations the edits of this payment came through
+    :type invitations: list[str], optional
+    :param transaction_id: Id of the internal transaction, absent for ``waived`` payments
+    :type transaction_id: str, optional
+    """
+    def __init__(self, note=None, profile=None, group=None, amount=None, currency=None, status=None, signatures=None, id=None, invitations=None, transaction_id=None, readers=None, writers=None, nonreaders=None, content=None, domain=None, cdate=None, mdate=None, tcdate=None, tmdate=None, ddate=None):
+        self.id = id
+        self.invitations = invitations
+        self.note = note
+        self.profile = profile
+        self.group = group
+        self.amount = amount
+        self.currency = currency
+        self.status = status
+        self.signatures = signatures
+        self.transaction_id = transaction_id
+        self.readers = readers
+        self.writers = writers
+        self.nonreaders = nonreaders
+        self.content = content
+        self.domain = domain
+        self.cdate = cdate
+        self.mdate = mdate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.ddate = ddate
+
+    def to_json(self):
+        """
+        Converts Payment instance to a dictionary. The instance variable names are the keys and their values the values of the dictionary.
+
+        :return: Dictionary containing all the parameters of a Payment instance
+        :rtype: dict
+        """
+        body = {}
+
+        if self.id:
+            body['id'] = self.id
+
+        if self.note:
+            body['note'] = self.note
+
+        if self.profile:
+            body['profile'] = self.profile
+
+        if self.group:
+            body['group'] = self.group
+
+        if self.amount is not None:
+            body['amount'] = self.amount
+
+        if self.currency:
+            body['currency'] = self.currency
+
+        if self.status:
+            body['status'] = self.status
+
+        if self.signatures:
+            body['signatures'] = self.signatures
+
+        if self.transaction_id:
+            body['transactionId'] = self.transaction_id
+
+        if self.readers:
+            body['readers'] = self.readers
+
+        if self.writers:
+            body['writers'] = self.writers
+
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+
+        if self.content:
+            body['content'] = self.content
+
+        if self.ddate:
+            body['ddate'] = self.ddate
+
+        return body
+
+    @classmethod
+    def from_json(Payment, p):
+        """
+        Creates a Payment object from a dictionary that contains keys values equivalent to the name of the instance variables of the Payment class
+
+        :param p: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Payment class
+        :type p: dict
+
+        :return: Payment whose instance variables contain the values from the dictionary
+        :rtype: Payment
+        """
+        payment = Payment(
+            id = p.get('id'),
+            invitations = p.get('invitations'),
+            note = p.get('note'),
+            profile = p.get('profile'),
+            group = p.get('group'),
+            amount = p.get('amount'),
+            currency = p.get('currency'),
+            status = p.get('status'),
+            signatures = p.get('signatures'),
+            transaction_id = p.get('transactionId'),
+            readers = p.get('readers'),
+            writers = p.get('writers'),
+            nonreaders = p.get('nonreaders'),
+            content = p.get('content'),
+            domain = p.get('domain'),
+            cdate = p.get('cdate'),
+            mdate = p.get('mdate'),
+            tcdate = p.get('tcdate'),
+            tmdate = p.get('tmdate'),
+            ddate = p.get('ddate')
+        )
+        return payment
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Payment(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
