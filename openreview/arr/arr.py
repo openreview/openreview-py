@@ -776,9 +776,7 @@ class ARR(object):
 
         arr_venues.sort(reverse=True)
 
-        stale_venue_ids = [
-            venue_id for _, venue_id in arr_venues if venue_id != self.venue_id
-        ][previous_count:]
+        stale_venue_ids = [venue_id for _, venue_id in arr_venues[1 + previous_count:]]
         if stale_venue_ids:
             self.client.remove_members_from_group(active_venues.id, stale_venue_ids)
 
