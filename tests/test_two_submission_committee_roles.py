@@ -123,6 +123,115 @@ class TestTwoSubmissionCommitteeRoles():
         assert venue_group.content['area_chair_roles']['value'] == ['Area_Chairs', 'Technical_Area_Chairs']
         assert venue_group.content['submission_area_chair_roles']['value'] == ['Area_Chairs', 'Technical_Area_Chairs']
 
+        # The submission change /Readers edit invitations should offer an "All X" option for every reviewer/area chair role. 
+        # Before_Reviewing also offers an "Assigned X" option for every per-submission role.
+        roles = ['Expert_Reviewers', 'Technical_Reviewers', 'Area_Chairs', 'Technical_Area_Chairs']
+        submission_group_id = 'XYZW.cc/2025/Conference/Submission${{2/id}/number}'
+
+        # Before bidding, submissions should be readable by every reviewer/area chair role so that all of them can bid.
+        before_bidding_invitation = openreview_client.get_invitation('XYZW.cc/2025/Conference/-/Submission_Change_Before_Bidding')
+        assert before_bidding_invitation.edit['note']['readers'] == [
+            'XYZW.cc/2025/Conference',
+            'XYZW.cc/2025/Conference/Area_Chairs',
+            'XYZW.cc/2025/Conference/Technical_Area_Chairs',
+            'XYZW.cc/2025/Conference/Expert_Reviewers',
+            'XYZW.cc/2025/Conference/Technical_Reviewers',
+            f'{submission_group_id}/Authors'
+        ]
+
+        # Before reviewing, submissions should be readable by every per-submission reviewer/area chair group.
+        before_reviewing_invitation = openreview_client.get_invitation('XYZW.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        assert before_reviewing_invitation.edit['note']['readers'] == [
+            'XYZW.cc/2025/Conference',
+            f'{submission_group_id}/Area_Chairs',
+            f'{submission_group_id}/Technical_Area_Chairs',
+            f'{submission_group_id}/Expert_Reviewers',
+            f'{submission_group_id}/Technical_Reviewers',
+            f'{submission_group_id}/Authors'
+        ]
+
+        readers_invitation =openreview_client.get_invitation('XYZW.cc/2025/Conference/-/Submission_Change_Before_Bidding/Readers')
+        values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+        for role in roles:
+            assert f'XYZW.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option'
+        assert not any(value.startswith(submission_group_id) and not value.endswith('/Authors') for value in values), 'Unexpected "Assigned" reader option before bidding'
+
+        readers_invitation = openreview_client.get_invitation('XYZW.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Readers')
+        values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+        for role in roles:
+            assert f'XYZW.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option'
+            assert f'{submission_group_id}/{role}' in values, f'Missing "Assigned {role}" reader option'
+        assert not any(value.endswith('/Submitted') for value in values), 'Unexpected "Submitted" reader option'
+
+        # Withdrawn and desk rejected submissions should be readable by every per-submission reviewer/area chair group, and their /Readers edit
+        # invitations should offer "All X" and "Assigned X" options for every role.
+        for invitation_name in ['Withdrawn_Submission', 'Desk_Rejected_Submission']:
+            invitation = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/-/{invitation_name}')
+            assert invitation.edit['note']['readers'] == [
+                'XYZW.cc/2025/Conference/Program_Chairs',
+                f'{submission_group_id}/Area_Chairs',
+                f'{submission_group_id}/Technical_Area_Chairs',
+                f'{submission_group_id}/Expert_Reviewers',
+                f'{submission_group_id}/Technical_Reviewers',
+                f'{submission_group_id}/Authors'
+            ], f'Unexpected readers in {invitation_name}'
+
+            readers_invitation = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/-/{invitation_name}/Readers')
+            values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+            for role in roles:
+                assert f'XYZW.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option in {invitation_name}/Readers'
+                assert f'{submission_group_id}/{role}' in values, f'Missing "Assigned {role}" reader option in {invitation_name}/Readers'
+            assert not any(value.endswith('/Submitted') for value in values), f'Unexpected "Submitted" reader option in {invitation_name}/Readers'
+
+        # Each reviewer role has its own review form here (Official_Review for Expert_Reviewers and Technical_Reviewers_Review for Technical_Reviewers),
+        # so each review form should get its own release invitation pointing to that form. The meta review and decision releases are shared.
+        # Every release should make the notes readable by all the per-submission reviewer/area chair groups, not just the groups of the primary role.
+        release_group_id = 'XYZW.cc/2025/Conference/Submission${5/content/noteNumber/value}'
+        releases = {
+            'Official_Review_Release': 'Official_Review',
+            'Technical_Reviewers_Review_Release': 'Technical_Reviewers_Review',
+            'Meta_Review_Release': 'Meta_Review',
+            'Decision_Release': 'Decision'
+        }
+        for release_name, stage_name in releases.items():
+            release_invitation = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/-/{release_name}')
+            assert release_invitation.edit['invitation']['id'] == f'XYZW.cc/2025/Conference/-/{stage_name}', f'{release_name} releases the wrong stage'
+            assert release_invitation.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+                'XYZW.cc/2025/Conference/Program_Chairs',
+                f'{release_group_id}/Area_Chairs',
+                f'{release_group_id}/Technical_Area_Chairs',
+                f'{release_group_id}/Expert_Reviewers',
+                f'{release_group_id}/Technical_Reviewers',
+                f'{release_group_id}/Authors'
+            ], f'Unexpected readers in {release_name}'
+
+            # The /Readers edit invitation of each release lets PCs change who the notes are released to, so it should offer "All X", "Assigned X" and
+            # "Assigned X who already submitted their review" options for every reviewer role, and "All X" and "Assigned X" for every area chair role.
+            readers_invitation = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/-/{release_name}/Readers')
+            values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+            for role in roles:
+                assert f'XYZW.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option in {release_name}/Readers'
+                assert f'{release_group_id}/{role}' in values, f'Missing "Assigned {role}" reader option in {release_name}/Readers'
+            for role in ['Expert_Reviewers', 'Technical_Reviewers']:
+                assert f'{release_group_id}/{role}/Submitted' in values, f'Missing "Assigned {role} Submitted" reader option in {release_name}/Readers'
+
+        # When decisions are made, the Accept_Submission_Release and Reject_Submission_Release templates create the Accept/Reject_Submission_Change_After_Decision
+        # invitations, which release the submissions with new readers. Accepted submissions are made public, so every committee member can still read them.
+        accept_invitation = openreview_client.get_invitation('XYZW.cc/2025/Conference/-/Accept_Submission_Change_After_Decision')
+        assert accept_invitation.edit['note']['readers'] == ['everyone']
+
+        # Rejected submissions stay private, so their readers should include every per-submission reviewer/area chair group (not just the groups of the
+        # primary role) so that none of the assigned committee members lose access to the submissions they reviewed.
+        reject_invitation = openreview_client.get_invitation('XYZW.cc/2025/Conference/-/Reject_Submission_Change_After_Decision')
+        assert reject_invitation.edit['note']['readers'] == [
+            'XYZW.cc/2025/Conference',
+            f'{submission_group_id}/Area_Chairs',
+            f'{submission_group_id}/Technical_Area_Chairs',
+            f'{submission_group_id}/Expert_Reviewers',
+            f'{submission_group_id}/Technical_Reviewers',
+            f'{submission_group_id}/Authors'
+        ]
+
         # Populate committee groups
         openreview_client.post_group_edit(
             invitation='XYZW.cc/2025/Conference/Expert_Reviewers/-/Members',
@@ -210,6 +319,17 @@ class TestTwoSubmissionCommitteeRoles():
         for submission in submissions:
             assert openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Expert_Reviewers')
             assert openreview_client.get_group(f'XYZW.cc/2025/Conference/Submission{submission.number}/Technical_Reviewers')
+
+        # The /Readers edit invitations of Accept/Reject_Submission_Change_After_Decision let PCs change who the submissions are released to
+        # after decisions, so they should offer "All X" and "Assigned X" options for every reviewer/area chair role, not just the primary role of each committee type.
+        submission_group_id = 'XYZW.cc/2025/Conference/Submission${{2/id}/number}'
+        for invitation_name in ['Accept_Submission_Change_After_Decision', 'Reject_Submission_Change_After_Decision']:
+            readers_invitation = openreview_client.get_invitation(f'XYZW.cc/2025/Conference/-/{invitation_name}/Readers')
+            values = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+            for role in ['Expert_Reviewers', 'Technical_Reviewers', 'Area_Chairs', 'Technical_Area_Chairs']:
+                assert f'XYZW.cc/2025/Conference/{role}' in values, f'Missing "All {role}" reader option in {invitation_name}/Readers'
+                assert f'{submission_group_id}/{role}' in values, f'Missing "Assigned {role}" reader option in {invitation_name}/Readers'
+            assert not any(value.endswith('/Submitted') for value in values), f'Unexpected "Submitted" reader option in {invitation_name}/Readers'
 
     def test_setup_matching_for_both_roles(self, openreview_client, helpers):
         """Post Assignment_Configuration notes and Proposed_Assignment edges for
@@ -524,6 +644,43 @@ class TestTwoSubmissionCommitteeRoles():
             signatures_items = child.edit['signatures']['param']['items']
             assert any('Technical_Reviewer_' in item.get('prefix', '') for item in signatures_items)
             assert not any('Expert_Reviewer_' in item.get('prefix', '') for item in signatures_items)
+
+        # The /Readers edit invitation for each review form should offer a reader option for every reviewer/area chair role configured on the venue (both
+        # the "primary" role and any additional roles added via reviewer_groups_names/area_chair_groups_names), not just the primary role of each committee type.
+        venue_group = openreview_client.get_group('XYZW.cc/2025/Conference')
+        reviewer_roles = venue_group.content['reviewer_roles']['value']
+        area_chair_roles = venue_group.content['area_chair_roles']['value']
+
+        def assert_all_role_reader_options(readers_invitation_id):
+            readers_invitation = openreview_client.get_invitation(readers_invitation_id)
+            items = readers_invitation.edit['content']['readers']['value']['param']['items']
+            values = [item['value'] for item in items]
+
+            assert any(value.endswith('/Program_Chairs') for value in values), (
+                f'Missing Program Chairs reader option in {readers_invitation_id}'
+            )
+
+            for role in area_chair_roles:
+                assert f'XYZW.cc/2025/Conference/{role}' in values, (
+                    f'Missing "All {role}" reader option in {readers_invitation_id}'
+                )
+                assert any(value.endswith(f'/{role}') and 'Submission' in value for value in values), (
+                    f'Missing "Assigned {role}" reader option in {readers_invitation_id}'
+                )
+
+            for role in reviewer_roles:
+                assert f'XYZW.cc/2025/Conference/{role}' in values, (
+                    f'Missing "All {role}" reader option in {readers_invitation_id}'
+                )
+                assert any(value.endswith(f'/{role}') and 'Submission' in value for value in values), (
+                    f'Missing "Assigned {role}" reader option in {readers_invitation_id}'
+                )
+                assert any(value.endswith(f'/{role}/Submitted') for value in values), (
+                    f'Missing "Assigned {role} Submitted" reader option in {readers_invitation_id}'
+                )
+
+        assert_all_role_reader_options('XYZW.cc/2025/Conference/-/Official_Review/Readers')
+        assert_all_role_reader_options('XYZW.cc/2025/Conference/-/Technical_Reviewers_Review/Readers')
 
         # Reviewer assignments were undeployed earlier; redeploy them so reviewers
         # can actually post reviews for submission 1.
