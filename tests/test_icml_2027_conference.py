@@ -413,3 +413,27 @@ class TestICML2027Conference():
 
         settled = { p.note for p in payments if p.status in ['paid', 'waived'] }
         assert [s.number for s in submissions if s.id not in settled] == [1, 3]
+
+    def test_payments_page(self, openreview_client, helpers):
+
+        venue_id = self.venue_id
+
+        author_one_client = openreview.api.OpenReviewClient(username='authorone@icml2027.cc', password=helpers.strong_password)
+        author_two_client = openreview.api.OpenReviewClient(username='authortwo@icml2027.cc', password=helpers.strong_password)
+
+        ## one call gives the payments page every fee the author is invited to pay, its submission and its payments
+        invitations = { i.id: i for i in author_two_client.get_invitations(invitee=True, type='payment', details='replytoNote,repliedPayments') }
+        assert sorted(invitations.keys()) == [f'{venue_id}/Submission1/-/Submission_Fee_Payment', f'{venue_id}/Submission2/-/Submission_Fee_Payment']
+
+        submission_one_fee = invitations[f'{venue_id}/Submission1/-/Submission_Fee_Payment']
+        assert submission_one_fee.details['replytoNote']['content']['title']['value'] == 'Paper title 1'
+        assert sorted([p['status'] for p in submission_one_fee.details['repliedPayments']]) == ['expired', 'pending']
+
+        submission_two_fee = invitations[f'{venue_id}/Submission2/-/Submission_Fee_Payment']
+        assert submission_two_fee.details['replytoNote']['content']['title']['value'] == 'Paper title 2'
+        assert [(p['status'], p['amount']) for p in submission_two_fee.details['repliedPayments']] == [('waived', 2000)]
+
+        ## each author only gets the fees of their own submissions
+        invitations = author_one_client.get_invitations(invitee=True, type='payment', details='replytoNote,repliedPayments')
+        assert [i.id for i in invitations] == [f'{venue_id}/Submission1/-/Submission_Fee_Payment']
+        assert len(invitations[0].details['repliedPayments']) == 2
