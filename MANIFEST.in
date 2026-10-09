@@ -9,6 +9,7 @@ include openreview/duplicate_domains.json
 include openreview/journal/process/*.py
 include openreview/journal/process/*.js
 include openreview/journal/webfield/*.js
+include openreview/journal/schemas/*.json
 include openreview/journal/journal_request/process/*.py
 include openreview/profile/process/*.py
 include openreview/profile/process/*.js

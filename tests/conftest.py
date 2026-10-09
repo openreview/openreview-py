@@ -127,16 +127,27 @@ class Helpers:
 
     @staticmethod
     def await_venue_processes(super_client, venue_id, timeout=300):
-        # Wait until no process function for this specific venue is running, so renaming the venue
-        # is not rejected with a 409. Filtering by the venue prefix means we only wait on this
-        # venue's jobs and ignore active/scheduled jobs belonging to other venues from previous tests.
+        # The API documents an invitation ID filter, not a regex. Scope running
+        # logs locally and allow queue finalization to settle after the last log.
+        # Delayed date jobs remain scheduled and must not block venue renaming.
         wait_time = 0.5
-        max_iterations = int(timeout / wait_time)
-        for _ in range(max_iterations):
-            running = super_client.get_process_logs(invitation=f'{venue_id}/.*', status='running')
-            if not running:
-                break
-            time.sleep(wait_time)
+        deadline = time.monotonic() + timeout
+        quiet_since = None
+        while time.monotonic() < deadline:
+            logs = super_client.get_process_logs(status='running')
+            running = [log for log in logs if log.get('status') == 'running' and any(
+                isinstance(value, str) and (value == venue_id or value.startswith(venue_id + '/'))
+                for value in (log.get('invitation'), log.get('id')))]
+            now = time.monotonic()
+            if running:
+                quiet_since = None
+            else:
+                if quiet_since is None:
+                    quiet_since = now
+                if now - quiet_since >= 2:
+                    return
+            time.sleep(max(0, min(wait_time, deadline - time.monotonic())))
+        raise TimeoutError(f'Venue processes did not become quiet within {timeout}s: {venue_id}')
 
     @staticmethod
     def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0, timeout=300):
