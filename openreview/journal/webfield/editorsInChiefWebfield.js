@@ -427,7 +427,8 @@ var loadData = function() {
       return edges.reduce(function(tracks, edge) {
         tracks[edge.tail] = edge.label;
         return tracks;
-    }, {});
+      }, {});
+    }) : $.Deferred().resolve({})),
     perfTrack('  edges: reviewer roles', REVIEWERS_ROLE_ID ? Webfield2.api.getAll('/edges', { invitation: REVIEWERS_ROLE_ID, head: REVIEWERS_ID, domain: VENUE_ID })
     .then(function(edges) {
       return edges.reduce(function(roles, edge) {
