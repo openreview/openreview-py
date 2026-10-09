@@ -150,6 +150,38 @@ class TestTools():
         assert 'test_subject_a@mail.com' in posted_group.members
         assert 'test_subject_b@mail.com' in posted_group.members
 
+    def test_remove_members_from_anonids_group(self, openreview_client):
+        group_id = 'AnonTest/Submission1/Area_Chairs'
+        openreview_client.post_group_edit(
+            invitation = 'openreview.net/-/Edit',
+            signatures = ['~Super_User1'],
+            group = openreview.api.Group(
+                id = group_id,
+                members = ['AnonTest/Submission1/Secondary_Area_Chairs'],
+                signatures = ['~Super_User1'],
+                signatories = [group_id],
+                readers = ['everyone'],
+                writers = [group_id],
+                anonids = True
+            ))
+
+        posted_group = openreview_client.add_members_to_group(group_id, 'old_chair@mail.com')
+        posted_group = openreview_client.add_members_to_group(group_id, 'new_chair@mail.com')
+        assert posted_group.members == ['AnonTest/Submission1/Secondary_Area_Chairs', 'old_chair@mail.com', 'new_chair@mail.com']
+        assert len(posted_group.anon_members) == 2
+
+        old_chair_anon_id = posted_group.anon_ids_by_member['old_chair@mail.com']
+        new_chair_anon_id = posted_group.anon_ids_by_member['new_chair@mail.com']
+
+        # Removing a member must remove its own anonymous id even if a non-anonymous member precedes it
+        posted_group = openreview_client.remove_members_from_group(group_id, 'old_chair@mail.com')
+        assert posted_group.members == ['AnonTest/Submission1/Secondary_Area_Chairs', 'new_chair@mail.com']
+        assert posted_group.anon_members == [new_chair_anon_id]
+
+        raw_group = openreview_client.get_groups(id=group_id)[0]
+        assert old_chair_anon_id not in raw_group.members
+        assert new_chair_anon_id in raw_group.members
+
     # def test_get_all_venues(self, openreview_client):
     #     venues = openreview.tools.get_all_venues(openreview_client)
     #     assert venues, "Venues could not be retrieved"

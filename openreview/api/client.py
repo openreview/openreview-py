@@ -534,13 +534,16 @@ class OpenReviewClient(object):
             members_by_anonid = { g.id:g.members[0] for g in self.get_groups(prefix=anon_prefix) if g.members }
             members = []
             anon_members = []
+            anon_ids_by_member = {}
             for member in group.members:
                 if member in members_by_anonid:
                     anon_members.append(member)
                     members.append(members_by_anonid[member])
+                    anon_ids_by_member[members_by_anonid[member]] = member
                 else:
                     members.append(member)
             group.anon_members = anon_members
+            group.anon_ids_by_member = anon_ids_by_member
             group.members = members
         return group
 
@@ -4498,6 +4501,7 @@ class Group(object):
         self.deanonymizers = deanonymizers
         self.details = details
         self.anon_members = []
+        self.anon_ids_by_member = {}
 
     def get_content_value(self, field_name, default_value=None):
         if self.content:
@@ -4676,10 +4680,7 @@ class Group(object):
     def transform_to_anon_ids(self, elements):
         if self.anonids:
             for index, element in enumerate(elements):
-                if element in self.members and self.anon_members:
-                    elements[index] = self.anon_members[self.members.index(element)]
-                else:
-                    elements[index] = element
+                elements[index] = self.anon_ids_by_member.get(element, element)
         return elements
 
 
