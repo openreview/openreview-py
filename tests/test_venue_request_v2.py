@@ -632,7 +632,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
                 'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
                 'submission_description': 'This is a submission description',
                 'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
-                'desk_rejected_submissions_author_anonymity':'Yes, author identities of desk rejected submissions should be revealed.',
+                'desk_rejected_submissions_author_anonymity':'Yes, author identities of desk rejected submissions should be revealed.'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -687,6 +687,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         replies = client.get_notes(replyto=request_form_note_id)
         assert replies[0].content['title'] == 'Post Submission Configuration Updated'
 
+        ## revert withdrawn and desk-rejected reveal authors to keep in line with the original venue settings
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
@@ -705,6 +706,8 @@ Please note that with the exception of urgent issues, requests made on weekends 
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
                 'submission_description': '',
+                'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
+                'desk_rejected_submissions_author_anonymity':'No, author identities of desk rejected submissions should not be revealed.'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -720,19 +723,6 @@ Please note that with the exception of urgent issues, requests made on weekends 
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
         assert invitation.description is None
-
-        ## revert withdrawn and desk-rejected reveal authors to keep in line with the original venue settings
-        openreview_client.post_group_edit(
-            invitation=f'{venue['venue_id']}/-/Edit',
-            signatures=[venue['venue_id']],
-            group=openreview.api.Group(
-                id=venue['venue_id'],
-                content={
-                    'withdrawn_submission_reveal_authors': { 'value': False },
-                    'desk_rejected_submission_reveal_authors': { 'value': False }
-                }
-            )
-        )
 
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, openreview_client,  venue, helpers):
 
