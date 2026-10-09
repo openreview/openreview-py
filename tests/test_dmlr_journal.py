@@ -24,6 +24,18 @@ class TestDMLRJournal():
 
         return JournalRequest.get_journal(eic_client, requests[0].id)
 
+    @pytest.fixture(scope="class")
+    def unassigned_ae(self, journal, openreview_client, helpers):
+        email = 'unassigned-ae@dmlrfive.com'
+        actor = helpers.create_user(email, 'Unassigned', 'DMLRAE')
+        profile = openreview.tools.get_profile(openreview_client, email)
+        openreview_client.add_members_to_group(journal.get_action_editors_id(), profile.id)
+        assert profile.id in openreview_client.get_group(journal.get_action_editors_id()).members
+        for group_id in (journal.get_editors_in_chief_id(), journal.get_authors_id(1),
+                         journal.get_action_editors_id(1), journal.get_reviewers_id(1)):
+            assert profile.id not in openreview_client.get_group(group_id).members
+        return actor
+
     def test_setup(self, openreview_client, request_page, selenium, helpers, journal_request):
 
         ## Editors in Chief
@@ -45,6 +57,7 @@ class TestDMLRJournal():
                     'settings': {
                         'value': {
                             "submission_public": False,
+                            "action_editor_paper_visibility": "all",
                             "author_anonymity": False,
                             "eic_submission_notification": True,
                             "assignment_delay": 5,
@@ -340,11 +353,15 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
         assert note.content['venueid']['value'] == 'DMLR/Submitted'
 
 
-    def test_review_approval(self, journal, openreview_client, helpers):
+    def test_review_approval(self, journal, openreview_client, helpers, unassigned_ae):
 
         ce_client = OpenReviewClient(username='ce@mailseven.com', password=helpers.strong_password)
         andrew_client = OpenReviewClient(username='andrew@dmlrzero.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='DMLR/-/Submission')[0].id
+
+        assert journal.settings['action_editor_paper_visibility'] == 'all'
+        with pytest.raises(openreview.OpenReviewException, match='ForbiddenError|NotFoundError'):
+            unassigned_ae.get_note(note_id_1)
 
         # Assign Action Editor
         paper_assignment_edge = ce_client.post_edge(openreview.Edge(invitation='DMLR/Action_Editors/-/Assignment',
@@ -406,6 +423,7 @@ Please note that responding to this email will direct your reply to dmlr@jmlr.or
         assert note
         assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Edit', 'DMLR/-/Under_Review']
         assert note.readers == ['DMLR', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+        assert unassigned_ae.get_note(note_id_1).id == note_id_1
         assert note.writers == ['DMLR', 'DMLR/Paper1/Authors']
         assert note.signatures == ['DMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Ane1']
@@ -449,7 +467,7 @@ note={Under review}
         for edit in edits:
             assert edit.readers == ['DMLR', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
 
-    def test_review(self, journal, openreview_client, helpers):
+    def test_review(self, journal, openreview_client, helpers, unassigned_ae):
 
         ce_client = OpenReviewClient(username='ce@mailseven.com', password=helpers.strong_password)
         andrew_client = OpenReviewClient(username='andrew@dmlrzero.com', password=helpers.strong_password)
@@ -577,6 +595,11 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert reviews[0].signatures == [david_anon_groups[0].id]
         assert reviews[1].readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert reviews[1].signatures == [carlos_anon_groups[0].id]
+        for review in reviews:
+            for role, actor in [('assigned AE', andrew_client), ('unassigned AE', unassigned_ae),
+                                ('author', helpers.get_user('test@mail.com')),
+                                ('reviewer', david_client), ('EIC', ce_client)]:
+                assert actor.get_note(review.id).id == review.id, role
 
         ## Post a review edit
         carlos_review_note = carlos_client.post_note_edit(invitation='DMLR/Paper1/-/Review',
@@ -721,7 +744,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
 
         helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id']) 
     
-    def test_decision(self, journal, openreview_client, helpers):
+    def test_decision(self, journal, openreview_client, helpers, unassigned_ae):
 
         ce_client = OpenReviewClient(username='ce@mailseven.com', password=helpers.strong_password)
         andrew_client = OpenReviewClient(username='andrew@dmlrzero.com', password=helpers.strong_password)
@@ -773,6 +796,14 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
 
         decision_note = andrew_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == ["DMLR/Editors_In_Chief", "DMLR/Paper1/Action_Editors"]
+        assert ce_client.get_note(decision_note.id).id == decision_note.id
+        for role, actor in [('unassigned AE', unassigned_ae),
+                            ('author', helpers.get_user('test@mail.com')),
+                            ('reviewer', helpers.get_user('david@dmlrone.com'))]:
+            with pytest.raises(openreview.OpenReviewException) as denied:
+                actor.get_note(decision_note.id)
+            details = denied.value.args[0]
+            assert isinstance(details, dict) and details.get('name') in ('ForbiddenError', 'NotFoundError'), role
 
         ## EIC approves the decision
         approval_note = ce_client.post_note_edit(invitation='DMLR/Paper1/-/Decision_Approval',
@@ -790,6 +821,10 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         decision_note = ce_client.get_note(decision_note.id)
         assert decision_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert decision_note.nonreaders == []
+        for role, actor in [('assigned AE', andrew_client), ('unassigned AE', unassigned_ae),
+                            ('author', helpers.get_user('test@mail.com')),
+                            ('reviewer', helpers.get_user('david@dmlrone.com')), ('EIC', ce_client)]:
+            assert actor.get_note(decision_note.id).id == decision_note.id, role
 
         helpers.await_queue_edit(openreview_client, invitation='DMLR/-/Accepted')
 

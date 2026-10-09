@@ -485,7 +485,8 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
         assert note.readers == ['everyone']
         assert note.content['venue']['value'] == 'Under review for TMLRE'
         assert note.content['venueid']['value'] == 'TMLRE/Under_Review'
-        assert note.content['assigned_action_editor']['value'] == '~Alice_Johnson1'
+        assert 'assigned_action_editor' not in note.content
+        assert journal.get_assigned_action_editor(note) == '~Alice_Johnson1'
 
     def test_desk_rejection(self, journal, openreview_client, helpers):
         venue_id = journal.venue_id

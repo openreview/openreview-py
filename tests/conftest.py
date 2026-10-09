@@ -153,7 +153,7 @@ class Helpers:
             if len(process_logs) == count and all(process_log['status'] in finished_status for process_log in process_logs):
                 for process_log in process_logs:
                     assert process_log['status'] == (expected_status), process_log.get('log', 'No log available')
-                    return
+                return
 
             time.sleep(wait_time)
             if counter % cycles == 0:

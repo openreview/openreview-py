@@ -3,7 +3,6 @@ def process(client, invitation):
     journal = openreview.journal.Journal()
 
     submission = client.get_note(invitation.edit['note']['forum'])
-    assigned_action_editor = submission.content.get('assigned_action_editor', {}).get('value')
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
     now = datetime.datetime.now()
     task = invitation.pretty_id()
@@ -18,6 +17,8 @@ def process(client, invitation):
     else:
         days_late = abs((now - duedate).days)
     
+    assigned_action_editor = journal.get_assigned_action_editor(submission, allow_unassigned=True)
+
     ## send email to reviewers
     print('send email to authors', late_invitees)
     client.post_message(

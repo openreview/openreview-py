@@ -12,6 +12,15 @@ from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
 
+def assert_submission_hidden(client, note_id):
+    with pytest.raises(openreview.OpenReviewException) as caught:
+        client.get_note(note_id)
+    details = caught.value.args[0]
+    assert isinstance(details, dict), details
+    assert (details.get('status') in (403, 404) or
+            details.get('name') in ('ForbiddenError', 'NotFoundError')), details
+
+
 class TestJMLRJournal():
 
 
@@ -45,6 +54,7 @@ class TestJMLRJournal():
                     'settings': {
                         'value': {
                             'submission_public': False,
+                            'action_editor_paper_visibility': 'assigned_only',
                             'author_anonymity': False,
                             'assignment_delay': 0,
                             'skip_official_recommendation': True
@@ -121,6 +131,10 @@ class TestJMLRJournal():
         assert note
         assert note.invitations == ['JMLR/-/Submission']
         assert note.readers == ['JMLR', 'JMLR/Paper1/Action_Editors', 'JMLR/Paper1/Authors']
+        celeste_client = helpers.get_user('celeste@jmlr.com')
+        unassigned_ae_client = helpers.get_user('melisa@jmlr.com')
+        assert_submission_hidden(celeste_client, note_id_1)
+        assert_submission_hidden(unassigned_ae_client, note_id_1)
         assert note.writers == ['JMLR', 'JMLR/Paper1/Authors']
         assert note.signatures == ['JMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Celeste_Azul1']
@@ -146,7 +160,14 @@ class TestJMLRJournal():
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        celeste_client = OpenReviewClient(username='celeste@jmlr.com', password=helpers.strong_password)
+        # Assignment grants the handling AE access; other board members stay excluded.
+        assert celeste_client.get_note(note_id_1).id == note_id_1
+        assert_submission_hidden(unassigned_ae_client, note_id_1)
+        assert test_client.get_note(note_id_1).id == note_id_1
+        assert eic_client.get_note(note_id_1).id == note_id_1
+        persisted = openreview_client.get_note(note_id_1)
+        assert 'assigned_action_editor' not in persisted.content
+        assert journal.get_assigned_action_editor(persisted) == '~Celeste_JMLR1'
 
         celeste_paper1_anon_groups = celeste_client.get_groups(prefix=f'JMLR/Paper1/Action_Editor_.*', signatory='~Celeste_JMLR1')
         assert len(celeste_paper1_anon_groups) == 1
@@ -163,10 +184,22 @@ class TestJMLRJournal():
 
         note = celeste_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['JMLR/-/Submission', 'JMLR/-/Edit', 'JMLR/-/Under_Review']
+        assert note.invitations == ['JMLR/-/Submission', 'JMLR/-/Under_Review']
 
         edits = openreview_client.get_note_edits(note.id, invitation='JMLR/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        # Shared JMLR settings keep under-review submissions scoped to the assigned AE.
+        note = openreview_client.get_note(note_id_1)
+        assert note.readers == ['JMLR', 'JMLR/Paper1/Action_Editors',
+                                'JMLR/Paper1/Reviewers', 'JMLR/Paper1/Authors']
+        assert celeste_client.get_note(note_id_1).id == note_id_1
+        assert_submission_hidden(unassigned_ae_client, note_id_1)
+        assert test_client.get_note(note_id_1).id == note_id_1
+        assert eic_client.get_note(note_id_1).id == note_id_1
+        persisted = openreview_client.get_note(note_id_1)
+        assert 'assigned_action_editor' not in persisted.content
+        assert journal.get_assigned_action_editor(persisted) == '~Celeste_JMLR1'
 
         assert celeste_client.get_invitation('JMLR/Paper1/Reviewers/-/Assignment')
 
@@ -344,9 +377,14 @@ Please note that responding to this email will direct your reply to editor@jmlr.
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 3
-        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        for review in reviews:
+            for role, actor in [('assigned AE', celeste_client), ('author', test_client),
+                                ('reviewer', reviewer_three_client), ('EIC', eic_client)]:
+                assert actor.get_note(review.id).id == review.id, role
+            assert_submission_hidden(unassigned_ae_client, review.id)
 
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation JMLR/Paper1/-/Official_Recommendation was not found'):
             invitation = eic_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
@@ -430,3 +468,125 @@ Please note that responding to this email will direct your reply to editor@jmlr.
             )
 
         helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+        pending_decision = openreview_client.get_note(decision_note['note']['id'])
+        assert pending_decision.readers == [f'{venue_id}/Editors_In_Chief',
+                                           f'{venue_id}/Paper1/Action_Editors']
+        assert eic_client.get_note(pending_decision.id).id == pending_decision.id
+        assert_submission_hidden(test_client, pending_decision.id)
+        assert_submission_hidden(unassigned_ae_client, pending_decision.id)
+        approval = eic_client.post_note_edit(
+            invitation=journal.get_decision_approval_id(1),
+            signatures=[journal.get_editors_in_chief_id()],
+            note=Note(content={
+                'approval': {'value': "I approve the AE's decision."},
+                'comment_to_the_AE': {'value': 'I agree with the AE'},
+            }))
+        helpers.await_queue_edit(openreview_client, edit_id=approval['id'])
+        released_decision = openreview_client.get_note(decision_note['note']['id'])
+        assert released_decision.readers == [f'{venue_id}/Editors_In_Chief',
+                                            f'{venue_id}/Paper1/Action_Editors',
+                                            f'{venue_id}/Paper1/Reviewers',
+                                            f'{venue_id}/Paper1/Authors']
+        for role, actor in [('assigned AE', celeste_client), ('author', test_client),
+                            ('reviewer', reviewer_three_client), ('EIC', eic_client)]:
+            assert actor.get_note(released_decision.id).id == released_decision.id, role
+        assert_submission_hidden(unassigned_ae_client, released_decision.id)
+        assert_submission_hidden(unassigned_ae_client, note_id_1)
+
+
+    @pytest.mark.parametrize('visibility', [None, 'assigned_only', 'all'],
+                             ids=['default', 'assigned-only', 'all-aes'])
+    def test_submission_visibility_after_review_approval(
+            self, visibility, openreview_client, helpers, journal_request):
+        """Omitted and explicit scoped modes agree; explicit all expands under review."""
+        venue_id = {None: 'JMLRVisibilityDefault', 'assigned_only': 'JMLRVisibilityAssignedOnly',
+                    'all': 'JMLRVisibilityAll'}[visibility]
+        # Use private nonanonymous submissions, varying only the readership policy.
+        settings = {
+            'submission_public': False,
+            'author_anonymity': False,
+            'assignment_delay': 0,
+            'skip_official_recommendation': True,
+        }
+        if visibility is not None:
+            settings['action_editor_paper_visibility'] = visibility
+        request = openreview_client.post_note_edit(
+            invitation='openreview.net/Support/-/Journal_Request',
+            signatures=['openreview.net/Support'],
+            note=Note(content={
+                'official_venue_name': {'value': 'JMLR Visibility Test'},
+                'abbreviated_venue_name': {'value': venue_id},
+                'contact_info': {'value': 'editor@jmlr.org'},
+                'support_role': {'value': '~Rajarshi_Das1'},
+                'editors': {'value': ['editor@jmlr.org', '~Rajarshi_Das1']},
+                'website': {'value': 'jmlr.org'},
+                'settings': {'value': settings},
+            }))
+        helpers.await_queue_edit(openreview_client, request['id'])
+        deployment = openreview_client.post_note_edit(
+            invitation='openreview.net/Support/-/Journal_Request_Deployment',
+            signatures=['openreview.net/Support'],
+            note=Note(id=request['note']['id'], content={'venue_id': {'value': venue_id}}))
+        helpers.await_queue_edit(openreview_client, deployment['id'])
+        backend = helpers.get_user('rajarshi@mail.com')
+        backend.impersonate(venue_id)
+        journal = JournalRequest.get_journal(backend, request['note']['id'])
+        openreview_client.add_members_to_group(
+            journal.get_action_editors_id(), ['~Celeste_JMLR1', '~Melisa_JMLR1'])
+        author = helpers.get_user('test@mail.com')
+        assigned_ae = helpers.get_user('celeste@jmlr.com')
+        unassigned_ae = helpers.get_user('melisa@jmlr.com')
+        eic = helpers.get_user('rajarshi@mail.com')
+        submission = author.post_note_edit(
+            invitation=journal.get_author_submission_id(), signatures=['~SomeFirstName_User1'],
+            note=Note(content={
+                'title': {'value': 'JMLR visibility lifecycle'},
+                'abstract': {'value': 'Assigned and unassigned AE readership.'},
+                'authors': {'value': ['SomeFirstName User']},
+                'authorids': {'value': ['~SomeFirstName_User1']},
+                'pdf': {'value': '/pdf/' + 'p' * 40 + '.pdf'},
+                'competing_interests': {'value': 'None'},
+                'human_subjects_reporting': {'value': 'Not applicable'},
+            }))
+        helpers.await_queue_edit(openreview_client, submission['id'])
+        note_id = submission['note']['id']
+        note = openreview_client.get_note(note_id)
+        number = note.number
+        paper_aes = journal.get_action_editors_id(number)
+        authors = journal.get_authors_id(number)
+        assert note.readers == [venue_id, paper_aes, authors]
+        assert_submission_hidden(assigned_ae, note_id)
+        assert_submission_hidden(unassigned_ae, note_id)
+
+        assignment = eic.post_edge(openreview.api.Edge(
+            invitation=journal.get_ae_assignment_id(),
+            signatures=[journal.get_editors_in_chief_id()],
+            head=note_id, tail='~Celeste_JMLR1', weight=1))
+        helpers.await_queue_edit(openreview_client, assignment.id)
+        assert assigned_ae.get_note(note_id).id == note_id
+        assert_submission_hidden(unassigned_ae, note_id)
+        assert author.get_note(note_id).id == note_id
+        assert eic.get_note(note_id).id == note_id
+
+        anon_groups = assigned_ae.get_groups(
+            prefix=journal.get_action_editors_id(number, anon=True), signatory='~Celeste_JMLR1')
+        assert len(anon_groups) == 1
+        approval = assigned_ae.post_note_edit(
+            invitation=journal.get_review_approval_id(number), signatures=[anon_groups[0].id],
+            note=Note(content={'under_review': {'value': 'Appropriate for Review'}}))
+        helpers.await_queue_edit(openreview_client, approval['id'])
+        transitions = openreview_client.get_note_edits(
+            note_id=note_id, invitation=journal.get_under_review_id())
+        assert len(transitions) == 1
+        helpers.await_queue_edit(openreview_client, transitions[0].id)
+        note = openreview_client.get_note(note_id)
+        assert note.content['venueid']['value'] == journal.under_review_venue_id
+        ae_reader = journal.get_action_editors_id() if visibility == 'all' else paper_aes
+        assert note.readers == [venue_id, ae_reader, journal.get_reviewers_id(number), authors]
+        assert assigned_ae.get_note(note_id).id == note_id
+        assert author.get_note(note_id).id == note_id
+        assert eic.get_note(note_id).id == note_id
+        if visibility != 'all':
+            assert_submission_hidden(unassigned_ae, note_id)
+        else:
+            assert unassigned_ae.get_note(note_id).id == note_id
