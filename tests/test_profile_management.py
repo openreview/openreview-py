@@ -1682,6 +1682,232 @@ computation and memory.
         assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': '~Sarah_Racz1'}
 
 
+    def test_import_acl_anthology_notes(self, client, openreview_client, test_client, helpers):
+
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+
+        ## the ACL Anthology record for the paper already imported from DBLP earlier in this
+        ## file, which is how a publication ends up grouped under both sources on a profile
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/ACL_Anthology.org/-/Record',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'json': {
+                    'value': {
+                        'id': '2023.acl-long.48',
+                        'bibkey': 'chang-etal-2023-multi',
+                        'title': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling',
+                        'abstract': 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint.',
+                        'authors': [
+                            { 'first': 'Haw-Shiuan', 'last': 'Chang', 'full': 'Haw-Shiuan Chang', 'id': 'haw-shiuan-chang' },
+                            { 'first': 'Ruei-Yao', 'last': 'Sun', 'full': 'Ruei-Yao Sun', 'id': 'ruei-yao-sun' },
+                            { 'first': 'Kathryn', 'last': 'Ricci', 'full': 'Kathryn Ricci', 'id': 'kathryn-ricci' },
+                            { 'first': 'Andrew', 'last': 'McCallum', 'full': 'Andrew McCallum', 'id': 'andrew-mccallum' }
+                        ],
+                        'editors': [
+                            { 'first': 'Anna', 'last': 'Rogers', 'full': 'Anna Rogers', 'id': 'anna-rogers' }
+                        ],
+                        'year': '2023',
+                        'month': 'July',
+                        'venueIds': ['acl'],
+                        'venueAcronyms': ['ACL'],
+                        'booktitle': 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)',
+                        'publisher': 'Association for Computational Linguistics',
+                        'address': 'Toronto, Canada',
+                        'pages': '821-854',
+                        'doi': '10.18653/v1/2023.acl-long.48',
+                        'url': 'https://aclanthology.org/2023.acl-long.48/',
+                        'pdf': 'https://aclanthology.org/2023.acl-long.48.pdf',
+                        'bibtex': '@inproceedings{chang-etal-2023-multi,\n    title = "Multi-{CLS} {BERT}: An Efficient Alternative to Traditional Ensembling"\n}'
+                    }
+                }
+            },
+            note = openreview.api.Note(
+                external_id = 'acl:2023.acl-long.48',
+                content = {
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+                    },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'Haw-Shiuan Chang', 'username': ''},
+                            {'fullname': 'Ruei-Yao Sun', 'username': ''},
+                            {'fullname': 'Kathryn Ricci', 'username': ''},
+                            {'fullname': 'Andrew McCallum', 'username': '~Andrew_McCallum1'}
+                        ]
+                    },
+                    'venue': {
+                        'value': 'ACL 2023'
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        note = andrew_client.get_note(edit['note']['id'])
+        assert note.invitations == ['openreview.net/Public_Article/ACL_Anthology.org/-/Record', 'openreview.net/Public_Article/-/Edit']
+        assert note.external_ids == ['acl:2023.acl-long.48']
+        assert note.pdate == openreview.tools.datetime_millis(datetime.datetime(2023, 7, 1))
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['abstract']['value'].startswith('Ensembling BERT models')
+        assert note.content['venue']['value'] == 'ACL 2023'
+        assert note.content['venueid']['value'] == 'openreview.net/Public_Article'
+        assert note.content['html']['value'] == 'https://aclanthology.org/2023.acl-long.48/'
+        assert note.content['pdf']['value'] == 'https://aclanthology.org/2023.acl-long.48.pdf'
+        assert '_bibtex' in note.content
+
+        ## the poster keeps the profile id they claimed, everybody else is linked to their
+        ## Anthology page. The names match the DBLP note, so a profile groups the two.
+        assert note.content['authors']['value'] == [
+            {'fullname': 'Haw-Shiuan Chang', 'username': 'https://aclanthology.org/people/haw-shiuan-chang/'},
+            {'fullname': 'Ruei-Yao Sun', 'username': 'https://aclanthology.org/people/ruei-yao-sun/'},
+            {'fullname': 'Kathryn Ricci', 'username': 'https://aclanthology.org/people/kathryn-ricci/'},
+            {'fullname': 'Andrew McCallum', 'username': '~Andrew_McCallum1'}
+        ]
+
+        ## an author can claim a publication imported from the Anthology
+        haw_shiuan_client = openreview.api.OpenReviewClient(username='haw@profile.org', password=helpers.strong_password)
+        haw_shiuan_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Haw-Shiuan_Chang1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+                'author_name': { 'value': 'Haw-Shiuan Chang' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = andrew_client.get_note(note.id)
+        assert note.content['authors']['value'][0] == {'fullname': 'Haw-Shiuan Chang', 'username': '~Haw-Shiuan_Chang1'}
+
+        ## the same publication is now on the profile from both sources
+        dblp_notes = openreview_client.get_notes(content={ 'authorids': '~Andrew_McCallum1' }, invitation='DBLP.org/-/Record')
+        assert any(n.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling' for n in dblp_notes)
+
+
+    def test_acl_import_leaves_an_unlinked_publication_alone(self, openreview_client, helpers):
+
+        ## Min Zhang is a name the Anthology itself cannot always tell apart, so the OpenReview
+        ## id it records for an author can belong to another person of the same name
+        first_zhang_client = helpers.create_user('min_one@profile.org', 'Min', 'Zhang', alternates=[], institution='tsinghua.edu.cn')
+        second_zhang_client = helpers.create_user('min_two@profile.org', 'Min', 'Zhang', alternates=[], institution='suda.edu.cn')
+
+        ## the metadata openreview.profile.acl_anthology.paper_to_json reads out of the Anthology
+        publications = [
+            {
+                'id': '2021.emnlp-main.100',
+                'title': 'A Publication Min Zhang Keeps',
+                'authors': [
+                    { 'first': 'Min', 'last': 'Zhang', 'full': 'Min Zhang', 'id': 'min-zhang' }
+                ],
+                'year': '2021',
+                'month': 'November',
+                'venueAcronyms': ['EMNLP'],
+                'url': 'https://aclanthology.org/2021.emnlp-main.100/',
+                'bibtex': '@inproceedings{zhang-2021-keeps}'
+            },
+            {
+                'id': '2021.emnlp-main.101',
+                'title': 'A Publication Min Zhang Unlinks',
+                'authors': [
+                    { 'first': 'Min', 'last': 'Zhang', 'full': 'Min Zhang', 'id': 'min-zhang' }
+                ],
+                'year': '2021',
+                'month': 'November',
+                'venueAcronyms': ['EMNLP'],
+                'url': 'https://aclanthology.org/2021.emnlp-main.101/',
+                'bibtex': '@inproceedings{zhang-2021-unlinks}'
+            }
+        ]
+
+        ## an authorship claim is signed by the ACL Anthology group, so the import runs with a
+        ## client that can sign for it
+        result = openreview.profile.acl_anthology.post_publications(
+            openreview_client, publications, 'min-zhang', profile_id='~Min_Zhang1')
+        assert result['created'] == 2
+        assert result['claimed'] == 0
+        for edit in result['edits']:
+            helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        kept = openreview_client.get_notes(external_id='acl:2021.emnlp-main.100')[0]
+        unlinked = openreview_client.get_notes(external_id='acl:2021.emnlp-main.101')[0]
+        assert kept.content['authors']['value'] == [{'fullname': 'Min Zhang', 'username': '~Min_Zhang1'}]
+        assert unlinked.content['authors']['value'] == [{'fullname': 'Min Zhang', 'username': '~Min_Zhang1'}]
+        assert kept.content['venue']['value'] == 'EMNLP 2021'
+
+        ## the owner of the profile unlinks one of the imported publications
+        first_zhang_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
+            signatures = ['~Min_Zhang1'],
+            note = openreview.api.Note(
+                id = unlinked.id
+            ),
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+                'author_name': { 'value': 'Min Zhang' },
+            }
+        )
+
+        ## Author_Removal has only a preprocess, so the author list is updated with the edit
+        assert openreview_client.get_note(unlinked.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': ''}
+        ]
+
+        ## running the import again must not link the author back
+        result = openreview.profile.acl_anthology.post_publications(
+            openreview_client, publications, 'min-zhang', profile_id='~Min_Zhang1')
+        assert result == { 'created': 0, 'claimed': 0, 'skipped': 2, 'edits': [] }
+
+        assert openreview_client.get_note(unlinked.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': ''}
+        ]
+        assert openreview_client.get_note(kept.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': '~Min_Zhang1'}
+        ]
+
+        ## the other Min Zhang can still claim the publication the first one unlinked: a removal
+        ## binds the profile that made it. The publication already linked to the first one is
+        ## left alone.
+        result = openreview.profile.acl_anthology.post_publications(
+            openreview_client, publications, 'min-zhang', profile_id='~Min_Zhang2')
+        assert result['created'] == 0
+        assert result['claimed'] == 1
+        assert result['skipped'] == 1
+
+        assert openreview_client.get_note(unlinked.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': '~Min_Zhang2'}
+        ]
+        assert openreview_client.get_note(kept.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': '~Min_Zhang1'}
+        ]
+
+        ## and their own removal is respected for them in turn
+        second_zhang_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
+            signatures = ['~Min_Zhang2'],
+            note = openreview.api.Note(
+                id = unlinked.id
+            ),
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+                'author_name': { 'value': 'Min Zhang' },
+            }
+        )
+
+        result = openreview.profile.acl_anthology.post_publications(
+            openreview_client, publications, 'min-zhang', profile_id='~Min_Zhang2')
+        assert result['claimed'] == 0
+        assert openreview_client.get_note(unlinked.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': ''}
+        ]
+
+
     def test_remove_alternate_name(self, openreview_client, support_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
