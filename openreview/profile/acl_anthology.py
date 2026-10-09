@@ -40,6 +40,20 @@ def get_author_id(url):
     return match.group(1)
 
 
+def _name_resolution_types():
+    '''
+    The acl_anthology error and warning raised when a name cannot be placed, or an empty
+    stand-in when the package is absent. A caller that passes its own anthology -- a test,
+    or a job that built one itself -- should not need the package installed just to import.
+    '''
+    try:
+        from acl_anthology.exceptions import NameSpecResolutionError, NameSpecResolutionWarning
+    except ImportError:
+        return (), None
+
+    return (NameSpecResolutionError,), NameSpecResolutionWarning
+
+
 @contextmanager
 def _quiet_ambiguous_names():
     '''
@@ -48,10 +62,13 @@ def _quiet_ambiguous_names():
     tell apart, which buries the output of a long import -- and this module answers that
     case deliberately, by linking neither of them. Drop this context manager to see them.
     '''
-    from acl_anthology.exceptions import NameSpecResolutionWarning
+    _, resolution_warning = _name_resolution_types()
+    if resolution_warning is None:
+        yield
+        return
 
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore', NameSpecResolutionWarning)
+        warnings.simplefilter('ignore', resolution_warning)
         yield
 
 
@@ -67,12 +84,12 @@ def _person_id(namespec):
     if namespec.parent is None:
         return namespec.id
 
-    from acl_anthology.exceptions import NameSpecResolutionError
+    resolution_errors, _ = _name_resolution_types()
 
     try:
         with _quiet_ambiguous_names():
             return namespec.resolve().id
-    except NameSpecResolutionError:
+    except resolution_errors:
         ## the Anthology's own data cannot place this name; one such author should not
         ## abort the import
         return None
@@ -211,7 +228,38 @@ def _drop_unknown_profile_ids(metadata, profiles_by_username):
             del person['openreview']
 
 
-def _claim_authorship(client, note, metadata, author_id, profile_id, super_user):
+def _was_removed_from_publication(client, note, author_index, profile, super_user):
+    '''
+    Whether this author has already been removed from this position of a publication.
+
+    Unlinking a publication posts an Author_Removal edit and leaves the author named but
+    unlinked, which looks exactly like an author who was never linked. Without this, the
+    next import would link them again and undo what they asked for. An explicit removal
+    outranks anything the Anthology says, including an OpenReview id it records itself.
+
+    Only the position and the signatures are compared, never the name. The Anthology's
+    OpenReview ids are contributed by its users, so the id recorded for an author can belong
+    to somebody else of the same name; matching on the name would let their removal bar the
+    real author from ever claiming the paper.
+    '''
+    names = profile.content.get('names', [])
+    usernames = {name['username'] for name in names if name.get('username')} | { profile.id }
+
+    removals = client.get_note_edits(
+        note_id=note.id,
+        invitation=f'{super_user}/Public_Article/-/Author_Removal'
+    )
+
+    for removal in removals:
+        content = removal.content or {}
+        if content.get('author_index', {}).get('value') != author_index:
+            continue
+        if set(removal.signatures or []) & usernames:
+            return True
+    return False
+
+
+def _claim_authorship(client, note, metadata, author_id, profile_id, profile, super_user):
     '''
     Links the profile being imported to an author of a publication already in OpenReview.
 
@@ -222,7 +270,8 @@ def _claim_authorship(client, note, metadata, author_id, profile_id, super_user)
     the ownership checks meant for people claiming their own papers, which is what lets the
     import link an author the Anthology spells differently from their profile.
 
-    :return: The posted edit, or None when there is nothing to link
+    :return: The posted edit, or None when there is nothing to link, or when the author has
+        already been removed from this publication
     '''
     if not profile_id or note.ddate:
         return None
@@ -238,6 +287,9 @@ def _claim_authorship(client, note, metadata, author_id, profile_id, super_user)
     ## a link to an Anthology page is not a link to a profile, so it is replaced; a profile
     ## already linked there is left alone, whoever it belongs to
     if authors[author_index].get('username', '').startswith('~'):
+        return None
+
+    if _was_removed_from_publication(client, note, author_index, profile, super_user):
         return None
 
     return client.post_note_edit(
@@ -341,16 +393,43 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
 
         ## frontmatter is not a publication, and a retracted or removed paper should not be imported
         papers = [paper for paper in person.papers() if not (paper.is_frontmatter or paper.is_deleted)]
+        publications = [paper_to_json(paper) for paper in papers]
 
+    return post_publications(client, publications, author_id, profile_id=profile_id, super_user=super_user)
+
+
+def post_publications(client, publications, author_id, profile_id=None, super_user='openreview.net'):
+    '''
+    Posts a Record edit for each publication, given its ACL Anthology metadata.
+
+    This is the half of the import that talks to OpenReview: :func:`import_publications` reads
+    the metadata out of the Anthology and hands it here, and a caller that already holds the
+    metadata can post it without the acl-anthology package.
+
+    :param client: A client that can post to the Record invitation, and to Authorship_Claim as the ACL Anthology group when a publication needs claiming
+    :type client: openreview.api.OpenReviewClient
+    :param publications: The metadata of each publication, as :func:`paper_to_json` returns it
+    :type publications: list[dict]
+    :param author_id: The ACL Anthology author id whose publications these are
+    :type author_id: str
+    :param profile_id: The OpenReview profile the publications are being imported for
+    :type profile_id: str, optional
+    :param super_user: The super user id, which the Public_Article invitations hang off
+    :type super_user: str, optional
+
+    :return: How many publications were created, how many had an authorship claim posted,
+        how many were left alone, and the edits posted for the first two
+    :rtype: dict
+    '''
     acl_group_id = f'{super_user}/Public_Article/ACL_Anthology.org'
     signature = profile_id if profile_id else f'{acl_group_id}/Uploader'
 
     ## resolved once for the whole run instead of per paper: coauthors repeat across papers
     candidate_ids = {
-        namespec.openreview
-        for paper in papers
-        for namespec in paper.authors + tuple(paper.editors)
-        if namespec.openreview
+        person['openreview']
+        for publication in publications
+        for person in publication.get('authors', []) + publication.get('editors', [])
+        if person.get('openreview')
     }
     if profile_id:
         candidate_ids.add(profile_id)
@@ -363,9 +442,8 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
     claimed = []
     skipped = 0
 
-    for paper in papers:
-        external_id = f'acl:{paper.full_id}'
-        metadata = paper_to_json(paper)
+    for metadata in publications:
+        external_id = f"acl:{metadata['id']}"
         _drop_unknown_profile_ids(metadata, profiles_by_username)
         imported_index = _imported_author_index(metadata, author_id)
 
@@ -391,7 +469,8 @@ def import_publications(client, author, profile_id=None, anthology=None, super_u
             skipped += 1
             continue
 
-        claim = _claim_authorship(client, existing_notes[0], metadata, author_id, profile_id, super_user)
+        claim = _claim_authorship(client, existing_notes[0], metadata, author_id, profile_id,
+                                  profiles_by_username.get(profile_id), super_user)
         if claim:
             claimed.append(claim)
         else:

@@ -1789,6 +1789,125 @@ computation and memory.
         assert any(n.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling' for n in dblp_notes)
 
 
+    def test_acl_import_leaves_an_unlinked_publication_alone(self, openreview_client, helpers):
+
+        ## Min Zhang is a name the Anthology itself cannot always tell apart, so the OpenReview
+        ## id it records for an author can belong to another person of the same name
+        first_zhang_client = helpers.create_user('min_one@profile.org', 'Min', 'Zhang', alternates=[], institution='tsinghua.edu.cn')
+        second_zhang_client = helpers.create_user('min_two@profile.org', 'Min', 'Zhang', alternates=[], institution='suda.edu.cn')
+
+        ## the metadata openreview.profile.acl_anthology.paper_to_json reads out of the Anthology
+        publications = [
+            {
+                'id': '2021.emnlp-main.100',
+                'title': 'A Publication Min Zhang Keeps',
+                'authors': [
+                    { 'first': 'Min', 'last': 'Zhang', 'full': 'Min Zhang', 'id': 'min-zhang' }
+                ],
+                'year': '2021',
+                'month': 'November',
+                'venueAcronyms': ['EMNLP'],
+                'url': 'https://aclanthology.org/2021.emnlp-main.100/',
+                'bibtex': '@inproceedings{zhang-2021-keeps}'
+            },
+            {
+                'id': '2021.emnlp-main.101',
+                'title': 'A Publication Min Zhang Unlinks',
+                'authors': [
+                    { 'first': 'Min', 'last': 'Zhang', 'full': 'Min Zhang', 'id': 'min-zhang' }
+                ],
+                'year': '2021',
+                'month': 'November',
+                'venueAcronyms': ['EMNLP'],
+                'url': 'https://aclanthology.org/2021.emnlp-main.101/',
+                'bibtex': '@inproceedings{zhang-2021-unlinks}'
+            }
+        ]
+
+        ## an authorship claim is signed by the ACL Anthology group, so the import runs with a
+        ## client that can sign for it
+        result = openreview.profile.acl_anthology.post_publications(
+            openreview_client, publications, 'min-zhang', profile_id='~Min_Zhang1')
+        assert result['created'] == 2
+        assert result['claimed'] == 0
+        for edit in result['edits']:
+            helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        kept = openreview_client.get_notes(external_id='acl:2021.emnlp-main.100')[0]
+        unlinked = openreview_client.get_notes(external_id='acl:2021.emnlp-main.101')[0]
+        assert kept.content['authors']['value'] == [{'fullname': 'Min Zhang', 'username': '~Min_Zhang1'}]
+        assert unlinked.content['authors']['value'] == [{'fullname': 'Min Zhang', 'username': '~Min_Zhang1'}]
+        assert kept.content['venue']['value'] == 'EMNLP 2021'
+
+        ## the owner of the profile unlinks one of the imported publications
+        first_zhang_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
+            signatures = ['~Min_Zhang1'],
+            note = openreview.api.Note(
+                id = unlinked.id
+            ),
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+                'author_name': { 'value': 'Min Zhang' },
+            }
+        )
+
+        ## Author_Removal has only a preprocess, so the author list is updated with the edit
+        assert openreview_client.get_note(unlinked.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': ''}
+        ]
+
+        ## running the import again must not link the author back
+        result = openreview.profile.acl_anthology.post_publications(
+            openreview_client, publications, 'min-zhang', profile_id='~Min_Zhang1')
+        assert result == { 'created': 0, 'claimed': 0, 'skipped': 2, 'edits': [] }
+
+        assert openreview_client.get_note(unlinked.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': ''}
+        ]
+        assert openreview_client.get_note(kept.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': '~Min_Zhang1'}
+        ]
+
+        ## the other Min Zhang can still claim the publication the first one unlinked: a removal
+        ## binds the profile that made it. The publication already linked to the first one is
+        ## left alone.
+        result = openreview.profile.acl_anthology.post_publications(
+            openreview_client, publications, 'min-zhang', profile_id='~Min_Zhang2')
+        assert result['created'] == 0
+        assert result['claimed'] == 1
+        assert result['skipped'] == 1
+
+        assert openreview_client.get_note(unlinked.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': '~Min_Zhang2'}
+        ]
+        assert openreview_client.get_note(kept.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': '~Min_Zhang1'}
+        ]
+
+        ## and their own removal is respected for them in turn
+        second_zhang_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
+            signatures = ['~Min_Zhang2'],
+            note = openreview.api.Note(
+                id = unlinked.id
+            ),
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+                'author_name': { 'value': 'Min Zhang' },
+            }
+        )
+
+        result = openreview.profile.acl_anthology.post_publications(
+            openreview_client, publications, 'min-zhang', profile_id='~Min_Zhang2')
+        assert result['claimed'] == 0
+        assert openreview_client.get_note(unlinked.id).content['authors']['value'] == [
+            {'fullname': 'Min Zhang', 'username': ''}
+        ]
+
+
     def test_remove_alternate_name(self, openreview_client, support_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
