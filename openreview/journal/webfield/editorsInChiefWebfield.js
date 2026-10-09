@@ -19,6 +19,7 @@ var REVIEWER_REPORT_ID = '';
 var NUMBER_OF_REVIEWERS = 3;
 var PREFERRED_EMAILS_ID = '';
 var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
+var ACTION_EDITORS_TRACK_ID = '';
 var REVIEWERS_ROLE_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
@@ -42,6 +43,8 @@ var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
 var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
 var ACTION_EDITORS_AVAILABILITY_ID = ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME;
+var ACTION_EDITORS_TRACK_EDIT = ACTION_EDITORS_TRACK_ID ? ';' + ACTION_EDITORS_TRACK_ID + ',head:ignore' : '';
+var ACTION_EDITORS_TRACK_SCORE_BROWSE = ACTION_EDITORS_TRACK_ID ? ';' + ACTION_EDITOR_ID + '/-/Track_Score' : '';
 var REVIEWERS_REPORT_ID = REVIEWERS_ID + '/-/Reviewer_Report';
 var REVIEWERS_ROLE_EDIT = REVIEWERS_ROLE_ID ? ';' + REVIEWERS_ROLE_ID + ',head:ignore' : '';
 
@@ -78,8 +81,8 @@ var DECISION_PENDING_STATUS = VENUE_ID + '/Decision_Pending';
 
 var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')');
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
-  '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
-  '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + 
+  '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' + ACTION_EDITORS_TRACK_EDIT +
+  '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ACTION_EDITORS_TRACK_SCORE_BROWSE +
   '&version=2&referrer=' + referrerUrl;
 var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' + REVIEWERS_ROLE_EDIT +
@@ -419,6 +422,13 @@ var loadData = function() {
       })
       return recommendationCount;
     })),
+    perfTrack('  edges: action editor tracks', ACTION_EDITORS_TRACK_ID ? Webfield2.api.getAll('/edges', { invitation: ACTION_EDITORS_TRACK_ID, head: ACTION_EDITOR_ID, domain: VENUE_ID })
+    .then(function(edges) {
+      return edges.reduce(function(tracks, edge) {
+        tracks[edge.tail] = edge.label;
+        return tracks;
+      }, {});
+    }) : $.Deferred().resolve({})),
     perfTrack('  edges: reviewer roles', REVIEWERS_ROLE_ID ? Webfield2.api.getAll('/edges', { invitation: REVIEWERS_ROLE_ID, head: REVIEWERS_ID, domain: VENUE_ID })
     .then(function(edges) {
       return edges.reduce(function(roles, edge) {
@@ -463,6 +473,7 @@ var formatData = function(
   reviewerInvitationIds,
   aeInvitationIds,
   aeRecommendations,
+  aeTrackById,
   reviewerRoleById
 ) {
   var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
@@ -544,7 +555,8 @@ var formatData = function(
         email: actionEditor.email,
         status: {
           Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
-          Publications: '-'
+          Publications: '-',
+          Track: aeTrackById[actionEditor.id] || '-'
         },
         hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
       },
@@ -573,6 +585,7 @@ var formatData = function(
         status: {
           Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-',
+          Track: aeTrackById[actionEditor.id] || '-',
           Archived: 'Yes'
         },
         hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
@@ -1006,8 +1019,8 @@ var formatData = function(
         name: 'Edit Assignments',
         url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
         '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
-        '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
-        '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + 
+        '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' + ACTION_EDITORS_TRACK_EDIT +
+        '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ACTION_EDITORS_TRACK_SCORE_BROWSE + ';' + 
         '&version=2'
       }
     ] : [];
@@ -1661,6 +1674,7 @@ var renderData = function(venueStatusData) {
       name: ['summary.name'],
       papersAssigned: ['reviewProgressData.numPapers'],
       institutionEmail: ['summary.hasInstitutionEmail'],
+      track: ['summary.status.Track'],
       default: ['summary.name']
     },
     extraClasses: 'console-table',

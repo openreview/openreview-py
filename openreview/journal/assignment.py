@@ -70,6 +70,26 @@ class Assignment(object):
                 conflict_edges.append(edge)
 
         self.post_submission_edges(conflict_edges)
+
+        tracks = self.journal.get_tracks()
+        if tracks:
+            submission_track = note.content.get('track', {}).get('value', tracks[0])
+            track_by_action_editor = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=self.journal.get_ae_track_id(), groupby='tail', select='label', domain=venue_id) }
+            track_score_edges = []
+            for action_editor in action_editors:
+                if track_by_action_editor.get(action_editor, tracks[0]) == submission_track:
+                    edge = Edge(invitation = self.journal.get_ae_track_score_id(),
+                        readers = [venue_id, authors_id, action_editor],
+                        writers = [venue_id],
+                        signatures = [venue_id],
+                        head = note.id,
+                        tail = action_editor,
+                        weight = 1
+                    )
+                    track_score_edges.append(edge)
+
+            self.post_submission_edges(track_score_edges)
+
         print('Finished setup AE assignment.')
         
 
@@ -256,6 +276,8 @@ class Assignment(object):
         scores_spec[journal.get_ae_affinity_score_id()] = {'weight': 1, 'default': 0}
         scores_spec[journal.get_ae_recommendation_id()] = {'weight': 0.1, 'default': 0}
         scores_spec[journal.get_ae_resubmission_score_id()] = {'weight': 10, 'default': 0}
+        if journal.get_tracks():
+            scores_spec[journal.get_ae_track_score_id()] = {'weight': 10, 'default': 0}
         self.client.post_note_edit(invitation=journal.get_ae_assignment_configuration_id(),
                 signatures=[journal.venue_id],
                 note=openreview.api.Note(
