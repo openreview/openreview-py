@@ -59,7 +59,7 @@ class Recruitment(object):
 
         return recruitment_status
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reviewer_role=None):
 
         reviewers_id = self.journal.get_reviewers_id()
         reviewers_declined_id = reviewers_id + '/Declined'
@@ -80,6 +80,9 @@ class Recruitment(object):
             memberships = [g.id for g in self.client.get_groups(member=invitee, prefix=reviewers_id)] if tools.get_group(self.client, invitee) else []
             if reviewers_id in memberships:
                 recruitment_status['already_member'].append(invitee)
+                if reviewer_role:
+                    profile=openreview.tools.get_profile(self.client, invitee)
+                    self.journal.set_reviewer_role(profile.id if profile else invitee, reviewer_role)
             else:
                 profile=openreview.tools.get_profile(self.client, invitee)
                 invitee = profile.id if profile else invitee
@@ -107,5 +110,8 @@ class Recruitment(object):
                     if error_string not in recruitment_status['errors']:
                         recruitment_status['errors'][error_string] = []
                     recruitment_status['errors'][error_string].append(invitee)
+                else:
+                    if reviewer_role:
+                        self.journal.set_reviewer_role(invitee, reviewer_role)
 
         return recruitment_status

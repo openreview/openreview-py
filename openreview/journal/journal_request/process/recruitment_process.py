@@ -39,7 +39,8 @@ def process(client, edit, invitation):
         role = 'Reviewer'
         subject = subject.replace('{{role}}', role)
         content = content.replace('{{role}}', role)
-        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
+        reviewer_role = recruitment_note.content.get('reviewer_role', {}).get('value')
+        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names, reviewer_role=reviewer_role)
 
     non_invited_status = f'''No recruitment invitation was sent to the following users because they have already been invited as {role}:
 {status.get('already_invited')}''' if status.get('already_invited') else ''

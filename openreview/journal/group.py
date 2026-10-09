@@ -139,6 +139,8 @@ class GroupBuilder(object):
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
+            if self.journal.get_reviewer_roles():
+                content = content.replace("var REVIEWERS_ROLE_ID = '';", "var REVIEWERS_ROLE_ID = '" + self.journal.get_reviewer_role_id() + "';")
 
             editor_in_chief_group.web = content
             self.post_group(editor_in_chief_group)
@@ -229,6 +231,8 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
+            if self.journal.get_reviewer_roles():
+                content = content.replace("var REVIEWERS_ROLE_ID = '';", "var REVIEWERS_ROLE_ID = '" + self.journal.get_reviewer_role_id() + "';")
 
             action_editor_group.web = content
             self.post_group(action_editor_group)
@@ -291,6 +295,8 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
+            if self.journal.get_reviewer_roles():
+                content = content.replace("var REVIEWERS_ROLE_ID = '';", "var REVIEWERS_ROLE_ID = '" + self.journal.get_reviewer_role_id() + "';")
 
             action_editor_archived_group.web = content
             self.post_group(action_editor_archived_group)            
@@ -313,6 +319,9 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                             members=[],
                             content=content
                             )
+        elif reviewer_assignment_email_legacy_release_text in (reviewer_group.content or {}).get('assignment_email_template_script', {}).get('value', ''):
+            assignment_email_template = reviewer_group.content['assignment_email_template_script']['value']
+            reviewer_group.content['assignment_email_template_script'] = { 'value': assignment_email_template.replace(reviewer_assignment_email_legacy_release_text, reviewer_assignment_email_release_text) }
         with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")

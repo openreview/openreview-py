@@ -36,5 +36,8 @@ def process(client, edit, invitation):
         )
 
     )
-    
+
+    if journal.are_reviews_released_on_decision():
+        journal.release_reviews(submission)
+
     journal.invitation_builder.set_note_decision_approval_invitation(submission, note, journal.get_due_date(days = 7))

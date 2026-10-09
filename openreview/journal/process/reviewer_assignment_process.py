@@ -17,6 +17,8 @@ def process_update(client, edge, invitation, existing_edge):
     responsiblity_invitation_edit = None
     number_of_reviewers = journal.get_number_of_reviewers()
     review_visibility = 'publicly visible' if journal.is_submission_public() else 'visible to all the reviewers'
+    review_readers_before_release = 'the authors and AE' if journal.should_release_reviews_to_authors_when_posted() else 'the AE'
+    review_release_event = 'the AE posts a decision' if journal.are_reviews_released_on_decision() else f'{number_of_reviewers} reviews have been submitted'
     submission_length = ' If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.' if journal.get_submission_length() else ''
     official_reviewer = client.get_groups(member=edge.tail, id=journal.get_reviewers_id())
 
@@ -126,6 +128,8 @@ def process_update(client, edge, invitation, existing_edge):
             invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_id(number=note.number)}',
             number_of_reviewers=number_of_reviewers,
             review_visibility=review_visibility,
+            review_readers_before_release=review_readers_before_release,
+            review_release_event=review_release_event,
             reviewers_max_papers=journal.get_reviewers_max_papers(),
             assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
         )
