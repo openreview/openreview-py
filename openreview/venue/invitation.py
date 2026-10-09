@@ -5351,7 +5351,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             )
         )
 
-    def set_submission_change_invitation(self, name, activation_date):
+    def set_submission_change_invitation(self, name, activation_date, track=None, track_roles=None):
 
         venue_id = self.venue_id
         venue = self.venue
@@ -5394,19 +5394,32 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
         }
 
-        readers = [venue_id]
-        if venue.use_senior_area_chairs:
-            readers.append(venue.get_senior_area_chairs_id(number))
-        if venue.use_area_chairs:
-            for ac_name in venue.submission_area_chair_roles:
-                readers.append(venue.get_area_chairs_id(number, name=ac_name))
-        if venue.use_reviewers:
-            for reviewers_name in venue.submission_reviewer_roles:
-                readers.append(venue.get_reviewers_id(number, name=reviewers_name))
-        readers.append(venue.get_authors_id('${{2/id}/number}'))
+        source = {
+            'venueid': [venue.get_submission_venue_id()]
+        }
+        track_committee_ids = None
+
+        if track:
+            ## only the committee groups restricted to this track read its submissions
+            source['content'] = { 'track': track }
+            if track_roles is None:
+                track_roles = self.get_committee_roles_by_track().get(track, { 'reviewers': [], 'area_chairs': [], 'senior_area_chairs': [] })
+            track_committee_ids = [venue.get_committee_id(role) for role in track_roles['senior_area_chairs'] + track_roles['area_chairs'] + track_roles['reviewers']]
+            readers = self.get_track_submission_change_readers(name, track_roles)
+        else:
+            readers = [venue_id]
+            if venue.use_senior_area_chairs:
+                readers.append(venue.get_senior_area_chairs_id(number))
+            if venue.use_area_chairs:
+                for ac_name in venue.submission_area_chair_roles:
+                    readers.append(venue.get_area_chairs_id(number, name=ac_name))
+            if venue.use_reviewers:
+                for reviewers_name in venue.submission_reviewer_roles:
+                    readers.append(venue.get_reviewers_id(number, name=reviewers_name))
+            readers.append(venue.get_authors_id('${{2/id}/number}'))
 
         invitation = Invitation(
-            id = f'{venue_id}/-/{name}',
+            id = f'{venue_id}/-/{track}_{name}' if track else f'{venue_id}/-/{name}',
             invitees = [f'{venue_id}/Automated_Administrator'],
             signatures = [venue_id],
             readers = [venue_id],
@@ -5415,9 +5428,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             description = description,
             content = {
                 'source': {
-                    'value': {
-                        'venueid': [venue.get_submission_venue_id()]
-                    }
+                    'value': source
                 }
             },
             date_processes = [{
@@ -5454,7 +5465,50 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
         edit_invitations_builder.set_edit_submission_field_readers_invitation(invitation.id)
         edit_invitations_builder.set_edit_dates_one_level_invitation(invitation.id)
-        edit_invitations_builder.set_edit_submission_readers_invitation(invitation.id, include_assigned_committee)
+        edit_invitations_builder.set_edit_submission_readers_invitation(invitation.id, include_assigned_committee, committee_ids=track_committee_ids)
+
+        return invitation
+
+    def get_committee_roles_by_track(self):
+        """Return the committee role names restricted to each track, as
+        { track: { 'reviewers': [...], 'area_chairs': [...], 'senior_area_chairs': [...] } }.
+        Roles without a track are left out."""
+
+        venue = self.venue
+
+        role_names = { 'reviewers': venue.reviewer_roles if venue.use_reviewers else [] }
+        role_names['area_chairs'] = venue.area_chair_roles if venue.use_area_chairs else []
+        role_names['senior_area_chairs'] = venue.senior_area_chair_roles if venue.use_senior_area_chairs else []
+
+        roles_by_track = {}
+        for key, roles in role_names.items():
+            for role in roles:
+                group = tools.get_group(self.client, venue.get_committee_id(role))
+                track = group.content.get('track', {}).get('value') if group and group.content else None
+                if track:
+                    roles_by_track.setdefault(track, { 'reviewers': [], 'area_chairs': [], 'senior_area_chairs': [] })[key].append(role)
+        return roles_by_track
+
+    def get_track_submission_change_readers(self, name, track_roles):
+        """Return the note readers of a track's submission change invitation. Before bidding
+        these are the track's role groups; before reviewing, the per-submission groups those
+        roles are assigned into."""
+
+        venue = self.venue
+        number = None if 'Change_Before_Bidding' in name else '${{2/id}/number}'
+
+        readers = [self.venue_id]
+        if number is None:
+            readers.extend([venue.get_committee_id(role) for role in track_roles['senior_area_chairs'] + track_roles['area_chairs'] + track_roles['reviewers']])
+        else:
+            if track_roles['senior_area_chairs']:
+                readers.append(venue.get_senior_area_chairs_id(number))
+            for role in track_roles['area_chairs'] + track_roles['reviewers']:
+                submission_group_id = venue.get_committee_id(venue.get_submission_committee_name(role), number)
+                if submission_group_id not in readers:
+                    readers.append(submission_group_id)
+        readers.append(venue.get_authors_id('${{2/id}/number}'))
+        return readers
 
     def set_venue_template_invitations(self):
 

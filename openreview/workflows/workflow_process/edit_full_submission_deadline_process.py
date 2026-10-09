@@ -12,19 +12,24 @@ def process(client, edit, invitation):
     print('Expiration:', edit.invitation.edit['invitation']['expdate'])
     
     # update post submission cdate if new cdate is later than current cdate
-    before_bidding_invitation_id = f'{venue_id}/-/{submission_name}_Change_Before_Bidding'
-    before_bidding_invitation = openreview.tools.get_invitation(client, before_bidding_invitation_id)
-    if before_bidding_invitation and before_bidding_invitation.cdate < expdate:
-        print('Setting post submission cdate to:', expdate)
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=before_bidding_invitation_id,
-                cdate=expdate,
-                signatures=[venue_id]
+    # a venue with tracks has one invitation per track instead of the venue-wide one
+    submission_invitation = client.get_invitation(domain.get_content_value('submission_id', f'{venue_id}/-/{submission_name}'))
+    track_options = submission_invitation.edit['note']['content'].get('track', {}).get('value', {}).get('param', {}).get('enum', [])
+    tracks = [option['value'] if isinstance(option, dict) else option for option in track_options]
+    before_bidding_invitation_ids = [f'{venue_id}/-/{submission_name}_Change_Before_Bidding'] + [f'{venue_id}/-/{track}_{submission_name}_Change_Before_Bidding' for track in tracks]
+    for before_bidding_invitation_id in before_bidding_invitation_ids:
+        before_bidding_invitation = openreview.tools.get_invitation(client, before_bidding_invitation_id)
+        if before_bidding_invitation and before_bidding_invitation.cdate < expdate:
+            print('Setting post submission cdate to:', expdate)
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=before_bidding_invitation_id,
+                    cdate=expdate,
+                    signatures=[venue_id]
+                )
             )
-        )
 
     # update withdrawal cdate
     withdrawal_invitation_id = f'{venue_id}/-/{withdrawal_name}'

@@ -73,12 +73,16 @@ def process(client, invitation):
             enable_reviewer_reassignment=True,
         )
 
-        #update change before reviewing cdate
+        #update change before reviewing cdate; a committee restricted to a track only releases
+        #the submissions of its own track
+        committee_group = client.get_group(committee_id)
+        committee_track = committee_group.content.get('track', {}).get('value') if committee_group.content else None
+        before_reviewing_invitation_id = f'{venue_id}/-/{committee_track}_Submission_Change_Before_Reviewing' if committee_track else f'{venue_id}/-/Submission_Change_Before_Reviewing'
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             signatures=[venue_id],
             invitation=openreview.api.Invitation(
-                id=f'{venue_id}/-/Submission_Change_Before_Reviewing',
+                id=before_reviewing_invitation_id,
                 cdate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes=30)),
                 signatures=[venue_id]
             )
