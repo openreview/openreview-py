@@ -3494,6 +3494,24 @@ arr_submitted_contributor_content = {
         "description": "Per ACL [sustainable reviewing policy](https://aclrollingreview.org/sustainable-reviewing-2026) in effect from October 2026, submissions to ARR are guaranteed reviewing only if they contribute sufficient service capacity (as reviewer, chair or in other senior roles). No one individual may be designated as the service contributor for more than 2 submissions. The previous exception policy no longer applies: it is the responsibility of the submitting authors to ensure that the designated contributor is available and willing to serve in a given cycle. \n\n We clarify that the service expectations for the service contributors designated in cycle submissions are different from the regular volunteer service. If you are a designated service contributor in this cycle, your answers in this form override any previously indicated unavailability or service load preferences as an ARR volunteer reviewer or chair for this cycle.",
         "order": 1
     },
+    "other_service_role": {
+        "order": 2,
+        "description": "If you selected “I am already serving” above, select all your current ARR roles. Otherwise, leave this blank. We will check these against ARR’s records.",
+        "value": {
+            "param": {
+                "type": "string[]",
+                "enum": [
+                    "senior area chair",
+                    "ethics reviewer or chair",
+                    "ARR team",
+                    "program chair",
+                ],
+                "input": "checkbox",
+                "optional": True,
+                "deletable": True,
+                "fieldName": "Your service role(s) (if applicable)",
+            }
+        },
     "confirm_emergency_policy": {
         "value": {
             "param": {
@@ -3506,7 +3524,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "Should the unforeseen circumstances prevent a designated contributor from completing their tasks on time, it is their responsibility to notify the chairs of the [when the tasks will be completed](https://aclrollingreview.org/reviewerguidelines#delay). If the tasks cannot be completed at all, designated contributors must file an [emergency declaration form](https://aclrollingreview.org/reviewerguidelines#emergency), where they must provide a qualified and willing replacement. Otherwise any submissions for which they serve, or which they co-author, will be desk rejected.",
-        "order": 2
+        "order": 3
     },
     "confirm_endorsement": {
         "value": {
@@ -3520,7 +3538,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "To mitigate the problem of low-effort submissions, ARR adopts arXiv-style endorsement system. The designated service contributors must confirm that the submission(s), for which they serve, are at the quality level expected at a top-tier NLP conference. Cases of system abuse, including systematic endorsement of low-quality submissions, will be subject to sanctions of the ACL publication ethics committee. See the [sustainable reviewing policy](https://aclrollingreview.org/sustainable-reviewing-2026) for details.",
-        "order": 3
+        "order": 4
     },
     "serving_as_a_regular_or_emergency_reviewer_or_AC": {
         "value": {
@@ -3535,7 +3553,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "Some reviewers and ACs will be needed to quickly review (in 1-2 days) papers that are missing reviews at the end of the review period. Please indicate if you are willing to serve in this way.",
-        "order": 4
+        "order": 5
     },
     "indicate_emergency_reviewer_load": {
         "value": {
@@ -3552,7 +3570,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "Please indicate how many papers you would be willing to do emergency reviews for if asked.",
-        "order": 5
+        "order": 6
     },
     "are_you_a_student": {
         "value": {
@@ -3569,7 +3587,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
-        "order": 6
+        "order": 7
     },
     "what_is_your_highest_level_of_completed_education": {
         "value": {
@@ -3585,7 +3603,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
-        "order": 7
+        "order": 8
     },
     "confirm_you_are_qualified_to_review": {
         "value": {
@@ -3600,7 +3618,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "The ARR requirements for reviewers depend on both publications and career stage. Please see this page for the up-to-date list of criteria and qualifying venues, and assess whether you qualify: https://aclrollingreview.org/qualifications \n\n Note, we will check that your response matches online records. Having your self-reported status helps us identify issues with available data.",
-        "order": 8
+        "order": 9
     },
     "confirm_your_profile_has_past_domains": {
         "description": "I confirm that I have specified in my OpenReview profile the full history of domains I am now and previously was affiliated with.",
@@ -3614,7 +3632,7 @@ arr_submitted_contributor_content = {
                 "optional": False
             }
         },
-        "order": 9
+        "order": 10
     },
     "confirm_your_profile_has_all_email_addresses": {
         "description": "I confirm that I have specified in my OpenReview profile all (professional) email addresses I now use and have used before.",
@@ -3628,7 +3646,7 @@ arr_submitted_contributor_content = {
                 "optional": False
             }
         },
-        "order": 10
+        "order": 11
     },
     "meta_data_donation": {
         "value": {
@@ -3642,7 +3660,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "If selected as reviewer, do you agree for the anonymized metadata associated with your reviews produced in this cycle to be included in a publicly available dataset? This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as meta-review decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc.",
-        "order": 11
+        "order": 12
     },
     "indicate_your_research_areas": {
         "value": {
@@ -3654,7 +3672,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "If you are selected as a reviewer, we will need to know the research areas / tracks you are qualified to review for. Please select the most relevant research areas / tracks for your expertise. Note: we will try to find optimal matches, given the available information, but we cannot guarantee that everyone's preferences would be satisfied. You will be able to provide feedback on paper-reviewer matching in the review form.",
-        "order": 12
+        "order": 13
     },
     "contribution_types": {
         "value": {
@@ -3666,7 +3684,7 @@ arr_submitted_contributor_content = {
             }
         },
         "description": "Please indicate what types of contributions you are overall interested in reviewing.",
-        "order": 13
+        "order": 14
     },
     "indicate_your_languages": {
         "value": {
