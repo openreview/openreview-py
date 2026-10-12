@@ -2416,6 +2416,7 @@ arr_registration_task = {
                 "enum": [
                     "My OpenReview profile contains a link to my DBLP profile with just my papers.",
                     "My OpenReview profile contains a link to my DBLP profile, but it also includes other peoples' publications.",
+                    "My DBLP profile cannot be added, because it is mixed with other peoples' publications and was already claimed in another OpenReview profile",
                     "N/A: I have no publications listed in DBLP."
                 ],
                 "optional": False,
@@ -2432,6 +2433,7 @@ arr_registration_task = {
                 "enum": [
                     "My OpenReview profile contains a link to an ACL Anthology profile with just my papers.",
                     "My OpenReview profile contains a link to an ACL Anthology profile, but it also contains other peoples' publications.",
+                    "My ACL Anthology profile cannot be added, because it is mixed with other peoples' publications and was already claimed in another OpenReview profile",
                     "N/A: I have no publications in ACL Anthology."
                 ],
                 "optional": False,
@@ -3715,6 +3717,7 @@ arr_submitted_contributor_content = {
                 "enum": [
                     "My OpenReview profile contains a link to my DBLP profile with just my papers.",
                     "My OpenReview profile contains a link to my DBLP profile, but it also includes other peoples' publications.",
+                    "My DBLP profile cannot be added, because it is mixed with other peoples' publications and was already claimed in another OpenReview profile",
                     "N/A: I have no publications listed in DBLP."
                 ],
                 "optional": False,
@@ -3731,6 +3734,7 @@ arr_submitted_contributor_content = {
                 "enum": [
                     "My OpenReview profile contains a link to an ACL Anthology profile with just my papers.",
                     "My OpenReview profile contains a link to an ACL Anthology profile, but it also contains other peoples' publications.",
+                    "My ACL Anthology profile cannot be added, because it is mixed with other peoples' publications and was already claimed in another OpenReview profile",
                     "N/A: I have no publications in ACL Anthology."
                 ],
                 "optional": False,
