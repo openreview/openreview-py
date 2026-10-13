@@ -190,6 +190,9 @@ class Journal(object):
     def get_authors_deanonymization_id(self, number=None):
         return self.__get_invitation_id(name='Authors_De-Anonymization', number=number)
 
+    def get_eic_author_deanonymization_id(self, number=None):
+        return self.__get_invitation_id(name='Authors_De-Anonymization_By_EICs', number=number)
+
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
 

@@ -32,4 +32,4 @@ def process(client, edit, invitation):
         sender=journal.get_message_sender()
     )
 
-    journal.invitation_builder.expire_paper_invitations(submission)     
+    journal.invitation_builder.expire_paper_invitations(submission)
