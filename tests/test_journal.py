@@ -1593,8 +1593,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=ack_invitation.id,
                 cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
-                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
-                signatures=['TMLR/Editors_In_Chief']
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000
             )
         )
 
