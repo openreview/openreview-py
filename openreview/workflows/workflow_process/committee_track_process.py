@@ -9,7 +9,7 @@ def process(client, edit, invitation):
 
     ## restrict every matching invitation of this group to the group's track,
     ## or lift the restriction when the track is removed
-    for name in ['Affinity_Score', 'Conflict', 'Proposed_Assignment', 'Assignment', 'Aggregate_Score']:
+    for name in ['Affinity_Score', 'Conflict', 'Proposed_Assignment', 'Assignment', 'Aggregate_Score', domain.get_content_value('bid_name', 'Bid')]:
         edge_invitation = openreview.tools.get_invitation(client, f'{group_id}/-/{name}')
         if not edge_invitation:
             continue

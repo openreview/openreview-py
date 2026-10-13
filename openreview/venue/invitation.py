@@ -1500,6 +1500,16 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
             bid_score_spec = bid_stage.default_scores_spec
 
+            # the domain only stores the venue-wide role's score and conflict ids; a role split into
+            # several groups (e.g. one per track) has its own, so the bid console reads them from here
+            bid_matching_content = {}
+            affinity_score_id = venue.get_affinity_score_id(match_group_id)
+            if tools.get_invitation(self.client, affinity_score_id):
+                bid_matching_content['affinity_score_id'] = { 'value': affinity_score_id }
+            conflict_id = venue.get_conflict_score_id(match_group_id)
+            if tools.get_invitation(self.client, conflict_id):
+                bid_matching_content['conflict_id'] = { 'value': conflict_id }
+
             bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
 
             template_name = 'profileBidWebfield.js' if match_group_id == venue.get_senior_area_chairs_id() and not venue.sac_paper_assignments else 'paperBidWebfield.js'
@@ -1521,7 +1531,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 web = webfield_content,
                 content = {
                     'committee_name': { 'value': venue.get_committee_name(match_group_id) },
-                    'scores_spec': { 'value': bid_score_spec }
+                    'scores_spec': { 'value': bid_score_spec },
+                    **bid_matching_content
                 },
                 edge = {
                     'id': {

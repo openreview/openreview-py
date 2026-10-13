@@ -33,22 +33,24 @@ def process(client, edit, invitation):
     authors_name = venue.authors_name
     reviewers_name = venue.reviewers_name
 
+    # one bid per reviewer and area chair role, so a role restricted to a track bids only on that track
     venue.bid_stages = [
         openreview.stages.BidStage(
-            f'{venue_id}/{reviewers_name}',
+            venue.get_reviewers_id(name=role),
             start_date = submission_deadline_datetime + datetime.timedelta(days=3.5),
             due_date = submission_deadline_datetime + datetime.timedelta(days=7)
-        )
+        ) for role in venue.reviewer_roles
     ]
 
     if venue.use_area_chairs:
-        venue.bid_stages.append(
-            openreview.stages.BidStage(
-                venue.get_area_chairs_id(),
-                start_date=submission_duedate + datetime.timedelta(days=3.5),
-                due_date=submission_duedate + datetime.timedelta(days=7)
+        for role in venue.area_chair_roles:
+            venue.bid_stages.append(
+                openreview.stages.BidStage(
+                    venue.get_area_chairs_id(name=role),
+                    start_date=submission_duedate + datetime.timedelta(days=3.5),
+                    due_date=submission_duedate + datetime.timedelta(days=7)
+                )
             )
-        )
 
         if venue.use_senior_area_chairs:
             venue.bid_stages.append(
