@@ -592,12 +592,13 @@ Please note that with the exception of urgent issues, requests made on weekends 
         venue_group = openreview_client.get_group(venue['venue_id'])
         assert 'withdrawn_submission_reveal_authors' not in venue_group.content
 
+        venue_group_id = venue['venue_id']
         # add keys to venue group
         openreview_client.post_group_edit(
-            invitation=f'{venue['venue_id']}/-/Edit',
-            signatures=[venue['venue_id']],
+            invitation=f'{venue_group_id}/-/Edit',
+            signatures=[venue_group_id],
             group=openreview.api.Group(
-                id=venue['venue_id'],
+                id=venue_group_id,
                 content={
                     'withdrawn_submission_reveal_authors': { 'value': False },
                     'desk_rejected_submission_reveal_authors': { 'value': False }
