@@ -5427,6 +5427,39 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
+        review_duedate = openreview_client.get_invitation('TMLR/Paper10/-/Review').duedate
+
+        ## Desk reject the under review submission by EIC, the pending review is discounted
+        desk_reject_note = raia_client.post_note_edit(invitation= 'TMLR/Paper10/-/Desk_Rejection',
+                                    signatures=[f'{venue_id}/Editors_In_Chief'],
+                                    note=Note(content={
+                                        'desk_reject_comments': { 'value': 'Out of scope.' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        note = openreview_client.get_note(note_id_10)
+        assert note.content['venueid']['value'] == 'TMLR/Desk_Rejected'
+        assert openreview_client.get_invitation('TMLR/Paper10/-/Review').expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
+
+        ## Revert the desk rejection by EIC, the pending review is counted again
+        desk_reject_reversion_note = raia_client.post_note_edit(invitation='TMLR/Paper10/-/Desk_Rejection_Reversion',
+                                    signatures=[f'{venue_id}/Editors_In_Chief'],
+                                    note=Note(content={
+                                        'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of the desk-rejected submission.' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_reversion_note['id'])
+
+        note = openreview_client.get_note(note_id_10)
+        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
+        review_invitation = openreview_client.get_invitation('TMLR/Paper10/-/Review')
+        assert review_invitation.expdate is None
+        assert review_invitation.duedate == review_duedate
+
+        assert joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews') == 5
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
 
         note = openreview_client.get_note(note_id_10)
         journal.invitation_builder.expire_paper_invitations(note)
