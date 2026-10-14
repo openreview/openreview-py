@@ -1000,9 +1000,9 @@ item recommendation queries by up to 30 \% overall.
 
         geometric_note = andrew_client.get_note(edit['note']['id'])
         assert geometric_note.content['authors']['value'] == [
-            {"fullname": "Shib Dasgupta", "username": "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all"},
-            {"fullname": "Michael Boratko", "username": "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all"},
-            {"fullname": "Andrew McCallum", "username": "https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all"}
+            {"fullname": "Shib Dasgupta", "username": ""},
+            {"fullname": "Michael Boratko", "username": ""},
+            {"fullname": "Andrew McCallum", "username": ""}
         ]
 
         edit = andrew_client.post_note_edit(
@@ -1020,8 +1020,8 @@ item recommendation queries by up to 30 \% overall.
 
         geometric_note = andrew_client.get_note(edit['note']['id'])
         assert geometric_note.content['authors']['value'] == [
-            {"fullname": "Shib Dasgupta", "username": "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all"},
-            {"fullname": "Michael Boratko", "username": "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all"},
+            {"fullname": "Shib Dasgupta", "username": ""},
+            {"fullname": "Michael Boratko", "username": ""},
             {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
         ]
 
@@ -1113,10 +1113,10 @@ computation and memory.
         updated_note = andrew_client.get_note(edit['note']['id'])
         assert updated_note.external_ids == ['arxiv:2210.05043v2']
         assert updated_note.content['authors']['value'] == [
-            {"fullname": "Haw-Shiuan Chang", "username": "https://arxiv.org/search/?query=Haw-Shiuan%20Chang&searchtype=all"},
-            {"fullname": "Ruei-Yao Sun", "username": "https://arxiv.org/search/?query=Ruei-Yao%20Sun&searchtype=all"},
-            {"fullname": "Kathryn Ricci", "username": "https://arxiv.org/search/?query=Kathryn%20Ricci&searchtype=all"},
-            {"fullname": "Andrew McCallum", "username": "https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all"}
+            {"fullname": "Haw-Shiuan Chang", "username": ""},
+            {"fullname": "Ruei-Yao Sun", "username": ""},
+            {"fullname": "Kathryn Ricci", "username": ""},
+            {"fullname": "Andrew McCallum", "username": ""}
         ]
 
         edit = andrew_client.post_note_edit(
@@ -1134,9 +1134,9 @@ computation and memory.
 
         updated_note = andrew_client.get_note(edit['note']['id'])
         assert updated_note.content['authors']['value'] == [
-            {"fullname": "Haw-Shiuan Chang", "username": "https://arxiv.org/search/?query=Haw-Shiuan%20Chang&searchtype=all"},
-            {"fullname": "Ruei-Yao Sun", "username": "https://arxiv.org/search/?query=Ruei-Yao%20Sun&searchtype=all"},
-            {"fullname": "Kathryn Ricci", "username": "https://arxiv.org/search/?query=Kathryn%20Ricci&searchtype=all"},
+            {"fullname": "Haw-Shiuan Chang", "username": ""},
+            {"fullname": "Ruei-Yao Sun", "username": ""},
+            {"fullname": "Kathryn Ricci", "username": ""},
             {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
         ]
         
