@@ -139,6 +139,12 @@ class Journal(object):
     def get_desk_rejection_id(self, number=None):
         return self.__get_invitation_id(name='Desk_Rejection', number=number)
 
+    def get_desk_rejection_expiration_id(self):
+        return self.__get_invitation_id(name='Desk_Rejection_Expiration')
+
+    def get_desk_rejection_reversion_id(self, number=None):
+        return self.__get_invitation_id(name='Desk_Rejection_Reversion', number=number)
+
     def get_desk_rejection_approval_id(self, number=None):
         return self.__get_invitation_id(name='Desk_Rejection_Approval', number=number)
 
