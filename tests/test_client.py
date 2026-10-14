@@ -1,9 +1,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import re
 import datetime
 import openreview
 import pytest
 import time
+from contextlib import contextmanager
 from unittest.mock import patch, MagicMock
 from openreview.api import OpenReviewClient
 from openreview.api import Note
@@ -300,10 +302,12 @@ class TestClient():
         notes = openreview_client.get_notes(invitation=invitation, content = { 'title': 'Paper title3333'})
         assert len(notes) == 0
 
-        notes = list(openreview.tools.iterget_notes(openreview_client, invitation=invitation, content = { 'title': 'Paper title'}))
+        with pytest.deprecated_call():
+            notes = list(openreview.tools.iterget_notes(openreview_client, invitation=invitation, content = { 'title': 'Paper title'}))
         assert len(notes) == 1
 
-        notes = list(openreview.tools.iterget_notes(openreview_client, invitation=invitation, content = { 'title': 'Paper title333'}))
+        with pytest.deprecated_call():
+            notes = list(openreview.tools.iterget_notes(openreview_client, invitation=invitation, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
 
         notes = openreview_client.get_all_notes(invitation=invitation, content = { 'title': 'Paper title'})
@@ -559,6 +563,38 @@ class TestClient():
     #     assert note
 
 
+def _fail_if_prompted(*args, **kwargs):
+    raise AssertionError('interactive MFA helper must not be called when mfa_code_provider is set')
+
+@contextmanager
+def no_mfa_prompts(interactive):
+    with patch('openreview.mfa._is_interactive', return_value=interactive), \
+         patch('openreview.mfa._default_mfa_method_chooser', side_effect=_fail_if_prompted), \
+         patch('openreview.mfa._default_mfa_code_prompt', side_effect=_fail_if_prompted):
+        yield
+
+def recording(provider):
+    calls = []
+    def record(method):
+        calls.append(method)
+        return provider(method)
+    return record, calls
+
+def verification_messages(openreview_client, email):
+    messages = openreview_client.get_messages(to=email)
+    return [m for m in messages if 'Verification Code' in m.get('content', {}).get('subject', '')]
+
+def await_email_otp(openreview_client, email, previous_count):
+    for _ in range(20):
+        messages = verification_messages(openreview_client, email)
+        if len(messages) > previous_count:
+            newest = max(messages, key=lambda m: m.get('cdate', 0))
+            match = re.search(r'verification code is: \*\*(\d{6})\*\*', newest['content']['text'])
+            assert match, 'Could not extract OTP code from message'
+            return match.group(1)
+        time.sleep(0.5)
+    raise AssertionError('No new verification code email arrived')
+
 class TestMfaLogin():
 
     def test_login_without_mfa(self, helpers):
@@ -790,6 +826,204 @@ class TestMfaLogin():
             )
             assert client.token
             assert client.profile
+
+    def test_mfa_code_provider_totp_non_interactive_v2(self, helpers):
+        import pyotp
+
+        provider, calls = recording(lambda m: pyotp.TOTP(TestMfaLogin.totp_secret).now())
+        with no_mfa_prompts(interactive=False):
+            client = OpenReviewClient(
+                baseurl='http://localhost:3001',
+                username='mfa_totp_test@mail.com',
+                password=helpers.strong_password,
+                mfa_code_provider=provider
+            )
+        assert client.token
+        assert client.profile
+        assert calls == ['totp']
+
+    def test_mfa_code_provider_totp_interactive_v2(self, helpers):
+        import pyotp
+
+        provider, calls = recording(lambda m: pyotp.TOTP(TestMfaLogin.totp_secret).now())
+        with no_mfa_prompts(interactive=True):
+            client = OpenReviewClient(
+                baseurl='http://localhost:3001',
+                username='mfa_totp_test@mail.com',
+                password=helpers.strong_password,
+                mfa_code_provider=provider
+            )
+        assert client.token
+        assert client.profile
+        assert calls == ['totp']
+
+    def test_mfa_code_provider_totp_v1(self, helpers):
+        import pyotp
+
+        provider, calls = recording(lambda m: pyotp.TOTP(TestMfaLogin.totp_secret).now())
+        with no_mfa_prompts(interactive=False):
+            client = openreview.Client(
+                baseurl='http://localhost:3000',
+                username='mfa_totp_test@mail.com',
+                password=helpers.strong_password,
+                mfa_code_provider=provider
+            )
+        assert client.token
+        assert client.profile
+        assert calls == ['totp']
+
+    def test_mfa_code_provider_prefers_totp_over_email_v2(self, openreview_client, helpers):
+        import requests as req
+        import pyotp
+
+        email = 'mfa_totp_and_email_test@mail.com'
+        helpers.create_user(email, 'MfaTotpEmail', 'TestUser')
+        client = OpenReviewClient(
+            baseurl='http://localhost:3001',
+            username=email,
+            password=helpers.strong_password
+        )
+        headers = {'Authorization': f'Bearer {client.token}', 'User-Agent': 'test-script'}
+
+        res = req.post('http://localhost:3001/mfa/setup/email', headers=headers)
+        assert res.status_code == 200
+        res = req.post('http://localhost:3001/mfa/setup/totp/init', headers=headers)
+        assert res.status_code == 200
+        secret = res.json()['secret']
+        res = req.post('http://localhost:3001/mfa/setup/totp/verify', headers=headers, json={'code': pyotp.TOTP(secret).now()})
+        assert res.status_code == 200
+
+        res = req.post(
+            'http://localhost:3001/login',
+            json={'id': email, 'password': helpers.strong_password},
+            headers={'User-Agent': 'test-script'}
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data.get('mfaPending') is True
+        assert data.get('preferredMethod') == 'emailOtp'
+        assert 'totp' in data['mfaMethods']
+        assert 'emailOtp' in data['mfaMethods']
+
+        email_count = len(verification_messages(openreview_client, email))
+
+        provider, calls = recording(lambda m: pyotp.TOTP(secret).now())
+        with no_mfa_prompts(interactive=False):
+            client = OpenReviewClient(
+                baseurl='http://localhost:3001',
+                username=email,
+                password=helpers.strong_password,
+                mfa_code_provider=provider
+            )
+        assert client.token
+        assert client.profile
+        assert calls == ['totp']
+
+        time.sleep(1)
+        assert len(verification_messages(openreview_client, email)) == email_count
+
+    def test_mfa_code_provider_email_otp_v2(self, openreview_client, helpers):
+        email = 'mfa_email_test@mail.com'
+        email_count = len(verification_messages(openreview_client, email))
+
+        provider, calls = recording(lambda m: await_email_otp(openreview_client, email, email_count))
+        with no_mfa_prompts(interactive=False):
+            client = OpenReviewClient(
+                baseurl='http://localhost:3001',
+                username=email,
+                password=helpers.strong_password,
+                mfa_code_provider=provider
+            )
+        assert client.token
+        assert client.profile
+        assert calls == ['emailOtp']
+
+    def test_mfa_code_provider_wrong_code_v2(self, helpers):
+        import requests as req
+        import pyotp
+
+        # A separate user, because the failed attempt counts toward the lockout
+        email = 'mfa_provider_wrong_code_test@mail.com'
+        helpers.create_user(email, 'MfaWrongCode', 'TestUser')
+        client = OpenReviewClient(
+            baseurl='http://localhost:3001',
+            username=email,
+            password=helpers.strong_password
+        )
+        headers = {'Authorization': f'Bearer {client.token}', 'User-Agent': 'test-script'}
+        res = req.post('http://localhost:3001/mfa/setup/totp/init', headers=headers)
+        assert res.status_code == 200
+        secret = res.json()['secret']
+        res = req.post('http://localhost:3001/mfa/setup/totp/verify', headers=headers, json={'code': pyotp.TOTP(secret).now()})
+        assert res.status_code == 200
+
+        provider, calls = recording(lambda m: pyotp.TOTP(pyotp.random_base32()).now())
+        with no_mfa_prompts(interactive=False):
+            with pytest.raises(openreview.OpenReviewException) as exc_info:
+                OpenReviewClient(
+                    baseurl='http://localhost:3001',
+                    username=email,
+                    password=helpers.strong_password,
+                    mfa_code_provider=provider
+                )
+        assert not isinstance(exc_info.value, openreview.MfaRequiredException)
+        assert 'Invalid TOTP code' in str(exc_info.value)
+        assert '4 attempts remaining' in str(exc_info.value)
+        assert calls == ['totp']
+
+    def test_mfa_code_provider_declines_v2(self, helpers):
+        import pyotp
+
+        provider, calls = recording(lambda m: None)
+        with patch('openreview.mfa._is_interactive', return_value=False):
+            with pytest.raises(openreview.MfaRequiredException) as exc_info:
+                OpenReviewClient(
+                    baseurl='http://localhost:3001',
+                    username='mfa_totp_test@mail.com',
+                    password=helpers.strong_password,
+                    mfa_code_provider=provider
+                )
+        assert 'totp' in exc_info.value.mfa_methods
+        assert calls == ['totp']
+
+        provider, calls = recording(lambda m: None)
+        with patch('openreview.mfa._is_interactive', return_value=True), \
+             patch('openreview.mfa._default_mfa_method_chooser', return_value='totp'), \
+             patch('openreview.mfa._default_mfa_code_prompt', return_value=pyotp.TOTP(TestMfaLogin.totp_secret).now()):
+            client = OpenReviewClient(
+                baseurl='http://localhost:3001',
+                username='mfa_totp_test@mail.com',
+                password=helpers.strong_password,
+                mfa_code_provider=provider
+            )
+        assert client.token
+        assert client.profile
+        assert calls == ['totp']
+
+    def test_mfa_code_provider_exception_propagates_v2(self, helpers):
+        def provider(method):
+            raise RuntimeError('vault locked')
+
+        with no_mfa_prompts(interactive=False):
+            with pytest.raises(RuntimeError, match='vault locked'):
+                OpenReviewClient(
+                    baseurl='http://localhost:3001',
+                    username='mfa_totp_test@mail.com',
+                    password=helpers.strong_password,
+                    mfa_code_provider=provider
+                )
+
+    def test_mfa_code_provider_not_called_without_mfa_v2(self, helpers):
+        provider, calls = recording(lambda m: '000000')
+        client = OpenReviewClient(
+            baseurl='http://localhost:3001',
+            username='mfa_nomfa_test@mail.com',
+            password=helpers.strong_password,
+            mfa_code_provider=provider
+        )
+        assert client.token
+        assert client.profile
+        assert calls == []
 
 class TestExpertiseAllResultsDownload():
     """Tests for get_expertise_all_results downloading result files."""
