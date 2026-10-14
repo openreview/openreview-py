@@ -139,6 +139,12 @@ class Journal(object):
     def get_desk_rejection_id(self, number=None):
         return self.__get_invitation_id(name='Desk_Rejection', number=number)
 
+    def get_desk_rejection_expiration_id(self):
+        return self.__get_invitation_id(name='Desk_Rejection_Expiration')
+
+    def get_desk_rejection_reversion_id(self, number=None):
+        return self.__get_invitation_id(name='Desk_Rejection_Reversion', number=number)
+
     def get_desk_rejection_approval_id(self, number=None):
         return self.__get_invitation_id(name='Desk_Rejection_Approval', number=number)
 
@@ -189,6 +195,9 @@ class Journal(object):
 
     def get_authors_deanonymization_id(self, number=None):
         return self.__get_invitation_id(name='Authors_De-Anonymization', number=number)
+
+    def get_eic_author_deanonymization_id(self, number=None):
+        return self.__get_invitation_id(name='Authors_De-Anonymization_By_EICs', number=number)
 
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
