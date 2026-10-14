@@ -6623,6 +6623,77 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         self.save_super_invitation(self.journal.get_authors_deanonymization_id(), invitation_content, edit_content, invitation)
 
+        invitation = {
+            'id': self.journal.get_eic_author_deanonymization_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id],
+            'readers': [venue_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'edit': {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': editors_in_chief_id, 'optional': False }]
+                    }
+                },
+                'readers': ['${2/note/readers}'],
+                'writers': [ venue_id ],
+                'note': {
+                    'signatures': ['${3/signatures}'],
+                    'forum':  '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'readers': {
+                        'param': {
+                            'items': [
+                                { 'value': editors_in_chief_id, 'optional': False },
+                                { 'value': self.journal.get_action_editors_id('${8/content/noteNumber/value}'), 'optional': True },
+                                { 'value': self.journal.get_reviewers_id(number='${8/content/noteNumber/value}'), 'optional': True },
+                                { 'value': self.journal.get_authors_id(number='${8/content/noteNumber/value}'), 'optional': True },
+                                { 'value': 'everyone', 'optional': True }
+                            ]
+                        }
+                    },
+                    'writers': [ venue_id ],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'const': 'Authors De-Anonymization By EICs'
+                                }
+                            }
+                        },
+                        'confirmation': {
+                            'order': 2,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['I want to reveal all author names.'],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 3,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            'process': self.process_script
+        }
+
+        self.save_super_invitation(self.journal.get_eic_author_deanonymization_id(), invitation_content, edit_content, invitation)
+
     def set_note_authors_deanonymization_invitation(self, note):
         if self.journal.should_release_authors():
             return self.client.post_invitation_edit(invitations=self.journal.get_authors_deanonymization_id(),
@@ -6634,6 +6705,18 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 writers=[self.journal.venue_id],
                 signatures=[self.journal.venue_id]
             )
+
+    def set_note_eic_author_deanonymization_invitation(self, note):
+        if self.journal.should_release_authors():
+            return self.client.post_invitation_edit(invitations=self.journal.get_eic_author_deanonymization_id(),
+                    content={
+                        'noteId': { 'value': note.id },
+                        'noteNumber': { 'value': note.number }
+                    },
+                    readers=[self.journal.venue_id],
+                    writers=[self.journal.venue_id],
+                    signatures=[self.journal.venue_id]
+                )
 
     def set_assignment_configuration_invitation(self):
 
