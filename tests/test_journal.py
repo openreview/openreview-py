@@ -5292,6 +5292,53 @@ The TMLR Editors-in-Chief
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Revision').expdate < now
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Withdrawal').expdate < now
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Desk_Rejection').expdate < now
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Official_Comment').expdate is None
+        assert openreview_client.get_invitation_edits(invitation_id='TMLR/Paper9/-/Revision', invitation='TMLR/-/Desk_Rejection_Expiration')
+
+        reversion_invitation = openreview_client.get_invitation('TMLR/Paper9/-/Desk_Rejection_Reversion')
+        assert not reversion_invitation.expdate
+        assert reversion_invitation.edit['note']['replyto'] == desk_reject_note['note']['id']
+
+        ## Revert the desk rejection by EIC
+        desk_reject_reversion_note = raia_client.post_note_edit(invitation='TMLR/Paper9/-/Desk_Rejection_Reversion',
+                                    signatures=[f'{venue_id}/Editors_In_Chief'],
+                                    note=Note(content={
+                                        'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of the desk-rejected submission.' },
+                                        'comment': { 'value': 'The PDF was anonymized after all.' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_reversion_note['id'])
+
+        note = openreview_client.get_note(note_id_9)
+        assert note.readers == ['TMLR', 'TMLR/Paper9/Action_Editors', 'TMLR/Paper9/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper9/Authors']
+        assert note.content['venue']['value'] == 'Submitted to TMLR'
+        assert note.content['venueid']['value'] == 'TMLR/Submitted'
+
+        assert not openreview_client.get_note_edits(note_id=note_id_9, invitation='TMLR/-/Desk_Rejected')
+
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Revision').expdate is None
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Withdrawal').expdate is None
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Desk_Rejection').expdate is None
+        assert openreview_client.get_invitation('TMLR/Paper9/Action_Editors/-/Recommendation').expdate is None
+
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Desk rejection reverted for TMLR submission 9: Paper title 9')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+The TMLR Editors-in-Chief have reverted the desk rejection of the TMLR submission "9: Paper title 9". The submission has been restored to its previous status.
+
+To view the Editors-in-Chief's comments, follow this link: https://openreview.net/forum?id={note_id_9}&noteId={desk_reject_reversion_note['note']['id']}
+
+The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
+'''
 
         note = openreview_client.get_note(note_id_9)
         journal.invitation_builder.expire_paper_invitations(note)
@@ -5380,6 +5427,39 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
+        review_duedate = openreview_client.get_invitation('TMLR/Paper10/-/Review').duedate
+
+        ## Desk reject the under review submission by EIC, the pending review is discounted
+        desk_reject_note = raia_client.post_note_edit(invitation= 'TMLR/Paper10/-/Desk_Rejection',
+                                    signatures=[f'{venue_id}/Editors_In_Chief'],
+                                    note=Note(content={
+                                        'desk_reject_comments': { 'value': 'Out of scope.' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        note = openreview_client.get_note(note_id_10)
+        assert note.content['venueid']['value'] == 'TMLR/Desk_Rejected'
+        assert openreview_client.get_invitation('TMLR/Paper10/-/Review').expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
+
+        ## Revert the desk rejection by EIC, the pending review is counted again
+        desk_reject_reversion_note = raia_client.post_note_edit(invitation='TMLR/Paper10/-/Desk_Rejection_Reversion',
+                                    signatures=[f'{venue_id}/Editors_In_Chief'],
+                                    note=Note(content={
+                                        'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of the desk-rejected submission.' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_reversion_note['id'])
+
+        note = openreview_client.get_note(note_id_10)
+        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
+        review_invitation = openreview_client.get_invitation('TMLR/Paper10/-/Review')
+        assert review_invitation.expdate is None
+        assert review_invitation.duedate == review_duedate
+
+        assert joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews') == 5
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
 
         note = openreview_client.get_note(note_id_10)
         journal.invitation_builder.expire_paper_invitations(note)
