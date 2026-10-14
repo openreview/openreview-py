@@ -472,6 +472,103 @@ Please note that responding to this email will direct your reply to editor@jmlr.
         with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
             xukun_client.get_note(decision_note.id)
 
+    def test_resubmission(self, journal, openreview_client, helpers):
+
+        venue_id = journal.venue_id
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        eic_client = OpenReviewClient(username='rajarshi@mail.com', password=helpers.strong_password)
+        xukun_client = OpenReviewClient(username='xukun@jmlrone.com', password=helpers.strong_password)
+        melisa_client = OpenReviewClient(username='melisa@jmlr.com', password=helpers.strong_password)
+        editor_in_chief_group_id = 'JMLR/Editors_In_Chief'
+
+        previous_submission = openreview_client.get_notes(invitation='JMLR/-/Submission', number=1)[0]
+        previous_forum_notes = openreview_client.get_notes(forum=previous_submission.id)
+        previous_reviews = [n for n in previous_forum_notes if n.invitations[0] == 'JMLR/Paper1/-/Review']
+        previous_decision = [n for n in previous_forum_notes if n.invitations[0] == 'JMLR/Paper1/-/Decision'][0]
+        previous_ratings = [n for n in previous_forum_notes if n.invitations[0].endswith('/-/Rating')]
+        assert len(previous_reviews) == 3
+        assert len(previous_ratings) == 3
+
+        ## Resubmit Paper1, linking the previous submission
+        submission_note_2 = test_client.post_note_edit(invitation='JMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title resubmitted' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User']},
+                    'authorids': { 'value': ['~SomeFirstName_User1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'previous_JMLR_submission_url': { 'value': f'https://openreview.net/forum?id={previous_submission.id}&noteId={previous_submission.id}' },
+                    'changes_since_last_submission': { 'value': 'Addressed the reviewers comments' },
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
+        note_id_2 = submission_note_2['note']['id']
+
+        ## The AE assigned to the resubmission is not the AE of the previous submission
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            xukun_client.get_note(previous_submission.id)
+
+        paper_assignment_edge = eic_client.post_edge(openreview.Edge(invitation='JMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Xukun_JMLR1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_2,
+            tail='~Xukun_JMLR1',
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        assert openreview_client.get_group('JMLR/Paper1/Resubmission_Readers').members == ['JMLR/Paper2/Action_Editors']
+
+        ## The new AE can read the previous submission, its reviews and its decision
+        note = xukun_client.get_note(previous_submission.id)
+        assert note.readers == ['JMLR', 'JMLR/Paper1/Action_Editors', 'JMLR/Paper1/Reviewers', 'JMLR/Paper1/Authors', 'JMLR/Paper1/Resubmission_Readers']
+        for review in previous_reviews:
+            assert xukun_client.get_note(review.id)
+        assert xukun_client.get_note(previous_decision.id)
+
+        ## but not the other replies, like the review ratings
+        for rating in previous_ratings:
+            with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+                xukun_client.get_note(rating.id)
+
+        ## Link a submission that belongs to other authors
+        helpers.create_user('peter@jmlrthree.com', 'Peter', 'JMLR')
+        peter_client = OpenReviewClient(username='peter@jmlrthree.com', password=helpers.strong_password)
+        submission_note_3 = peter_client.post_note_edit(invitation='JMLR/-/Submission',
+            signatures=['~Peter_JMLR1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title from other authors' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Peter JMLR']},
+                    'authorids': { 'value': ['~Peter_JMLR1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'previous_JMLR_submission_url': { 'value': f'https://openreview.net/forum?id={previous_submission.id}' },
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_3['id'])
+
+        paper_assignment_edge = eic_client.post_edge(openreview.Edge(invitation='JMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Melisa_JMLR1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=submission_note_3['note']['id'],
+            tail='~Melisa_JMLR1',
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            melisa_client.get_note(previous_submission.id)
+        assert openreview_client.get_group('JMLR/Paper1/Resubmission_Readers').members == ['JMLR/Paper2/Action_Editors']
+
     def test_submission_visibility_setting(self):
 
         def build_journal(settings):
