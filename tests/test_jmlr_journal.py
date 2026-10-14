@@ -550,3 +550,19 @@ Please note that responding to this email will direct your reply to editor@jmlr.
         configuration_note = openreview_client.get_notes(invitation='JMLR/Action_Editors/-/Assignment_Configuration', content={ 'title': 'matching-tracks' })[0]
         assert configuration_note.content['scores_specification']['value']['JMLR/Action_Editors/-/Track_Score'] == { 'weight': 10, 'default': 0 }
         assert configuration_note.content['scores_specification']['value']['JMLR/Action_Editors/-/Affinity_Score'] == { 'weight': 1, 'default': 0 }
+
+        withdraw_note = test_client.post_note_edit(invitation=f'JMLR/Paper{note_2.number}/-/Withdrawal',
+            signatures=[f'JMLR/Paper{note_2.number}/Authors'],
+            note=Note(
+                content={
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        assert openreview_client.get_note(note_id_2).content['venueid']['value'] == 'JMLR/Withdrawn_Submission'
+
+        journal.archive_assignments()
+
+        assert openreview_client.get_all_edges(invitation='JMLR/Action_Editors/-/Track_Score', head=note_id_2) == []
+        assert openreview_client.get_all_edges(invitation='JMLR/Action_Editors/-/Affinity_Score', head=note_id_2) == []

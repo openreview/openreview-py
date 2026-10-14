@@ -1566,6 +1566,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 self.client.delete_edges(invitation=self.get_ae_conflict_id(), head=submission.id, soft_delete=True)
                 self.client.delete_edges(invitation=self.get_ae_aggregate_score_id(), head=submission.id, soft_delete=True)
                 self.client.delete_edges(invitation=self.get_ae_resubmission_score_id(), head=submission.id, soft_delete=True)
+                if self.get_tracks():
+                    self.client.delete_edges(invitation=self.get_ae_track_score_id(), head=submission.id, soft_delete=True)
 
                 submission_reviewer_assignments = reviewer_assignments.get(submission.id, [])
                 for reviewer_assignment in submission_reviewer_assignments:
