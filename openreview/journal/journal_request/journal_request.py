@@ -135,7 +135,7 @@ class JournalRequest():
                         'default': {
                             'submission_name': 'Submission',
                             'assignment_delay': 5,
-                            'submission_public': True,
+                            'submission_visibility': 'public',
                             'submission_license': 'CC BY-SA 4.0',
                             'author_anonymity': True,
                             'AE_anonymity': False,
