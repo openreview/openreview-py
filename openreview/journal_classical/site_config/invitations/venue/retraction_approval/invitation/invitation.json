@@ -1,0 +1,12 @@
+{
+  "postprocesses": [],
+  "edit": {
+    "invitation": {
+      "postprocesses": [
+        {
+          "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/production_change_notification/postprocess.py}}"
+        }
+      ]
+    }
+  }
+}

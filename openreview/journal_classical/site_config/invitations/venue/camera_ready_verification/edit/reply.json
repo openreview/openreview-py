@@ -1,0 +1,79 @@
+{
+  "signatures": ["JMLR"],
+  "readers": ["JMLR"],
+  "writers": ["JMLR"],
+  "content": {
+    "noteNumber": {"value": {"param": {"type": "integer"}}},
+    "noteId": {"value": {"param": {"type": "string"}}},
+    "duedate": {"value": {"param": {"type": "integer"}}}
+  },
+  "invitation": {
+    "id": "JMLR/Paper${2/content/noteNumber/value}/-/Camera_Ready_Verification",
+    "duedate": "${2/content/duedate/value}",
+    "invitees": [
+      "JMLR/Editors_In_Chief",
+      "JMLR/Paper${3/content/noteNumber/value}/Action_Editors"
+    ],
+    "readers": [
+      "JMLR",
+      "JMLR/Editors_In_Chief",
+      "JMLR/Paper${3/content/noteNumber/value}/Action_Editors"
+    ],
+    "writers": ["JMLR"],
+    "signatures": ["JMLR"],
+    "dateprocesses": [
+      {
+        "dates": [
+          "#{4/duedate} + 86400000",
+          "#{4/duedate} + 604800000",
+          "#{4/duedate} + 2592000000"
+        ],
+        "script": "{{PYTHON_SCRIPT_JSON:invitations/venue/camera_ready/dateprocess_reminder.py}}"
+      }
+    ],
+    "edit": {
+      "signatures": {
+        "param": {
+          "items": [
+            {"value": "JMLR/Editors_In_Chief", "optional": true},
+            {"prefix": "JMLR/Paper${7/content/noteNumber/value}/Action_Editor_", "optional": true}
+          ]
+        }
+      },
+      "readers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${4/content/noteNumber/value}/Action_Editors"
+      ],
+      "writers": [
+        "JMLR/Editors_In_Chief",
+        "JMLR/Paper${4/content/noteNumber/value}/Action_Editors"
+      ],
+      "note": {
+        "signatures": ["${3/signatures}"],
+        "forum": "${4/content/noteId/value}",
+        "replyto": "${4/content/noteId/value}",
+        "readers": [
+          "JMLR/Editors_In_Chief",
+          "JMLR/Paper${5/content/noteNumber/value}/Action_Editors",
+          "JMLR/Paper${5/content/noteNumber/value}/Authors"
+        ],
+        "writers": ["JMLR"],
+        "content": {
+          "verification": {
+            "order": 1,
+            "description": "Check the latest camera-ready PDF before approving. The paper-specific metadata block and exact rendered values are inserted here after the author uploads the camera-ready manuscript.\n\nBaseline checklist:\n- Uses jmlr_or.sty.\n- Matches the accepted paper except for camera-ready formatting and explicitly approved minor revisions.\n- Does not render an Editor line.\n- For Accept with minor revision, the requested changes are present and the authors supplied a restricted Camera-ready revision summary Official Comment.\n\nIf correction is needed, do not submit this approval. Post a restricted Official Comment to the paper Authors and wait for a corrected upload.",
+            "value": {
+              "param": {
+                "type": "string",
+                "enum": ["I confirm that the latest camera-ready manuscript satisfies the JMLR camera-ready requirements."],
+                "input": "checkbox"
+              }
+            }
+          }
+        }
+      }
+    },
+    "process": "def process(client, edit, invitation):\n    script = None\n    for parent_invitation_id in invitation.invitations or []:\n        parent_invitation = client.get_invitation(parent_invitation_id)\n        parent_content = getattr(parent_invitation, 'content', {}) or {}\n        if 'process_script' in parent_content:\n            script = parent_content['process_script']['value']\n            break\n    if script is None:\n        raise openreview.OpenReviewException(f'Camera-ready verification invitation {invitation.id} has no parent process_script.')\n    funcs = {'openreview': openreview, 'datetime': datetime}\n    exec(script, funcs)\n    funcs['process'](client, edit, invitation)\n"
+  },
+  "replacement": true
+}
