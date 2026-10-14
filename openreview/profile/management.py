@@ -17,6 +17,7 @@ class ProfileManagement():
         self.dblp_group_id = f'{self.public_article_group_id}/DBLP.org'
         self.arxiv_group_id = f'{self.public_article_group_id}/arXiv.org'
         self.orcid_group_id = f'{self.public_article_group_id}/ORCID.org'
+        self.manual_import_group_id = f'{self.public_article_group_id}/Manual_Import'
 
 
     def setup(self):
@@ -30,6 +31,7 @@ class ProfileManagement():
         self.set_deprecated_dblp_ivitations()
         self.set_arxiv_invitations()
         self.set_orcid_invitations()
+        self.set_manual_import_invitations()
         self.set_anonymous_preprint_invitations()
         self.set_news_article_invitations()
 
@@ -255,8 +257,8 @@ return {
             signatures = [self.super_user],
             invitation = openreview.api.Invitation(
                 id=self.public_article_meta_invitation_id,
-                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
-                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.support_group_id],
+                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.manual_import_group_id, self.support_group_id],
+                readers=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id, self.manual_import_group_id, self.support_group_id],
                 signatures=[self.public_article_group_id],
                 edit=True
             )
@@ -1440,6 +1442,164 @@ return {
             )
         )    
     
+    def set_manual_import_invitations(self):
+        """
+        Records imported by the support team from sources that have no automated importer
+        (e.g. a conference program scraped from the venue website). The Record invitation is
+        only available to the support group; authors claim the resulting publications with
+        the regular Public_Article/-/Authorship_Claim invitation.
+        """
+
+        manual_import_group = openreview.tools.get_group(self.client, self.manual_import_group_id)
+        if manual_import_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.support_group_id],
+                group = openreview.api.Group(
+                    id = self.manual_import_group_id,
+                    readers = ['everyone'],
+                    writers = [self.manual_import_group_id],
+                    nonreaders = [],
+                    signatures = [self.support_group_id],
+                    signatories = [self.manual_import_group_id],
+                    members = []
+                )
+            )
+
+        record_invitation_id = f'{self.manual_import_group_id}/-/Record'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.manual_import_group_id],
+            replacement=True,
+            invitation = openreview.api.Invitation(
+                id=record_invitation_id,
+                readers=['everyone'],
+                writers=[self.manual_import_group_id],
+                signatures=[self.manual_import_group_id],
+                invitees=[self.support_group_id],
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': [self.support_group_id],
+                    'writers':  [self.manual_import_group_id],
+                    'note': {
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '~', self.manual_import_group_id, self.support_group_id],
+                        'license': 'CC BY-SA 4.0',
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id,
+                                'optional': True
+                            }
+                        },
+                        'externalId': {
+                            'param': {
+                                'regex': '^[^:]+:.+$',
+                                'optional': True
+                            }
+                        },
+                        'pdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True
+                            }
+                        },
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'description': 'Authors of paper. Leave the username empty when the author has not been matched to a profile yet.',
+                                'value': {
+                                    'param': {
+                                        'type': 'author{}',
+                                        'properties': {
+                                            'fullname': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string' } },
+                                            'institutions': {
+                                                'param': {
+                                                    'type': 'object{}',
+                                                    'properties': {
+                                                        'name': { 'param': { 'type': 'string', 'optional': True } },
+                                                        'domain': { 'param': { 'type': 'string', 'optional': True } },
+                                                        'country': { 'param': { 'type': 'string', 'optional': True } },
+                                                    },
+                                                    'optional': True
+                                                }
+                                            }
+                                        },
+                                    }
+                                }
+                            },
+                            'abstract': {
+                                'order': 3,
+                                'description': 'Abstract of paper.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'markdown': True,
+                                        'input': 'textarea',
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'venue': {
+                                'order': 4,
+                                'description': 'Venue where the paper was published, as displayed to the users (e.g. ICRA 2026).',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': '^.{1,100}$'
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'order': 5,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': self.public_article_group_id,
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'html': {
+                                'order': 6,
+                                'description': 'Link to the page where the paper is listed in the original source.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': 'https?://.+',
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'pdf': {
+                                'order': 7,
+                                'description': 'Link to the PDF of the paper.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': 'https?://.+',
+                                        'optional': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
     def set_remove_name_invitations(self):
 
         content = {

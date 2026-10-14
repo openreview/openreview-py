@@ -1682,6 +1682,175 @@ computation and memory.
         assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': '~Sarah_Racz1'}
 
 
+    def test_import_manual_records(self, openreview_client, support_client, helpers):
+
+        record_invitation_id = 'openreview.net/Public_Article/Manual_Import/-/Record'
+
+        invitation = openreview_client.get_invitation(record_invitation_id)
+        assert invitation.invitees == ['openreview.net/Support']
+        assert invitation.edit['signatures'] == ['openreview.net/Support']
+
+        # A regular user can not post a manually imported record
+        josiah_client = openreview.api.OpenReviewClient(username='josiah@profile.org', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException):
+            josiah_client.post_note_edit(
+                invitation = record_invitation_id,
+                signatures = ['~Josiah_Couch1'],
+                note = openreview.api.Note(
+                        content={
+                        'title': { 'value': 'Open-Vocabulary Mobile Manipulation Based on Double Relaxed Contrastive Learning with Dense Labeling' },
+                        'authors': { 'value': [{ 'fullname': 'Josiah Couch', 'username': '' }] },
+                        'venue': { 'value': 'ICRA 2026' }
+                    }
+                )
+            )
+
+        edit = support_client.post_note_edit(
+            invitation = record_invitation_id,
+            signatures = ['openreview.net/Support'],
+            note = openreview.api.Note(
+                content={
+                    'title': { 'value': 'Open-Vocabulary Mobile Manipulation Based on Double Relaxed Contrastive Learning with Dense Labeling' },
+                    'authors': {
+                        'value': [
+                            { 'fullname': 'Daichi Yashima', 'username': '', 'institutions': [{ 'name': 'Keio University', 'domain': 'keio.ac.jp' }] },
+                            { 'fullname': 'Ryosuke Korekata', 'username': '', 'institutions': [{ 'name': 'Keio University' }] },
+                            { 'fullname': 'Komei Sugiura', 'username': '' },
+                        ]
+                    },
+                    'venue': { 'value': 'ICRA 2026' },
+                    'html': { 'value': 'https://ras.papercept.net/conferences/conferences/ICRA26/program/ICRA26_ContentListWeb_3.html#tuat4_09' }
+                }
+            )
+        )
+
+        note = openreview_client.get_note(edit['note']['id'])
+        assert note.invitations == [record_invitation_id]
+        assert not note.external_ids
+        assert note.readers == ['everyone']
+        assert note.writers == ['~', 'openreview.net/Public_Article/Manual_Import', 'openreview.net/Support']
+        assert note.signatures == ['openreview.net/Support']
+        assert note.license == 'CC BY-SA 4.0'
+        assert note.content['venue']['value'] == 'ICRA 2026'
+        assert note.content['venueid']['value'] == 'openreview.net/Public_Article'
+        assert note.content['authors']['value'] == [
+            { 'fullname': 'Daichi Yashima', 'username': '', 'institutions': [{ 'name': 'Keio University', 'domain': 'keio.ac.jp' }] },
+            { 'fullname': 'Ryosuke Korekata', 'username': '', 'institutions': [{ 'name': 'Keio University' }] },
+            { 'fullname': 'Komei Sugiura', 'username': '' },
+        ]
+
+        # The support team can update an existing record by id, e.g. to add the abstract later
+        edit = support_client.post_note_edit(
+            invitation = record_invitation_id,
+            signatures = ['openreview.net/Support'],
+            note = openreview.api.Note(
+                id = note.id,
+                content={
+                    'title': { 'value': 'Open-Vocabulary Mobile Manipulation Based on Double Relaxed Contrastive Learning with Dense Labeling' },
+                    'authors': {
+                        'value': [
+                            { 'fullname': 'Daichi Yashima', 'username': '', 'institutions': [{ 'name': 'Keio University', 'domain': 'keio.ac.jp' }] },
+                            { 'fullname': 'Ryosuke Korekata', 'username': '', 'institutions': [{ 'name': 'Keio University' }] },
+                            { 'fullname': 'Komei Sugiura', 'username': '' },
+                        ]
+                    },
+                    'abstract': { 'value': 'This is the abstract of the paper.' },
+                    'venue': { 'value': 'ICRA 2026' }
+                }
+            )
+        )
+
+        assert edit['note']['id'] == note.id
+        note = openreview_client.get_note(note.id)
+        assert note.content['abstract']['value'] == 'This is the abstract of the paper.'
+        assert len(openreview_client.get_notes(invitation=record_invitation_id)) == 1
+
+        daichi_client = helpers.create_user('daichi@profile.org', 'Daichi', 'Yashima', alternates=[], institution='keio.ac.jp')
+
+        # Can not claim an author position that has a different name
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Ryosuke Korekata from index 1 doesn\'t match with the names listed in your profile'):
+            daichi_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+                signatures = ['~Daichi_Yashima1'],
+                content = {
+                    'author_index': { 'value': 1 },
+                    'author_id': { 'value': '~Daichi_Yashima1' },
+                    'author_name': { 'value': 'Daichi Yashima' },
+                },
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        edit = daichi_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Daichi_Yashima1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Daichi_Yashima1' },
+                'author_name': { 'value': 'Daichi Yashima' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = openreview_client.get_note(note.id)
+        assert note.invitations == [record_invitation_id, 'openreview.net/Public_Article/-/Authorship_Claim']
+        # Once claimed, the profile becomes the source of truth for the author so the imported institutions are dropped
+        assert note.content['authors']['value'] == [
+            { 'fullname': 'Daichi Yashima', 'username': '~Daichi_Yashima1' },
+            { 'fullname': 'Ryosuke Korekata', 'username': '', 'institutions': [{ 'name': 'Keio University' }] },
+            { 'fullname': 'Komei Sugiura', 'username': '' },
+        ]
+
+        publications = openreview_client.get_notes(content={ 'authors.username': '~Daichi_Yashima1' })
+        assert len(publications) == 1
+        assert publications[0].id == note.id
+
+        # Re-importing the record must keep the claimed username and must not attach imported institutions to a claimed author
+        edit = support_client.post_note_edit(
+            invitation = record_invitation_id,
+            signatures = ['openreview.net/Support'],
+            note = openreview.api.Note(
+                id = note.id,
+                content={
+                    'title': { 'value': 'Open-Vocabulary Mobile Manipulation Based on Double Relaxed Contrastive Learning with Dense Labeling' },
+                    'authors': {
+                        'value': [
+                            { 'fullname': 'Daichi Yashima', 'username': '~Daichi_Yashima1' },
+                            { 'fullname': 'Ryosuke Korekata', 'username': '', 'institutions': [{ 'name': 'Keio University' }] },
+                            { 'fullname': 'Komei Sugiura', 'username': '' },
+                        ]
+                    },
+                    'abstract': { 'value': 'This is the abstract of the paper.' },
+                    'venue': { 'value': 'ICRA 2026' }
+                }
+            )
+        )
+
+        note = openreview_client.get_note(note.id)
+        assert note.content['authors']['value'][0] == { 'fullname': 'Daichi Yashima', 'username': '~Daichi_Yashima1' }
+
+        # The author can remove themselves from the publication
+        daichi_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
+            signatures = ['~Daichi_Yashima1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+                'author_name': { 'value': 'Daichi Yashima' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = openreview_client.get_note(note.id)
+        assert note.content['authors']['value'][0] == { 'fullname': 'Daichi Yashima', 'username': '' }
+        assert len(openreview_client.get_notes(content={ 'authors.username': '~Daichi_Yashima1' })) == 0
+
+
     def test_remove_alternate_name(self, openreview_client, support_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
