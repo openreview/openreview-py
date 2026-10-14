@@ -450,3 +450,55 @@ Please note that responding to this email will direct your reply to editor@jmlr.
             )
 
         helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        decision_note = celeste_client.get_note(decision_note['note']['id'])
+        assert decision_note.readers == [f'{venue_id}/Editors_In_Chief', f'{venue_id}/Paper1/Action_Editors']
+
+        approval_note = eic_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision_Approval',
+                            signatures=[f'{venue_id}/Editors_In_Chief'],
+                            note=Note(
+                                content= {
+                                    'approval': { 'value': 'I approve the AE\'s decision.' },
+                                    'comment_to_the_AE': { 'value': 'I agree with the AE' }
+                                }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+
+        decision_note = eic_client.get_note(decision_note.id)
+        assert decision_note.readers == [f'{venue_id}/Editors_In_Chief', f'{venue_id}/Paper1/Action_Editors', f'{venue_id}/Paper1/Reviewers', f'{venue_id}/Paper1/Authors']
+        assert decision_note.nonreaders == []
+
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            xukun_client.get_note(decision_note.id)
+
+    def test_submission_visibility_setting(self):
+
+        def build_journal(settings):
+            return Journal(None, 'JMLR', '1234', 'editor@jmlr.org', 'Journal of Machine Learning Research', 'JMLR', settings=settings)
+
+        assert build_journal({}).get_submission_visibility() == 'public'
+        assert build_journal({ 'submission_public': True }).get_submission_visibility() == 'public'
+        assert build_journal({ 'submission_public': False }).get_submission_visibility() == 'all_action_editors'
+
+        journal = build_journal({ 'submission_public': True, 'submission_visibility': 'assigned_action_editor' })
+        assert journal.get_submission_visibility() == 'assigned_action_editor'
+        assert not journal.is_submission_public()
+        assert journal.get_release_decision_readers(1) == ['JMLR/Editors_In_Chief', 'JMLR/Paper1/Action_Editors', 'JMLR/Paper1/Reviewers', 'JMLR/Paper1/Authors']
+
+        journal = build_journal({ 'submission_public': True, 'submission_visibility': 'all_action_editors' })
+        assert journal.get_submission_visibility() == 'all_action_editors'
+        assert not journal.is_submission_public()
+        assert journal.get_release_decision_readers(1) == ['JMLR/Editors_In_Chief', 'JMLR/Action_Editors', 'JMLR/Paper1/Reviewers', 'JMLR/Paper1/Authors']
+
+        journal = build_journal({ 'submission_public': False, 'submission_visibility': 'public' })
+        assert journal.get_submission_visibility() == 'public'
+        assert journal.is_submission_public()
+        assert journal.get_release_decision_readers(1) == ['everyone']
+
+        for settings in [{ 'submission_visibility': 'assigned_action_editors' }, { 'submission_public': False, 'submission_visibility': 'private' }]:
+            journal = build_journal(settings)
+            with pytest.raises(openreview.OpenReviewException, match=f'Invalid submission_visibility setting: {settings["submission_visibility"]}'):
+                journal.get_submission_visibility()
+            with pytest.raises(openreview.OpenReviewException, match='Invalid submission_visibility setting'):
+                journal.get_release_decision_readers(1)
