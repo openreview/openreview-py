@@ -4,6 +4,7 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.content['subtitle']['value']
+    venue_name = domain.content['title']['value']
     contact = domain.content['contact']['value']
     desk_rejected_venue_id = domain.content['desk_rejected_venue_id']['value']
     desk_rejection_reversion_id = domain.content['desk_rejection_reversion_id']['value']
@@ -95,3 +96,24 @@ For more information, click here https://openreview.net/forum?id={submission.id}
 
         # email ethics chairs
         client.post_message(email_subject, [ethics_chairs_id], email_body, invitation=meta_invitation_id, signature=venue_id, ignoreRecipients=ignoreRecipients, replyTo=contact, sender=sender)
+
+    # post an edit to update the submission's bibtex
+    client.post_note_edit(
+        invitation=meta_invitation_id,
+        signatures=[venue_id],
+        note=openreview.api.Note(
+            id=submission.id,
+            content={
+                '_bibtex': {
+                    'value':openreview.tools.generate_bibtex(
+                        note=submission,
+                        venue_fullname=venue_name,
+                        year=str(datetime.datetime.now().year),
+                        url_forum=submission.forum,
+                        paper_status='rejected',
+                        anonymous='readers' in submission.content['authors']
+                    )
+                }
+            }
+        )
+    )
