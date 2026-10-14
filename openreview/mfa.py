@@ -13,13 +13,6 @@ def _is_interactive():
         pass
     return False
 
-def _code_provider_method(mfa_methods):
-    """Pick the method to hand to an mfa_code_provider, ignoring the server's UI preference."""
-    for method in ('totp', 'emailOtp'):
-        if method in mfa_methods:
-            return method
-    return None
-
 def _default_mfa_method_chooser(mfa_methods, preferred_method):
     """Phase 1: Choose MFA method interactively."""
     supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]

@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import re
 import datetime
 import openreview
 import pytest
@@ -584,17 +583,6 @@ def verification_messages(openreview_client, email):
     messages = openreview_client.get_messages(to=email)
     return [m for m in messages if 'Verification Code' in m.get('content', {}).get('subject', '')]
 
-def await_email_otp(openreview_client, email, previous_count):
-    for _ in range(20):
-        messages = verification_messages(openreview_client, email)
-        if len(messages) > previous_count:
-            newest = max(messages, key=lambda m: m.get('cdate', 0))
-            match = re.search(r'verification code is: \*\*(\d{6})\*\*', newest['content']['text'])
-            assert match, 'Could not extract OTP code from message'
-            return match.group(1)
-        time.sleep(0.5)
-    raise AssertionError('No new verification code email arrived')
-
 class TestMfaLogin():
 
     def test_login_without_mfa(self, helpers):
@@ -872,7 +860,7 @@ class TestMfaLogin():
         assert client.profile
         assert calls == ['totp']
 
-    def test_mfa_code_provider_prefers_totp_over_email_v2(self, openreview_client, helpers):
+    def test_mfa_code_provider_uses_totp_when_email_also_enabled_v2(self, openreview_client, helpers):
         import requests as req
         import pyotp
 
@@ -918,25 +906,24 @@ class TestMfaLogin():
         assert client.token
         assert client.profile
         assert calls == ['totp']
-
-        time.sleep(1)
         assert len(verification_messages(openreview_client, email)) == email_count
 
-    def test_mfa_code_provider_email_otp_v2(self, openreview_client, helpers):
+    def test_mfa_code_provider_not_called_for_email_otp_only_v2(self, openreview_client, helpers):
         email = 'mfa_email_test@mail.com'
         email_count = len(verification_messages(openreview_client, email))
 
-        provider, calls = recording(lambda m: await_email_otp(openreview_client, email, email_count))
-        with no_mfa_prompts(interactive=False):
-            client = OpenReviewClient(
-                baseurl='http://localhost:3001',
-                username=email,
-                password=helpers.strong_password,
-                mfa_code_provider=provider
-            )
-        assert client.token
-        assert client.profile
-        assert calls == ['emailOtp']
+        provider, calls = recording(lambda m: '000000')
+        with patch('openreview.mfa._is_interactive', return_value=False):
+            with pytest.raises(openreview.MfaRequiredException) as exc_info:
+                OpenReviewClient(
+                    baseurl='http://localhost:3001',
+                    username=email,
+                    password=helpers.strong_password,
+                    mfa_code_provider=provider
+                )
+        assert exc_info.value.mfa_methods == ['emailOtp']
+        assert calls == []
+        assert len(verification_messages(openreview_client, email)) == email_count
 
     def test_mfa_code_provider_wrong_code_v2(self, helpers):
         import requests as req

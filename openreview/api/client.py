@@ -59,7 +59,7 @@ class OpenReviewClient(object):
     :type token: str, optional
     :param tokenExpiresIn: Time in seconds before the token expires. If none is set the value will be set automatically to one hour. The max value that it can be set to is 1 week.
     :type tokenExpiresIn: number, optional
-    :param mfa_code_provider: Callable that returns a verification code when the account has multi-factor authentication enabled, so scripts can log in without interactive prompts. It receives the MFA method name, ``'totp'`` or ``'emailOtp'`` (the email is sent before it is called), and is called at most once per login. Return ``None`` or ``''`` to fall back to the interactive prompt. Example: ``lambda method: pyotp.TOTP(os.environ['OPENREVIEW_TOTP_SECRET']).now()``
+    :param mfa_code_provider: Callable that returns the current code from an authenticator app (TOTP), so scripts can log in to accounts with multi-factor authentication without interactive prompts. It receives the method name ``'totp'`` and is called at most once per login, and only when the account has TOTP enabled. Return ``None`` or ``''`` to fall back to the interactive prompt. Example: ``lambda method: pyotp.TOTP(os.environ['OPENREVIEW_TOTP_SECRET']).now()``
     :type mfa_code_provider: callable, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None, mfa_code_provider=None):
@@ -230,13 +230,10 @@ class OpenReviewClient(object):
                 'message': f'No supported MFA methods. Server offered: {", ".join(mfa_methods)}'
             })
 
-        provider_method = mfa._code_provider_method(mfa_methods) if mfa_code_provider else None
-        if provider_method:
-            if provider_method == 'emailOtp':
-                self.__request_mfa_challenge(mfa_pending_token, provider_method)
-            code = mfa_code_provider(provider_method)
+        if mfa_code_provider and 'totp' in mfa_methods:
+            code = mfa_code_provider('totp')
             if code:
-                return self.__verify_mfa(mfa_pending_token, provider_method, code)
+                return self.__verify_mfa(mfa_pending_token, 'totp', code)
 
         if not mfa._is_interactive():
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
@@ -330,7 +327,7 @@ class OpenReviewClient(object):
         :type password: str, optional
         :param expiresIn: Time in seconds before the token expires. If none is set the value will be set automatically to one hour. The max value that it can be set to is 1 week.
         :type expiresIn: number, optional
-        :param mfa_code_provider: Callable that returns a verification code when the account has multi-factor authentication enabled, so scripts can log in without interactive prompts. It receives the MFA method name, ``'totp'`` or ``'emailOtp'`` (the email is sent before it is called), and is called at most once per login. Return ``None`` or ``''`` to fall back to the interactive prompt. Example: ``lambda method: pyotp.TOTP(os.environ['OPENREVIEW_TOTP_SECRET']).now()``
+        :param mfa_code_provider: Callable that returns the current code from an authenticator app (TOTP), so scripts can log in to accounts with multi-factor authentication without interactive prompts. It receives the method name ``'totp'`` and is called at most once per login, and only when the account has TOTP enabled. Return ``None`` or ``''`` to fall back to the interactive prompt. Example: ``lambda method: pyotp.TOTP(os.environ['OPENREVIEW_TOTP_SECRET']).now()``
         :type mfa_code_provider: callable, optional
 
         :return: Dictionary containing user information and the authentication token
