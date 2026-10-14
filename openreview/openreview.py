@@ -66,9 +66,11 @@ class Client(object):
     :param token: Session token. This token can be provided instead of the username and password if the user had already logged in
     :type token: str, optional
     :param tokenExpiresIn: Time in seconds before the token expires. This parameter only works when providing a username and a password. If none is set, the value will be set automatically to one day. The max value that it can be set to is 1 week.
-    :type expiresIn: number, optional
+    :type tokenExpiresIn: number, optional
+    :param mfa_code_provider: Callable that returns the current code from an authenticator app (TOTP), so scripts can log in to accounts with multi-factor authentication without interactive prompts. It receives the method name ``'totp'`` and is called at most once per login, and only when the account has TOTP enabled. Return ``None`` or ``''`` to fall back to the interactive prompt. Example: ``lambda method: pyotp.TOTP(os.environ['OPENREVIEW_TOTP_SECRET']).now()``
+    :type mfa_code_provider: callable, optional
     """
-    def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
+    def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None, mfa_code_provider=None):
         self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL', 'http://localhost:3000')
         if any(url in self.baseurl for url in tools.V2_REMOTE_URLS):
             correct_baseurl = tools.get_base_urls(self)[0]
@@ -158,7 +160,7 @@ class Client(object):
                 password = os.environ.get('OPENREVIEW_PASSWORD')
 
             if username or password:
-                self.login_user(username, password, expiresIn=tokenExpiresIn)
+                self.login_user(username, password, expiresIn=tokenExpiresIn, mfa_code_provider=mfa_code_provider)
 
 
 
@@ -204,14 +206,19 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def __resolve_mfa(self, mfa_pending_token, mfa_methods, preferred_method):
-        """Resolve MFA via interactive prompt."""
+    def __resolve_mfa(self, mfa_pending_token, mfa_methods, preferred_method, mfa_code_provider=None):
+        """Resolve MFA via the code provider, falling back to an interactive prompt."""
         supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]
         if not supported:
             raise OpenReviewException({
                 'name': 'MfaError',
                 'message': f'No supported MFA methods. Server offered: {", ".join(mfa_methods)}'
             })
+
+        if mfa_code_provider and 'totp' in mfa_methods:
+            code = mfa_code_provider('totp')
+            if code:
+                return self.__verify_mfa(mfa_pending_token, 'totp', code)
 
         if not mfa._is_interactive():
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
@@ -261,11 +268,11 @@ class Client(object):
         self.__handle_token(json_response)
         return json_response
 
-    def login_user(self,username=None, password=None, expiresIn=None):
+    def login_user(self,username=None, password=None, expiresIn=None, mfa_code_provider=None):
         """
         Logs in a registered user. If MFA is enabled for the account, this method
-        will attempt to complete MFA verification automatically using the configured
-        an interactive terminal prompt.
+        completes MFA verification with ``mfa_code_provider`` when given, otherwise
+        with an interactive terminal prompt.
 
         :param username: OpenReview username
         :type username: str, optional
@@ -273,6 +280,8 @@ class Client(object):
         :type password: str, optional
         :param expiresIn: Time in seconds before the token expires. If none is set the value will be set automatically to one hour. The max value that it can be set to is 1 week.
         :type expiresIn: number, optional
+        :param mfa_code_provider: Callable that returns the current code from an authenticator app (TOTP), so scripts can log in to accounts with multi-factor authentication without interactive prompts. It receives the method name ``'totp'`` and is called at most once per login, and only when the account has TOTP enabled. Return ``None`` or ``''`` to fall back to the interactive prompt. Example: ``lambda method: pyotp.TOTP(os.environ['OPENREVIEW_TOTP_SECRET']).now()``
+        :type mfa_code_provider: callable, optional
 
         :return: Dictionary containing user information and the authentication token
         :rtype: dict
@@ -293,7 +302,8 @@ class Client(object):
             json_response = self.__resolve_mfa(
                 json_response['mfaPendingToken'],
                 json_response['mfaMethods'],
-                json_response.get('preferredMethod')
+                json_response.get('preferredMethod'),
+                mfa_code_provider
             )
 
         self.__handle_token(json_response)
