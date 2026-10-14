@@ -100,6 +100,8 @@ class InvitationBuilder(object):
         self.set_solicit_review_comment_invitation()
         self.set_withdrawal_invitation()
         self.set_desk_rejection_invitation()
+        self.set_desk_rejection_expiration_invitation()
+        self.set_desk_rejection_reversion_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
         self.set_revision_invitation()
@@ -172,27 +174,37 @@ class InvitationBuilder(object):
             invitation=invitation
         )
 
-    def expire_invitation(self, invitation_id, expdate=None):
+    def expire_invitation(self, invitation_id, expdate=None, expiration_invitation_id=None):
         invitation = openreview.tools.get_invitation(self.client, invitation_id)
 
         if not invitation:
             return
-        
+
         now = tools.datetime_millis(datetime.datetime.now())
 
         if invitation.expdate and invitation.expdate < now:
             return
-        
+
         invitation_expdate = expdate if expdate else now
-        self.post_invitation_edit(invitation=Invitation(id=invitation.id,
-                cdate=invitation_expdate if (invitation.cdate and invitation.cdate > invitation_expdate) else None,
-                duedate=invitation_expdate if (invitation.duedate and invitation.duedate > invitation_expdate) else None,                                                        
-                expdate=invitation_expdate,
-                signatures=[self.venue_id]
-            )
+        expired_invitation = Invitation(id=invitation.id,
+            cdate=invitation_expdate if (invitation.cdate and invitation.cdate > invitation_expdate) else None,
+            duedate=invitation_expdate if (invitation.duedate and invitation.duedate > invitation_expdate) else None,
+            expdate=invitation_expdate,
+            signatures=[self.venue_id]
         )
 
-    def expire_paper_invitations(self, note):
+        ## Post through a dedicated expiration invitation when given so the edit can be found and deleted later to reopen the invitation
+        if expiration_invitation_id:
+            return self.client.post_invitation_edit(invitations=expiration_invitation_id,
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                invitation=expired_invitation
+            )
+
+        self.post_invitation_edit(invitation=expired_invitation)
+
+    def expire_paper_invitations(self, note, expiration_invitation_id=None):
 
         now = openreview.tools.datetime_millis(datetime.datetime.now())
         invitations = self.client.get_invitations(prefix=f'{self.venue_id}/Paper{note.number}/.*', type='all')
@@ -200,7 +212,7 @@ class InvitationBuilder(object):
 
         for invitation in invitations:
             if invitation.id.split('/')[-1] not in exceptions:
-                self.expire_invitation(invitation.id, now)
+                self.expire_invitation(invitation.id, now, expiration_invitation_id=expiration_invitation_id)
 
                 if self.journal.get_review_id(number=note.number) == invitation.id:
                     ## Discount all the pending reviews
@@ -2967,9 +2979,161 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
     def set_note_desk_rejection_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
+            content={
+                'noteId': { 'value': note.id },
                 'noteNumber': { 'value': note.number },
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
+    def set_desk_rejection_expiration_invitation(self):
+        venue_id = self.journal.venue_id
+
+        ## Expiration edits for paper invitations closed by a desk rejection, the edit ddate lets the reversion delete them to reopen the invitations
+        invitation = Invitation(id=self.journal.get_desk_rejection_expiration_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'invitation': {
+                    'id': {
+                        'param': {
+                            'regex': f'{venue_id}/{self.journal.submission_group_name}[0-9]+/.*'
+                        }
+                    },
+                    'signatures': [venue_id],
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'duedate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
+
+    def set_desk_rejection_reversion_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/desk_rejection_reversion_process.py')
+            }
+        }
+        edit_content = {
+            'noteId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'deskRejectionId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_desk_rejection_reversion_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, editors_in_chief_id],
+            'readers': [venue_id, editors_in_chief_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'process': self.process_script,
+            'edit': {
+                'signatures': [editors_in_chief_id],
+                'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/deskRejectionId/value}',
+                    'signatures': [editors_in_chief_id],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id ],
+                    'content': {
+                        'revert_desk_rejection_confirmation': {
+                            'order': 1,
+                            'description': 'Please confirm to revert the desk rejection.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'We approve the reversion of the desk-rejected submission.'
+                                    ],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Optionally explain why the desk rejection is being reverted. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'deletable': True,
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_desk_rejection_reversion_id(), invitation_content, edit_content, invitation)
+
+    def set_note_desk_rejection_reversion_invitation(self, note, desk_rejection_note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_reversion_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'deskRejectionId': { 'value': desk_rejection_note.id }
             },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
