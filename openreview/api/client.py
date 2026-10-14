@@ -109,6 +109,9 @@ class OpenReviewClient(object):
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
         self.mfa_challenge_url = self.baseurl + '/mfa/challenge'
         self.mfa_verify_url = self.baseurl + '/mfa/verify'
+        self.mfa_setup_email_url = self.baseurl + '/mfa/setup/email'
+        self.mfa_setup_totp_init_url = self.baseurl + '/mfa/setup/totp/init'
+        self.mfa_setup_totp_verify_url = self.baseurl + '/mfa/setup/totp/verify'
 
         # Build User-Agent string: openreview-py/{package_version} (Python/{python_version})
         try:

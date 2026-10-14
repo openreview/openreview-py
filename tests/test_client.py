@@ -579,6 +579,16 @@ def recording(provider):
         return provider(method)
     return record, calls
 
+def enable_totp(client):
+    import pyotp
+
+    res = client.session.post(client.mfa_setup_totp_init_url, headers=client.headers)
+    assert res.status_code == 200
+    secret = res.json()['secret']
+    res = client.session.post(client.mfa_setup_totp_verify_url, headers=client.headers, json={'code': pyotp.TOTP(secret).now()})
+    assert res.status_code == 200
+    return secret
+
 def verification_messages(openreview_client, email):
     messages = openreview_client.get_messages(to=email)
     return [m for m in messages if 'Verification Code' in m.get('content', {}).get('subject', '')]
@@ -861,7 +871,6 @@ class TestMfaLogin():
         assert calls == ['totp']
 
     def test_mfa_code_provider_uses_totp_when_email_also_enabled_v2(self, openreview_client, helpers):
-        import requests as req
         import pyotp
 
         email = 'mfa_totp_and_email_test@mail.com'
@@ -871,20 +880,14 @@ class TestMfaLogin():
             username=email,
             password=helpers.strong_password
         )
-        headers = {'Authorization': f'Bearer {client.token}', 'User-Agent': 'test-script'}
+        res = client.session.post(client.mfa_setup_email_url, headers=client.headers)
+        assert res.status_code == 200
+        secret = enable_totp(client)
 
-        res = req.post('http://localhost:3001/mfa/setup/email', headers=headers)
-        assert res.status_code == 200
-        res = req.post('http://localhost:3001/mfa/setup/totp/init', headers=headers)
-        assert res.status_code == 200
-        secret = res.json()['secret']
-        res = req.post('http://localhost:3001/mfa/setup/totp/verify', headers=headers, json={'code': pyotp.TOTP(secret).now()})
-        assert res.status_code == 200
-
-        res = req.post(
-            'http://localhost:3001/login',
+        res = client.session.post(
+            client.login_url,
             json={'id': email, 'password': helpers.strong_password},
-            headers={'User-Agent': 'test-script'}
+            headers=client.headers
         )
         assert res.status_code == 200
         data = res.json()
@@ -926,7 +929,6 @@ class TestMfaLogin():
         assert len(verification_messages(openreview_client, email)) == email_count
 
     def test_mfa_code_provider_wrong_code_v2(self, helpers):
-        import requests as req
         import pyotp
 
         # A separate user, because the failed attempt counts toward the lockout
@@ -937,12 +939,7 @@ class TestMfaLogin():
             username=email,
             password=helpers.strong_password
         )
-        headers = {'Authorization': f'Bearer {client.token}', 'User-Agent': 'test-script'}
-        res = req.post('http://localhost:3001/mfa/setup/totp/init', headers=headers)
-        assert res.status_code == 200
-        secret = res.json()['secret']
-        res = req.post('http://localhost:3001/mfa/setup/totp/verify', headers=headers, json={'code': pyotp.TOTP(secret).now()})
-        assert res.status_code == 200
+        enable_totp(client)
 
         provider, calls = recording(lambda m: pyotp.TOTP(pyotp.random_base32()).now())
         with no_mfa_prompts(interactive=False):
