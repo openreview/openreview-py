@@ -447,57 +447,15 @@ class TestJournal():
         assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 0
 
         invitation = openreview_client.get_invitation('TMLR/-/Submission')
-        assert not invitation.preprocess
+        # the submission preprocess validates the beyond PDF fields and the previous submission URL
+        assert invitation.preprocess
+        assert 'preprocess_script' in openreview_client.get_invitation('TMLR/-/Revision').content
         # submission invitations get the default human verification rate limit
         assert invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
         # expertise selection invitations get the higher edge/tag human verification rate limit
         assert openreview_client.get_invitation('TMLR/Reviewers/-/Expertise_Selection').humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
         assert openreview_client.get_invitation('TMLR/Action_Editors/-/Expertise_Selection').humanVerificationRequired == { 'limit': 100, 'windowMs': 3600000 }
-
-        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/tmlr_submission_pre_process.py')) as f:
-            preprocess = f.read()
-
-        # add beyondPDF preprocess
-        openreview_client.post_invitation_edit(
-            invitations='TMLR/-/Edit',
-            signatures=['TMLR'],
-            invitation=openreview.api.Invitation(
-                id='TMLR/-/Submission',
-                preprocess=preprocess
-            )
-        )
-
-        invitation = openreview_client.get_invitation('TMLR/-/Submission')
-        assert invitation.preprocess
-
-        openreview_client.post_invitation_edit(
-            invitations='TMLR/-/Edit',
-            signatures=['TMLR'],
-            invitation=openreview.api.Invitation(
-                id='TMLR/-/Revision',
-                content={
-                    'preprocess_script': {
-                        'value': preprocess
-                    }
-                },
-                edit={
-                    "invitation":{
-                        "preprocess":'''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content["preprocess_script"]['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-    '''
-                    }
-                }
-                
-            )
-        )
 
         assert invitation.post_processes
 
@@ -507,7 +465,7 @@ class TestJournal():
         settings = journal_request.content['settings']['value']
         settings['ae_max_active_submissions'] = 3
 
-        # edit journal request to check preprocess are not overwritten
+        # edit journal request to update the settings, the preprocess is set again
         request_form = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Journal_Request{journal_request.number}/-/Revision',
             signatures = ['openreview.net/Support'],
             note = Note(
@@ -524,6 +482,8 @@ class TestJournal():
                     }
             ))
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        assert openreview_client.get_invitation('TMLR/-/Submission').preprocess
 
         recommendation_inv = openreview_client.get_invitation('TMLR/-/Official_Recommendation')
         assert 'description' in recommendation_inv.edit['invitation']

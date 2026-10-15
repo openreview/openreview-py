@@ -1076,12 +1076,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             },
+            preprocess=self.get_process_content('process/submission_pre_process.py'),
             process=self.get_process_content('process/author_submission_process.py')
         )
 
         existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
-        if existing_invitation and existing_invitation.preprocess:
-            invitation.preprocess=existing_invitation.preprocess
 
         if self.journal.enable_blocked_authors():
             invitation.post_processes = [
@@ -5062,7 +5061,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation_content = {
             'process_script': {
                 'value': self.get_process_content('process/submission_revision_process.py')
-            }                
+            },
+            'preprocess_script': {
+                'value': self.get_process_content('process/submission_pre_process.py')
+            }
         }
         edit_content = {
             'noteId': { 
@@ -5207,13 +5209,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             },
-            'process': self.process_script                    
+            'preprocess': self.preprocess_script,
+            'process': self.process_script
         }
-
-        existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_revision_id())
-        if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
-            invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
-            invitation['preprocess'] = existing_super_invitation.edit['invitation']['preprocess']
 
         submission_length = self.journal.get_submission_length()
         if submission_length:

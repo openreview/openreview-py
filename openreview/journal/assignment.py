@@ -204,10 +204,8 @@ class Assignment(object):
                         )
 
                     ## Compute resubmission scores, TMLR/Action_Editors/-/Resubmission_Score with weigth = 10 in the matching system
-                    if f'previous_{journal.short_name}_submission_url' in submitted_submission.content:
-                        previous_forum_url = submitted_submission.content[f'previous_{journal.short_name}_submission_url']['value']
-                        previous_forum_url = previous_forum_url.replace('https://openreview.net/forum?id=', '')
-                        previous_forum_id = previous_forum_url.split('&')[0]
+                    previous_forum_id = journal.get_previous_submission_id(submitted_submission)
+                    if previous_forum_id:
                         previous_assignments = self.client.get_edges(invitation=journal.get_ae_assignment_id(), head = previous_forum_id)
                         for assignment in previous_assignments:
                             if assignment.tail in action_editors and not self.client.get_edges(invitation=journal.get_ae_resubmission_score_id(), head=submitted_submission.id, tail=assignment.tail):
