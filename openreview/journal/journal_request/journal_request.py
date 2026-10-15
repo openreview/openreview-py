@@ -152,6 +152,7 @@ class JournalRequest():
                             'number_of_reviewers': 3,
                             'reviewers_max_papers': 6,
                             'action_editors_max_papers': 12,
+                            'tracks': [],
                             'ae_max_active_submissions': 2,
                             'ae_recommendation_period': 1,
                             'under_review_approval_period': 1,
