@@ -7,6 +7,7 @@ from .assignment import Assignment
 import re
 import csv
 import datetime
+from urllib.parse import urlparse, parse_qs
 from tqdm import tqdm
 from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 
@@ -123,6 +124,9 @@ class Journal(object):
 
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
+
+    def get_resubmission_readers_id(self, number):
+        return self.__get_group_id('Resubmission_Readers', number)
 
     def get_meta_invitation_id(self):
         return self.__get_invitation_id(name='Edit')
@@ -455,6 +459,73 @@ class Journal(object):
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')
         return venue_id in [self.submitted_venue_id, self.under_review_venue_id, self.assigning_AE_venue_id, self.assigned_AE_venue_id]
+
+    def get_previous_submission_id(self, submission):
+        previous_submission_url = submission.content.get(f'previous_{self.short_name}_submission_url', {}).get('value')
+        if previous_submission_url:
+            return parse_qs(urlparse(previous_submission_url).query).get('id', [None])[0]
+
+    def share_previous_submission_with_action_editors(self, submission):
+        """Give the Action Editors of a resubmission read access to the previous submission.
+
+        Only applies when the submission is visible to the assigned Action Editor only. The
+        Action Editors group of the resubmission is added to the Resubmission_Readers group of
+        the previous submission, and this group is added to the readers of the previous
+        submission, its reviews and its decision. Since the access is granted to the paper group,
+        it follows the Action Editor assignments of the resubmission.
+
+        The previous submission must be a submission of this journal that shares at least one
+        author with the resubmission, otherwise nothing is shared.
+
+        :param submission: The resubmission note, linked to the previous submission with the
+            ``previous_<short_name>_submission_url`` field.
+        :type submission: openreview.api.Note
+        """
+        if self.get_submission_visibility() != 'assigned_action_editor':
+            return
+
+        previous_submission_id = self.get_previous_submission_id(submission)
+        if not previous_submission_id or previous_submission_id == submission.id:
+            return
+
+        previous_submission = openreview.tools.get_note(self.client, previous_submission_id)
+        if not previous_submission or previous_submission.domain != self.venue_id:
+            print(f'Previous submission {previous_submission_id} is not a {self.short_name} submission')
+            return
+
+        if not set(submission.content['authorids']['value']).intersection(previous_submission.content.get('authorids', {}).get('value', [])):
+            print(f'Previous submission {previous_submission_id} has no authors in common with the resubmission')
+            return
+
+        resubmission_readers_id = self.get_resubmission_readers_id(previous_submission.number)
+        action_editors_id = self.get_action_editors_id(number=submission.number)
+        resubmission_readers = openreview.tools.get_group(self.client, resubmission_readers_id)
+        if not resubmission_readers:
+            self.group_builder.post_group(openreview.api.Group(id=resubmission_readers_id,
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                signatories=[self.venue_id],
+                members=[action_editors_id]
+            ))
+        elif action_editors_id not in resubmission_readers.members:
+            self.client.add_members_to_group(resubmission_readers, action_editors_id)
+
+        shared_invitation_ids = [
+            self.get_author_submission_id(),
+            self.get_review_id(number=previous_submission.number),
+            self.get_ae_decision_id(number=previous_submission.number)
+        ]
+        for note in self.client.get_all_notes(forum=previous_submission.id):
+            if note.invitations[0] in shared_invitation_ids and resubmission_readers_id not in note.readers:
+                self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
+                    signatures=[self.venue_id],
+                    readers=[self.venue_id],
+                    writers=[self.venue_id],
+                    note=openreview.api.Note(id=note.id,
+                        readers={ 'add': [resubmission_readers_id] }
+                    )
+                )
 
     def setup(self, support_role, editors=[], assignment_delay=5):
         """Bootstrap the full journal venue on OpenReview.

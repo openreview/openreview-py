@@ -89,6 +89,9 @@ def process_update(client, edge, invitation, existing_edge):
                             content = content 
         ))
 
+        print('share the previous submission with the action editors of the resubmission')
+        journal.share_previous_submission_with_action_editors(note)
+
         print('check if the EICs are authors of the submission')
         eics = client.get_group(journal.get_editors_in_chief_id()).members
         for eic in eics:
