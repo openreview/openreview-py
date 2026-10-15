@@ -2,7 +2,8 @@ def process(client, edit, invitation):
     '''Answers a message posted to a chat invitation, e.g. `<venue>/Submission<N>/Reviewer_<id>/-/LLM_Interaction`.
 
     Sends the prompt, the submission PDF, the submission metadata and the chat history to the LLM gateway and posts
-    the answer as a reply signed by `<venue>/AI_Review_Assistant`. When the super invitation lists reply invitation
+    the answer as a reply signed by `<venue>/AI_Review_Assistant`. The request uses the LiteLLM unified input, the
+    OpenAI chat completions format, so the same request works for the Claude, Gemini and OpenAI models of the gateway. When the super invitation lists reply invitation
     names in llm_reply_invitations, e.g. the reviews, rebuttals and comments for the area chairs, the forum replies
     of those invitations are sent too. The context is read impersonating the anonymous group of the chat, so it
     only has what the committee member can read; this needs an API that lets process functions impersonate.
@@ -51,8 +52,8 @@ def process(client, edit, invitation):
         return
 
     def count_tokens(usage):
-        # all the input, cache and output tokens reported by the gateway
-        return sum(value for key, value in usage.items() if key.endswith('_tokens') and isinstance(value, int))
+        # the input and output tokens reported by the gateway, the input tokens include the cached ones
+        return usage.get('total_tokens') or (usage.get('prompt_tokens') or 0) + (usage.get('completion_tokens') or 0)
 
     def get_cost(headers):
         # the cost of the call in USD reported by the gateway, after its discount and margin
@@ -123,11 +124,10 @@ def process(client, edit, invitation):
                     print(f'The submission PDF is too large to attach: {len(pdf)} bytes')
                 else:
                     context.append({
-                        'type': 'document',
-                        'source': {
-                            'type': 'base64',
-                            'media_type': 'application/pdf',
-                            'data': base64.standard_b64encode(pdf).decode('utf-8')
+                        'type': 'file',
+                        'file': {
+                            'filename': f'submission{submission.number}.pdf',
+                            'file_data': 'data:application/pdf;base64,' + base64.standard_b64encode(pdf).decode('utf-8')
                         }
                     })
             except Exception as e:
@@ -175,7 +175,8 @@ def process(client, edit, invitation):
             context.append({ 'type': 'text', 'text': 'Forum replies:\n\n' + ('\n\n---\n\n'.join(replies) if replies else 'There are no replies in the forum yet.') })
 
         if model.startswith('claude'):
-            # every message of the chat resends the same context, cache it
+            # every message of the chat resends the same context, cache it; LiteLLM passes it to Claude, the other
+            # providers cache long prompts on their own
             context[-1]['cache_control'] = { 'type': 'ephemeral' }
 
         # the conversation up to and including the message being answered, oldest first
@@ -196,22 +197,23 @@ def process(client, edit, invitation):
             messages[0]['content'] = context + [{ 'type': 'text', 'text': messages[0]['content'] }]
         else:
             messages.insert(0, { 'role': 'user', 'content': context })
+        messages.insert(0, { 'role': 'system', 'content': prompt })
 
         body = {
             'model': model,
             'max_tokens': MAX_TOKENS,
-            'system': prompt,
-            'messages': messages
+            'messages': messages,
+            # LiteLLM maps it to the thinking of each provider
+            'reasoning_effort': 'medium',
+            # the parameters a model does not support are dropped instead of failing the request
+            'drop_params': True
         }
-        if model.startswith('claude'):
-            body['thinking'] = { 'type': 'adaptive' }
 
         response = requests.post(
-            f'{base_url.rstrip("/")}/v1/messages',
+            f'{base_url.rstrip("/")}/chat/completions',
             headers={
                 'Authorization': f'Bearer {api_key}',
-                'content-type': 'application/json',
-                'anthropic-version': '2023-06-01'
+                'content-type': 'application/json'
             },
             json=body,
             timeout=REQUEST_TIMEOUT
@@ -224,11 +226,15 @@ def process(client, edit, invitation):
         cost = get_cost(response.headers)
         print('LLM usage:', usage, 'cost:', cost)
 
-        if result.get('stop_reason') == 'refusal':
+        choice = result['choices'][0]
+        if choice.get('finish_reason') == 'content_filter':
             return 'Sorry, I cannot help with this request.', usage, cost
 
-        answer = '\n\n'.join(block['text'] for block in result.get('content', []) if block.get('type') == 'text').strip()
-        if result.get('stop_reason') == 'max_tokens':
+        content = choice['message'].get('content') or ''
+        if isinstance(content, list):
+            content = '\n\n'.join(part.get('text', '') for part in content if part.get('type') == 'text')
+        answer = content.strip()
+        if choice.get('finish_reason') == 'length':
             answer += '\n\n_The answer was cut off because it reached the maximum length._'
         return answer, usage, cost
 

@@ -12,7 +12,8 @@ from selenium.webdriver.common.by import By
 
 @pytest.fixture(scope='module')
 def llm_mock():
-    # stands in for the LLM gateway: records the requests of the chat process and answers in the Anthropic format;
+    # stands in for the LLM gateway: records the requests of the chat process and answers in the OpenAI chat
+    # completions format, the LiteLLM unified output;
     # the API process runner reaches it on localhost because the services share the network
     received = []
 
@@ -27,13 +28,15 @@ def llm_mock():
             if '[slow]' in question:
                 time.sleep(5)
             answer = json.dumps({
-                'id': 'msg_mock',
-                'type': 'message',
-                'role': 'assistant',
+                'id': 'chatcmpl-mock',
+                'object': 'chat.completion',
                 'model': body['model'],
-                'stop_reason': 'end_turn',
-                'content': [{ 'type': 'text', 'text': f'Answer from the LLM mock to: {question}' }],
-                'usage': { 'input_tokens': 100, 'output_tokens': 20 }
+                'choices': [{
+                    'index': 0,
+                    'finish_reason': 'stop',
+                    'message': { 'role': 'assistant', 'content': f'Answer from the LLM mock to: {question}' }
+                }],
+                'usage': { 'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120 }
             }).encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -1266,13 +1269,17 @@ class TestCVPRConferenceWithTemplates():
 
         # the LLM gets the prompt, the PDF, the metadata visible to the reviewer and the question, but not the forum replies
         request = llm_mock['requests'][-1]
-        assert request['path'] == '/v1/messages'
+        assert request['path'] == '/chat/completions'
         assert request['authorization'] == 'Bearer sk-test-key'
         assert request['body']['model'] == 'claude-sonnet-4-6'
-        assert request['body']['system'].startswith('You are an AI assistant that helps a reviewer of CVPR 2027')
-        assert len(request['body']['messages']) == 1
-        pdf_block, metadata_block, question_block = request['body']['messages'][0]['content']
-        assert base64.b64decode(pdf_block['source']['data']) == pdf_bytes
+        assert request['body']['reasoning_effort'] == 'medium'
+        assert request['body']['drop_params'] == True
+        assert [message['role'] for message in request['body']['messages']] == ['system', 'user']
+        assert request['body']['messages'][0]['content'].startswith('You are an AI assistant that helps a reviewer of CVPR 2027')
+        pdf_block, metadata_block, question_block = request['body']['messages'][1]['content']
+        assert pdf_block['type'] == 'file'
+        assert pdf_block['file']['filename'] == 'submission2.pdf'
+        assert base64.b64decode(pdf_block['file']['file_data'].removeprefix('data:application/pdf;base64,')) == pdf_bytes
         assert 'Title: Paper title 2' in metadata_block['text']
         assert 'SomeFirstName' not in metadata_block['text']
         assert 'Kai' not in metadata_block['text']
@@ -1294,7 +1301,7 @@ class TestCVPRConferenceWithTemplates():
         get_answer(anon_group_id, slow_message_edit)
 
         # the chat history goes with the new message
-        assert [message['role'] for message in llm_mock['requests'][-1]['body']['messages']] == ['user', 'assistant', 'user']
+        assert [message['role'] for message in llm_mock['requests'][-1]['body']['messages']] == ['system', 'user', 'assistant', 'user']
 
         # the chat reaches its token limit after the two answers
         save_settings('Reviewers', llm_mock['url'], 240)
@@ -1316,9 +1323,9 @@ class TestCVPRConferenceWithTemplates():
         assert answer.content['message']['value'] == 'Answer from the LLM mock to: Which critique is best supported by the paper?'
 
         request = llm_mock['requests'][-1]
-        assert request['body']['system'].startswith('You are an AI assistant that helps an area chair of CVPR 2027')
-        pdf_block, metadata_block, replies_block, question_block = request['body']['messages'][0]['content']
-        assert base64.b64decode(pdf_block['source']['data']) == pdf_bytes
+        assert request['body']['messages'][0]['content'].startswith('You are an AI assistant that helps an area chair of CVPR 2027')
+        pdf_block, metadata_block, replies_block, question_block = request['body']['messages'][1]['content']
+        assert base64.b64decode(pdf_block['file']['file_data'].removeprefix('data:application/pdf;base64,')) == pdf_bytes
         assert replies_block['text'].startswith('Forum replies:')
         assert replies_block['text'].count('Official Review by Reviewer_') == 3
         assert 'Limited evaluation' in replies_block['text']
