@@ -53,6 +53,7 @@ class TestSimpleDualAnonymous():
                     'full_submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
                     'area_chairs_support': { 'value': True },
                     'senior_area_chairs_support': { 'value': True },
+                    'ethics_review_support': { 'value': True },
                     'expected_submissions': { 'value': 12000 },
                     'venue_organizer_agreement': {
                         'value': [
@@ -89,7 +90,9 @@ class TestSimpleDualAnonymous():
             'ICLR.cc/2026/Conference/Reviewers',
             'ICLR.cc/2026/Conference/Authors',
             'ICLR.cc/2026/Conference/Area_Chairs',
-            'ICLR.cc/2026/Conference/Senior_Area_Chairs'
+            'ICLR.cc/2026/Conference/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
         ]
         assert 'preferred_emails_id' in group.content and group.content['preferred_emails_id']['value'] == 'ICLR.cc/2026/Conference/-/Preferred_Emails'
         invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Preferred_Emails')
@@ -109,6 +112,10 @@ class TestSimpleDualAnonymous():
             'ICLR.cc/2026/Conference/Senior_Area_Chairs'
         ]
         assert group.domain == 'ICLR.cc/2026/Conference'
+
+        # ethics_review_support is checked in the request form, so the ethics committees are created at deployment
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers')
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Chairs')
 
         # by default, only the venue, program chairs, and assigned senior area chairs can read the submission group
         submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group')
