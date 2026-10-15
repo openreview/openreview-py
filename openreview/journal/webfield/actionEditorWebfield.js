@@ -17,6 +17,7 @@ var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
 var NUMBER_OF_REVIEWERS = 3;
 var PREFERRED_EMAILS_ID = '';
+var REVIEWERS_ROLE_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -31,6 +32,7 @@ var CUSTOM_MAX_PAPERS_NAME = 'Custom_Max_Papers';
 var AVAILABILITY_NAME = 'Assignment_Availability';
 var REVIEWERS_AVAILABILITY_ID = REVIEWERS_ID + '/-/' + AVAILABILITY_NAME;
 var REVIEWERS_REPORT_ID = REVIEWERS_ID + '/-/Reviewer_Report';
+var REVIEWERS_ROLE_BROWSE = REVIEWERS_ROLE_ID ? ';' + REVIEWERS_ROLE_ID + ',head:ignore' : '';
 
 
 var SUBMISSION_GROUP_NAME = 'Paper';
@@ -57,6 +59,7 @@ var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tai
     REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
     REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' +
     REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+    REVIEWERS_ROLE_BROWSE +
   '&maxColumns=2&version=2' +
   '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
   "&preferredEmailInvitationId=" + PREFERRED_EMAILS_ID +
@@ -431,7 +434,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
             '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID +
-            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' + REVIEWERS_ROLE_BROWSE +
             '&maxColumns=2&version=2' +
             '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
             "&preferredEmailInvitationId=" + PREFERRED_EMAILS_ID

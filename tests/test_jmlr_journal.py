@@ -44,10 +44,11 @@ class TestJMLRJournal():
                     'website': {'value': 'jmlr.org' },
                     'settings': {
                         'value': {
-                            'submission_public': False,
+                            'submission_visibility': 'assigned_action_editor',
                             'author_anonymity': False,
                             'assignment_delay': 0,
-                            'skip_official_recommendation': True
+                            'skip_official_recommendation': True,
+                            'tracks': ['Regular', 'MLOSS']
                         }
                     }
                 }
@@ -83,6 +84,70 @@ class TestJMLRJournal():
         openreview_client.add_members_to_group('JMLR/Action_Editors', ['~Xukun_JMLR1', '~Melisa_JMLR1', '~Celeste_JMLR1'])
         openreview_client.add_members_to_group('JMLR/Reviewers', ['~Carlos_JMLR1', '~Andrew_JMLR1', '~Hugo_JMLR1', '~Rachel_JMLR1'])
 
+        invitation = openreview_client.get_invitation('JMLR/-/Submission')
+        assert invitation.edit['note']['content']['track']['value']['param']['enum'] == ['Regular', 'MLOSS']
+        assert invitation.edit['note']['content']['track']['value']['param']['default'] == 'Regular'
+        assert invitation.edit['note']['content']['track']['value']['param']['input'] == 'select'
+        assert 'optional' not in invitation.edit['note']['content']['track']['value']['param']
+
+        invitation = openreview_client.get_invitation('JMLR/Action_Editors/-/Track')
+        assert invitation.invitees == ['JMLR', 'JMLR/Editors_In_Chief']
+        assert invitation.edit['label']['param']['enum'] == ['Regular', 'MLOSS']
+        assert 'weight' not in invitation.edit
+        assert openreview_client.get_invitation('JMLR/Action_Editors/-/Track_Score')
+
+        assert "var ACTION_EDITORS_TRACK_ID = 'JMLR/Action_Editors/-/Track';" in openreview_client.get_group('JMLR/Editors_In_Chief').web
+
+        invitation = openreview_client.get_invitation('JMLR/Action_Editors/-/Assignment_Configuration')
+        assert invitation.edit['note']['content']['scores_specification']['value']['param']['default']['JMLR/Action_Editors/-/Track_Score'] == { 'weight': 10, 'default': 0 }
+
+    def test_action_editor_tracks(self, journal, openreview_client, helpers):
+
+        eic_client = OpenReviewClient(username='rajarshi@mail.com', password=helpers.strong_password)
+
+        helpers.create_user('alexandre@jmlrmloss.com', 'Alexandre', 'MLOSS')
+        openreview_client.add_members_to_group('JMLR/Action_Editors', ['~Alexandre_MLOSS1'])
+
+        for action_editor in ['~Alexandre_MLOSS1', '~Xukun_JMLR1']:
+            eic_client.post_edge(openreview.api.Edge(invitation='JMLR/Action_Editors/-/Track',
+                readers=['JMLR', action_editor],
+                writers=['JMLR'],
+                signatures=['JMLR/Editors_In_Chief'],
+                head='JMLR/Action_Editors',
+                tail=action_editor,
+                label='MLOSS'
+            ))
+
+        track_edges = openreview_client.get_all_edges(invitation='JMLR/Action_Editors/-/Track')
+        assert { edge.tail: edge.label for edge in track_edges } == {
+            '~Alexandre_MLOSS1': 'MLOSS',
+            '~Xukun_JMLR1': 'MLOSS'
+        }
+
+        xukun_edge = eic_client.get_edges(invitation='JMLR/Action_Editors/-/Track', tail='~Xukun_JMLR1')[0]
+        xukun_edge.label = 'Regular'
+        eic_client.post_edge(xukun_edge)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'label must be equal to one of the allowed values: Regular, MLOSS'):
+            xukun_edge.label = 'Software'
+            eic_client.post_edge(xukun_edge)
+
+        assert openreview_client.get_edges(invitation='JMLR/Action_Editors/-/Track', tail='~Xukun_JMLR1')[0].label == 'Regular'
+
+        alexandre_client = OpenReviewClient(username='alexandre@jmlrmloss.com', password=helpers.strong_password)
+        alexandre_edges = alexandre_client.get_edges(invitation='JMLR/Action_Editors/-/Track', tail='~Alexandre_MLOSS1')
+        assert len(alexandre_edges) == 1
+        assert alexandre_edges[0].label == 'MLOSS'
+        assert alexandre_client.get_edges(invitation='JMLR/Action_Editors/-/Track', tail='~Xukun_JMLR1') == []
+
+        with pytest.raises(openreview.OpenReviewException, match=r'is not an invitee of JMLR/Action_Editors/-/Track'):
+            alexandre_edge = alexandre_edges[0]
+            alexandre_edge.label = 'Regular'
+            alexandre_edge.signatures = ['~Alexandre_MLOSS1']
+            alexandre_client.post_edge(alexandre_edge)
+
+        assert openreview_client.get_edges(invitation='JMLR/Action_Editors/-/Track', tail='~Alexandre_MLOSS1')[0].label == 'MLOSS'
+
     def test_submission(self, journal, openreview_client, test_client, helpers, selenium, request_page):
 
         venue_id = journal.venue_id
@@ -101,7 +166,8 @@ class TestJMLRJournal():
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'track': { 'value': 'Regular' }
                 }
             ))
 
@@ -109,6 +175,16 @@ class TestJMLRJournal():
         note_id_1=submission_note_1['note']['id']
 
         Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        track_scores = openreview_client.get_all_edges(invitation='JMLR/Action_Editors/-/Track_Score', head=note_id_1)
+        assert sorted(edge.tail for edge in track_scores) == ['~Celeste_JMLR1', '~Melisa_JMLR1', '~Xukun_JMLR1']
+        for edge in track_scores:
+            assert edge.weight == 1
+            assert edge.readers == ['JMLR', 'JMLR/Paper1/Authors', edge.tail]
+
+        invitation = openreview_client.get_invitation('JMLR/Paper1/Action_Editors/-/Recommendation')
+        assert 'browse=JMLR/Action_Editors/-/Affinity_Score;JMLR/Action_Editors/-/Track_Score;' in invitation.web
+        assert 'Your submission is in the Regular track.' in invitation.web
 
         author_group=openreview_client.get_group("JMLR/Paper1/Authors")
         assert author_group
@@ -167,6 +243,13 @@ class TestJMLRJournal():
 
         edits = openreview_client.get_note_edits(note.id, invitation='JMLR/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        note = openreview_client.get_note(note_id_1)
+        assert note.readers == ['JMLR', 'JMLR/Paper1/Action_Editors', 'JMLR/Paper1/Reviewers', 'JMLR/Paper1/Authors']
+
+        xukun_client = OpenReviewClient(username='xukun@jmlrone.com', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            xukun_client.get_note(note_id_1)
 
         assert celeste_client.get_invitation('JMLR/Paper1/Reviewers/-/Assignment')
 
@@ -344,9 +427,21 @@ Please note that responding to this email will direct your reply to editor@jmlr.
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 3
-        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            xukun_client.get_note(reviews[0].id)
+
+        official_comment_invitation = openreview_client.get_invitation(f'{venue_id}/Paper1/-/Official_Comment')
+        assert official_comment_invitation.edit['note']['readers']['param']['items'] == [
+            { 'value': f'{venue_id}/Editors_In_Chief', 'optional': True },
+            { 'value': f'{venue_id}/Paper1/Action_Editors', 'optional': True },
+            { 'value': f'{venue_id}/Paper1/Reviewers', 'optional': True },
+            { 'inGroup': f'{venue_id}/Paper1/Reviewers', 'optional': True },
+            { 'value': f'{venue_id}/Paper1/Authors', 'optional': True }
+        ]
 
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation JMLR/Paper1/-/Official_Recommendation was not found'):
             invitation = eic_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
@@ -405,6 +500,7 @@ Please note that responding to this email will direct your reply to editor@jmlr.
                 )
             )
             helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+            assert rating_note['note']['readers'] == [f'{venue_id}/Editors_In_Chief', f'{venue_id}/Paper1/Action_Editors']
             process_logs = openreview_client.get_process_logs(id = rating_note['id'])
             assert len(process_logs) == 1
             assert process_logs[0]['status'] == 'ok'
@@ -430,3 +526,117 @@ Please note that responding to this email will direct your reply to editor@jmlr.
             )
 
         helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        decision_note = celeste_client.get_note(decision_note['note']['id'])
+        assert decision_note.readers == [f'{venue_id}/Editors_In_Chief', f'{venue_id}/Paper1/Action_Editors']
+
+        approval_note = eic_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision_Approval',
+                            signatures=[f'{venue_id}/Editors_In_Chief'],
+                            note=Note(
+                                content= {
+                                    'approval': { 'value': 'I approve the AE\'s decision.' },
+                                    'comment_to_the_AE': { 'value': 'I agree with the AE' }
+                                }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+
+        decision_note = eic_client.get_note(decision_note.id)
+        assert decision_note.readers == [f'{venue_id}/Editors_In_Chief', f'{venue_id}/Paper1/Action_Editors', f'{venue_id}/Paper1/Reviewers', f'{venue_id}/Paper1/Authors']
+        assert decision_note.nonreaders == []
+
+        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
+            xukun_client.get_note(decision_note.id)
+        
+        
+    def test_action_editor_track_matching(self, journal, openreview_client, test_client, helpers):
+
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        submission_content = {
+            'title': { 'value': 'Open source software title' },
+            'abstract': { 'value': 'Open source software abstract' },
+            'authors': { 'value': ['SomeFirstName User']},
+            'authorids': { 'value': ['~SomeFirstName_User1']},
+            'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+            'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+            'human_subjects_reporting': { 'value': 'Not applicable'}
+        }
+
+        with pytest.raises(openreview.OpenReviewException, match=r'track cannot be empty or missing'):
+            test_client.post_note_edit(invitation='JMLR/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=Note(content=submission_content))
+
+        submission_content['track'] = { 'value': 'MLOSS' }
+        submission_note_2 = test_client.post_note_edit(invitation='JMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(content=submission_content))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
+        note_id_2 = submission_note_2['note']['id']
+        note_2 = openreview_client.get_note(note_id_2)
+        assert note_2.content['track']['value'] == 'MLOSS'
+
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        track_scores = openreview_client.get_all_edges(invitation='JMLR/Action_Editors/-/Track_Score', head=note_id_2)
+        assert [edge.tail for edge in track_scores] == ['~Alexandre_MLOSS1']
+        assert track_scores[0].readers == ['JMLR', f'JMLR/Paper{note_2.number}/Authors', '~Alexandre_MLOSS1']
+
+        invitation = openreview_client.get_invitation(f'JMLR/Paper{note_2.number}/Action_Editors/-/Recommendation')
+        assert 'Your submission is in the MLOSS track.' in invitation.web
+
+        journal.setup_ae_matching('tracks')
+
+        configuration_note = openreview_client.get_notes(invitation='JMLR/Action_Editors/-/Assignment_Configuration', content={ 'title': 'matching-tracks' })[0]
+        assert configuration_note.content['scores_specification']['value']['JMLR/Action_Editors/-/Track_Score'] == { 'weight': 10, 'default': 0 }
+        assert configuration_note.content['scores_specification']['value']['JMLR/Action_Editors/-/Affinity_Score'] == { 'weight': 1, 'default': 0 }
+
+        withdraw_note = test_client.post_note_edit(invitation=f'JMLR/Paper{note_2.number}/-/Withdrawal',
+            signatures=[f'JMLR/Paper{note_2.number}/Authors'],
+            note=Note(
+                content={
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        assert openreview_client.get_note(note_id_2).content['venueid']['value'] == 'JMLR/Withdrawn_Submission'
+
+        journal.archive_assignments()
+
+        assert openreview_client.get_all_edges(invitation='JMLR/Action_Editors/-/Track_Score', head=note_id_2) == []
+        assert openreview_client.get_all_edges(invitation='JMLR/Action_Editors/-/Affinity_Score', head=note_id_2) == []
+
+    def test_submission_visibility_setting(self):
+
+        def build_journal(settings):
+            return Journal(None, 'JMLR', '1234', 'editor@jmlr.org', 'Journal of Machine Learning Research', 'JMLR', settings=settings)
+
+        assert build_journal({}).get_submission_visibility() == 'public'
+        assert build_journal({ 'submission_public': True }).get_submission_visibility() == 'public'
+        assert build_journal({ 'submission_public': False }).get_submission_visibility() == 'all_action_editors'
+
+        journal = build_journal({ 'submission_public': True, 'submission_visibility': 'assigned_action_editor' })
+        assert journal.get_submission_visibility() == 'assigned_action_editor'
+        assert not journal.is_submission_public()
+        assert journal.get_release_decision_readers(1) == ['JMLR/Editors_In_Chief', 'JMLR/Paper1/Action_Editors', 'JMLR/Paper1/Reviewers', 'JMLR/Paper1/Authors']
+
+        journal = build_journal({ 'submission_public': True, 'submission_visibility': 'all_action_editors' })
+        assert journal.get_submission_visibility() == 'all_action_editors'
+        assert not journal.is_submission_public()
+        assert journal.get_release_decision_readers(1) == ['JMLR/Editors_In_Chief', 'JMLR/Action_Editors', 'JMLR/Paper1/Reviewers', 'JMLR/Paper1/Authors']
+
+        journal = build_journal({ 'submission_public': False, 'submission_visibility': 'public' })
+        assert journal.get_submission_visibility() == 'public'
+        assert journal.is_submission_public()
+        assert journal.get_release_decision_readers(1) == ['everyone']
+
+        for settings in [{ 'submission_visibility': 'assigned_action_editors' }, { 'submission_public': False, 'submission_visibility': 'private' }]:
+            journal = build_journal(settings)
+            with pytest.raises(openreview.OpenReviewException, match=f'Invalid submission_visibility setting: {settings["submission_visibility"]}'):
+                journal.get_submission_visibility()
+            with pytest.raises(openreview.OpenReviewException, match='Invalid submission_visibility setting'):
+                journal.get_release_decision_readers(1)
+

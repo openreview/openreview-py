@@ -139,6 +139,12 @@ class Journal(object):
     def get_desk_rejection_id(self, number=None):
         return self.__get_invitation_id(name='Desk_Rejection', number=number)
 
+    def get_desk_rejection_expiration_id(self):
+        return self.__get_invitation_id(name='Desk_Rejection_Expiration')
+
+    def get_desk_rejection_reversion_id(self, number=None):
+        return self.__get_invitation_id(name='Desk_Rejection_Reversion', number=number)
+
     def get_desk_rejection_approval_id(self, number=None):
         return self.__get_invitation_id(name='Desk_Rejection_Approval', number=number)
 
@@ -190,6 +196,9 @@ class Journal(object):
     def get_authors_deanonymization_id(self, number=None):
         return self.__get_invitation_id(name='Authors_De-Anonymization', number=number)
 
+    def get_eic_author_deanonymization_id(self, number=None):
+        return self.__get_invitation_id(name='Authors_De-Anonymization_By_EICs', number=number)
+
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
 
@@ -207,6 +216,12 @@ class Journal(object):
 
     def get_ae_resubmission_score_id(self):
         return self.__get_invitation_id(name='Resubmission_Score', prefix=self.get_action_editors_id())
+
+    def get_ae_track_id(self):
+        return self.__get_invitation_id(name='Track', prefix=self.get_action_editors_id())
+
+    def get_ae_track_score_id(self):
+        return self.__get_invitation_id(name='Track_Score', prefix=self.get_action_editors_id())
 
     def get_ae_assignment_configuration_id(self):
         return self.__get_invitation_id(name='Assignment_Configuration', prefix=self.get_action_editors_id())
@@ -300,6 +315,9 @@ class Journal(object):
 
     def get_reviewer_availability_id(self):
         return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_reviewers_id())
+
+    def get_reviewer_role_id(self):
+        return self.__get_invitation_id(name='Role', prefix=self.get_reviewers_id())
 
     def get_reviewer_pending_review_id(self):
         return self.__get_invitation_id(name='Pending_Reviews', prefix=self.get_reviewers_id())
@@ -456,6 +474,16 @@ class Journal(object):
         :param assignment_delay: Number of minutes to delay before assignment process functions run.
         :type assignment_delay: int, optional
         """
+        tracks = self.get_tracks()
+        if not isinstance(tracks, list) or not all(isinstance(track, str) and track.strip() for track in tracks) or len(set(tracks)) != len(tracks):
+            raise openreview.OpenReviewException(f'Invalid tracks setting: {tracks}. It must be a list of unique track names, the first one is the default track.')
+        review_release_options = ['all_reviews_posted', 'decision_posted']
+        if self.get_review_release() not in review_release_options:
+            raise openreview.OpenReviewException(f'Invalid review_release setting: {self.get_review_release()}. Valid values are: {", ".join(review_release_options)}')
+
+        if self.are_reviews_released_on_decision() and not self.should_skip_official_recommendation():
+            raise openreview.OpenReviewException('The review_release setting decision_posted requires skip_official_recommendation, the official recommendation stage needs the reviews to be released')
+
         if not self.secret_key:
             ## create the secret key the first time the journal is set up; it is stored
             ## in the venue group content by the group builder, never edited and only
@@ -597,14 +625,15 @@ class Journal(object):
         """
         return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reviewer_role=None):
         """Send recruitment emails to invite people to serve as reviewers.
 
         Sends personalized recruitment emails with accept/decline links. Skips
         invitees who are already members of the reviewers group.
 
         Side effects: sends recruitment emails and adds invitees to the
-        Reviewers/Invited group.
+        Reviewers/Invited group. When ``reviewer_role`` is set, also sets the
+        reviewer role of the invitees and of the listed existing reviewers.
 
         :param message: The email body template (supports ``{{accept_url}}``, ``{{decline_url}}``, ``{{fullname}}``, and ``{{invitation_url}}`` placeholders).
         :type message: str
@@ -616,10 +645,31 @@ class Journal(object):
         :type invitee_names: list[str], optional
         :param replyTo: Reply-to email address for the recruitment message.
         :type replyTo: str, optional
+        :param reviewer_role: One of the ``reviewer_roles`` journal settings to assign to the invitees.
+        :type reviewer_role: str, optional
         :return: Dict with keys ``invited``, ``already_invited``, ``already_member``, and ``errors``.
         :rtype: dict
         """
-        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo)
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo, reviewer_role)
+
+    def set_reviewer_role(self, reviewer, reviewer_role):
+        """Set the reviewer role label of a reviewer, replacing any role set before.
+
+        The role applies to all the submissions and is shown to the Action Editors
+        in the reviewer assignment browser.
+
+        :param reviewer: Profile ID or email of the reviewer.
+        :type reviewer: str
+        :param reviewer_role: One of the ``reviewer_roles`` journal settings.
+        :type reviewer_role: str
+        :return: The posted edge.
+        :rtype: openreview.api.Edge
+        """
+        edges = self.client.get_edges(invitation=self.get_reviewer_role_id(), head=self.get_reviewers_id(), tail=reviewer)
+        edge = edges[0] if edges else openreview.api.Edge(invitation=self.get_reviewer_role_id(), head=self.get_reviewers_id(), tail=reviewer)
+        edge.label = reviewer_role
+        edge.signatures = [self.venue_id]
+        return self.client.post_edge(edge)
 
     def setup_author_submission(self, note):
         """Process a new submission by creating per-paper groups, invitations, and expertise requests.
@@ -669,8 +719,21 @@ class Journal(object):
         if not self.should_skip_official_recommendation():
             self.invitation_builder.set_note_official_recommendation_enabling_invitation(note)
 
+    def get_submission_visibility(self):
+        submission_visibility = self.settings.get('submission_visibility')
+        if submission_visibility is None:
+            return 'public' if self.settings.get('submission_public', True) else 'all_action_editors'
+        if submission_visibility not in ['public', 'all_action_editors', 'assigned_action_editor']:
+            raise openreview.OpenReviewException(f'Invalid submission_visibility setting: {submission_visibility}. Valid values are public, all_action_editors and assigned_action_editor.')
+        return submission_visibility
+
     def is_submission_public(self):
-        return self.settings.get('submission_public', True)
+        return self.get_submission_visibility() == 'public'
+
+    def get_action_editors_reader_id(self, number):
+        if self.get_submission_visibility() == 'assigned_action_editor':
+            return self.get_action_editors_id(number=number)
+        return self.get_action_editors_id()
 
     def get_issn(self):
         return self.settings.get('issn', None)
@@ -688,6 +751,15 @@ class Journal(object):
         ## Whether reviewers are anonymous to each other. Defaults to False to preserve
         ## the TMLR behavior where assigned reviewers can see one another's identities.
         return self.settings.get('reviewer_to_reviewer_anonymity', False)
+
+    def get_review_release(self):
+        return self.settings.get('review_release', 'all_reviews_posted')
+
+    def are_reviews_released_on_decision(self):
+        return self.get_review_release() == 'decision_posted'
+
+    def should_release_reviews_to_authors_when_posted(self):
+        return self.settings.get('release_reviews_to_authors_when_posted', True)
 
     def release_submission_after_acceptance(self):
         """Return whether submission content is made public after acceptance.
@@ -771,6 +843,9 @@ class Journal(object):
     def has_external_reviewers(self):
         return self.settings.get('external_reviewers', True)
 
+    def get_reviewer_roles(self):
+        return self.settings.get('reviewer_roles', [])
+
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)
 
@@ -779,6 +854,9 @@ class Journal(object):
 
     def get_ae_max_papers(self):
         return self.settings.get('action_editors_max_papers', 12)
+
+    def get_tracks(self):
+        return self.settings.get('tracks', [])
 
     def get_submission_additional_fields(self):
         return self.settings.get('submission_additional_fields', {})
@@ -814,22 +892,22 @@ class Journal(object):
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.venue_id, self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.venue_id, self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_review_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_decision_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_authors_readers(self, number):
         if self.is_submission_public() or self.release_submission_after_acceptance():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_authors_id(number)]
 
     def get_official_comment_readers(self, number):
         readers = []
@@ -838,7 +916,7 @@ class Journal(object):
 
         readers.append(self.get_editors_in_chief_id())
 
-        if not self.is_submission_public():
+        if self.get_submission_visibility() == 'all_action_editors':
             readers.append(self.get_action_editors_id())
 
         return readers + [self.get_action_editors_id(number),
@@ -1276,10 +1354,30 @@ Your {lower_formatted_invitation} on a submission has been {action}
         invitation.invitations = None
         self.invitation_builder.post_invitation_edit(invitation, replacement=True)
 
+    def release_reviews(self, submission):
+        """Make the reviews, the AI review and the official comments of a submission visible to their release readers.
+
+        Side effects: updates the review invitation readers and posts the review, AI review
+        and comment release invitations.
+
+        :param submission: The submission note whose reviews are being released.
+        :type submission: openreview.api.Note
+        """
+        print('Release reviews...')
+        self.invitation_builder.set_note_release_review_invitation(submission)
+
+        if self.should_enable_ai_review() and self.client.get_notes(invitation=self.get_ai_review_id(number=submission.number), limit=1):
+            print('Release LLM review...')
+            self.invitation_builder.set_note_release_ai_review_invitation(submission)
+
+        print('Release comments...')
+        self.invitation_builder.set_note_release_comment_invitation(submission)
+
     def release_reviews_process(self, submission):
         """Release reviews to authors and open the discussion or decision phase for a submission.
 
-        Makes all reviews and comments visible to their intended readers. If official
+        Makes all reviews and comments visible to their intended readers, unless the
+        journal releases the reviews when the Action Editor posts the decision. If official
         recommendations are enabled, schedules the recommendation invitation after
         a discussion period and sends notification emails to authors, reviewers, and
         the action editor about the start of the discussion phase. If official
@@ -1298,18 +1396,12 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         number_of_reviewers = self.get_number_of_reviewers()
 
-        print('Release reviews...')
-        invitation = self.invitation_builder.set_note_release_review_invitation(submission)
-
         ai_reviews = None
         if self.should_enable_ai_review():
             ai_reviews = self.client.get_notes(invitation=self.get_ai_review_id(number=submission.number))
-            if ai_reviews:
-                print('Release LLM review...')
-                self.invitation_builder.set_note_release_ai_review_invitation(submission)
 
-        print('Release comments...')
-        invitation = self.invitation_builder.set_note_release_comment_invitation(submission)
+        if not self.are_reviews_released_on_decision():
+            self.release_reviews(submission)
 
         ## Enable official recommendation
         print('Enable official recommendations')
@@ -1496,6 +1588,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 self.client.delete_edges(invitation=self.get_ae_conflict_id(), head=submission.id, soft_delete=True)
                 self.client.delete_edges(invitation=self.get_ae_aggregate_score_id(), head=submission.id, soft_delete=True)
                 self.client.delete_edges(invitation=self.get_ae_resubmission_score_id(), head=submission.id, soft_delete=True)
+                if self.get_tracks():
+                    self.client.delete_edges(invitation=self.get_ae_track_score_id(), head=submission.id, soft_delete=True)
 
                 submission_reviewer_assignments = reviewer_assignments.get(submission.id, [])
                 for reviewer_assignment in submission_reviewer_assignments:

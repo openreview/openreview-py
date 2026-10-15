@@ -1593,8 +1593,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=ack_invitation.id,
                 cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
-                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
-                signatures=['TMLR/Editors_In_Chief']
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000
             )
         )
 
@@ -4124,9 +4123,31 @@ url={https://openreview.net/forum?id=''' + note_id_4 + '''},
 note={Rejected}
 }'''
 
+        ## EICs can still post their de-anonymization note, restricted to the paper committee and the authors,
+        ## but the authors were already released so there should be no second release
+        eic_deanonymize_authors_note = raia_client.post_note_edit(invitation='TMLR/Paper4/-/Authors_De-Anonymization_By_EICs',
+                            signatures=['TMLR/Editors_In_Chief'],
+                            note=Note(
+                            readers=['TMLR/Editors_In_Chief', 'TMLR/Paper4/Action_Editors', 'TMLR/Paper4/Reviewers', 'TMLR/Paper4/Authors'],
+                            content= {
+                                'confirmation': { 'value': 'I want to reveal all author names.' },
+                                'comment': { 'value': 'Confirming the author names are revealed.' }
+                            }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=eic_deanonymize_authors_note['id'])
+
+        eic_deanonymization_note = openreview_client.get_note(eic_deanonymize_authors_note['note']['id'])
+        assert eic_deanonymization_note.readers == ['TMLR/Editors_In_Chief', 'TMLR/Paper4/Action_Editors', 'TMLR/Paper4/Reviewers', 'TMLR/Paper4/Authors']
+        assert eic_deanonymization_note.signatures == ['TMLR/Editors_In_Chief']
+        assert eic_deanonymization_note.content['comment']['value'] == 'Confirming the author names are revealed.'
+
+        note = openreview_client.get_note(note_id_4)
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/-/Rejected', 'TMLR/-/Authors_Release']
+        assert len(openreview_client.get_note_edits(note_id=note_id_4, invitation='TMLR/-/Authors_Release')) == 1
+
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_4)
-        assert len(invitations) == 10
+        assert len(invitations) == 11
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejected" in [i.id for i in invitations]
@@ -4136,6 +4157,7 @@ note={Rejected}
         assert f"{venue_id}/Paper4/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper4/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper4/-/Authors_De-Anonymization" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper4/-/Authors_De-Anonymization_By_EICs" in [i.id for i in invitations]
 
         ## Check pending review edges
         edges_count = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
@@ -4827,7 +4849,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_6)
-        assert len(invitations) == 10
+        assert len(invitations) == 11
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejected" in [i.id for i in invitations]
@@ -4835,10 +4857,34 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert f"{venue_id}/Paper6/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper6/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper6/-/Moderation" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper6/-/Authors_De-Anonymization_By_EICs" in [i.id for i in invitations]
 
         messages = journal.client.get_messages(subject = '[TMLR] Authors have withdrawn TMLR submission 6: Paper title 6')
         assert len(messages) == 4
 
+        ## EICs reveal the author names first, with a public de-anonymization note
+        eic_deanonymize_authors_note = raia_client.post_note_edit(invitation='TMLR/Paper6/-/Authors_De-Anonymization_By_EICs',
+                            signatures=['TMLR/Editors_In_Chief'],
+                            note=Note(
+                            readers=['everyone'],
+                            content= {
+                                'confirmation': { 'value': 'I want to reveal all author names.' },
+                                'comment': { 'value': 'Revealing the author names at the request of the authors.' }
+                            }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=eic_deanonymize_authors_note['id'])
+
+        eic_deanonymization_note = openreview_client.get_note(eic_deanonymize_authors_note['note']['id'])
+        assert eic_deanonymization_note.readers == ['everyone']
+        assert eic_deanonymization_note.signatures == ['TMLR/Editors_In_Chief']
+        assert eic_deanonymization_note.content['comment']['value'] == 'Revealing the author names at the request of the authors.'
+
+        note = openreview_client.get_note(note_id_6)
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn', 'TMLR/-/Authors_Release']
+        assert note.content['authorids'].get('readers') == ['everyone']
+        assert note.content['authors'].get('readers') == ['everyone']
+
+        ## Authors were already released by the EICs, so this de-anonymization should not release them again
         deanonymize_authors_note = test_client.post_note_edit(invitation='TMLR/Paper6/-/Authors_De-Anonymization',
                             signatures=['TMLR/Paper6/Authors'],
                             note=Note(
@@ -4872,6 +4918,8 @@ year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_6 + '''},
 note={Withdrawn}
 }'''
+
+        assert len(openreview_client.get_note_edits(note_id=note_id_6, invitation='TMLR/-/Authors_Release')) == 1
 
         helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0)
         helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0)
@@ -5293,6 +5341,53 @@ The TMLR Editors-in-Chief
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Revision').expdate < now
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Withdrawal').expdate < now
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Desk_Rejection').expdate < now
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Official_Comment').expdate is None
+        assert openreview_client.get_invitation_edits(invitation_id='TMLR/Paper9/-/Revision', invitation='TMLR/-/Desk_Rejection_Expiration')
+
+        reversion_invitation = openreview_client.get_invitation('TMLR/Paper9/-/Desk_Rejection_Reversion')
+        assert not reversion_invitation.expdate
+        assert reversion_invitation.edit['note']['replyto'] == desk_reject_note['note']['id']
+
+        ## Revert the desk rejection by EIC
+        desk_reject_reversion_note = raia_client.post_note_edit(invitation='TMLR/Paper9/-/Desk_Rejection_Reversion',
+                                    signatures=[f'{venue_id}/Editors_In_Chief'],
+                                    note=Note(content={
+                                        'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of the desk-rejected submission.' },
+                                        'comment': { 'value': 'The PDF was anonymized after all.' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_reversion_note['id'])
+
+        note = openreview_client.get_note(note_id_9)
+        assert note.readers == ['TMLR', 'TMLR/Paper9/Action_Editors', 'TMLR/Paper9/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper9/Authors']
+        assert note.content['venue']['value'] == 'Submitted to TMLR'
+        assert note.content['venueid']['value'] == 'TMLR/Submitted'
+
+        assert not openreview_client.get_note_edits(note_id=note_id_9, invitation='TMLR/-/Desk_Rejected')
+
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Revision').expdate is None
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Withdrawal').expdate is None
+        assert openreview_client.get_invitation('TMLR/Paper9/-/Desk_Rejection').expdate is None
+        assert openreview_client.get_invitation('TMLR/Paper9/Action_Editors/-/Recommendation').expdate is None
+
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Desk rejection reverted for TMLR submission 9: Paper title 9')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+The TMLR Editors-in-Chief have reverted the desk rejection of the TMLR submission "9: Paper title 9". The submission has been restored to its previous status.
+
+To view the Editors-in-Chief's comments, follow this link: https://openreview.net/forum?id={note_id_9}&noteId={desk_reject_reversion_note['note']['id']}
+
+The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
+'''
 
         note = openreview_client.get_note(note_id_9)
         journal.invitation_builder.expire_paper_invitations(note)
@@ -5381,6 +5476,39 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
+        review_duedate = openreview_client.get_invitation('TMLR/Paper10/-/Review').duedate
+
+        ## Desk reject the under review submission by EIC, the pending review is discounted
+        desk_reject_note = raia_client.post_note_edit(invitation= 'TMLR/Paper10/-/Desk_Rejection',
+                                    signatures=[f'{venue_id}/Editors_In_Chief'],
+                                    note=Note(content={
+                                        'desk_reject_comments': { 'value': 'Out of scope.' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        note = openreview_client.get_note(note_id_10)
+        assert note.content['venueid']['value'] == 'TMLR/Desk_Rejected'
+        assert openreview_client.get_invitation('TMLR/Paper10/-/Review').expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
+
+        ## Revert the desk rejection by EIC, the pending review is counted again
+        desk_reject_reversion_note = raia_client.post_note_edit(invitation='TMLR/Paper10/-/Desk_Rejection_Reversion',
+                                    signatures=[f'{venue_id}/Editors_In_Chief'],
+                                    note=Note(content={
+                                        'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of the desk-rejected submission.' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_reversion_note['id'])
+
+        note = openreview_client.get_note(note_id_10)
+        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
+        review_invitation = openreview_client.get_invitation('TMLR/Paper10/-/Review')
+        assert review_invitation.expdate is None
+        assert review_invitation.duedate == review_duedate
+
+        assert joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews') == 5
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
 
         note = openreview_client.get_note(note_id_10)
         journal.invitation_builder.expire_paper_invitations(note)
