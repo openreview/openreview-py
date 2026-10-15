@@ -139,6 +139,8 @@ class GroupBuilder(object):
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
+            if self.journal.get_tracks():
+                content = content.replace("var ACTION_EDITORS_TRACK_ID = '';", "var ACTION_EDITORS_TRACK_ID = '" + self.journal.get_ae_track_id() + "';")
             if self.journal.get_reviewer_roles():
                 content = content.replace("var REVIEWERS_ROLE_ID = '';", "var REVIEWERS_ROLE_ID = '" + self.journal.get_reviewer_role_id() + "';")
 
