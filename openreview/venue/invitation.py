@@ -146,7 +146,7 @@ class InvitationBuilder(object):
         submission_license = self.venue.submission_license
         commitments_venue = submission_stage.commitments_venue
 
-        content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
+        content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id(), include_field_readers=True)
 
         if submission_stage.unified_authors:
             edit_authors_ref = '${2/note/content/authors/value/*/username}'
@@ -2446,17 +2446,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             'venueid': {
                 'value': self.venue.get_withdrawn_submission_venue_id()
-            },
-            '_bibtex': {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'maxLength': 200000,
-                        'input': 'textarea',
-                        'optional': True,
-                        'deletable': True
-                    }
-                }
             }
         }
         if not submission_stage.unified_authors:
@@ -2755,17 +2744,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             'venueid': {
                 'value': self.venue.get_desk_rejected_submission_venue_id()
-            },
-            '_bibtex': {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'maxLength': 200000,
-                        'input': 'textarea',
-                        'optional': True,
-                        'deletable': True
-                    }
-                }
             }
         }
         if not submission_stage.unified_authors:
@@ -4003,7 +3981,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         if self.venue.is_template_related_workflow():
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
-            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id)
+            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id, readers_only=True)
             edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
 
         return invitation
@@ -5288,6 +5266,86 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'group': {
                         'id': venue_id,
                         "web": "${2/content/web/value}"
+                    }
+                }
+            )
+        )
+
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            signatures=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Homepage_Tabs',
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitees=[venue_id],
+                edit={
+                    'content': {
+                        'show_active_submissions': {
+                            'order': 1,
+                            'description': 'Select whether to show active submissions on the homepage',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'show_withdrawn_submissions': {
+                            'order': 2,
+                            'description': 'Select whether to show withdrawn submissions on the homepage',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'show_desk_rejected_submissions': {
+                            'order': 3,
+                            'description': 'Select whether to show desk rejected submissions on the homepage',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'show_recent_activity_tab': {
+                            'order': 4,
+                            'description': 'Select whether to show the recent activity tab on the homepage',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'
+                                }
+                            }
+                        }
+                    },
+                    'signatures' : {
+                        'param': {
+                            'items': [
+                                { 'value': venue_id, 'optional': True }
+                            ]
+                        }
+                    },
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'group': {
+                        'id': venue_id,
+                        'content': {
+                            'show_active_submissions': { 'value': '${4/content/show_active_submissions/value}'},
+                            'show_withdrawn_submissions': { 'value': '${4/content/show_withdrawn_submissions/value}'},
+                            'show_desk_rejected_submissions': { 'value': '${4/content/show_desk_rejected_submissions/value}'},
+                            'show_recent_activity_tab': { 'value': '${4/content/show_recent_activity_tab/value}'}
+                        }
                     }
                 }
             )

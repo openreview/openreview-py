@@ -22,7 +22,7 @@ if (decisionHeadingMap) {
   }
 }
 
-if (domain.content.public_submissions?.value && !decisionHeadingMap) {
+if (domain.content.show_active_submissions?.value && !decisionHeadingMap) {
   tabs.push({
     name: 'Active Submissions',
     query: {
@@ -34,7 +34,7 @@ if (domain.content.public_submissions?.value && !decisionHeadingMap) {
   })
 }
 
-if (domain.content.public_withdrawn_submissions?.value) {
+if (domain.content.show_withdrawn_submissions?.value) {
   tabs.push({
     name: 'Withdrawn Submissions',
     query: {
@@ -46,7 +46,7 @@ if (domain.content.public_withdrawn_submissions?.value) {
   })
 }
 
-if (domain.content.public_desk_rejected_submissions?.value) {
+if (domain.content.show_desk_rejected_submissions?.value) {
   tabs.push({
     name: 'Desk Rejected Submissions',
     query: {
@@ -58,10 +58,12 @@ if (domain.content.public_desk_rejected_submissions?.value) {
   })
 }
 
-tabs.push({
-  name: 'Recent Activity',
-  type: 'activity'
-})
+if (domain.content.show_recent_activity_tab?.value) {
+  tabs.push({
+    name: 'Recent Activity',
+    type: 'activity'
+  })
+}
 
 return {
   component: 'VenueHomepage',

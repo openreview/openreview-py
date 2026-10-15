@@ -589,6 +589,27 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert title_tag
         assert title_tag.text == venue['request_form_note'].content['title']
 
+        venue_group = openreview_client.get_group(venue['venue_id'])
+        assert 'withdrawn_submission_reveal_authors' not in venue_group.content
+
+        venue_group_id = venue['venue_id']
+        # add keys to venue group
+        openreview_client.post_group_edit(
+            invitation=f'{venue_group_id}/-/Edit',
+            signatures=[venue_group_id],
+            group=openreview.api.Group(
+                id=venue_group_id,
+                content={
+                    'withdrawn_submission_reveal_authors': { 'value': False },
+                    'desk_rejected_submission_reveal_authors': { 'value': False }
+                }
+            )
+        )
+
+        venue_group = openreview_client.get_group(venue['venue_id'])
+        assert 'withdrawn_submission_reveal_authors' in venue_group.content and venue_group.content['withdrawn_submission_reveal_authors']['value'] == False
+        assert 'desk_rejected_submission_reveal_authors' in venue_group.content and venue_group.content['desk_rejected_submission_reveal_authors']['value'] == False
+
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
@@ -611,6 +632,8 @@ Please note that with the exception of urgent issues, requests made on weekends 
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
                 'submission_description': 'This is a submission description',
+                'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
+                'desk_rejected_submissions_author_anonymity':'Yes, author identities of desk rejected submissions should be revealed.'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -638,6 +661,11 @@ Please note that with the exception of urgent issues, requests made on weekends 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
         assert 'This is a submission description' == invitation.description
 
+        # check keys have not been removed from the venue group and they were updated correctly
+        venue_group = openreview_client.get_group(venue['venue_id'])
+        assert 'withdrawn_submission_reveal_authors' in venue_group.content and venue_group.content['withdrawn_submission_reveal_authors']['value'] == True
+        assert 'desk_rejected_submission_reveal_authors' in venue_group.content and venue_group.content['desk_rejected_submission_reveal_authors']['value'] == True
+
         # hide pdf
         post_submission_note=test_client.post_note(openreview.Note(
             content= {
@@ -660,6 +688,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         replies = client.get_notes(replyto=request_form_note_id)
         assert replies[0].content['title'] == 'Post Submission Configuration Updated'
 
+        ## revert withdrawn and desk-rejected reveal authors to keep in line with the original venue settings
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
@@ -678,6 +707,8 @@ Please note that with the exception of urgent issues, requests made on weekends 
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
                 'submission_description': '',
+                'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
+                'desk_rejected_submissions_author_anonymity':'No, author identities of desk rejected submissions should not be revealed.'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -2395,9 +2426,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'input': 'radio'
                             }
                         },
-                        'readers': {
-                            "delete": True
-                        }
+                        'readers': { 'const': { 'delete': True } }
                     }
             },
             allow_de_anonymization=False)
@@ -2407,7 +2436,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=2)
         
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
-        assert 'readers' not in invitation.edit['note']['content']['final_review_rating']
+        assert 'readers' in invitation.edit['note']['content']['final_review_rating'] and invitation.edit['note']['content']['final_review_rating']['readers'] == { 'const': { 'delete': True } }
         
         anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
         anon_group_id = anon_groups[0].id
@@ -4067,6 +4096,7 @@ Best,
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/-/Withdrawn_Submission')
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note

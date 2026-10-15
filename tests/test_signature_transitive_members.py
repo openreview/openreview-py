@@ -96,7 +96,7 @@ class TestSignatureTransitiveMembers():
 
         # The chairs are not writers of the paper's Reviewers group, since they are not allowed to see the identities
         reviewers_group = openreview_client.get_group('TestIdentityVenue.cc/Submission1/Reviewers')
-        assert reviewers_group.readers == ['TestIdentityVenue.cc', 'TestIdentityVenue.cc/Submission1/Area_Chairs', 'TestIdentityVenue.cc/Submission1/Reviewers']
+        assert reviewers_group.readers == ['TestIdentityVenue.cc', 'TestIdentityVenue.cc/Program_Chairs', 'TestIdentityVenue.cc/Submission1/Area_Chairs', 'TestIdentityVenue.cc/Submission1/Reviewers']
         assert reviewers_group.writers == ['TestIdentityVenue.cc']
 
         anon_group = openreview_client.get_groups(prefix='TestIdentityVenue.cc/Submission1/Reviewer_')[0]

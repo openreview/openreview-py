@@ -1,15 +1,22 @@
 async function process(client, edge, invitation) {
   client.throwErrors = false
 
-  const { groups } = await client.getGroups({ id: edge.domain })
+  const reviewersId = invitation.content.reviewers_id?.value
+  const [{ groups }, { groups: matchGroups }] = await Promise.all([
+    client.getGroups({ id: edge.domain }),
+    reviewersId ? client.getGroups({ id: reviewersId }) : Promise.resolve({ groups: [] })
+  ])
   const domain = groups[0]
+  const matchGroup = matchGroups?.[0]
   const venueId = domain.id
   const submissionName = domain.content.submission_name?.value
   const reviewName = invitation.content.review_name?.value
   const reviewersAnonName = invitation.content.reviewers_anon_name?.value
   const committeeName = invitation.content.reviewers_name?.value
   const committeeRole = invitation.content.committee_role?.value
-  const quota = domain.content?.[`submission_assignment_max_${committeeRole}`]?.value
+  // each committee group sets its own quota, so the key there is not suffixed with the role,
+  // otherwise fall back to the venue-wide quota of this role
+  const quota = matchGroup?.content?.submission_assignment_max_reviewers?.value ?? domain.content?.[`submission_assignment_max_${committeeRole}`]?.value
   const inviteAssignmentId = domain.content?.[`${committeeRole}_invite_assignment_id`]?.value
   const customMaxPapersId = domain.content?.[`${committeeRole}_custom_max_papers_id`]?.value
 
