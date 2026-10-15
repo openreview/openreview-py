@@ -156,6 +156,17 @@ class TestTools():
             invitation = 'openreview.net/-/Edit',
             signatures = ['~Super_User1'],
             group = openreview.api.Group(
+                id = 'AnonTest/Submission1/Secondary_Area_Chairs',
+                members = [],
+                signatures = ['~Super_User1'],
+                signatories = ['AnonTest/Submission1/Secondary_Area_Chairs'],
+                readers = ['everyone'],
+                writers = ['AnonTest/Submission1/Secondary_Area_Chairs']
+            ))
+        openreview_client.post_group_edit(
+            invitation = 'openreview.net/-/Edit',
+            signatures = ['~Super_User1'],
+            group = openreview.api.Group(
                 id = group_id,
                 members = ['AnonTest/Submission1/Secondary_Area_Chairs'],
                 signatures = ['~Super_User1'],
