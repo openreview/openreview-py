@@ -30,3 +30,4 @@ def process(client, edit, invitation):
 
     print('Enable Author deanonymize')
     journal.invitation_builder.set_note_authors_deanonymization_invitation(submission)
+    journal.invitation_builder.set_note_eic_author_deanonymization_invitation(submission)

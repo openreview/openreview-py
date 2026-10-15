@@ -139,6 +139,12 @@ class Journal(object):
     def get_desk_rejection_id(self, number=None):
         return self.__get_invitation_id(name='Desk_Rejection', number=number)
 
+    def get_desk_rejection_expiration_id(self):
+        return self.__get_invitation_id(name='Desk_Rejection_Expiration')
+
+    def get_desk_rejection_reversion_id(self, number=None):
+        return self.__get_invitation_id(name='Desk_Rejection_Reversion', number=number)
+
     def get_desk_rejection_approval_id(self, number=None):
         return self.__get_invitation_id(name='Desk_Rejection_Approval', number=number)
 
@@ -190,6 +196,9 @@ class Journal(object):
     def get_authors_deanonymization_id(self, number=None):
         return self.__get_invitation_id(name='Authors_De-Anonymization', number=number)
 
+    def get_eic_author_deanonymization_id(self, number=None):
+        return self.__get_invitation_id(name='Authors_De-Anonymization_By_EICs', number=number)
+
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
 
@@ -207,6 +216,12 @@ class Journal(object):
 
     def get_ae_resubmission_score_id(self):
         return self.__get_invitation_id(name='Resubmission_Score', prefix=self.get_action_editors_id())
+
+    def get_ae_track_id(self):
+        return self.__get_invitation_id(name='Track', prefix=self.get_action_editors_id())
+
+    def get_ae_track_score_id(self):
+        return self.__get_invitation_id(name='Track_Score', prefix=self.get_action_editors_id())
 
     def get_ae_assignment_configuration_id(self):
         return self.__get_invitation_id(name='Assignment_Configuration', prefix=self.get_action_editors_id())
@@ -459,6 +474,9 @@ class Journal(object):
         :param assignment_delay: Number of minutes to delay before assignment process functions run.
         :type assignment_delay: int, optional
         """
+        tracks = self.get_tracks()
+        if not isinstance(tracks, list) or not all(isinstance(track, str) and track.strip() for track in tracks) or len(set(tracks)) != len(tracks):
+            raise openreview.OpenReviewException(f'Invalid tracks setting: {tracks}. It must be a list of unique track names, the first one is the default track.')
         review_release_options = ['all_reviews_posted', 'decision_posted']
         if self.get_review_release() not in review_release_options:
             raise openreview.OpenReviewException(f'Invalid review_release setting: {self.get_review_release()}. Valid values are: {", ".join(review_release_options)}')
@@ -701,8 +719,21 @@ class Journal(object):
         if not self.should_skip_official_recommendation():
             self.invitation_builder.set_note_official_recommendation_enabling_invitation(note)
 
+    def get_submission_visibility(self):
+        submission_visibility = self.settings.get('submission_visibility')
+        if submission_visibility is None:
+            return 'public' if self.settings.get('submission_public', True) else 'all_action_editors'
+        if submission_visibility not in ['public', 'all_action_editors', 'assigned_action_editor']:
+            raise openreview.OpenReviewException(f'Invalid submission_visibility setting: {submission_visibility}. Valid values are public, all_action_editors and assigned_action_editor.')
+        return submission_visibility
+
     def is_submission_public(self):
-        return self.settings.get('submission_public', True)
+        return self.get_submission_visibility() == 'public'
+
+    def get_action_editors_reader_id(self, number):
+        if self.get_submission_visibility() == 'assigned_action_editor':
+            return self.get_action_editors_id(number=number)
+        return self.get_action_editors_id()
 
     def get_issn(self):
         return self.settings.get('issn', None)
@@ -824,6 +855,9 @@ class Journal(object):
     def get_ae_max_papers(self):
         return self.settings.get('action_editors_max_papers', 12)
 
+    def get_tracks(self):
+        return self.settings.get('tracks', [])
+
     def get_submission_additional_fields(self):
         return self.settings.get('submission_additional_fields', {})
 
@@ -858,22 +892,22 @@ class Journal(object):
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.venue_id, self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.venue_id, self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_review_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_decision_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_authors_readers(self, number):
         if self.is_submission_public() or self.release_submission_after_acceptance():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]
+        return [self.get_editors_in_chief_id(), self.get_action_editors_reader_id(number), self.get_authors_id(number)]
 
     def get_official_comment_readers(self, number):
         readers = []
@@ -882,7 +916,7 @@ class Journal(object):
 
         readers.append(self.get_editors_in_chief_id())
 
-        if not self.is_submission_public():
+        if self.get_submission_visibility() == 'all_action_editors':
             readers.append(self.get_action_editors_id())
 
         return readers + [self.get_action_editors_id(number),
@@ -1554,6 +1588,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 self.client.delete_edges(invitation=self.get_ae_conflict_id(), head=submission.id, soft_delete=True)
                 self.client.delete_edges(invitation=self.get_ae_aggregate_score_id(), head=submission.id, soft_delete=True)
                 self.client.delete_edges(invitation=self.get_ae_resubmission_score_id(), head=submission.id, soft_delete=True)
+                if self.get_tracks():
+                    self.client.delete_edges(invitation=self.get_ae_track_score_id(), head=submission.id, soft_delete=True)
 
                 submission_reviewer_assignments = reviewer_assignments.get(submission.id, [])
                 for reviewer_assignment in submission_reviewer_assignments:
