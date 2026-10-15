@@ -630,6 +630,9 @@ class TestCVPRConferenceWithTemplates():
                     },
                     'llm_token_limit': {
                         'value': 1000000
+                    },
+                    'llm_show_usage': {
+                        'value': False
                     }
                 },
                 edit={
@@ -768,6 +771,7 @@ class TestCVPRConferenceWithTemplates():
         assert 'llm_api_key' not in llm_super_invitation.content
         assert llm_super_invitation.content['llm_base_url']['value'] == 'https://litellm.openreview.net'
         assert llm_super_invitation.content['llm_token_limit']['value'] == 1000000
+        assert llm_super_invitation.content['llm_show_usage']['value'] == False
         # the reviewers do not get the forum replies
         assert 'llm_reply_invitations' not in llm_super_invitation.content
 
@@ -829,7 +833,8 @@ class TestCVPRConferenceWithTemplates():
                 'llm_base_url': { 'value': 'https://litellm.openreview.net' },
                 'llm_model': { 'value': 'claude-sonnet-4-6' },
                 'llm_prompt': { 'value': default_prompt },
-                'llm_token_limit': { 'value': 1000000 }
+                'llm_token_limit': { 'value': 1000000 },
+                'llm_show_usage': { 'value': False }
             }
         )
 
@@ -858,7 +863,8 @@ class TestCVPRConferenceWithTemplates():
                     'llm_base_url': { 'value': 'https://litellm.openreview.net' },
                     'llm_model': { 'value': 'gpt-4o' },
                     'llm_prompt': { 'value': 'Another prompt.' },
-                    'llm_token_limit': { 'value': 1000000 }
+                    'llm_token_limit': { 'value': 1000000 },
+                    'llm_show_usage': { 'value': False }
                 }
             )
 
@@ -933,6 +939,9 @@ class TestCVPRConferenceWithTemplates():
                     },
                     'llm_token_limit': {
                         'value': 1000000
+                    },
+                    'llm_show_usage': {
+                        'value': False
                     },
                     # the forum replies of these invitations are sent to the LLM too
                     'llm_reply_invitations': {
@@ -1114,7 +1123,8 @@ class TestCVPRConferenceWithTemplates():
                 'llm_base_url': { 'value': 'https://litellm.openreview.net' },
                 'llm_model': { 'value': 'claude-sonnet-4-6' },
                 'llm_prompt': { 'value': ac_default_prompt },
-                'llm_token_limit': { 'value': 1000000 }
+                'llm_token_limit': { 'value': 1000000 },
+                'llm_show_usage': { 'value': False }
             }
         )
 
@@ -1219,7 +1229,7 @@ class TestCVPRConferenceWithTemplates():
 
         pc_client = openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
 
-        def save_settings(committee_name, base_url, token_limit):
+        def save_settings(committee_name, base_url, token_limit, show_usage=False):
             settings = openreview_client.get_invitation(f'thecvf.com/CVPR/2027/Conference/{committee_name}/-/LLM_Interaction').content
             pc_client.post_invitation_edit(
                 invitations=f'thecvf.com/CVPR/2027/Conference/{committee_name}/-/LLM_Interaction/Settings',
@@ -1228,7 +1238,8 @@ class TestCVPRConferenceWithTemplates():
                     'llm_base_url': { 'value': base_url },
                     'llm_model': { 'value': settings['llm_model']['value'] },
                     'llm_prompt': { 'value': settings['llm_prompt']['value'] },
-                    'llm_token_limit': { 'value': token_limit }
+                    'llm_token_limit': { 'value': token_limit },
+                    'llm_show_usage': { 'value': show_usage }
                 }
             )
 
@@ -1315,6 +1326,23 @@ class TestCVPRConferenceWithTemplates():
         _, other_anon_group_id, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', 'What are the main contributions of this paper?')
         answer = get_answer(other_anon_group_id, message_edit)
         assert answer.content['message']['value'] == 'Answer from the LLM mock to: What are the main contributions of this paper?'
+
+        # the program chairs show the usage to the reviewers, it is added at the end of the answers
+        save_settings('Reviewers', llm_mock['url'], 480, show_usage=True)
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', 'And the limitations?')
+        answer = get_answer(other_anon_group_id, message_edit)
+        assert answer.content['message']['value'] == 'Answer from the LLM mock to: And the limitations?\n\n---\n\n_You have used 50% of the AI assistant usage limit for this submission (240 of 480 tokens)._'
+
+        # the usage is not part of the chat history sent to the LLM
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', 'And the experiments?')
+        answer = get_answer(other_anon_group_id, message_edit)
+        assert answer.content['message']['value'].endswith('_You have used 75% of the AI assistant usage limit for this submission (360 of 480 tokens)._')
+        assert [message['content'] for message in llm_mock['requests'][-1]['body']['messages'][2:]] == [
+            'Answer from the LLM mock to: What are the main contributions of this paper?',
+            'And the limitations?',
+            'Answer from the LLM mock to: And the limitations?',
+            'And the experiments?'
+        ]
         save_settings('Reviewers', llm_mock['url'], 1000000)
 
         # the area chair gets the reviews of the forum too

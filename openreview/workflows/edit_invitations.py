@@ -2164,6 +2164,21 @@ class EditInvitationsBuilder(object):
                                 'default': 1000000
                             }
                         }
+                    },
+                    'llm_show_usage': {
+                        'order': 6,
+                        'description': 'Should the committee members see how much of the token limit they have used? The usage is added at the end of each answer in their chat.',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [
+                                    { 'value': True, 'description': 'Yes, show the usage to the committee members.' },
+                                    { 'value': False, 'description': 'No, the usage is visible to the venue only.' }
+                                ],
+                                'input': 'radio',
+                                'default': False
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -2185,6 +2200,9 @@ class EditInvitationsBuilder(object):
                         },
                         'llm_token_limit': {
                             'value': '${4/content/llm_token_limit/value}'
+                        },
+                        'llm_show_usage': {
+                            'value': '${4/content/llm_show_usage/value}'
                         }
                     }
                 }

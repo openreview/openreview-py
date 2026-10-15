@@ -15,7 +15,8 @@ def process(client, edit, invitation):
 
     The edit of each answer stores the tokens used and the cost in USD in its content, readable by the venue only;
     the usage details reported by the gateway are printed in the process logs. Once the answers in a chat, one committee member on one submission, add up to llm_token_limit
-    tokens, the assistant stops calling the LLM in that chat.
+    tokens, the assistant stops calling the LLM in that chat. When llm_show_usage is set, each answer ends with the
+    share of the limit used in the chat, so the committee member sees when they are about to reach it.
 
     This is the `process_script` of the super invitation. The process of the child invitations execs it with
     the `openreview`, `datetime`, `base64` and `requests` modules.
@@ -30,6 +31,9 @@ def process(client, edit, invitation):
     ERROR_MESSAGE = 'Sorry, I could not answer this message. Please try again later.'
     LIMIT_MESSAGE = 'You have reached the usage limit of the AI assistant for this submission. Please contact the program chairs if you need to continue.'
     UNAVAILABLE_MESSAGE = 'The submission is not available to you yet, so the AI assistant cannot answer questions about it.'
+    # added at the end of the answers when llm_show_usage is set, and removed from the chat history sent to the LLM
+    USAGE_PREFIX = '\n\n---\n\n_You have used '
+    USAGE_FOOTER = USAGE_PREFIX + '{percent} of the AI assistant usage limit for this submission ({used:,} of {limit:,} tokens)._'
 
     # never sent to the LLM: the author identities, the files, the author consent checkboxes and the venue bookkeeping fields
     EXCLUDED_FIELDS = ['authors', 'authorids', 'pdf', 'supplementary_material', 'email_sharing', 'data_release', 'venue', 'venueid']
@@ -94,9 +98,11 @@ def process(client, edit, invitation):
         model = super_invitation.get_content_value('llm_model', 'claude-sonnet-4-6')
         prompt = super_invitation.get_content_value('llm_prompt')
         token_limit = super_invitation.get_content_value('llm_token_limit')
+        show_usage = super_invitation.get_content_value('llm_show_usage', False)
         if not api_key or not base_url or not prompt:
             raise openreview.OpenReviewException('The LLM key, URL or prompt is missing, set them with the LLM_Interaction/Settings invitation')
 
+        used_tokens = 0
         if token_limit is not None:
             used_tokens = get_used_tokens()
             print(f'tokens used in the chat: {used_tokens} of {token_limit}')
@@ -186,7 +192,8 @@ def process(client, edit, invitation):
             if note.signatures[0] == assistant_id:
                 # skip the replies that were never completed
                 if text not in (THINKING_MESSAGE, ERROR_MESSAGE, LIMIT_MESSAGE, UNAVAILABLE_MESSAGE):
-                    messages.append({ 'role': 'assistant', 'content': text })
+                    # without the usage line, the last match since the answer can have its own horizontal rules
+                    messages.append({ 'role': 'assistant', 'content': text.rsplit(USAGE_PREFIX, 1)[0] })
             else:
                 messages.append({ 'role': 'user', 'content': text })
 
@@ -228,14 +235,23 @@ def process(client, edit, invitation):
 
         choice = result['choices'][0]
         if choice.get('finish_reason') == 'content_filter':
-            return 'Sorry, I cannot help with this request.', usage, cost
+            answer = 'Sorry, I cannot help with this request.'
+        else:
+            content = choice['message'].get('content') or ''
+            if isinstance(content, list):
+                content = '\n\n'.join(part.get('text', '') for part in content if part.get('type') == 'text')
+            answer = content.strip()
+            if choice.get('finish_reason') == 'length':
+                answer += '\n\n_The answer was cut off because it reached the maximum length._'
 
-        content = choice['message'].get('content') or ''
-        if isinstance(content, list):
-            content = '\n\n'.join(part.get('text', '') for part in content if part.get('type') == 'text')
-        answer = content.strip()
-        if choice.get('finish_reason') == 'length':
-            answer += '\n\n_The answer was cut off because it reached the maximum length._'
+        if show_usage and token_limit:
+            used_tokens += count_tokens(usage)
+            percent = used_tokens * 100 / token_limit
+            answer += USAGE_FOOTER.format(
+                percent=f'{percent:.0f}%' if percent >= 1 else 'less than 1%',
+                used=used_tokens,
+                limit=token_limit
+            )
         return answer, usage, cost
 
     reply_edit = client.post_note_edit(
