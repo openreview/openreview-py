@@ -478,10 +478,9 @@ Please note that responding to this email will direct your reply to editor@jmlr.
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         eic_client = OpenReviewClient(username='rajarshi@mail.com', password=helpers.strong_password)
         xukun_client = OpenReviewClient(username='xukun@jmlrone.com', password=helpers.strong_password)
-        melisa_client = OpenReviewClient(username='melisa@jmlr.com', password=helpers.strong_password)
         editor_in_chief_group_id = 'JMLR/Editors_In_Chief'
 
-        previous_submission = openreview_client.get_notes(invitation='JMLR/-/Submission', number=1)[0]
+        previous_submission =openreview_client.get_notes(invitation='JMLR/-/Submission', number=1)[0]
         previous_forum_notes = openreview_client.get_notes(forum=previous_submission.id)
         previous_reviews = [n for n in previous_forum_notes if n.invitations[0] == 'JMLR/Paper1/-/Review']
         previous_decision = [n for n in previous_forum_notes if n.invitations[0] == 'JMLR/Paper1/-/Decision'][0]
@@ -507,6 +506,55 @@ Please note that responding to this email will direct your reply to editor@jmlr.
             ))
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
         note_id_2 = submission_note_2['note']['id']
+
+        ## The link must point to a JMLR submission that shares at least one author with the resubmission
+        invalid_link_error = 'The previous JMLR submission URL must link to a JMLR submission that shares at least one author with this submission'
+
+        def resubmission_content(previous_submission_id, author_name='SomeFirstName User', author_id='~SomeFirstName_User1'):
+            return {
+                'title': { 'value': 'Paper title resubmitted' },
+                'abstract': { 'value': 'Paper abstract' },
+                'authors': { 'value': [author_name] },
+                'authorids': { 'value': [author_id] },
+                'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                'previous_JMLR_submission_url': { 'value': f'https://openreview.net/forum?id={previous_submission_id}' },
+                'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                'human_subjects_reporting': { 'value': 'Not applicable'}
+            }
+
+        request_form = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'JMLR' })[0]
+        for invalid_previous_submission_id in [
+            previous_reviews[0].id, ## a reply, not a submission
+            request_form.id, ## a note from another venue
+            'nonexistentid' ## a note that does not exist
+        ]:
+            with pytest.raises(openreview.OpenReviewException, match=invalid_link_error):
+                test_client.post_note_edit(invitation='JMLR/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=Note(content=resubmission_content(invalid_previous_submission_id)))
+
+        ## A submission that belongs to other authors
+        helpers.create_user('peter@jmlrthree.com', 'Peter', 'JMLR')
+        peter_client = OpenReviewClient(username='peter@jmlrthree.com', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match=invalid_link_error):
+            peter_client.post_note_edit(invitation='JMLR/-/Submission',
+                signatures=['~Peter_JMLR1'],
+                note=Note(content=resubmission_content(previous_submission.id, author_name='Peter JMLR', author_id='~Peter_JMLR1')))
+
+        ## The link is also validated in the revisions, the authors are taken from the submission
+        revision_content = resubmission_content(note_id_2)
+        del revision_content['authors']
+        del revision_content['authorids']
+        with pytest.raises(openreview.OpenReviewException, match=invalid_link_error):
+            test_client.post_note_edit(invitation='JMLR/Paper2/-/Revision',
+                signatures=['JMLR/Paper2/Authors'],
+                note=Note(id=note_id_2, content=revision_content))
+
+        revision_content['previous_JMLR_submission_url'] = { 'value': f'https://openreview.net/forum?id={previous_submission.id}' }
+        revision_edit = test_client.post_note_edit(invitation='JMLR/Paper2/-/Revision',
+            signatures=['JMLR/Paper2/Authors'],
+            note=Note(id=note_id_2, content=revision_content))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
 
         ## The AE assigned to the resubmission is not the AE of the previous submission
         with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
@@ -536,37 +584,13 @@ Please note that responding to this email will direct your reply to editor@jmlr.
             with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
                 xukun_client.get_note(rating.id)
 
-        ## Link a submission that belongs to other authors
-        helpers.create_user('peter@jmlrthree.com', 'Peter', 'JMLR')
-        peter_client = OpenReviewClient(username='peter@jmlrthree.com', password=helpers.strong_password)
-        submission_note_3 = peter_client.post_note_edit(invitation='JMLR/-/Submission',
-            signatures=['~Peter_JMLR1'],
-            note=Note(
-                content={
-                    'title': { 'value': 'Paper title from other authors' },
-                    'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Peter JMLR']},
-                    'authorids': { 'value': ['~Peter_JMLR1']},
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'previous_JMLR_submission_url': { 'value': f'https://openreview.net/forum?id={previous_submission.id}' },
-                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
-                }
-            ))
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note_3['id'])
+        ## Unassign the AE of the resubmission, the AE is removed from the paper AE group
+        current_assignment = eic_client.get_edges(invitation='JMLR/Action_Editors/-/Assignment', head=note_id_2)[0]
+        current_assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        eic_client.post_edge(current_assignment)
+        helpers.await_queue_edit(openreview_client, edit_id=current_assignment.id, count=2)
 
-        paper_assignment_edge = eic_client.post_edge(openreview.Edge(invitation='JMLR/Action_Editors/-/Assignment',
-            readers=[venue_id, editor_in_chief_group_id, '~Melisa_JMLR1'],
-            writers=[venue_id, editor_in_chief_group_id],
-            signatures=[editor_in_chief_group_id],
-            head=submission_note_3['note']['id'],
-            tail='~Melisa_JMLR1',
-            weight=1
-        ))
-        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
-
-        with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
-            melisa_client.get_note(previous_submission.id)
+        assert openreview_client.get_group('JMLR/Paper2/Action_Editors').members == []
         assert openreview_client.get_group('JMLR/Paper1/Resubmission_Readers').members == ['JMLR/Paper2/Action_Editors']
 
     def test_submission_visibility_setting(self):
