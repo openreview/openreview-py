@@ -2993,7 +2993,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         openreview_client.add_members_to_group(f'ICML.cc/2025/Conference/Submission1/Reviewers', '~Reviewer_ICMLThree1')
 
 #         reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
-#         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2025/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
+#         anon_groups = reviewer_client_2.get_groups(prefix='ICML.cc/2025/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
 #         anon_group_id = anon_groups[0].id
 #         review_edit = reviewer_client_2.post_note_edit(
 #             invitation='ICML.cc/2025/Conference/Submission1/-/Official_Review',
