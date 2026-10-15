@@ -135,7 +135,7 @@ class JournalRequest():
                         'default': {
                             'submission_name': 'Submission',
                             'assignment_delay': 5,
-                            'submission_public': True,
+                            'submission_visibility': 'public',
                             'submission_license': 'CC BY-SA 4.0',
                             'author_anonymity': True,
                             'AE_anonymity': False,
@@ -152,6 +152,7 @@ class JournalRequest():
                             'number_of_reviewers': 3,
                             'reviewers_max_papers': 6,
                             'action_editors_max_papers': 12,
+                            'tracks': [],
                             'ae_max_active_submissions': 2,
                             'ae_recommendation_period': 1,
                             'under_review_approval_period': 1,
