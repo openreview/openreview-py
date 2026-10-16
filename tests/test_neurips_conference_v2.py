@@ -1650,7 +1650,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
         reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@mit.edu', password=helpers.strong_password)
-        anon_groups = reviewer_client.get_groups(prefix='NeurIPS.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_MIT1')
+        anon_groups = reviewer_client_2.get_groups(prefix='NeurIPS.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_MIT1')
         anon_group_id = anon_groups[0].id
         review_edit = reviewer_client_2.post_note_edit(
             invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review',
