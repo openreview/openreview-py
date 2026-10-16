@@ -103,7 +103,7 @@ class OpenReviewClient(object):
         self.note_edits_url = self.baseurl + '/notes/edits'
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.group_edits_url = self.baseurl + '/groups/edits'
-        self.profile_edits_url = self.baseurl + '/profiles/edits'
+        self.profile_assertions_url = self.baseurl + '/profiles/assertions'
         self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
         self.domains_restriction = self.baseurl + '/domains/restriction'
@@ -158,7 +158,7 @@ class OpenReviewClient(object):
         self.session.mount('http://', adapter)
         # requests picks the longest matching prefix, so only the edits endpoints
         # get the POST-retrying adapter
-        for edits_url in [self.note_edits_url, self.invitation_edits_url, self.group_edits_url, self.profile_edits_url]:
+        for edits_url in [self.note_edits_url, self.invitation_edits_url, self.group_edits_url, self.profile_assertions_url]:
             self.session.mount(edits_url, edits_adapter)
 
         if self.token:
@@ -1115,8 +1115,8 @@ class OpenReviewClient(object):
         Moderates a Profile
 
         The moderation endpoint changes the profile state and records the decision as a
-        ``Profile_State`` profile edit, so the state history can be read back through
-        the profile edits API.
+        ``Profile_State`` profile assertion, so the state history can be read back
+        through the profile assertions API.
 
         :param profile_id: Profile id to moderate
         :type profile_id: str
@@ -2062,27 +2062,28 @@ class OpenReviewClient(object):
 
         return edits
 
-    def get_profile_edits(self, profile_id = None, invitation = None, with_count = False, sort = None, trash = None, limit = None):
+    def get_profile_assertions(self, profile_id = None, invitation = None, with_count = False, sort = None, trash = None, limit = None):
         """
-        Gets a list of edits for a profile. Profile edits record assertions about a profile
-        (e.g. moderation verifications) and never modify the profile itself. The edits that
-        will be returned match all the criteria passed in the parameters.
+        Gets a list of assertions about a profile. Profile assertions record claims
+        about a profile (e.g. moderation verifications) and never modify the profile
+        itself. The assertions that will be returned match all the criteria passed in
+        the parameters.
 
-        :param profile_id: ID of the Profile whose edits to retrieve.
+        :param profile_id: ID of the Profile whose assertions to retrieve.
         :type profile_id: str, optional
-        :param invitation: Invitation ID to filter edits by.
+        :param invitation: Invitation ID to filter assertions by.
         :type invitation: str, optional
-        :param with_count: If True, also returns the total count of matching edits.
+        :param with_count: If True, also returns the total count of matching assertions.
         :type with_count: bool, optional
         :param sort: Field to sort results by (e.g., ``tcdate``, ``tmdate``, ``id``).
         :type sort: str, optional
-        :param trash: If True, includes soft-deleted edits in the results.
+        :param trash: If True, includes soft-deleted assertions in the results.
         :type trash: bool, optional
-        :param limit: Maximum number of edits to return.
+        :param limit: Maximum number of assertions to return.
         :type limit: int, optional
 
-        :return: List of Edit objects, or a tuple ``(list[Edit], int)`` when ``with_count`` is True.
-        :rtype: list[Edit] | tuple[list[Edit], int]
+        :return: List of Assertion objects, or a tuple ``(list[Assertion], int)`` when ``with_count`` is True.
+        :rtype: list[Assertion] | tuple[list[Assertion], int]
         """
         params = {}
         if profile_id:
@@ -2098,15 +2099,15 @@ class OpenReviewClient(object):
         if limit is not None:
             params['limit'] = limit
 
-        response = self.session.get(self.profile_edits_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.profile_assertions_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
-        edits = [Edit.from_json(n) for n in response.json()['edits']]
+        assertions = [Assertion.from_json(a) for a in response.json()['assertions']]
 
         if with_count and params.get('offset') is None:
-            return edits, response.json()['count']
+            return assertions, response.json()['count']
 
-        return edits
+        return assertions
 
     def post_tag(self, tag):
         """
@@ -3291,58 +3292,69 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def post_profile_edit(self, invitation, signatures=None, profile=None, readers=None, writers=None, nonreaders=None, content=None, await_process=False):
-        """Post a Profile edit.
+    def post_profile_assertion(self, invitation, signatures=None, profile=None, readers=None, writers=None, nonreaders=None, content=None, id=None, ddate=None, await_process=False):
+        """Post a Profile Assertion.
 
-        Posts an edit that records an assertion about a Profile (e.g. an identity or
+        Posts an assertion that records a claim about a Profile (e.g. an identity or
         affiliation verification made during moderation). Unlike note or group edits,
-        a profile edit is a record only: it is validated against the invitation's schema
+        an assertion is a record only: it is validated against the invitation's schema
         and stored, but it never modifies the profile's content. The subject profile
         must already exist and ``profile['id']`` must be its canonical tilde id. To
-        update or soft delete an existing edit, post an :class:`Edit` object with the
-        edit ``id`` (and optionally ``ddate``) through :meth:`post_edit`.
+        update an existing assertion pass its ``id``; updates replace the stored
+        record, so a soft delete sends ``ddate`` and a restore sends
+        ``ddate={'delete': True}`` together with the whole content.
 
-        :param invitation: Invitation ID that defines the schema and permissions for this edit.
+        :param invitation: Invitation ID that defines the schema and permissions for this assertion.
         :type invitation: str
-        :param signatures: List of group IDs signing this edit.
+        :param signatures: List of group IDs signing this assertion.
         :type signatures: list[str], optional
         :param profile: Dictionary with the subject profile ``id`` and the asserted ``content`` (e.g. ``{'id': '~Jane_Doe1', 'content': {...}}``).
         :type profile: dict, optional
-        :param readers: List of group IDs that can read this edit.
+        :param readers: List of group IDs that can read this assertion.
         :type readers: list[str], optional
-        :param writers: List of group IDs that can modify this edit.
+        :param writers: List of group IDs that can modify this assertion.
         :type writers: list[str], optional
-        :param nonreaders: List of group IDs excluded from reading this edit.
+        :param nonreaders: List of group IDs excluded from reading this assertion.
         :type nonreaders: list[str], optional
-        :param content: Additional content fields for the edit itself (not the Profile).
+        :param content: Additional content fields for the assertion itself (not the Profile).
         :type content: dict, optional
+        :param id: ID of an existing assertion to update.
+        :type id: str, optional
+        :param ddate: Deletion date in epoch milliseconds to soft delete, or ``{'delete': True}`` to restore.
+        :type ddate: int | dict, optional
         :param await_process: If True, blocks until the server-side process function completes; raises OpenReviewException on error.
         :type await_process: bool, optional
 
-        :return: Dictionary containing the posted edit, including the assigned edit ``id``.
+        :return: Dictionary containing the posted assertion, including its assigned ``id``.
         :rtype: dict
         """
-        edit_json = {
+        assertion_json = {
             'invitation': invitation,
             'profile': profile if profile is not None else {}
         }
 
         if signatures is not None:
-            edit_json['signatures'] = signatures
+            assertion_json['signatures'] = signatures
 
         if readers is not None:
-            edit_json['readers'] = readers
+            assertion_json['readers'] = readers
 
         if writers is not None:
-            edit_json['writers'] = writers
+            assertion_json['writers'] = writers
 
         if nonreaders is not None:
-            edit_json['nonreaders'] = nonreaders
+            assertion_json['nonreaders'] = nonreaders
 
         if content is not None:
-            edit_json['content'] = content
+            assertion_json['content'] = content
 
-        response = self.session.post(self.profile_edits_url, json = edit_json, headers = self.headers)
+        if id is not None:
+            assertion_json['id'] = id
+
+        if ddate is not None:
+            assertion_json['ddate'] = ddate
+
+        response = self.session.post(self.profile_assertions_url, json = assertion_json, headers = self.headers)
         response = self.__handle_response(response)
 
         if await_process:
@@ -3353,12 +3365,11 @@ class OpenReviewClient(object):
     def post_edit(self, edit):
         """Post an Edit object, routing it to the correct endpoint based on its contents.
 
-        Inspects the serialized edit for the presence of ``note``, ``group``,
-        ``profile``, or ``invitation`` keys and POSTs to the corresponding edits
-        endpoint (``/notes/edits``, ``/groups/edits``, ``/profiles/edits``, or
-        ``/invitations/edits``).
+        Inspects the serialized edit for the presence of ``note``, ``group``, or
+        ``invitation`` keys and POSTs to the corresponding edits endpoint
+        (``/notes/edits``, ``/groups/edits``, or ``/invitations/edits``).
 
-        :param edit: Edit object to post. Must contain exactly one of ``note``, ``group``, ``profile``, or ``invitation``.
+        :param edit: Edit object to post. Must contain exactly one of ``note``, ``group``, or ``invitation``.
         :type edit: Edit
 
         :return: Dictionary containing the posted edit, including the assigned edit ``id``.
@@ -3371,8 +3382,6 @@ class OpenReviewClient(object):
             response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
         elif 'group' in edit_json:
             response = self.session.post(self.group_edits_url, json = edit_json, headers = self.headers)
-        elif 'profile' in edit_json:
-            response = self.session.post(self.profile_edits_url, json = edit_json, headers = self.headers)
         elif 'invitation' in edit_json:
             response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
 
@@ -3910,8 +3919,6 @@ class Edit(object):
     :type note: dict, optional
     :param invitation: Template of the Invitation that will be created
     :type invitation: dict, optional
-    :param profile: Subject profile id and asserted content of a profile edit, as a dictionary
-    :type profile: dict, optional
     :param nonreaders: List of nonreaders in the Edit, each nonreader is a Group id
     :type nonreaders: list[str], optional
     :param cdate: Creation date
@@ -3933,7 +3940,6 @@ class Edit(object):
         content = None,
         note = None,
         group = None,
-        profile = None,
         invitation = None,
         nonreaders = None,
         cdate = None,
@@ -3956,7 +3962,6 @@ class Edit(object):
         self.content = content
         self.note = note
         self.group = group
-        self.profile = profile
         self.invitation = invitation
         self.tauthor = tauthor
 
@@ -3995,8 +4000,6 @@ class Edit(object):
             body['note'] = self.note.to_json()
         if (self.group):
             body['group'] = self.group.to_json()
-        if (self.profile):
-            body['profile'] = self.profile
         if isinstance(self.invitation, Invitation):
             body['invitation'] = self.invitation.to_json()
         if isinstance(self.invitation, str):
@@ -4031,15 +4034,140 @@ class Edit(object):
             content = e.get('content'),
             note = Note.from_json(e['note']) if 'note' in e else None,
             group = Group.from_json(e['group']) if 'group' in e else None,
-            profile = e.get('profile'),
             invitation = e.get('invitation'),
             tauthor = e.get('tauthor')
             )
 
         if isinstance(edit.invitation, dict):
             edit.invitation = Invitation.from_json(edit.invitation)
-        
+
         return edit
+
+class Assertion(object):
+    """
+    A Profile Assertion: a signed record of a claim about a profile (e.g. a moderation
+    verification). An assertion never modifies the profile itself.
+
+    :param id: Assertion id
+    :type id: str
+    :param invitation: ID of the invitation the assertion responds to
+    :type invitation: str, optional
+    :param readers: List of readers of the Assertion, each reader is a Group id
+    :type readers: list[str], optional
+    :param writers: List of writers of the Assertion, each writer is a Group id
+    :type writers: list[str], optional
+    :param signatures: List of signatures of the Assertion, each signature is a Group id
+    :type signatures: list[str], optional
+    :param content: Content of the assertion itself (e.g. the document it was read from)
+    :type content: dict, optional
+    :param profile: Subject profile id and the asserted content, as a dictionary
+    :type profile: dict, optional
+    :param nonreaders: List of nonreaders of the Assertion, each nonreader is a Group id
+    :type nonreaders: list[str], optional
+    :param cdate: Creation date
+    :type cdate: int, optional
+    :param ddate: Deletion date
+    :type ddate: int, optional
+    :param tcdate: True creation date
+    :type tcdate: int, optional
+    :param tmdate: Modification date
+    :type tmdate: int, optional
+    """
+    def __init__(self,
+        id = None,
+        domain = None,
+        invitation = None,
+        readers = None,
+        writers = None,
+        signatures = None,
+        content = None,
+        profile = None,
+        nonreaders = None,
+        cdate = None,
+        tcdate = None,
+        tmdate = None,
+        ddate = None,
+        tauthor = None):
+
+        self.id = id
+        self.domain = domain
+        self.invitation = invitation
+        self.cdate = cdate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.ddate = ddate
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.writers = writers
+        self.signatures = signatures
+        self.content = content
+        self.profile = profile
+        self.tauthor = tauthor
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Assertion(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
+
+    def to_json(self):
+        """
+        Converts Assertion instance to a dictionary. The instance variable names are the keys and their values the values of the dictionary.
+
+        :return: Dictionary containing all the parameters of an Assertion instance
+        :rtype: dict
+        """
+        body = {}
+
+        if (self.id):
+            body['id'] = self.id
+        if (self.invitation):
+            body['invitation'] = self.invitation
+        if (self.readers):
+            body['readers'] = self.readers
+        if (self.nonreaders):
+            body['nonreaders'] = self.nonreaders
+        if (self.writers):
+            body['writers'] = self.writers
+        if (self.signatures):
+            body['signatures'] = self.signatures
+        if (self.content):
+            body['content'] = self.content
+        if (self.profile):
+            body['profile'] = self.profile
+        if (self.ddate):
+            body['ddate'] = self.ddate
+
+        return body
+
+    @classmethod
+    def from_json(Assertion, a):
+        """
+        Creates an Assertion object from a dictionary that contains keys values equivalent to the name of the instance variables of the Assertion class
+
+        :param a: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Assertion class
+        :type a: dict
+
+        :return: Assertion whose instance variables contain the values from the dictionary
+        :rtype: Assertion
+        """
+        return Assertion(a.get('id'),
+            domain = a.get('domain'),
+            invitation = a.get('invitation'),
+            cdate = a.get('cdate'),
+            tcdate = a.get('tcdate'),
+            tmdate = a.get('tmdate'),
+            ddate = a.get('ddate'),
+            readers = a.get('readers'),
+            nonreaders = a.get('nonreaders'),
+            writers = a.get('writers'),
+            signatures = a.get('signatures'),
+            content = a.get('content'),
+            profile = a.get('profile'),
+            tauthor = a.get('tauthor')
+            )
 
 class Note(object):
     """
@@ -4224,6 +4352,7 @@ class Invitation(object):
         invitees = None,
         signatures = None,
         edit = None,
+        assertion = None,
         edge = None,
         tag = None,
         message = None,
@@ -4271,6 +4400,7 @@ class Invitation(object):
         self.minReplies = minReplies
         self.maxReplies = maxReplies
         self.edit = edit
+        self.assertion = assertion
         self.edge = edge
         self.tag = tag
         self.message = message
@@ -4405,7 +4535,9 @@ class Invitation(object):
             if self.type == 'Edge':
                 body['edge']=self.edit
             if self.type == 'Tag':
-                body['tag']=self.edit                
+                body['tag']=self.edit
+        if self.assertion is not None:
+            body['assertion']=self.assertion
         if self.edge:
             body['edge']=self.edge
         if self.tag:
@@ -4451,6 +4583,7 @@ class Invitation(object):
             signatures = i.get('signatures'),
             minReplies = i.get('minReplies'),
             edit = i.get('edit'),
+            assertion = i.get('assertion'),
             maxReplies = i.get('maxReplies'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),

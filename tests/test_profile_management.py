@@ -55,15 +55,15 @@ class TestProfileManagement():
 
         assert len(client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')) == 0
 
-    def test_profile_edit_moderation(self, helpers, support_client):
+    def test_profile_assertion_moderation(self, helpers, support_client):
 
-        ## Profile edits record moderation assertions about a profile without modifying it.
+        ## Profile assertions record moderation assertions about a profile without modifying it.
         gwen_client = helpers.create_user('gwen@profile.org', 'Gwen', 'Verified', alternates=[], institution='profile.org')
         profile_content_before = gwen_client.get_profile('~Gwen_Verified1').content
 
         ## 1. The user uploaded an identity document: support confirms the name and dob
         ## as read off the document, and records which kind of document it was.
-        identity_edit = support_client.post_profile_edit(
+        identity_assertion = support_client.post_profile_assertion(
             invitation='openreview.net/Support/-/Identity_Verification',
             signatures=['openreview.net/Support'],
             content={ 'source': { 'value': 'Passport' } },
@@ -75,11 +75,11 @@ class TestProfileManagement():
                 }
             }
         )
-        assert identity_edit['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
+        assert identity_assertion['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
 
         ## The document source is required: it says where the data was read from.
         with pytest.raises(openreview.OpenReviewException):
-            support_client.post_profile_edit(
+            support_client.post_profile_assertion(
                 invitation='openreview.net/Support/-/Identity_Verification',
                 signatures=['openreview.net/Support'],
                 profile={
@@ -91,23 +91,23 @@ class TestProfileManagement():
             )
 
         ## The record is visible to the profile owner.
-        edits = gwen_client.get_profile_edits(profile_id='~Gwen_Verified1')
-        assert len(edits) == 1
-        assert edits[0].invitation == 'openreview.net/Support/-/Identity_Verification'
-        assert edits[0].content['source']['value'] == 'Passport'
-        assert edits[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Gwen Verified'
-        assert edits[0].profile['content']['dob']['value'] == helpers.default_dob()
+        assertions = gwen_client.get_profile_assertions(profile_id='~Gwen_Verified1')
+        assert len(assertions) == 1
+        assert assertions[0].invitation == 'openreview.net/Support/-/Identity_Verification'
+        assert assertions[0].content['source']['value'] == 'Passport'
+        assert assertions[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Gwen Verified'
+        assert assertions[0].profile['content']['dob']['value'] == helpers.default_dob()
 
         ## Other users cannot see the identity verification record.
         amelia_client = helpers.get_user('amelia@profile.org')
-        edits = amelia_client.get_profile_edits(profile_id='~Gwen_Verified1')
-        assert len(edits) == 0
+        assertions = amelia_client.get_profile_assertions(profile_id='~Gwen_Verified1')
+        assert len(assertions) == 0
 
         ## 2. The user uploaded a document proving affiliation: support confirms the
         ## institution and position, plus the name because this enrollment letter
         ## happens to show it — institution documents may also carry identity data,
         ## so the identity fields are optional here. This record is public.
-        affiliation_edit = support_client.post_profile_edit(
+        affiliation_assertion = support_client.post_profile_assertion(
             invitation='openreview.net/Support/-/Affiliation_Verification',
             signatures=['openreview.net/Support'],
             content={ 'source': { 'value': 'Enrollment Letter' } },
@@ -131,17 +131,17 @@ class TestProfileManagement():
             }
         )
 
-        assert affiliation_edit['readers'] == ['everyone']
-        assert affiliation_edit['content']['source']['value'] == 'Enrollment Letter'
+        assert affiliation_assertion['readers'] == ['everyone']
+        assert affiliation_assertion['content']['source']['value'] == 'Enrollment Letter'
 
         ## Anyone can see the affiliation was verified.
-        edits = amelia_client.get_profile_edits(profile_id='~Gwen_Verified1')
-        assert len(edits) == 1
-        assert edits[0].invitation == 'openreview.net/Support/-/Affiliation_Verification'
+        assertions = amelia_client.get_profile_assertions(profile_id='~Gwen_Verified1')
+        assert len(assertions) == 1
+        assert assertions[0].invitation == 'openreview.net/Support/-/Affiliation_Verification'
 
         ## 3. The user uploaded a parental consent document: support confirms the parent
         ## relation. Not public: visible to the profile owner and the support team only.
-        parent_consent_edit = support_client.post_profile_edit(
+        parent_consent_assertion = support_client.post_profile_assertion(
             invitation='openreview.net/Support/-/Parent_Consent',
             signatures=['openreview.net/Support'],
             content={ 'comment': { 'value': 'Consent form signed by the parent on file.' } },
@@ -160,12 +160,12 @@ class TestProfileManagement():
                 }
             }
         )
-        assert parent_consent_edit['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
-        assert parent_consent_edit['content']['comment']['value'] == 'Consent form signed by the parent on file.'
+        assert parent_consent_assertion['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
+        assert parent_consent_assertion['content']['comment']['value'] == 'Consent form signed by the parent on file.'
 
         ## The relation type and the parent's name are mandatory in the consent record.
         with pytest.raises(openreview.OpenReviewException):
-            support_client.post_profile_edit(
+            support_client.post_profile_assertion(
                 invitation='openreview.net/Support/-/Parent_Consent',
                 signatures=['openreview.net/Support'],
                 content={ 'comment': { 'value': 'Missing the parent name.' } },
@@ -184,7 +184,7 @@ class TestProfileManagement():
                 }
             )
         with pytest.raises(openreview.OpenReviewException):
-            support_client.post_profile_edit(
+            support_client.post_profile_assertion(
                 invitation='openreview.net/Support/-/Parent_Consent',
                 signatures=['openreview.net/Support'],
                 content={ 'comment': { 'value': 'Missing the relation type.' } },
@@ -204,28 +204,28 @@ class TestProfileManagement():
             )
 
         ## The owner and support see all the records, other users only the public one.
-        edits = gwen_client.get_profile_edits(profile_id='~Gwen_Verified1')
-        assert len(edits) == 3
-        edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1')
-        assert len(edits) == 3
-        edits = amelia_client.get_profile_edits(profile_id='~Gwen_Verified1')
-        assert len(edits) == 1
+        assertions = gwen_client.get_profile_assertions(profile_id='~Gwen_Verified1')
+        assert len(assertions) == 3
+        assertions = support_client.get_profile_assertions(profile_id='~Gwen_Verified1')
+        assert len(assertions) == 3
+        assertions = amelia_client.get_profile_assertions(profile_id='~Gwen_Verified1')
+        assert len(assertions) == 1
 
         ## 4. Moderation changes the state of the profile: the moderation endpoint
-        ## changes the state and records every decision as a Profile_State edit.
-        ## The labels enum in the edit schema is the controlled
+        ## changes the state and records every decision as a Profile_State assertion.
+        ## The labels enum in the assertion schema is the controlled
         ## vocabulary of moderation reasons: support manages it by editing the
         ## invitation, and every record is validated against it. Entries with a
         ## description are offered by the rejection UI with the description as the
         ## default message.
         invitation = support_client.get_invitation('openreview.net/Support/-/Profile_State')
-        label_options = invitation.edit['content']['labels']['value']['param']['enum']
+        label_options = invitation.assertion['content']['labels']['value']['param']['enum']
         assert len(label_options) == 13
         assert len([option for option in label_options if 'description' in option]) == 11
 
-        ## A label outside the vocabulary is rejected by the edit schema.
+        ## A label outside the vocabulary is rejected by the assertion schema.
         with pytest.raises(openreview.OpenReviewException):
-            support_client.post_profile_edit(
+            support_client.post_profile_assertion(
                 invitation='openreview.net/Support/-/Profile_State',
                 signatures=['openreview.net/Support'],
                 content={
@@ -236,20 +236,20 @@ class TestProfileManagement():
         support_client.moderate_profile('~Gwen_Verified1', 'block', 'Suspicious activity detected in the profile.', labels=['Suspicious Activity'])
         support_client.moderate_profile('~Gwen_Verified1', 'unblock')
 
-        state_edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1', invitation='openreview.net/Support/-/Profile_State', sort='tcdate:asc')
-        assert len(state_edits) == 2
-        assert state_edits[0].profile['state'] == 'Blocked'
-        assert state_edits[0].content['reason']['value'] == 'Suspicious activity detected in the profile.'
-        assert state_edits[0].content['labels']['value'] == ['Suspicious Activity']
+        state_assertions = support_client.get_profile_assertions(profile_id='~Gwen_Verified1', invitation='openreview.net/Support/-/Profile_State', sort='tcdate:asc')
+        assert len(state_assertions) == 2
+        assert state_assertions[0].profile['state'] == 'Blocked'
+        assert state_assertions[0].content['reason']['value'] == 'Suspicious activity detected in the profile.'
+        assert state_assertions[0].content['labels']['value'] == ['Suspicious Activity']
         ## Unblocking leaves the profile pending re-activation
-        assert state_edits[1].profile['state'] == 'Inactive'
-        assert not (state_edits[1].content or {}).get('reason')
+        assert state_assertions[1].profile['state'] == 'Inactive'
+        assert not (state_assertions[1].content or {}).get('reason')
 
         ## A verification record can be retracted with a soft delete. The consent record is
-        ## mandatory in a Parent_Consent edit, so the delete carries it like any other
-        ## update: an edit is validated against the invitation whether or not it has a ddate.
-        support_client.post_edit(openreview.api.Edit(
-            id=parent_consent_edit['id'],
+        ## mandatory in a Parent_Consent assertion, so the delete carries it like any other
+        ## update: an assertion is validated against the invitation whether or not it has a ddate.
+        support_client.post_profile_assertion(
+            id=parent_consent_assertion['id'],
             invitation='openreview.net/Support/-/Parent_Consent',
             signatures=['openreview.net/Support'],
             ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
@@ -267,19 +267,19 @@ class TestProfileManagement():
                     }
                 }
             }
-        ))
-        edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1')
-        assert len(edits) == 4
-        edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1', trash=True)
-        assert len(edits) == 5
+        )
+        assertions = support_client.get_profile_assertions(profile_id='~Gwen_Verified1')
+        assert len(assertions) == 4
+        assertions = support_client.get_profile_assertions(profile_id='~Gwen_Verified1', trash=True)
+        assert len(assertions) == 5
 
         ## And restored with a ddate delete, so the verified relation stays visible in
         ## the profile UI even though it is not listed in the profile itself. Updates
-        ## replace the record like the other edit endpoints, so the restore has to
+        ## replace the record, so the restore has to
         ## carry the whole content: an undelete that omitted it would restore an
         ## empty record.
-        support_client.post_edit(openreview.api.Edit(
-            id=parent_consent_edit['id'],
+        support_client.post_profile_assertion(
+            id=parent_consent_assertion['id'],
             invitation='openreview.net/Support/-/Parent_Consent',
             signatures=['openreview.net/Support'],
             ddate={ 'delete': True },
@@ -298,10 +298,10 @@ class TestProfileManagement():
                     }
                 }
             }
-        ))
-        edits = support_client.get_profile_edits(profile_id='~Gwen_Verified1')
-        assert len(edits) == 5
-        restored = [edit for edit in edits if edit.invitation == 'openreview.net/Support/-/Parent_Consent'][0]
+        )
+        assertions = support_client.get_profile_assertions(profile_id='~Gwen_Verified1')
+        assert len(assertions) == 5
+        restored = [assertion for assertion in assertions if assertion.invitation == 'openreview.net/Support/-/Parent_Consent'][0]
         assert restored.profile['content']['relations']['value']['add'][0]['name'] == 'Gustavo Verified'
         assert restored.content['comment']['value'] == 'Consent form signed by the parent on file.'
 
@@ -319,7 +319,7 @@ class TestProfileManagement():
         ## the UI can surface the mismatch.
         different_dob = helpers.dob_for_age(25)
         assert different_dob != profile_content_before['dob']
-        mismatch_edit = support_client.post_profile_edit(
+        mismatch_assertion = support_client.post_profile_assertion(
             invitation='openreview.net/Support/-/Identity_Verification',
             signatures=['openreview.net/Support'],
             content={ 'source': { 'value': 'Government ID' } },
@@ -330,7 +330,7 @@ class TestProfileManagement():
                 }
             }
         )
-        assert mismatch_edit['profile']['content']['dob']['value'] == different_dob
+        assert mismatch_assertion['profile']['content']['dob']['value'] == different_dob
 
         profile = support_client.get_profile('~Gwen_Verified1')
         assert profile.content['dob'] == profile_content_before['dob']
@@ -341,7 +341,7 @@ class TestProfileManagement():
         ## the past is a mismatch the UI surfaces next to the profile dates.
         current_year = datetime.datetime.now().year
         for end_year in [current_year, current_year - 1]:
-            edit = support_client.post_profile_edit(
+            assertion = support_client.post_profile_assertion(
                 invitation='openreview.net/Support/-/Affiliation_Verification',
                 signatures=['openreview.net/Support'],
                 content={ 'source': { 'value': 'Student ID' } },
@@ -364,7 +364,7 @@ class TestProfileManagement():
                     }
                 }
             )
-            assert edit['profile']['content']['history']['value']['add'][0]['end'] == end_year
+            assert assertion['profile']['content']['history']['value']['add'][0]['end'] == end_year
 
         ## The profile still lists the position as Present
         profile = support_client.get_profile('~Gwen_Verified1')
@@ -373,7 +373,7 @@ class TestProfileManagement():
 
         ## A student ID may show only the institution name, not its email domain, so
         ## the domain is optional in the asserted history entry.
-        edit = support_client.post_profile_edit(
+        assertion = support_client.post_profile_assertion(
             invitation='openreview.net/Support/-/Affiliation_Verification',
             signatures=['openreview.net/Support'],
             content={ 'source': { 'value': 'Student ID' } },
@@ -393,12 +393,12 @@ class TestProfileManagement():
                 }
             }
         )
-        assert 'domain' not in edit['profile']['content']['history']['value']['add'][0]['institution']
+        assert 'domain' not in assertion['profile']['content']['history']['value']['add'][0]['institution']
 
         ## The document type enums end with a '.*' prefix option, so a document that
         ## matches none of the named types can be recorded verbatim. Support can also
         ## attach an optional free-text comment to the record.
-        edit = support_client.post_profile_edit(
+        assertion = support_client.post_profile_assertion(
             invitation='openreview.net/Support/-/Affiliation_Verification',
             signatures=['openreview.net/Support'],
             content={
@@ -421,8 +421,8 @@ class TestProfileManagement():
                 }
             }
         )
-        assert edit['content']['source']['value'] == 'Notarized letter from the registrar'
-        assert edit['content']['comment']['value'] == 'Letter countersigned by the department head; registrar stamp verified by phone.'
+        assert assertion['content']['source']['value'] == 'Notarized letter from the registrar'
+        assert assertion['content']['comment']['value'] == 'Letter countersigned by the department head; registrar stamp verified by phone.'
 
     def test_import_deprecated_dblp_notes(self, client, openreview_client, test_client, helpers):
 
@@ -5560,7 +5560,7 @@ The OpenReview Team.
         with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
             rita_client.get_profile_documents('~Rita_Identity1')
 
-        support_client.post_profile_edit(
+        support_client.post_profile_assertion(
             invitation='openreview.net/Support/-/Identity_Verification',
             signatures=['openreview.net/Support'],
             content={ 'source': { 'value': 'Government ID' } },
@@ -5572,22 +5572,22 @@ The OpenReview Team.
             }
         )
 
-        edits = support_client.get_profile_edits(profile_id='~Rita_Identity1', invitation='openreview.net/Support/-/Identity_Verification')
-        assert len(edits) == 1
-        assert edits[0].content['source']['value'] == 'Government ID'
-        assert edits[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Rita Identity'
+        assertions = support_client.get_profile_assertions(profile_id='~Rita_Identity1', invitation='openreview.net/Support/-/Identity_Verification')
+        assert len(assertions) == 1
+        assert assertions[0].content['source']['value'] == 'Government ID'
+        assert assertions[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Rita Identity'
 
         ## The verification record and the state history recorded by moderate_profile
         ## are visible to the profile owner
-        edits = rita_client.get_profile_edits(profile_id='~Rita_Identity1', sort='tcdate:asc')
-        assert len(edits) == 3
-        assert edits[0].invitation == 'openreview.net/Support/-/Profile_State'
-        assert edits[0].profile['state'] == 'Rejected'
-        assert edits[0].content['labels']['value'] == ['Documentation / ID requests']
-        assert link['url'] in edits[0].content['reason']['value']
-        assert edits[1].invitation == 'openreview.net/Support/-/Profile_State'
-        assert edits[1].profile['state'] == 'Active'
-        assert edits[2].invitation == 'openreview.net/Support/-/Identity_Verification'
+        assertions = rita_client.get_profile_assertions(profile_id='~Rita_Identity1', sort='tcdate:asc')
+        assert len(assertions) == 3
+        assert assertions[0].invitation == 'openreview.net/Support/-/Profile_State'
+        assert assertions[0].profile['state'] == 'Rejected'
+        assert assertions[0].content['labels']['value'] == ['Documentation / ID requests']
+        assert link['url'] in assertions[0].content['reason']['value']
+        assert assertions[1].invitation == 'openreview.net/Support/-/Profile_State'
+        assert assertions[1].profile['state'] == 'Active'
+        assert assertions[2].invitation == 'openreview.net/Support/-/Identity_Verification'
 
     def test_profile_identity_documents_kept_for_review(self, openreview_client, support_client, helpers, tmp_path):
 

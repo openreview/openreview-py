@@ -22,7 +22,7 @@ class ProfileManagement():
 
     def setup(self):
         self.set_profile_moderation_invitations()
-        self.set_profile_edit_invitations()
+        self.set_profile_assertion_invitations()
         self.set_remove_name_invitations()
         self.set_remove_email_invitations()
         self.set_archive_invitations()
@@ -231,12 +231,12 @@ return {
             )
         )
 
-    def set_profile_edit_invitations(self):
+    def set_profile_assertion_invitations(self):
         '''
-        Profile edit invitations used during moderation. A profile edit records an assertion
-        about a profile (it never modifies the profile itself), so these invitations replace
-        the moderation tag invitations with structured, per-field records that follow the
-        profile schema.
+        Profile assertion invitations used during moderation. A profile assertion records
+        a claim about a profile (it never modifies the profile itself), so these
+        invitations replace the moderation tag invitations with structured, per-field
+        records that follow the profile schema.
         '''
 
         ## Posted by support after reviewing an identity document uploaded by the user:
@@ -252,7 +252,7 @@ return {
                 readers=['everyone'],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
-                edit={
+                assertion={
                     'signatures': [self.support_group_id],
                     'readers': ['${2/profile/id}', self.support_group_id],
                     'writers': [self.support_group_id],
@@ -264,7 +264,7 @@ return {
                         }
                     },
                     ## The document the data was read from describes the verification
-                    ## itself, not the profile, so it sits on the edit content.
+                    ## itself, not the profile, so it sits on the assertion content.
                     'content': {
                         'source': {
                             'value': {
@@ -324,7 +324,7 @@ return {
         )
 
         ## Posted by support after reviewing a document proving institution affiliation:
-        ## the edit asserts the institution, the position held and — when the document
+        ## the assertion carries the institution, the position held and — when the document
         ## carries them — the person's name and date of birth. Every asserted field is
         ## keyed and shaped like its profile.content counterpart, so a record can be
         ## compared to the profile field by field. Institution-issued documents
@@ -341,7 +341,7 @@ return {
                 readers=['everyone'],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
-                edit={
+                assertion={
                     'signatures': [self.support_group_id],
                     'readers': ['everyone'],
                     'writers': [self.support_group_id],
@@ -445,7 +445,7 @@ return {
                 readers=['everyone'],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
-                edit={
+                assertion={
                     'signatures': [self.support_group_id],
                     'readers': ['${2/profile/id}', self.support_group_id],
                     'writers': [self.support_group_id],
