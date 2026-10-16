@@ -1822,7 +1822,7 @@ return {
                                         'type': 'author{}',
                                         'properties': {
                                             'fullname': { 'param': { 'type': 'string' } },
-                                            'username': { 'param': { 'type': 'string' } },
+                                            'username': { 'param': { 'type': 'string', 'optional': True } },
                                         },
                                     }
                                 }
