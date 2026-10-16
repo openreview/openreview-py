@@ -475,7 +475,7 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                             signatories=[venue_id],
                             members=[])
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
+            with open(self.venue.authors_webfield_path) as f:
                 content = f.read()
                 authors_group.web = content
                 self.post_group(authors_group)

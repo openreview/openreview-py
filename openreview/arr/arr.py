@@ -171,6 +171,7 @@ class ARR(object):
         self.venue.senior_area_chairs_webfield_path = os.path.join(arr_webfield_dir, 'seniorAreaChairsWebfield.js')
         self.venue.area_chairs_webfield_path = os.path.join(arr_webfield_dir, 'areachairsWebfield.js')
         self.venue.ethics_chairs_webfield_path = os.path.join(arr_webfield_dir, 'ethicsChairsWebfield.js')
+        self.venue.authors_webfield_path = os.path.join(arr_webfield_dir, 'authorsWebfield.js')
 
     def set_arr_stages(self, configuration_note):
         workflow = ARRWorkflow(
