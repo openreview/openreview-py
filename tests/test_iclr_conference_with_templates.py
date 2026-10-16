@@ -105,6 +105,15 @@ class TestSimpleDualAnonymous():
         assert group.content['senior_area_chairs_name']['value'] == 'Senior_Area_Chairs'
         assert group.content['sac_paper_assignments']['value'] == False
         assert group.content['senior_area_chairs_conflict_id']['value'] == 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Conflict'
+        assert group.content['ethics_chairs_id']['value'] == 'ICLR.cc/2026/Conference/Ethics_Chairs'
+        assert group.content['ethics_chairs_name']['value'] == 'Ethics_Chairs'
+        assert group.content['ethics_reviewers_id']['value'] == 'ICLR.cc/2026/Conference/Ethics_Reviewers'
+        assert group.content['ethics_reviewers_name']['value'] == 'Ethics_Reviewers'
+        assert group.content['anon_ethics_reviewer_name']['value'] == 'Ethics_Reviewer_'
+        # the ethics reviewers' message and matching invitations are hidden from the workflow timeline, like the reviewers' ones
+        assert 'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Message' in group.content['exclusion_workflow_invitations']['value']
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs/-/Message' in group.content['exclusion_workflow_invitations']['value']
+        assert '/ICLR.cc/2026/Conference/Ethics_Reviewers/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration).*/' in group.content['exclusion_workflow_invitations']['value']
 
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs')
         assert group.readers == [
@@ -113,9 +122,57 @@ class TestSimpleDualAnonymous():
         ]
         assert group.domain == 'ICLR.cc/2026/Conference'
 
-        # ethics_review_support is checked in the request form, so the ethics committees are created at deployment
-        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers')
-        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Chairs')
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+        # created through the Committee_Group template, which sets the ethics reviewer console
+        assert group.content['committee_role']['value'] == 'ethics_reviewers'
+        assert group.web and 'Ethics Reviewer Console' in group.web
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers/Invited')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers/Declined')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Chairs')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
+        ]
+        # ethics chairs can sign as the group, ethics reviewers sign with their anonymous submission groups
+        assert group.signatories == ['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Ethics_Chairs']
+        assert group.domain == 'ICLR.cc/2026/Conference'
+        # created through the Committee_Group template, which sets the ethics chair console
+        assert group.content['committee_role']['value'] == 'ethics_chairs'
+        assert group.web and 'Ethics Chair Console' in group.web
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Chairs/Invited')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Chairs/Declined')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        # the ethics committees get the same message, members and recruitment invitations as the other committees
+        for committee_id in ['ICLR.cc/2026/Conference/Ethics_Reviewers', 'ICLR.cc/2026/Conference/Ethics_Chairs']:
+            for invitation_name in ['Message', 'Members', 'Recruitment_Request', 'Recruitment_Request_Reminder', 'Recruitment_Response']:
+                assert openreview.tools.get_invitation(openreview_client, f'{committee_id}/-/{invitation_name}'), f'{committee_id}/-/{invitation_name} not found'
 
         # by default, only the venue, program chairs, and assigned senior area chairs can read the submission group
         submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group')
