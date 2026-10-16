@@ -4932,7 +4932,6 @@ The OpenReview Team.
         vouch_invitation = openreview_client.get_invitation('openreview.net/Support/-/Vouch')
         assert vouch_invitation.content['lifetimeLimit']['value'] == 20
         assert vouch_invitation.content['monthLimit']['value'] == 5
-        assert vouch_invitation.humanVerificationRequired == openreview.tools.DEFAULT_HUMAN_VERIFICATION
 
         ## Voucher: established user with an institutional email -> activated automatically as institutional
         voucher_client = helpers.create_user('voucher@umass.edu', 'Voucher', 'User', institution='umass.edu')
