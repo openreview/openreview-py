@@ -167,6 +167,11 @@ class Venue(object):
             preferred_email_groups.append(self.get_senior_area_chairs_id())
             self.senior_area_chair_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED]
 
+        if request_note.content.get('ethics_review_support',{}).get('value'):
+            self.use_ethics_chairs = True
+            self.use_ethics_reviewers = True
+            preferred_email_groups.extend([self.get_ethics_reviewers_id(), self.get_ethics_chairs_id()])
+
         self.release_role_participation = request_note.content.get('release_role_participation', {}).get('value', True)
 
         self.preferred_emails_groups = preferred_email_groups
