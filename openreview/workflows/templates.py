@@ -62,6 +62,8 @@ class Templates():
         self.setup_reviewers_review_days_late_template_invitation()
         self.setup_committee_roles_invitations()
         self.setup_llm_pdf_response_template_invitation()
+        self.setup_submission_fee_payment_template_invitation()
+        self.setup_fee_waiver_request_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -2980,6 +2982,429 @@ If you would like to change your decision, please follow the link in the previou
                                                     'maxLength': 200000,
                                                     'markdown': True,
                                                     'input': 'textarea'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_submission_fee_payment_template_invitation(self):
+
+        ## Only support enables a submission fee: the payments are collected by OpenReview
+        support_user_id = self.support_user_id
+
+        invitation = Invitation(id=f'{self.template_domain}/-/Submission_Fee_Payment',
+            invitees=[support_user_id],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/submission_fee_template_process.py'),
+            edit = {
+                'signatures': [support_user_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Submission_Fee_Payment.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission_Fee_Payment'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'description': 'When should authors be able to pay the submission fee?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 4,
+                        'description': 'When is the submission fee due? Authors can still pay after this date, submissions left unpaid are resolved by the venue.',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'amount': {
+                        'order': 5,
+                        'description': 'Fee per submission, in the minor unit of the currency: 2000 is 20.00 USD.',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'minimum': 1
+                            }
+                        }
+                    },
+                    'currency': {
+                        'order': 6,
+                        'description': 'Currency of the fee.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['USD'],
+                                'default': 'USD'
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 7,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Authors of every active submission pay a submission fee through the OpenReview payment processor. Payments are visible to the program chairs, the authors of the submission and OpenReview support.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process
+                    }],
+                    'content': {
+                        'amount': {
+                            'value': '${4/content/amount/value}'
+                        },
+                        'currency': {
+                            'value': '${4/content/currency/value}'
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors', support_user_id],
+                            'writers': ['${5/content/venue_id/value}'],
+                            ## Authors are invitees so the forum shows them the pay button, but the
+                            ## edit signature keeps them from posting a payment: they pay through checkout.
+                            ## Only support posts payment edits, whoever signs the invitation
+                            'invitees': ['${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors', support_user_id],
+                            'cdate': '${4/content/activation_date/value}',
+                            'duedate': '${4/content/due_date/value}',
+                            ## Checkout reads the amount from here, never from the payer
+                            'content': {
+                                'amount': {
+                                    'value': '${6/content/amount/value}'
+                                },
+                                'currency': {
+                                    'value': '${6/content/currency/value}'
+                                }
+                            },
+                            'edit': {
+                                'signature': { 'param': { 'const': support_user_id } },
+                                'readers': ['${6/content/venue_id/value}', '${6/content/venue_id/value}/${6/content/submission_name/value}${4/content/noteNumber/value}/Authors', support_user_id],
+                                'writers': [support_user_id],
+                                'payment': {
+                                    'note': '${4/content/noteId/value}',
+                                    ## Fixed to the fee, also for waived payments: they record the fee that was waived
+                                    'amount': '${6/content/amount/value}',
+                                    'currency': '${6/content/currency/value}',
+                                    'status': { 'param': { 'enum': ['pending', 'paid', 'waived', 'refunded', 'disputed', 'expired'] } },
+                                    ## The payer, or support for the statuses support asserts
+                                    'signatures': { 'param': { 'regex': f'~.*|{support_user_id}' } },
+                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${5/content/noteNumber/value}/Authors', support_user_id],
+                                    'writers': [support_user_id],
+                                    'transactionId': { 'param': { 'regex': '.*', 'optional': True } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_fee_waiver_request_template_invitation(self):
+
+        support_user_id = self.support_user_id
+
+        invitation = Invitation(id=f'{self.template_domain}/-/Fee_Waiver_Request',
+            invitees=[support_user_id],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            edit = {
+                'signatures': [support_user_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Fee_Waiver_Request.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Fee_Waiver_Request'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'description': 'When should authors be able to request a fee waiver?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 4,
+                        'description': 'When should authors request a fee waiver by?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'payment_name': {
+                        'order': 5,
+                        'description': 'Name of the submission fee step whose fee the waivers settle. Default is Submission_Fee_Payment.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission_Fee_Payment'
+                            }
+                        }
+                    },
+                    'auto_grant_waivers': {
+                        'order': 6,
+                        'description': 'Should every waiver request be granted automatically?',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [
+                                    { 'value': True, 'description': 'Yes, grant every waiver request automatically' },
+                                    { 'value': False, 'description': 'No, OpenReview support decides each waiver request' }
+                                ],
+                                'input': 'radio',
+                                'default': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 7,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    ## Signed by the super user instead of the venue, and so are the child invitations:
+                    ## their processes read the submissions of the venue and record a granted waiver as
+                    ## a waived payment, which only support can post. The program chairs can not edit
+                    ## the dates, support changes them by posting this template again
+                    'signatures': ['~Super_User1'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Authors can request a waiver of the submission fee. A granted waiver settles the fee of the submission. Waiver requests are visible to the program chairs, OpenReview support and the requesting author only.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process
+                    }],
+                    'content': {
+                        'payment_name': {
+                            'value': '${4/content/payment_name/value}'
+                        },
+                        'auto_grant_waivers': {
+                            'value': '${4/content/auto_grant_waivers/value}'
+                        },
+                        'fee_waiver_request_process_script': {
+                            'value': self.get_process_content('process/fee_waiver_request_process.py')
+                        },
+                        'fee_waiver_request_preprocess_script': {
+                            'value': self.get_process_content('process/fee_waiver_request_pre_process.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'signatures': ['~Super_User1'],
+                            'readers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors', support_user_id],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'invitees': ['${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors'],
+                            'cdate': '${4/content/activation_date/value}',
+                            'duedate': '${4/content/due_date/value}',
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['fee_waiver_request_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'preprocess': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['fee_waiver_request_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                ## Each author files their own request, signed with their profile
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'prefix': '~.*' }
+                                        ]
+                                    }
+                                },
+                                'readers': ['${2/note/readers}'],
+                                'writers': ['${6/content/venue_id/value}', support_user_id],
+                                'note': {
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/noteId/value}',
+                                    'signatures': ['${3/signatures}'],
+                                    ## Co-authors do not see each other's requests
+                                    'readers': ['${7/content/venue_id/value}', support_user_id, '${3/signatures}'],
+                                    'writers': ['${7/content/venue_id/value}', support_user_id],
+                                    ## Factual questions only, no free text justification
+                                    'content': {
+                                        'low_income_economy': {
+                                            'order': 1,
+                                            'description': 'Are all the authors of this submission affiliated with institutions in a World Bank low-income or lower-middle-income economy?',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'enum': ['Yes', 'No'],
+                                                    'input': 'radio'
+                                                }
+                                            }
+                                        },
+                                        'students_or_unaffiliated': {
+                                            'order': 2,
+                                            'description': 'Are all the authors of this submission students or unaffiliated?',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'enum': ['Yes', 'No'],
+                                                    'input': 'radio'
+                                                }
+                                            }
+                                        },
+                                        'no_payment_method': {
+                                            'order': 3,
+                                            'description': 'Do all the authors of this submission lack access to a supported payment method?',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'enum': ['Yes', 'No'],
+                                                    'input': 'radio'
                                                 }
                                             }
                                         }
