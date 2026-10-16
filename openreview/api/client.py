@@ -751,7 +751,7 @@ class OpenReviewClient(object):
             confirmedEmails = [email.lower() for email in confirmedEmails]
             full_response = []
             for email_batch in batches(confirmedEmails):
-                response = self.session.post(self.profiles_search_url, json = {'confirmedEmails': email_batch}, headers = self.headers)
+                response = self.session.post(self.profiles_search_url, json = {'ids': email_batch}, headers = self.headers)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
@@ -4836,4 +4836,3 @@ class Tag(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))            
-
