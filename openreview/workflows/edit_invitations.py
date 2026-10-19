@@ -2137,7 +2137,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'enum': ['claude-sonnet-4-6', 'gemini-2.5-flash'],
+                                'enum': ['claude-sonnet-4-6', 'gemini-2.5-flash', 'gpt-6-astra', 'gpt-6.1-sol', 'gpt-6-luna'],
                                 'default': 'claude-sonnet-4-6',
                                 'input': 'radio'
                             }

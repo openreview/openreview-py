@@ -1283,6 +1283,8 @@ class TestCVPRConferenceWithTemplates():
         assert request['path'] == '/chat/completions'
         assert request['authorization'] == 'Bearer sk-test-key'
         assert request['body']['model'] == 'claude-sonnet-4-6'
+        assert request['body']['max_completion_tokens'] == 16000
+        assert 'max_tokens' not in request['body']
         assert request['body']['reasoning_effort'] == 'medium'
         assert request['body']['drop_params'] == True
         assert [message['role'] for message in request['body']['messages']] == ['system', 'user']

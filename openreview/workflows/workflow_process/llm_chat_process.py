@@ -208,7 +208,9 @@ def process(client, edit, invitation):
 
         body = {
             'model': model,
-            'max_tokens': MAX_TOKENS,
+            # the OpenAI reasoning models reject max_tokens; LiteLLM maps max_completion_tokens to the max_tokens of
+            # Claude and the max_output_tokens of Gemini
+            'max_completion_tokens': MAX_TOKENS,
             'messages': messages,
             # LiteLLM maps it to the thinking of each provider
             'reasoning_effort': 'medium',
