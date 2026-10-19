@@ -2437,10 +2437,10 @@ def percentile(data, percent):
     matching the behaviour of numpy.percentile with the default 'linear' method.
 
     *percent* may be an int or float in [0, 100].
-    *data* must be a non-empty sequence of numbers.
+    *data* is a sequence of numbers; like numpy, an empty sequence returns nan.
     """
     if not data:
-        raise ValueError("data must be non-empty")
+        return float('nan')
     sorted_data = sorted(data)
     n = len(sorted_data)
     if n == 1:
