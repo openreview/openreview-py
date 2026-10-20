@@ -18,7 +18,7 @@ Three properties drive nearly every real finding:
 2. **Anonymity is a readers problem.** Reviewer and area chair identities live in per-paper groups with `anonids: True`; `deanonymizers` says who may map the anonymous id to a profile. A real profile id or name reaching a note, an email, a bibtex entry, a webfield constant or a log is a deanonymization.
 3. **Process functions run as the venue.** Whoever can change a `*/process/*.py` file, or a helper it imports, changes what runs with venue, support or super-user credentials in production. They also run again on retry and on redeploy, against venues that were configured by older versions of this code.
 
-**Before commenting, read `references/known-false-positives.md`.** It lists findings already investigated and rejected here. Re-raising them trains the team to skim automated review.
+**Before commenting, verify current file locations and line numbers; reference docs can drift as code moves.** Also read `references/known-false-positives.md` before commenting; it lists findings already investigated and rejected here.
 
 ## Non-negotiables by directory
 

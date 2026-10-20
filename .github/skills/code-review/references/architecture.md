@@ -1,7 +1,5 @@
 # Architecture Reference
 
-Verify file locations before citing them in a finding — this file drifts as the code moves.
-
 ## Three execution contexts
 
 | Context | Who runs it | Credentials | What a diff changes |
