@@ -49,7 +49,8 @@ class Venue(object):
         self.senior_area_chairs_name = self.senior_area_chair_roles[0]
         self.secondary_area_chairs_name = f'Secondary_{self.area_chairs_name}'
         self.ethics_chairs_name = 'Ethics_Chairs'
-        self.ethics_reviewers_name = 'Ethics_Reviewers'
+        self.ethics_reviewer_roles = ['Ethics_Reviewers']
+        self.ethics_reviewers_name = self.ethics_reviewer_roles[0]
         self.authors_name = 'Authors'
         self.recommendation_name = 'Recommendation'
         self.use_ethics_chairs = False
@@ -271,6 +272,7 @@ class Venue(object):
             self.reviewers_name: 'reviewers',
             self.area_chairs_name: 'area_chairs',
             self.senior_area_chairs_name: 'senior_area_chairs',
+            self.ethics_reviewers_name: 'ethics_reviewers',
         }
 
         return standard_role_by_committee.get(name, name)
@@ -1362,6 +1364,23 @@ Total Errors: {len(errors)}
                     await_process=True
                 )
 
+        if self.use_ethics_reviewers:
+            # ethics reviewers are only assigned to the submissions flagged for ethics review, which are flagged
+            # during the reviewing period, so their assignments are made after the matching scores are computed
+            self.invitation_builder.set_assignment_invitation(committee_id=self.get_ethics_reviewers_id(), cdate=submission_deadline + (60*60*1000*24*7*4.1))
+            self.client.post_invitation_edit(
+                invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+                signatures=[invitation_prefix],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'name': { 'value': f'{self.ethics_reviewers_name}_Assignment_Deployment' },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*4.2) },
+                    'committee_name': { 'value': self.ethics_reviewers_name },
+                    'committee_pretty_name': { 'value': self.get_ethics_reviewers_name(pretty=True) }
+                },
+                await_process=True
+            )
+
     def setup_matching_invitations(self):
         """Create matching configuration invitations for reviewers and area chairs (if enabled).
         Sets up the matching invitations (affinity scores, conflicts, custom
@@ -1383,6 +1402,12 @@ Total Errors: {len(errors)}
                 venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id(name=reviewer_role)))
                 venue_matching.setup_matching_invitations()
 
+        if self.use_ethics_reviewers:
+            # compute the ethics reviewers scores and conflicts once submissions have been flagged for ethics review
+            submission_deadline = self.submission_stage.second_due_date or self.submission_stage.due_date
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_ethics_reviewers_id()))
+            venue_matching.setup_matching_invitations(cdate=tools.datetime_millis(submission_deadline + datetime.timedelta(weeks=4)))
+
     def setup_all_committees_matching(self):
         """Run full matching setup (invitations, affinity scores, conflicts) for all committees.
         Sets up matching for area chairs (if enabled) and reviewers, including
@@ -1402,6 +1427,10 @@ Total Errors: {len(errors)}
             for reviewer_role in self.reviewer_roles:
                 venue_matching = matching.Matching(self, self.client.get_group(self.get_reviewers_id(name=reviewer_role)))
                 venue_matching.setup()
+
+        if self.use_ethics_reviewers:
+            venue_matching = matching.Matching(self, self.client.get_group(self.get_ethics_reviewers_id()))
+            venue_matching.setup()
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         """Set up paper matching for a specific committee, optionally computing affinity scores and conflicts.

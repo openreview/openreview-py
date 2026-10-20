@@ -3373,6 +3373,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 },
                 'reviewers_anon_name': {
                     'value': venue.anon_ethics_reviewers_name()
+                },
+                'committee_role': {
+                    'value': venue.get_standard_committee_role(committee_id=venue.get_ethics_reviewers_id())
                 }
             }
 

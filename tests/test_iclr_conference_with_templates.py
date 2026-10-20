@@ -108,6 +108,7 @@ class TestSimpleDualAnonymous():
         assert group.content['ethics_chairs_id']['value'] == 'ICLR.cc/2026/Conference/Ethics_Chairs'
         assert group.content['ethics_chairs_name']['value'] == 'Ethics_Chairs'
         assert group.content['ethics_reviewers_id']['value'] == 'ICLR.cc/2026/Conference/Ethics_Reviewers'
+        assert group.content['ethics_reviewer_roles']['value'] == ['Ethics_Reviewers']
         assert group.content['ethics_reviewers_name']['value'] == 'Ethics_Reviewers'
         assert group.content['anon_ethics_reviewer_name']['value'] == 'Ethics_Reviewer_'
         # the ethics reviewers' message and matching invitations are hidden from the workflow timeline, like the reviewers' ones
@@ -130,6 +131,20 @@ class TestSimpleDualAnonymous():
             assert 'noteReaders' in invitation.edit['content']
             assert 'review_readers' in invitation.content
             assert invitation.edit['invitation']['edit']['note']['readers'][0] == '${5/content/noteReaders/value}'
+
+        # the ethics reviewers are matched to the flagged submissions, after the reviewers
+        assert 'ethics_reviewers_custom_max_papers_id' not in group.content
+        reviewers_affinity_score_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Affinity_Score')
+        for invitation_name in ['Affinity_Score', 'Conflict']:
+            invitation = openreview_client.get_invitation(f'ICLR.cc/2026/Conference/Ethics_Reviewers/-/{invitation_name}')
+            assert invitation.cdate > reviewers_affinity_score_inv.cdate
+            assert 'ICLR.cc/2026/Conference/Ethics_Chairs' in invitation.readers
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Ethics_Reviewers/-/Assignment_Configuration')
+        assert invitation.edit['note']['content']['paper_invitation']['value']['param']['default'].endswith('&content.flagged_for_ethics_review=true')
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Ethics_Reviewers/-/Assignment')
+        assert invitation.content['committee_role']['value'] == 'ethics_reviewers'
+        assert invitation.content['review_name']['value'] == 'Ethics_Review'
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Reviewers_Assignment_Deployment')
 
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs')
         assert group.readers == [
