@@ -121,59 +121,62 @@ def process(client, edit, invitation):
 
     ## Post emergency score edges if they don't exist
     if len(emergency_score_edges) == 0:
-        print('Create emergency score edges...')
-        deployed_label = [
-            note for note in client.get_all_notes(invitation=f"{role}/-/Assignment_Configuration", domain=venue_id) if 'Deployed' in note.content['status']['value']
-        ][0].content['title']['value']
-        submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
-        review_name = domain.content.get('review_name', {}).get('value', 'Official_Review')
-        submissions = client.get_all_notes(
-            invitation=f"{venue_id}/-/{submission_name}",
-            domain=venue_id
-        )
-        official_reviews = client.get_all_notes(
-            parent_invitations=f"{venue_id}/-/{review_name}",
-            domain=venue_id
-        )
-        review_counts = {}
-        for review in official_reviews:
-            if review.forum not in review_counts:
-                review_counts[review.forum] = 0
-            review_counts[review.forum] += 1
+        deployed_label = next((
+            note.content['title']['value'] for note in client.get_all_notes(invitation=f"{role}/-/Assignment_Configuration", domain=venue_id) if 'Deployed' in note.content['status']['value']
+        ), None)
+        if deployed_label is None:
+            print('No deployed assignment configuration, skip emergency score edges')
+        else:
+            print('Create emergency score edges...')
+            submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
+            review_name = domain.content.get('review_name', {}).get('value', 'Official_Review')
+            submissions = client.get_all_notes(
+                invitation=f"{venue_id}/-/{submission_name}",
+                domain=venue_id
+            )
+            official_reviews = client.get_all_notes(
+                parent_invitations=f"{venue_id}/-/{review_name}",
+                domain=venue_id
+            )
+            review_counts = {}
+            for review in official_reviews:
+                if review.forum not in review_counts:
+                    review_counts[review.forum] = 0
+                review_counts[review.forum] += 1
 
-        eligible_submission_ids = []
-        for submission in submissions:
-            if review_counts.get(submission.id, 0) < 3:
-                eligible_submission_ids.append(submission.id)
+            eligible_submission_ids = []
+            for submission in submissions:
+                if review_counts.get(submission.id, 0) < 3:
+                    eligible_submission_ids.append(submission.id)
 
-        ## Get all the user's aggregate score edges in a single call and index them by submission
-        aggregate_score_edges_by_submission = {}
-        for edge in client.get_all_edges(
-            invitation=f"{role}/-/Aggregate_Score",
-            label=deployed_label,
-            tail=user,
-            domain=venue_id
-        ):
-            aggregate_score_edges_by_submission.setdefault(edge.head, []).append(edge)
+            ## Get all the user's aggregate score edges in a single call and index them by submission
+            aggregate_score_edges_by_submission = {}
+            for edge in client.get_all_edges(
+                invitation=f"{role}/-/Aggregate_Score",
+                label=deployed_label,
+                tail=user,
+                domain=venue_id
+            ):
+                aggregate_score_edges_by_submission.setdefault(edge.head, []).append(edge)
 
-        aggregate_score_edges = []
-        for submission_id in eligible_submission_ids:
-            aggregate_score_edges.extend(aggregate_score_edges_by_submission.get(submission_id, []))
+            aggregate_score_edges = []
+            for submission_id in eligible_submission_ids:
+                aggregate_score_edges.extend(aggregate_score_edges_by_submission.get(submission_id, []))
 
-        edges_to_post = []
-        for edge in aggregate_score_edges:
-            edges_to_post.append(openreview.api.Edge(
-                invitation=f"{role}/-/Emergency_Score",
-                readers=edge.readers,
-                writers=edge.writers,
-                nonreaders=edge.nonreaders,
-                signatures=edge.signatures,
-                head=edge.head,
-                tail=edge.tail,
-                weight=edge.weight
-            ))
+            edges_to_post = []
+            for edge in aggregate_score_edges:
+                edges_to_post.append(openreview.api.Edge(
+                    invitation=f"{role}/-/Emergency_Score",
+                    readers=edge.readers,
+                    writers=edge.writers,
+                    nonreaders=edge.nonreaders,
+                    signatures=edge.signatures,
+                    head=edge.head,
+                    tail=edge.tail,
+                    weight=edge.weight
+                ))
     
-        openreview.tools.post_bulk_edges(client, edges_to_post)
+            openreview.tools.post_bulk_edges(client, edges_to_post)
 
     ## Delete availability, assume they can review more than resubmissions
     client.delete_edges(
