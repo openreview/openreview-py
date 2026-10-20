@@ -2641,6 +2641,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ['aclweb.org/ACL/ARR/2023/August', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].content['authorids']['value']
 
+        # Check the list of authors is included in the submission email
+        messages = openreview_client.get_messages(to='peter@mail.com', subject='ARR - August 2023 has received your submission titled Paper title 1')
+        messages = [m for m in messages if f'Submission Number: {submissions[0].number}\n' in m['content']['text']]
+        assert len(messages) == 1
+        assert f'''Title: Paper title 1
+
+Authors: SomeFirstName User, Peter SomeLastName, Andrew Mc, SAC ARROne 
+
+Abstract: This is an abstract 1''' in messages[0]['content']['text']
+
         # Try additional submission posting with August paper
         note = openreview.api.Note(content = _generate_valid_content(0, domains, june_submission))
         with pytest.raises(openreview.OpenReviewException, match=r'The provided URL points to a submission in the current cycle. Please provide a link to a previous ARR submission.'):
