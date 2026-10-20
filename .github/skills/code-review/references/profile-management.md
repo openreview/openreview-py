@@ -1,0 +1,36 @@
+# Profile Management
+
+`openreview/profile/management.py` sets up the invitations under `openreview.net/-/Edit`, `openreview.net/Support/-/*`, `DBLP.org/-/*`, `arXiv.org/-/*`, `ORCID.org/-/*`, `aclweb.org/-/*`, the archive, anonymous preprint and news groups. Their process functions in `openreview/profile/process/` sign as `~Super_User1`, `openreview.net/Support` or the import group, and they rewrite profiles, groups, notes and edges across the whole site. This is the most privileged code in the repository.
+
+## Flows and what each may touch
+
+| Invitation | Requester | Decider | Process rewrites |
+|---|---|---|---|
+| `Support/-/Profile_Name_Removal` + `_Decision` | the profile owner (`request_remove_name_pre_process.py` checks the name belongs to the signer, #3230) | support | profile names, `rename_profile`, `rename_edges`, note signatures and authorids, deletes the username group |
+| `Support/-/Profile_Email_Removal` | support on behalf of a user | support | profile emails, `rename_edges`, deletes the email group |
+| `Support/-/Profile_Merge` + `_Decision` | either profile's owner or support | support | `merge_profiles`, notifications to both |
+| `Support/-/Profile_Blocked_Status`, `Profile_Moderation_Label`, `Vouch` | support, vouchers | support | `moderate_profile`, labels |
+| `DBLP.org/-/Record`, `arXiv.org/-/Record`, `ORCID.org/-/Record`, `aclweb.org/-/Record` | import pipelines and users claiming papers | — | creates or updates publication notes; `author_coreference_pre_process.js` validates that the claimed author position matches |
+| `Public_Article/-/Authorship_Claim`, `Author_Removal` | a user | — | `author_removal_pre_process.js` validates the signer is the author being removed |
+| `Anonymous_Preprint/-/Submission`, `Comment` | any user | — | creates anonymous author groups, notifies |
+| `Archive/-/Direct_Upload`, `Comment` | a user | — | user's own archive |
+
+## Rules
+
+**Ownership is checked in the pre-process.** Every request that removes, renames or claims something verifies that the signature owns it: the name is in the signer's `names`, the email is in the signer's `emails`, the authorid at the claimed position is the signer or one of their names (`4ea95317` validates that the signer is an author of the previous URL in a coreference). A new request type without that check lets any user ask support to alter someone else's identity, and support decisions are made from what the request says.
+
+**Request notes are private.** A name-removal or email-removal request contains the identifier being removed, often because the user wants it unlinked from them. `readers` on those notes are the requester (`${2/signatures}` or the profile id) and `openreview.net/Support`; decisions add nothing. Comments on them follow the same readers.
+
+**Cascades are complete.** `request_remove_name_decision_process.py` walks notes (signatures, writers, readers, `authorids`, `authors`), edges (`rename_edges`), groups (`members`, `delete_group` for the username) and the profile. A new entity type that stores profile ids (tags, messages, edges on a new invitation) has to be added there and in `request_remove_email_process.py`, or the removed identity survives in it. That is both an integrity defect and a privacy one, since the point of the request was to unlink the identity.
+
+**Merge direction matters.** `merge_profiles(profileTo, profileFrom)` keeps `profileTo`. The decision process must pass them in the order the request named, and a merge of a blocked or under-moderation profile needs the blocked status carried to the result.
+
+**Imports write publications on behalf of users.** The DBLP, arXiv, ORCID and ACL record processes (JavaScript) create notes whose `authorids` point at profiles. The coreference pre-process is what stops a user from attaching a stranger's profile to a paper; changes to its matching logic need a test with a non-matching author position that is rejected.
+
+**Anonymous preprints.** `anonymous_preprint_submission_process.py` creates a per-paper authors group whose readers are the authors and the venue group; the submission's `authors` and `authorids` fields carry readers of that group. The comment process notifies through the group, never by resolving members into the email body.
+
+**Vouching and moderation.** `vouch_process.py` calls `client.moderate_profile(profile.id, 'accept')`. The pre-process restricts who may vouch and for which profile states (#3189 allowed under-moderation profiles). Widening the states a voucher can accept is a change to who gets an active profile without human review.
+
+## Tests
+
+`tests/test_profile_management.py` covers these flows end to end with real users. A change here ships with a test that acts as the wrong user and asserts the `OpenReviewException` message, in addition to the happy path. Run the file, not a single test; the users created early in the file are reused throughout.
