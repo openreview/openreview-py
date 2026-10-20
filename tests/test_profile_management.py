@@ -2117,7 +2117,7 @@ computation and memory.
         note = andrew_client.get_note(edit['note']['id'])
         assert note.invitations == ['openreview.net/Public_Article/ACL_Anthology.org/-/Record', 'openreview.net/Public_Article/-/Edit']
         assert note.external_ids == ['acl:2023.acl-long.48']
-        assert note.pdate == openreview.tools.datetime_millis(datetime.datetime(2023, 7, 1))
+        assert note.pdate == openreview.tools.datetime_millis(datetime.datetime(2023, 7, 1, tzinfo=datetime.timezone.utc))
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
         assert note.content['abstract']['value'].startswith('Ensembling BERT models')
         assert note.content['venue']['value'] == 'ACL 2023'
