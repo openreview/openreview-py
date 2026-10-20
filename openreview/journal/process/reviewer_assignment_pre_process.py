@@ -22,10 +22,10 @@ def process(client, edge, invitation):
         if not reviews:
             return
 
-        groups=client.get_groups(prefix=journal.get_reviewers_id(number=submission.number, anon=True), signatory=edge.tail)
+        groups=client.get_groups(prefix=journal.get_reviewers_id(number=submission.number, anon=True), member=edge.tail)
 
         if not groups:
-            raise openreview.OpenReviewException(f'Can not remove assignment, signatory groups not found for {edge.tail}.')
+            raise openreview.OpenReviewException(f'Can not remove assignment, anonymous group not found for {edge.tail}.')
 
 
         for review in reviews:
@@ -59,9 +59,8 @@ def process(client, edge, invitation):
            raise openreview.OpenReviewException(f'Reviewer {edge.tail} is currently unavailable.')           
 
         ## Check resubmission assignments
-        if f'previous_{journal.short_name}_submission_url' in submission.content:
-            previous_forum_url = submission.content[f'previous_{journal.short_name}_submission_url']['value']
-            previous_forum_id = previous_forum_url.replace('https://openreview.net/forum?id=', '')
+        previous_forum_id = journal.get_previous_submission_id(submission)
+        if previous_forum_id:
             previous_assignments = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head = previous_forum_id, tail = edge.tail)
             if previous_assignments:
                 return ## don't check pending reviews
