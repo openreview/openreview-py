@@ -131,12 +131,12 @@ class Helpers:
         # Process logs cannot tell when that is over: a log is still 'queued' after its job becomes
         # active and already 'ok' before the job is released, so retry until the server accepts it.
         wait_time = 0.5
-        deadline = time.time() + timeout
-        while True:
+        max_iterations = int(timeout / wait_time) or 1
+        for iteration in range(max_iterations):
             try:
                 return super_client.rename_venue(old_venue_id, new_venue_id, request_form)
             except openreview.OpenReviewException as e:
-                if e.args[0].get('status') != 409 or time.time() >= deadline:
+                if e.args[0].get('status') != 409 or iteration == max_iterations - 1:
                     raise
             time.sleep(wait_time)
 
