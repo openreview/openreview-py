@@ -367,7 +367,7 @@ class JournalRequest():
             )
         )
 
-    def setup_comment_invitation(self, note_id, action_editors_id=None):
+    def setup_comment_invitation(self, note_id):
 
         note = self.client.get_note(note_id)
         venue_id = note.content['venue_id']['value']
@@ -403,10 +403,80 @@ class JournalRequest():
                             }
                         },
                         'signatures': ['${3/signatures}'],
-                        'readers': { 'param': { 'enum': [self.support_group_id, venue_id, '~.*'] }},
+                        'readers': { 'param': { 'enum': [self.support_group_id, venue_id] }},
                         'writers': [self.support_group_id, venue_id],
                         'forum': note.id,
                         'replyto': { 'param': { 'withForum': note.id }},
+                        'content': {
+                            'title': {
+                                'description': 'Brief summary of your comment.',
+                                'order': 1,
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': '.{1,500}'
+                                    }
+                                }
+                            },
+                            'comment': {
+                                'description': 'Your comment or reply (max 200000 characters).',
+                                'order': 2,
+                                'value' : {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                process = content
+            )
+
+            return self.post_invitation_edit(invitation = invitation)
+
+    def setup_recruitment_comment_invitation(self, note_id):
+
+        note = self.client.get_note(note_id)
+        venue_id = note.content['venue_id']['value']
+        recruitment_comment_invitation_id = f'{self.support_group_id}/Journal_Request{note.number}/-/Recruitment_Comment'
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/comment_process.py')) as f:
+            content = f.read()
+            content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
+            content = content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue_id + "'")
+            invitation = openreview.api.Invitation(
+                id = recruitment_comment_invitation_id,
+                invitees = [venue_id, self.support_group_id],
+                readers = [venue_id, self.support_group_id],
+                writers = [],
+                signatures = [venue_id],
+                edit = {
+                    'signatures': {
+                        'param': {
+                            'items': [
+                                { 'value': venue_id, 'optional': True},
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
+                        }
+                    },
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': recruitment_comment_invitation_id,
+                                'optional': True
+                            }
+                        },
+                        'signatures': ['${3/signatures}'],
+                        'readers': ['${{2/replyto}/readers}'],
+                        'writers': [self.support_group_id, venue_id],
+                        'forum': note.id,
+                        'replyto': { 'param': { 'withInvitation': f'{self.support_group_id}/Journal_Request{note.number}/-/Reviewer_Recruitment_by_AE' }},
                         'content': {
                             'title': {
                                 'description': 'Brief summary of your comment.',
@@ -596,9 +666,14 @@ Cheers!'''.replace('{short_name}', short_name)
 
     def setup_recruitment_by_action_editors(self, note_id, template=None):
 
+        self.setup_recruitment_comment_invitation(note_id)
+
         note = self.client.get_note(note_id)
         short_name = note.content['abbreviated_venue_name']['value']
         venue_id = note.content['venue_id']['value']
+        invitation_id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Reviewer_Recruitment_by_AE'
+        existing_invitation = openreview.tools.get_invitation(self.client, invitation_id)
+
         recruitment_email_template = '''Dear {{fullname}},
 
 You have been nominated to serve as a reviewer for {short_name} by {{inviter}}.
@@ -610,6 +685,8 @@ Cheers!
 
         if template:
             recruitment_email_template = template
+        elif existing_invitation:
+            recruitment_email_template = existing_invitation.edit['note']['content']['email_content']['value']['param']['default']
 
         recruitment_content = {
             'invitee_name': {
@@ -656,41 +733,36 @@ Cheers!
             }
         }
 
-        invitation_id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Reviewer_Recruitment_by_AE'
-        existing_invitation = openreview.tools.get_invitation(self.client, invitation_id)
-
-        if not existing_invitation or (template and template != existing_invitation.edit['note']['content']['email_content']['value']['param']['default']):
-
-            with open(os.path.join(os.path.dirname(__file__), 'process/ae_recruitment_process.py')) as f:
-                content = f.read()
-                content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
-                invitation = openreview.api.Invitation(
-                    id = invitation_id,
-                    invitees = [f'{venue_id}/Action_Editors'],
-                    readers = [f'{venue_id}/Action_Editors'],
-                    writers = [],
-                    signatures = ['~Super_User1'],
-                    edit = {
-                        'signatures': { 
-                            'param': { 
-                                'items': [
-                                    { 'prefix': '~.*', 'optional': True },
-                                    { 'value': self.support_group_id, 'optional': True}
-                                ]
-                            }
-                        },
-                        'writers': [self.support_group_id, venue_id],
-                        'readers': [self.support_group_id, venue_id],
-                        'note': {
-                            'forum': note.id,
-                            'replyto': note.id,
-                            'signatures': ['${3/signatures}'],
-                            'readers': [self.support_group_id, venue_id, '${3/signatures}'],
-                            'writers': [self.support_group_id, venue_id],
-                            'content': recruitment_content
+        with open(os.path.join(os.path.dirname(__file__), 'process/ae_recruitment_process.py')) as f:
+            content = f.read()
+            content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
+            invitation = openreview.api.Invitation(
+                id = invitation_id,
+                invitees = [f'{venue_id}/Action_Editors'],
+                readers = [f'{venue_id}/Action_Editors'],
+                writers = [],
+                signatures = ['~Super_User1'],
+                edit = {
+                    'signatures': {
+                        'param': {
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
                         }
                     },
-                    process = content
-                )
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
+                    'note': {
+                        'forum': note.id,
+                        'replyto': note.id,
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, venue_id, '${3/signatures}'],
+                        'writers': [self.support_group_id, venue_id],
+                        'content': recruitment_content
+                    }
+                },
+                process = content
+            )
 
-                self.post_invitation_edit(invitation = invitation)
+            self.post_invitation_edit(invitation = invitation)

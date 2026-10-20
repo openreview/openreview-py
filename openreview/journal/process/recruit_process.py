@@ -71,16 +71,15 @@ If you would like to change your decision, please click the Accept link in the p
                     profile = openreview.tools.get_profile(client, user)
                     id_or_email = profile.id
                 if id_or_email in invitee_ids:
-                    comment_inv = client.get_invitation(id=f'{SUPPORT_GROUP}/Journal_Request{journal_request.number}/-/Comment')
+                    recruitment_comment_invitation_id = f'{SUPPORT_GROUP}/Journal_Request{journal_request.number}/-/Recruitment_Comment'
                     comment_content = f'''The user {invitee} has {action} an invitation to be a reviewer for {SHORT_PHRASE}.'''
-                    recruitment_response_notes = list(openreview.tools.iterget_notes(client, replyto=note.id, sort='number:desc'))
+                    recruitment_response_notes = list(openreview.tools.iterget_notes(client, invitation=recruitment_comment_invitation_id, replyto=note.id, sort='number:desc'))
                     if recruitment_response_notes and 'New Recruitment Response' in recruitment_response_notes[0].content['title']['value']:
                         posted_recruitment_response = recruitment_response_notes[0]
-                        revision = client.post_note_edit(invitation=comment_inv.id,
+                        revision = client.post_note_edit(invitation=recruitment_comment_invitation_id,
                             signatures = [VENUE_ID],
                             note = openreview.api.Note(id=posted_recruitment_response.id,
                                                         replyto=posted_recruitment_response.replyto,
-                                                        readers=posted_recruitment_response.readers,
                                                         content = {
                                                             'title': posted_recruitment_response.content['title'],
                                                             'comment': { 'value': comment_content }
@@ -88,8 +87,7 @@ If you would like to change your decision, please click the Accept link in the p
                         ))
                     else:
                         #post new comment to journal request
-                        recruitment_inv = note.invitations[0]
-                        comment = client.post_note_edit(invitation=comment_inv.id,
+                        comment = client.post_note_edit(invitation=recruitment_comment_invitation_id,
                             signatures=[VENUE_ID],
                             note = openreview.api.Note(
                                 content = {
@@ -97,8 +95,7 @@ If you would like to change your decision, please click the Accept link in the p
                                     'comment': { 'value': comment_content}
                                 },
                                 forum = JOURNAL_REQUEST_ID,
-                                replyto = note.id,
-                                readers = note.readers
+                                replyto = note.id
                             ))
                     return response
 
