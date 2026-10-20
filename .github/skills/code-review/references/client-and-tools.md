@@ -56,7 +56,7 @@ Conflicts are also recomputed per paper in `venue/matching.py` `_build_conflicts
 ## Bulk helpers
 
 - `get_all_notes`, `get_all_groups`, `get_all_edges`, `iterget_*` paginate server-side limits; `get_notes` alone returns one page. A process that counts or acts on "all" submissions through `get_notes` misses everything past the limit.
-- `concurrent_requests(fn, items, desc, max_workers)` and `post_bulk_edges` / `post_bulk_tags` bound concurrency. `post_bulk_edges` deletes and re-posts in batches; callers that need the deletes to land first pass `wait_to_finish=True` to `delete_edges`.
+- `concurrent_requests(fn, items, desc, max_workers)` and `post_bulk_edges` / `post_bulk_tags` bound concurrency. `post_bulk_edges` only batches `client.post_edges()` calls; it deletes nothing. A caller that replaces conflicts, affinity scores or assignments must call `client.delete_edges(invitation_id)` itself first, as `Matching._build_conflicts()` does, and pass `wait_to_finish=True` when the new edges are posted right after. A replacement path that omits the delete leaves stale edges alongside the new ones.
 - `add_members_to_group` and `remove_members_from_group` on `anonids` groups operate on `members`, not `anon_members`; #3264 fixed removal targeting the wrong member and #3289 fixed group lookup by `member` rather than `signatory`. A helper that looks up an anonymous group by `signatory` matches the venue, not the reviewer.
 
 ## Attachments and files

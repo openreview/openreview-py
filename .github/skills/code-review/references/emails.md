@@ -2,7 +2,9 @@
 
 Email is the one output of this library that cannot be un-read. Every `client.post_message()` in a process function sends as the venue, to whoever is in `recipients`, with whatever text was formatted. The server resolves group ids to members and emails, so a wrong group is a wrong audience of hundreds.
 
-## Required shape
+## Required shape (V2 client)
+
+Processes under `venue/`, `journal/process/`, `arr/`, `workflows/` and `profile/` run on `openreview.api.OpenReviewClient` and send:
 
 ```python
 client.post_message(
@@ -20,6 +22,10 @@ client.post_message(
 - `invitation=` and `signature=` are what let the API authorize the message and attribute it; a call without them fails for the venue token or is attributed wrongly. Journals pass `journal.get_meta_invitation_id()` and `journal.get_message_sender()`.
 - `parentGroup=` scopes recipients to members of that group; it is used when `recipients` is a broad group and only the intersection should be mailed.
 - Guard the empty case: `if recipients:` before posting, or the call fails on an empty list.
+
+## V1 client exemption
+
+`openreview.Client.post_message(subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, useJob=False)` in `openreview/openreview.py` accepts neither `invitation` nor `signature`; passing them raises `TypeError`. The processes under `venue_request/process/`, `journal/journal_request/process/` and `agora/process/` run on that client, as do V1 venue scripts. Do not ask for those keywords there. Everything under **Audience rules** below applies to both clients.
 
 ## Audience rules
 

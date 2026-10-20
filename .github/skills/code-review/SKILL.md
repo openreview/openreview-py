@@ -37,7 +37,7 @@ Apply these from this page; open the matching reference for mechanism and edge c
 - A process must be safe to run twice. Date processes guard on `cdate > now` and filter submissions through `openreview.tools.should_match_invitation_source()`; edit processes do not assume the entity is new.
 - `domain.content` keys introduced by the PR are read with `domain.get_content_value(key, default)`; `domain.content[key]['value']` on a new key breaks every venue deployed before the PR.
 - Pre-processes reject by raising `openreview.OpenReviewException` with a message safe to show the submitter. JS pre-processes set `client.throwErrors = true`.
-- Emails carry `invitation=`, `signature=` and `sender`. Review, meta-review and decision text goes only to that note's readers; anonymous signatures are never resolved to names for recipients outside the deanonymizers.
+- Emails sent through the V2 client (`openreview.api.OpenReviewClient`) carry `invitation=`, `signature=` and `sender`. The V1 `openreview.Client.post_message()` accepts neither `invitation` nor `signature`; the `venue_request/`, `journal/journal_request/` and `agora/` processes run on it, so do not ask for those keywords there. Audience rules apply to both clients: review, meta-review and decision text goes only to that note's readers, and anonymous signatures are never resolved to names for recipients outside the deanonymizers.
 - A webfield constant substituted with `.replace("var X = '';", ...)` is visible to every user who loads the page. Only venue configuration goes there.
 
 ### `openreview/profile/` → `references/profile-management.md`
