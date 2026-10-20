@@ -24,7 +24,7 @@ For each item, decide whether it applies to the target and whether the code hand
 
 ## 3. Emails
 
-- [ ] **`invitation=` and `signature=` present** on every V2 `post_message`, with `sender` from `domain.content`. Not applicable to the V1 `openreview.Client`, which accepts neither; `venue_request/`, `journal/journal_request/` and `agora/` processes run on it.
+- [ ] **`invitation=` and `signature=` present** on every V2 `post_message`, with `sender` from `domain.content`. Not applicable to the V1 `openreview.Client`, which accepts neither; `venue_request/` and `agora/` processes run on it. `journal/journal_request/` is V2 and must pass both.
 - [ ] **Content follows readers.** Review, meta-review, decision and comment text is quoted only to recipients who are readers of that note, branching on the stage's release settings and `users_to_notify` / `email_*` flags.
 - [ ] **Actor and silent groups excluded.** `ignoreRecipients` carries the triggering user, the venue and support groups, and groups the settings say not to notify.
 - [ ] **Recipients are groups or ids**, never raw email lists pulled from profiles.
@@ -34,8 +34,8 @@ For each item, decide whether it applies to the target and whether the code hand
 
 ## 4. Edges and matching
 
-- [ ] **Author nonreaders** on assignment, proposed assignment, invite assignment, aggregate score and affinity score edges, and on bid edges.
-- [ ] **Conflict edges** readable by the venue (and the configured chairs) only.
+- [ ] **Edge readers** are the venue, the configured chairs for the committee being matched, and the edge tail `${2/tail}`, as `Matching._create_edge_invitation()` builds them. This applies to conflict, affinity, assignment-type and custom max papers edges alike; the tail reading their own edge is supported, an authors group among the readers is not.
+- [ ] **Author nonreaders** on assignment, proposed assignment, invite assignment, aggregate score and affinity score edges, and on bid edges. Conflict edges carry no author nonreader by design.
 - [ ] **Bid readers** are the venue, the assigned chairs and `${2/tail}`.
 - [ ] **Edge signatures equal the actor.** Reviewer-signed edges have `signatures == [tail]` or the actor's anonymous group; AC-signed edges use the anonymous AC id.
 - [ ] **Conflict detection unchanged or justified.** `get_conflicts`, the info functions, `subdomains`, `duplicate_domains.json`, `common_domains` and `n_years` produce no fewer conflicts than before for the same profiles; venue `conflict_policy` falls through to `default`, not to none.
@@ -83,4 +83,4 @@ For each item, decide whether it applies to the target and whether the code hand
 - [ ] **Pagination correct.** "All" means `get_all_*` or `iterget_*`, not one page of `get_*`.
 - [ ] **TLS verification on.** No `verify=False`.
 - [ ] **New dependency justified.** Standard library preferred; the package supports 3.9 and is acceptable on API servers; it is added to `pyproject.toml` and `requirements.txt` regenerated.
-- [ ] **New subpackage packaged.** Listed in `[tool.setuptools.packages.find] include`.
+- [ ] **New subpackage packaged.** Listed in `[tool.setuptools.packages.find] include`, and any new `process/`, `webfield/` or data directory has `include` lines in `MANIFEST.in` (the `openreview = ["*"]` package-data pattern is not recursive).

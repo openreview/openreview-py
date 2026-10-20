@@ -55,10 +55,14 @@ A reply cannot be more visible than its forum. Ethics reviews, retractions, deci
 
 Edges are where integrity leaks hide, because their readers are easy to get right for the venue and wrong for the people the edge is about:
 
-- Assignment, proposed assignment, invite assignment, aggregate score and affinity score edges: `readers = [venue, (SAC group), (AC group)]`, `nonreaders = [authors group of the head]`. Authors must never learn who reviews them, or how close a match a reviewer was.
+`Matching._create_edge_invitation()` builds one reader set for every matching edge type and then varies the nonreaders:
+
+- Readers start at `[venue]`, add the configured chairs for the committee being matched (per-paper senior area chairs and area chairs when matching reviewers; ethics chairs when matching ethics reviewers), and always end with the edge tail, `${2/tail}`. The reviewer, area chair or ethics reviewer an edge is about can read their own edge. `tests/test_acs_and_reviewers.py` asserts exactly this for conflict edges: `[venue, Submission${{2/head}/number}/Action_Editors, ${2/tail}]`.
+- Nonreaders are `[authors group of the head]` on affinity score edges and on assignment-type edges (assignment, proposed assignment, invite assignment, aggregate score). Authors must never learn who reviews them or how close a match a reviewer was.
+- Conflict edges carry the same readers (venue, configured chairs, tail) and no author nonreader. Do not flag chairs or the tail as a leak on a conflict edge; flag a reader outside that set, or an authors group among the readers.
 - Bid edges: readers are the venue, the assigned area chairs and the bidder (`${2/tail}`); nonreaders are the authors.
-- Conflict edges and the invitation `content.hash_seed` for recruitment are readable by the venue only.
-- Custom max papers, availability and constraint-label edges belong to the tail: readers include `${2/tail}`, no paper-specific nonreaders.
+- Custom max papers, custom user demands and constraint-label edges belong to the tail: readers include `${2/tail}`, no paper-specific nonreaders. When an alternate matching group is configured, `${2/head}` is added to the readers and nonreaders are cleared.
+- Recruitment `hash_seed` in invitation `content` stays readable by the venue only. It is a credential, not an edge.
 - Edge signatures must be the actor: a reviewer-signed edge has `signatures == [tail]` or the actor's anonymous group; an AC signs with their anonymous id.
 
 Journal edges follow the same shape with action editors in place of area chairs; `journal/assignment.py` and the `*_assignment_process.py` files move pending-review counters on those edges, so a readers change there also changes what the Editors-in-Chief console shows.

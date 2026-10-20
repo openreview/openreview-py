@@ -4,7 +4,7 @@ Email is the one output of this library that cannot be un-read. Every `client.po
 
 ## Required shape (V2 client)
 
-Processes under `venue/`, `journal/process/`, `arr/`, `workflows/` and `profile/` run on `openreview.api.OpenReviewClient` and send:
+Processes under `venue/`, `journal/process/`, `journal/journal_request/`, `arr/`, `workflows/` and `profile/` run on `openreview.api.OpenReviewClient` and send:
 
 ```python
 client.post_message(
@@ -25,7 +25,7 @@ client.post_message(
 
 ## V1 client exemption
 
-`openreview.Client.post_message(subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, useJob=False)` in `openreview/openreview.py` accepts neither `invitation` nor `signature`; passing them raises `TypeError`. The processes under `venue_request/process/`, `journal/journal_request/process/` and `agora/process/` run on that client, as do V1 venue scripts. Do not ask for those keywords there. Everything under **Audience rules** below applies to both clients.
+`openreview.Client.post_message(subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, useJob=False)` in `openreview/openreview.py` accepts neither `invitation` nor `signature`; passing them raises `TypeError`. The processes under `venue_request/process/` and `agora/process/` run on that client, as do V1 venue scripts. Do not ask for those keywords there. `journal/journal_request/process/` is V2 (`JournalRequest` is constructed with `OpenReviewClient` in `tests/conftest.py`, and `request_form_process.py` passes `invitation=` and `signature=`), so the V2 checks apply to it. Everything under **Audience rules** below applies to both clients.
 
 ## Audience rules
 
@@ -39,7 +39,7 @@ client.post_message(
 
 **Recruitment.** `tools.recruit_reviewer()`, `tools.recruit_user()` and the `*recruitment_process.py` files send invitations containing an HMAC-signed link (`get_user_hash_key(user, hash_seed)`, SHA-256 over the venue's `hash_seed`, which has `readers: [venue]`). The link is the credential: the pre-process recomputes the HMAC and checks membership in the invited group before accepting a response. A change that stores `hash_seed` with wider readers, uses a different user string for signing than for verification, or skips the invited-group check lets anyone accept on another person's behalf.
 
-**Message content from users.** Subjects and bodies embed submission titles, comment text and reviewer-written messages via f-strings. That is plain-text email, so there is no injection concern, but a title that is `None` raises inside the f-string; use `.get()` chains for optional fields.
+**Message content from users.** Subjects and bodies embed submission titles, comment text and reviewer-written messages via f-strings. That is plain-text email, so there is no injection concern. `submission.content['title']['value']` raises `KeyError` on a form without that field, which aborts the process; a `.get()` chain avoids the crash but formats a missing value as the literal text `None`, which is a wording defect, not a crash. Flag the first as a failure and the second only as text quality.
 
 ## Tests
 

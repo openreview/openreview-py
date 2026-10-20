@@ -28,7 +28,7 @@ Apply these from this page; open the matching reference for mechanism and edge c
 - `'everyone'` enters a readers list only behind a check that the submission is public (`submission_stage.public`, `journal.is_submission_public()`, `release_to_public`). An ethics review, a retraction, a comment or a decision cannot be more visible than its submission.
 - Anonymous committee members are referenced by anonymous group (`get_reviewers_id(number, anon=True)`, `get_area_chairs_id(number, anon=True)`) in `signatures` and in per-reviewer readers. A profile id or the non-anonymous group appears there only when the venue is not anonymous.
 - Edit readers mirror note readers (`'${2/note/readers}'`), and `nonreaders` are carried together with `readers`. Dropping a `nonreaders` list while widening `readers` is a finding.
-- Assignment, proposed assignment, affinity and bid edges carry `nonreaders: [authors group]`. Conflict edges and invitation `hash_seed` content stay readable by the venue only.
+- Matching edges are readable by the venue, the configured chairs and the edge tail (`${2/tail}`); conflict edges included. Assignment, proposed assignment, affinity and bid edges additionally carry `nonreaders: [authors group]`. An authors group among any edge's readers, or a reader outside that set, is the finding. Recruitment `hash_seed` content stays readable by the venue only.
 - A builder change must be safe on a venue deployed by an older version: new `domain.content` keys get defaults where they are read, invitation and group ids do not change, and `save_invitation` does not wipe content a PC edited.
 - The classic path (`venue_request/`) and the template path (`workflows/`) deploy the same stages. A behaviour change in one usually needs the same change in the other.
 
@@ -37,7 +37,7 @@ Apply these from this page; open the matching reference for mechanism and edge c
 - A process must be safe to run twice. Date processes guard on `cdate > now` and filter submissions through `openreview.tools.should_match_invitation_source()`; edit processes do not assume the entity is new.
 - `domain.content` keys introduced by the PR are read with `domain.get_content_value(key, default)`; `domain.content[key]['value']` on a new key breaks every venue deployed before the PR.
 - Pre-processes reject by raising `openreview.OpenReviewException` with a message safe to show the submitter. JS pre-processes set `client.throwErrors = true`.
-- Emails sent through the V2 client (`openreview.api.OpenReviewClient`) carry `invitation=`, `signature=` and `sender`. The V1 `openreview.Client.post_message()` accepts neither `invitation` nor `signature`; the `venue_request/`, `journal/journal_request/` and `agora/` processes run on it, so do not ask for those keywords there. Audience rules apply to both clients: review, meta-review and decision text goes only to that note's readers, and anonymous signatures are never resolved to names for recipients outside the deanonymizers.
+- Emails sent through the V2 client (`openreview.api.OpenReviewClient`) carry `invitation=`, `signature=` and `sender`. The V1 `openreview.Client.post_message()` accepts neither `invitation` nor `signature`; the `venue_request/` and `agora/` processes run on it, so do not ask for those keywords there. `journal/journal_request/` runs on the V2 client and must pass both. Audience rules apply to both clients: review, meta-review and decision text goes only to that note's readers, and anonymous signatures are never resolved to names for recipients outside the deanonymizers.
 - A webfield constant substituted with `.replace("var X = '';", ...)` is visible to every user who loads the page. Only venue configuration goes there.
 
 ### `openreview/profile/` → `references/profile-management.md`
@@ -58,9 +58,9 @@ Apply these from this page; open the matching reference for mechanism and edge c
 - A test for a bug must fail before the fix. Run and cite tests at the file level.
 
 ### `.circleci/`, `.github/workflows/`, `pyproject.toml` → `references/ci-and-packaging.md`
-- A new subpackage directory must be added to `[tool.setuptools.packages.find] include` or it is missing from the wheel the API servers install.
+- A new subpackage directory must be added to `[tool.setuptools.packages.find] include`, and a new resource directory (`process/`, `webfield/`, data files) needs `include` lines in `MANIFEST.in`; the `openreview = ["*"]` package-data pattern is not recursive. Either omission means files missing from the wheel the API servers install.
 - PR builds run only the modified test files first, then the full suite. A library change with no modified test file gets no targeted run; say so when the change deserves one.
-- Deploy workflows run on `workflow_dispatch` only and authenticate to GCP with OIDC. No `pull_request_target`, no PR-controlled data in a `run:` block.
+- Production deploy workflows run on `workflow_dispatch` only; `deploy-dev.yml` also accepts `repository_dispatch` of type `openreview-py-updated`, the supported staging trigger. All authenticate to GCP with OIDC. No `pull_request_target`, no PR-controlled data in a `run:` block, no new trigger on the production workflows.
 
 ## Severity
 

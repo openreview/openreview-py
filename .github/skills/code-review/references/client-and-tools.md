@@ -20,7 +20,12 @@
 
 ## Errors
 
-`OpenReviewException` carries the server's error dict (`name`, `message`, `details`) from `__handle_response`. `tools.get_group`, `get_note`, `get_invitation` and `get_profile` return `None` on `NotFoundError` and re-raise anything else. A new helper that swallows every `OpenReviewException` to return `None` hides forbidden and validation errors, which in a process function means a silent skip instead of a retry.
+`OpenReviewException` carries the server's error dict (`name`, `message`, `details`) from `__handle_response`. The lookup helpers do not share one contract:
+
+- `tools.get_group`, `get_note` and `get_profile` return `None` only on not-found (`NotFoundError`, or a "Not Found" message) and re-raise everything else.
+- `tools.get_invitation` catches **every** `OpenReviewException`, prints it and returns `None`, including forbidden and validation errors. In a privileged process, `if not openreview.tools.get_invitation(client, id): create it` therefore treats a permission error as "does not exist". Do not describe it as a not-found guard, and do not flag existing callers for relying on it; a new caller that uses it to decide whether to create or overwrite something should be asked to use `client.get_invitation` with explicit not-found handling.
+
+The rule for **new** helpers is the first contract: return `None` on not-found, re-raise the rest. Swallowing every `OpenReviewException` hides forbidden and validation errors, which in a process function means a silent skip instead of a retry.
 
 ## Profiles and emails
 

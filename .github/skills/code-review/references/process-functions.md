@@ -32,7 +32,7 @@ This is deliberate: it lets one script serve many invitations and be updated in 
 
 - `if cdate > now: return` at the top of a date process, so an invitation scheduled for the future does nothing when its parent is re-saved.
 - `if edge.tcdate != edge.tmdate: return` or checking `edit.note.ddate` to distinguish create, update and delete.
-- Looking the entity up before creating it (`openreview.tools.get_group`, `get_invitation`, `get_note` return `None` on not-found) rather than catching a duplicate error.
+- Looking the entity up before creating it rather than catching a duplicate error. `openreview.tools.get_group` and `get_note` return `None` on not-found only; `openreview.tools.get_invitation` returns `None` on *any* `OpenReviewException`, so a create-if-missing check built on it also fires on a forbidden or validation error.
 - `client.post_invitation_edit(..., replacement=False)` and `post_group_edit` that add to `members` instead of overwriting.
 
 **Filter submissions by source.** Date processes that fan out over submissions list them with `client.get_all_notes(invitation=submission_id, ...)` and then keep only those where `openreview.tools.should_match_invitation_source(client, invitation, note, domain=domain)` is true. Skipping the filter acts on withdrawn, desk-rejected and already-decided papers; #3283 added a regression test for exactly that.
@@ -41,7 +41,7 @@ This is deliberate: it lets one script serve many invitations and be updated in 
 
 **New keys need defaults.** `domain.get_content_value('key', default)` for anything introduced in the same PR or recently. `domain.content['key']['value']` is only safe for keys every deployed venue has had since it was created (`meta_invitation_id`, `submission_id`, `submission_name`, `program_chairs_id`, `title`). The parent invitation's content has the same problem: `parent_invitation.get_content_value('users_to_notify', [])`.
 
-**Do not assume content.** `submission.content.get('title', {}).get('value')` rather than `submission.content['title']['value']` — venues define their own submission forms (#3193).
+**Do not assume content.** `submission.content['title']['value']` raises `KeyError` when the venue's form has no such field; venues define their own submission forms (#3193). `submission.content.get('title', {}).get('value')` does not raise, but it yields `None`, and formatting `None` into an f-string produces the text `None` in a subject or email body rather than an error. So a missing-key lookup is a crash finding; a `.get()` chain feeding an f-string is at most a wording defect, not a crash.
 
 **Bulk work is bounded.** Fan-outs go through `openreview.tools.concurrent_requests(fn, items, desc=..., max_workers=...)` or `post_bulk_edges`. An unbounded thread pool or a sequential loop over thousands of submissions is a timeout, and the retry starts over.
 
