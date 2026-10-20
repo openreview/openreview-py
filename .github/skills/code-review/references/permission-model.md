@@ -38,7 +38,7 @@ Signs of a leak in a diff:
 
 - `signature_group.members[0]`, `profile.get_preferred_name()` or `profile.id` resolved from an anonymous signature and then placed in a note, an email body, a subject line, a tag or a `print()`.
 - A comment, email or tag whose readers include `authors` while its text names a reviewer.
-- `anon_members` or `client.get_groups(prefix=anon_prefix, member=...)` used with a client other than the venue's, or its result returned to a caller who is not a deanonymizer.
+- The result of `anon_members` or `client.get_groups(prefix=anon_prefix, member=...)` disclosing *another* member's identity to someone outside the group's `deanonymizers`: written into a note, email, tag, log or webfield that a non-deanonymizer reads. The client used is not the test. A reviewer looking up their own anonymous group with their own client to sign a review (`tests/test_assignment_removal.py`) is supported, and so is a deanonymizer such as an assigned area chair or the venue resolving members. What matters is who ends up seeing which identity.
 - A journal path that assumes `is_action_editor_anonymous()` is false, or that reviewer-to-reviewer anonymity is off, without checking the setting.
 
 ## Public vs restricted

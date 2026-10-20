@@ -20,7 +20,7 @@ For each item, decide whether it applies to the target and whether the code hand
 - [ ] **No resolution outside the deanonymizers.** `signature_group.members[0]`, `anon_members`, `get_groups(prefix=anon, member=...)` results and `profile.get_preferred_name()` of an anonymous actor never reach a note, email body or subject, tag, webfield constant, bibtex or `print()` destined for a non-deanonymizer.
 - [ ] **Authors stay hidden where they should.** Bibtex uses `anonymous=True` while author fields are hidden, including for withdrawn and desk-rejected papers; new-submission and revision emails with author lists go to authors and PCs only.
 - [ ] **Journal flags honoured.** `are_authors_anonymous()`, `is_action_editor_anonymous()`, `is_reviewer_to_reviewer_anonymous()` are consulted wherever AE or reviewer identity could be shown.
-- [ ] **Group lookups use the right client.** Anonymous groups are looked up with the client that owns the signatory (the venue), and lookups match by `member`, not `signatory`.
+- [ ] **Group lookups disclose nothing beyond the deanonymizers.** A member may look up their own anonymous group with their own client, and a configured deanonymizer may resolve members; neither is a finding. Flag a lookup whose result reveals another member's identity to a user outside `deanonymizers`. Lookups match by `member`, not `signatory`; a `signatory` match returns the venue's groups rather than the member's.
 
 ## 3. Emails
 
