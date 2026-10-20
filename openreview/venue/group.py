@@ -357,6 +357,12 @@ class GroupBuilder(object):
         if self.venue.comment_notification_threshold:
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
 
+        if venue_group.content.get('withdrawn_submission_reveal_authors'):
+            content['withdrawn_submission_reveal_authors'] = { 'value': self.venue.submission_stage.withdrawn_submission_reveal_authors }
+
+        if venue_group.content.get('desk_rejected_submission_reveal_authors'):
+            content['desk_rejected_submission_reveal_authors'] = { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors }
+
         if self.venue.is_template_related_workflow():
             content['workflow_stages'] = { 'value': get_workflow_stage_order(self.venue) }
             submission_name = self.venue.submission_stage.name

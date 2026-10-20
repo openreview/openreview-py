@@ -60,6 +60,8 @@ To know more about the decision, please follow this link: https://openreview.net
             client.delete_edges(invitation=journal.get_ae_conflict_id(), head=submission.id, soft_delete=True)
             client.delete_edges(invitation=journal.get_ae_aggregate_score_id(), head=submission.id, soft_delete=True)
             client.delete_edges(invitation=journal.get_ae_resubmission_score_id(), head=submission.id, soft_delete=True)                
+            if journal.get_tracks():
+                client.delete_edges(invitation=journal.get_ae_track_score_id(), head=submission.id, soft_delete=True)
 
             for reviewer_assignment_edge in submission_rev_assignments:
                 print(reviewer_assignment_edge.head, reviewer_assignment_edge.tail)

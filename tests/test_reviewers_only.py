@@ -3342,6 +3342,41 @@ url={https://openreview.net/forum?id='''+submissions[2].id+'''}
         assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
         assert submissions[3].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
 
+        # re-run Submission_Change_Before_Reviewing after some submissions were accepted/rejected,
+        # accepted venueid is a substring of the submission venueid, make sure they are ignored
+        submission_change_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        assert submission_change_inv.content['source']['value']['venueid'] == ['ABCD.cc/2025/Conference/Submission']
+
+        openreview_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Edit',
+            signatures=['ABCD.cc/2025/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()),
+                signatures=['ABCD.cc/2025/Conference']
+            )
+        )
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=4)
+
+        domain = openreview_client.get_group('ABCD.cc/2025/Conference')
+        submission_change_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        updated_submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert updated_submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference'
+        assert not openreview.tools.should_match_invitation_source(openreview_client, submission_change_inv, updated_submissions[0], domain=domain)
+        assert updated_submissions[2].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
+        assert not openreview.tools.should_match_invitation_source(openreview_client, submission_change_inv, updated_submissions[2], domain=domain)
+        assert openreview.tools.should_match_invitation_source(openreview_client, submission_change_inv, updated_submissions[1], domain=domain)
+
+        # accepted and rejected submissions were not modified
+        assert updated_submissions[0].readers == ['everyone']
+        assert updated_submissions[0].mdate == submissions[0].mdate
+        assert updated_submissions[2].mdate == submissions[2].mdate
+
+        # a source venueid stored as a string is normalized to a list, no substring matching
+        submission_change_inv.content['source']['value']['venueid'] = 'ABCD.cc/2025/Conference/Submission'
+        assert openreview.tools.get_invitation_source(submission_change_inv, domain)['venueid'] == ['ABCD.cc/2025/Conference/Submission']
+        assert not openreview.tools.should_match_invitation_source(openreview_client, submission_change_inv, updated_submissions[0], domain=domain)
+
     def test_reviewer_stats_computation(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)

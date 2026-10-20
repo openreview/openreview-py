@@ -643,6 +643,33 @@ class TestARRVenueV2():
         helpers.await_queue_edit(client, invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number))
 
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/June')
+
+        # June is the newest cycle by creation date, April is pruned
+        active_venues = openreview_client.get_group('active_venues')
+        arr_active_venues = {
+            venue_id for venue_id in active_venues.members
+            if venue_id.startswith('aclweb.org/ACL/ARR')
+        }
+        assert arr_active_venues == {
+            'aclweb.org/ACL/ARR/2023/June',
+            'aclweb.org/ACL/ARR/2023/August'
+        }
+
+        # Setup on an older cycle re-adds it to active_venues, pruning must remove it again and keep the newer cycles
+        openreview_client.add_members_to_group('active_venues', 'aclweb.org/ACL/ARR/2023/April')
+        april_venue = openreview.venue.Venue(openreview_client, 'aclweb.org/ACL/ARR/2023/April', 'openreview.net/Support')
+        openreview.arr.ARR(openreview_client, 'aclweb.org/ACL/ARR/2023/April', 'openreview.net/Support', venue=april_venue).prune_active_arr_venues()
+
+        active_venues = openreview_client.get_group('active_venues')
+        arr_active_venues = {
+            venue_id for venue_id in active_venues.members
+            if venue_id.startswith('aclweb.org/ACL/ARR')
+        }
+        assert arr_active_venues == {
+            'aclweb.org/ACL/ARR/2023/June',
+            'aclweb.org/ACL/ARR/2023/August'
+        }
+
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Senior_Area_Chairs')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Area_Chairs')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Ethics_Chairs')
@@ -2614,6 +2641,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ['aclweb.org/ACL/ARR/2023/August', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].content['authorids']['value']
 
+        # Check the list of authors is included in the submission email
+        messages = openreview_client.get_messages(to='peter@mail.com', subject='ARR - August 2023 has received your submission titled Paper title 1')
+        messages = [m for m in messages if f'Submission Number: {submissions[0].number}\n' in m['content']['text']]
+        assert len(messages) == 1
+        assert f'''Title: Paper title 1
+
+Authors: SomeFirstName User, Peter SomeLastName, Andrew Mc, SAC ARROne 
+
+Abstract: This is an abstract 1''' in messages[0]['content']['text']
+
         # Try additional submission posting with August paper
         note = openreview.api.Note(content = _generate_valid_content(0, domains, june_submission))
         with pytest.raises(openreview.OpenReviewException, match=r'The provided URL points to a submission in the current cycle. Please provide a link to a previous ARR submission.'):
@@ -2896,6 +2933,17 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Post_Submission-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Post_Submission-0-1', count=2)
+
+        # Setup on an older cycle does not prune newer cycles
+        active_venues = openreview_client.get_group('active_venues')
+        arr_active_venues = {
+            venue_id for venue_id in active_venues.members
+            if venue_id.startswith('aclweb.org/ACL/ARR')
+        }
+        assert arr_active_venues == {
+            'aclweb.org/ACL/ARR/2023/June',
+            'aclweb.org/ACL/ARR/2023/August'
+        }
 
         withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
         assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content

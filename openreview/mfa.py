@@ -2,16 +2,32 @@ import sys
 from . import tools
 
 
-def _is_interactive():
-    """Check if interactive input is available (terminal or notebook)."""
-    if sys.stdin.isatty():
-        return True
+def _is_marimo_notebook() -> bool:
+    """Check if we are running inside a Marimo notebook."""
+
     try:
-        if 'IPKernelApp' in get_ipython().config:
-            return True
+        import marimo
+
+        return marimo.running_in_notebook()
+    except ModuleNotFoundError:
+        pass
+    return False
+
+
+def _is_jupyter_notebook() -> bool:
+    """Check if we are running inside a Jupyter notebook."""
+
+    try:
+        return "IPKernelApp" in get_ipython().config
     except NameError:
         pass
     return False
+
+
+def _is_interactive():
+    """Check if interactive input is available (terminal or notebook)."""
+    return sys.stdin.isatty() or _is_jupyter_notebook() or _is_marimo_notebook()
+
 
 def _default_mfa_method_chooser(mfa_methods, preferred_method):
     """Phase 1: Choose MFA method interactively."""

@@ -96,10 +96,10 @@ async function process(client, edge, invitation) {
   }
 
   if (reviewersAnonName) {
-    const { groups: anonGroups } = await client.getGroups({ prefix: `${submissionGroupId}/${reviewersAnonName}`, signatory: edge.tail })
+    const { groups: anonGroups } = await client.getGroups({ prefix: `${submissionGroupId}/${reviewersAnonName}`, member: edge.tail })
 
-    if (!anonGroups?.length) { 
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can remove assignment, signatory groups not found for ${edge.tail}` }))
+    if (!anonGroups?.length) {
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not remove assignment, anonymous group not found for ${edge.tail}` }))
     }
 
     const { notes } = await client.getNotes({ invitation: `${submissionGroupId}/-/` + reviewName, signatures: anonGroups[0].id, limit: 1 })
