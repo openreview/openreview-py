@@ -40,13 +40,15 @@ The rule for **new** helpers is the first contract: return `None` on not-found, 
 | Policy | Function | Domains come from |
 |---|---|---|
 | `default` | `get_profile_info` | institution history and email domains, all years unless `n_years` |
-| `NeurIPS` | `get_neurips_profile_info` | institutions only, with a relations window |
-| `Comprehensive` | `get_comprehensive_profile_info` | the widest set |
+| `NeurIPS` | `get_neurips_profile_info` | institution history within `n_years`, excluding positions containing "intern"; **falls back to the profile's email domains when no institution domain remains**. Coauthor and coworker relations are windowed by `n_years`; other relation types are kept in full |
+| `Comprehensive` | `get_comprehensive_profile_info` | institution history within `n_years` including interns, with the same email-domain fallback when no institution domain remains |
 | callable | wrapped by `info_function_builder` | whatever the venue supplies |
+
+The email-domain fallback matters: a profile with no institution history, or whose positions all ended before the `n_years` cut-off, would otherwise contribute no domains at all and conflict with nobody. Removing the `if not domains:` branch, or making it conditional on something else, silently drops conflict detection for exactly those profiles while every profile with history keeps behaving the same, so tests on well-filled fixtures will not catch it.
 
 `subdomains()` expands `a.b.edu` to its parents and maps through `duplicate_domains.json`; `common_domains` (gmail and similar) are excluded so that two Gmail users are not conflicted. Treat any of the following as integrity findings that need a stated reason and a test in `tests/test_tools.py`:
 
-- A domain, relation, publication or email source removed from an info function.
+- A domain, relation, publication or email source removed from an info function, including the email-domain fallback in the NeurIPS and Comprehensive policies.
 - `n_years` applied where it was not, or a window shortened.
 - A new entry in `common_domains` for a domain that is actually an institution.
 - `duplicate_domains.json` mapping changed so that two institutions stop being equal.
@@ -66,4 +68,9 @@ Conflicts are also recomputed per paper in `venue/matching.py` `_build_conflicts
 
 ## Attachments and files
 
-`get_attachment()` returns bytes; `tools.get_all_attachments()` and `get_expertise_results(format='csv')` write to caller-supplied paths with `open(path, 'wb')`. Paths come from the script author, not from the server, so traversal is not a concern; overwriting without warning is a usability note at most. `put_attachment()` and `post_profile_document()` stream a local file to the server, which validates type and size.
+Distinguish two sources of path components:
+
+- **Caller-selected destinations.** `get_expertise_all_results(job_id, output_filename=...)` writes the downloaded scores to the filename the script author passes (`get_expertise_results()` returns parsed rows and writes nothing). `tools.get_all_attachments(..., output_dir)` takes its directory from the caller. A path the script author chose is not a traversal concern; overwriting without warning is a usability note at most.
+- **Server-supplied filenames.** Inside `get_all_attachments()`, the multi-note branch extracts a ZIP returned by the API and writes each entry with `os.path.join(output_dir, member.filename)` and no check that the result stays inside `output_dir`. A member named `../outside.txt` lands outside the directory. The server is trusted today, but this is a trust boundary: review any change to that loop, any new code that extracts archives or writes files named by a server response, and any new field whose value reaches a filename. The guard is to resolve the joined path and reject it unless it starts with the resolved `output_dir`, or to write under a name the client derives itself (the single-note branch does this with `{note.number}_{field_name}.{extension}`).
+
+`put_attachment()` and `post_profile_document()` stream a local file to the server, which validates type and size.

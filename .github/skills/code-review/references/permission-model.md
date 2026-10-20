@@ -61,7 +61,8 @@ Edges are where integrity leaks hide, because their readers are easy to get righ
 - Nonreaders are `[authors group of the head]` on affinity score edges and on assignment-type edges (assignment, proposed assignment, invite assignment, aggregate score). Authors must never learn who reviews them or how close a match a reviewer was.
 - Conflict edges carry the same readers (venue, configured chairs, tail) and no author nonreader. Do not flag chairs or the tail as a leak on a conflict edge; flag a reader outside that set, or an authors group among the readers.
 - Bid edges: readers are the venue, the assigned area chairs and the bidder (`${2/tail}`); nonreaders are the authors.
-- Custom max papers, custom user demands and constraint-label edges belong to the tail: readers include `${2/tail}`, no paper-specific nonreaders. When an alternate matching group is configured, `${2/head}` is added to the readers and nonreaders are cleared.
+- Custom max papers, custom user demands and constraint-label edges belong to the tail: readers include `${2/tail}`, no paper-specific nonreaders.
+- Profile-to-profile matching is exempt from the author-nonreader rule. `setup_committee_matching(committee_id, ..., alternate_matching_group=...)` matches members of one group to members of another (mentors to mentees in `tests/test_matching_v2.py`). The head is then a profile with `inGroup: alternate_matching_group`, `${2/head}` is appended to the readers so both people can see the edge, and nonreaders are cleared because there is no paper and no authors group. Requiring an authors nonreader there, or flagging the head reader, rejects a supported configuration.
 - Recruitment `hash_seed` in invitation `content` stays readable by the venue only. It is a credential, not an edge.
 - Edge signatures must be the actor: a reviewer-signed edge has `signatures == [tail]` or the actor's anonymous group; an AC signs with their anonymous id.
 

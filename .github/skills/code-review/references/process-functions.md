@@ -4,7 +4,8 @@ Files under `openreview/venue/process/`, `openreview/journal/process/`, `openrev
 
 ## Execution model
 
-- The server supplies `openreview`, `datetime`, `json` and `re` already imported, plus an authenticated `client`, and calls the function. Nothing else is available; a process that needs `urllib.parse`, `Crypto.Hash` or `csv` imports it inside the function body. A module-level import in a process file is fine in Python but a top-level statement other than `def` or `import` runs before the call and has no `client`.
+- For a process file the API executes directly, the server supplies `openreview`, `datetime`, `json` and `re` already imported, plus an authenticated `client`, and calls the function. Nothing else is available; a process that needs `urllib.parse`, `Crypto.Hash` or `csv` imports it inside the function body. A module-level import in a process file is fine in Python but a top-level statement other than `def` or `import` runs before the call and has no `client`.
+- For a script stored in the meta invitation and run by a super-process wrapper, the namespace is what the wrapper's `funcs` dict holds: `openreview` and `datetime`, plus `date_index` and `days_late_map` in the date variants. The wrapper's own `json` and `re` are not passed through. A stored script that uses `json` or `re` without importing them fails with `NameError` at run time, and that is a real finding, not a style one. Check which wrapper runs the file before deciding whether an import is missing.
 - Entry points: `process(client, edit, invitation)` for note, group, edge and tag edits; `process(client, invitation)` for date processes and cron processes; `process_update(client, entity, invitation, existing_entity)` when the invitation declares it. JS files (`*.js` beside the Python ones) use `async function process(client, edge, invitation)` and should set `client.throwErrors = true` so a failed call rejects the edit instead of continuing.
 - `token` is minted for `invitation.signatures[0]`. For venue invitations that is the venue group; for `venue_request/` and `workflows/` support flows it is `openreview.net/Support`; for `profile/` it is `~Super_User1` or support. Everything `client` does in a process is done with those credentials.
 - `openreview` is the package installed on the API server. A helper in `tools.py` or a client method is therefore server-side code when a process calls it, and a signature change there breaks every stored process that uses it until the server is upgraded and the venue is redeployed.
@@ -22,7 +23,7 @@ exec(script, funcs)
 funcs['process'](client, ...)
 ```
 
-This is deliberate: it lets one script serve many invitations and be updated in one place. It is safe because the meta invitation's `writers` are the venue and support. The things to flag are a wrapper that reads the script from somewhere a non-venue user can write (a note, a group another role edits, an edit's content), a new `funcs` entry that hands the script something it should not have, and any `exec` or `eval` outside these wrappers.
+This is deliberate: it lets one script serve many invitations and be updated in one place. It is safe because the meta invitation's `writers` are the venue and support. Note that `funcs` is the stored script's entire global namespace: only the names listed there (and whatever the script imports itself) exist when it runs. The things to flag are a wrapper that reads the script from somewhere a non-venue user can write (a note, a group another role edits, an edit's content), a new `funcs` entry that hands the script something it should not have, and any `exec` or `eval` outside these wrappers.
 
 ## Rules
 

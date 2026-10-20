@@ -34,11 +34,12 @@ For each item, decide whether it applies to the target and whether the code hand
 
 ## 4. Edges and matching
 
-- [ ] **Edge readers** are the venue, the configured chairs for the committee being matched, and the edge tail `${2/tail}`, as `Matching._create_edge_invitation()` builds them. This applies to conflict, affinity, assignment-type and custom max papers edges alike; the tail reading their own edge is supported, an authors group among the readers is not.
-- [ ] **Author nonreaders** on assignment, proposed assignment, invite assignment, aggregate score and affinity score edges, and on bid edges. Conflict edges carry no author nonreader by design.
+- [ ] **Edge readers** are the venue, the configured chairs for the committee being matched, and the edge tail `${2/tail}`, as `Matching._create_edge_invitation()` builds them. This applies to conflict, affinity, assignment-type and custom max papers edges alike; the tail reading their own edge is supported, an authors group among the readers of a paper edge is not.
+- [ ] **Author nonreaders** on paper-matching assignment, proposed assignment, invite assignment, aggregate score and affinity score edges, and on bid edges. Conflict edges carry no author nonreader by design.
+- [ ] **Profile-to-profile matching exempt.** When `setup_committee_matching(..., alternate_matching_group=...)` is used (mentors matched to mentees, `tests/test_matching_v2.py`), the head is a profile in that group, `${2/head}` is appended to the readers and nonreaders are cleared. There is no paper and no authors group; do not require one, and do not flag the head reader.
 - [ ] **Bid readers** are the venue, the assigned chairs and `${2/tail}`.
 - [ ] **Edge signatures equal the actor.** Reviewer-signed edges have `signatures == [tail]` or the actor's anonymous group; AC-signed edges use the anonymous AC id.
-- [ ] **Conflict detection unchanged or justified.** `get_conflicts`, the info functions, `subdomains`, `duplicate_domains.json`, `common_domains` and `n_years` produce no fewer conflicts than before for the same profiles; venue `conflict_policy` falls through to `default`, not to none.
+- [ ] **Conflict detection unchanged or justified.** `get_conflicts`, the info functions, `subdomains`, `duplicate_domains.json`, `common_domains` and `n_years` produce no fewer conflicts than before for the same profiles; venue `conflict_policy` falls through to `default`, not to none. The NeurIPS and Comprehensive policies fall back to email domains when no institution domain survives the `n_years` filter; a test with a profile that has no qualifying history is what catches that branch being removed.
 - [ ] **Deploy and undeploy symmetric.** `deploy_assignments()` adds group members and `undeploy_assignments()` removes them; assignment edges and per-paper group membership stay in sync through `assignment_post_process.py`.
 - [ ] **Deletions awaited** before replacements are posted (`wait_to_finish=True`, `await_process=True`).
 

@@ -19,7 +19,7 @@ Reads the expiry of the client's own token to decide when to log in again. It is
 Process output is the stored process log, and `print` is the only logging mechanism available in the wrapped script. Printing counts, ids and progress is expected. Printing tokens, emails or profile email lists is not.
 
 **Imports inside `def process(...)`.**
-The server supplies only `openreview`, `datetime`, `json` and `re`. Anything else must be imported inside the function. `from Crypto.Hash import HMAC, SHA256` inside a pre-process is the intended use of the `pycryptodome` dependency.
+For a process file the API executes directly, the server supplies only `openreview`, `datetime`, `json` and `re`; anything else must be imported inside the function, and an in-function `import` is not a finding. `from Crypto.Hash import HMAC, SHA256` inside a pre-process is the intended use of the `pycryptodome` dependency. This exemption does not extend to scripts run by the super-process wrappers (`journal/invitation.py`, `arr/invitation.py`, `workflows/templates.py`, `workflows/workflows.py`): their `exec` namespace holds only `openreview` and `datetime` (plus `date_index` and `days_late_map` for date processes), so a stored script using `json` or `re` without importing them is a genuine `NameError`.
 
 **`random.choices` in `tools.create_hash_seed()`.**
 Existing, triaged. A PR that touches the function should switch to `secrets.choice`; a PR that does not touch it should not be asked to.
