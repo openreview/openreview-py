@@ -125,6 +125,36 @@ class TestSimpleDualAnonymous():
         invitation = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Ethics_Review')
         assert invitation and invitation.content['source']['value']['content'] == { 'flagged_for_ethics_review': True }
 
+        # the ethics invitations can be configured from the workflow timeline
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review').description
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group').description
+        for invitation_id in [
+            'ICLR.cc/2026/Conference/-/Ethics_Review/Form_Fields',
+            'ICLR.cc/2026/Conference/-/Ethics_Review/Readers',
+            'ICLR.cc/2026/Conference/-/Ethics_Review/Dates',
+            'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group/Deanonymizers',
+            'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group/Dates'
+        ]:
+            assert openreview.tools.get_invitation(openreview_client, invitation_id), f'{invitation_id} not found'
+        # ethics review notifications are fixed, so there is no notifications edit
+        assert not openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Ethics_Review/Notifications')
+
+        # the ethics committee can be selected as readers of the ethics reviews and deanonymizers of the ethics reviewers
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review/Readers')
+        reader_options = [item['value'] for item in invitation.edit['content']['readers']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' in reader_options
+        assert 'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Ethics_Reviewers' in reader_options
+        assert 'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Ethics_Reviewers/Submitted' in reader_options
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group/Deanonymizers')
+        deanonymizer_options = [item['value'] for item in invitation.edit['content']['identity_visibility']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' in deanonymizer_options
+        assert 'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Ethics_Reviewers' in deanonymizer_options
+
+        # the other readers edits don't offer the ethics committee
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review/Readers')
+        reader_options = [item['value'] for item in invitation.edit['content']['readers']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' not in reader_options
+
         # the review and meta review readers are computed per submission, so the ethics reviewers of flagged submissions can be added
         for stage_name in ['Official_Review', 'Meta_Review']:
             invitation = openreview.tools.get_invitation(openreview_client, f'ICLR.cc/2026/Conference/-/{stage_name}')

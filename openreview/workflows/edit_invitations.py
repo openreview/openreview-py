@@ -624,7 +624,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
     
-    def set_edit_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None, include_authors=False):
+    def set_edit_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None, include_authors=False, include_ethics=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Readers'
@@ -656,6 +656,18 @@ class EditInvitationsBuilder(object):
             {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
             {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'}
         ])
+
+        # the ethics committee only exists for the submissions flagged for ethics review,
+        # so only the ethics review invitations offer it
+        if include_ethics:
+            ethics_chairs_id = self.get_content_value('ethics_chairs_id')
+            ethics_reviewers_name = self.get_content_value('ethics_reviewers_name', 'Ethics_Reviewers')
+            if ethics_chairs_id:
+                reply_readers.append({'value': ethics_chairs_id, 'optional': True, 'description': 'Ethics Chairs'})
+            reply_readers.extend([
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{ethics_reviewers_name}', 'optional': True, 'description': 'Assigned Ethics Reviewers'},
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{ethics_reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Ethics Reviewers who already submitted their ethics review'}
+            ])
 
         if include_signatures:
             reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
@@ -1386,7 +1398,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_group_deanonymizers_invitation(self, super_invitation_id, readers_only=False):
+    def set_edit_group_deanonymizers_invitation(self, super_invitation_id, readers_only=False, include_ethics=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id+ '/Deanonymizers'
@@ -1417,6 +1429,13 @@ class EditInvitationsBuilder(object):
             {'value': f'{venue_id}/{reviewers_name}', 'optional': True, 'description': 'All Reviewers'},
             {'value': f'{venue_id}/{submission_name}' + '${3/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
         ])
+
+        if include_ethics:
+            ethics_chairs_id = self.get_content_value('ethics_chairs_id')
+            ethics_reviewers_name = self.get_content_value('ethics_reviewers_name', 'Ethics_Reviewers')
+            if ethics_chairs_id:
+                deanonymizers.append({'value': ethics_chairs_id, 'optional': True, 'description': 'Ethics Chairs'})
+            deanonymizers.append({'value': f'{venue_id}/{submission_name}' + '${3/content/noteNumber/value}' +f'/{ethics_reviewers_name}', 'optional': True, 'description': 'Assigned Ethics Reviewers'})
 
         if not readers_only:
             group_edit = {

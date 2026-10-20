@@ -4049,7 +4049,16 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
         )
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'This step creates an Ethics Reviewers group for each submission flagged for ethics review, when the submission is flagged. Here configure the Deanonymizers which will determine which groups can see the Ethics Reviewers\' true identities.'
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id, include_ethics=True)
+            edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+
         return invitation
 
     def set_ethics_review_invitation(self):
@@ -4183,8 +4192,17 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if ethics_review_expdate:
             invitation.edit['invitation']['expdate'] = ethics_review_expdate
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'Configure the contents of the ethics review form (form fields can be added or removed), who can see the ethics reviews, and set the date/time when the ethics review form is available to ethics reviewers, when ethics reviews are due, and when the ethics review form is no longer available to ethics reviewers. The ethics review form is only created for the submissions flagged for ethics review.'
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_content_invitation(ethics_review_invitation_id)
+            edit_invitations_builder.set_edit_reply_readers_invitation(ethics_review_invitation_id, include_ethics=True)
+            edit_invitations_builder.set_edit_dates_invitation(ethics_review_invitation_id)
+
         return invitation
 
     def set_ethics_stage_invitation(self):
