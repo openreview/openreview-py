@@ -391,7 +391,7 @@ class TestVenueDeployment():
 
         # 2. rename the venue to a new domain
         # the deliberately-delayed Withdrawal-0-0 cdate job is 'delayed', not active, so it does not block the rename
-        helpers.rename_venue(openreview_client, venue_id, renamed_venue_id, request_note.id)
+        openreview_client.rename_venue(venue_id, renamed_venue_id, request_note.id, wait_for_active_jobs=True)
 
         assert openreview.tools.get_group(openreview_client, renamed_venue_id)
 

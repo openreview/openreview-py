@@ -126,21 +126,6 @@ class Helpers:
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
-    def rename_venue(super_client, old_venue_id, new_venue_id, request_form, timeout=300):
-        # The server rejects a rename with a 409 while any queue job for the venue is active.
-        # Process logs cannot tell when that is over: a log is still 'queued' after its job becomes
-        # active and already 'ok' before the job is released, so retry until the server accepts it.
-        wait_time = 0.5
-        max_iterations = int(timeout / wait_time) or 1
-        for iteration in range(max_iterations):
-            try:
-                return super_client.rename_venue(old_venue_id, new_venue_id, request_form)
-            except openreview.OpenReviewException as e:
-                if e.args[0].get('status') != 409 or iteration == max_iterations - 1:
-                    raise
-            time.sleep(wait_time)
-
-    @staticmethod
     def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0, timeout=300):
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'

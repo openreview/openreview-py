@@ -6616,7 +6616,7 @@ url={https://openreview.net/forum?id='''
 
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        helpers.rename_venue(openreview_client, 'ICML.cc/2023/Conference', 'ICML.org/2023/Conference', request_form.id)
+        openreview_client.rename_venue('ICML.cc/2023/Conference', 'ICML.org/2023/Conference', request_form.id, wait_for_active_jobs=True)
 
         assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference')
         assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Authors')
