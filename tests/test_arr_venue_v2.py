@@ -280,7 +280,7 @@ class TestARRVenueV2():
         authors_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Authors')
         assert authors_group
         assert 'AuthorConsole' in authors_group.web
-        assert 'For more information about the ACL Rolling Review process' in authors_group.web
+        assert "the 'Author Tasks' tab lists only the tasks for this specific account" in authors_group.web
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Preferred_Emails_Readers')
 
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
