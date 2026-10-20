@@ -126,16 +126,18 @@ class Helpers:
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
-    def await_venue_processes(super_client, venue_id, timeout=300):
-        # Wait until no process function for this specific venue is running, so renaming the venue
-        # is not rejected with a 409. Filtering by the venue prefix means we only wait on this
-        # venue's jobs and ignore active/scheduled jobs belonging to other venues from previous tests.
+    def rename_venue(super_client, old_venue_id, new_venue_id, request_form, timeout=300):
+        # The server rejects a rename with a 409 while any queue job for the venue is active.
+        # Process logs cannot tell when that is over: a log is still 'queued' after its job becomes
+        # active and already 'ok' before the job is released, so retry until the server accepts it.
         wait_time = 0.5
-        max_iterations = int(timeout / wait_time)
-        for _ in range(max_iterations):
-            running = super_client.get_process_logs(invitation=f'{venue_id}/.*', status='running')
-            if not running:
-                break
+        deadline = time.time() + timeout
+        while True:
+            try:
+                return super_client.rename_venue(old_venue_id, new_venue_id, request_form)
+            except openreview.OpenReviewException as e:
+                if e.args[0].get('status') != 409 or time.time() >= deadline:
+                    raise
             time.sleep(wait_time)
 
     @staticmethod

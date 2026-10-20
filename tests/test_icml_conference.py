@@ -6616,10 +6616,7 @@ url={https://openreview.net/forum?id='''
 
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        # the server rejects the rename while a process job for the venue is active, so wait for
-        # this venue's running processes to finish first (jobs from other venues are ignored)
-        helpers.await_venue_processes(openreview_client, 'ICML.cc/2023/Conference')
-        openreview_client.rename_venue('ICML.cc/2023/Conference', 'ICML.org/2023/Conference', request_form.id)
+        helpers.rename_venue(openreview_client, 'ICML.cc/2023/Conference', 'ICML.org/2023/Conference', request_form.id)
 
         assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference')
         assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Authors')
