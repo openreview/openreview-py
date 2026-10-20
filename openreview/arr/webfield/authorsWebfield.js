@@ -8,8 +8,7 @@ return {
       subtitle: domain.content.subtitle?.value,
       website: domain.content.website?.value,
       contact: domain.content.contact?.value,
-      instructions: `<p class="dark">This page provides information and status updates for your submissions to ${domain.content.subtitle?.value}. It will be regularly updated as the cycle progresses, so please check back frequently.</p>
-<p class="dark">For more information about the ACL Rolling Review process, please visit <a href="https://aclrollingreview.org" target="_blank" rel="nofollow">https://aclrollingreview.org</a>.</p>`
+      instructions: `<p class="dark">⚠️ Due to technical limitations of OpenReview, the 'Author Tasks' tab lists only the tasks for this specific account, and only in the author role. <b>See <a href="https://aclrollingreview.org/authors#submission-forms" target="_blank">here</a> for actions expected at submission time from contributors and other authors.</b></p><br>`
     },
     apiVersion: 2,
     venueId: domain.id,
