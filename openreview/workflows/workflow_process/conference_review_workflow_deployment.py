@@ -114,6 +114,17 @@ def process(client, edit, invitation):
         remove_fields=['email_sharing', 'data_release']
     )
 
+    # the ethics review stage has to be set before the venue setup and the review stages are created, so the
+    # domain stores the ethics review name and the review and meta review invitations compute their readers
+    # per submission, adding the ethics reviewers of the submissions that are flagged for ethics review
+    if venue.use_ethics_reviewers:
+        venue.ethics_review_stage = openreview.stages.EthicsReviewStage(
+            start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
+            due_date=submission_deadline_datetime + datetime.timedelta(weeks=5.5),
+            release_to_reviewers=openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE,
+            release_to_chairs=True
+        )
+
     venue.setup(note.content['program_chair_emails']['value'])
     venue.invitation_builder.set_venue_template_invitations()
 
@@ -226,6 +237,14 @@ def process(client, edit, invitation):
             },
             await_process=True
         )
+
+    if venue.ethics_review_stage:
+        # program chairs flag submissions for ethics review, which creates the per-submission ethics reviewers
+        # group and ethics review invitation, and adds the ethics reviewers as readers of the submission and its reviews
+        venue.invitation_builder.set_ethics_stage_invitation()
+        venue.invitation_builder.set_ethics_paper_groups_invitation()
+        venue.invitation_builder.set_ethics_review_invitation()
+
     venue.create_decision_stage()
 
     client.post_invitation_edit(

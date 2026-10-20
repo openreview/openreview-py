@@ -114,6 +114,22 @@ class TestSimpleDualAnonymous():
         assert 'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Message' in group.content['exclusion_workflow_invitations']['value']
         assert 'ICLR.cc/2026/Conference/Ethics_Chairs/-/Message' in group.content['exclusion_workflow_invitations']['value']
         assert '/ICLR.cc/2026/Conference/Ethics_Reviewers/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration).*/' in group.content['exclusion_workflow_invitations']['value']
+        # the ethics review stage is configured before the venue setup
+        assert group.content['ethics_review_name']['value'] == 'Ethics_Review'
+        assert group.content['release_submissions_to_ethics_chairs']['value'] == True
+
+        # flagging a submission creates its ethics reviewers group and ethics review invitation
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Ethics_Review_Flag')
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group')
+        invitation = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Ethics_Review')
+        assert invitation and invitation.content['source']['value']['content'] == { 'flagged_for_ethics_review': True }
+
+        # the review and meta review readers are computed per submission, so the ethics reviewers of flagged submissions can be added
+        for stage_name in ['Official_Review', 'Meta_Review']:
+            invitation = openreview.tools.get_invitation(openreview_client, f'ICLR.cc/2026/Conference/-/{stage_name}')
+            assert 'noteReaders' in invitation.edit['content']
+            assert 'review_readers' in invitation.content
+            assert invitation.edit['invitation']['edit']['note']['readers'][0] == '${5/content/noteReaders/value}'
 
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs')
         assert group.readers == [
