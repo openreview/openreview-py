@@ -1579,7 +1579,7 @@ arr_official_review_content = {
     "paper_matching_feedback": {
         "value": {
             "param": {
-                "input": "radio",
+                "input": "checkbox",
                 "enum": [
                     "This work aligns well with both my expertise and interests",
                     "This work is within my expertise, but not my top choice if there was bidding",
