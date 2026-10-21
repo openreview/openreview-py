@@ -106,7 +106,7 @@ class TestProfileManagement():
         ## 2. The user uploaded a document proving affiliation: support confirms the
         ## institution and position, plus the name because this enrollment letter
         ## happens to show it — institution documents may also carry identity data,
-        ## so the identity fields are optional here. This record is public.
+        ## so the identity fields are optional here.
         affiliation_assertion = support_client.post_profile_assertion(
             invitation='openreview.net/Support/-/Affiliation_Verification',
             signatures=['openreview.net/Support'],
@@ -131,13 +131,12 @@ class TestProfileManagement():
             }
         )
 
-        assert affiliation_assertion['readers'] == ['everyone']
+        assert affiliation_assertion['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
         assert affiliation_assertion['content']['source']['value'] == 'Enrollment Letter'
 
-        ## Anyone can see the affiliation was verified.
+        ## The affiliation record is not public either.
         assertions = amelia_client.get_profile_assertions(profile_id='~Gwen_Verified1')
-        assert len(assertions) == 1
-        assert assertions[0].invitation == 'openreview.net/Support/-/Affiliation_Verification'
+        assert len(assertions) == 0
 
         ## 3. The user uploaded a parental consent document: support confirms the parent
         ## relation. Not public: visible to the profile owner and the support team only.
@@ -203,13 +202,13 @@ class TestProfileManagement():
                 }
             )
 
-        ## The owner and support see all the records, other users only the public one.
+        ## The owner and support see all the records, other users none of them.
         assertions = gwen_client.get_profile_assertions(profile_id='~Gwen_Verified1')
         assert len(assertions) == 3
         assertions = support_client.get_profile_assertions(profile_id='~Gwen_Verified1')
         assert len(assertions) == 3
         assertions = amelia_client.get_profile_assertions(profile_id='~Gwen_Verified1')
-        assert len(assertions) == 1
+        assert len(assertions) == 0
 
         ## 4. Moderation changes the state of the profile: the moderation endpoint
         ## changes the state and records every decision as a Profile_State assertion.

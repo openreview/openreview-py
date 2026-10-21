@@ -249,7 +249,7 @@ return {
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Identity_Verification',
                 invitees=[self.support_group_id],
-                readers=['everyone'],
+                readers=[self.support_group_id],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
                 assertion={
@@ -330,20 +330,21 @@ return {
         ## compared to the profile field by field. Institution-issued documents
         ## vary: some show identity data and some do not even state the email domain,
         ## so the identity fields and the institution domain are optional -- only the
-        ## affiliation itself is required. The record is public so anyone can see
-        ## the affiliation was verified.
+        ## affiliation itself is required. The record is visible to the profile owner
+        ## and the support team: making verified affiliations public is a separate
+        ## decision.
         self.client.post_invitation_edit(
             invitations=self.meta_invitation_id,
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Affiliation_Verification',
                 invitees=[self.support_group_id],
-                readers=['everyone'],
+                readers=[self.support_group_id],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
                 assertion={
                     'signatures': [self.support_group_id],
-                    'readers': ['everyone'],
+                    'readers': ['${2/profile/id}', self.support_group_id],
                     'writers': [self.support_group_id],
                     'ddate': {
                         'param': {
@@ -442,7 +443,7 @@ return {
             invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Parent_Consent',
                 invitees=[self.support_group_id],
-                readers=['everyone'],
+                readers=[self.support_group_id],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
                 assertion={
