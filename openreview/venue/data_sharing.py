@@ -391,10 +391,10 @@ class VenueDataSharing():
     def post_status(self, request_id, status, status_message=None):
         """Updates the status of a request; only the process functions do it, through the meta invitation."""
         content = {
-            'status': { 'value': status }
+            'status': { 'value': status },
+            ## remove the message of a previous failed run
+            'status_message': { 'value': status_message, 'readers': [self.support_group_id] } if status_message else { 'delete': True }
         }
-        if status_message:
-            content['status_message'] = { 'value': status_message, 'readers': [self.support_group_id] }
 
         return self.client.post_note_edit(
             invitation=self.meta_invitation_id,
@@ -423,16 +423,20 @@ class VenueDataSharing():
         author_overlap_only = request.content['author_overlap_only']['value']
         forum_url = self.get_forum_url(request.id)
 
-        short_name, program_chairs_id = self.get_venue_info(venue_id)
-        alternate_short_name, alternate_program_chairs_id = self.get_venue_info(alternate_venue_id)
-
-        ## the approval can not change once the data is being shared
-        self.post_invitation_edit(openreview.api.Invitation(
-            id=self.get_approval_invitation_id(request.number),
-            expdate=openreview.tools.datetime_millis(datetime.datetime.now())
-        ), replacement=False)
+        ## used in the failure email when the venue lookups fail
+        short_name = venue_id
+        alternate_short_name = alternate_venue_id
 
         try:
+            short_name, program_chairs_id = self.get_venue_info(venue_id)
+            alternate_short_name, alternate_program_chairs_id = self.get_venue_info(alternate_venue_id)
+
+            ## the approval can not change once the data is being shared
+            self.post_invitation_edit(openreview.api.Invitation(
+                id=self.get_approval_invitation_id(request.number),
+                expdate=openreview.tools.datetime_millis(datetime.datetime.now())
+            ), replacement=False)
+
             venue = openreview.venue.helpers.get_venue(self.client, venue_id, support_user=self.support_group_id)
             alternate_venue = openreview.venue.helpers.get_venue(self.client, alternate_venue_id, support_user=self.support_group_id)
 

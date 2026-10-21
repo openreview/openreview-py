@@ -437,3 +437,95 @@ class TestVenueDataSharing():
         assert len(messages) == 1
         assert f'forum?id={request.id}' in messages[0]['content']['text']
         assert openreview_client.get_messages(to='pc@datasharinga.cc', subject='Dual submission check failed: DSA 2026 and DSB 2026') == []
+
+        ## support fixes the problem and runs the check again
+        openreview_client.post_group_edit(
+            invitation=f'{self.alternate_venue_id}/-/Edit',
+            signatures=[self.alternate_venue_id],
+            group=openreview.api.Group(
+                id=self.alternate_venue_id,
+                content={
+                    'submission_name': { 'value': 'Submission' }
+                }
+            )
+        )
+
+        edit = support_client.post_note_edit(
+            invitation=data_sharing.run_invitation_id,
+            signatures=[self.support_group_id],
+            note=Note(
+                id=request.id,
+                content={
+                    'job_id': { 'value': 'test-job-id' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        ## the message of the failed run is removed
+        request = openreview_client.get_note(request.id)
+        assert request.content['status']['value'] == 'Completed'
+        assert 'status_message' not in request.content
+
+        results_notes = openreview_client.get_notes(invitation=data_sharing.get_results_invitation_id(2))
+        assert len(results_notes) == 1
+
+        messages = openreview_client.get_messages(to='chris@datasharing.org', subject='Dual submission check completed: DSA 2026 and DSB 2026')
+        assert len(messages) == 2
+        assert any(f'forum?id={request.id}&noteId={results_notes[0].id}' in m['content']['text'] for m in messages)
+
+    def test_run_failure_on_venue_lookup(self, openreview_client, data_sharing, helpers):
+
+        pc_client = OpenReviewClient(username='pc@datasharinga.cc', password=helpers.strong_password)
+        support_client = OpenReviewClient(username='chris@datasharing.org', password=helpers.strong_password)
+
+        edit = pc_client.post_note_edit(
+            invitation=data_sharing.request_invitation_id,
+            signatures=[self.venue_id],
+            note=Note(
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'alternate_venue_id': { 'value': self.alternate_venue_id },
+                    'top_percent_cutoff': { 'value': 1 },
+                    'author_overlap_only': { 'value': False }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        request = openreview_client.get_note(edit['note']['id'])
+        assert request.number == 3
+
+        ## point the request to a venue that does not exist so the venue lookup fails
+        openreview_client.post_note_edit(
+            invitation=f'{self.support_group_id}/-/Edit',
+            readers=[self.support_group_id],
+            writers=[self.support_group_id],
+            signatures=[self.support_group_id],
+            note=Note(
+                id=request.id,
+                content={
+                    'alternate_venue_id': { 'value': 'Missing.cc/2026/Conference' }
+                }
+            ))
+
+        edit = support_client.post_note_edit(
+            invitation=data_sharing.run_invitation_id,
+            signatures=[self.support_group_id],
+            note=Note(
+                id=request.id,
+                content={
+                    'job_id': { 'value': 'test-job-id' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+
+        request = openreview_client.get_note(request.id)
+        assert request.content['status']['value'] == 'Failed'
+        assert 'Missing.cc/2026/Conference' in request.content['status_message']['value']
+
+        ## nothing was shared, so the approval is still open
+        approval_invitation = openreview_client.get_invitation(data_sharing.get_approval_invitation_id(3))
+        assert approval_invitation.expdate is None
+
+        ## the venue id is used when the venue can not be found
+        messages = openreview_client.get_messages(to='chris@datasharing.org', subject='Dual submission check failed: DSA 2026 and Missing.cc/2026/Conference')
+        assert len(messages) == 1
+        assert f'forum?id={request.id}' in messages[0]['content']['text']
