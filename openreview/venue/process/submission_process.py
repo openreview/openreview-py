@@ -154,6 +154,12 @@ To view the submission, click here: https://openreview.net/forum?id={note.forum}
 
     for group_invitation in group_invitations:
         if 'noteId' in group_invitation.edit.get('content', {}):
+            # skip the group invitations restricted to some submissions, like the ethics reviewers groups that are
+            # only created for the submissions flagged for ethics review; the date process applies the same filter
+            source_content = openreview.tools.get_invitation_source(group_invitation, domain).get('content', {})
+            if any(note.content.get(key, {}).get('value') != value for key, value in source_content.items()):
+                print('skipping invitation: ', group_invitation.id, ' - does not match source')
+                continue
             print('create invitation: ', group_invitation.id)
             client.post_group_edit(
                 invitation=group_invitation.id,
