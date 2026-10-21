@@ -1,6 +1,6 @@
 # Tests
 
-Every test is an integration test. `docker/run.py` starts MongoDB, Redis, Elasticsearch, both API servers and the web frontend, then runs pytest inside a container. Tests register real users, deploy real venues and assert on what the API stores and sends. There are no unit tests and no mocks; proposing either for process-function behaviour is not useful.
+Every test is an integration test. `docker/run.py` starts MongoDB, Redis, Elasticsearch, both API servers and the web frontend, then runs pytest inside a container locally. When run in CircleCI, the testing follows what's defined in .circleci/config.yml. Tests register real users, deploy real venues and assert on what the API stores and sends. There are no unit tests and no mocks; proposing either for process-function behaviour is not useful.
 
 ## How the suite works
 
