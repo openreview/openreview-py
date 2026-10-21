@@ -50,7 +50,6 @@ Apply these from this page; open the matching reference for mechanism and edge c
 - `get_conflicts()`, `get_profile_info()`, `get_neurips_profile_info()`, `get_comprehensive_profile_info()`, `subdomains()` and `duplicate_domains.json` decide who may review whom. Fewer conflicts for the same input needs a reason and a test.
 - Profile lookup by email uses `confirmedEmails`. Switching to `emails` lets an unconfirmed address claim a profile.
 - Never log a token, an `Authorization` header or a request body. `LogRetry` already prints response text on retry; do not widen what it prints.
-- Public method signatures are an API: parameters are added with defaults, never renamed or removed. Python 3.9 is the floor — no `match`, no `X | None`.
 
 ### `tests/` → `references/tests.md`
 - Every test hits the real servers. Do not suggest mocks or unit tests for process-function behaviour.
@@ -58,9 +57,8 @@ Apply these from this page; open the matching reference for mechanism and edge c
 - A test for a bug must fail before the fix. Run and cite tests at the file level.
 
 ### `.circleci/`, `.github/workflows/`, `pyproject.toml` → `references/ci-and-packaging.md`
-- A new subpackage directory must be added to `[tool.setuptools.packages.find] include`, and a new resource directory (`process/`, `webfield/`, data files) needs `include` lines in `MANIFEST.in`; the `openreview = ["*"]` package-data pattern is not recursive. Either omission means files missing from the wheel the API servers install.
-- PR builds run only the modified test files first, then the full suite. A library change with no modified test file gets no targeted run; say so when the change deserves one.
-- Production deploy workflows run on `workflow_dispatch` only; `deploy-dev.yml` also accepts `repository_dispatch` of type `openreview-py-updated`, the supported staging trigger. All authenticate to GCP with OIDC. No `pull_request_target`, no PR-controlled data in a `run:` block, no new trigger on the production workflows.
+- Tests run from a checkout, so they cannot catch a file missing from the wheel: a new subpackage goes in `[tool.setuptools.packages.find] include`, a new `process/`, `webfield/` or data directory gets `include` lines in `MANIFEST.in`.
+- Production deploy workflows are `workflow_dispatch` only (`deploy-dev.yml` also takes `repository_dispatch` of type `openreview-py-updated`). No `pull_request_target`, no PR-controlled data in a `run:` block. Everything else here fails the test run on its own.
 
 ## Severity
 

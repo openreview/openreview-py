@@ -4,10 +4,6 @@
 
 ## Compatibility
 
-- Public method signatures are an API. Parameters are added with defaults at the end; they are not renamed, reordered or removed.
-- Python 3.9 is the floor (`requires-python` in `pyproject.toml`; CI installs on 3.9 through 3.13). No `match`, no `X | None` in annotations evaluated at runtime, no `zip(strict=)`, no `str.removeprefix` assumptions in code that must also run on the API server's interpreter.
-- `@deprecated` from the `Deprecated` package marks retired helpers; a deprecated function keeps working for at least one release.
-- Both clients send `User-Agent: openreview-py/<version> (Python/<python>)`, read from the installed package metadata, on every request. The API enforces a minimum client version from that header and answers 426 `ClientVersionError` to older clients. Keep the header on every request path, including `post_note_edit_as_guest`, and keep the format, or the server cannot tell users to upgrade.
 - Domain objects (`Note`, `Edit`, `Invitation`, `Group`, `Edge`, `Tag`, `Profile`) round-trip through `to_json()` / `from_json()`. A new attribute is added to both, and to the V1 class when the field exists in API 1, or it is silently dropped on the way to the server.
 
 ## Authentication and tokens
