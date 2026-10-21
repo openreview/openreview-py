@@ -19,7 +19,7 @@ class TestVenueDataSharing():
     def data_sharing(self, openreview_client):
         return openreview.venue.VenueDataSharing(openreview_client, self.support_group_id)
 
-    def create_venue(self, openreview_client, venue_id, short_name, program_chair_email):
+    def create_venue(self, openreview_client, venue_id, short_name, program_chair_emails):
 
         venue = Venue(openreview_client, venue_id, self.support_group_id)
         venue.invitation_builder.update_wait_time = 2000
@@ -32,7 +32,7 @@ class TestVenueDataSharing():
             double_blind=True,
             due_date=datetime.datetime.now() + datetime.timedelta(days=1)
         )
-        venue.setup(program_chair_ids=[program_chair_email])
+        venue.setup(program_chair_ids=program_chair_emails)
         venue.create_submission_stage()
         return venue
 
@@ -68,11 +68,27 @@ class TestVenueDataSharing():
         )
 
         helpers.create_user('pc@datasharinga.cc', 'ProgramChair', 'SharingA')
+        helpers.create_user('pc2@datasharinga.cc', 'ProgramChair', 'SharingATwo')
         helpers.create_user('pc@datasharingb.cc', 'ProgramChair', 'SharingB')
         helpers.create_user('celeste@datasharing.org', 'Celeste', 'Sharing')
 
-        venue = self.create_venue(openreview_client, self.venue_id, 'DSA 2026', 'pc@datasharinga.cc')
-        alternate_venue = self.create_venue(openreview_client, self.alternate_venue_id, 'DSB 2026', 'pc@datasharingb.cc')
+        venue = self.create_venue(openreview_client, self.venue_id, 'DSA 2026', ['pc@datasharinga.cc', 'pc2@datasharinga.cc'])
+        alternate_venue = self.create_venue(openreview_client, self.alternate_venue_id, 'DSB 2026', ['pc@datasharingb.cc'])
+
+        ## a venue without submission_venue_id in its domain, like a journal
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            signatures=['openreview.net'],
+            group=openreview.api.Group(
+                id='DataSharingJournal.cc',
+                readers=['everyone'],
+                writers=['DataSharingJournal.cc'],
+                signatures=['~Super_User1'],
+                signatories=['DataSharingJournal.cc'],
+                members=[]
+            )
+        )
+        openreview_client.add_members_to_group('venues', 'DataSharingJournal.cc')
 
         venues = openreview_client.get_group('venues').members
         assert self.venue_id in venues
@@ -126,6 +142,10 @@ class TestVenueDataSharing():
         with pytest.raises(openreview.OpenReviewException, match=r'The other venue must be different from your venue'):
             post_request(pc_client, self.venue_id, self.venue_id)
 
+        ## journals are not supported yet
+        with pytest.raises(openreview.OpenReviewException, match=r'DataSharingJournal.cc is not supported yet'):
+            post_request(pc_client, self.venue_id, 'DataSharingJournal.cc')
+
         ## only the program chairs can sign as the venue
         with pytest.raises(openreview.OpenReviewException):
             post_request(author_client, self.venue_id, self.alternate_venue_id)
@@ -145,6 +165,8 @@ class TestVenueDataSharing():
                     'alternate_venue_id': { 'value': self.alternate_venue_id },
                     'top_percent_cutoff': { 'value': 5 },
                     'author_overlap_only': { 'value': False },
+                    'submission_statuses': { 'value': ['Active', 'Withdrawn'] },
+                    'results_recipients': { 'value': ['~ProgramChair_SharingA1'] },
                     'comment': { 'value': 'We would like to check for papers submitted to both venues.' }
                 }
             ))
@@ -182,6 +204,9 @@ class TestVenueDataSharing():
         assert 'The program chairs of DSA 2026 (DataSharingA.cc/2026/Conference) request a dual submission check' in messages[0]['content']['text']
         assert 'the 5% most similar pairs of submissions' in messages[0]['content']['text']
         assert 'We would like to check for papers submitted to both venues.' in messages[0]['content']['text']
+        ## the other venue sees what the requesting venue shares and who gets the results before approving
+        assert 'Submissions of DSA 2026 to compare: Active, Withdrawn' in messages[0]['content']['text']
+        assert 'Results recipients of DSA 2026: ~ProgramChair_SharingA1' in messages[0]['content']['text']
         assert f'forum?id={request.id}' in messages[0]['content']['text']
 
         messages = openreview_client.get_messages(to='pc@datasharinga.cc', subject='Your dual submission check request with DSB 2026 has been sent')
@@ -301,6 +326,7 @@ class TestVenueDataSharing():
                 id=approval.id,
                 content={
                     'status': { 'value': 'Approved' },
+                    'submission_statuses': { 'value': ['Active'] },
                     'approval_comment': { 'value': 'Our committee agreed.' }
                 }
             ))
@@ -312,6 +338,8 @@ class TestVenueDataSharing():
         messages = openreview_client.get_messages(to='pc@datasharinga.cc', subject='DSB 2026 approved your dual submission check request')
         assert len(messages) == 1
         assert 'Our committee agreed.' in messages[0]['content']['text']
+        assert 'Submissions of DSB 2026 to compare: Active' in messages[0]['content']['text']
+        assert 'Results recipients of DSB 2026: all the program chairs of DSB 2026' in messages[0]['content']['text']
 
         messages = openreview_client.get_messages(to='chris@datasharing.org', subject='Dual submission check ready to run: DSA 2026 and DSB 2026')
         assert len(messages) == 1
@@ -353,19 +381,28 @@ class TestVenueDataSharing():
         assert results_note.forum == request.id
         assert results_note.replyto == request.id
         assert results_note.signatures == [self.support_group_id]
-        assert results_note.readers == [self.support_group_id, self.venue_id, self.alternate_venue_id]
+        ## venue A chose one recipient, venue B shares the results with all its program chairs
+        assert results_note.readers == [self.support_group_id, '~ProgramChair_SharingA1', self.alternate_venue_id]
 
         ## the approval can not change after the check runs
         approval_invitation = openreview_client.get_invitation(data_sharing.get_approval_invitation_id(1))
         assert approval_invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
 
-        ## the program chairs of both venues can download the results
+        ## the results recipients of both venues can download the results
         alternate_pc_client = OpenReviewClient(username='pc@datasharingb.cc', password=helpers.strong_password)
         for client in [pc_client, alternate_pc_client]:
             results = client.get_attachment(id=results_note.id, field_name='results')
             rows = list(csv.reader(io.StringIO(results.decode('utf-8'))))
             assert rows[0][:3] == ['DSA 2026 id', 'DSB 2026 id', 'Score']
             assert len(rows) == 1
+
+        ## the other program chair of venue A can read the request but not the results
+        other_pc_client = OpenReviewClient(username='pc2@datasharinga.cc', password=helpers.strong_password)
+        assert other_pc_client.get_note(request.id)
+        with pytest.raises(openreview.OpenReviewException, match=r'does not have permission to see Note'):
+            other_pc_client.get_note(results_note.id)
+        with pytest.raises(openreview.OpenReviewException):
+            other_pc_client.get_attachment(id=results_note.id, field_name='results')
 
         ## job_id and status_message are only visible to support
         assert 'job_id' not in pc_client.get_note(request.id).content
@@ -379,6 +416,7 @@ class TestVenueDataSharing():
             messages = openreview_client.get_messages(to=email, subject='Dual submission check completed: DSA 2026 and DSB 2026')
             assert len(messages) == 1
             assert f'forum?id={request.id}&noteId={results_note.id}' in messages[0]['content']['text']
+        assert openreview_client.get_messages(to='pc2@datasharinga.cc', subject='Dual submission check completed: DSA 2026 and DSB 2026') == []
 
     def test_run_failure(self, openreview_client, data_sharing, helpers):
 
@@ -399,6 +437,17 @@ class TestVenueDataSharing():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         request = openreview_client.get_note(edit['note']['id'])
         assert request.number == 2
+
+        alternate_pc_client = OpenReviewClient(username='pc@datasharingb.cc', password=helpers.strong_password)
+        edit = alternate_pc_client.post_note_edit(
+            invitation=data_sharing.get_approval_invitation_id(2),
+            signatures=[self.alternate_venue_id],
+            note=Note(
+                content={
+                    'status': { 'value': 'Approved' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         ## break the alternate venue so the check fails: its submission invitation can not be found
         openreview_client.post_group_edit(
@@ -529,3 +578,59 @@ class TestVenueDataSharing():
         messages = openreview_client.get_messages(to='chris@datasharing.org', subject='Dual submission check failed: DSA 2026 and Missing.cc/2026/Conference')
         assert len(messages) == 1
         assert f'forum?id={request.id}' in messages[0]['content']['text']
+
+    def test_run_checks(self, openreview_client, data_sharing, helpers):
+
+        pc_client = OpenReviewClient(username='pc@datasharinga.cc', password=helpers.strong_password)
+        alternate_pc_client = OpenReviewClient(username='pc@datasharingb.cc', password=helpers.strong_password)
+        support_client = OpenReviewClient(username='chris@datasharing.org', password=helpers.strong_password)
+
+        edit = pc_client.post_note_edit(
+            invitation=data_sharing.request_invitation_id,
+            signatures=[self.venue_id],
+            note=Note(
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'alternate_venue_id': { 'value': self.alternate_venue_id },
+                    'top_percent_cutoff': { 'value': 1 },
+                    'author_overlap_only': { 'value': False }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        request = openreview_client.get_note(edit['note']['id'])
+        assert request.number == 4
+
+        def run(error=False):
+            edit = support_client.post_note_edit(
+                invitation=data_sharing.run_invitation_id,
+                signatures=[self.support_group_id],
+                note=Note(
+                    id=request.id,
+                    content={
+                        'job_id': { 'value': 'test-job-id' }
+                    }
+                ))
+            helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=error)
+            return openreview_client.get_note(request.id)
+
+        ## the check does not run before the other venue approves it
+        request = run(error=True)
+        assert request.content['status']['value'] == 'Failed'
+        assert 'DSB 2026 has not approved the request.' in request.content['status_message']['value']
+        assert openreview_client.get_invitation(data_sharing.get_approval_invitation_id(4)).expdate is None
+
+        edit = alternate_pc_client.post_note_edit(
+            invitation=data_sharing.get_approval_invitation_id(4),
+            signatures=[self.alternate_venue_id],
+            note=Note(
+                content={
+                    'status': { 'value': 'Approved' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        ## once approved, the check runs
+        request = run()
+        assert request.content['status']['value'] == 'Completed'
+        assert 'status_message' not in request.content
+        assert len(openreview_client.get_notes(invitation=data_sharing.get_results_invitation_id(4))) == 1

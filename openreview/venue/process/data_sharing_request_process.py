@@ -18,6 +18,8 @@ def process(client, edit, invitation):
     top_percent_cutoff = request.content['top_percent_cutoff']['value']
     author_overlap_only = request.content['author_overlap_only']['value']
     comment = request.content.get('comment', {}).get('value')
+    submission_statuses = request.content.get('submission_statuses', {}).get('value') or ['Active']
+    results_recipients = request.content.get('results_recipients', {}).get('value')
     forum_url = f'{openreview.tools.get_site_url(client)}/forum?id={request.id}'
 
     ## create the Approval, Comment and Results invitations of the request from their templates
@@ -47,7 +49,12 @@ Comment from the program chairs of {short_name}:
         subject=f'{short_name} requests a dual submission check with {alternate_short_name}',
         message=f'''The program chairs of {short_name} ({venue_id}) request a dual submission check with {alternate_short_name} ({alternate_venue_id}).
 
-If you approve, the OpenReview support team will compute the similarity between the submissions of both venues and share a CSV file with the program chairs of both venues. The file contains the ids, titles, abstracts and authors of the {top_percent_cutoff}% most similar pairs of submissions{', only for pairs that share at least one author' if author_overlap_only else ''}.{comment_text}
+If you approve, the OpenReview support team will compute the similarity between the submissions of both venues and share a CSV file with the results recipients of both venues. The file contains the ids, titles, abstracts and authors of the {top_percent_cutoff}% most similar pairs of submissions{', only for pairs that share at least one author' if author_overlap_only else ''}.
+
+Submissions of {short_name} to compare: {', '.join(submission_statuses)}
+Results recipients of {short_name}: {', '.join(results_recipients) if results_recipients else f'all the program chairs of {short_name}'}{comment_text}
+
+When you approve, you choose which submissions of {alternate_short_name} to compare and who in {alternate_short_name} gets the results.
 
 To approve or reject the request, or to ask the program chairs of {short_name} a question, go to: {forum_url}
 

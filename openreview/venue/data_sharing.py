@@ -138,9 +138,34 @@ class VenueDataSharing():
                     }
                 }
             },
-            'comment': {
+            'submission_statuses': {
                 'order': 6,
-                'description': 'Message to the program chairs of the other venue (optional).',
+                'description': 'Submissions of your venue to compare. Leave empty to compare only the active submissions. If your venue already released its decisions, select the accepted, rejected and withdrawn submissions.',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'enum': ['Active', 'Accepted', 'Rejected', 'Withdrawn', 'Desk Rejected'],
+                        'optional': True,
+                        'deletable': True,
+                        'input': 'checkbox'
+                    }
+                }
+            },
+            'results_recipients': {
+                'order': 7,
+                'description': 'Profile ids or emails of the people of your venue who will get the results. Leave empty to share the results with all the program chairs of your venue.',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'regex': '^~.+$|^.+@.+$',
+                        'optional': True,
+                        'deletable': True
+                    }
+                }
+            },
+            'comment': {
+                'order': 8,
+                'description': 'Message to the program chairs of the other venue (optional). They see your choices above before approving.',
                 'value': {
                     'param': {
                         'type': 'string',
@@ -276,7 +301,7 @@ class VenueDataSharing():
                             'content': {
                                 'status': {
                                     'order': 1,
-                                    'description': 'Do you approve sharing the submissions of your venue with the requesting venue to check for dual submissions? The program chairs of both venues will get the titles, abstracts and authors of the most similar pairs of submissions.',
+                                    'description': 'Do you approve sharing the submissions of your venue with the requesting venue to check for dual submissions? The results recipients of both venues will get the titles, abstracts and authors of the most similar pairs of submissions.',
                                     'value': {
                                         'param': {
                                             'type': 'string',
@@ -285,8 +310,33 @@ class VenueDataSharing():
                                         }
                                     }
                                 },
-                                'approval_comment': {
+                                'submission_statuses': {
                                     'order': 2,
+                                    'description': 'Submissions of your venue to compare. Leave empty to compare only the active submissions. If your venue already released its decisions, select the accepted, rejected and withdrawn submissions.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'enum': ['Active', 'Accepted', 'Rejected', 'Withdrawn', 'Desk Rejected'],
+                                            'optional': True,
+                                            'deletable': True,
+                                            'input': 'checkbox'
+                                        }
+                                    }
+                                },
+                                'results_recipients': {
+                                    'order': 3,
+                                    'description': 'Profile ids or emails of the people of your venue who will get the results. Leave empty to share the results with all the program chairs of your venue.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'regex': '^~.+$|^.+@.+$',
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
+                                },
+                                'approval_comment': {
+                                    'order': 4,
                                     'description': 'Comment for the program chairs of the requesting venue (optional).',
                                     'value': {
                                         'param': {
@@ -400,7 +450,8 @@ class VenueDataSharing():
                     'signatures': [self.support_group_id],
                     'edit': {
                         'signatures': [self.support_group_id],
-                        'readers': [self.support_group_id, '${4/content/venue_id/value}', '${4/content/alternate_venue_id/value}'],
+                        ## the edit has the CSV too, so it has the same readers as the note
+                        'readers': ['${2/note/readers}'],
                         'writers': [self.support_group_id],
                         'note': {
                             'id': {
@@ -412,7 +463,12 @@ class VenueDataSharing():
                             'forum': '${4/content/noteId/value}',
                             'replyto': '${4/content/noteId/value}',
                             'signatures': ['${3/signatures}'],
-                            'readers': [self.support_group_id, '${5/content/venue_id/value}', '${5/content/alternate_venue_id/value}'],
+                            ## support and the results recipients of both venues, set by the Run process
+                            'readers': {
+                                'param': {
+                                    'regex': '.+'
+                                }
+                            },
                             'writers': [self.support_group_id],
                             'content': {
                                 'results': {

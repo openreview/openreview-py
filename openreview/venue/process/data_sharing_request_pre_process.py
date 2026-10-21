@@ -10,3 +10,8 @@ def process(client, edit, invitation):
     for id in [venue_id, alternate_venue_id]:
         if id not in venues:
             raise openreview.OpenReviewException(f'{id} is not a venue.')
+
+        ## journals don't have this field and their submissions are selected differently
+        venue_group = client.get_group(id)
+        if 'submission_venue_id' not in (venue_group.content or {}):
+            raise openreview.OpenReviewException(f'{id} is not supported yet: the dual submission check only works with conferences and workshops, not journals.')

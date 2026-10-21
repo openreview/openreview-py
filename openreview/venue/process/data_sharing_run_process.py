@@ -13,6 +13,21 @@ def process(client, edit, invitation):
         program_chairs_id = venue_group.content.get('program_chairs_id', {}).get('value', f'{venue_id}/Program_Chairs')
         return short_name, program_chairs_id
 
+    def get_submission_venue_ids(venue, statuses):
+        ## each status is a venue id of the domain group, e.g. withdrawn submissions have the withdrawn venue id
+        content = client.get_group(venue.venue_id).content
+        venue_ids_by_status = {
+            'Active': content.get('submission_venue_id', {}).get('value'),
+            'Accepted': venue.venue_id,
+            'Rejected': content.get('rejected_venue_id', {}).get('value'),
+            'Withdrawn': content.get('withdrawn_venue_id', {}).get('value'),
+            'Desk Rejected': content.get('desk_rejected_venue_id', {}).get('value')
+        }
+        ## the API matches any of comma separated values, and the expertise service queries the notes with it
+        venue_ids = ','.join([venue_ids_by_status[status] for status in statuses if venue_ids_by_status.get(status)])
+        print(f'{venue.short_name}: submissions with venue ids {venue_ids}')
+        return venue_ids
+
     def post_message(recipients, subject, message):
         client.post_message(subject=subject, recipients=recipients, message=message, invitation=f'{SUPPORT_GROUP}/-/Edit', signature=SUPPORT_GROUP)
 
@@ -49,6 +64,18 @@ def process(client, edit, invitation):
         short_name, program_chairs_id = get_venue_info(venue_id)
         alternate_short_name, alternate_program_chairs_id = get_venue_info(alternate_venue_id)
 
+        ## the other venue chooses its submissions and its results recipients when it approves
+        approvals = client.get_notes(invitation=f'{GROUP_ID}/Dual_Submission_Check{request.number}/-/Approval')
+        if not approvals or approvals[0].content['status']['value'] != 'Approved':
+            raise openreview.OpenReviewException(f'{alternate_short_name} has not approved the request.')
+        approval = approvals[0]
+
+        recipients = request.content.get('results_recipients', {}).get('value')
+        alternate_recipients = approval.content.get('results_recipients', {}).get('value')
+        ## without recipients, the results are shared with all the program chairs of the venue
+        results_readers = [SUPPORT_GROUP] + (recipients or [venue_id]) + (alternate_recipients or [alternate_venue_id])
+        results_emails = [SUPPORT_GROUP] + (recipients or [program_chairs_id]) + (alternate_recipients or [alternate_program_chairs_id])
+
         ## the approval can not change once the data is being shared
         client.post_invitation_edit(
             invitations=f'{SUPPORT_GROUP}/-/Edit',
@@ -64,17 +91,45 @@ def process(client, edit, invitation):
         venue = openreview.venue.helpers.get_venue(client, venue_id, support_user=SUPPORT_GROUP)
         alternate_venue = openreview.venue.helpers.get_venue(client, alternate_venue_id, support_user=SUPPORT_GROUP)
 
+        venue_ids = get_submission_venue_ids(venue, request.content.get('submission_statuses', {}).get('value') or ['Active'])
+        alternate_venue_ids = get_submission_venue_ids(alternate_venue, approval.content.get('submission_statuses', {}).get('value') or ['Active'])
+
         post_message(
             recipients=[program_chairs_id, alternate_program_chairs_id],
             subject=f'Dual submission check started: {short_name} and {alternate_short_name}',
             message=f'''The OpenReview support team started the dual submission check between {short_name} and {alternate_short_name}.
 
-Computing the similarity between the submissions of both venues can take several hours. You will receive another email when the results are available.
+Computing the similarity between the submissions of both venues can take several hours. The results recipients of both venues will receive another email when the results are available.
 
 You can view the request here: {forum_url}
 
 The OpenReview Team'''
         )
+
+        if not job_id:
+            ## compute_dual_submission_metadata only compares the active submissions, so start the job with the selected ones
+            job = client.request_paper_similarity(
+                name=f'{venue.short_name}--{alternate_venue.short_name}-Paper-Similarity',
+                venue_id=venue_ids,
+                alternate_venue_id=alternate_venue_ids,
+                model='specter2+scincl',
+                sparse_value=5
+            )
+            job_id = job['jobId']
+            print('Similarity job id:', job_id)
+            ## keep the job id so a failed run can be retried without computing the scores again
+            client.post_note_edit(
+                invitation=f'{SUPPORT_GROUP}/-/Edit',
+                readers=[SUPPORT_GROUP],
+                writers=[SUPPORT_GROUP],
+                signatures=[SUPPORT_GROUP],
+                note=openreview.api.Note(
+                    id=request.id,
+                    content={
+                        'job_id': { 'value': job_id, 'readers': [SUPPORT_GROUP] }
+                    }
+                )
+            )
 
         results_invitation_id = f'{GROUP_ID}/Dual_Submission_Check{request.number}/-/Results'
         with tempfile.TemporaryDirectory() as output_dir:
@@ -97,6 +152,7 @@ The OpenReview Team'''
             invitation=results_invitation_id,
             signatures=[SUPPORT_GROUP],
             note=openreview.api.Note(
+                readers=results_readers,
                 content={
                     'results': { 'value': results_url }
                 }
@@ -118,7 +174,7 @@ Check the process logs of the request, then run it again: {forum_url}'''
         raise e
 
     post_message(
-        recipients=[program_chairs_id, alternate_program_chairs_id, SUPPORT_GROUP],
+        recipients=results_emails,
         subject=f'Dual submission check completed: {short_name} and {alternate_short_name}',
         message=f'''The dual submission check between {short_name} and {alternate_short_name} has completed.
 

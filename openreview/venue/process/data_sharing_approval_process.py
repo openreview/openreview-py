@@ -17,6 +17,8 @@ def process(client, edit, invitation):
     alternate_venue_id = request.content['alternate_venue_id']['value']
     status = approval.content['status']['value']
     approval_comment = approval.content.get('approval_comment', {}).get('value')
+    submission_statuses = approval.content.get('submission_statuses', {}).get('value') or ['Active']
+    results_recipients = approval.content.get('results_recipients', {}).get('value')
     forum_url = f'{openreview.tools.get_site_url(client)}/forum?id={request.id}'
 
     ## copy the decision to the status of the request
@@ -46,9 +48,12 @@ Comment from the program chairs of {alternate_short_name}:
         post_message(
             recipients=[program_chairs_id],
             subject=f'{alternate_short_name} approved your dual submission check request',
-            message=f'''The program chairs of {alternate_short_name} ({alternate_venue_id}) approved your dual submission check request.{comment_text}
+            message=f'''The program chairs of {alternate_short_name} ({alternate_venue_id}) approved your dual submission check request.
 
-The OpenReview support team will run the check, and you will receive an email when the results are available.
+Submissions of {alternate_short_name} to compare: {', '.join(submission_statuses)}
+Results recipients of {alternate_short_name}: {', '.join(results_recipients) if results_recipients else f'all the program chairs of {alternate_short_name}'}{comment_text}
+
+The OpenReview support team will run the check, and the results recipients of both venues will receive an email when the results are available.
 
 You can view the request here: {forum_url}
 
