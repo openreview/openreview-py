@@ -431,6 +431,11 @@ Please note that responding to this email will direct your reply to editor@jmlr.
         assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
         assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
 
+        rachel_assignment_edge = celeste_client.get_edges(invitation='JMLR/Reviewers/-/Assignment', head=note_id_1, tail='~Rachel_JMLR1')[0]
+        rachel_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Rachel_JMLR1 already posted a review.'):
+            celeste_client.post_edge(rachel_assignment_edge)
+
         with pytest.raises(openreview.OpenReviewException, match='does not have permission to see Note'):
             xukun_client.get_note(reviews[0].id)
 
