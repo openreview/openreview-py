@@ -423,6 +423,24 @@ class TestProfileManagement():
         assert assertion['content']['source']['value'] == 'Notarized letter from the registrar'
         assert assertion['content']['comment']['value'] == 'Letter countersigned by the department head; registrar stamp verified by phone.'
 
+    def test_profile_state_email_visibility(self, openreview_client, helpers, support_client):
+
+        hugo_client = helpers.create_user('hugo@umass.edu', 'Hugo', 'Institutional', institution='umass.edu')
+        assert openreview_client.get_profile('~Hugo_Institutional1').state == 'Active Institutional'
+
+        assertions = support_client.get_profile_assertions(profile_id='~Hugo_Institutional1', invitation='openreview.net/Support/-/Profile_State')
+        assert len(assertions) == 1
+        assert assertions[0].profile['state'] == 'Active Institutional'
+        assert assertions[0].content['email']['value'] == 'hugo@umass.edu'
+        assert assertions[0].readers == ['~Hugo_Institutional1', 'openreview.net/Support']
+
+        assertions = hugo_client.get_profile_assertions(profile_id='~Hugo_Institutional1', invitation='openreview.net/Support/-/Profile_State')
+        assert len(assertions) == 1
+        assert assertions[0].content['email']['value'] == 'hugo@umass.edu'
+
+        amelia_client = helpers.get_user('amelia@profile.org')
+        assert len(amelia_client.get_profile_assertions(profile_id='~Hugo_Institutional1', invitation='openreview.net/Support/-/Profile_State')) == 0
+
     def test_import_deprecated_dblp_notes(self, client, openreview_client, test_client, helpers):
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
