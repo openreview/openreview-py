@@ -50,7 +50,7 @@ Gitignored; `config.example.json` holds paths and branch names, not secrets.
 Nothing in `pyproject.toml` or the repository configures ruff, flake8, black or isort. Spacing around `=` in keyword arguments, quote style, import order, trailing whitespace and line length vary across files on `master`. Formatting-only comments are noise. Never suggest running a formatter over a glob.
 
 **Few comments and docstrings.**
-Internal code is deliberately sparse on comments. Do not ask for docstrings on builder or process code; the public client methods in `api/client.py` and `tools.py` do carry docstrings for the Sphinx docs, and a new public method there should too.
+Internal code is deliberately sparse on comments. Do not ask for docstrings on builder or process code; the public client methods in `api/client.py` and `tools.py` do carry docstrings for the Sphinx docs, the openreview internal agent, and a new public method there should too.
 
 **Deprecated parameters kept alive.**
 `openreview.tools.get_invitation_source()` and several builders accept legacy string forms (`'all_submissions'`, `reply_to`, `source_submissions_query`) alongside the dict form. The branches marked deprecated exist for venues deployed on the old form; removing them is a breaking change, not a cleanup.
