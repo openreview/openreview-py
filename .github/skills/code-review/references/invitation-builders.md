@@ -23,7 +23,7 @@ What to check: when a reviewer moves a reader into a new nesting level, the numb
 - Edit readers mirror note readers: `'readers': ['${2/note/readers}']`, `'nonreaders': ['${2/note/nonreaders}']` on the edit when the note's readers are a param. An edit with wider readers than its note exposes the diff.
 - Signature params use `{ 'prefix': s, 'optional': True }` for anonymous patterns and `{ 'value': s, 'optional': True }` for fixed groups; the builder helper `review_stage.get_signatures()` produces the list. Hand-written `items` need the same shape.
 - Reader params with `enum` or `items` are what the UI offers and what the API validates against. A comment stage that lets PCs pick readers from an `items` list must list groups only; `inGroup` items are validated against membership.
-- `'const': { 'delete': True }` on a content field's `readers` removes field-level restriction (reveals the field). It belongs in reveal-authors and camera-ready flows only.
+- `'const': { 'delete': True }` on a content field's `readers` removes field-level restriction (reveals the field to the readers of the entity, in this case, the note). It belongs in reveal-authors and camera-ready flows only.
 - Params stamped with a `${...}` literal are required and `deletable`; `optional` copies the literal path into the entity.
 - `invitees` controls who can post; `noninvitees` wins over it. Invitation `readers` controls who sees the invitation exists.
 
