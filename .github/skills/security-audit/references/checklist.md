@@ -29,7 +29,7 @@ For each item, decide whether it applies to the target and whether the code hand
 - [ ] **Actor and silent groups excluded.** `ignoreRecipients` carries the triggering user, the venue and support groups, and groups the settings say not to notify.
 - [ ] **Recipients are groups or ids**, never raw email lists pulled from profiles.
 - [ ] **Empty recipients handled** without raising.
-- [ ] **Recruitment links.** `hash_seed` has `readers: [venue]`; signing and verification use the same canonical user string; the pre-process checks invited-group membership before accepting.
+- [ ] **Recruitment links.** `hash_seed` has `readers: [venue]`, and the signed user string is the one in the link. Verification is the API's guest-token check, not a process function.
 - [ ] **Tests select by recipient and subject**, and assert the excluded address received nothing.
 
 ## 4. Edges and matching

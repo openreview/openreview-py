@@ -8,7 +8,7 @@
 
 ## Authentication and tokens
 
-- The token is stored on `self.token` and sent as `Authorization: Bearer`. `jwt.decode(self.token, options={"verify_signature": False})` is used only to read the expiry of the client's own token to decide when to re-login; it is not an auth decision and must not become one.
+- The token is stored on `self.token` and sent as `Authorization: Bearer`. `jwt.decode(self.token, options={"verify_signature": False})` only reads the expiry of the client's own token to decide when to re-login; the library makes no authorization decisions, so the unverified decode is not a finding.
 - `login_user()` handles MFA through `MfaRequiredException` and `mfa_code_provider`; `impersonate(group_id)` swaps the session token for one scoped to the group and is a privileged call the server authorizes.
 - `post_note_edit_as_guest(token, edit)` is the guest-token path, POST-only and scoped to one invitation server-side.
 - `LogRetry` prints the method, URL and response text on retried requests. It must not print request headers or bodies, which carry the token and, for `register_user` and `post_profile`, passwords and emails. Do not add logging of `self.headers`.
@@ -54,7 +54,7 @@ Conflicts are also recomputed per paper in `venue/matching.py` `_build_conflicts
 
 ## Recruitment keys
 
-`get_user_hash_key(user, hash_seed, invitation=None)` returns an HMAC-SHA256 hex digest over the user string, or a JWT when `invitation` is passed. The pre-process recomputes it from the stored `hash_seed` and compares. Signing and verifying must use the same canonical user string (URL-decoded, same case); a change to one side without the other locks every invitee out or lets anyone in. `create_hash_seed()` uses `random.choices`; a PR touching it should move to `secrets.choice`, and a PR that does not touch it should not be asked to.
+`get_user_hash_key(user, hash_seed, invitation=None)` returns an HMAC-SHA256 hex digest over the user string, or a JWT when `invitation` is passed. The API verifies it against the invitation's `hash_seed` when issuing the guest token for a recruitment response; no process function does. The user string that is signed must be the one placed in the link (same quoting, same case), or every invitee is locked out. `create_hash_seed()` uses `random.choices`; a PR touching it should move to `secrets.choice`, and a PR that does not touch it should not be asked to.
 
 ## Bulk helpers
 
