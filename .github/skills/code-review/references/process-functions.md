@@ -36,17 +36,17 @@ This is deliberate: it lets one script serve many invitations and be updated in 
 - Looking the entity up before creating it rather than catching a duplicate error. `openreview.tools.get_group` and `get_note` return `None` on not-found only; `openreview.tools.get_invitation` returns `None` on *any* `OpenReviewException`, so a create-if-missing check built on it also fires on a forbidden or validation error.
 - `client.post_invitation_edit(..., replacement=False)` and `post_group_edit` that add to `members` instead of overwriting.
 
-**Filter submissions by source.** Date processes that fan out over submissions list them with `client.get_all_notes(invitation=submission_id, ...)` and then keep only those where `openreview.tools.should_match_invitation_source(client, invitation, note, domain=domain)` is true. Skipping the filter acts on withdrawn and desk-rejected papers, and on decided papers that the invitation's `source` excludes (`Submission_Change_Before_Reviewing`, for example, applies only to undecided ones; #3283 added a regression test for exactly that). The stage default, `venue.get_active_venue_ids()`, keeps accepted, rejected and undecided submissions in scope and drops only withdrawn and desk-rejected ones.
+**Filter submissions by source.** Date processes that fan out over submissions list them with `client.get_all_notes(invitation=submission_id, ...)` and then keep only those where `openreview.tools.should_match_invitation_source(client, invitation, note, domain=domain)` is true. Skipping the filter acts on withdrawn and desk-rejected papers, and on decided papers that the invitation's `source` excludes (`Submission_Change_Before_Reviewing`, for example, applies only to undecided ones). The stage default, `venue.get_active_venue_ids()`, keeps accepted, rejected and undecided submissions in scope and drops only withdrawn and desk-rejected ones.
 
 **Configurable names.** Read `submission_name`, `reviewers_name`, `review_name`, `area_chairs_name`, `reviewers_anon_name` and the `*_id` keys from `domain.content`. Build per-paper ids with `f'{venue_id}/{submission_name}{number}/{reviewers_name}'`, never with `Paper` or `Reviewers` spelled out. Use `openreview.tools.pretty_id()` for human-readable text.
 
 **New keys need defaults.** `domain.get_content_value('key', default)` for anything introduced in the same PR or recently. `domain.content['key']['value']` is only safe for keys every deployed venue has had since it was created (`meta_invitation_id`, `submission_id`, `submission_name`, `program_chairs_id`, `title`). The parent invitation's content has the same problem: `parent_invitation.get_content_value('users_to_notify', [])`.
 
-**Do not assume content.** `submission.content['title']['value']` raises `KeyError` when the venue's form has no such field; venues define their own submission forms (#3193). `submission.content.get('title', {}).get('value')` does not raise, but it yields `None`, and formatting `None` into an f-string produces the text `None` in a subject or email body rather than an error. So a missing-key lookup is a crash finding; a `.get()` chain feeding an f-string is at most a wording defect, not a crash.
+**Do not assume content.** `submission.content['title']['value']` raises `KeyError` when the venue's form has no such field; venues define their own submission forms. `submission.content.get('title', {}).get('value')` does not raise, but it yields `None`, and formatting `None` into an f-string produces the text `None` in a subject or email body rather than an error. So a missing-key lookup is a crash finding; a `.get()` chain feeding an f-string is at most a wording defect, not a crash.
 
 **Bulk work is bounded.** Fan-outs go through `openreview.tools.concurrent_requests(fn, items, desc=..., max_workers=...)` or `post_bulk_edges`. An unbounded thread pool or a sequential loop over thousands of submissions is a timeout, and the retry starts over.
 
-**Wait when ordering matters.** `client.post_note_edit(..., await_process=True)` and `delete_edges(..., wait_to_finish=True)` exist because a process that posts an edit and then reads its result races the queue. A sequence that deletes edges and immediately posts replacements needs the wait (#3209).
+**Wait when ordering matters.** `client.post_note_edit(..., await_process=True)` and `delete_edges(..., wait_to_finish=True)` exist because a process that posts an edit and then reads its result races the queue. A sequence that deletes edges and immediately posts replacements needs the wait.
 
 **Journal processes resolve the journal.** `journal/invitation.py` `get_process_content()` rewrites `openreview.journal.Journal()` into `JournalRequest.get_journal(client, request_form_id)` when the journal was created from a request form. A journal process must call `openreview.journal.Journal()` on one line exactly so the rewrite matches; any other way of constructing it runs with default settings on request-form journals.
 
@@ -54,5 +54,5 @@ This is deliberate: it lets one script serve many invitations and be updated in 
 
 - A process using `client.get_group(edit.domain)` and trusting `domain.content`: the venue wrote it.
 - A process signing as `venue_id` for notifications and reader updates: that is the token it holds.
-- Retrying a failed `post_message` or skipping a notification when `recipients` is empty (#3142).
+- Retrying a failed `post_message` or skipping a notification when `recipients` is empty.
 - Imports inside the function body.

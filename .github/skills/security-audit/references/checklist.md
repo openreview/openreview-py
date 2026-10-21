@@ -24,7 +24,7 @@ For each item, decide whether it applies to the target and whether the code hand
 
 ## 3. Emails
 
-- [ ] **`invitation=` and `signature=` present** on every V2 `post_message`, with `sender` from `domain.content`. Not applicable to the V1 `openreview.Client`, which accepts neither; `venue_request/` and `agora/` processes run on it. `journal/journal_request/` is V2 and must pass both.
+- [ ] **`invitation=` and `signature=` present** on every `post_message`, with `sender` from `domain.content`.
 - [ ] **Content follows readers.** Review, meta-review, decision and comment text is quoted only to recipients who are readers of that note, branching on the stage's release settings and `users_to_notify` / `email_*` flags.
 - [ ] **Actor and silent groups excluded.** `ignoreRecipients` carries the triggering user, the venue and support groups, and groups the settings say not to notify.
 - [ ] **Recipients are groups or ids**, never raw email lists pulled from profiles.

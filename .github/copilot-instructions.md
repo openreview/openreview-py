@@ -15,7 +15,7 @@ The permission model as this library authors it, the process-function execution 
 
 **Identity exposure** — Never put a profile id, name, or email of an anonymous reviewer or area chair into a note, an email body, a bibtex entry, a webfield constant, or a log. Resolve anonymous groups to members only where the result stays with the venue or the deanonymizers.
 
-**Email** — On the V2 client, `post_message()` carries `invitation=` (the venue's meta invitation) and `signature=` (the venue id); the V1 `openreview.Client` accepts neither. On both: review, meta-review and decision content goes only to the readers of that note, and `ignoreRecipients` excludes the actor and groups that must not receive it.
+**Email** — `post_message()` carries `invitation=` (the venue's meta invitation) and `signature=` (the venue id). Review, meta-review and decision content goes only to the readers of that note, and `ignoreRecipients` excludes the actor and groups that must not receive it.
 
 **Code execution** — `exec()` appears only in the "super process" wrappers that load a script stored in the venue's meta invitation content. Any new `exec()` or `eval()`, and any path where a user-supplied string reaches one, is critical.
 

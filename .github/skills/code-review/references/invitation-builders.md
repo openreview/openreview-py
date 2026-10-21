@@ -47,8 +47,8 @@ The `edit_*_process.py` files under `workflows/workflow_process/` apply those pa
 
 `setup()` is run again whenever PCs change a setting. Builder changes must be safe against a venue deployed by last year's code:
 
-- `save_invitation()` merges; a builder that passes a full `content` dict with `replacement=True` wipes keys PCs edited through the UI (#3254). Prefer posting only the fields the builder owns.
-- Group `content` written on redeploy should keep keys the venue already has (#3267) and update the keys the code owns (#3195).
+- `save_invitation()` merges; a builder that passes a full `content` dict with `replacement=True` wipes keys PCs edited through the UI. Prefer posting only the fields the builder owns.
+- Group `content` written on redeploy should keep keys the venue already has and update the keys the code owns.
 - Invitation and group ids are stable. Renaming `Official_Review` to something else leaves every existing child invitation, note and process referencing the old id.
 - A newly required `domain.content` key gets written by the builder *and* read with a default in processes, because venues redeploy stages one at a time.
 

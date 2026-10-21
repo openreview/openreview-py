@@ -2,9 +2,9 @@
 
 Email is the one output of this library that cannot be un-read. Every `client.post_message()` in a process function sends as the venue, to whoever is in `recipients`, with whatever text was formatted. The server resolves group ids to members and emails, so a wrong group is a wrong audience of hundreds.
 
-## Required shape (V2 client)
+## Required shape
 
-Processes under `venue/`, `journal/process/`, `journal/journal_request/`, `arr/`, `workflows/` and `profile/` run on `openreview.api.OpenReviewClient` and send:
+Every process sends through `openreview.api.OpenReviewClient`:
 
 ```python
 client.post_message(
@@ -23,10 +23,6 @@ client.post_message(
 - `parentGroup=` scopes recipients to members of that group; it is used when `recipients` is a broad group and only the intersection should be mailed.
 - Guard the empty case: `if recipients:` before posting, or the call fails on an empty list.
 
-## V1 client exemption
-
-`openreview.Client.post_message(subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, useJob=False)` in `openreview/openreview.py` accepts neither `invitation` nor `signature`; passing them raises `TypeError`. The processes under `venue_request/process/` and `agora/process/` run on that client, as do V1 venue scripts. Do not ask for those keywords there. `journal/journal_request/process/` is V2 (`JournalRequest` is constructed with `OpenReviewClient` in `tests/conftest.py`, and `request_form_process.py` passes `invitation=` and `signature=`), so the V2 checks apply to it. Everything under **Audience rules** below applies to both clients.
-
 ## Audience rules
 
 **Content follows readers.** A review, meta-review, decision, rebuttal or comment is quoted in an email only to recipients who are readers of that note. The pattern in `review_process.py` is: PCs get the full content, the reviewer who posted gets a confirmation, the assigned area chairs get the content if they are readers, the other reviewers get the content only when `release_to_reviewers` makes them readers, and authors get it only when `release_to_authors` is set. A new notification path needs the same branching, driven by the stage settings in the parent invitation (`users_to_notify`, `email_program_chairs`, `email_area_chairs`, `email_reviewers`, `email_authors`).
@@ -43,4 +39,4 @@ client.post_message(
 
 ## Tests
 
-Tests read sent mail with `openreview_client.get_messages(to=..., subject=...)` and assert counts and body fragments. Select by recipient and subject, never by position in the full list — the order of messages across recipients is not stable (#3225, #3226). A notification change ships with an assertion that the right address got it and an assertion that the excluded address did not.
+Tests read sent mail with `openreview_client.get_messages(to=..., subject=...)` and assert counts and body fragments. Select by recipient and subject, never by position in the full list — the order of messages across recipients is not stable. A notification change ships with an assertion that the right address got it and an assertion that the excluded address did not.

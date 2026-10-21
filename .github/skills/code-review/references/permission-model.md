@@ -71,8 +71,8 @@ Journal edges follow the same shape with action editors in place of area chairs;
 ## Writers and invitees
 
 - `writers` on a note is who can edit it later. The venue is always a writer. Authors are writers of their submission during submission and revision stages only; reviewers are writers of their own review through `'${3/signatures}'`.
-- `invitees` is who may *use* an invitation; `readers` on the invitation is who may *see* it exists. Granting `readers` to a committee group on a per-paper invitation reveals the paper number and the stage to that group. The recruitment-group fix in `venue/group.py` (#3235) removed sign and read permissions that invited-but-not-accepted members had been given; do not reintroduce them.
-- A tilde id cannot be listed as an allowed reader of an official comment; allowed readers are groups, and the API validates individual readers against group membership (#3243).
+- `invitees` is who may *use* an invitation; `readers` on the invitation is who may *see* it exists. Granting `readers` to a committee group on a per-paper invitation reveals the paper number and the stage to that group. Invited-but-not-accepted members of a recruitment group get no sign or read permissions on the committee group in `venue/group.py`; do not grant them.
+- A tilde id cannot be listed as an allowed reader of an official comment; allowed readers are groups, and the API validates individual readers against group membership.
 
 ## Stage transitions
 
