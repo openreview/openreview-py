@@ -17,7 +17,6 @@ def process(client, invitation):
     decision_name = domain.get_content_value('decision_name')
     submission_name = domain.get_content_value('submission_name')
     authors_name  = domain.get_content_value('authors_name')
-    support_user = invitation.invitations[0].split('Template')[0] + 'Support'
 
     email_subject = invitation.get_content_value('subject')
     email_content = invitation.get_content_value('message')
@@ -25,24 +24,9 @@ def process(client, invitation):
     contact_email = domain.get_content_value('contact')
     decision_option = invitation.get_content_value('decision_option')
 
-    status_invitation_id = domain.get_content_value('status_invitation_id')
-    request_form_id = domain.get_content_value('request_form_id')
-
     if not fields_to_include:
-        # post status to request form
-        client.post_note_edit(
-            invitation=status_invitation_id,
-            signatures=[venue_id],
-            readers=[venue_id, support_user],
-            note=openreview.api.Note(
-                forum=request_form_id,
-                signatures=[venue_id],
-                content={
-                    'title': { 'value': f'Author {decision_option} Decision Notification Failed' },
-                    'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid decision fields to include in the email notification. Please re-schedule this process to run at a later time and then select which fields to include.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?id={venue_id}), find and expand the "Create {invitation.id.split("/")[-1].replace("_", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Fields To Include" invitation, select the fields to include when emailing decisions to authors and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid fields to include. Once you have selected the fields to include, click "Submit" and the process will automatically be scheduled to run shortly.'}
-                }
-            )
-        )
+        # log the failure so PCs can see it in the workflow timeline
+        print(f'{decision_option} decision emails were not sent: no decision fields were selected. Select the fields under "Fields To Include" to run this step.')
         return
 
     def send_decision_email(submission_tuple):
