@@ -4,7 +4,7 @@
 
 ## Compatibility
 
-- Public method signatures are an API. Parameters are added with defaults at the end; they are not renamed, reordered or removed. #3214 is a parameter being put back after a release broke callers.
+- Public method signatures are an API. Parameters are added with defaults at the end; they are not renamed, reordered or removed.
 - Python 3.9 is the floor (`requires-python` in `pyproject.toml`; CI installs on 3.9 through 3.13). No `match`, no `X | None` in annotations evaluated at runtime, no `zip(strict=)`, no `str.removeprefix` assumptions in code that must also run on the API server's interpreter.
 - `@deprecated` from the `Deprecated` package marks retired helpers; a deprecated function keeps working for at least one release.
 - Both clients send `User-Agent: openreview-py/<version> (Python/<python>)`, read from the installed package metadata, on every request. The API enforces a minimum client version from that header and answers 426 `ClientVersionError` to older clients. Keep the header on every request path, including `post_note_edit_as_guest`, and keep the format, or the server cannot tell users to upgrade.
