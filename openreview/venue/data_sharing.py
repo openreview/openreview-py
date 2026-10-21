@@ -1,12 +1,14 @@
 import os
-import datetime
-import tempfile
 import openreview
-from openreview import tools
 
 
 class VenueDataSharing():
-    """Requests from one venue to share data with another venue, hosted in the support domain.
+    """Sets up requests from one venue to share data with another venue, hosted in the support domain.
+
+    This class only posts the group and the invitations. The process functions don't use it, so
+    they only depend on the openreview-py that the API already has. The per-request Approval,
+    Comment and Results invitations come from template invitations that the request process
+    fills in.
 
     The invitations are signed by the support group, so the process functions run as support,
     except the Run invitation, which is signed by the super user so its process can read the
@@ -14,7 +16,7 @@ class VenueDataSharing():
 
     The first type of request is a dual submission check: the program chairs of one venue
     request it, the program chairs of the other venue approve it, and support runs
-    :meth:`openreview.venue.Venue.compute_dual_submission_metadata` and attaches the CSV to
+    :meth:`openreview.venue.Venue.compute_dual_submission_metadata` and posts the CSV to
     the request forum.
     """
 
@@ -25,6 +27,9 @@ class VenueDataSharing():
         self.group_id = f'{support_group_id}/Venue_Data_Sharing'
         self.request_invitation_id = f'{self.group_id}/-/Dual_Submission_Check_Request'
         self.run_invitation_id = f'{self.group_id}/-/Dual_Submission_Check_Run'
+        self.approval_template_invitation_id = f'{self.group_id}/-/Dual_Submission_Check_Approval'
+        self.comment_template_invitation_id = f'{self.group_id}/-/Dual_Submission_Check_Comment'
+        self.results_template_invitation_id = f'{self.group_id}/-/Dual_Submission_Check_Results'
 
     def get_approval_invitation_id(self, number):
         return f'{self.group_id}/Dual_Submission_Check{number}/-/Approval'
@@ -37,7 +42,7 @@ class VenueDataSharing():
 
     def get_process_content(self, file_name):
         with open(os.path.join(os.path.dirname(__file__), 'process', file_name)) as f:
-            return f.read().replace("SUPPORT_GROUP = ''", f"SUPPORT_GROUP = '{self.support_group_id}'")
+            return f.read().replace("SUPPORT_GROUP = ''", f"SUPPORT_GROUP = '{self.support_group_id}'").replace("GROUP_ID = ''", f"GROUP_ID = '{self.group_id}'")
 
     def post_invitation_edit(self, invitation, replacement=True, signature=None):
         signature = signature or self.support_group_id
@@ -52,6 +57,9 @@ class VenueDataSharing():
 
     def setup(self):
         self.set_group()
+        self.set_approval_template_invitation()
+        self.set_comment_template_invitation()
+        self.set_results_template_invitation()
         self.set_request_invitation()
         self.set_run_invitation()
 
@@ -216,151 +224,80 @@ class VenueDataSharing():
             }
         ), signature='~Super_User1')
 
-    def create_request_invitations(self, request):
 
-        venue_id = request.content['venue_id']['value']
-        alternate_venue_id = request.content['alternate_venue_id']['value']
-        participants = [self.support_group_id, venue_id, alternate_venue_id]
+    def get_template_edit_content(self):
+        ## the request process fills these values when it creates the invitations of a request
+        return {
+            'noteNumber': { 'value': { 'param': { 'type': 'integer' } } },
+            'noteId': { 'value': { 'param': { 'type': 'string' } } },
+            'venue_id': { 'value': { 'param': { 'type': 'string' } } },
+            'alternate_venue_id': { 'value': { 'param': { 'type': 'string' } } }
+        }
 
-        approval_invitation_id = self.get_approval_invitation_id(request.number)
+    def set_approval_template_invitation(self):
+
+        approval_invitation_id = f'{self.group_id}/Dual_Submission_Check${{2/content/noteNumber/value}}/-/Approval'
         self.post_invitation_edit(openreview.api.Invitation(
-            id=approval_invitation_id,
-            invitees=[alternate_venue_id],
-            readers=participants,
-            writers=[self.support_group_id],
-            signatures=[self.support_group_id],
-            maxReplies=1,
-            process=self.get_process_content('data_sharing_approval_process.py'),
-            edit={
-                'signatures': [alternate_venue_id],
-                'readers': participants,
-                'writers': [self.support_group_id, alternate_venue_id],
-                'note': {
-                    'id': {
-                        'param': {
-                            'withInvitation': approval_invitation_id,
-                            'optional': True
-                        }
-                    },
-                    'forum': request.id,
-                    'replyto': request.id,
-                    'signatures': ['${3/signatures}'],
-                    'readers': participants,
-                    'writers': [self.support_group_id, alternate_venue_id],
-                    'content': {
-                        'status': {
-                            'order': 1,
-                            'description': f'Do you approve sharing the submissions of {alternate_venue_id} with {venue_id} to check for dual submissions? The program chairs of both venues will get the titles, abstracts and authors of the most similar pairs of submissions.',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': ['Approved', 'Rejected'],
-                                    'input': 'radio'
-                                }
-                            }
-                        },
-                        'approval_comment': {
-                            'order': 2,
-                            'description': 'Comment for the program chairs of the requesting venue (optional).',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 5000,
-                                    'markdown': True,
-                                    'input': 'textarea',
-                                    'optional': True,
-                                    'deletable': True
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        ))
-
-        comment_invitation_id = self.get_comment_invitation_id(request.number)
-        self.post_invitation_edit(openreview.api.Invitation(
-            id=comment_invitation_id,
-            invitees=participants,
-            readers=participants,
-            writers=[self.support_group_id],
-            signatures=[self.support_group_id],
-            process=self.get_process_content('data_sharing_comment_process.py'),
-            edit={
-                'signatures': {
-                    'param': {
-                        'items': [{ 'value': participant, 'optional': True } for participant in participants]
-                    }
-                },
-                'readers': participants,
-                'writers': [self.support_group_id, '${2/signatures}'],
-                'note': {
-                    'id': {
-                        'param': {
-                            'withInvitation': comment_invitation_id,
-                            'optional': True
-                        }
-                    },
-                    'forum': request.id,
-                    'replyto': {
-                        'param': {
-                            'withForum': request.id
-                        }
-                    },
-                    'signatures': ['${3/signatures}'],
-                    'readers': participants,
-                    'writers': [self.support_group_id, '${3/signatures}'],
-                    'content': {
-                        'comment': {
-                            'order': 1,
-                            'description': 'Your comment or reply (max 5000 characters).',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 5000,
-                                    'markdown': True,
-                                    'input': 'textarea'
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        ))
-
-        ## posted by the Run process, or by support with a CSV computed by hand
-        results_invitation_id = self.get_results_invitation_id(request.number)
-        self.post_invitation_edit(openreview.api.Invitation(
-            id=results_invitation_id,
+            id=self.approval_template_invitation_id,
             invitees=[self.support_group_id],
-            readers=participants,
+            readers=[self.support_group_id],
             writers=[self.support_group_id],
             signatures=[self.support_group_id],
             edit={
                 'signatures': [self.support_group_id],
-                'readers': participants,
+                'readers': [self.support_group_id],
                 'writers': [self.support_group_id],
-                'note': {
-                    'id': {
-                        'param': {
-                            'withInvitation': results_invitation_id,
-                            'optional': True
-                        }
-                    },
-                    'forum': request.id,
-                    'replyto': request.id,
-                    'signatures': ['${3/signatures}'],
-                    'readers': participants,
+                'content': self.get_template_edit_content(),
+                'replacement': True,
+                'invitation': {
+                    'id': approval_invitation_id,
+                    'invitees': ['${3/content/alternate_venue_id/value}'],
+                    'readers': [self.support_group_id, '${3/content/venue_id/value}', '${3/content/alternate_venue_id/value}'],
                     'writers': [self.support_group_id],
-                    'content': {
-                        'results': {
-                            'order': 1,
-                            'description': 'CSV file with the pairs of submissions that are potential dual submissions.',
-                            'value': {
+                    'signatures': [self.support_group_id],
+                    'maxReplies': 1,
+                    'process': self.get_process_content('data_sharing_approval_process.py'),
+                    'edit': {
+                        'signatures': ['${4/content/alternate_venue_id/value}'],
+                        'readers': [self.support_group_id, '${4/content/venue_id/value}', '${4/content/alternate_venue_id/value}'],
+                        'writers': [self.support_group_id, '${4/content/alternate_venue_id/value}'],
+                        'note': {
+                            'id': {
                                 'param': {
-                                    'type': 'file',
-                                    'extensions': ['csv'],
-                                    'maxSize': 50
+                                    'withInvitation': f'{self.group_id}/Dual_Submission_Check${{6/content/noteNumber/value}}/-/Approval',
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'signatures': ['${3/signatures}'],
+                            'readers': [self.support_group_id, '${5/content/venue_id/value}', '${5/content/alternate_venue_id/value}'],
+                            'writers': [self.support_group_id, '${5/content/alternate_venue_id/value}'],
+                            'content': {
+                                'status': {
+                                    'order': 1,
+                                    'description': 'Do you approve sharing the submissions of your venue with the requesting venue to check for dual submissions? The program chairs of both venues will get the titles, abstracts and authors of the most similar pairs of submissions.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Approved', 'Rejected'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'approval_comment': {
+                                    'order': 2,
+                                    'description': 'Comment for the program chairs of the requesting venue (optional).',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 5000,
+                                            'markdown': True,
+                                            'input': 'textarea',
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -369,136 +306,129 @@ class VenueDataSharing():
             }
         ))
 
-    def get_venue_info(self, venue_id):
-        """Returns the short name and the program chairs group id of a venue."""
-        venue_group = self.client.get_group(venue_id)
-        short_name = venue_group.content.get('subtitle', {}).get('value') or venue_id
-        program_chairs_id = venue_group.content.get('program_chairs_id', {}).get('value', f'{venue_id}/Program_Chairs')
-        return short_name, program_chairs_id
+    def set_comment_template_invitation(self):
 
-    def get_forum_url(self, request_id):
-        return f'{tools.get_site_url(self.client)}/forum?id={request_id}'
-
-    def post_message(self, recipients, subject, message):
-        return self.client.post_message(
-            subject=subject,
-            recipients=recipients,
-            message=message,
-            invitation=self.meta_invitation_id,
-            signature=self.support_group_id
-        )
-
-    def post_status(self, request_id, status, status_message=None):
-        """Updates the status of a request; only the process functions do it, through the meta invitation."""
-        content = {
-            'status': { 'value': status },
-            ## remove the message of a previous failed run
-            'status_message': { 'value': status_message, 'readers': [self.support_group_id] } if status_message else { 'delete': True }
-        }
-
-        return self.client.post_note_edit(
-            invitation=self.meta_invitation_id,
+        comment_invitation_id = f'{self.group_id}/Dual_Submission_Check${{2/content/noteNumber/value}}/-/Comment'
+        self.post_invitation_edit(openreview.api.Invitation(
+            id=self.comment_template_invitation_id,
+            invitees=[self.support_group_id],
             readers=[self.support_group_id],
             writers=[self.support_group_id],
             signatures=[self.support_group_id],
-            note=openreview.api.Note(
-                id=request_id,
-                content=content
-            )
-        )
-
-    def run_dual_submission_check(self, request, job_id=None):
-        """Computes the dual submission metadata of a request and attaches the CSV to it.
-
-        The client must be able to read the submissions of both venues, e.g. the super user.
-
-        :param request: Dual_Submission_Check_Request note
-        :type request: openreview.api.Note
-        :param job_id: Existing similarity job id to reuse instead of computing the scores again
-        :type job_id: str, optional
-        """
-        venue_id = request.content['venue_id']['value']
-        alternate_venue_id = request.content['alternate_venue_id']['value']
-        top_percent_cutoff = request.content['top_percent_cutoff']['value']
-        author_overlap_only = request.content['author_overlap_only']['value']
-        forum_url = self.get_forum_url(request.id)
-
-        ## used in the failure email when the venue lookups fail
-        short_name = venue_id
-        alternate_short_name = alternate_venue_id
-
-        try:
-            short_name, program_chairs_id = self.get_venue_info(venue_id)
-            alternate_short_name, alternate_program_chairs_id = self.get_venue_info(alternate_venue_id)
-
-            ## the approval can not change once the data is being shared
-            self.post_invitation_edit(openreview.api.Invitation(
-                id=self.get_approval_invitation_id(request.number),
-                expdate=openreview.tools.datetime_millis(datetime.datetime.now())
-            ), replacement=False)
-
-            venue = openreview.venue.helpers.get_venue(self.client, venue_id, support_user=self.support_group_id)
-            alternate_venue = openreview.venue.helpers.get_venue(self.client, alternate_venue_id, support_user=self.support_group_id)
-
-            self.post_message(
-                recipients=[program_chairs_id, alternate_program_chairs_id],
-                subject=f'Dual submission check started: {short_name} and {alternate_short_name}',
-                message=f'''The OpenReview support team started the dual submission check between {short_name} and {alternate_short_name}.
-
-Computing the similarity between the submissions of both venues can take several hours. You will receive another email when the results are available.
-
-You can view the request here: {forum_url}
-
-The OpenReview Team'''
-            )
-
-            with tempfile.TemporaryDirectory() as output_dir:
-                venue.compute_dual_submission_metadata(
-                    alternate_venue,
-                    output_dir,
-                    top_percent_cutoff=top_percent_cutoff,
-                    job_id=job_id,
-                    author_overlap_only=author_overlap_only
-                )
-                ## the output directory only contains the CSV file
-                csv_path = os.path.join(output_dir, os.listdir(output_dir)[0])
-                ## only users with a profile can upload files and the token of a process function
-                ## has none, impersonating the support group gives a token with a profile
-                upload_client = openreview.api.OpenReviewClient(baseurl=self.client.baseurl, token=self.client.token)
-                upload_client.impersonate(self.support_group_id)
-                results_invitation_id = self.get_results_invitation_id(request.number)
-                results_url = upload_client.put_attachment(csv_path, results_invitation_id, 'results')
-
-            results_edit = self.client.post_note_edit(
-                invitation=results_invitation_id,
-                signatures=[self.support_group_id],
-                note=openreview.api.Note(
-                    content={
-                        'results': { 'value': results_url }
+            edit={
+                'signatures': [self.support_group_id],
+                'readers': [self.support_group_id],
+                'writers': [self.support_group_id],
+                'content': self.get_template_edit_content(),
+                'replacement': True,
+                'invitation': {
+                    'id': comment_invitation_id,
+                    'invitees': [self.support_group_id, '${3/content/venue_id/value}', '${3/content/alternate_venue_id/value}'],
+                    'readers': [self.support_group_id, '${3/content/venue_id/value}', '${3/content/alternate_venue_id/value}'],
+                    'writers': [self.support_group_id],
+                    'signatures': [self.support_group_id],
+                    'process': self.get_process_content('data_sharing_comment_process.py'),
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                'items': [
+                                    { 'value': self.support_group_id, 'optional': True },
+                                    { 'value': '${7/content/venue_id/value}', 'optional': True },
+                                    { 'value': '${7/content/alternate_venue_id/value}', 'optional': True }
+                                ]
+                            }
+                        },
+                        'readers': [self.support_group_id, '${4/content/venue_id/value}', '${4/content/alternate_venue_id/value}'],
+                        'writers': [self.support_group_id, '${2/signatures}'],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': f'{self.group_id}/Dual_Submission_Check${{6/content/noteNumber/value}}/-/Comment',
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': {
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}'
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': [self.support_group_id, '${5/content/venue_id/value}', '${5/content/alternate_venue_id/value}'],
+                            'writers': [self.support_group_id, '${3/signatures}'],
+                            'content': {
+                                'comment': {
+                                    'order': 1,
+                                    'description': 'Your comment or reply (max 5000 characters).',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 5000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                )
-            )
-            self.post_status(request.id, 'Completed')
+                }
+            }
+        ))
 
-        except Exception as e:
-            self.post_status(request.id, 'Failed', status_message=repr(e))
-            self.post_message(
-                recipients=[self.support_group_id],
-                subject=f'Dual submission check failed: {short_name} and {alternate_short_name}',
-                message=f'''The dual submission check between {short_name} and {alternate_short_name} failed with the following error:
+    def set_results_template_invitation(self):
 
-{repr(e)}
-
-Check the process logs of the request, then run it again: {forum_url}'''
-            )
-            raise e
-
-        self.post_message(
-            recipients=[program_chairs_id, alternate_program_chairs_id, self.support_group_id],
-            subject=f'Dual submission check completed: {short_name} and {alternate_short_name}',
-            message=f'''The dual submission check between {short_name} and {alternate_short_name} has completed.
-
-You can download the results here: {forum_url}&noteId={results_edit['note']['id']}
-
-The OpenReview Team'''
-        )
+        results_invitation_id = f'{self.group_id}/Dual_Submission_Check${{2/content/noteNumber/value}}/-/Results'
+        ## posted by the Run process, or by support with a CSV computed by hand
+        self.post_invitation_edit(openreview.api.Invitation(
+            id=self.results_template_invitation_id,
+            invitees=[self.support_group_id],
+            readers=[self.support_group_id],
+            writers=[self.support_group_id],
+            signatures=[self.support_group_id],
+            edit={
+                'signatures': [self.support_group_id],
+                'readers': [self.support_group_id],
+                'writers': [self.support_group_id],
+                'content': self.get_template_edit_content(),
+                'replacement': True,
+                'invitation': {
+                    'id': results_invitation_id,
+                    'invitees': [self.support_group_id],
+                    'readers': [self.support_group_id, '${3/content/venue_id/value}', '${3/content/alternate_venue_id/value}'],
+                    'writers': [self.support_group_id],
+                    'signatures': [self.support_group_id],
+                    'edit': {
+                        'signatures': [self.support_group_id],
+                        'readers': [self.support_group_id, '${4/content/venue_id/value}', '${4/content/alternate_venue_id/value}'],
+                        'writers': [self.support_group_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': f'{self.group_id}/Dual_Submission_Check${{6/content/noteNumber/value}}/-/Results',
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'signatures': ['${3/signatures}'],
+                            'readers': [self.support_group_id, '${5/content/venue_id/value}', '${5/content/alternate_venue_id/value}'],
+                            'writers': [self.support_group_id],
+                            'content': {
+                                'results': {
+                                    'order': 1,
+                                    'description': 'CSV file with the pairs of submissions that are potential dual submissions.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'file',
+                                            'extensions': ['csv'],
+                                            'maxSize': 50
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ))

@@ -2,7 +2,14 @@ def process(client, edit, invitation):
 
     SUPPORT_GROUP = ''
 
-    data_sharing = openreview.venue.VenueDataSharing(client, SUPPORT_GROUP)
+    def get_venue_info(venue_id):
+        venue_group = client.get_group(venue_id)
+        short_name = venue_group.content.get('subtitle', {}).get('value') or venue_id
+        program_chairs_id = venue_group.content.get('program_chairs_id', {}).get('value', f'{venue_id}/Program_Chairs')
+        return short_name, program_chairs_id
+
+    def post_message(recipients, subject, message):
+        client.post_message(subject=subject, recipients=recipients, message=message, invitation=f'{SUPPORT_GROUP}/-/Edit', signature=SUPPORT_GROUP)
 
     approval = client.get_note(edit.note.id)
     request = client.get_note(approval.forum)
@@ -10,12 +17,24 @@ def process(client, edit, invitation):
     alternate_venue_id = request.content['alternate_venue_id']['value']
     status = approval.content['status']['value']
     approval_comment = approval.content.get('approval_comment', {}).get('value')
-    forum_url = data_sharing.get_forum_url(request.id)
+    forum_url = f'{openreview.tools.get_site_url(client)}/forum?id={request.id}'
 
-    data_sharing.post_status(request.id, status)
+    ## copy the decision to the status of the request
+    client.post_note_edit(
+        invitation=f'{SUPPORT_GROUP}/-/Edit',
+        readers=[SUPPORT_GROUP],
+        writers=[SUPPORT_GROUP],
+        signatures=[SUPPORT_GROUP],
+        note=openreview.api.Note(
+            id=request.id,
+            content={
+                'status': { 'value': status }
+            }
+        )
+    )
 
-    short_name, program_chairs_id = data_sharing.get_venue_info(venue_id)
-    alternate_short_name, alternate_program_chairs_id = data_sharing.get_venue_info(alternate_venue_id)
+    short_name, program_chairs_id = get_venue_info(venue_id)
+    alternate_short_name, alternate_program_chairs_id = get_venue_info(alternate_venue_id)
 
     comment_text = f'''
 
@@ -24,7 +43,7 @@ Comment from the program chairs of {alternate_short_name}:
 {approval_comment}''' if approval_comment else ''
 
     if status == 'Approved':
-        data_sharing.post_message(
+        post_message(
             recipients=[program_chairs_id],
             subject=f'{alternate_short_name} approved your dual submission check request',
             message=f'''The program chairs of {alternate_short_name} ({alternate_venue_id}) approved your dual submission check request.{comment_text}
@@ -36,7 +55,7 @@ You can view the request here: {forum_url}
 The OpenReview Team'''
         )
 
-        data_sharing.post_message(
+        post_message(
             recipients=[SUPPORT_GROUP],
             subject=f'Dual submission check ready to run: {short_name} and {alternate_short_name}',
             message=f'''The program chairs of {alternate_short_name} ({alternate_venue_id}) approved the dual submission check requested by {short_name} ({venue_id}).
@@ -45,7 +64,7 @@ Run the check from the request: {forum_url}'''
         )
         return
 
-    data_sharing.post_message(
+    post_message(
         recipients=[program_chairs_id],
         subject=f'{alternate_short_name} rejected your dual submission check request',
         message=f'''The program chairs of {alternate_short_name} ({alternate_venue_id}) rejected your dual submission check request.{comment_text}
