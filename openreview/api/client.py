@@ -910,12 +910,16 @@ class OpenReviewClient(object):
             return 'openreview.net/-/Edit'
         return 'OpenReview.net/-/Edit'
 
-    def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None):
+    def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None, wait_for_active_jobs=False, timeout=300):
         """
         Updates the domain for an entire venue
 
-        :param old_domain: Current domain
-        :param new_domain: New domain
+        :param old_venue_id: Current domain
+        :param new_venue_id: New domain
+        :param wait_for_active_jobs: The server rejects the rename with a 409 while a process job for the venue is active. If True, retry until no job is active or the timeout is reached, then raise the last 409, which names the blocking job.
+        :type wait_for_active_jobs: bool
+        :param timeout: Seconds to keep retrying when wait_for_active_jobs is True
+        :type timeout: int
 
         :return: Status of the request. The process can be tracked in the queue.
         :rtype: dict
@@ -927,11 +931,17 @@ class OpenReviewClient(object):
             }
         if additional_renames:
             json['additionalRenames'] = additional_renames
-        response = self.session.post(
-            self.domains_rename,
-            json = json,
-            headers = self.headers)
 
+        wait_time = 0.5
+        max_iterations = (int(timeout / wait_time) or 1) if wait_for_active_jobs else 1
+        for iteration in range(max_iterations):
+            response = self.session.post(
+                self.domains_rename,
+                json = json,
+                headers = self.headers)
+            if response.status_code != 409 or iteration == max_iterations - 1:
+                break
+            time.sleep(wait_time)
 
         response = self.__handle_response(response)
         result = response.json()

@@ -1401,7 +1401,6 @@ return {
                 writers=[self.arxiv_group_id],
                 signatures=[self.arxiv_group_id],
                 invitees=['~'],
-                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 process=self.get_process_content('process/arxiv_record_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -1911,6 +1910,7 @@ return {
                         writers=[self.support_group_id],
                         signatures=[self.super_user],
                         invitees=['~'],
+                        humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                         process=file_content,
                         preprocess=pre_file_content,
                         edit={
@@ -2327,7 +2327,8 @@ return {
                         'signatures': [ archive_group.id ],
                         'readers': ['everyone'],
                         'writers': [archive_group.id],
-                        'invitees': ['everyone'],
+                        'invitees': ['~'],
+                        'humanVerificationRequired': openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                         'process': '''def process(client, edit, invitation):
         meta_invitation = client.get_invitation(invitation.invitations[0])
         script = meta_invitation.content['comment_process_script']['value']
@@ -2429,6 +2430,7 @@ return {
                 writers=[anonymous_group_id],
                 signatures=[anonymous_group_id],
                 invitees=['~'],
+                humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 edit={
                     'readers': [ anonymous_group_id, author_anonymous_group_id],
                     'signatures': { 
@@ -2627,7 +2629,8 @@ return {
                         'signatures': [ anonymous_group_id ],
                         'readers': ['everyone'],
                         'writers': [anonymous_group_id],
-                        'invitees': ['everyone'],
+                        'invitees': ['~'],
+                        'humanVerificationRequired': openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                         'process': '''def process(client, edit, invitation):
         meta_invitation = client.get_invitation(invitation.invitations[0])
         script = meta_invitation.content['comment_process_script']['value']
@@ -2745,7 +2748,9 @@ return {
                     readers=['everyone'],
                     writers=[self.support_group_id],
                     signatures=[self.super_user],
-                    invitees=['~', '(guest)'],
+                    invitees=['~'],
+                    humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
+                    preprocess=self.get_process_content('process/request_merge_profiles_pre_process.py'),
                     process=file_content,
                     edit={
                         'readers': [self.support_group_id, '${2/note/content/right/value}', '${2/note/content/left/value}'],
@@ -2754,8 +2759,7 @@ return {
                             'param': {
                                 'items': [
                                     { 'prefix': '~.*', 'optional': True },
-                                    { 'value': self.support_group_id, 'optional': True },
-                                    { 'value': '(guest)', 'optional': True } 
+                                    { 'value': self.support_group_id, 'optional': True }
                                 ]
                             }
                         },

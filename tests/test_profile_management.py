@@ -775,10 +775,8 @@ class TestProfileManagement():
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
-        # the arXiv record invitation gets the default human verification rate limit
-        # (DBLP and ORCID are excluded because they support bulk upload)
         record_invitation = openreview_client.get_invitation('openreview.net/Public_Article/arXiv.org/-/Record')
-        assert record_invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
+        assert record_invitation.humanVerificationRequired is None
 
         edit = test_client_v2.post_note_edit(
             invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
@@ -2309,6 +2307,8 @@ computation and memory.
         assert openreview_client.get_group('john@profile.org').members == ['~John_Last1', '~John_Alternate_Last1']
         assert openreview_client.get_group('~John_Alternate_Last1').members == ['john@profile.org']
 
+        assert openreview_client.get_invitation('openreview.net/Support/-/Profile_Name_Removal').humanVerificationRequired == openreview.tools.DEFAULT_HUMAN_VERIFICATION
+
         ## Try to remove the unexisting name and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~John_Lasst1'):
             request_note = john_client.post_note_edit(
@@ -2398,7 +2398,9 @@ computation and memory.
             }
         )
 
-        assert openreview_client.get_invitation('openreview.net/Archive/Submission1/-/Comment')
+        comment_invitation = openreview_client.get_invitation('openreview.net/Archive/Submission1/-/Comment')
+        assert comment_invitation.invitees == ['~']
+        assert comment_invitation.humanVerificationRequired == openreview.tools.DEFAULT_HUMAN_VERIFICATION
 
 
         edit = john_client.post_note_edit(
@@ -4451,31 +4453,71 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_merge_profiles_as_guest(self, openreview_client, helpers, support_client):
+    def test_merge_profiles_validation(self, openreview_client, helpers, support_client):
 
-        helpers.create_user('marina@profile.org', 'Marina', 'Last', alternates=[], institution='google.com')
+        marina_client = helpers.create_user('marina@profile.org', 'Marina', 'Last', alternates=[], institution='google.com')
         helpers.create_user('marina@gmail.com', 'Marina', 'Last', alternates=[], institution='google.com')
 
+        invitation = openreview_client.get_invitation('openreview.net/Support/-/Profile_Merge')
+        assert invitation.invitees == ['~']
+        assert invitation.humanVerificationRequired == openreview.tools.DEFAULT_HUMAN_VERIFICATION
+
         guest_client = openreview.api.OpenReviewClient()
-        edit = guest_client.post_note_edit(
+        with pytest.raises(openreview.OpenReviewException, match=r'NotInviteeError'):
+            guest_client.post_note_edit(
+                invitation = 'openreview.net/Support/-/Profile_Merge',
+                signatures=['(guest)'],
+                note = openreview.api.Note(
+                    content={
+                        'email': { 'value': 'marina@hotmail.com' },
+                        'left': { 'value': 'marina@profile.org' },
+                        'right': { 'value': 'marina@gmail.com' },
+                        'comment': { 'value': 'please merge my profiles' }
+                    }
+            ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~Marina_Unknown1'):
+            marina_client.post_note_edit(
+                invitation = 'openreview.net/Support/-/Profile_Merge',
+                signatures=['~Marina_Last1'],
+                note = openreview.api.Note(
+                    content={
+                        'left': { 'value': '~Marina_Unknown1' },
+                        'right': { 'value': '~Marina_Last2' },
+                        'comment': { 'value': 'please merge my profiles' }
+                    }
+            ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~Marina_Unknown1'):
+            marina_client.post_note_edit(
+                invitation = 'openreview.net/Support/-/Profile_Merge',
+                signatures=['~Marina_Last1'],
+                note = openreview.api.Note(
+                    content={
+                        'left': { 'value': '~Marina_Last1' },
+                        'right': { 'value': '~Marina_Unknown1' },
+                        'comment': { 'value': 'please merge my profiles' }
+                    }
+            ))
+
+        edit = marina_client.post_note_edit(
             invitation = 'openreview.net/Support/-/Profile_Merge',
-            signatures=['(guest)'],
+            signatures=['~Marina_Last1'],
             note = openreview.api.Note(
                 content={
-                    'email': { 'value': 'marina@hotmail.com' },
                     'left': { 'value': 'marina@profile.org' },
-                    'right': { 'value': 'marina@gmail.com' },
+                    'right': { 'value': 'marina_unknown@hotmail.com' },
                     'comment': { 'value': 'please merge my profiles' }
                 }
         ))
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        messages = openreview_client.get_messages(to='marina@hotmail.com', subject='Profile merge request has been received')
+        messages = openreview_client.get_messages(to='marina@profile.org', subject='Profile merge request has been received')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi marina@hotmail.com,
+        assert messages[0]['content']['text'] == '''Hi Marina Last,
 
-We have received your request to merge the following profiles: marina@profile.org, marina@gmail.com.
+We have received your request to merge the following profiles: marina@profile.org, marina_unknown@hotmail.com.
 
 We will evaluate your request and you will receive another email with the request status.
 
@@ -4498,11 +4540,11 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        messages = openreview_client.get_messages(to='marina@hotmail.com', subject='Profile merge request has been rejected')
+        messages = openreview_client.get_messages(to='marina@profile.org', subject='Profile merge request has been rejected')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi marina@hotmail.com,
+        assert messages[0]['content']['text'] == '''Hi Marina Last,
 
-We have received your request to merge the following profiles: marina@profile.org, marina@gmail.com.
+We have received your request to merge the following profiles: marina@profile.org, marina_unknown@hotmail.com.
 
 We can not merge your profiles for the following reason:
 
@@ -4960,6 +5002,8 @@ The OpenReview Team.
 
         clara_client = helpers.create_user('clara@profile.org', 'Clara', 'Last', alternates=[], institution='google.com')
 
+        assert openreview_client.get_invitation('openreview.net/Anonymous_Preprint/-/Submission').humanVerificationRequired == openreview.tools.DEFAULT_HUMAN_VERIFICATION
+
         edit = clara_client.post_note_edit(
             invitation='openreview.net/Anonymous_Preprint/-/Submission',
             signatures=['~Clara_Last1'],
@@ -4997,7 +5041,9 @@ The OpenReview Team.
             }
         )
 
-        assert openreview_client.get_invitation('openreview.net/Anonymous_Preprint/Submission1/-/Comment')
+        comment_invitation = openreview_client.get_invitation('openreview.net/Anonymous_Preprint/Submission1/-/Comment')
+        assert comment_invitation.invitees == ['~']
+        assert comment_invitation.humanVerificationRequired == openreview.tools.DEFAULT_HUMAN_VERIFICATION
 
 
         edit = clara_client.post_note_edit(

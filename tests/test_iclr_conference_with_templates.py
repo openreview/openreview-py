@@ -752,12 +752,13 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ICLR.cc/2026/Conference/Area_Chairs/-/Conflict-0-1', count=3)
 
+        # assert the SAC reminder was printed to the process log instead of posted to the request form
+        logs = openreview_client.get_process_logs(id='ICLR.cc/2026/Conference/Area_Chairs/-/Conflict-0-1')
+        assert any('Since your venue uses Senior Area Chairs, please remember to recompute Area Chairs conflicts once you deploy SAC-AC assignments' in '\n'.join(log.get('log', [])) for log in logs)
+
         venue = openreview_client.get_group('ICLR.cc/2026/Conference')
-        # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 1
-        assert notes[0].content['title']['value'] == 'Area Chairs Conflicts Reminder'
-        assert notes[0].content['comment']['value'] == 'Area Chairs conflicts have been successfully computed. Please note that you will need to recompute Area Chairs conflicts once you deploy SAC-AC assignments to account for SAC conflicts.'
+        assert len(notes) == 0
 
         assert len(openreview_client.get_grouped_edges(
             invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Conflict',
@@ -841,12 +842,16 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment-0-1', count=2)
 
-        # assert status comment posted to request form
+        # assert the failure was printed to the process log instead of posted to the request form
+        logs = openreview_client.get_process_logs(id='ICLR.cc/2026/Conference/-/Senior_Area_Chairs_Assignment_Deployment-0-1')
+        # each log's 'log' field is a list of the lines the process printed
+        failure_logs = [text for text in ('\n'.join(log.get('log', [])) for log in logs) if 'Assignments were not deployed: no match name was selected.' in text]
+        assert len(failure_logs) == 1
+        assert 'Select a match name under "Match" to run this step.' in failure_logs[0]
+
         venue = openreview_client.get_group('ICLR.cc/2026/Conference')
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 2
-        assert notes[-1].content['title']['value'] == 'Senior Area Chairs Assignment Deployment Failed'
-        assert 'To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?id=ICLR.cc/2026/Conference)' in notes[-1].content['comment']['value']
+        assert len(notes) == 0
 
         # try to deploy initialized configuration and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'The matching configuration with title "sac-matching-1" does not have status "Complete".'):
@@ -926,11 +931,13 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ICLR.cc/2026/Conference/Area_Chairs/-/Conflict-0-1', count=4)
 
+        # assert the SAC reminder was skipped since SAC-AC assignments were already deployed
+        logs = openreview_client.get_process_logs(id='ICLR.cc/2026/Conference/Area_Chairs/-/Conflict-0-1')
+        assert any('SAC-AC assignments have been deployed, skipping reminder' in '\n'.join(log.get('log', [])) for log in logs)
+
         venue = openreview_client.get_group('ICLR.cc/2026/Conference')
-        # assert status comment was not posted to the request form since SAC-AC assignemnts were already deployed
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 2
-        assert notes[-1].content['title']['value'] == 'Senior Area Chairs Assignment Deployment Failed'
+        assert len(notes) == 0
 
         assert len(openreview_client.get_grouped_edges(
             invitation='ICLR.cc/2026/Conference/Area_Chairs/-/Conflict',
