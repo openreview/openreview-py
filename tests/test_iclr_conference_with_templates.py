@@ -53,6 +53,7 @@ class TestSimpleDualAnonymous():
                     'full_submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
                     'area_chairs_support': { 'value': True },
                     'senior_area_chairs_support': { 'value': True },
+                    'ethics_review_support': { 'value': True },
                     'expected_submissions': { 'value': 12000 },
                     'venue_organizer_agreement': {
                         'value': [
@@ -89,7 +90,9 @@ class TestSimpleDualAnonymous():
             'ICLR.cc/2026/Conference/Reviewers',
             'ICLR.cc/2026/Conference/Authors',
             'ICLR.cc/2026/Conference/Area_Chairs',
-            'ICLR.cc/2026/Conference/Senior_Area_Chairs'
+            'ICLR.cc/2026/Conference/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
         ]
         assert 'preferred_emails_id' in group.content and group.content['preferred_emails_id']['value'] == 'ICLR.cc/2026/Conference/-/Preferred_Emails'
         invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Preferred_Emails')
@@ -102,6 +105,76 @@ class TestSimpleDualAnonymous():
         assert group.content['senior_area_chairs_name']['value'] == 'Senior_Area_Chairs'
         assert group.content['sac_paper_assignments']['value'] == False
         assert group.content['senior_area_chairs_conflict_id']['value'] == 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Conflict'
+        assert group.content['ethics_chairs_id']['value'] == 'ICLR.cc/2026/Conference/Ethics_Chairs'
+        assert group.content['ethics_chairs_name']['value'] == 'Ethics_Chairs'
+        assert group.content['ethics_reviewers_id']['value'] == 'ICLR.cc/2026/Conference/Ethics_Reviewers'
+        assert group.content['ethics_reviewer_roles']['value'] == ['Ethics_Reviewers']
+        assert group.content['ethics_reviewers_name']['value'] == 'Ethics_Reviewers'
+        assert group.content['anon_ethics_reviewer_name']['value'] == 'Ethics_Reviewer_'
+        # the ethics reviewers' message and matching invitations are hidden from the workflow timeline, like the reviewers' ones
+        assert 'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Message' in group.content['exclusion_workflow_invitations']['value']
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs/-/Message' in group.content['exclusion_workflow_invitations']['value']
+        assert '/ICLR.cc/2026/Conference/Ethics_Reviewers/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration).*/' in group.content['exclusion_workflow_invitations']['value']
+        # the ethics review stage is configured before the venue setup
+        assert group.content['ethics_review_name']['value'] == 'Ethics_Review'
+        assert group.content['release_submissions_to_ethics_chairs']['value'] == True
+
+        # flagging a submission creates its ethics reviewers group and ethics review invitation
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Ethics_Review_Flag')
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group')
+        invitation = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Ethics_Review')
+        assert invitation and invitation.content['source']['value']['content'] == { 'flagged_for_ethics_review': True }
+
+        # the ethics invitations can be configured from the workflow timeline
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review').description
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group').description
+        for invitation_id in [
+            'ICLR.cc/2026/Conference/-/Ethics_Review/Form_Fields',
+            'ICLR.cc/2026/Conference/-/Ethics_Review/Readers',
+            'ICLR.cc/2026/Conference/-/Ethics_Review/Dates',
+            'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group/Deanonymizers',
+            'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group/Dates'
+        ]:
+            assert openreview.tools.get_invitation(openreview_client, invitation_id), f'{invitation_id} not found'
+        # ethics review notifications are fixed, so there is no notifications edit
+        assert not openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Ethics_Review/Notifications')
+
+        # the ethics committee can be selected as readers of the ethics reviews and deanonymizers of the ethics reviewers
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review/Readers')
+        reader_options = [item['value'] for item in invitation.edit['content']['readers']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' in reader_options
+        assert 'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Ethics_Reviewers' in reader_options
+        assert 'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Ethics_Reviewers/Submitted' in reader_options
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Ethics_Reviewers/-/Submission_Group/Deanonymizers')
+        deanonymizer_options = [item['value'] for item in invitation.edit['content']['identity_visibility']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' in deanonymizer_options
+        assert 'ICLR.cc/2026/Conference/Submission${3/content/noteNumber/value}/Ethics_Reviewers' in deanonymizer_options
+
+        # the other readers edits don't offer the ethics committee
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review/Readers')
+        reader_options = [item['value'] for item in invitation.edit['content']['readers']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' not in reader_options
+
+        # the review and meta review readers are computed per submission, so the ethics reviewers of flagged submissions can be added
+        for stage_name in ['Official_Review', 'Meta_Review']:
+            invitation = openreview.tools.get_invitation(openreview_client, f'ICLR.cc/2026/Conference/-/{stage_name}')
+            assert 'noteReaders' in invitation.edit['content']
+            assert 'review_readers' in invitation.content
+            assert invitation.edit['invitation']['edit']['note']['readers'][0] == '${5/content/noteReaders/value}'
+
+        # the ethics reviewers are matched to the flagged submissions, after the reviewers
+        assert 'ethics_reviewers_custom_max_papers_id' not in group.content
+        reviewers_affinity_score_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Affinity_Score')
+        for invitation_name in ['Affinity_Score', 'Conflict']:
+            invitation = openreview_client.get_invitation(f'ICLR.cc/2026/Conference/Ethics_Reviewers/-/{invitation_name}')
+            assert invitation.cdate > reviewers_affinity_score_inv.cdate
+            assert 'ICLR.cc/2026/Conference/Ethics_Chairs' in invitation.readers
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Ethics_Reviewers/-/Assignment_Configuration')
+        assert invitation.edit['note']['content']['paper_invitation']['value']['param']['default'].endswith('&content.flagged_for_ethics_review=true')
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Ethics_Reviewers/-/Assignment')
+        assert invitation.content['committee_role']['value'] == 'ethics_reviewers'
+        assert invitation.content['review_name']['value'] == 'Ethics_Review'
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Reviewers_Assignment_Deployment')
 
         group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs')
         assert group.readers == [
@@ -109,6 +182,58 @@ class TestSimpleDualAnonymous():
             'ICLR.cc/2026/Conference/Senior_Area_Chairs'
         ]
         assert group.domain == 'ICLR.cc/2026/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+        # created through the Committee_Group template, which sets the ethics reviewer console
+        assert group.content['committee_role']['value'] == 'ethics_reviewers'
+        assert group.web and 'Ethics Reviewer Console' in group.web
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers/Invited')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Reviewers/Declined')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Chairs')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference',
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
+        ]
+        # ethics chairs can sign as the group, ethics reviewers sign with their anonymous submission groups
+        assert group.signatories == ['ICLR.cc/2026/Conference', 'ICLR.cc/2026/Conference/Ethics_Chairs']
+        assert group.domain == 'ICLR.cc/2026/Conference'
+        # created through the Committee_Group template, which sets the ethics chair console
+        assert group.content['committee_role']['value'] == 'ethics_chairs'
+        assert group.web and 'Ethics Chair Console' in group.web
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Chairs/Invited')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Ethics_Chairs/Declined')
+        assert group.readers == [
+            'ICLR.cc/2026/Conference'
+        ]
+        assert group.domain == 'ICLR.cc/2026/Conference'
+
+        # the ethics committees get the same message, members and recruitment invitations as the other committees
+        for committee_id in ['ICLR.cc/2026/Conference/Ethics_Reviewers', 'ICLR.cc/2026/Conference/Ethics_Chairs']:
+            for invitation_name in ['Message', 'Members', 'Recruitment_Request', 'Recruitment_Request_Reminder', 'Recruitment_Response']:
+                assert openreview.tools.get_invitation(openreview_client, f'{committee_id}/-/{invitation_name}'), f'{committee_id}/-/{invitation_name} not found'
 
         # by default, only the venue, program chairs, and assigned senior area chairs can read the submission group
         submission_group_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/Senior_Area_Chairs/-/Submission_Group')
@@ -2127,6 +2252,164 @@ note={under review}
             anon_group_id
         ]
 
+    def test_ethics_review_flag(self, client, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+        # the program chairs flag submission 5 for ethics review
+        submission = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', number=[5])[0]
+        flag_edit = pc_client.post_note_edit(
+            invitation='ICLR.cc/2026/Conference/-/Ethics_Review_Flag',
+            signatures=['ICLR.cc/2026/Conference'],
+            note=openreview.api.Note(
+                id=submission.id,
+                content={
+                    'flagged_for_ethics_review': { 'value': True },
+                    'ethics_comments': { 'value': 'Please check the consent for the collected data.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=flag_edit['id'])
+
+        assert openreview_client.get_group('ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers')
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission5/-/Ethics_Review')
+        assert not openreview.tools.get_group(openreview_client, 'ICLR.cc/2026/Conference/Submission4/Ethics_Reviewers')
+
+        # the ethics reviewers and ethics chairs are added as readers of the flagged submission reviews only
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission5/-/Official_Review')
+        assert invitation.edit['note']['readers'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            '${3/signatures}'
+        ]
+
+        # the assigned reviewer posts a review on the flagged submission
+        assert '~Reviewer_ICLRThree1' in openreview_client.get_group('ICLR.cc/2026/Conference/Submission5/Reviewers').members
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer_three@iclr.cc', password=helpers.strong_password)
+        anon_group_id = reviewer_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission5/Reviewer_', signatory='~Reviewer_ICLRThree1')[0].id
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICLR.cc/2026/Conference/Submission5/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'The data collection needs an ethics review'},
+                    'review': { 'value': 'Good paper, but the consent for the collected data is not clear.'},
+                    'rating': { 'value': 10},
+                    'confidence': { 'value': 5},
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        flagged_review = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission5/-/Official_Review')[0]
+        assert flagged_review.readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            anon_group_id
+        ]
+
+        # the review readers edit offers the readers with the submission number placeholder used by the review readers template
+        readers_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review/Readers')
+        reader_options = [item['value'] for item in readers_inv.edit['content']['readers']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Submission{number}/Reviewers/Submitted' in reader_options
+        assert '${3/signatures}' not in reader_options
+
+        # the program chairs release the reviews to the reviewers who submitted their review
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Official_Review/Readers',
+            content={
+                'readers': {
+                    'value': [
+                        'ICLR.cc/2026/Conference/Program_Chairs',
+                        'ICLR.cc/2026/Conference/Submission{number}/Senior_Area_Chairs',
+                        'ICLR.cc/2026/Conference/Submission{number}/Area_Chairs',
+                        'ICLR.cc/2026/Conference/Submission{number}/Reviewers/Submitted'
+                    ]
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=3)
+
+        # the selected readers are stored in the review readers template, the invitation still computes the readers per submission
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review')
+        assert invitation.content['review_readers']['value'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Reviewers/Submitted'
+        ]
+        assert invitation.edit['invitation']['edit']['note']['readers'] == ['${5/content/noteReaders/value}', '${3/signatures}']
+
+        # the flagged submission keeps the ethics committee as readers of its reviews
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission5/-/Official_Review')
+        assert invitation.edit['note']['readers'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Reviewers/Submitted',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            '${3/signatures}'
+        ]
+
+        # the existing reviews get the new readers, the review of the flagged submission keeps the ethics committee
+        reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
+        assert reviews[0].readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Reviewers/Submitted',
+            reviews[0].signatures[0]
+        ]
+        flagged_review = openreview_client.get_note(flagged_review.id)
+        assert flagged_review.readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Reviewers/Submitted',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            anon_group_id
+        ]
+
+        # restore the default readers, the next stages expect them
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Official_Review/Readers',
+            content={
+                'readers': {
+                    'value': [
+                        'ICLR.cc/2026/Conference/Program_Chairs',
+                        'ICLR.cc/2026/Conference/Submission{number}/Senior_Area_Chairs',
+                        'ICLR.cc/2026/Conference/Submission{number}/Area_Chairs'
+                    ]
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=4)
+
+        reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
+        assert reviews[0].readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+            reviews[0].signatures[0]
+        ]
+        flagged_review = openreview_client.get_note(flagged_review.id)
+        assert flagged_review.readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            anon_group_id
+        ]
+
     def test_comment_stage(self, client, openreview_client, helpers):
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -2627,7 +2910,60 @@ note={under review}
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
 
-        # release the reviews to the public
+        # release the reviews to the default readers: the program chairs, the assigned committee and the authors
+        now = datetime.datetime.now()
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Official_Review_Release/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review_Release-0-1', count=2)
+        # two more runs than the review stage because test_ethics_review_flag changes the review readers twice
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=5)
+
+        reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
+        assert len(reviews) == 1
+        assert reviews[0].readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Reviewers',
+            'ICLR.cc/2026/Conference/Submission2/Authors'
+        ]
+
+        # the released readers are stored in the review readers template, so the flagged submission keeps the ethics committee
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review')
+        assert invitation.content['review_readers']['value'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Reviewers',
+            'ICLR.cc/2026/Conference/Submission{number}/Authors'
+        ]
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission5/-/Official_Review')
+        assert invitation.edit['note']['readers'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Reviewers',
+            'ICLR.cc/2026/Conference/Submission5/Authors',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
+        ]
+        flagged_reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission5/-/Official_Review')
+        assert len(flagged_reviews) == 1
+        assert flagged_reviews[0].readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Reviewers',
+            'ICLR.cc/2026/Conference/Submission5/Authors',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
+        ]
+
+        # release the reviews to the public, the release is active so changing its readers applies the release again
         pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Official_Review_Release/Readers',
             content = {
@@ -2636,24 +2972,112 @@ note={under review}
                 }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=6)
 
         review_release_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Official_Review_Release')
         assert review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == ['everyone']
 
-        now = datetime.datetime.now()
-        pc_client.post_invitation_edit(
-            invitations='ICLR.cc/2026/Conference/-/Official_Review_Release/Dates',
-            content={
-                'activation_date': { 'value': openreview.tools.datetime_millis(now) }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review_Release-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=3)
-
         reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
         assert len(reviews) == 1
         assert reviews[0].readers == ['everyone']
+
+        # the release stores the released readers in the review readers template, so the readers are still computed per submission
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review')
+        assert invitation.content['review_readers']['value'] == ['everyone']
+        assert invitation.edit['invitation']['edit']['note']['readers'] == ['${5/content/noteReaders/value}']
+        # public reviews are not restricted, so the flagged submission doesn't add the ethics committee
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission5/-/Official_Review')
+        assert invitation.edit['note']['readers'] == ['everyone']
+        flagged_reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission5/-/Official_Review')
+        assert flagged_reviews[0].readers == ['everyone']
+
+    def test_ethics_review_release(self, client, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+        # the ethics reviews are not released by default, the release activates long after the ethics reviews are due
+        release_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review_Release')
+        ethics_review_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review')
+        assert release_inv.cdate > ethics_review_inv.edit['invitation']['duedate'] + (60*60*1000*24*7*4)
+        assert release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Authors'
+        ]
+        # the release readers edit offers the ethics committee
+        readers_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review_Release/Readers')
+        reader_options = [item['value'] for item in readers_inv.edit['content']['readers']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' in reader_options
+        assert 'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Ethics_Reviewers' in reader_options
+        # the other releases don't offer it
+        readers_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review_Release/Readers')
+        reader_options = [item['value'] for item in readers_inv.edit['content']['readers']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' not in reader_options
+
+        # an ethics reviewer is assigned to the flagged submission
+        helpers.create_user('ethics_reviewer@iclr.cc', 'Ethics', 'ICLRReviewer')
+        openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Ethics_Reviewers', '~Ethics_ICLRReviewer1')
+        openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers', '~Ethics_ICLRReviewer1')
+
+        # open the ethics review form
+        now = datetime.datetime.now()
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Ethics_Review/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+                'due_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Ethics_Review-0-1', count=2)
+
+        # only the flagged submission has an ethics review form
+        invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Ethics_Review')
+        assert [invitation.id for invitation in invitations] == ['ICLR.cc/2026/Conference/Submission5/-/Ethics_Review']
+
+        ethics_reviewer_client = openreview.api.OpenReviewClient(username='ethics_reviewer@iclr.cc', password=helpers.strong_password)
+        anon_group_id = ethics_reviewer_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission5/Ethics_Reviewer_', signatory='~Ethics_ICLRReviewer1')[0].id
+        ethics_review_edit = ethics_reviewer_client.post_note_edit(
+            invitation='ICLR.cc/2026/Conference/Submission5/-/Ethics_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'recommendation': { 'value': '2: Serious ethical issues that need to be addressed in the final version' },
+                    'ethics_review': { 'value': 'The paper needs to explain how the consent for the collected data was obtained.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=ethics_review_edit['id'])
+
+        # by default the ethics review is only visible to the program chairs, the ethics chairs and its author
+        ethics_review = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission5/-/Ethics_Review')[0]
+        assert ethics_review.readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            anon_group_id
+        ]
+        assert ethics_review.nonreaders == ['ICLR.cc/2026/Conference/Submission5/Authors']
+
+        # the program chairs release the ethics reviews to the ethics committee and the authors
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Ethics_Review_Release/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Ethics_Review_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Ethics_Review-0-1', count=3)
+
+        ethics_review = openreview_client.get_note(ethics_review.id)
+        assert ethics_review.readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Submission5/Authors'
+        ]
+        assert not ethics_review.nonreaders
 
     def test_public_comment_stage(self, client, openreview_client, helpers, test_client):
 
@@ -2845,10 +3269,11 @@ note={under review}
         )
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Author_Reviews_Notification-0-1', count=3)
 
-        # only Submission2 has a review, so only its authors are notified
+        # only Submission2 and Submission5 (flagged for ethics review) have a review, so only their authors are notified
         messages = openreview_client.get_messages(subject='[ICLR 2026] The reviews for your submission.*')
         assert messages
-        assert all('Paper title 2' in message['content']['subject'] for message in messages)
+        assert all('Paper title 2' in message['content']['subject'] or 'Paper title 5' in message['content']['subject'] for message in messages)
+        assert any('Paper title 5' in message['content']['subject'] for message in messages)
         recipients = [message['content']['to'] for message in messages]
         assert 'test@mail.com' in recipients
 
@@ -3177,6 +3602,18 @@ note={under review}
             'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
             'ICLR.cc/2026/Conference/Submission2/Reviewers',
             'ICLR.cc/2026/Conference/Submission2/Authors'
+        ]
+
+        # the meta reviews of the submission flagged for ethics review are also released to the ethics chairs,
+        # the ethics reviewers are not readers of the meta reviews
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission5/-/Meta_Review')
+        assert invitation.edit['note']['readers'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Reviewers',
+            'ICLR.cc/2026/Conference/Submission5/Authors',
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
         ]
 
     def test_metareview_sac_revision_stage(self, client, openreview_client, helpers):

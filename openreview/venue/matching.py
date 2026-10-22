@@ -1504,12 +1504,15 @@ class Matching(object):
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_assignment_id(self.match_group.id))     
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id))
              
-    def setup_matching_invitations(self):
+    def setup_matching_invitations(self, cdate=None):
 
         venue = self.venue
         venue_id = venue.id
         score_invitation_id = venue.get_affinity_score_id(self.match_group.id)
         paper_number = '${{2/head}/number}'
+        # by default the scores and conflicts are computed a few days after the submission deadline,
+        # committees that are matched later (like the ethics reviewers) can pass their own activation date
+        matching_cdate = cdate if cdate else tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3)
 
         invitation_readers = [venue_id]
         edge_readers = [venue_id]
@@ -1542,6 +1545,10 @@ class Matching(object):
                 edge_readers.append(venue.get_senior_area_chairs_id(number=paper_number))
                 invitation_readers.append(self.senior_area_chairs_id)
 
+        if self.is_ethics_reviewer and venue.use_ethics_chairs:
+            edge_readers.append(venue.get_ethics_chairs_id())
+            invitation_readers.append(venue.get_ethics_chairs_id())
+
         #append tail to readers
         edge_readers.append('${2/tail}')
 
@@ -1567,7 +1574,7 @@ class Matching(object):
             signatures = [venue_id],
             responseArchiveDate = venue.get_edges_archive_date(),
             description = description,
-            cdate = tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3),
+            cdate = matching_cdate,
             date_processes = [{
                 'dates': ["#{4/cdate}", venue.invitation_builder.update_date_string],
                 'script': venue.invitation_builder.get_process_content('../workflows/process/compute_affinity_scores_process.py')
@@ -1649,7 +1656,7 @@ class Matching(object):
                 signatures = [venue_id],
                 responseArchiveDate = venue.get_edges_archive_date(),
                 description = f'This step runs automatically at its "activation date", and creates "edges" between the {venue.get_committee_name(self.match_group.id, pretty=True)} group and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
-                cdate = tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3),
+                cdate = matching_cdate,
                 date_processes = [{
                     'dates': ["#{4/cdate}", "#{4/mdate} + " + str(5000)],
                     'script': venue.invitation_builder.get_process_content('../workflows/process/compute_conflicts_process.py')

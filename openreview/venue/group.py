@@ -315,6 +315,7 @@ class GroupBuilder(object):
             content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
 
         if self.venue.use_ethics_reviewers:
+            content['ethics_reviewer_roles'] = { 'value': self.venue.ethics_reviewer_roles }
             content['ethics_reviewers_id'] = { 'value': self.venue.get_ethics_reviewers_id() }
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
             content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
@@ -370,10 +371,15 @@ class GroupBuilder(object):
                 f'/{venue_id}/-/Venue.*/'
             ]
 
-            # every reviewer role has its own message and matching invitations
-            for role in self.venue.reviewer_roles:
+            # every reviewer role has its own message and matching invitations; ethics reviewers are
+            # matched to flagged submissions the same way, so their invitations are hidden like the reviewers' ones
+            reviewer_roles = self.venue.reviewer_roles + ([self.venue.ethics_reviewers_name] if self.venue.use_ethics_reviewers else [])
+            for role in reviewer_roles:
                 exclusion_workflow_invitations.append(f'{venue_id}/{role}/-/Message') # TODO: parametrize invitation names
                 exclusion_workflow_invitations.append(f'/{venue_id}/{role}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment|Registration).*/') # matching invitations
+
+            if self.venue.use_ethics_chairs:
+                exclusion_workflow_invitations.append(f'{self.venue.get_ethics_chairs_id()}/-/Message')
 
             exclusion_workflow_invitations.extend([
                 f'{venue_id}/Authors/-/Message',
@@ -676,6 +682,28 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
 
     def create_ethics_reviewers_group(self):
         venue_id = self.venue.id
+
+        if self.venue.is_template_related_workflow():
+            ethics_reviewers_name = self.venue.ethics_reviewers_name
+            pretty_name = self.venue.get_committee_name(ethics_reviewers_name, pretty=True)
+            anon_name = self.venue.anon_ethics_reviewers_name()
+
+            self.client.post_group_edit(
+                invitation=f'{self.openreview_template}/-/Committee_Group',
+                signatures=[self.openreview_template],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'committee_name': { 'value': ethics_reviewers_name },
+                    'committee_role': { 'value': 'ethics_reviewers' },
+                    'committee_pretty_name': { 'value': pretty_name },
+                    'committee_anon_name': { 'value': anon_name },
+                    'committee_submitted_name': { 'value': 'Submitted' },
+                    'additional_readers': { 'value': [self.venue.get_ethics_chairs_id()] }
+                },
+                await_process=True
+            )
+            return
+
         ethics_reviewers_id = self.venue.get_ethics_reviewers_id()
         ethics_chairs_id = self.venue.get_ethics_chairs_id()
         ethics_reviewers_group = openreview.tools.get_group(self.client, ethics_reviewers_id)
@@ -695,6 +723,25 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 
     def create_ethics_chairs_group(self):
         venue_id = self.venue.id
+
+        if self.venue.is_template_related_workflow():
+            ethics_chairs_name = self.venue.ethics_chairs_name
+            pretty_name = self.venue.get_committee_name(ethics_chairs_name, pretty=True)
+
+            self.client.post_group_edit(
+                invitation=f'{self.openreview_template}/-/Committee_Group',
+                signatures=[self.openreview_template],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'committee_name': { 'value': ethics_chairs_name },
+                    'committee_role': { 'value': 'ethics_chairs' },
+                    'committee_pretty_name': { 'value': pretty_name },
+                    'additional_readers': { 'value': [] }
+                },
+                await_process=True
+            )
+            return
+
         ethics_chairs_id = self.venue.get_ethics_chairs_id()
         ethics_chairs_group = openreview.tools.get_group(self.client, ethics_chairs_id)
         if not ethics_chairs_group:
