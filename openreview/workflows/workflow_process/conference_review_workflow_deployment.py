@@ -245,6 +245,28 @@ def process(client, edit, invitation):
         venue.invitation_builder.set_ethics_paper_groups_invitation()
         venue.invitation_builder.set_ethics_review_invitation()
 
+        # the ethics reviews are not released by default: the release activates a year after the submission deadline,
+        # the program chairs pick an earlier date from the workflow timeline if they want to release them, for example to the authors
+        client.post_invitation_edit(
+            invitations=f'{invitation_prefix}/-/Note_Release',
+            signatures=[invitation_prefix],
+            content={
+                'venue_id': { 'value': venue_id },
+                'name': { 'value': f'{venue.ethics_review_stage.name}_Release' },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*365) },
+                'submission_name': { 'value': 'Submission' },
+                'stage_name': { 'value': venue.ethics_review_stage.name },
+                'reviewers_name': { 'value': reviewers_name },
+                'authors_name': { 'value': authors_name },
+                'additional_readers': { 'value': [
+                    venue.get_ethics_chairs_id(),
+                    venue.get_ethics_reviewers_id(number='${5/content/noteNumber/value}')
+                ] },
+                'description': { 'value': 'This step runs automatically at its "activation date", and releases ethics reviews to the specified readers. Ethics reviews are not released by default, set an earlier activation date to release them.' }
+            },
+            await_process=True
+        )
+
     venue.create_decision_stage()
 
     client.post_invitation_edit(

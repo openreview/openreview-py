@@ -1647,7 +1647,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_review_release_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None):
+    def set_review_release_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None, include_ethics=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Readers'
@@ -1680,12 +1680,23 @@ class EditInvitationsBuilder(object):
             {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'}
         ])
 
+        # the ethics review release can also keep the ethics committee as readers, it only exists for flagged submissions
+        if include_ethics:
+            ethics_chairs_id = self.get_content_value('ethics_chairs_id')
+            ethics_reviewers_name = self.get_content_value('ethics_reviewers_name', 'Ethics_Reviewers')
+            if ethics_chairs_id:
+                reply_readers.append({'value': ethics_chairs_id, 'optional': True, 'description': 'Ethics Chairs'})
+            reply_readers.extend([
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{ethics_reviewers_name}', 'optional': True, 'description': 'Assigned Ethics Reviewers'},
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{ethics_reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Ethics Reviewers who already submitted their ethics review'}
+            ])
+
         if include_signatures:
             reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
 
         reply_readers.extend([
             {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
-            {'value': 'everyone', 'optional': True, 'description': 'Public'}                  
+            {'value': 'everyone', 'optional': True, 'description': 'Public'}
         ])
 
         invitation = Invitation(

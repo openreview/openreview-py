@@ -2985,6 +2985,93 @@ note={under review}
         flagged_reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission5/-/Official_Review')
         assert flagged_reviews[0].readers == ['everyone']
 
+    def test_ethics_review_release(self, client, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+        # the ethics reviews are not released by default, the release activates long after the ethics reviews are due
+        release_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review_Release')
+        ethics_review_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review')
+        assert release_inv.cdate > ethics_review_inv.edit['invitation']['duedate'] + (60*60*1000*24*7*4)
+        assert release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Authors'
+        ]
+        # the release readers edit offers the ethics committee
+        readers_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Review_Release/Readers')
+        reader_options = [item['value'] for item in readers_inv.edit['content']['readers']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' in reader_options
+        assert 'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Ethics_Reviewers' in reader_options
+        # the other releases don't offer it
+        readers_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review_Release/Readers')
+        reader_options = [item['value'] for item in readers_inv.edit['content']['readers']['value']['param']['items']]
+        assert 'ICLR.cc/2026/Conference/Ethics_Chairs' not in reader_options
+
+        # an ethics reviewer is assigned to the flagged submission
+        helpers.create_user('ethics_reviewer@iclr.cc', 'Ethics', 'ICLRReviewer')
+        openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Ethics_Reviewers', '~Ethics_ICLRReviewer1')
+        openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers', '~Ethics_ICLRReviewer1')
+
+        # open the ethics review form
+        now = datetime.datetime.now()
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Ethics_Review/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+                'due_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Ethics_Review-0-1', count=2)
+
+        # only the flagged submission has an ethics review form
+        invitations = openreview_client.get_invitations(invitation='ICLR.cc/2026/Conference/-/Ethics_Review')
+        assert [invitation.id for invitation in invitations] == ['ICLR.cc/2026/Conference/Submission5/-/Ethics_Review']
+
+        ethics_reviewer_client = openreview.api.OpenReviewClient(username='ethics_reviewer@iclr.cc', password=helpers.strong_password)
+        anon_group_id = ethics_reviewer_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission5/Ethics_Reviewer_', signatory='~Ethics_ICLRReviewer1')[0].id
+        ethics_review_edit = ethics_reviewer_client.post_note_edit(
+            invitation='ICLR.cc/2026/Conference/Submission5/-/Ethics_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'recommendation': { 'value': '2: Serious ethical issues that need to be addressed in the final version' },
+                    'ethics_review': { 'value': 'The paper needs to explain how the consent for the collected data was obtained.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=ethics_review_edit['id'])
+
+        # by default the ethics review is only visible to the program chairs, the ethics chairs and its author
+        ethics_review = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission5/-/Ethics_Review')[0]
+        assert ethics_review.readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            anon_group_id
+        ]
+        assert ethics_review.nonreaders == ['ICLR.cc/2026/Conference/Submission5/Authors']
+
+        # the program chairs release the ethics reviews to the ethics committee and the authors
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Ethics_Review_Release/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Ethics_Review_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Ethics_Review-0-1', count=3)
+
+        ethics_review = openreview_client.get_note(ethics_review.id)
+        assert ethics_review.readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Submission5/Authors'
+        ]
+        assert not ethics_review.nonreaders
+
     def test_public_comment_stage(self, client, openreview_client, helpers, test_client):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
