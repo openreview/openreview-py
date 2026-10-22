@@ -182,7 +182,7 @@ class InvitationBuilder(object):
 
 Submission Number: {{{{note_number}}}}
 
-Title: {{{{note_title}}}} {{{{note_abstract}}}}
+Title: {{{{note_title}}}}{{{{note_authors}}}} {{{{note_abstract}}}}
 
 To view your submission, click here: https://openreview.net/forum?id={{{{note_forum}}}}'''
                 }

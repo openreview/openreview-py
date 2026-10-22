@@ -2641,6 +2641,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ['aclweb.org/ACL/ARR/2023/August', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].content['authorids']['value']
 
+        # Check the list of authors is included in the submission email
+        messages = openreview_client.get_messages(to='peter@mail.com', subject='ARR - August 2023 has received your submission titled Paper title 1')
+        messages = [m for m in messages if f'Submission Number: {submissions[0].number}\n' in m['content']['text']]
+        assert len(messages) == 1
+        assert f'''Title: Paper title 1
+
+Authors: SomeFirstName User, Peter SomeLastName, Andrew Mc, SAC ARROne 
+
+Abstract: This is an abstract 1''' in messages[0]['content']['text']
+
         # Try additional submission posting with August paper
         note = openreview.api.Note(content = _generate_valid_content(0, domains, june_submission))
         with pytest.raises(openreview.OpenReviewException, match=r'The provided URL points to a submission in the current cycle. Please provide a link to a previous ARR submission.'):
@@ -3589,6 +3599,66 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         affinity_scores =  openreview_client.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
         assert len(affinity_scores) == 101 * 7 ## submissions * reviewers
+
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'emergency_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_reviewing_exp_date': (due_date + datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M'),
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+        helpers.await_queue()
+
+        assert len(openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Configuration')) == 0
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        emergency_note_edit = reviewer_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement',
+            signatures=['~Reviewer_Alternate_ARROne1'],
+            note=openreview.api.Note(
+                content={
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 2 },
+                    'research_area': { 'value': ['NLP and Code Models'] }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=emergency_note_edit['id'])
+
+        assert [edge.weight for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARROne1')] == [2]
+        assert [edge.weight for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registered_Load', tail='~Reviewer_ARROne1')] == [0]
+        assert [edge.weight for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Load', tail='~Reviewer_ARROne1')] == [2]
+        assert [edge.label for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Area', tail='~Reviewer_ARROne1')] == ['NLP and Code Models']
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Score', tail='~Reviewer_ARROne1') == 0
+
+        emergency_note_edit = reviewer_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement',
+            signatures=['~Reviewer_ARROne1'],
+            note=openreview.api.Note(
+                id=emergency_note_edit['note']['id'],
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
+                content={
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 2 },
+                    'research_area': { 'value': ['NLP and Code Models'] }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=emergency_note_edit['id'])
+
+        assert [edge.weight for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARROne1')] == [0]
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registered_Load', tail='~Reviewer_ARROne1') == 0
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Load', tail='~Reviewer_ARROne1') == 0
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Area', tail='~Reviewer_ARROne1') == 0
 
         # Post assignment configuration notes
         reviewer_assignment_config_edit = openreview_client.post_note_edit(

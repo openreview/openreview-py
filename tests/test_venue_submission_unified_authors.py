@@ -233,7 +233,9 @@ To view your submission, click here: https://openreview.net/forum?id={note_id}''
 
 Submission Number: {note.number}
 
-Title:  
+Title: 
+
+Authors: Ana UnifiedOne, Bea UnifiedTwo 
 
 Abstract: This is an abstract
 

@@ -390,7 +390,10 @@ class GroupBuilder(object):
             ])
 
             content['exclusion_workflow_invitations']  = { 'value': exclusion_workflow_invitations }
-            content['status_invitation_id'] = { 'value': f'{self.venue.support_user}/Venue_Request/Conference_Review_Workflow/-/Status' }
+
+            # new venues no longer get status_invitation_id since workflow processes print to the log instead of posting status notes; keep it for existing venues so a re-deploy doesn't delete it
+            if venue_group.content.get('status_invitation_id'):
+                content['status_invitation_id'] = venue_group.content.get('status_invitation_id')
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
