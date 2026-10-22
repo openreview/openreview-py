@@ -2211,7 +2211,7 @@ class OpenReviewClient(object):
 
         return self.get_tags(**params)
 
-    def get_payments(self, id = None, note = None, profile = None, group = None, invitation = None, status = None, signatures = None, transaction_id = None, domain = None, limit = None, offset = None, sort = None, with_count = None):
+    def get_payments(self, id = None, note = None, profile = None, group = None, invitation = None, status = None, signature = None, transaction_id = None, domain = None, limit = None, offset = None, sort = None, with_count = None):
         """Get a list of Payment objects based on the filters provided.
 
         Returns Payments matching all the criteria passed in the parameters. When
@@ -2230,8 +2230,8 @@ class OpenReviewClient(object):
         :type invitation: str, optional
         :param status: Payment status: ``pending``, ``paid``, ``waived``, ``refunded``, ``disputed`` or ``expired``.
         :type status: str, optional
-        :param signatures: Group IDs. If provided, returns the Payments signed by any of them, e.g. made by a payer.
-        :type signatures: list[str], optional
+        :param signature: A group ID. If provided, returns the Payments signed by it or by the groups it is a member of, e.g. made by a payer.
+        :type signature: str, optional
         :param transaction_id: A Transaction ID. If provided, returns the Payments covered by this Transaction.
         :type transaction_id: str, optional
         :param domain: Venue domain ID; improves query efficiency when the caller is a venue organizer.
@@ -2262,8 +2262,8 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if status is not None:
             params['status'] = status
-        if signatures is not None:
-            params['signatures'] = signatures
+        if signature is not None:
+            params['signature'] = signature
         if transaction_id is not None:
             params['transactionId'] = transaction_id
         if domain is not None:
@@ -2286,7 +2286,7 @@ class OpenReviewClient(object):
 
         return payments
 
-    def get_all_payments(self, note = None, profile = None, group = None, invitation = None, status = None, signatures = None, transaction_id = None, domain = None):
+    def get_all_payments(self, note = None, profile = None, group = None, invitation = None, status = None, signature = None, transaction_id = None, domain = None):
         """Get all the Payment objects matching the filters provided, paging through the results.
 
         Takes the same filters as :meth:`get_payments`.
@@ -2300,7 +2300,7 @@ class OpenReviewClient(object):
             'group': group,
             'invitation': invitation,
             'status': status,
-            'signatures': signatures,
+            'signature': signature,
             'transaction_id': transaction_id,
             'domain': domain
         }
@@ -2434,8 +2434,9 @@ class OpenReviewClient(object):
     def checkout_payments(self, payments, gateway=None, cancel_url=None):
         """Start one checkout covering several payment invitations, e.g. the fees of several submissions.
 
-        The payments are created by an asynchronous job: poll :meth:`get_payments_checkout` with the
-        returned ``jobId`` to get the gateway URL once it completes.
+        The API waits for the job that creates the payments and returns the gateway ``url``, like a
+        single checkout. If the job takes longer than the API waits, it returns the ``jobId`` instead:
+        poll :meth:`get_payments_checkout` with it to get the gateway URL once it completes.
 
         :param payments: List of ``(invitation_id, Payment)`` pairs, one per fee to pay.
         :type payments: list[tuple[str, Payment]]
@@ -2444,7 +2445,7 @@ class OpenReviewClient(object):
         :param cancel_url: URL the gateway sends the payer back to when the checkout is abandoned.
         :type cancel_url: str, optional
 
-        :return: Dictionary with the ``jobId``, the number of payments and the job ``status``.
+        :return: Dictionary with the gateway ``url``, or the ``jobId`` of a checkout that is still being created.
         :rtype: dict
         """
         body = {
@@ -5142,8 +5143,8 @@ class Payment(object):
     :type currency: str, optional
     :param status: ``pending``, ``paid``, ``waived``, ``refunded``, ``disputed`` or ``expired``
     :type status: str, optional
-    :param signatures: The payer for ``pending`` and ``paid`` payments, the support group for the statuses support asserts
-    :type signatures: list[str], optional
+    :param signature: The payer for ``pending`` and ``paid`` payments, the support group for the statuses support asserts
+    :type signature: str, optional
     :param id: Payment id
     :type id: str, optional
     :param invitations: Invitations the edits of this payment came through
@@ -5151,7 +5152,7 @@ class Payment(object):
     :param transaction_id: Id of the internal transaction, absent for ``waived`` payments
     :type transaction_id: str, optional
     """
-    def __init__(self, note=None, profile=None, group=None, amount=None, currency=None, status=None, signatures=None, id=None, invitations=None, transaction_id=None, readers=None, writers=None, nonreaders=None, content=None, domain=None, cdate=None, mdate=None, tcdate=None, tmdate=None, ddate=None):
+    def __init__(self, note=None, profile=None, group=None, amount=None, currency=None, status=None, signature=None, id=None, invitations=None, transaction_id=None, readers=None, writers=None, nonreaders=None, content=None, domain=None, cdate=None, mdate=None, tcdate=None, tmdate=None, ddate=None):
         self.id = id
         self.invitations = invitations
         self.note = note
@@ -5160,7 +5161,7 @@ class Payment(object):
         self.amount = amount
         self.currency = currency
         self.status = status
-        self.signatures = signatures
+        self.signature = signature
         self.transaction_id = transaction_id
         self.readers = readers
         self.writers = writers
@@ -5203,8 +5204,8 @@ class Payment(object):
         if self.status:
             body['status'] = self.status
 
-        if self.signatures:
-            body['signatures'] = self.signatures
+        if self.signature:
+            body['signature'] = self.signature
 
         if self.transaction_id:
             body['transactionId'] = self.transaction_id
@@ -5246,7 +5247,7 @@ class Payment(object):
             amount = p.get('amount'),
             currency = p.get('currency'),
             status = p.get('status'),
-            signatures = p.get('signatures'),
+            signature = p.get('signature'),
             transaction_id = p.get('transactionId'),
             readers = p.get('readers'),
             writers = p.get('writers'),

@@ -35,7 +35,7 @@ def process(client, edit, invitation):
             amount=payment_invitation.get_content_value('amount'),
             currency=payment_invitation.get_content_value('currency'),
             status='waived',
-            signatures=[support_group_id]
+            signature=support_group_id
         )
     )
 

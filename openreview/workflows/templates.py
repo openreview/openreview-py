@@ -3165,7 +3165,7 @@ If you would like to change your decision, please follow the link in the previou
                                     'currency': '${6/content/currency/value}',
                                     'status': { 'param': { 'enum': ['pending', 'paid', 'waived', 'refunded', 'disputed', 'expired'] } },
                                     ## The payer, or support for the statuses support asserts
-                                    'signatures': { 'param': { 'regex': f'~.*|{support_user_id}' } },
+                                    'signature': { 'param': { 'regex': f'~.*|{support_user_id}' } },
                                     'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${5/content/noteNumber/value}/Authors', support_user_id],
                                     'writers': [support_user_id],
                                     'transactionId': { 'param': { 'regex': '.*', 'optional': True } }

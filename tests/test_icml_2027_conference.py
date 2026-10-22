@@ -229,7 +229,7 @@ class TestICML2027Conference():
             author_one_client.post_payment_edit(
                 invitation=payment_invitation_id,
                 signature='~AuthorOne_ICMLTwentySeven1',
-                payment=Payment(note=submission.id, amount=2000, currency='USD', status='paid', signatures=['~AuthorOne_ICMLTwentySeven1'])
+                payment=Payment(note=submission.id, amount=2000, currency='USD', status='paid', signature='~AuthorOne_ICMLTwentySeven1')
             )
 
         checkout = author_one_client.checkout_payment(invitation=payment_invitation_id, payment=Payment(note=submission.id))
@@ -242,7 +242,7 @@ class TestICML2027Conference():
         assert payments[0].status == 'pending'
         assert payments[0].amount == 2000
         assert payments[0].currency == 'USD'
-        assert payments[0].signatures == ['~AuthorOne_ICMLTwentySeven1']
+        assert payments[0].signature == '~AuthorOne_ICMLTwentySeven1'
         assert payments[0].invitations[0] == payment_invitation_id
         assert payments[0].readers == [venue_id, f'{venue_id}/Submission1/Authors', support_group_id]
 
@@ -264,7 +264,7 @@ class TestICML2027Conference():
         payment = author_two_client.get_payments(id=checkout['paymentId'])[0]
         assert payment.status == 'pending'
         assert payment.amount == 2000
-        assert payment.signatures == ['~AuthorTwo_ICMLTwentySeven1']
+        assert payment.signature == '~AuthorTwo_ICMLTwentySeven1'
 
         assert sorted([p.status for p in pc_client.get_payments(note=submission.id)]) == ['expired', 'pending']
 
@@ -343,7 +343,7 @@ class TestICML2027Conference():
         assert payments[0].status == 'waived'
         assert payments[0].amount == 2000
         assert payments[0].currency == 'USD'
-        assert payments[0].signatures == [support_group_id]
+        assert payments[0].signature == support_group_id
         assert payments[0].invitations[0] == f'{venue_id}/Submission2/-/Submission_Fee_Payment'
         assert not payments[0].transaction_id
         assert len(pc_client.get_payments(note=submission.id, status='waived')) == 1
