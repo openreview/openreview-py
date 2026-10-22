@@ -362,6 +362,17 @@ class GroupBuilder(object):
         if venue_group.content.get('desk_rejected_submission_reveal_authors'):
             content['desk_rejected_submission_reveal_authors'] = { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors }
 
+        # venues deployed before these keys were renamed to show_* still have the old homepage webfield,
+        # which reads the public_* keys to decide which submission tabs to show, so keep them in sync
+        if venue_group.content.get('public_submissions'):
+            content['public_submissions'] = { 'value': self.venue.submission_stage.public }
+
+        if venue_group.content.get('public_withdrawn_submissions'):
+            content['public_withdrawn_submissions'] = { 'value': self.venue.submission_stage.withdrawn_submission_public }
+
+        if venue_group.content.get('public_desk_rejected_submissions'):
+            content['public_desk_rejected_submissions'] = { 'value': self.venue.submission_stage.desk_rejected_submission_public }
+
         if self.venue.is_template_related_workflow():
             submission_name = self.venue.submission_stage.name
             exclusion_workflow_invitations = [

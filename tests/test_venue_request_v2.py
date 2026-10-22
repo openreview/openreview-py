@@ -591,9 +591,12 @@ Please note that with the exception of urgent issues, requests made on weekends 
 
         venue_group = openreview_client.get_group(venue['venue_id'])
         assert 'withdrawn_submission_reveal_authors' not in venue_group.content
+        assert 'public_submissions' not in venue_group.content
+        assert 'public_withdrawn_submissions' not in venue_group.content
+        assert 'public_desk_rejected_submissions' not in venue_group.content
 
         venue_group_id = venue['venue_id']
-        # add keys to venue group
+        # add keys to venue group, including the public_* keys read by the old homepage webfield
         openreview_client.post_group_edit(
             invitation=f'{venue_group_id}/-/Edit',
             signatures=[venue_group_id],
@@ -601,7 +604,10 @@ Please note that with the exception of urgent issues, requests made on weekends 
                 id=venue_group_id,
                 content={
                     'withdrawn_submission_reveal_authors': { 'value': False },
-                    'desk_rejected_submission_reveal_authors': { 'value': False }
+                    'desk_rejected_submission_reveal_authors': { 'value': False },
+                    'public_submissions': { 'value': venue_group.content['show_active_submissions']['value'] },
+                    'public_withdrawn_submissions': { 'value': False },
+                    'public_desk_rejected_submissions': { 'value': False }
                 }
             )
         )
@@ -609,6 +615,9 @@ Please note that with the exception of urgent issues, requests made on weekends 
         venue_group = openreview_client.get_group(venue['venue_id'])
         assert 'withdrawn_submission_reveal_authors' in venue_group.content and venue_group.content['withdrawn_submission_reveal_authors']['value'] == False
         assert 'desk_rejected_submission_reveal_authors' in venue_group.content and venue_group.content['desk_rejected_submission_reveal_authors']['value'] == False
+        assert 'public_submissions' in venue_group.content
+        assert 'public_withdrawn_submissions' in venue_group.content and venue_group.content['public_withdrawn_submissions']['value'] == False
+        assert 'public_desk_rejected_submissions' in venue_group.content and venue_group.content['public_desk_rejected_submissions']['value'] == False
 
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
@@ -632,7 +641,9 @@ Please note that with the exception of urgent issues, requests made on weekends 
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
                 'submission_description': 'This is a submission description',
+                'withdrawn_submissions_visibility': 'Yes, withdrawn submissions should be made public.',
                 'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
+                'desk_rejected_submissions_visibility': 'Yes, desk rejected submissions should be made public.',
                 'desk_rejected_submissions_author_anonymity':'Yes, author identities of desk rejected submissions should be revealed.'
             },
             forum=venue['request_form_note'].forum,
@@ -666,6 +677,12 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert 'withdrawn_submission_reveal_authors' in venue_group.content and venue_group.content['withdrawn_submission_reveal_authors']['value'] == True
         assert 'desk_rejected_submission_reveal_authors' in venue_group.content and venue_group.content['desk_rejected_submission_reveal_authors']['value'] == True
 
+        # check the public_* keys read by the old homepage webfield were kept and updated from the revision. public_submissions
+        # can't be changed by the revision (submission_readers is not part of it), so it should still match show_active_submissions
+        assert 'public_submissions' in venue_group.content and venue_group.content['public_submissions']['value'] == venue_group.content['show_active_submissions']['value']
+        assert 'public_withdrawn_submissions' in venue_group.content and venue_group.content['public_withdrawn_submissions']['value'] == True
+        assert 'public_desk_rejected_submissions' in venue_group.content and venue_group.content['public_desk_rejected_submissions']['value'] == True
+
         # hide pdf
         post_submission_note=test_client.post_note(openreview.Note(
             content= {
@@ -688,7 +705,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         replies = client.get_notes(replyto=request_form_note_id)
         assert replies[0].content['title'] == 'Post Submission Configuration Updated'
 
-        ## revert withdrawn and desk-rejected reveal authors to keep in line with the original venue settings
+        ## revert withdrawn and desk-rejected visibility and reveal authors to keep in line with the original venue settings
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
@@ -707,7 +724,9 @@ Please note that with the exception of urgent issues, requests made on weekends 
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
                 'submission_description': '',
+                'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
                 'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
+                'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.',
                 'desk_rejected_submissions_author_anonymity':'No, author identities of desk rejected submissions should not be revealed.'
             },
             forum=venue['request_form_note'].forum,
