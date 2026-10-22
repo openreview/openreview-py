@@ -1590,7 +1590,7 @@ arr_official_review_content = {
                     "Other"
                 ],
                 "optional": True,
-                "type": "string"
+                "type": "string[]"
             }
         },
         "order": 28,
