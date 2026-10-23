@@ -252,6 +252,24 @@ class TestRLJJournal():
                                     }
                                 }
                             },
+                            'review_approval_additional_fields': {
+                                'under_review': {
+                                    'description': 'Confirm whether this submission is appropriate for review.',
+                                    'order': 1
+                                },
+                                'scope_check': {
+                                    'order': 3,
+                                    'description': 'Is this submission within the scope of RLJ?',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio',
+                                            'optional': True
+                                        }
+                                    }
+                                }
+                            },
                             'decision_additional_fields': {
                                 'claims_and_evidence': None,
                                 'audience': None,
@@ -527,10 +545,18 @@ class TestRLJJournal():
         assert len(mateo_paper1_anon_groups) == 1
         mateo_paper1_anon_group = mateo_paper1_anon_groups[0]
 
+        invitation = openreview_client.get_invitation('RLJ/Paper1/-/Review_Approval')
+        assert 'scope_check' in invitation.edit['note']['content']
+        assert 'under_review' in invitation.edit['note']['content']
+        assert invitation.edit['note']['content']['under_review']['description'] == 'Confirm whether this submission is appropriate for review.'
+        assert invitation.edit['note']['content']['under_review']['value']['param']['enum'] == ['Appropriate for Review', 'Desk Reject']
+        assert 'comment' in invitation.edit['note']['content']
+
         under_review_note = mateo_client.post_note_edit(invitation= 'RLJ/Paper1/-/Review_Approval',
                                     signatures=[mateo_paper1_anon_group.id],
                                     note=Note(content={
-                                        'under_review': { 'value': 'Appropriate for Review' }
+                                        'under_review': { 'value': 'Appropriate for Review' },
+                                        'scope_check': { 'value': 'Yes' }
                                     }))
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
@@ -761,3 +787,16 @@ class TestRLJJournal():
         for review in reviews:
             assert review.readers == ['everyone']
             assert review.nonreaders == []
+
+    @pytest.mark.parametrize('under_review_field', [
+        None,
+        {'delete': True},
+        {'value': {'param': {'type': 'string', 'enum': ['Yes', 'No']}}},
+        {'value': {'param': {'type': 'string', 'enum': ['Appropriate for Review', 'Desk Reject'], 'optional': True}}},
+        {'value': {'param': {'type': 'string', 'enum': ['Appropriate for Review', 'Desk Reject'], 'deletable': True}}}
+    ])
+    def test_review_approval_under_review_cannot_be_deleted_or_changed(self, journal, under_review_field):
+        journal.settings['review_approval_additional_fields'] = {'under_review': under_review_field}
+
+        with pytest.raises(ValueError):
+            journal.invitation_builder.set_review_approval_invitation()

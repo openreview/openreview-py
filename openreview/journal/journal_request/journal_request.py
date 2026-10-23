@@ -184,6 +184,7 @@ class JournalRequest():
                             'website_urls': {},
                             'submission_additional_fields': {},
                             'review_additional_fields': {},
+                            'review_approval_additional_fields': {},
                             'official_recommendation_additional_fields': {},
                             'official_recommendation_additional_validation': {},
                             'official_recommendation_description': '',

@@ -2838,6 +2838,40 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }
         }
 
+        if self.journal.get_review_approval_additional_fields():
+            for key, value in self.journal.get_review_approval_additional_fields().items():
+                if key == 'under_review':
+                    if not isinstance(value, dict) or 'delete' in value:
+                        raise ValueError('The under_review field cannot be deleted from review_approval_additional_fields.')
+
+                    field = invitation['edit']['note']['content'][key]
+                    field_override = dict(value)
+                    value_override = field_override.pop('value', {})
+                    if not isinstance(value_override, dict):
+                        raise ValueError('The under_review field must retain its required string decision values.')
+                    value_override = dict(value_override)
+
+                    param_override = value_override.pop('param', {})
+                    if not isinstance(param_override, dict):
+                        raise ValueError('The under_review field must retain its required string decision values.')
+                    param_override = dict(param_override)
+
+                    field.update(field_override)
+                    field['value'].update(value_override)
+                    field['value']['param'].update(param_override)
+                    param = field['value']['param']
+                    enum = param.get('enum', [])
+                    if (param.get('type') != 'string'
+                            or not isinstance(enum, list)
+                            or len(enum) != 2
+                            or not all(isinstance(value, str) for value in enum)
+                            or set(enum) != {'Appropriate for Review', 'Desk Reject'}
+                            or param.get('optional')
+                            or param.get('deletable')):
+                        raise ValueError('The under_review field must require the string decision values Appropriate for Review and Desk Reject.')
+                else:
+                    invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
         self.save_super_invitation(self.journal.get_review_approval_id(),invitation_content, edit_content, invitation)
 
     def set_note_review_approval_invitation(self, note, duedate):
