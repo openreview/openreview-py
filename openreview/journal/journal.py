@@ -860,6 +860,15 @@ class Journal(object):
     def should_enable_ai_review(self):
         return self.settings.get('enable_ai_review', False)
 
+    def should_enable_preflight_submission(self):
+        return self.settings.get('enable_preflight_submission', False)
+
+    def get_preflight_url(self):
+        return self.settings.get('preflight_url')
+
+    def get_preflight_token(self):
+        return self.settings.get('preflight_token')
+
     def has_ai_review(self, submission):
         if not self.should_enable_ai_review():
             return False

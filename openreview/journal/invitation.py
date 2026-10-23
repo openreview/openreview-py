@@ -127,7 +127,6 @@ class InvitationBuilder(object):
         if self.journal.should_enable_ai_review():
             self.set_ai_review_invitation()
             self.set_survey_invitation()
-    
     def get_super_process_content(self, field_name):
         return '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -3523,6 +3522,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            content={
+                'preflight_url': {'value': self.journal.get_preflight_url()},
+                'preflight_token': {'value': self.journal.get_preflight_token()}
+            } if self.journal.should_enable_preflight_submission() else {},
             maxReplies=1,
             edit={
                 'ddate': {
