@@ -553,9 +553,9 @@ For more details, please check the following links:
                         "param": {
                             "type": "object{}",
                             "properties": {
-                                'name': { 'param': { 'type': 'string' } },
+                                'name': { 'param': { 'type': 'string', 'optional': True } },
                                 'domain': { 'param': { 'type': 'string' } },
-                                'country': { 'param': { 'type': 'string' } }
+                                'country': { 'param': { 'type': 'string', 'optional': True } }
                             },
                             'optional': True
                         }
@@ -1394,9 +1394,9 @@ For more details, please check the following links:
                             "param": {
                                 "type": "object{}",
                                 "properties": {
-                                    'name': { 'param': { 'type': 'string' } },
+                                    'name': { 'param': { 'type': 'string', 'optional': True } },
                                     'domain': { 'param': { 'type': 'string' } },
-                                    'country': { 'param': { 'type': 'string' } }
+                                    'country': { 'param': { 'type': 'string', 'optional': True } }
                                 },
                                 'optional': True
                             }
@@ -3462,9 +3462,9 @@ note={under review}
                         "param": {
                             "type": "object{}",
                             "properties": {
-                                'name': { 'param': { 'type': 'string' } },
+                                'name': { 'param': { 'type': 'string', 'optional': True } },
                                 'domain': { 'param': { 'type': 'string' } },
-                                'country': { 'param': { 'type': 'string' } }
+                                'country': { 'param': { 'type': 'string', 'optional': True } }
                             },
                             'optional': True
                         }
