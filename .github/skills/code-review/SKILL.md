@@ -22,7 +22,7 @@ license: MIT
 | Any `*/webfield/` file | `invitation-builders.md` § Webfields |
 | `profile/` | `profile-management.md` |
 | `api/client.py`, `openreview.py`, `tools.py` | `client-and-tools.md` |
-| Recruitment: `*/recruitment.py`, `*recruitment*process.py` | `client-and-tools.md` § Recruitment links |
+| Recruitment: `*/recruitment.py` and any `*recruitment*` process file | `client-and-tools.md` § Recruitment links |
 | `tests/` | `tests.md` |
 | `pyproject.toml`, `MANIFEST.in`, `.circleci/`, `.github/workflows/` | `ci-and-packaging.md` |
 

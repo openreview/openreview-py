@@ -15,7 +15,7 @@ Privacy findings are about one list at one moment. Workflow findings are about w
 | Review release | release sub-invitations from `set_review_invitation()` (classic path) or `edit_invitations.set_review_release_reply_readers_invitation()` (template path) | reader lists rewritten on existing notes |
 | Comment stages | `create_comment_stage()` | official and public comments with reader params |
 | Decision | `create_decision_stage()`, `post_decisions()`, `post_decision_stage()` | `venueid` and `venue` set per decision, author fields revealed when `release_authors` is set, accepted-authors group |
-| Camera-ready, PC revision | `create_submission_revision_stage()`, `set_pc_submission_revision_invitation()` | revised submissions; authors regain write access to their accepted paper only |
+| Camera-ready, PC revision | `create_submission_revision_stage()`, `set_pc_submission_revision_invitation()` | revised submissions; the revision invitation's `source` decides which papers' authors can revise (accepted ones, for camera-ready) |
 
 Journals (`openreview/journal/`) follow a linear path per submission: `Author_Submission` → `Under_Review` (readers from `get_under_review_submission_readers()`) → reviews, official recommendations, decision approval → `Accepted` / `Rejected` / `Withdrawn` / `Retracted` / `Desk_Rejected`, each with a release invitation that rewrites readers. ARR (`openreview/arr/`) layers cycles, commitment venues and metadata revisions on the conference lifecycle.
 
