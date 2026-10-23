@@ -2838,6 +2838,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }
         }
 
+        if self.journal.get_review_approval_additional_fields():
+            for key, value in self.journal.get_review_approval_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
         self.save_super_invitation(self.journal.get_review_approval_id(),invitation_content, edit_content, invitation)
 
     def set_note_review_approval_invitation(self, note, duedate):

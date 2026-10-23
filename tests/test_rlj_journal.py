@@ -252,6 +252,20 @@ class TestRLJJournal():
                                     }
                                 }
                             },
+                            'review_approval_additional_fields': {
+                                'scope_check': {
+                                    'order': 3,
+                                    'description': 'Is this submission within the scope of RLJ?',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio',
+                                            'optional': True
+                                        }
+                                    }
+                                }
+                            },
                             'decision_additional_fields': {
                                 'claims_and_evidence': None,
                                 'audience': None,
@@ -527,10 +541,16 @@ class TestRLJJournal():
         assert len(mateo_paper1_anon_groups) == 1
         mateo_paper1_anon_group = mateo_paper1_anon_groups[0]
 
+        invitation = openreview_client.get_invitation('RLJ/Paper1/-/Review_Approval')
+        assert 'scope_check' in invitation.edit['note']['content']
+        assert 'under_review' in invitation.edit['note']['content']
+        assert 'comment' in invitation.edit['note']['content']
+
         under_review_note = mateo_client.post_note_edit(invitation= 'RLJ/Paper1/-/Review_Approval',
                                     signatures=[mateo_paper1_anon_group.id],
                                     note=Note(content={
-                                        'under_review': { 'value': 'Appropriate for Review' }
+                                        'under_review': { 'value': 'Appropriate for Review' },
+                                        'scope_check': { 'value': 'Yes' }
                                     }))
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
