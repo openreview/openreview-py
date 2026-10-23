@@ -3858,7 +3858,7 @@ arr_withdrawal_content = {
         "order": 2
     },
     "withdrawal_confirmation": {
-        "description": "I am aware of and accept the implications of withdrawing this submission from ARR. In particular, the submission will not be fully reviewed and ready for commitment in this cycle, and any earlier reviewed versions will also be ineligible for commitment. I will also not be able to resubmit it to ARR without restoring this submission, and if I have received even one review for it -- it would count as a resubmission, it would need to be disclosed and accompanied with an explanation of revisions. See https://aclrollingreview.org/cfp#withdrawal.",
+        "description": "I am aware of and accept the implications of withdrawing this submission from ARR. In particular, the submission will not be fully reviewed and ready for commitment in this cycle, and any earlier reviewed versions will also be ineligible for commitment. I will also *not* be able to resubmit it to ARR without restoring this submission. If I have received even one review for it -- withdrawal will *not* make it disappear. Any further revisions would still count as resubmissions, and they must be accompanied with an explanation of revisions. See https://aclrollingreview.org/cfp#withdrawal.",
         "value": {
             "param": {
                 "type": "string",
