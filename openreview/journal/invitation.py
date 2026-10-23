@@ -127,7 +127,9 @@ class InvitationBuilder(object):
         if self.journal.should_enable_ai_review():
             self.set_ai_review_invitation()
             self.set_survey_invitation()
-    
+        if self.journal.should_enable_preflight_submission():
+            self.set_preflight_submission_invitation()
+
     def get_super_process_content(self, field_name):
         return '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -7412,6 +7414,34 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         self.save_invitation(invitation)                
+
+    def set_preflight_submission_invitation(self):
+
+        venue_id = self.journal.venue_id
+
+        ## maxReplies=1 allows a single Preflight edit per submission, so repeated Under Review triggers do not resend the request
+        invitation = openreview.api.Invitation(id=self.journal.get_preflight_submission_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            maxReplies=1,
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_author_submission_id()
+                        }
+                    }
+                }
+            },
+            process=self.get_process_content('process/preflight_submission_process.py')
+        )
+
+        self.save_invitation(invitation)
 
     def set_ai_review_invitation(self):
 
