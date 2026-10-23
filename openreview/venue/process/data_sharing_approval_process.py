@@ -74,6 +74,8 @@ Run the check from the request: {forum_url}'''
         subject=f'{alternate_short_name} rejected your dual submission check request',
         message=f'''The program chairs of {alternate_short_name} ({alternate_venue_id}) rejected your dual submission check request.{comment_text}
 
+A request can't be edited. If the program chairs of {alternate_short_name} suggested different settings, submit a new request with them.
+
 You can view the request here: {forum_url}
 
 The OpenReview Team'''

@@ -306,6 +306,7 @@ class TestVenueDataSharing():
         messages = openreview_client.get_messages(to='pc@datasharinga.cc', subject='DSB 2026 rejected your dual submission check request')
         assert len(messages) == 1
         assert 'We need to check with our committee first.' in messages[0]['content']['text']
+        assert 'If the program chairs of DSB 2026 suggested different settings, submit a new request with them.' in messages[0]['content']['text']
 
         ## only one approval per request
         with pytest.raises(openreview.OpenReviewException):
