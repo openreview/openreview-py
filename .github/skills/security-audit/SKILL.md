@@ -8,6 +8,8 @@ license: MIT
 
 A focused audit of one stage, process function, builder, journal flow or helper. Trace what it writes (readers, nonreaders, writers, signatures, invitees, deanonymizers, edges, emails) under every venue setting that reaches it, and — when something is found — reproduce it with an integration test before proposing a fix.
 
+The rules to audit against are in `.github/copilot-instructions.md` and the code-review skill's references (`.github/skills/code-review/references/`). This skill holds only the procedure.
+
 ## Target
 
 The user supplies one of:
@@ -28,7 +30,7 @@ Build a complete picture before looking for flaws.
 
 **Process function.** Read the file and every `client.post_*` and `client.post_message` call in it. For each, record the readers it writes or the recipients it mails and where those values come from (the note, the invitation, `domain.content`, a literal). Note which `domain.content` keys are read without defaults.
 
-**Helper.** Read it, grep for callers across `openreview/` including `*/process/` files, and trace both directions. A helper called from a process runs with venue credentials.
+**Helper.** Read it, grep for callers across `openreview/` including `*/process/` files, and trace both directions.
 
 **Flow.** Walk the invitations in order (request → pre-process → process → decision → process), recording readers of each note and who may sign each step.
 
@@ -38,18 +40,28 @@ Record every file and line range — findings need them.
 
 List the venue shapes that reach the target and check each branch:
 
-- Anonymity: double-blind, single-blind (`test_non_anonnymous_venue.py`), open (`test_workshop_no_anonymity.py`); journal `author_anonymity`, `AE_anonymity`, `reviewer_to_reviewer_anonymity`.
-- Roles: `use_area_chairs`, `use_senior_area_chairs`, `use_ethics_chairs`, `use_ethics_reviewers`, `use_secondary_area_chairs`, multiple `reviewer_roles`.
-- Visibility: `public` on the stage, `submission_stage.readers`, journal `submission_visibility`, `release_to_reviewers`, `release_to_authors`, `review_release`.
-- Lifecycle: the submission is active, withdrawn, desk-rejected, rejected or accepted when the target runs.
-- Deployment path: classic `venue_request/` and template `workflows/`.
-- Redeploy: the target runs a second time on a venue with existing data.
+- Anonymity: double-blind, single-blind and open venues; the journal anonymity settings.
+- Roles: which optional committees and reviewer roles the venue enables.
+- Visibility: public stages, submission readers, journal submission visibility, and the review and decision release settings.
+- Lifecycle: the submission is undecided, withdrawn, desk-rejected, rejected or accepted when the target runs.
+- Deployment: the classic and template paths, and a second run on a venue with existing data.
 
-Note each combination as covered, not reachable, or not checked.
+`tests.md` maps each setting to the venue test file that exercises it. Note each combination as covered, not reachable, or not checked.
 
-## Step 3 — Work the checklist
+## Step 3 — Work the references
 
-`references/checklist.md` covers eight categories: readers and nonreaders, anonymity, emails, edges and matching, process-function execution, profile and PII handling, workflow integrity, and the client and helpers. Not every item applies to every target — work the relevant ones. `.github/skills/code-review/references/permission-model.md` has the full treatment of where the lists are built and how they change across stages.
+For the target, work every section below that applies. Not every area applies to every target.
+
+| Area | Sections in `.github/skills/code-review/references/` |
+|---|---|
+| Readers and nonreaders | `permission-model.md` (Where the lists are built, Public vs restricted, Writers and invitees); `invitation-builders.md` (Dollar-sign pointers, Mirrors and params) |
+| Anonymity | `permission-model.md` (Anonymity) |
+| Emails | `emails.md` |
+| Edges, matching and conflicts | `permission-model.md` (Edges); `workflow-stages.md` (Invariants to check on every stage change); `client-and-tools.md` (Conflict detection, Bulk helpers) |
+| Process-function execution | `process-functions.md`; `architecture.md` (Venue configuration, Submission states and invitation source); `known-false-positives.md` |
+| Profiles and personal data | `profile-management.md`; `client-and-tools.md` (Profiles and emails, Recruitment links) |
+| Workflow integrity | `workflow-stages.md`; `invitation-builders.md` (Dates, PC-editable sub-invitations, Redeploy safety); `architecture.md` (Two deployment paths) |
+| Client and helpers | `client-and-tools.md` |
 
 ## Step 4 — Write the report
 
@@ -78,28 +90,22 @@ Note each combination as covered, not reachable, or not checked.
 Critical: N   High: N   Medium: N   Low: N   Informational: N
 ```
 
-**Severity.** Critical — a reader outside the intended set can see submission content, review content, reviewer or area chair identity, or profile emails; process code reachable by someone other than the venue or support. High — integrity: missed conflicts, authors able to read assignment or bid edges, a signature accepted that the actor cannot hold, a stage transition leaving wrong `venueid` or readers, a change that breaks running venues on redeploy. Medium — needs specific settings or ordering, or has limited exposure. Low — defence in depth. Informational — hardening.
+Use the severity levels and the bar for a finding in the code-review skill's `SKILL.md`, and for each finding also say whether you read the code path or inferred it.
 
-Every finding names the file and line, the setting combination, the entity and the unintended reader, and whether you read the code path or inferred it. If unsure something is real, say so.
-
-The Verified Controls section matters. It shows the audit was thorough and stops a short findings list from reading as a shallow one. Do not pad with generic advice that names no specific gap.
+The Verified Controls section matters. It shows the audit was thorough and stops a short findings list from reading as a shallow one.
 
 ## Step 5 — Reproduce with a test
 
-Required for every Critical and High finding, and for Medium where feasible. A leak that cannot be reproduced may not be real.
-
-The suite is pytest integration tests run through `docker/run.py` against real API servers. Fixtures and helpers are in `tests/conftest.py`: `openreview_client` is the V2 super user, `helpers.create_user(email, first, last)` returns a logged-in client for a new user, `helpers.await_queue_edit(openreview_client, edit_id=...)` waits for the process that an edit triggers. Tests within a file share state and run in order.
+Required for every Critical and High finding, and for Medium where feasible. A leak that cannot be reproduced may not be real. `tests.md` describes the suite, its fixtures, and where a new test goes.
 
 Shape of a reproduction:
 
-1. Pick the test file whose venue has the setting from the finding (`test_iclr_conference_v2.py` for SACs and ethics, `test_journal.py` for TMLR-style journals, `test_*_with_templates.py` for the workflow path, and so on), and add the test at the end of the file so it reuses the venue and users already created.
+1. In the test file whose venue has the setting from the finding, add the test as `tests.md` § Writing a test for a fix describes.
 2. Drive the target: post the edit, or wait for the date process, as the role that triggers it.
 3. As the user who should be excluded — an author's client for reviewer identity, a reviewer's client for another reviewer's unreleased review — fetch the note, group, edge or message.
 4. Assert the outcome that *should* happen: `pytest.raises(openreview.OpenReviewException, match=r'.*Forbidden.*')`, an exact `readers` list, or `len(openreview_client.get_messages(to=..., subject=...)) == 0`.
 
-Written that way the test **fails while the bug exists** and passes once fixed. Run the whole file, never the single test, and show the user the failing output before proposing a fix.
-
-If the test passes immediately, either the leak is not real (remove it from the findings) or the test is not reaching the code path (check the setting combination, the lifecycle state and whether the queue was awaited).
+Show the user the failing output before proposing a fix. If the test passes immediately, either the leak is not real (remove it from the findings) or the test is not reaching the code path (check the setting combination, the lifecycle state and whether the queue was awaited).
 
 ## Step 6 — Fix and verify
 

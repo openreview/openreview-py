@@ -1,20 +1,19 @@
 # Process Functions
 
-Files under `openreview/venue/process/`, `openreview/journal/process/`, `openreview/arr/process/`, `openreview/profile/process/`, `openreview/venue_request/process/`, `openreview/workflows/process/`, `openreview/workflows/workflow_process/` and `openreview/agora/process/` are not imported by this package. Builders read them with `get_process_content()` and store the text on an invitation (`process`, `preprocess`, `dateprocesses`, `postprocesses`). The API executes them.
+Process files live under `openreview/venue/process/`, `openreview/journal/process/`, `openreview/arr/process/`, `openreview/profile/process/`, `openreview/venue_request/process/`, `openreview/workflows/process/`, `openreview/workflows/workflow_process/` and `openreview/agora/process/`. The package never imports them: builders read them with `get_process_content()` and store the text on an invitation as `process`, `preprocess`, `dateprocesses` or `postprocesses`.
 
 ## Execution model
 
-- For a process file the API executes directly, the server supplies `openreview`, `datetime`, `json` and `re` already imported, plus an authenticated `client`, and calls the function. Nothing else is available; a process that needs `urllib.parse`, `Crypto.Hash` or `csv` imports it inside the function body. A module-level import in a process file is fine in Python but a top-level statement other than `def` or `import` runs before the call and has no `client`.
-- For a script stored in the meta invitation and run by a super-process wrapper, the namespace is exactly what that wrapper's `funcs` dict holds, plus Python builtins and whatever the script itself imports or defines. The wrapper's own imports are not inherited. The dicts differ per wrapper: journal wrappers pass `openreview` and `datetime` (date variants add `date_index` and `days_late_map`); the workflow recruitment wrapper in `workflows/templates.py` also passes `re`, which `committee_recruitment` scripts use without importing it; the ARR revision pre-process wrapper in `arr/invitation.py` passes only `openreview`, so even `datetime` is unavailable there. A name that is in none of those three sources is a real `NameError`, not a style finding. Before reporting one, locate the wrapper that runs the script and read its `funcs`.
-- Entry points: `process(client, edit, invitation)` for note, group, edge and tag edits; `process(client, invitation)` for date processes and cron processes; `process_update(client, entity, invitation, existing_entity)` when the invitation declares it. JS files (`*.js` beside the Python ones) use `async function process(client, edge, invitation)` and should set `client.throwErrors = true` so a failed call rejects the edit instead of continuing.
-- `token` is minted for `invitation.signatures[0]`. For venue invitations that is the venue group; for `venue_request/` and `workflows/` support flows it is `openreview.net/Support`; for `profile/` it is `~Super_User1` or support. Everything `client` does in a process is done with those credentials.
-- `openreview` is the package installed on the API server. A helper in `tools.py` or a client method is therefore server-side code when a process calls it, and a signature change there breaks every stored process that uses it until the server is upgraded and the venue is redeployed.
-- A pre-process rejects an edit by raising `openreview.OpenReviewException('message')`. The message is shown to the submitter, so it must not include internals such as other users' ids, group members or stack text. A process (not pre-process) that raises records an error on the edit and the job retries.
-- `print()` output becomes the stored process log, readable by the venue. Tokens, email addresses and profile email lists do not belong there.
+- **Entry points.** `process(client, edit, invitation)` for note, group, edge and tag edits; `process(client, invitation)` for date and cron processes; `process_update(client, entity, invitation, existing_entity)` when the invitation declares it. JS files (`*.js` beside the Python ones) use `async function process(client, edge, invitation)` and set `client.throwErrors = true` so a failed call rejects the edit instead of continuing.
+- **Who `client` is.** For venue invitations the first signature is the venue group; for `venue_request/` and `workflows/` support flows it is `openreview.net/Support`; for `profile/` it is `~Super_User1` or support. Everything `client` does in a process is done with those credentials.
+- **Names available to a process file.** The API supplies `openreview`, `datetime`, `json` and `re` already imported, plus `client`. Anything else (`urllib.parse`, `csv`, or `from Crypto.Hash import HMAC, SHA256` for the `pycryptodome` dependency) is imported inside the function body, which is required, not a finding. A top-level statement other than `def` or `import` runs before the call and has no `client`.
+- **Names available to a stored script.** A script run by a super-process wrapper (below) sees exactly that wrapper's `funcs` dict, plus Python builtins and whatever the script imports or defines; the wrapper's own imports are not inherited. The dicts differ: journal wrappers pass `openreview` and `datetime` (date variants add `date_index` and `days_late_map`); the workflow recruitment wrapper in `workflows/templates.py` also passes `re`, which `committee_recruitment` scripts use without importing it; the ARR revision pre-process wrapper in `arr/invitation.py` passes only `openreview`, so even `datetime` is unavailable there. A name in none of those three sources is a real `NameError`. Before reporting one, find the wrapper that runs the script and read its `funcs`.
+- **Signature changes in the package.** A changed signature in `tools.py` or a client method breaks every stored process that calls it until the server is upgraded and the venue is redeployed.
+- **Errors.** A pre-process rejects an edit by raising `openreview.OpenReviewException('message')`. The message is shown to the submitter, so it must not include internals such as other users' ids, group members or stack text. A process (not pre-process) that raises records an error on the edit and the job retries.
 
 ## The super-process wrappers
 
-`journal/invitation.py` (`get_super_process_content`, `get_super_dateprocess_content`), `arr/invitation.py`, `workflows/templates.py` and `workflows/workflows.py` store a short wrapper as the process and keep the real script in the meta invitation's `content` (for example `invitation_edit_script`, `group_edit_script`). The wrapper does:
+`journal/invitation.py` (`get_super_process_content`, `get_super_dateprocess_content`), `arr/invitation.py`, `workflows/templates.py` and `workflows/workflows.py` store a short wrapper as the process and keep the real script in the meta invitation's `content` (for example `invitation_edit_script`, `group_edit_script`), so one script serves many invitations and is updated in one place. The wrapper does:
 
 ```python
 script = meta_invitation.content["<field>"]['value']
@@ -23,7 +22,7 @@ exec(script, funcs)
 funcs['process'](client, ...)
 ```
 
-This is deliberate: it lets one script serve many invitations and be updated in one place. It is safe because the meta invitation's `writers` are the venue and support. Note that `funcs` is the stored script's entire global namespace: only the names listed there, Python builtins, and whatever the script imports or defines itself exist when it runs, and each wrapper lists different names. The things to flag are a wrapper that reads the script from somewhere a non-venue user can write (a note, a group another role edits, an edit's content), a new `funcs` entry that hands the script something it should not have, and any `exec` or `eval` outside these wrappers.
+When this is and is not a finding is in `known-false-positives.md`.
 
 ## Rules
 
@@ -33,18 +32,12 @@ This is deliberate: it lets one script serve many invitations and be updated in 
 
 - `if cdate > now: return` at the top of a date process, so an invitation scheduled for the future does nothing when its parent is re-saved.
 - `if edge.tcdate != edge.tmdate: return` or checking `edit.note.ddate` to distinguish create, update and delete.
-- Looking the entity up before creating it rather than catching a duplicate error. `openreview.tools.get_group` and `get_note` return `None` on not-found only; `openreview.tools.get_invitation` returns `None` on *any* `OpenReviewException`, so a create-if-missing check built on it also fires on a forbidden or validation error.
+- Looking the entity up before creating it rather than catching a duplicate error. The `tools.get_*` lookup helpers differ in which errors return `None` (`client-and-tools.md` § Errors).
 - `client.post_invitation_edit(..., replacement=False)` and `post_group_edit` that add to `members` instead of overwriting.
-
-**Filter submissions by source.** Date processes that fan out over submissions list them with `client.get_all_notes(invitation=submission_id, ...)` and then keep only those where `openreview.tools.should_match_invitation_source(client, invitation, note, domain=domain)` is true. Skipping the filter acts on withdrawn and desk-rejected papers, and on decided papers that the invitation's `source` excludes (`Submission_Change_Before_Reviewing`, for example, applies only to undecided ones). The stage default, `venue.get_active_venue_ids()`, keeps accepted, rejected and undecided submissions in scope and drops only withdrawn and desk-rejected ones.
-
-**Configurable names.** Read `submission_name`, `reviewers_name`, `review_name`, `area_chairs_name`, `reviewers_anon_name` and the `*_id` keys from `domain.content`. Build per-paper ids with `f'{venue_id}/{submission_name}{number}/{reviewers_name}'`, never with `Paper` or `Reviewers` spelled out. Use `openreview.tools.pretty_id()` for human-readable text.
-
-**New keys need defaults.** `domain.get_content_value('key', default)` for anything introduced in the same PR or recently. `domain.content['key']['value']` is only safe for keys every deployed venue has had since it was created (`meta_invitation_id`, `submission_id`, `submission_name`, `program_chairs_id`, `title`). The parent invitation's content has the same problem: `parent_invitation.get_content_value('users_to_notify', [])`.
 
 **Do not assume content.** `submission.content['title']['value']` raises `KeyError` when the venue's form has no such field; venues define their own submission forms. `submission.content.get('title', {}).get('value')` does not raise, but it yields `None`, and formatting `None` into an f-string produces the text `None` in a subject or email body rather than an error. So a missing-key lookup is a crash finding; a `.get()` chain feeding an f-string is at most a wording defect, not a crash.
 
-**Bulk work is bounded.** Fan-outs go through `openreview.tools.concurrent_requests(fn, items, desc=..., max_workers=...)` or `post_bulk_edges`. An unbounded thread pool or a sequential loop over thousands of submissions is a timeout, and the retry starts over.
+**Bulk work is bounded.** Fan-outs go through `openreview.tools.concurrent_requests(fn, items, desc=..., max_workers=...)` or `post_bulk_edges` / `post_bulk_tags`. An unbounded thread pool or a sequential loop over thousands of submissions is a timeout, and the retry starts over.
 
 **Wait when ordering matters.** `client.post_note_edit(..., await_process=True)` and `delete_edges(..., wait_to_finish=True)` exist because a process that posts an edit and then reads its result races the queue. A sequence that deletes edges and immediately posts replacements needs the wait.
 
@@ -54,5 +47,3 @@ This is deliberate: it lets one script serve many invitations and be updated in 
 
 - A process using `client.get_group(edit.domain)` and trusting `domain.content`: the venue wrote it.
 - A process signing as `venue_id` for notifications and reader updates: that is the token it holds.
-- Retrying a failed `post_message` or skipping a notification when `recipients` is empty.
-- Imports inside the function body.

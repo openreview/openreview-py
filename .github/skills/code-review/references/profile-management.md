@@ -33,4 +33,4 @@
 
 ## Tests
 
-`tests/test_profile_management.py` covers these flows end to end with real users. A change here ships with a test that acts as the wrong user and asserts the `OpenReviewException` message, in addition to the happy path. Run the file, not a single test; the users created early in the file are reused throughout.
+`tests/test_profile_management.py` covers these flows end to end with real users. A change here ships with a test that acts as the wrong user and asserts the `OpenReviewException` message, in addition to the happy path.

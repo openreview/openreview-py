@@ -2,33 +2,25 @@
 
 Python client library and venue-management toolkit for [OpenReview](https://openreview.net), a scientific peer-review platform. Python 3.9+, `requests`, no framework.
 
-The permission model as this library authors it, the process-function execution model, per-directory review rules, and the findings already triaged as false positives are in the `code-review` skill (`.github/skills/code-review/`). This file holds only what is true everywhere.
+This file holds what is true for every file. The review rules for each area of the code are in the `code-review` skill (`.github/skills/code-review/`), each stated once, in the reference for that area.
 
-- **This library writes access control; the API enforces it.** Every `readers`, `nonreaders`, `writers`, `signatures`, `invitees` and `deanonymizers` list built here becomes data the API trusts. A wrong list in an invitation builder or a process function is a leak the server will faithfully enforce.
-- **Process functions are server-side code.** Files under any `*/process/` directory are read as strings and stored on invitations. The API runs them with a token minted for the invitation's first signature, normally the venue itself, `openreview.net/Support`, or `~Super_User1`. They `import openreview` from the package installed on the API server, so a change to `openreview/tools.py` or `openreview/api/client.py` is a change to what runs with venue credentials in production.
-- **Anonymity is a readers problem.** Reviewer and area chair identities live in per-paper groups with `anonids: True`; who can see the mapping is the group's `deanonymizers`. Anonymous notes are signed with the anonymous group id, never the profile id.
-- **Deployed venues are live data.** Builders run again on redeploy and process functions read their configuration from the venue group's `content`. Renaming an invitation, a group, or a `domain.content` key changes behaviour for venues already running.
+- **This library writes access control; the API enforces it.** Every `readers`, `nonreaders`, `writers`, `signatures`, `invitees` and `deanonymizers` list built here becomes data the API trusts. A wrong list in a builder or a process function is a leak the server will faithfully enforce.
+- **Process functions are server-side code.** Files under any `*/process/` directory are stored on invitations and run by the API with the credentials of the invitation's first signature, usually the venue. They `import openreview` from the package installed on the API server, so a change to `openreview/tools.py` or `openreview/api/client.py` changes what runs with those credentials in production.
+- **Anonymity is a readers problem.** Reviewer and area chair identities live in per-paper groups with `anonids: True`, and only a group's `deanonymizers` may see who is behind an anonymous id. The profile id, name or email of an anonymous member must never reach a note, email, bibtex entry, webfield constant or log that anyone else reads.
+- **Deployed venues are live data.** Builders run again on redeploy, and process functions read their configuration from the venue group's `content`. Renaming an invitation, a group or a `domain.content` key changes behaviour for venues already running.
 
-## Security rules that apply to every file
+## Rules for every file
 
-**Secrets** — Never hardcode tokens, passwords or API keys outside `tests/`. Clients take credentials from arguments or environment. Never `print()` a token, an `Authorization` header, a full request body or a profile's `emails` in library code; process-function output becomes a stored log.
+**Secrets and logs.** Never hardcode tokens, passwords or API keys outside `tests/`; clients take credentials from arguments or the environment. Never `print()` or log a token, an `Authorization` header, a request body or a profile's emails; process-function output is a stored log.
 
-**Identity exposure** — Never put a profile id, name, or email of an anonymous reviewer or area chair into a note, an email body, a bibtex entry, a webfield constant, or a log. Resolve anonymous groups to members only where the result stays with the venue or the deanonymizers.
+**Code execution.** `exec()` appears only in the super-process wrappers that run a script stored in the venue's meta invitation. Any new `exec()` or `eval()`, and any path where a user-supplied string reaches one, is critical.
 
-**Email** — `post_message()` carries `invitation=` (the venue's meta invitation) and `signature=` (the venue id). Review, meta-review and decision content goes only to the readers of that note, and `ignoreRecipients` excludes the actor and groups that must not receive it.
-
-**Code execution** — `exec()` appears only in the "super process" wrappers that load a script stored in the venue's meta invitation content. Any new `exec()` or `eval()`, and any path where a user-supplied string reaches one, is critical.
-
-**Conflicts** — `openreview.tools.get_conflicts()` and the profile-info functions beside it decide who may review whom. A change that yields fewer conflicts for the same profiles needs a stated reason and a test.
-
-## Tests
-
-Every test is an integration test against the real API servers, started by `docker/run.py`. Tests in one file share server state, run in order, and depend on earlier tests. Run tests at the file level. Do not suggest mocks or unit tests for process-function behaviour.
+**Tests.** Every test is an integration test against the real API servers started by `docker/run.py`. Tests in one file share server state and run in order, so they are run at the file level. Do not suggest mocks or unit tests.
 
 ## What not to comment on
 
-- **Formatting and style.** No linter or formatter is configured. Line length, quote style, blank lines and import order are not findings.
-- **Comments.** The codebase deliberately carries few inline comments. Do not ask for docstrings or comments on internal code.
-- **Test credentials.** `Helpers.strong_password` in `tests/conftest.py` and the `openreview.net` super user login are intentional fixtures.
+- **Formatting and style.** No linter or formatter is configured, and spacing, quote style, import order and line length vary across `master`. Never suggest running a formatter over a glob.
+- **Comments.** Builder and process code deliberately carries few comments; do not ask for more. Public methods in `api/client.py` and `tools.py` do carry docstrings, used by the Sphinx docs and the OpenReview internal agent, and a new public method there should too.
+- **Test credentials.** `Helpers.strong_password` in `tests/conftest.py` and the `openreview.net` super user login are local-stack fixtures committed on purpose. No production credentials are committed.
 
-`.github/skills/code-review/references/known-false-positives.md` has the full triaged list.
+The other findings already triaged as false positives are in `.github/skills/code-review/references/known-false-positives.md`.

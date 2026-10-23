@@ -1,6 +1,6 @@
 # Clients and `tools.py`
 
-`openreview/api/client.py` (`OpenReviewClient`, V2, port 3001), `openreview/openreview.py` (`Client`, V1, port 3000, plus `Profile` and the exception classes) and `openreview/tools.py` are the public API of the package and the runtime of every process function. A diff here is reviewed for three audiences at once: scripts people have written against the published signatures, builders, and server-side processes that import whatever version the API server has installed.
+`openreview/api/client.py` (`OpenReviewClient`, V2, port 3001), `openreview/openreview.py` (`Client`, V1, port 3000, plus `Profile` and the exception classes) and `openreview/tools.py` are the public API of the package.
 
 ## Compatibility
 
@@ -8,10 +8,9 @@
 
 ## Authentication and tokens
 
-- The token is stored on `self.token` and sent as `Authorization: Bearer`. `jwt.decode(self.token, options={"verify_signature": False})` only reads the expiry of the client's own token to decide when to re-login; the library makes no authorization decisions, so the unverified decode is not a finding.
 - `login_user()` handles MFA through `MfaRequiredException` and `mfa_code_provider`; `impersonate(group_id)` swaps the session token for one scoped to the group and is a privileged call the server authorizes.
 - `post_note_edit_as_guest(token, edit)` is the guest-token path, POST-only and scoped to one invitation server-side.
-- `LogRetry` prints the method, URL and response text on retried requests. It must not print request headers or bodies, which carry the token and, for `register_user` and `post_profile`, passwords and emails. Do not add logging of `self.headers`.
+- `LogRetry` prints the method, URL and response text of retried requests. Request headers and bodies are deliberately left out: they carry the token and, for `register_user` and `post_profile`, passwords and emails.
 - `verify=` on `requests` calls is never set to `False`.
 
 ## Errors
@@ -52,14 +51,17 @@ The email-domain fallback matters: a profile with no institution history, or who
 
 Conflicts are also recomputed per paper in `venue/matching.py` `_build_conflicts()` and in the journal's `ae_conflict` / `reviewer_conflict` edges, using these same functions with the venue's `n_years`.
 
-## Recruitment keys
+## Recruitment links
 
-`get_user_hash_key(user, hash_seed, invitation=None)` returns an HMAC-SHA256 hex digest over the user string, or a JWT when `invitation` is passed. The API verifies it against the invitation's `hash_seed` when issuing the guest token for a recruitment response; no process function does. The user string that is signed must be the one placed in the link (same quoting, same case), or every invitee is locked out. `create_hash_seed()` uses `random.choices`; a PR touching it should move to `secrets.choice`, and a PR that does not touch it should not be asked to.
+Recruitment emails carry a link whose `key` comes from `get_user_hash_key(user, seed, invitation=None)`: an HMAC-SHA256 hex digest over the user string, or a JWT when `invitation` is passed. The links are built by `tools.recruit_reviewer()` and `tools.recruit_user()`, by `venue/recruitment.py` and `journal/recruitment.py`, and by the recruitment process files (`venue/process/group_recruitment_process.py`, `workflows/process/committee_recruitment_request_*_process.py`). The HMAC seed is the recruitment invitation's `content.hash_seed`; the template path signs its JWT with the response invitation's `secret`. The link is the credential, and the API validates the key when it issues the guest token for the response, so no process function checks it. The library is responsible for two things:
+
+- The seed is never exposed: `hash_seed` stays in the invitation's `content` with `readers: [venue]`, and neither seed is copied anywhere else. A leaked seed lets anyone accept on another person's behalf.
+- The user string that is signed is the one placed in the link, with the same quoting and case, or every invitee is locked out.
 
 ## Bulk helpers
 
 - `get_all_notes`, `get_all_groups`, `get_all_edges`, `iterget_*` paginate server-side limits; `get_notes` alone returns one page. A process that counts or acts on "all" submissions through `get_notes` misses everything past the limit.
-- `concurrent_requests(fn, items, desc, max_workers)` and `post_bulk_edges` / `post_bulk_tags` bound concurrency. `post_bulk_edges` only batches `client.post_edges()` calls; it deletes nothing. A caller that replaces conflicts, affinity scores or assignments must call `client.delete_edges(invitation_id)` itself first, as `Matching._build_conflicts()` does, and pass `wait_to_finish=True` when the new edges are posted right after. A replacement path that omits the delete leaves stale edges alongside the new ones.
+- `post_bulk_edges` only batches `client.post_edges()` calls; it deletes nothing. A caller that replaces conflicts, affinity scores or assignments calls `client.delete_edges(invitation_id)` itself first, as `Matching._build_conflicts()` does, or stale edges remain alongside the new ones.
 - `add_members_to_group` and `remove_members_from_group` on `anonids` groups operate on `members`, not `anon_members`. Removal must target the member, not the anonymous id, and lookups must match by `member` rather than `signatory`: a helper that looks up an anonymous group by `signatory` matches the venue, not the reviewer.
 
 ## Attachments and files

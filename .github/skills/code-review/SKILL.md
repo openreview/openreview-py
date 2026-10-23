@@ -6,66 +6,33 @@ license: MIT
 
 # Reviewing openreview-py
 
-Python client and venue-management library for a peer-review platform. It is used three ways, and a diff can affect all three at once:
+`.github/copilot-instructions.md` states the four properties behind most real findings here and the rules that apply to every file. Every other rule is stated once, in the reference for the area of the code it governs, so the rules for a change are in the references for the code it touches.
 
-- **As a client**, by program chairs, journal editors and support staff running scripts and notebooks.
-- **As a builder**, when `Venue.setup()`, `Journal.setup()` and the workflow templates post groups and invitations whose `readers`, `writers`, `signatures`, `invitees` and `deanonymizers` the API then enforces.
-- **As server-side code**, when the API executes the Python process functions stored on those invitations, importing `openreview` from the package installed on the API server and authenticating as the invitation's first signature.
+## Before commenting
 
-Three properties drive nearly every real finding:
+1. Read `references/architecture.md` and `references/known-false-positives.md`.
+2. For each area the diff touches, read the references in the table below.
+3. Verify file locations and line numbers in the code before citing them; the references can drift as code moves.
 
-1. **This library authors access control.** The API decides visibility from `readers`/`nonreaders` set membership, but the lists come from here. A builder that adds `everyone` without checking the submission is public, a process function that posts an edit with hand-written readers instead of the note's, or an email that quotes a review to someone outside its readers, is a leak the server will enforce faithfully.
-2. **Anonymity is a readers problem.** Reviewer and area chair identities live in per-paper groups with `anonids: True`; `deanonymizers` says who may map the anonymous id to a profile. A real profile id or name reaching a note, an email, a bibtex entry, a webfield constant or a log is a deanonymization.
-3. **Process functions run as the venue.** Whoever can change a `*/process/*.py` file, or a helper it imports, changes what runs with venue, support or super-user credentials in production. They also run again on retry and on redeploy, against venues that were configured by older versions of this code.
-
-**Before commenting, verify current file locations and line numbers; reference docs can drift as code moves.** Also read `references/known-false-positives.md` before commenting; it lists findings already investigated and rejected here.
-
-## Non-negotiables by directory
-
-Apply these from this page; open the matching reference for mechanism and edge cases.
-
-### Builders: `openreview/venue/`, `openreview/journal/`, `openreview/arr/`, `openreview/stages/`, `openreview/workflows/`, `openreview/venue_request/` → `references/permission-model.md`, `references/invitation-builders.md`
-- `'everyone'` enters a readers list only behind a check that the submission is public (`submission_stage.public`, `journal.is_submission_public()`, `release_to_public`). An ethics review, a retraction, a comment or a decision cannot be more visible than its submission.
-- Anonymous committee members are referenced by anonymous group (`get_reviewers_id(number, anon=True)`, `get_area_chairs_id(number, anon=True)`) in `signatures` and in per-reviewer readers. A profile id or the non-anonymous group appears there only when the venue is not anonymous.
-- Edit readers mirror note readers (`'${2/note/readers}'`), and `nonreaders` are carried together with `readers`. Dropping a `nonreaders` list while widening `readers` is a finding.
-- Matching edges are readable by the venue, the configured chairs and the edge tail (`${2/tail}`); conflict edges included. When the head is a paper, assignment, proposed assignment, affinity and bid edges additionally carry `nonreaders: [authors group]`. Profile-to-profile matching (`alternate_matching_group`, e.g. mentors to mentees) has no paper: the head profile is added to the readers and nonreaders are empty by design. An authors group among a paper edge's readers, or a reader outside these sets, is the finding. Recruitment `hash_seed` content stays readable by the venue only.
-- A builder change must be safe on a venue deployed by an older version: new `domain.content` keys get defaults where they are read, invitation and group ids do not change, and `save_invitation` does not wipe content a PC edited.
-- The classic path (`venue_request/`) and the template path (`workflows/`) deploy the same stages. A behaviour change in one usually needs the same change in the other.
-
-### `*/process/` and `*/webfield/` → `references/process-functions.md`, `references/emails.md`
-- `client` is the venue, support group or super user. Every `client.post_*` is privileged; readers on anything it posts come from the note, the invitation or `domain.content`, never from a literal.
-- A process must be safe to run twice. Date processes guard on `cdate > now` and filter submissions through `openreview.tools.should_match_invitation_source()`; edit processes do not assume the entity is new.
-- `domain.content` keys introduced by the PR are read with `domain.get_content_value(key, default)`; `domain.content[key]['value']` on a new key breaks every venue deployed before the PR.
-- Pre-processes reject by raising `openreview.OpenReviewException` with a message safe to show the submitter. JS pre-processes set `client.throwErrors = true`.
-- Emails carry `invitation=`, `signature=` and `sender`. Review, meta-review and decision text goes only to that note's readers, and anonymous signatures are never resolved to names for recipients outside the deanonymizers.
-- A webfield constant substituted with `.replace("var X = '';", ...)` is visible to every user who loads the page. Only venue configuration goes there.
-
-### `openreview/profile/` → `references/profile-management.md`
-- Process functions here sign as `~Super_User1` or `openreview.net/Support` and rewrite profiles, groups, notes and edges. A pre-process must verify the requester owns the name, email or paper they are acting on.
-- Request notes that contain an email or a name being removed are readable by the requester and support only.
-- A rename or removal must cascade to every reference (profile names, notes, edges, groups) or it leaves a dangling identity; that is an integrity finding, not a style one.
-
-### `openreview/api/client.py`, `openreview/openreview.py`, `openreview/tools.py` → `references/client-and-tools.md`
-- These run on the API server inside process functions. A signature change breaks stored process code; a behaviour change in a helper is a production change.
-- `get_conflicts()`, `get_profile_info()`, `get_neurips_profile_info()`, `get_comprehensive_profile_info()`, `subdomains()` and `duplicate_domains.json` decide who may review whom. Fewer conflicts for the same input needs a reason and a test.
-- Profile lookup by email uses `confirmedEmails`. Switching to `emails` lets an unconfirmed address claim a profile.
-- Never log a token, an `Authorization` header or a request body. `LogRetry` already prints response text on retry; do not widen what it prints.
-
-### `tests/` → `references/tests.md`
-- Every test hits the real servers. Do not suggest mocks or unit tests for process-function behaviour.
-- Assert `readers`, `nonreaders` and `signatures` exactly, and select emails by recipient and subject, not list position.
-- A test for a bug must fail before the fix. Run and cite tests at the file level.
-
-### `.circleci/`, `.github/workflows/`, `pyproject.toml` → `references/ci-and-packaging.md`
-- Tests run from a checkout, so they cannot catch a file missing from the wheel: a new subpackage goes in `[tool.setuptools.packages.find] include`, a new `process/`, `webfield/` or data directory gets `include` lines in `MANIFEST.in`.
-- Production deploy workflows are `workflow_dispatch` only (`deploy-dev.yml` also takes `repository_dispatch` of type `openreview-py-updated`). No `pull_request_target`, no PR-controlled data in a `run:` block. Everything else here fails the test run on its own.
+| The diff touches | Read in `references/` |
+|---|---|
+| Builders in `venue/`, `journal/`, `arr/`, `stages/`, `workflows/`, `venue_request/` | `permission-model.md`, `invitation-builders.md`, `workflow-stages.md` |
+| `venue/matching.py` | the builder references, plus `client-and-tools.md` § Conflict detection |
+| Any `*/process/` or `workflows/workflow_process/` file | `process-functions.md`, `permission-model.md`, and `emails.md` when it sends mail |
+| Any `*/webfield/` file | `invitation-builders.md` § Webfields |
+| `profile/` | `profile-management.md` |
+| `api/client.py`, `openreview.py`, `tools.py` | `client-and-tools.md` |
+| Recruitment: `*/recruitment.py`, `*recruitment*process.py` | `client-and-tools.md` § Recruitment links |
+| `tests/` | `tests.md` |
+| `pyproject.toml`, `MANIFEST.in`, `.circleci/`, `.github/workflows/` | `ci-and-packaging.md` |
 
 ## Severity
 
 - **Critical** — a reader outside the intended set can see submission content, review content, reviewer or area chair identity, or profile emails; process-function code reachable by someone other than the venue or support.
 - **High** — integrity: conflicts missed, a committee member assigned or able to bid where they should not, authors able to read assignment or bid edges, a signature accepted that the actor cannot hold, a stage transition that leaves submissions in the wrong `venueid` or readers; a change that breaks running venues on redeploy.
 - **Medium** — needs specific venue settings or a specific stage ordering; limited exposure such as a bibtex author list on a withdrawn anonymous paper.
-- **Low** — defence in depth. **Informational** — hardening.
+- **Low** — defence in depth.
+- **Informational** — hardening.
 
 ## What makes a finding worth posting
 

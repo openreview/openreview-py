@@ -1,69 +1,27 @@
 # Known False Positives
 
-Findings that have already been investigated in this repository and rejected. Each entry records *why*, so that a genuine variant can still be recognised rather than the whole class being waved away.
-
-Re-raising these is worse than staying silent: it trains the team to skim automated review.
+Findings already investigated in this repository and rejected, beyond the ones listed in `.github/copilot-instructions.md`. Each entry records *why*, so that a genuine variant can still be recognised rather than the whole class being waved away. Re-raising these is worse than staying silent: it trains the team to skim automated review.
 
 ## Code patterns
 
-**`exec(script, funcs)` in the super-process wrappers.**
-`journal/invitation.py` (`get_super_process_content`, `get_super_dateprocess_content`), `arr/invitation.py`, `workflows/templates.py` and `workflows/workflows.py` store a short wrapper as the invitation's process and keep the real script in the venue's meta invitation `content`. The meta invitation is writable by the venue and support only, and the wrapper runs under the venue's token anyway, so the `exec` grants nothing the venue did not already have. Do not report these. *Do* report a wrapper that reads the script from a note, a group a non-venue role can edit, or an edit's content; a new `funcs` entry; and any `exec` or `eval` elsewhere. `journal/process/official_recommendation_pre_process.py` runs an `additional_validation` script taken from the journal settings (`journal.get_official_recommendation_additional_validation()`), which only the Editors-in-Chief and support can set, under the same reasoning.
+**`exec(script, funcs)` in the super-process wrappers** (`process-functions.md` § The super-process wrappers). The meta invitation that holds the script is writable by the venue and support only, and the wrapper runs under the venue's token anyway, so the `exec` grants nothing the venue did not already have. Report only a wrapper that reads its script from somewhere a non-venue role can write (a note, a group another role edits, an edit's content), or a new `funcs` entry that hands the script something it should not have. `journal/process/official_recommendation_pre_process.py` runs an `additional_validation` script from the journal settings (`journal.get_official_recommendation_additional_validation()`), which only the Editors-in-Chief and support can set, under the same reasoning.
 
-**`jwt.decode(self.token, options={"verify_signature": False})` in `api/client.py` and `openreview.py`.**
-Reads the expiry of the client's own token to decide when to log in again. openreview-py never makes authorization decisions; the server verifies the token on every request. Not a finding.
+**`jwt.decode(self.token, options={"verify_signature": False})` in `api/client.py` and `openreview.py`.** Reads the expiry of the client's own token to decide when to log in again. openreview-py never makes authorization decisions; the server verifies the token on every request.
 
-**Webfield `.replace("var VENUE_ID = '';", ...)` substitution.**
-`venue/group.py`, `journal/group.py`, `venue_request/venue_request.py` and others personalise JavaScript templates by string replacement with venue-configured values (ids, names, counts). The values are not user input and the page runs with the viewer's own token. Not an injection finding. A value with venue-only readers (`hash_seed`, tokens, email lists) being substituted *would* be a finding.
+**`print()` in process functions and tests.** Process output is the stored process log and `print` is the only logging available to a process; tests print for debugging in CI logs. Counts, ids and progress are expected.
 
-**`print()` inside process functions.**
-Process output is the stored process log, and `print` is the only logging mechanism available in the wrapped script. Printing counts, ids and progress is expected. Printing tokens, emails or profile email lists is not.
+**`random.choices` in `tools.create_hash_seed()`.** Existing, triaged. A PR that touches the function should switch to `secrets.choice`; a PR that does not touch it should not be asked to.
 
-**Imports inside `def process(...)`.**
-For a process file the API executes directly, the server supplies only `openreview`, `datetime`, `json` and `re`; anything else must be imported inside the function, and an in-function `import` is not a finding. `from Crypto.Hash import HMAC, SHA256` inside a pre-process is the intended use of the `pycryptodome` dependency. This exemption does not extend to scripts run by the super-process wrappers (`journal/invitation.py`, `arr/invitation.py`, `workflows/templates.py`, `workflows/workflows.py`): their `exec` namespace is the specific wrapper's `funcs` dict, and those dicts differ. The journal wrappers pass `openreview` and `datetime` (plus `date_index` and `days_late_map` for date processes); the workflow recruitment wrapper also passes `re`, so the recruitment script's bare `re` use is correct; the ARR revision pre-process wrapper passes only `openreview`. A missing-name report on a stored script is valid only after checking that wrapper's `funcs`, Python builtins, and the script's own imports and definitions.
+**`verify_signature`, `expiresIn`, `tokenExpiresIn` parameters.** Session-length controls exposed to script authors on purpose; the server caps the maximum.
 
-**`random.choices` in `tools.create_hash_seed()`.**
-Existing, triaged. A PR that touches the function should switch to `secrets.choice`; a PR that does not touch it should not be asked to.
+**Deprecated parameters kept alive.** `openreview.tools.get_invitation_source()` and several builders accept legacy string forms (`'all_submissions'`, `reply_to`, `source_submissions_query`) alongside the dict form. The branches marked deprecated exist for venues deployed on the old form; removing them is a breaking change, not a cleanup.
 
-**`verify_signature`, `expiresIn`, `tokenExpiresIn` parameters.**
-Session-length controls exposed to script authors on purpose; the server caps the maximum.
+**Long functions and large files.** `venue/invitation.py`, `journal/invitation.py`, `tools.py` and most test files are thousands of lines, and many tests are hundreds of lines because they walk a whole venue. Length alone is not a finding, and refactoring suggestions without a defect are noise.
 
-**Hardcoded venue ids and names in `tests/`.**
-`TestVenue.cc`, `ICLR.cc/2026/Conference`, `TMLR`, non-ASCII submission names such as `提交`, fixed test emails like `reviewer_venue_one@mail.com`, and `localhost:3000` / `localhost:3001` base URLs are the fixture vocabulary of the suite.
+## Tests and the local stack
 
-**Long functions and large files.**
-`venue/invitation.py`, `journal/invitation.py`, `tools.py` and most test files are thousands of lines. Length alone is not a finding and refactoring suggestions without a defect are noise.
+**Hardcoded venue ids, names and emails in `tests/`.** `TestVenue.cc`, `ICLR.cc/2026/Conference`, `TMLR`, fixed emails such as `reviewer_venue_one@mail.com` (the activation path is local-only) and `localhost:3000` / `localhost:3001` base URLs are the fixture vocabulary of the suite.
 
-## Credentials
+**`tests/drivers/geckodriver`** is provided by the Docker image.
 
-**`Helpers.strong_password` in `tests/conftest.py`.**
-The shared password for every test user and for the `openreview.net` super user in the local stack. Committed deliberately so the suite runs without setup. Not a leaked credential.
-
-**The `openreview.net` super user login in fixtures and `docker/`.**
-Local-stack only. No production credentials are committed.
-
-**`docker/config.json`.**
-Gitignored; `config.example.json` holds paths and branch names, not secrets.
-
-## Conventions
-
-**No linter, no formatter.**
-Nothing in `pyproject.toml` or the repository configures ruff, flake8, black or isort. Spacing around `=` in keyword arguments, quote style, import order, trailing whitespace and line length vary across files on `master`. Formatting-only comments are noise. Never suggest running a formatter over a glob.
-
-**Few comments and docstrings.**
-Internal code is deliberately sparse on comments. Do not ask for docstrings on builder or process code; the public client methods in `api/client.py` and `tools.py` do carry docstrings for the Sphinx docs, the openreview internal agent, and a new public method there should too.
-
-**Deprecated parameters kept alive.**
-`openreview.tools.get_invitation_source()` and several builders accept legacy string forms (`'all_submissions'`, `reply_to`, `source_submissions_query`) alongside the dict form. The branches marked deprecated exist for venues deployed on the old form; removing them is a breaking change, not a cleanup.
-
-**Duplicate-looking builders.**
-`venue_request/` and `workflows/` implement the same stages twice because they are two deployment paths. Suggesting one be deleted in favour of the other is out of scope for a PR review.
-
-## Rules that were narrowed after firing falsely
-
-Rules in this skill are scoped to new code and name their exemptions, following the api repository's experience with rules that fired on compliant code:
-
-- `'everyone'` in readers is flagged only when no public check guards it, not wherever it appears.
-- Literal reader lists are flagged in process functions and new builders; `[venue_id]` from `domain.id` and `[venue.id]` in builders are the baseline, not a literal.
-- Missing `ignoreRecipients` is flagged when the actor or an excluded group is in `recipients`, not on every `post_message`.
-- Missing `should_match_invitation_source()` is flagged on fan-outs over submissions, not on lookups of a single note by id.
-- `domain.content[key]['value']` is flagged for keys introduced recently, not for `meta_invitation_id`, `submission_id`, `submission_name`, `program_chairs_id` and `title`, which every venue has.
+**`docker/config.json`** is gitignored; `config.example.json` holds paths and branch names, not secrets.
