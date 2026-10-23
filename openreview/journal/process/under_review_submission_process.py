@@ -34,3 +34,10 @@ def process(client, edit, invitation):
         signature=journal.venue_id,
         sender=journal.get_message_sender()
     )
+
+    if journal.should_enable_preflight_submission():
+        client.post_note_edit(
+            invitation=journal.get_preflight_submission_id(),
+            signatures=[journal.venue_id],
+            note=openreview.api.Note(id=note.id)
+        )

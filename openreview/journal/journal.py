@@ -262,6 +262,9 @@ class Journal(object):
     def get_ai_review_id(self, number=None):
         return self.__get_invitation_id(name='AI_Review', number=number)
 
+    def get_preflight_submission_id(self):
+        return self.__get_invitation_id(name='Preflight_Submission')
+
     def get_review_rating_id(self, signature=None):
         return self.__get_invitation_id(name='Rating', prefix=signature)
 
@@ -859,6 +862,15 @@ class Journal(object):
     
     def should_enable_ai_review(self):
         return self.settings.get('enable_ai_review', False)
+
+    def should_enable_preflight_submission(self):
+        return self.settings.get('enable_preflight_submission', False)
+
+    def get_preflight_url(self):
+        return self.settings.get('preflight_url')
+
+    def get_preflight_token(self):
+        return self.settings.get('preflight_token')
 
     def has_ai_review(self, submission):
         if not self.should_enable_ai_review():
