@@ -605,8 +605,8 @@ var renderData = function(venueStatusData) {
     },
     extraClasses: 'console-table paper-table',
     postRenderTable: function() {
-      $('.console-table th').eq(0).css('width', '2%');  // [ ]
-      $('.console-table th').eq(1).css('width', '3%');  // #
+      $('.console-table th').eq(0).css('width', '35px');  // [ ]
+      $('.console-table th').eq(1).css('width', '65px');  // #
       $('.console-table th').eq(2).css('width', '20%'); // Paper Summary
       $('.console-table th').eq(3).css('width', '22%'); // Review Progress
       $('.console-table th').eq(4).css('width', '22%'); // Action Editor Decision
