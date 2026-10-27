@@ -300,6 +300,89 @@ class TestCVPRConferenceWithTemplates():
         assert len([group for group in submission_groups if group.id.endswith('/Area_Chairs')]) == 10
         assert len([group for group in submission_groups if group.id.endswith('/Senior_Area_Chairs')]) == 10
 
+    def test_supplementary_material_revision(self, openreview_client, helpers, test_client):
+
+        pc_client = openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        venue = openreview.venue.helpers.get_venue(pc_client, 'thecvf.com/CVPR/2027/Conference', support_user='openreview.net/Support')
+
+        now = datetime.datetime.now()
+        venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
+            name='Supplementary_Material',
+            start_date=now,
+            due_date=now + datetime.timedelta(days=7),
+            additional_fields={
+                'supplementary_material': {
+                    'order': 1,
+                    'description': 'All supplementary material must be self-contained and zipped into a single file. The maximum file size is 100MB.',
+                    'value': {
+                        'param': {
+                            'type': 'file',
+                            'extensions': ['zip', 'pdf', 'tgz', 'gz'],
+                            'maxSize': 100,
+                            'deletable': True
+                        }
+                    }
+                }
+            },
+            remove_fields=['title', 'abstract', 'keywords', 'TLDR', 'pdf', 'email_sharing', 'data_release'],
+            allow_author_reorder=openreview.stages.AuthorReorder.DISALLOW_EDIT
+        )
+        venue.create_submission_revision_stage()
+
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/-/Supplementary_Material-0-1', count=1)
+
+        assert pc_client.get_invitation('thecvf.com/CVPR/2027/Conference/-/Supplementary_Material/Dates')
+        assert pc_client.get_invitation('thecvf.com/CVPR/2027/Conference/-/Supplementary_Material/Form_Fields')
+
+        invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2027/Conference/-/Supplementary_Material')
+        assert len(invitations) == 10
+
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Submission1/-/Supplementary_Material')
+        assert invitation.invitees == ['thecvf.com/CVPR/2027/Conference', 'thecvf.com/CVPR/2027/Conference/Submission1/Authors']
+        assert list(invitation.edit['note']['content'].keys()) == ['supplementary_material']
+
+        revision_edit = test_client.post_note_edit(
+            invitation='thecvf.com/CVPR/2027/Conference/Submission1/-/Supplementary_Material',
+            signatures=['thecvf.com/CVPR/2027/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 + '.zip' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
+
+        submission = openreview_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/-/Submission', sort='number:asc')[0]
+        assert submission.content['supplementary_material']['value'] == '/attachment/' + 's' * 40 + '.zip'
+        assert submission.content['title']['value'] == 'Paper title 1'
+        assert submission.content['pdf']['value'] == '/pdf/' + 'p' * 40 + '.pdf'
+        assert [author['username'] for author in submission.content['authors']['value']] == ['~SomeFirstName_User1', '~Kai_Amazon1', '~SAC_CVPROne1']
+
+        now = datetime.datetime.now()
+        pc_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2027/Conference/-/Supplementary_Material/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
+                'due_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=1)) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/-/Supplementary_Material-0-1', count=2)
+
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Submission2/-/Supplementary_Material')
+        assert invitation.expdate < openreview.tools.datetime_millis(now)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation thecvf.com/CVPR/2027/Conference/Submission2/-/Supplementary_Material has expired'):
+            test_client.post_note_edit(
+                invitation='thecvf.com/CVPR/2027/Conference/Submission2/-/Supplementary_Material',
+                signatures=['thecvf.com/CVPR/2027/Conference/Submission2/Authors'],
+                note=openreview.api.Note(
+                    content={
+                        'supplementary_material': { 'value': '/attachment/' + 's' * 40 + '.zip' }
+                    }
+                ))
+
     def test_reviewer_conflicts(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
