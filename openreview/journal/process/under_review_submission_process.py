@@ -34,3 +34,55 @@ def process(client, edit, invitation):
         signature=journal.venue_id,
         sender=journal.get_message_sender()
     )
+    if journal.should_enable_preflight_submission():
+        _submit_preflight_request(invitation, journal, note)
+
+def _submit_preflight_request(invitation, journal, submission):
+    """Start asynchronous Preflight checks; result delivery is handled externally."""
+    import requests
+
+    if submission.content.get('venueid', {}).get('value') != journal.under_review_venue_id:
+        return
+
+    invitation_content = invitation.content or {}
+    preflight_url = invitation_content.get('preflight_url', {}).get('value')
+    preflight_token = invitation_content.get('preflight_token', {}).get('value')
+    if not preflight_url:
+        raise openreview.OpenReviewException({
+            'name': 'PreflightConfigurationError',
+            'message': f'preflight_url is not configured for {journal.venue_id}'
+        })
+    if not preflight_token:
+        raise openreview.OpenReviewException({
+            'name': 'PreflightConfigurationError',
+            'message': f'preflight_token is not configured for {journal.venue_id}'
+        })
+
+    forum_id = submission.forum or submission.id
+
+    try:
+        response = requests.post(
+            preflight_url,
+            json={'forum_id': forum_id},
+            headers={
+                'Authorization': f'Bearer {preflight_token}'
+            },
+            timeout=60
+        )
+    except requests.Timeout:
+        raise openreview.OpenReviewException({
+            'name': 'PreflightTimeoutError',
+            'message': 'Preflight request timed out'
+        })
+    except requests.RequestException:
+        raise openreview.OpenReviewException({
+            'name': 'PreflightConnectionError',
+            'message': 'Preflight connection failed'
+        })
+
+    if response.status_code != 200:
+        raise openreview.OpenReviewException({
+            'name': 'PreflightServiceError',
+            'message': f'Preflight request failed with HTTP status {response.status_code}',
+            'status': response.status_code
+        })
