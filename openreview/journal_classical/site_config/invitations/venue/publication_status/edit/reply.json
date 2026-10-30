@@ -1,0 +1,27 @@
+{
+  "signatures": {
+    "param": {
+      "items": [
+        {"value": "JMLR", "optional": true},
+        {"value": "JMLR/Editors_In_Chief", "optional": true},
+        {"value": "JMLR/Production_Editors", "optional": true}
+      ]
+    }
+  },
+  "readers": ["JMLR/Editors_In_Chief", "JMLR/Production_Editors"],
+  "writers": ["JMLR/Editors_In_Chief", "JMLR/Production_Editors"],
+  "note": {
+    "id": {"param": {"withInvitation": "JMLR/-/Publication_Status", "optional": true}},
+    "forum": {"param": {"withInvitation": "JMLR/-/Submission"}},
+    "replyto": {"param": {"withInvitation": "JMLR/-/Submission"}},
+    "signatures": ["${3/signatures}"],
+    "readers": ["JMLR/Editors_In_Chief", "JMLR/Production_Editors"],
+    "writers": ["JMLR/Editors_In_Chief", "JMLR/Production_Editors"],
+    "content": {
+      "status": {"order": 1, "value": {"param": {"type": "string", "enum": ["Ready", "Published"]}}},
+      "jmlr_publication_url": {"order": 2, "value": {"param": {"type": "string", "regex": "^https://(www\\.)?jmlr\\.org/papers/v[0-9]+/[^/?#]+\\.html(?:[?#].*)?$", "optional": true}}},
+      "pdf": {"order": 3, "value": {"param": {"type": "string", "optional": true}}, "readers": ["JMLR/Editors_In_Chief", "JMLR/Production_Editors"]},
+      "supplementary_material": {"order": 4, "value": {"param": {"type": "string", "optional": true}}, "readers": ["JMLR/Editors_In_Chief", "JMLR/Production_Editors"]}
+    }
+  }
+}

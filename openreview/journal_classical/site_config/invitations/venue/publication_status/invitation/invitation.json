@@ -1,0 +1,8 @@
+{
+  "id": "JMLR/-/Publication_Status",
+  "readers": ["JMLR/Editors_In_Chief", "JMLR/Production_Editors"],
+  "writers": ["JMLR"],
+  "invitees": ["JMLR", "JMLR/Editors_In_Chief", "JMLR/Production_Editors"],
+  "signatures": ["JMLR"],
+  "preprocess": "{{PYTHON_SCRIPT_JSON:invitations/venue/publication_status/preprocess.py}}"
+}

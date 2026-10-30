@@ -1,0 +1,12 @@
+{
+  "id": "JMLR/Tracks",
+  "readers": ["everyone"],
+  "writers": ["JMLR"],
+  "signatures": ["JMLR"],
+  "content": {
+    "tracks": {
+      "value": "[{\"id\":\"Award\",\"name\":\"Award\",\"beginning_date\":null,\"ending_date\":null},{\"id\":\"OSS\",\"name\":\"Open Source Software (OSS)\",\"beginning_date\":null,\"ending_date\":null}]"
+    },
+    "date_policy": {"value": "Anywhere on Earth (UTC-12)"}
+  }
+}

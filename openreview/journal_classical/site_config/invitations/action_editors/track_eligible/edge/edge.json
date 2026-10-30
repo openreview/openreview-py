@@ -1,0 +1,14 @@
+{
+  "id": {"param": {"withInvitation": "JMLR/Action_Editors/-/Track_Eligible", "optional": true}},
+  "ddate": {"param": {"range": [0, 9999999999999], "optional": true, "deletable": true}},
+  "readers": {"param": {"items": [
+    {"value": "everyone", "optional": true},
+    {"value": "JMLR/Editors_In_Chief", "optional": true},
+    {"prefix": "~.*", "optional": true}
+  ]}},
+  "writers": ["JMLR/Editors_In_Chief"],
+  "signatures": ["JMLR/Editors_In_Chief"],
+  "head": {"param": {"type": "group", "const": "JMLR/Action_Editors"}},
+  "tail": {"param": {"type": "profile"}},
+  "label": {"param": {"regex": "^[A-Za-z][A-Za-z0-9_]{0,63}$"}}
+}

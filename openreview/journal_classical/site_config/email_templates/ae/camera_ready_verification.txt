@@ -1,0 +1,19 @@
+Dear {{{{fullname}}}},
+
+The authors of {short_name} paper {submission_number}: {submission_title} have now submitted the camera-ready version of their work.
+
+As your final task for this submission, verify the latest camera-ready manuscript using the checklist shown in the OpenReview verification form:
+
+{invitation_url}
+
+Use the official JMLR Author Guidelines as the common author and Action Editor reference:
+
+{{CAMERA_READY_AUTHOR_GUIDELINES_URL}}
+
+The verification form contains the exact paper-specific formatting instructions, dates, publication identifier, footer URL, generated LaTeX metadata block, and accepted title. Use that checklist wherever it differs from the general guide.
+
+If the decision was Accept with minor revision, also read the authors' restricted "Camera-ready revision summary" Official Comment and verify the requested changes. Reviewers do not re-review the paper.
+
+If any correction is needed, do not approve the verification. Post a restricted Official Comment to the paper Authors explaining the correction and wait for a corrected upload. Then verify the latest PDF.
+
+The {short_name} Editors-in-Chief

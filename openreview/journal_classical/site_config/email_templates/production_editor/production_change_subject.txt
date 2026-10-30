@@ -1,0 +1,1 @@
+[{short_name}] Production follow-up: {event} for paper {submission_number}
