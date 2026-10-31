@@ -150,6 +150,10 @@ def process(client, edit, invitation):
 
     # When reviewers are split into several per-submission groups, create one additional review
     # invitation per secondary reviewer role so each role gets its own form.
+    # venue.review_stage is restored to the default review stage afterwards. None of the stages created after this loop read it today, but restoring it
+    # keeps any stage added later from being built from the last additional review form by mistake.
+    default_review_stage = venue.review_stage
+    review_names = [default_review_stage.name]
     for additional_role in venue.submission_reviewer_roles[1:]:
         review_name = f'{additional_role}_Review'
         venue.review_stage = openreview.stages.ReviewStage(
@@ -160,6 +164,8 @@ def process(client, edit, invitation):
             submission_reviewer_roles=[additional_role]
         )
         venue.create_review_stage()
+        review_names.append(review_name)
+    venue.review_stage = default_review_stage
 
     additional_readers = []
     submission_release_additional_readers = []
@@ -167,30 +173,32 @@ def process(client, edit, invitation):
         additional_readers.append(venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}'))
         submission_release_additional_readers.append(venue.get_senior_area_chairs_id(number='${{2/id}/number}'))
     if venue.use_area_chairs:
-        additional_readers.append(venue.get_area_chairs_id(number='${5/content/noteNumber/value}'))
-        submission_release_additional_readers.append(venue.get_area_chairs_id(number='${{2/id}/number}'))
+        additional_readers.extend(venue.get_submission_area_chairs_ids(number='${5/content/noteNumber/value}'))
+        submission_release_additional_readers.extend(venue.get_submission_area_chairs_ids(number='${{2/id}/number}'))
 
     # the release templates no longer hardcode the per-submission reviewers group as a reader,
-    # so pass it explicitly; it goes last to keep the final reader order unchanged
-    additional_readers.append(venue.get_reviewers_id(number='${5/content/noteNumber/value}'))
-    submission_release_additional_readers.append(venue.get_reviewers_id(number='${{2/id}/number}'))
+    # so pass them explicitly (one per per-submission reviewer group); they go last to keep the final reader order unchanged
+    additional_readers.extend(venue.get_submission_reviewers_ids(number='${5/content/noteNumber/value}'))
+    submission_release_additional_readers.extend(venue.get_submission_reviewers_ids(number='${{2/id}/number}'))
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Note_Release',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': f'{venue.review_stage.name}_Release' },
-            'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5) },
-            'submission_name': { 'value': 'Submission' },
-            'stage_name': { 'value': 'Official_Review' },
-            'reviewers_name': { 'value': reviewers_name },
-            'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': additional_readers },
-            'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
-        },
-        await_process=True
-    )
+    # Each review form gets its own release invitation, so the reviews of every reviewer role are released.
+    for review_name in review_names:
+        client.post_invitation_edit(
+            invitations=f'{invitation_prefix}/-/Note_Release',
+            signatures=[invitation_prefix],
+            content={
+                'venue_id': { 'value': venue_id },
+                'name': { 'value': f'{review_name}_Release' },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*5) },
+                'submission_name': { 'value': 'Submission' },
+                'stage_name': { 'value': review_name },
+                'reviewers_name': { 'value': reviewers_name },
+                'authors_name': { 'value': authors_name },
+                'additional_readers': { 'value': additional_readers },
+                'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
+            },
+            await_process=True
+        )
 
     from_email = note.content['abbreviated_venue_name']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
     from_email = f'{from_email}-notifications@openreview.net'
