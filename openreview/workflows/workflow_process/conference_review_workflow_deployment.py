@@ -114,6 +114,17 @@ def process(client, edit, invitation):
         remove_fields=['email_sharing', 'data_release']
     )
 
+    # the ethics review stage has to be set before the venue setup and the review stages are created, so the
+    # domain stores the ethics review name and the review and meta review invitations compute their readers
+    # per submission, adding the ethics reviewers of the submissions that are flagged for ethics review
+    if venue.use_ethics_reviewers:
+        venue.ethics_review_stage = openreview.stages.EthicsReviewStage(
+            start_date=submission_deadline_datetime + datetime.timedelta(weeks=3.5),
+            due_date=submission_deadline_datetime + datetime.timedelta(weeks=5.5),
+            release_to_reviewers=openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE,
+            release_to_chairs=True
+        )
+
     venue.setup(note.content['program_chair_emails']['value'])
     venue.invitation_builder.set_venue_template_invitations()
 
@@ -226,6 +237,36 @@ def process(client, edit, invitation):
             },
             await_process=True
         )
+
+    if venue.ethics_review_stage:
+        # program chairs flag submissions for ethics review, which creates the per-submission ethics reviewers
+        # group and ethics review invitation, and adds the ethics reviewers as readers of the submission and its reviews
+        venue.invitation_builder.set_ethics_stage_invitation()
+        venue.invitation_builder.set_ethics_paper_groups_invitation()
+        venue.invitation_builder.set_ethics_review_invitation()
+
+        # the ethics reviews are not released by default: the release activates a year after the submission deadline,
+        # the program chairs pick an earlier date from the workflow timeline if they want to release them, for example to the authors
+        client.post_invitation_edit(
+            invitations=f'{invitation_prefix}/-/Note_Release',
+            signatures=[invitation_prefix],
+            content={
+                'venue_id': { 'value': venue_id },
+                'name': { 'value': f'{venue.ethics_review_stage.name}_Release' },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*365) },
+                'submission_name': { 'value': 'Submission' },
+                'stage_name': { 'value': venue.ethics_review_stage.name },
+                'reviewers_name': { 'value': reviewers_name },
+                'authors_name': { 'value': authors_name },
+                'additional_readers': { 'value': [
+                    venue.get_ethics_chairs_id(),
+                    venue.get_ethics_reviewers_id(number='${5/content/noteNumber/value}')
+                ] },
+                'description': { 'value': 'This step runs automatically at its "activation date", and releases ethics reviews to the specified readers. Ethics reviews are not released by default, set an earlier activation date to release them.' }
+            },
+            await_process=True
+        )
+
     venue.create_decision_stage()
 
     client.post_invitation_edit(
@@ -349,6 +390,7 @@ def process(client, edit, invitation):
         'submission_area_chair_group_names',
         'senior_area_chairs_support',
         'senior_area_chair_groups_names',
+        'ethics_review_support',
         'release_role_participation',
         'venue_organizer_agreement'
     ]
