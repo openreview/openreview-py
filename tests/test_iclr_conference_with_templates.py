@@ -2655,6 +2655,28 @@ note={under review}
         assert len(reviews) == 1
         assert reviews[0].readers == ['everyone']
 
+        # delete the edit that changed the readers in the invitation, so that it goes back to the original state
+        invitation_edit = openreview_client.get_invitation_edits(invitation_id='ICLR.cc/2026/Conference/-/Official_Review_Release', invitation='ICLR.cc/2026/Conference/-/Official_Review_Release/Readers')[0]
+        invitation_edit.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        openreview_client.post_edit(invitation_edit)
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review_Release-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=4)
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer_one@iclr.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ICLR.cc/2026/Conference/Submission2/Reviewer_', signatory='~Reviewer_ICLROne1')
+        anon_group_id = anon_groups[0].id
+
+        reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
+        assert len(reviews) == 1
+        assert reviews[0].readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+            anon_group_id
+        ]
+
     def test_public_comment_stage(self, client, openreview_client, helpers, test_client):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
