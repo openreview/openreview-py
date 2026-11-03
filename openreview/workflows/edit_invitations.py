@@ -1658,6 +1658,12 @@ class EditInvitationsBuilder(object):
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [0, 9999999999999],
+                        'optional': True
+                    }
+                },
                 'content' :{
                     'readers': {
                         'value': {
