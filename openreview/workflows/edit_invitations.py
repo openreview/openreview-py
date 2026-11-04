@@ -2094,7 +2094,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_llm_chat_settings_invitation(self, super_invitation_id):
+    def set_edit_llm_chat_settings_invitation(self, super_invitation_id, include_reply_invitations=False):
 
         venue_id = self.venue_id
 
@@ -2208,6 +2208,25 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        # the chats that get the forum replies, e.g. the reviews, rebuttals and comments for the area chairs
+        if include_reply_invitations:
+            invitation.edit['content']['llm_reply_invitations'] = {
+                'order': 7,
+                'description': 'Names of the invitations whose forum replies are sent to the model with the submission, e.g. Official_Review, Author_Rebuttal, Official_Comment. Only the replies the committee member can read are sent. Delete the value to send no forum replies.',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'input': 'text',
+                        'regex': r'^\w+$',
+                        'mismatchError': 'must be invitation names with underscores instead of spaces, e.g. Official_Review',
+                        'deletable': True
+                    }
+                }
+            }
+            invitation.edit['invitation']['content']['llm_reply_invitations'] = {
+                'value': '${4/content/llm_reply_invitations/value}'
+            }
 
         self.save_invitation(invitation, replacement=True)
         return invitation

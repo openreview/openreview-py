@@ -908,6 +908,8 @@ class TestCVPRConferenceWithTemplates():
 
         # the program chairs configure the LLM gateway through the settings invitation, keeping the default prompt
         edit_invitations_builder.set_edit_llm_chat_settings_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
+        # the reviewer chats get no forum replies
+        assert 'llm_reply_invitations' not in openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Settings').edit['content']
 
         pc_client.post_invitation_edit(
             invitations='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Settings',
@@ -1169,7 +1171,7 @@ class TestCVPRConferenceWithTemplates():
         assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')) == 0
 
         edit_invitations_builder.set_edit_dates_one_level_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
-        edit_invitations_builder.set_edit_llm_chat_settings_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
+        edit_invitations_builder.set_edit_llm_chat_settings_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction', include_reply_invitations=True)
         edit_invitations_builder.set_edit_process_script_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
 
         activation_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(seconds=5))
@@ -1207,15 +1209,43 @@ class TestCVPRConferenceWithTemplates():
                 'llm_model': { 'value': 'claude-sonnet-4-6' },
                 'llm_prompt': { 'value': ac_default_prompt },
                 'llm_token_limit': { 'value': 1000000 },
-                'llm_show_usage': { 'value': False }
+                'llm_show_usage': { 'value': False },
+                'llm_reply_invitations': { 'value': ['Official_Review', 'Official_Comment'] }
             }
         )
 
         ac_llm_super_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
         assert ac_llm_super_invitation.content['llm_api_key'] == { 'value': 'sk-test-key', 'readers': ['thecvf.com/CVPR/2027/Conference'] }
         assert ac_llm_super_invitation.content['llm_prompt']['value'] == ac_default_prompt
+        assert ac_llm_super_invitation.content['llm_reply_invitations']['value'] == ['Official_Review', 'Official_Comment']
 
-        # show the chats in their own forum tab
+        def save_ac_reply_invitations(reply_invitations):
+            pc_client.post_invitation_edit(
+                invitations='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction/Settings',
+                content={
+                    'llm_api_key': { 'value': 'sk-test-key' },
+                    'llm_base_url': { 'value': 'https://litellm.openreview.net' },
+                    'llm_model': { 'value': 'claude-sonnet-4-6' },
+                    'llm_prompt': { 'value': ac_default_prompt },
+                    'llm_token_limit': { 'value': 1000000 },
+                    'llm_show_usage': { 'value': False },
+                    'llm_reply_invitations': { 'value': reply_invitations }
+                }
+            )
+
+        # the process matches the invitation names, not their pretty names
+        with pytest.raises(openreview.OpenReviewException, match=r'must be invitation names with underscores instead of spaces'):
+            save_ac_reply_invitations(['Official Review'])
+
+        # deleting the value sends no forum replies
+        save_ac_reply_invitations({ 'delete': True })
+        assert openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction').content.get('llm_reply_invitations', {}).get('value') is None
+
+        save_ac_reply_invitations(['Official_Review', 'Author_Rebuttal', 'Official_Comment'])
+        assert openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction').content['llm_reply_invitations']['value'] == ['Official_Review', 'Author_Rebuttal', 'Official_Comment']
+
+        # show the chats of each committee in their own forum tab: a tab shows only the replies readable by the
+        # chat it posts to, so a member of both committees of a submission needs both tabs to see both chats
 
         openreview_client.post_invitation_edit(
             invitations='thecvf.com/CVPR/2027/Conference/-/Edit',
@@ -1233,21 +1263,31 @@ class TestCVPRConferenceWithTemplates():
                         'live': True
                     },
                     {
-                        'id': 'llm_interaction',
-                        'label': 'LLM Interaction Chat',
-                        'filter': 'invitations:thecvf.com/CVPR/2027/Conference/Submission${note.number}/.*/-/LLM_Interaction',
+                        'id': 'reviewer_llm_interaction',
+                        'label': 'Reviewer AI Chat',
+                        'filter': 'invitations:thecvf.com/CVPR/2027/Conference/Submission${note.number}/Reviewer_.*/-/LLM_Interaction',
                         'nesting': 1,
                         'sort': 'date-asc',
                         'layout': 'chat',
                         'live': True,
-                        'expandedInvitations': ['thecvf.com/CVPR/2027/Conference/Submission${note.number}/.*/-/LLM_Interaction']
+                        'expandedInvitations': ['thecvf.com/CVPR/2027/Conference/Submission${note.number}/Reviewer_.*/-/LLM_Interaction']
+                    },
+                    {
+                        'id': 'area_chair_llm_interaction',
+                        'label': 'Area Chair AI Chat',
+                        'filter': 'invitations:thecvf.com/CVPR/2027/Conference/Submission${note.number}/Area_Chair_.*/-/LLM_Interaction',
+                        'nesting': 1,
+                        'sort': 'date-asc',
+                        'layout': 'chat',
+                        'live': True,
+                        'expandedInvitations': ['thecvf.com/CVPR/2027/Conference/Submission${note.number}/Area_Chair_.*/-/LLM_Interaction']
                     }
                 ]
             )
         )
 
         submission_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/-/Submission')
-        assert [view['id'] for view in submission_invitation.reply_forum_views] == ['discussion', 'llm_interaction']
+        assert [view['id'] for view in submission_invitation.reply_forum_views] == ['discussion', 'reviewer_llm_interaction', 'area_chair_llm_interaction']
 
         # open the review stage together with the chat
         now = datetime.datetime.now()
@@ -1314,16 +1354,20 @@ class TestCVPRConferenceWithTemplates():
 
         def save_settings(committee_name, base_url, token_limit, show_usage=False):
             settings = openreview_client.get_invitation(f'thecvf.com/CVPR/2027/Conference/{committee_name}/-/LLM_Interaction').content
+            content = {
+                'llm_api_key': { 'value': settings['llm_api_key']['value'] },
+                'llm_base_url': { 'value': base_url },
+                'llm_model': { 'value': settings['llm_model']['value'] },
+                'llm_prompt': { 'value': settings['llm_prompt']['value'] },
+                'llm_token_limit': { 'value': token_limit },
+                'llm_show_usage': { 'value': show_usage }
+            }
+            # only the area chair chats have it
+            if 'llm_reply_invitations' in settings:
+                content['llm_reply_invitations'] = { 'value': settings['llm_reply_invitations']['value'] }
             pc_client.post_invitation_edit(
                 invitations=f'thecvf.com/CVPR/2027/Conference/{committee_name}/-/LLM_Interaction/Settings',
-                content={
-                    'llm_api_key': { 'value': settings['llm_api_key']['value'] },
-                    'llm_base_url': { 'value': base_url },
-                    'llm_model': { 'value': settings['llm_model']['value'] },
-                    'llm_prompt': { 'value': settings['llm_prompt']['value'] },
-                    'llm_token_limit': { 'value': token_limit },
-                    'llm_show_usage': { 'value': show_usage }
-                }
+                content=content
             )
 
         def ask(email, profile_id, number, anon_name, question):
@@ -1453,15 +1497,19 @@ class TestCVPRConferenceWithTemplates():
 
     def test_llm_chat_tab_visible(self, openreview_client, helpers, selenium, request_page):
 
-        for email in ['reviewer1@cvpr.cc', 'reviewer2@cvpr.cc', 'reviewer3@cvpr.cc', 'reviewer4@cvpr.cc', 'reviewer5@cvpr.cc', 'reviewer6@cvpr.cc', 'reviewer7@gmail.com', 'ac1@cvpr.cc', 'ac2@cvpr.cc']:
+        reviewer_emails = ['reviewer1@cvpr.cc', 'reviewer2@cvpr.cc', 'reviewer3@cvpr.cc', 'reviewer4@cvpr.cc', 'reviewer5@cvpr.cc', 'reviewer6@cvpr.cc', 'reviewer7@gmail.com']
+        for email in reviewer_emails + ['ac1@cvpr.cc', 'ac2@cvpr.cc']:
             committee_client = openreview.api.OpenReviewClient(username=email, password=helpers.strong_password)
             submission = committee_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/-/Submission', sort='number:asc')[0]
 
+            # each committee member only sees the tab of their own chat
+            tab, other_tab = ('Reviewer AI Chat', 'Area Chair AI Chat') if email in reviewer_emails else ('Area Chair AI Chat', 'Reviewer AI Chat')
             request_page(
                 selenium,
                 'http://localhost:3030/forum?id=' + submission.id,
                 committee_client,
                 by=By.LINK_TEXT,
-                wait_for_element='LLM Interaction Chat'
+                wait_for_element=tab
             )
-            assert selenium.find_element(By.LINK_TEXT, 'LLM Interaction Chat')
+            assert selenium.find_element(By.LINK_TEXT, tab)
+            assert not selenium.find_elements(By.LINK_TEXT, other_tab)
