@@ -82,8 +82,14 @@ def _submit_preflight_request(invitation, journal, note):
         })
 
     if response.status_code not in (200, 202) :
+        try:
+            error_data = response.json()
+            error_reason = error_data.get('errorReason', 'Unknown error')
+        except:
+            error_reason = response.text or 'Unknown error'
+        
         raise openreview.OpenReviewException({
             'name': 'PreflightServiceError',
-            'message': f'Preflight request failed with HTTP status {response.status_code}',
+            'message': f'Preflight request failed with HTTP status {response.status_code}: {error_reason}',
             'status': response.status_code
         })
