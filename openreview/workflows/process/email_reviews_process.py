@@ -37,7 +37,7 @@ def process(client, invitation):
             submission_title=submission.content['title']['value']
         )
 
-        # this process re-runs after a failure and after any edit to the invitation, so skip submissions whose authors were already sent an email with this subject
+        # this process runs again after any edit to the invitation and when a failed job is retried, so skip submissions whose authors were already sent an email with this subject
         if client.get_messages(subject=subject):
             return None
 
