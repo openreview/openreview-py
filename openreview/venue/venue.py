@@ -112,6 +112,7 @@ class Venue(object):
         self.senior_area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'seniorAreaChairsWebfield.js')
         self.area_chairs_webfield_path = os.path.join(venue_webfield_dir, 'areachairsWebfield.js')
         self.ethics_chairs_webfield_path = os.path.join(venue_webfield_dir, 'ethicsChairsWebfield.js')
+        self.authors_webfield_path = os.path.join(venue_webfield_dir, 'authorsWebfield.js')
 
     def set_main_settings(self, request_note):
         """Configure venue properties from a venue request form note.

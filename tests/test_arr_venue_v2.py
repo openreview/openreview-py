@@ -277,7 +277,10 @@ class TestARRVenueV2():
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers')
-        assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Authors')
+        authors_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Authors')
+        assert authors_group
+        assert 'AuthorConsole' in authors_group.web
+        assert 'For more information about the ACL Rolling Review process' in authors_group.web
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Preferred_Emails_Readers')
 
         assert 'Emergency_Score' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Program_Chairs').web
