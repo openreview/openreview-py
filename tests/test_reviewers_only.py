@@ -2142,6 +2142,54 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 '''
         assert messages[0]['content']['replyTo'] == 'abcd2025.programchairs@gmail.com'
 
+    def test_retrigger_reviews_notification_with_same_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # paper #1 already received a reviews notification earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
+
+        # retrigger the reviews notification
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=4)
+
+        # emails should not be sent again since the subject matches the subject of the email sent earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
+
+    def test_retrigger_reviews_notification_new_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # change the reviews email subject
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Templates',
+            content={
+                'email_subject': { 'value': '[ABCD 2025] Updated reviews for your submission #{submission_number}, titled "{submission_title}"' },
+                'email_content': { 'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the reviews for your submission #{submission_number}, "{submission_title}", to ABCD 2025 have been updated.\n\n{formatted_reviews}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}' },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=5)
+
+        # the email now gets sent since the subject no longer matches a previously sent email
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] Updated reviews for your submission #1, titled \"Paper title 1\"')
+        assert messages and len(messages) == 1
+        assert 'have been updated' in messages[0]['content']['text']
+        assert '**review**: This is a good paper' in messages[0]['content']['text']
+
+        # the email sent earlier with the previous subject is not sent again
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
+
     def test_rebuttal_stage(self, openreview_client, test_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)

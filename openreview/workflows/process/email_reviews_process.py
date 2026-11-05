@@ -36,6 +36,11 @@ def process(client, invitation):
             submission_number=submission.number,
             submission_title=submission.content['title']['value']
         )
+
+        # this process re-runs after a failure and after any edit to the invitation, so skip submissions whose authors were already sent an email with this subject
+        if client.get_messages(subject=subject):
+            return None
+
         reviews = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{review_name}' in reply['invitations']]
 
         formatted_reviews = ''
@@ -56,7 +61,7 @@ def process(client, invitation):
                 submission_forum=submission.id
             )
 
-            client.post_message(
+            return client.post_message(
                 subject=subject,
                 recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
                 message=message,
@@ -64,8 +69,12 @@ def process(client, invitation):
                 replyTo=contact_email
             )
 
-    if fields_to_include:
-        openreview.tools.concurrent_requests(send_reviews_email, active_submissions)
-        print('Review emails sent to authors')
+        return None
+
+    messages = openreview.tools.concurrent_requests(send_reviews_email, active_submissions)
+    len_messages = len([m for m in messages if m is not None])
+
+    if len_messages:
+        print(f'{len_messages} review emails sent to authors')
     else:
-        print('No fields were selected; please set the review fields to include in the email to be sent to authors')
+        print('No new review emails sent to authors')
