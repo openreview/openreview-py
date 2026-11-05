@@ -31,14 +31,16 @@ def process(client, invitation):
     active_submissions = client.get_notes(content={'venueid': submission_venue_id}, details='directReplies')
     print('# active submissions:', len(active_submissions))
 
+    # this process runs again after any edit to the invitation and when a failed job is retried, so collect the subjects already sent by this invitation to skip those submissions below
+    sent_subjects = {message['content']['subject'] for message in client.get_all_messages(invitation=invitation.id)}
+
     def send_reviews_email(submission):
         subject = email_subject.format(
             submission_number=submission.number,
             submission_title=submission.content['title']['value']
         )
 
-        # this process runs again after any edit to the invitation and when a failed job is retried, so skip submissions whose authors were already sent an email with this subject
-        if client.get_messages(subject=subject):
+        if subject in sent_subjects:
             return None
 
         reviews = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{review_name}' in reply['invitations']]

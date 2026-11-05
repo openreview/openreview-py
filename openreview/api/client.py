@@ -2996,7 +2996,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None):
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, invitation = None, after = None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -3006,14 +3006,46 @@ class OpenReviewClient(object):
         :type subject: str, optional
         :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
         :type status: str, optional
+        :param invitation: Invitation ID of the invitation used to send the messages
+        :type invitation: str, optional
+        :param after: Message id to start getting the list of messages from
+        :type after: str, optional
 
         :return: Messages that match the passed parameters
         :rtype: dict
         """
 
-        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
+        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit, 'invitation': invitation, 'after': after }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
+
+    def get_all_messages(self, to = None, subject = None, status = None, invitation = None):
+        """
+        **Only for Super User**. Retrieves every message that matches the filters, requesting as many pages as needed
+
+        :param to: Tilde user names or emails
+        :type to: list[str], optional
+        :param subject: Subject of the e-mail
+        :type subject: str, optional
+        :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
+        :type status: str, optional
+        :param invitation: Invitation ID of the invitation used to send the messages
+        :type invitation: str, optional
+
+        :return: Messages that match the passed parameters
+        :rtype: list[dict]
+        """
+
+        messages = []
+        after = None
+
+        # stop on an empty page rather than a short one, since the server can cap a page below the limit requested here
+        while True:
+            page = self.get_messages(to=to, subject=subject, status=status, invitation=invitation, limit=self.limit, after=after)
+            if not page:
+                return messages
+            messages.extend(page)
+            after = page[-1]['id']
 
     def get_process_logs(self, id = None, invitation = None, status = None, min_sdate = None):
         """Retrieve process function execution logs.

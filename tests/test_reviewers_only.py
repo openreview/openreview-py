@@ -2166,6 +2166,12 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
         assert messages and len(messages) == 1
 
+        # only messages sent with this invitation are returned when filtering by invitation
+        messages = openreview_client.get_all_messages(invitation='ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
+        subjects = [message['content']['subject'] for message in messages]
+        assert '[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available' in subjects
+        assert all(subject.startswith('[ABCD 2025] The reviews for your submission #') for subject in subjects)
+
     def test_retrigger_reviews_notification_new_subject(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
