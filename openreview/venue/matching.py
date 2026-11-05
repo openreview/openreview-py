@@ -1215,14 +1215,23 @@ class Matching(object):
 
         return invite_assignment_invitation
 
+    def _get_committee_review_name(self):
+        # the review written by this committee: only these reviews block changing its assignments, so
+        # the official reviews of a flagged submission don't stop ethics reviewers from being assigned to it
+        venue = self.venue
+
+        if self.is_ethics_reviewer:
+            return venue.ethics_review_stage.name if venue.ethics_review_stage else 'Ethics_Review'
+        if self.is_area_chair:
+            return venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
+        return venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
+
     def deploy_assignments(self, assignment_title, overwrite):
 
         venue = self.venue
         client = self.client
 
-        review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
-        if self.is_area_chair:
-            review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
+        review_name = self._get_committee_review_name()
 
         deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
         paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')
@@ -1404,9 +1413,7 @@ class Matching(object):
         venue = self.venue
         client = self.client
 
-        review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
-        if self.is_area_chair:
-            review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
+        review_name = self._get_committee_review_name()
 
         deployed_invitation = client.get_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
         paper_committee_name = deployed_invitation.content.get('submission_committee_name', {}).get('value')

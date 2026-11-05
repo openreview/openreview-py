@@ -2410,6 +2410,106 @@ note={under review}
             anon_group_id
         ]
 
+    def test_ethics_reviewer_assignments(self, client, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
+
+        helpers.create_user('ethics_reviewer@iclr.cc', 'Ethics', 'ICLRReviewer')
+        openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Ethics_Reviewers', '~Ethics_ICLRReviewer1')
+
+        submission = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/-/Submission', number=[5])[0]
+        assert submission.content['flagged_for_ethics_review']['value'] == True
+        # the official review posted on the flagged submission must not block the ethics reviewer assignments
+        assert openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission5/-/Official_Review')
+        submission_change_cdate = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Submission_Change_Before_Reviewing').cdate
+
+        config_note = openreview_client.post_note_edit(
+            invitation='ICLR.cc/2026/Conference/Ethics_Reviewers/-/Assignment_Configuration',
+            readers=['ICLR.cc/2026/Conference'],
+            writers=['ICLR.cc/2026/Conference'],
+            signatures=['ICLR.cc/2026/Conference'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'ethics-matching-1'},
+                    'user_demand': { 'value': '1'},
+                    'max_papers': { 'value': '5'},
+                    'min_papers': { 'value': '0'},
+                    'alternates': { 'value': '2'},
+                    'paper_invitation': { 'value': 'ICLR.cc/2026/Conference/-/Submission&content.venueid=ICLR.cc/2026/Conference/Submission&content.flagged_for_ethics_review=true'},
+                    'match_group': { 'value': 'ICLR.cc/2026/Conference/Ethics_Reviewers'},
+                    'scores_specification': {
+                        'value': {
+                            'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Affinity_Score': {
+                                'weight': 1,
+                                'default': 0
+                            }
+                        }
+                    },
+                    'aggregate_score_invitation': { 'value': 'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Aggregate_Score'},
+                    'conflicts_invitation': { 'value': 'ICLR.cc/2026/Conference/Ethics_Reviewers/-/Conflict'},
+                    'solver': { 'value': 'FairFlow'},
+                    'status': { 'value': 'Initialized'},
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2026/Conference/Ethics_Reviewers/-/Assignment_Configuration')
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation='ICLR.cc/2026/Conference/Ethics_Reviewers/-/Proposed_Assignment',
+            head=submission.id,
+            tail='~Ethics_ICLRReviewer1',
+            signatures=['ICLR.cc/2026/Conference/Program_Chairs'],
+            weight=1,
+            label='ethics-matching-1'
+        ))
+
+        # mark the configuration as complete and deploy the assignments
+        openreview_client.post_note_edit(
+            invitation='ICLR.cc/2026/Conference/-/Edit',
+            signatures=['ICLR.cc/2026/Conference'],
+            note=openreview.api.Note(
+                id=config_note['note']['id'],
+                content={ 'status': { 'value': 'Complete' } }
+            )
+        )
+
+        match_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Ethics_Reviewers_Assignment_Deployment/Match')
+        assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['ethics-matching-1']
+
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Ethics_Reviewers_Assignment_Deployment/Match',
+            content={
+                'match_name': { 'value': 'ethics-matching-1' }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Ethics_Reviewers_Assignment_Deployment-0-1', count=2)
+
+        # activate the deployment
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Ethics_Reviewers_Assignment_Deployment/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Ethics_Reviewers_Assignment_Deployment-0-1', count=3)
+
+        config_note = openreview_client.get_note(config_note['note']['id'])
+        assert config_note.content['status']['value'] == 'Deployed'
+
+        # the ethics reviewer is assigned to the flagged submission and can sign its ethics review
+        grouped_edges = openreview_client.get_grouped_edges(invitation='ICLR.cc/2026/Conference/Ethics_Reviewers/-/Assignment', groupby='id')
+        assert len(grouped_edges) == 1
+        edges = openreview_client.get_edges(invitation='ICLR.cc/2026/Conference/Ethics_Reviewers/-/Assignment', head=submission.id)
+        assert [edge.tail for edge in edges] == ['~Ethics_ICLRReviewer1']
+        assert openreview_client.get_group('ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers').members == ['~Ethics_ICLRReviewer1']
+        assignment_invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Ethics_Reviewers/-/Assignment')
+        assert assignment_invitation.content['review_name']['value'] == 'Ethics_Review'
+        assert assignment_invitation.content['committee_role']['value'] == 'ethics_reviewers'
+
+        # flagging already gave the ethics reviewers access to the submission, so the deployment doesn't
+        # run the submission change again, which would remove the ethics readers of the flagged submissions
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Submission_Change_Before_Reviewing').cdate == submission_change_cdate
+
     def test_comment_stage(self, client, openreview_client, helpers):
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)
@@ -3015,11 +3115,6 @@ note={under review}
         readers_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review_Release/Readers')
         reader_options = [item['value'] for item in readers_inv.edit['content']['readers']['value']['param']['items']]
         assert 'ICLR.cc/2026/Conference/Ethics_Chairs' not in reader_options
-
-        # an ethics reviewer is assigned to the flagged submission
-        helpers.create_user('ethics_reviewer@iclr.cc', 'Ethics', 'ICLRReviewer')
-        openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Ethics_Reviewers', '~Ethics_ICLRReviewer1')
-        openreview_client.add_members_to_group('ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers', '~Ethics_ICLRReviewer1')
 
         # open the ethics review form
         now = datetime.datetime.now()

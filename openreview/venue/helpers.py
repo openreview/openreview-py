@@ -65,4 +65,12 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
         name=submission_name,
         unified_authors='authorids' not in submission_invitation.edit['note']['content']
     )
+
+    # the deployed ethics invitations keep the stage dates and readers, the domain only stores what
+    # the process functions need to find them, like the name used to deploy ethics reviewer assignments
+    if 'ethics_review_name' in domain.content:
+        venue.ethics_review_stage = stages.EthicsReviewStage(
+            name=domain.content['ethics_review_name']['value'],
+            release_to_chairs=domain.content.get('release_submissions_to_ethics_chairs', {}).get('value', False)
+        )
     return venue
