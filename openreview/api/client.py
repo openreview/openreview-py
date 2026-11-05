@@ -2996,7 +2996,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, invitation = None, after = None):
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, invitation = None, after = None, sort = None, with_count = None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -3010,14 +3010,24 @@ class OpenReviewClient(object):
         :type invitation: str, optional
         :param after: Message id to start getting the list of messages from
         :type after: str, optional
+        :param sort: Field to sort the messages by, for example "id". The server sorts by timestamp descending by default
+        :type sort: str, optional
+        :param with_count: If True and offset is not set, also returns the total number of matching messages
+        :type with_count: bool, optional
 
-        :return: Messages that match the passed parameters
-        :rtype: dict
+        :return: Messages that match the passed parameters, or a tuple of the messages and their count when with_count is True and offset is not set
+        :rtype: list[dict]
         """
 
-        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit, 'invitation': invitation, 'after': after }, headers = self.headers)
+        params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit, 'invitation': invitation, 'after': after, 'sort': sort, 'count': with_count }
+        response = self.session.get(self.messages_url, params = tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
-        return response.json()['messages']
+        messages = response.json()['messages']
+
+        if with_count and offset is None:
+            return messages, response.json()['count']
+
+        return messages
 
     def get_all_messages(self, to = None, subject = None, status = None, invitation = None):
         """
@@ -3036,16 +3046,17 @@ class OpenReviewClient(object):
         :rtype: list[dict]
         """
 
-        messages = []
-        after = None
+        params = {}
+        if to is not None:
+            params['to'] = to
+        if subject is not None:
+            params['subject'] = subject
+        if status is not None:
+            params['status'] = status
+        if invitation is not None:
+            params['invitation'] = invitation
 
-        # stop on an empty page rather than a short one, since the server can cap a page below the limit requested here
-        while True:
-            page = self.get_messages(to=to, subject=subject, status=status, invitation=invitation, limit=self.limit, after=after)
-            if not page:
-                return messages
-            messages.extend(page)
-            after = page[-1]['id']
+        return list(tools.efficient_iterget(self.get_messages, desc='Getting V2 Messages', **params))
 
     def get_process_logs(self, id = None, invitation = None, status = None, min_sdate = None):
         """Retrieve process function execution logs.
