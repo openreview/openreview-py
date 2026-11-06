@@ -48,9 +48,18 @@ def llm_mock():
                 self.respond(200, b'not an answer')
                 return
             usage = { 'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120 }
-            # answers as if 80 of the input tokens were read from the prompt cache
+            # answers as if some of the input tokens were read from the prompt cache
             if '[cached]' in question:
-                usage['prompt_tokens_details'] = { 'cached_tokens': 80 }
+                # the field LiteLLM reports for every provider
+                usage = { 'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120, 'prompt_tokens_details': { 'cached_tokens': 80 } }
+            if '[cache_read]' in question:
+                # the Anthropic field
+                usage = { 'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120, 'cache_read_input_tokens': 80 }
+            if '[fully_cached]' in question:
+                usage = { 'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120, 'prompt_tokens_details': { 'cached_tokens': 100 } }
+            if '[cached_outside]' in question:
+                # a provider that leaves the cached tokens out of prompt_tokens
+                usage = { 'prompt_tokens': 50, 'completion_tokens': 20, 'total_tokens': 70, 'prompt_tokens_details': { 'cached_tokens': 80 } }
             answer = json.dumps({
                 'id': 'chatcmpl-mock',
                 'object': 'chat.completion',
@@ -1670,6 +1679,18 @@ class TestCVPRConferenceWithTemplates():
         assert answer_edit.content['model']['value'] == 'gemini-2.5-flash'
         # the input tokens read from the prompt cache do not count towards the limit
         assert answer_edit.content['tokens']['value'] == 40
+
+        for question, tokens in [
+            # the Anthropic field of the cached input tokens
+            ('What is the main result? [cache_read]', 40),
+            # all the input read from the cache, only the output counts
+            ('How is the main result measured? [fully_cached]', 20),
+            # the cached tokens left out of prompt_tokens, the input does not go below zero
+            ('Is the main result significant? [cached_outside]', 20)
+        ]:
+            _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', question)
+            answer = get_answer(other_anon_group_id, message_edit)
+            assert openreview_client.get_note_edits(note_id=answer.id)[0].content['tokens']['value'] == tokens, question
         # the reviewer can not read the model of their chat
         assert (reviewer_client.get_invitation(f'{other_anon_group_id}/-/LLM_Interaction').content or {}).get('llm_model', {}).get('value') is None
 
