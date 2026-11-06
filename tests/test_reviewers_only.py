@@ -203,7 +203,22 @@ class TestReviewersOnly():
         venue_group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
 
-        assert venue_group.content['status_invitation_id']['value'] == f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status'
+        assert 'status_invitation_id' not in venue_group.content
+
+        # add status_invitation_id manually to mimic a venue deployed before it was removed, re-deployment should keep it
+        openreview_client.post_group_edit(
+            invitation='ABCD.cc/2025/Conference/-/Edit',
+            signatures=['ABCD.cc/2025/Conference'],
+            group=openreview.api.Group(
+                id='ABCD.cc/2025/Conference',
+                content={
+                    'status_invitation_id': { 'value': 'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status' }
+                }
+            )
+        )
+
+        venue_group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
+        assert venue_group.content['status_invitation_id']['value'] == 'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status'
         group_content = venue_group.content
 
         # workflow invitations declare which timeline stage they belong to so the UI can
@@ -269,6 +284,7 @@ class TestReviewersOnly():
         request_note = openreview_client.get_note(request.id)
         assert request_note.domain == 'openreview.net/Support'
         assert group_content == venue_group.content
+        assert venue_group.content['status_invitation_id']['value'] == 'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status'
 
         openreview_client.flush_members_cache('~ProgramChair_ABCD1')
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
@@ -1451,13 +1467,13 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status')
+        # assert the failure was printed to the process log instead of posted to the request form
+        logs = openreview_client.get_process_logs(id='ABCD.cc/2025/Conference/Program_Committee/-/Conflict-0-1')
+        assert any('Conflicts were not computed: no conflict policy was selected.' in '\n'.join(log.get('log', [])) for log in logs)
 
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
-        # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 1
-        assert notes[0].content['title']['value'] == 'Program Committee Conflicts Computation Failed'
+        assert len(notes) == 0
 
         # add conflict policy (this will already run since cdate is now in the past)
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
@@ -1503,13 +1519,13 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/Program_Committee/-/Affinity_Score-0-1', count=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', count=2)
+        # assert the failure was printed to the process log instead of posted to the request form
+        logs = openreview_client.get_process_logs(id='ABCD.cc/2025/Conference/Program_Committee/-/Affinity_Score-0-1')
+        assert any('Affinity scores were not computed: no affinity score model was selected.' in '\n'.join(log.get('log', [])) for log in logs)
 
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
-        # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 2
-        assert notes[-1].content['title']['value'] == 'Program Committee Affinity Scores Computation Failed'
+        assert len(notes) == 0
 
     def test_reviewers_deployment(self, openreview_client, helpers):
 
@@ -1588,22 +1604,17 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment-0-1', count=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', count=3)
+        # assert the failure was printed to the process log instead of posted to the request form
+        logs = openreview_client.get_process_logs(id='ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment-0-1')
+        assert any('Assignments were not deployed: no match name was selected.' in '\n'.join(log.get('log', [])) for log in logs)
 
-        # assert status comment posted to request form
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 3
-        assert notes[-1].content['title']['value'] == 'Program Committee Assignment Deployment Failed'
+        assert len(notes) == 0
 
-        last_note = notes[-1]
-        last_note_edit = openreview_client.get_note_edits(note_id=last_note.id, sort='tcdate:desc')[0]
-
-        helpers.await_queue_edit(openreview_client, edit_id=last_note_edit.id)
-        
+        # no failure emails were sent to the PCs for the conflicts, affinity scores or deployment failures
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Comment posted to your request for service: The ABCD Conference')
-        assert len(messages) == 6
-        assert 'Comment title: Program Committee Assignment Deployment Failed' in messages[-1]['content']['text']
+        assert len(messages) == 3
 
         # deploy with missing match name error email is not sent to support
         messages = openreview_client.get_messages(to='support@openreview.net', subject = 'Comment posted to a request for service: The ABCD Conference')
@@ -2242,13 +2253,13 @@ For more details, please check the following links:
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=2)
 
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', count=4)
+        # assert the failure was printed to the process log instead of posted to the request form
+        logs = openreview_client.get_process_logs(id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1')
+        assert any('Review emails were not sent: no review fields were selected.' in '\n'.join(log.get('log', [])) for log in logs)
 
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
-        # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 4
-        assert notes[-1].content['title']['value'] == 'Author Reviews Notification Failed'
+        assert len(notes) == 0
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Fields_to_Include',
@@ -2278,6 +2289,60 @@ To view this paper, please go to https://openreview.net/forum?id={submissions[0]
 Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
 '''
         assert messages[0]['content']['replyTo'] == 'abcd2025.programchairs@gmail.com'
+
+    def test_retrigger_reviews_notification_with_same_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # paper #1 already received a reviews notification earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
+
+        # retrigger the reviews notification
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=4)
+
+        # emails should not be sent again since the subject matches the subject of the email sent earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
+
+        # only messages sent with this invitation are returned when filtering by invitation
+        messages = openreview_client.get_all_messages(invitation='ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
+        subjects = [message['content']['subject'] for message in messages]
+        assert '[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available' in subjects
+        assert all(subject.startswith('[ABCD 2025] The reviews for your submission #') for subject in subjects)
+
+    def test_retrigger_reviews_notification_new_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # change the reviews email subject
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Templates',
+            content={
+                'email_subject': { 'value': '[ABCD 2025] Updated reviews for your submission #{submission_number}, titled "{submission_title}"' },
+                'email_content': { 'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the reviews for your submission #{submission_number}, "{submission_title}", to ABCD 2025 have been updated.\n\n{formatted_reviews}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}' },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=5)
+
+        # the email now gets sent since the subject no longer matches a previously sent email
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] Updated reviews for your submission #1, titled \"Paper title 1\"')
+        assert messages and len(messages) == 1
+        assert 'have been updated' in messages[0]['content']['text']
+        assert '**review**: This is a good paper' in messages[0]['content']['text']
+
+        # the email sent earlier with the previous subject is not sent again
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
 
     def test_rebuttal_stage(self, openreview_client, test_client, helpers):
 
@@ -2483,13 +2548,13 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         )
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Decision_Upload-0-1', count=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', count=5)
+        # assert the failure was printed to the process log instead of posted to the request form
+        logs = openreview_client.get_process_logs(id='ABCD.cc/2025/Conference/-/Decision_Upload-0-1')
+        assert any('Decisions were not posted: no decision CSV was uploaded.' in '\n'.join(log.get('log', [])) for log in logs)
 
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
-        # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 5
-        assert notes[-1].content['title']['value'] == 'Decision Upload Failed'
+        assert len(notes) == 0
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -2732,13 +2797,13 @@ ABCD 2025 Program Chairs'''
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification-0-1', count=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', count=6)
+        # assert the failure was printed to the process log instead of posted to the request form
+        logs = openreview_client.get_process_logs(id='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification-0-1')
+        assert any('Accept decision emails were not sent: no decision fields were selected.' in '\n'.join(log.get('log', [])) for log in logs)
 
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
-        # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert len(notes) == 6
-        assert notes[-1].content['title']['value'] == 'Author Accept Decision Notification Failed'
+        assert len(notes) == 0
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Author_Accept_Decision_Notification/Fields_to_Include',

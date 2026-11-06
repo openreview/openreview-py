@@ -801,10 +801,9 @@ For more details, please check the following links:
         )
         helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score-0-1', count=3)
 
-        # assert no *failure* status was posted to request form since PCs selected manual upload of affinity scores
-        venue = openreview_client.get_group('EFGH.cc/2025/Conference')
-        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status', forum=venue.content['request_form_id']['value'], sort='number:asc')
-        assert all(n.content.get('title', {}).get('value') != 'Action Editors Affinity Scores Computation Failed' for n in notes)
+        # assert the missing-model failure was not logged since PCs selected manual upload of affinity scores
+        logs = openreview_client.get_process_logs(id='EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score-0-1')
+        assert not any('Affinity scores were not computed' in '\n'.join(log.get('log', [])) for log in logs)
 
     def test_area_chairs_deployment(self, openreview_client, helpers):
 

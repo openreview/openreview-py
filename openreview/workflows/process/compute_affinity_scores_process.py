@@ -14,8 +14,6 @@ def process(client, invitation):
     committee_id = f'{venue_id}/{committee_name}'
     alternate_committee_id = invitation.get_content_value('alternate_committee_id')
     alternate_committee_name = alternate_committee_id.split('/')[-1] if alternate_committee_id else None
-    status_invitation_id = domain.get_content_value('status_invitation_id')
-    request_form_id = domain.get_content_value('request_form_id')
 
     support_user = domain.content['request_form_invitation']['value'].split('/Venue_Request')[0]
 
@@ -27,21 +25,8 @@ def process(client, invitation):
         return
 
     if not affinity_scores_model and not expertise_job_id:
-        prefix = venue_id + '/'
-        # post status to request form
-        client.post_note_edit(
-            invitation=status_invitation_id,
-            signatures=[venue_id],
-            readers=[venue_id, support_user],
-            note=openreview.api.Note(
-                forum=request_form_id,
-                signatures=[venue_id],
-                content={
-                    'title': { 'value': f'{committee_name.replace("_", " ").title()} Affinity Scores Computation Failed' },
-                    'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid affinity score model to use. Please re-schedule this process to run at a later time and then select a valid model.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?id={venue_id}), find and expand the "Create {invitation.id.split(prefix)[-1].replace("_", " ").replace("/-/", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Model" invitation, select a valid affinity score model to use and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid model. Once you have selected the model, click "Submit" and the process will automatically be scheduled to run shortly.'}
-                }
-            )
-        )
+        # log the failure so PCs can see it in the workflow timeline
+        print('Affinity scores were not computed: no affinity score model was selected. Select a model under "Model" to run this step, or select "I will upload my own affinity scores" to upload them yourself.')
         return
 
     venue = openreview.helpers.get_venue(client, venue_id, support_user)
@@ -81,7 +66,7 @@ def process(client, invitation):
     if 'error' not in matching_status:
 
         if len(matching_status['no_profiles']):
-            print(f'Affinity scores were successfully computed. The following {committee_name} do not have a profile:', ''.join(matching_status['no_profiles']))
+            print(f'Affinity scores were successfully computed. The following {committee_name} do not have a profile: {", ".join(matching_status["no_profiles"])}')
         else:
             print(f'Affinity scores were successfully computed for all {committee_name}')
     else:
