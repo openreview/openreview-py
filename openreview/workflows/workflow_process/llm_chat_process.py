@@ -19,6 +19,11 @@ def process(client, edit, invitation):
     tokens, the assistant stops calling the LLM in that chat. When llm_show_usage is set, each answer ends with the
     share of the limit used in the chat, so the committee member sees when they are about to reach it.
 
+    The API runs a process again when it is interrupted, e.g. when the worker restarts or the API returns an upstream
+    error. A run for a message that has its answer does nothing, the answer goes in the reply of the earlier run, and
+    a request that an earlier run sent without saving its answer is not sent again, because the gateway may have
+    charged it: the reply edit records the state of the request in gateway_request.
+
     This is the `process_script` of the super invitation. The process of the child invitations execs it with
     the `openreview`, `datetime`, `base64` and `requests` modules.
     '''
@@ -39,8 +44,7 @@ def process(client, edit, invitation):
     # never sent to the LLM: the author identities, the files, the author consent checkboxes and the venue bookkeeping fields
     EXCLUDED_FIELDS = ['authors', 'authorids', 'pdf', 'supplementary_material', 'email_sharing', 'data_release', 'venue', 'venueid']
 
-    domain = client.get_group(edit.domain)
-    venue_id = domain.id
+    venue_id = edit.domain
     assistant_id = f'{venue_id}/AI_Review_Assistant'
 
     # the replies posted by the assistant run this process too
@@ -72,20 +76,15 @@ def process(client, edit, invitation):
             return None
         return float(headers['x-litellm-response-cost-original']) - float(headers.get('x-litellm-response-cost-discount-amount') or 0) + float(headers.get('x-litellm-response-cost-margin-amount') or 0)
 
-    def update_reply(reply_edit_id, message, model=None, usage=None, cost=None):
-        reply_edit = client.get_note_edit(reply_edit_id)
+    def save_reply(reply_edit, message, content=None):
         reply_edit.note.content['message']['value'] = message
-        if usage:
-            # the invitation makes the model, the tokens and the cost readable by the venue only, the usage details
-            # are in the process logs
-            reply_edit.content = {
-                'tokens': { 'value': count_tokens(usage) }
-            }
-            if cost is not None:
-                reply_edit.content['cost'] = { 'value': cost }
-            # the chats created before the model was recorded do not have the field
-            if 'model' in invitation.edit.get('content', {}):
-                reply_edit.content['model'] = { 'value': model }
+        # the invitation makes these fields readable by the venue only, the usage details are in the process logs;
+        # the chats created before a field was added to the invitation do not have it
+        reply_edit.content = {
+            name: { 'value': value }
+            for name, value in (content or {}).items()
+            if value is not None and name in invitation.edit.get('content', {})
+        }
         # re-post the same edit so the reply note keeps its id
         reply_edit.note.id = None
         client.post_edit(reply_edit)
@@ -100,6 +99,8 @@ def process(client, edit, invitation):
         )
 
     def get_answer():
+        nonlocal gateway_request
+
         super_invitation = client.get_invitation(invitation.invitations[0])
         api_key = super_invitation.get_content_value('llm_api_key')
         base_url = super_invitation.get_content_value('llm_base_url')
@@ -231,6 +232,11 @@ def process(client, edit, invitation):
             'drop_params': True
         }
 
+        # saved before the request, so a run of this process after an interruption knows the gateway may have
+        # charged it
+        save_reply(reply_edit, THINKING_MESSAGE, { 'gateway_request': 'sent' })
+        gateway_request = 'sent'
+
         response = requests.post(
             f'{base_url.rstrip("/")}/chat/completions',
             headers={
@@ -241,6 +247,8 @@ def process(client, edit, invitation):
             timeout=REQUEST_TIMEOUT
         )
         if not response.ok:
+            # the gateway did not answer, a run after an interruption can send the request again
+            gateway_request = 'failed'
             raise openreview.OpenReviewException(f'LLM gateway error {response.status_code}: {response.text}')
 
         result = response.json()
@@ -269,21 +277,48 @@ def process(client, edit, invitation):
             )
         return answer, model, usage, cost
 
-    reply_edit = client.post_note_edit(
-        invitation=invitation.id,
-        signatures=[assistant_id],
-        note=openreview.api.Note(
-            replyto=edit.note.id,
-            content={
-                'message': { 'value': THINKING_MESSAGE }
-            }
-        )
-    )
+    # the reply of an earlier run of this process to the message, the API runs a process again when it is interrupted
+    replies = [note for note in client.get_notes(invitation=invitation.id, replyto=edit.note.id) if note.signatures[0] == assistant_id]
+    if replies and replies[0].content['message']['value'] not in (THINKING_MESSAGE, ERROR_MESSAGE):
+        print('the message is answered already, exiting...')
+        return
 
+    if replies:
+        # the answer goes in the same reply, so the message keeps one reply
+        reply_edit = client.get_note_edits(note_id=replies[0].id)[0]
+        if (reply_edit.content or {}).get('gateway_request', {}).get('value') == 'sent':
+            # the earlier run sent the request but did not save its answer, and the gateway may have charged it: it
+            # is not sent again, the committee member can ask again
+            print('the request of an earlier run was sent but its answer was not saved, exiting...')
+            save_reply(reply_edit, ERROR_MESSAGE, { 'gateway_request': 'sent' })
+            return
+    else:
+        reply_edit = client.get_note_edit(client.post_note_edit(
+            invitation=invitation.id,
+            signatures=[assistant_id],
+            note=openreview.api.Note(
+                replyto=edit.note.id,
+                content={
+                    'message': { 'value': THINKING_MESSAGE }
+                }
+            )
+        )['id'])
+
+    # the state of the request to the gateway in this run: not sent, sent or failed
+    gateway_request = None
     try:
         answer, model, usage, cost = get_answer()
     except Exception:
-        update_reply(reply_edit['id'], ERROR_MESSAGE)
+        save_reply(reply_edit, ERROR_MESSAGE, { 'gateway_request': gateway_request })
         raise
 
-    update_reply(reply_edit['id'], answer, model, usage, cost)
+    if usage:
+        save_reply(reply_edit, answer, {
+            'gateway_request': 'answered',
+            'model': model,
+            'tokens': count_tokens(usage),
+            'cost': cost
+        })
+    else:
+        # the limit and unavailable messages, without a request
+        save_reply(reply_edit, answer)

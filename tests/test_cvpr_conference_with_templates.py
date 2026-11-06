@@ -7,6 +7,7 @@ import threading
 import time
 import openreview
 import pytest
+import requests
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from selenium.webdriver.common.by import By
 
@@ -16,8 +17,17 @@ def llm_mock():
     # completions format, the LiteLLM unified output;
     # the API process runner reaches it on localhost because the services share the network
     received = []
+    # the questions whose first request failed
+    failed_questions = set()
 
     class Handler(BaseHTTPRequestHandler):
+        def respond(self, status, body):
+            self.send_response(status)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
             received.append({ 'path': self.path, 'authorization': self.headers.get('Authorization'), 'body': body })
@@ -27,6 +37,16 @@ def llm_mock():
             # keeps the question pending for a while
             if '[slow]' in question:
                 time.sleep(5)
+            # fails the first request of the question, the next ones are answered
+            if '[error]' in question and question not in failed_questions:
+                failed_questions.add(question)
+                self.respond(500, json.dumps({ 'error': { 'message': 'Internal Server Error' } }).encode('utf-8'))
+                return
+            # answers, so the request is charged, but the process cannot read the answer, as if it was interrupted
+            # before saving it
+            if '[lost]' in question:
+                self.respond(200, b'not an answer')
+                return
             usage = { 'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120 }
             # answers as if 80 of the input tokens were read from the prompt cache
             if '[cached]' in question:
@@ -837,6 +857,18 @@ class TestCVPRConferenceWithTemplates():
                                     },
                                     'readers': ['thecvf.com/CVPR/2027/Conference']
                                 },
+                                # sent before the request to the gateway, then answered or failed, so a run of the
+                                # process after an interruption does not send a request that may have been charged
+                                'gateway_request': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['sent', 'failed', 'answered'],
+                                            'optional': True
+                                        }
+                                    },
+                                    'readers': ['thecvf.com/CVPR/2027/Conference']
+                                },
                                 'tokens': {
                                     'value': {
                                         'param': {
@@ -1204,6 +1236,18 @@ class TestCVPRConferenceWithTemplates():
                                     },
                                     'readers': ['thecvf.com/CVPR/2027/Conference']
                                 },
+                                # sent before the request to the gateway, then answered or failed, so a run of the
+                                # process after an interruption does not send a request that may have been charged
+                                'gateway_request': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['sent', 'failed', 'answered'],
+                                            'optional': True
+                                        }
+                                    },
+                                    'readers': ['thecvf.com/CVPR/2027/Conference']
+                                },
                                 'tokens': {
                                     'value': {
                                         'param': {
@@ -1505,12 +1549,24 @@ class TestCVPRConferenceWithTemplates():
             )
             return committee_client, anon_group_id, message_edit
 
+        # the message has one reply of the assistant
+        def get_reply(anon_group_id, message_edit):
+            replies = [note for note in openreview_client.get_notes(invitation=f'{anon_group_id}/-/LLM_Interaction') if note.replyto == message_edit['note']['id']]
+            assert len(replies) == 1
+            assert replies[0].signatures == ['thecvf.com/CVPR/2027/Conference/AI_Review_Assistant']
+            return replies[0]
+
         def get_answer(anon_group_id, message_edit):
             helpers.await_queue_edit(openreview_client, edit_id=message_edit['id'])
-            answers = [note for note in openreview_client.get_notes(invitation=f'{anon_group_id}/-/LLM_Interaction') if note.replyto == message_edit['note']['id']]
-            assert len(answers) == 1
-            assert answers[0].signatures == ['thecvf.com/CVPR/2027/Conference/AI_Review_Assistant']
-            return answers[0]
+            return get_reply(anon_group_id, message_edit)
+
+        # runs the process of the message again, as the API does when a run is interrupted, e.g. when the worker
+        # restarts; the chats run the process_script of their super invitation the same way
+        def run_process_again(anon_group_id, message_edit):
+            chat_invitation = openreview_client.get_invitation(f'{anon_group_id}/-/LLM_Interaction')
+            funcs = { 'openreview': openreview, 'datetime': datetime, 'base64': base64, 'requests': requests }
+            exec(openreview_client.get_invitation(chat_invitation.invitations[0]).content['process_script']['value'], funcs)
+            funcs['process'](openreview_client, openreview_client.get_note_edit(message_edit['id']), chat_invitation)
 
         # the chats talk to the LLM mock during the test
         save_settings('Reviewers', llm_mock['url'])
@@ -1628,6 +1684,46 @@ class TestCVPRConferenceWithTemplates():
         helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction-0-0', count=2)
         assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')) == 26
         assert openreview_client.get_invitation(f'{other_anon_group_id}/-/LLM_Interaction').content['llm_model']['value'] == 'gemini-2.5-flash'
+
+        # a run of the process for a message that has its answer does nothing, the gateway is not called again
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'Which datasets are used?')
+        get_answer(anon_group_id, message_edit)
+        requests_count = len(llm_mock['requests'])
+        run_process_again(anon_group_id, message_edit)
+        assert len(llm_mock['requests']) == requests_count
+        get_reply(anon_group_id, message_edit)
+
+        # the gateway fails: the committee member gets the apology and the request is marked as failed, so a run
+        # after an interruption sends it again and answers in the same reply
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'Which baselines are compared? [error]')
+        helpers.await_queue_edit(openreview_client, edit_id=message_edit['id'], error=True)
+        reply = get_reply(anon_group_id, message_edit)
+        assert reply.content['message']['value'] == 'Sorry, I could not answer this message. Please try again later.'
+        assert openreview_client.get_note_edits(note_id=reply.id)[0].content['gateway_request']['value'] == 'failed'
+
+        requests_count = len(llm_mock['requests'])
+        run_process_again(anon_group_id, message_edit)
+        assert len(llm_mock['requests']) == requests_count + 1
+        answer = get_reply(anon_group_id, message_edit)
+        assert answer.id == reply.id
+        assert answer.content['message']['value'] == 'Answer from the LLM mock to: Which baselines are compared? [error]'
+        answer_edit = openreview_client.get_note_edits(note_id=answer.id)[0]
+        assert answer_edit.content['gateway_request']['value'] == 'answered'
+        assert answer_edit.content['tokens']['value'] == 120
+
+        # the gateway answers, so it charges the request, but the run fails before saving the answer: a run after
+        # the interruption does not send the request again, the committee member can ask again
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'Which hyperparameters matter most? [lost]')
+        helpers.await_queue_edit(openreview_client, edit_id=message_edit['id'], error=True)
+        requests_count = len(llm_mock['requests'])
+        run_process_again(anon_group_id, message_edit)
+        assert len(llm_mock['requests']) == requests_count
+        reply = get_reply(anon_group_id, message_edit)
+        assert reply.content['message']['value'] == 'Sorry, I could not answer this message. Please try again later.'
+        # the request stays marked as sent without tokens, so the venue can find the requests with an unknown usage
+        reply_edit = openreview_client.get_note_edits(note_id=reply.id)[0]
+        assert reply_edit.content['gateway_request']['value'] == 'sent'
+        assert reply_edit.content.get('tokens', {}).get('value') is None
 
         # the area chair gets the reviews of the forum too
         _, ac_anon_group_id, message_edit = ask('ac1@cvpr.cc', '~AC_CVPROne1', 2, 'Area_Chair_', 'Which critique is best supported by the paper?')
