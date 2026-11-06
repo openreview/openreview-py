@@ -711,6 +711,10 @@ class TestCVPRConferenceWithTemplates():
                     'llm_base_url': {
                         'value': 'https://litellm.openreview.net'
                     },
+                    # the chats need a model when they are created, before the program chairs save the settings
+                    'llm_model': {
+                        'value': 'claude-sonnet-4-6'
+                    },
                     'llm_token_limit': {
                         'value': 1000000
                     },
@@ -741,6 +745,22 @@ class TestCVPRConferenceWithTemplates():
                             'value': {
                                 'param': {
                                     'type': 'string'
+                                }
+                            }
+                        },
+                        # copied from the super invitation by the date process, the chat keeps its own copy
+                        'llm_model': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        },
+                        'llm_token_limit': {
+                            'value': {
+                                'param': {
+                                    'type': 'integer',
+                                    'minimum': 0
                                 }
                             }
                         }
@@ -775,6 +795,18 @@ class TestCVPRConferenceWithTemplates():
                         ],
                         'writers': ['thecvf.com/CVPR/2027/Conference'],
                         'signatures': ['thecvf.com/CVPR/2027/Conference'],
+                        # the model and the token limit of this chat, the workflow chairs can change them for this
+                        # chat only; readable by the venue only, the committee member can read the chat invitation
+                        'content': {
+                            'llm_model': {
+                                'value': '${4/content/llm_model/value}',
+                                'readers': ['thecvf.com/CVPR/2027/Conference']
+                            },
+                            'llm_token_limit': {
+                                'value': '${4/content/llm_token_limit/value}',
+                                'readers': ['thecvf.com/CVPR/2027/Conference']
+                            }
+                        },
                         'edit': {
                             'signatures': {
                                 'param': {
@@ -790,8 +822,17 @@ class TestCVPRConferenceWithTemplates():
                                 '${4/content/anonGroupId/value}'
                             ],
                             'writers': ['thecvf.com/CVPR/2027/Conference'],
-                            # the LLM usage of each answer, readable by the venue only
+                            # the model and the LLM usage of each answer, readable by the venue only
                             'content': {
+                                'model': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'optional': True
+                                        }
+                                    },
+                                    'readers': ['thecvf.com/CVPR/2027/Conference']
+                                },
                                 'tokens': {
                                     'value': {
                                         'param': {
@@ -853,6 +894,7 @@ class TestCVPRConferenceWithTemplates():
         assert default_prompt.startswith('You are an AI assistant that helps a reviewer of CVPR 2027')
         assert 'llm_api_key' not in llm_super_invitation.content
         assert llm_super_invitation.content['llm_base_url']['value'] == 'https://litellm.openreview.net'
+        assert llm_super_invitation.content['llm_model']['value'] == 'claude-sonnet-4-6'
         assert llm_super_invitation.content['llm_token_limit']['value'] == 1000000
         assert llm_super_invitation.content['llm_show_usage']['value'] == False
         # the reviewers do not get the forum replies
@@ -900,7 +942,11 @@ class TestCVPRConferenceWithTemplates():
                 chat_invitation = openreview_client.get_invitation(f'{anon_group.id}/-/LLM_Interaction')
                 assert chat_invitation.edit['note']['forum'] == submission.id
                 assert chat_invitation.edit['note']['content']['message']['value']['param']['markdown'] == True
-                # the tokens and the cost stored in the edit of each answer are readable by the venue only
+                # each chat has its own copy of the model and the token limit, readable by the venue only
+                assert chat_invitation.content['llm_model'] == { 'value': 'claude-sonnet-4-6', 'readers': ['thecvf.com/CVPR/2027/Conference'] }
+                assert chat_invitation.content['llm_token_limit'] == { 'value': 1000000, 'readers': ['thecvf.com/CVPR/2027/Conference'] }
+                # the model, the tokens and the cost stored in the edit of each answer are readable by the venue only
+                assert chat_invitation.edit['content']['model']['readers'] == ['thecvf.com/CVPR/2027/Conference']
                 assert chat_invitation.edit['content']['tokens']['readers'] == ['thecvf.com/CVPR/2027/Conference']
                 assert chat_invitation.edit['content']['cost']['readers'] == ['thecvf.com/CVPR/2027/Conference']
 
@@ -956,6 +1002,12 @@ class TestCVPRConferenceWithTemplates():
         # reviewers can not read the settings
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@cvpr.cc', password=helpers.strong_password)
         assert not openreview.tools.get_invitation(reviewer_client, 'thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
+
+        # nor the model and the token limit of their chats
+        reviewer_anon_group_id = reviewer_client.get_groups(prefix='thecvf.com/CVPR/2027/Conference/Submission2/Reviewer_', signatory='~Reviewer_CVPROne1')[0].id
+        reviewer_chat_invitation = reviewer_client.get_invitation(f'{reviewer_anon_group_id}/-/LLM_Interaction')
+        assert (reviewer_chat_invitation.content or {}).get('llm_model', {}).get('value') is None
+        assert (reviewer_chat_invitation.content or {}).get('llm_token_limit', {}).get('value') is None
 
         # the program chairs edit the process script of the chats through the process invitation, the chats
         # read it from the super invitation every time they run
@@ -1022,6 +1074,10 @@ class TestCVPRConferenceWithTemplates():
                     'llm_base_url': {
                         'value': 'https://litellm.openreview.net'
                     },
+                    # the chats need a model when they are created, before the program chairs save the settings
+                    'llm_model': {
+                        'value': 'claude-sonnet-4-6'
+                    },
                     'llm_token_limit': {
                         'value': 1000000
                     },
@@ -1058,6 +1114,22 @@ class TestCVPRConferenceWithTemplates():
                                     'type': 'string'
                                 }
                             }
+                        },
+                        # copied from the super invitation by the date process, the chat keeps its own copy
+                        'llm_model': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        },
+                        'llm_token_limit': {
+                            'value': {
+                                'param': {
+                                    'type': 'integer',
+                                    'minimum': 0
+                                }
+                            }
                         }
                     },
                     'invitation': {
@@ -1090,6 +1162,18 @@ class TestCVPRConferenceWithTemplates():
                         ],
                         'writers': ['thecvf.com/CVPR/2027/Conference'],
                         'signatures': ['thecvf.com/CVPR/2027/Conference'],
+                        # the model and the token limit of this chat, the workflow chairs can change them for this
+                        # chat only; readable by the venue only, the committee member can read the chat invitation
+                        'content': {
+                            'llm_model': {
+                                'value': '${4/content/llm_model/value}',
+                                'readers': ['thecvf.com/CVPR/2027/Conference']
+                            },
+                            'llm_token_limit': {
+                                'value': '${4/content/llm_token_limit/value}',
+                                'readers': ['thecvf.com/CVPR/2027/Conference']
+                            }
+                        },
                         'edit': {
                             'signatures': {
                                 'param': {
@@ -1105,8 +1189,17 @@ class TestCVPRConferenceWithTemplates():
                                 '${4/content/anonGroupId/value}'
                             ],
                             'writers': ['thecvf.com/CVPR/2027/Conference'],
-                            # the LLM usage of each answer, readable by the venue only
+                            # the model and the LLM usage of each answer, readable by the venue only
                             'content': {
+                                'model': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'optional': True
+                                        }
+                                    },
+                                    'readers': ['thecvf.com/CVPR/2027/Conference']
+                                },
                                 'tokens': {
                                     'value': {
                                         'param': {
@@ -1168,6 +1261,7 @@ class TestCVPRConferenceWithTemplates():
         assert ac_default_prompt.startswith('You are an AI assistant that helps an area chair of CVPR 2027')
         assert ac_llm_super_invitation.content['llm_reply_invitations']['value'] == ['Official_Review', 'Author_Rebuttal', 'Official_Comment']
         assert ac_llm_super_invitation.content['llm_base_url']['value'] == 'https://litellm.openreview.net'
+        assert ac_llm_super_invitation.content['llm_model']['value'] == 'claude-sonnet-4-6'
         assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')) == 0
 
         edit_invitations_builder.set_edit_dates_one_level_invitation('thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
@@ -1198,6 +1292,8 @@ class TestCVPRConferenceWithTemplates():
                     'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
                     anon_group.id
                 ]
+                assert chat_invitation.content['llm_model'] == { 'value': 'claude-sonnet-4-6', 'readers': ['thecvf.com/CVPR/2027/Conference'] }
+                assert chat_invitation.content['llm_token_limit'] == { 'value': 1000000, 'readers': ['thecvf.com/CVPR/2027/Conference'] }
 
         assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')) == 8
 
@@ -1352,14 +1448,14 @@ class TestCVPRConferenceWithTemplates():
 
         pc_client = openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
 
-        def save_settings(committee_name, base_url, token_limit, show_usage=False):
+        def save_settings(committee_name, base_url, show_usage=False):
             settings = openreview_client.get_invitation(f'thecvf.com/CVPR/2027/Conference/{committee_name}/-/LLM_Interaction').content
             content = {
                 'llm_api_key': { 'value': settings['llm_api_key']['value'] },
                 'llm_base_url': { 'value': base_url },
                 'llm_model': { 'value': settings['llm_model']['value'] },
                 'llm_prompt': { 'value': settings['llm_prompt']['value'] },
-                'llm_token_limit': { 'value': token_limit },
+                'llm_token_limit': { 'value': settings['llm_token_limit']['value'] },
                 'llm_show_usage': { 'value': show_usage }
             }
             # only the area chair chats have it
@@ -1368,6 +1464,25 @@ class TestCVPRConferenceWithTemplates():
             pc_client.post_invitation_edit(
                 invitations=f'thecvf.com/CVPR/2027/Conference/{committee_name}/-/LLM_Interaction/Settings',
                 content=content
+            )
+
+        # the workflow chairs change the model or the token limit of one chat, e.g. to compare the answers of two
+        # models or to extend the limit of one committee member; the value stays readable by the venue only
+        def save_chat_setting(anon_group_id, field_name, value):
+            openreview_client.post_invitation_edit(
+                invitations='thecvf.com/CVPR/2027/Conference/-/Edit',
+                readers=['thecvf.com/CVPR/2027/Conference'],
+                writers=['thecvf.com/CVPR/2027/Conference'],
+                signatures=['thecvf.com/CVPR/2027/Conference'],
+                invitation=openreview.api.Invitation(
+                    id=f'{anon_group_id}/-/LLM_Interaction',
+                    content={
+                        field_name: {
+                            'value': value,
+                            'readers': ['thecvf.com/CVPR/2027/Conference']
+                        }
+                    }
+                )
             )
 
         def ask(email, profile_id, number, anon_name, question):
@@ -1394,8 +1509,8 @@ class TestCVPRConferenceWithTemplates():
             return answers[0]
 
         # the chats talk to the LLM mock during the test
-        save_settings('Reviewers', llm_mock['url'], 1000000)
-        save_settings('Area_Chairs', llm_mock['url'], 1000000)
+        save_settings('Reviewers', llm_mock['url'])
+        save_settings('Area_Chairs', llm_mock['url'])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/openreview.pdf'), 'rb') as pdf_file:
             pdf_bytes = pdf_file.read()
@@ -1425,8 +1540,9 @@ class TestCVPRConferenceWithTemplates():
         assert 'Kai' not in metadata_block['text']
         assert question_block['text'] == 'What are the main contributions of this paper?'
 
-        # the edit of the answer stores the tokens and the cost, readable by the venue only
+        # the edit of the answer stores the model, the tokens and the cost, readable by the venue only
         answer_edit = openreview_client.get_note_edits(note_id=answer.id)[0]
+        assert answer_edit.content['model']['value'] == 'claude-sonnet-4-6'
         assert answer_edit.content['tokens']['value'] == 120
         # the cost in USD reported by the gateway headers
         assert answer_edit.content['cost']['value'] == 0.0021
@@ -1443,8 +1559,8 @@ class TestCVPRConferenceWithTemplates():
         # the chat history goes with the new message
         assert [message['role'] for message in llm_mock['requests'][-1]['body']['messages']] == ['system', 'user', 'assistant', 'user']
 
-        # the chat reaches its token limit after the two answers
-        save_settings('Reviewers', llm_mock['url'], 240)
+        # the workflow chairs lower the token limit of the chat, which reaches it after the two answers
+        save_chat_setting(anon_group_id, 'llm_token_limit', 240)
         requests_count = len(llm_mock['requests'])
         _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'And the limitations?')
         answer = get_answer(anon_group_id, message_edit)
@@ -1456,8 +1572,15 @@ class TestCVPRConferenceWithTemplates():
         answer = get_answer(other_anon_group_id, message_edit)
         assert answer.content['message']['value'] == 'Answer from the LLM mock to: What are the main contributions of this paper?'
 
+        # the workflow chairs extend the limit of the first chat, the reviewer can ask again
+        save_chat_setting(anon_group_id, 'llm_token_limit', 1000000)
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'And the limitations?')
+        answer = get_answer(anon_group_id, message_edit)
+        assert answer.content['message']['value'] == 'Answer from the LLM mock to: And the limitations?'
+
         # the program chairs show the usage to the reviewers, it is added at the end of the answers
-        save_settings('Reviewers', llm_mock['url'], 480, show_usage=True)
+        save_chat_setting(other_anon_group_id, 'llm_token_limit', 480)
+        save_settings('Reviewers', llm_mock['url'], show_usage=True)
         _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', 'And the limitations?')
         answer = get_answer(other_anon_group_id, message_edit)
         assert answer.content['message']['value'] == 'Answer from the LLM mock to: And the limitations?\n\n---\n\n_You have used 50% of the AI assistant usage limit for this submission (240 of 480 tokens)._'
@@ -1472,7 +1595,32 @@ class TestCVPRConferenceWithTemplates():
             'Answer from the LLM mock to: And the limitations?',
             'And the experiments?'
         ]
-        save_settings('Reviewers', llm_mock['url'], 1000000)
+        save_chat_setting(other_anon_group_id, 'llm_token_limit', 1000000)
+        save_settings('Reviewers', llm_mock['url'])
+
+        # the workflow chairs give another model to one chat, e.g. to compare the answers of two models
+        save_chat_setting(other_anon_group_id, 'llm_model', 'gemini-2.5-flash')
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', 'What are the main weaknesses?')
+        answer = get_answer(other_anon_group_id, message_edit)
+        request = llm_mock['requests'][-1]
+        assert request['body']['model'] == 'gemini-2.5-flash'
+        # the context is marked for caching on the Claude models only
+        assert all('cache_control' not in block for block in request['body']['messages'][1]['content'])
+        assert openreview_client.get_note_edits(note_id=answer.id)[0].content['model']['value'] == 'gemini-2.5-flash'
+        # the reviewer can not read the model of their chat
+        assert (reviewer_client.get_invitation(f'{other_anon_group_id}/-/LLM_Interaction').content or {}).get('llm_model', {}).get('value') is None
+
+        # activating the chats again, e.g. for the reviewers assigned later, creates the missing chats only, so the
+        # existing chats keep their model and token limit
+        pc_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(seconds=5)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction-0-0', count=2)
+        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')) == 26
+        assert openreview_client.get_invitation(f'{other_anon_group_id}/-/LLM_Interaction').content['llm_model']['value'] == 'gemini-2.5-flash'
 
         # the area chair gets the reviews of the forum too
         _, ac_anon_group_id, message_edit = ask('ac1@cvpr.cc', '~AC_CVPROne1', 2, 'Area_Chair_', 'Which critique is best supported by the paper?')
@@ -1480,6 +1628,8 @@ class TestCVPRConferenceWithTemplates():
         assert answer.content['message']['value'] == 'Answer from the LLM mock to: Which critique is best supported by the paper?'
 
         request = llm_mock['requests'][-1]
+        # the other chats keep the model they were created with
+        assert request['body']['model'] == 'claude-sonnet-4-6'
         assert request['body']['messages'][0]['content'].startswith('You are an AI assistant that helps an area chair of CVPR 2027')
         pdf_block, metadata_block, replies_block, question_block = request['body']['messages'][1]['content']
         assert base64.b64decode(pdf_block['file']['file_data'].removeprefix('data:application/pdf;base64,')) == pdf_bytes
@@ -1492,8 +1642,8 @@ class TestCVPRConferenceWithTemplates():
         assert question_block['text'] == 'Which critique is best supported by the paper?'
 
         # point the chats back to the LLM gateway
-        save_settings('Reviewers', 'https://litellm.openreview.net', 1000000)
-        save_settings('Area_Chairs', 'https://litellm.openreview.net', 1000000)
+        save_settings('Reviewers', 'https://litellm.openreview.net')
+        save_settings('Area_Chairs', 'https://litellm.openreview.net')
 
     def test_llm_chat_tab_visible(self, openreview_client, helpers, selenium, request_page):
 

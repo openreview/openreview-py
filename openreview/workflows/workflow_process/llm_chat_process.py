@@ -10,10 +10,11 @@ def process(client, edit, invitation):
 
     The settings are read from the content of the committee super invitation, e.g. `<venue>/Reviewers/-/LLM_Interaction`,
     edited by the program chairs with its `/Settings` invitation: llm_api_key, llm_base_url and
-    llm_prompt (required, the gateway URL and the default prompt are set when the super invitation is created)
-    and llm_model.
+    llm_prompt (required, the gateway URL and the default prompt are set when the super invitation is created).
+    llm_model and llm_token_limit are read from the content of the chat, which gets a copy of them when it is
+    created and can be changed for that chat only; the chats created without a copy use the super invitation's.
 
-    The edit of each answer stores the tokens used and the cost in USD in its content, readable by the venue only;
+    The edit of each answer stores the model, the tokens used and the cost in USD in its content, readable by the venue only;
     the usage details reported by the gateway are printed in the process logs. Once the answers in a chat, one committee member on one submission, add up to llm_token_limit
     tokens, the assistant stops calling the LLM in that chat. When llm_show_usage is set, each answer ends with the
     share of the limit used in the chat, so the committee member sees when they are about to reach it.
@@ -67,17 +68,20 @@ def process(client, edit, invitation):
             return None
         return float(headers['x-litellm-response-cost-original']) - float(headers.get('x-litellm-response-cost-discount-amount') or 0) + float(headers.get('x-litellm-response-cost-margin-amount') or 0)
 
-    def update_reply(reply_edit_id, message, usage=None, cost=None):
+    def update_reply(reply_edit_id, message, model=None, usage=None, cost=None):
         reply_edit = client.get_note_edit(reply_edit_id)
         reply_edit.note.content['message']['value'] = message
         if usage:
-            # the invitation makes the tokens and the cost readable by the venue only, the usage details are in the
-            # process logs
+            # the invitation makes the model, the tokens and the cost readable by the venue only, the usage details
+            # are in the process logs
             reply_edit.content = {
                 'tokens': { 'value': count_tokens(usage) }
             }
             if cost is not None:
                 reply_edit.content['cost'] = { 'value': cost }
+            # the chats created before the model was recorded do not have the field
+            if 'model' in invitation.edit.get('content', {}):
+                reply_edit.content['model'] = { 'value': model }
         # re-post the same edit so the reply note keeps its id
         reply_edit.note.id = None
         client.post_edit(reply_edit)
@@ -95,19 +99,24 @@ def process(client, edit, invitation):
         super_invitation = client.get_invitation(invitation.invitations[0])
         api_key = super_invitation.get_content_value('llm_api_key')
         base_url = super_invitation.get_content_value('llm_base_url')
-        model = super_invitation.get_content_value('llm_model', 'claude-sonnet-4-6')
         prompt = super_invitation.get_content_value('llm_prompt')
-        token_limit = super_invitation.get_content_value('llm_token_limit')
         show_usage = super_invitation.get_content_value('llm_show_usage', False)
         if not api_key or not base_url or not prompt:
             raise openreview.OpenReviewException('The LLM key, URL or prompt is missing, set them with the LLM_Interaction/Settings invitation')
+
+        # the chat's own model and token limit, copied from the super invitation when the chat was created
+        model = invitation.get_content_value('llm_model') or super_invitation.get_content_value('llm_model', 'claude-sonnet-4-6')
+        token_limit = invitation.get_content_value('llm_token_limit')
+        if token_limit is None:
+            token_limit = super_invitation.get_content_value('llm_token_limit')
+        print(f'model of the chat: {model}')
 
         used_tokens = 0
         if token_limit is not None:
             used_tokens = get_used_tokens()
             print(f'tokens used in the chat: {used_tokens} of {token_limit}')
             if used_tokens >= token_limit:
-                return LIMIT_MESSAGE, None, None
+                return LIMIT_MESSAGE, None, None, None
 
         # the context is read as the committee member: impersonating the anonymous group of the chat, the API only
         # returns the notes and fields the member can read; the venue client keeps posting the answer
@@ -119,7 +128,7 @@ def process(client, edit, invitation):
         except openreview.OpenReviewException as e:
             # e.g. the chats were activated before the submissions were released to the committee
             print('The committee member can not read the submission:', e)
-            return UNAVAILABLE_MESSAGE, None, None
+            return UNAVAILABLE_MESSAGE, None, None, None
 
         context = []
 
@@ -254,7 +263,7 @@ def process(client, edit, invitation):
                 used=used_tokens,
                 limit=token_limit
             )
-        return answer, usage, cost
+        return answer, model, usage, cost
 
     reply_edit = client.post_note_edit(
         invitation=invitation.id,
@@ -268,9 +277,9 @@ def process(client, edit, invitation):
     )
 
     try:
-        answer, usage, cost = get_answer()
+        answer, model, usage, cost = get_answer()
     except Exception:
         update_reply(reply_edit['id'], ERROR_MESSAGE)
         raise
 
-    update_reply(reply_edit['id'], answer, usage, cost)
+    update_reply(reply_edit['id'], answer, model, usage, cost)

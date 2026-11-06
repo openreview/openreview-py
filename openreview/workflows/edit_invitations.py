@@ -2133,7 +2133,7 @@ class EditInvitationsBuilder(object):
                     },
                     'llm_model': {
                         'order': 3,
-                        'description': 'Model that answers the reviewer messages.',
+                        'description': 'Model that answers the messages. Each chat is created with this model, changing it does not change the existing chats.',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -2156,7 +2156,7 @@ class EditInvitationsBuilder(object):
                     },
                     'llm_token_limit': {
                         'order': 5,
-                        'description': 'Maximum number of tokens the assistant can use in each chat, one committee member on one submission.',
+                        'description': 'Maximum number of tokens the assistant can use in each chat, one committee member on one submission. Each chat is created with this limit, changing it does not change the existing chats.',
                         'value': {
                             'param': {
                                 'type': 'integer',

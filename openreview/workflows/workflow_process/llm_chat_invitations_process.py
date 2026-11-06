@@ -20,12 +20,22 @@ def process(client, invitation):
     # of the committee members (only get_group replaces them with the profile ids and moves them to anon_members)
     committee_groups = { group.id: group for group in client.get_all_groups(invitation=f'{committee_id}/-/{submission_name}_Group', domain=venue_id) }
 
+    # activating the chats again, e.g. for the members assigned later, creates the missing chats only, so the
+    # existing ones keep the model and the token limit they were given
+    existing_chat_ids = { chat.id for chat in client.get_all_invitations(invitation=invitation.id, domain=venue_id) }
+
+    # each chat gets its own copy of the model and the token limit, which can then be changed for that chat only,
+    # e.g. to compare the answers of two models or to extend the limit of one committee member
+    model = invitation.get_content_value('llm_model')
+    token_limit = invitation.get_content_value('llm_token_limit')
+
     def create_chat_invitations(submission):
         paper_group_id = f'{venue_id}/{submission_name}{submission.number}'
         committee_group = committee_groups.get(f'{paper_group_id}/{committee_name}')
         anon_group_ids = [member for member in committee_group.members if member.startswith(f'{paper_group_id}/')] if committee_group else []
+        new_anon_group_ids = [anon_group_id for anon_group_id in anon_group_ids if f'{anon_group_id}/-/LLM_Interaction' not in existing_chat_ids]
 
-        for anon_group_id in anon_group_ids:
+        for anon_group_id in new_anon_group_ids:
             client.post_invitation_edit(
                 invitations=invitation.id,
                 readers=[venue_id],
@@ -34,12 +44,14 @@ def process(client, invitation):
                 content={
                     'noteId': { 'value': submission.id },
                     'noteNumber': { 'value': submission.number },
-                    'anonGroupId': { 'value': anon_group_id }
+                    'anonGroupId': { 'value': anon_group_id },
+                    'llm_model': { 'value': model },
+                    'llm_token_limit': { 'value': token_limit }
                 }
             )
 
-        return len(anon_group_ids)
+        return len(new_anon_group_ids)
 
     created = openreview.tools.concurrent_requests(create_chat_invitations, submissions, desc='llm_chat_invitations', max_workers=16, retries=1)
 
-    print(f'{sum(created)} chat invitations created')
+    print(f'{sum(created)} chat invitations created, {len(existing_chat_ids)} existed already')
