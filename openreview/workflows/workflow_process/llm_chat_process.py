@@ -1,0 +1,332 @@
+def process(client, edit, invitation):
+    '''Answers a message posted to a chat invitation, e.g. `<venue>/Submission<N>/Reviewer_<id>/-/LLM_Interaction`.
+
+    Sends the prompt, the submission PDF, the submission metadata and the chat history to the LLM gateway and posts
+    the answer as a reply signed by `<venue>/AI_Review_Assistant`. The request uses the LiteLLM unified input, the
+    OpenAI chat completions format, so the same request works for the Claude, Gemini and OpenAI models of the gateway. When the super invitation lists reply invitation
+    names in llm_reply_invitations, e.g. the reviews, rebuttals and comments for the area chairs, the forum replies
+    of those invitations are sent too. The context is read impersonating the anonymous group of the chat, so it
+    only has what the committee member can read; this needs an API that lets process functions impersonate.
+
+    The settings are read from the content of the committee super invitation, e.g. `<venue>/Reviewers/-/LLM_Interaction`,
+    edited by the program chairs with its `/Settings` invitation: llm_api_key, llm_base_url and
+    llm_prompt (required, the gateway URL and the default prompt are set when the super invitation is created).
+    llm_model and llm_token_limit are read from the content of the chat, which gets a copy of them when it is
+    created and can be changed for that chat only; the chats created without a copy use the super invitation's.
+
+    The edit of each answer stores the model, the tokens used and the cost in USD in its content, readable by the venue only;
+    the usage details reported by the gateway are printed in the process logs. Once the answers in a chat, one committee member on one submission, add up to llm_token_limit
+    tokens, the assistant stops calling the LLM in that chat. When llm_show_usage is set, each answer ends with the
+    share of the limit used in the chat, so the committee member sees when they are about to reach it.
+
+    The API runs a process again when it is interrupted, e.g. when the worker restarts or the API returns an upstream
+    error. A run for a message that has its answer does nothing, the answer goes in the reply of the earlier run, and
+    a request that an earlier run sent without saving its answer is not sent again, because the gateway may have
+    charged it: the reply edit records the state of the request in gateway_request.
+
+    This is the `process_script` of the super invitation. The process of the child invitations execs it with
+    the `openreview`, `datetime`, `base64` and `requests` modules.
+    '''
+
+    MAX_TOKENS = 16000
+    REQUEST_TIMEOUT = 600
+    # the PDF is sent base64 encoded and the request must stay under the 32MB request limit
+    MAX_PDF_BYTES = 20 * 1024 * 1024
+
+    THINKING_MESSAGE = 'Thinking...'
+    ERROR_MESSAGE = 'Sorry, I could not answer this message. Please try again later.'
+    LIMIT_MESSAGE = 'You have reached the usage limit of the AI assistant for this submission. Please contact the program chairs if you need to continue.'
+    UNAVAILABLE_MESSAGE = 'The submission is not available to you yet, so the AI assistant cannot answer questions about it.'
+    # added at the end of the answers when llm_show_usage is set, and removed from the chat history sent to the LLM
+    USAGE_PREFIX = '\n\n---\n\n_You have used '
+    USAGE_FOOTER = USAGE_PREFIX + '{percent} of the AI assistant usage limit for this submission ({used:,} of {limit:,} tokens)._'
+
+    # never sent to the LLM: the author identities, the files, the author consent checkboxes and the venue bookkeeping fields
+    EXCLUDED_FIELDS = ['authors', 'authorids', 'pdf', 'supplementary_material', 'email_sharing', 'data_release', 'venue', 'venueid']
+
+    venue_id = edit.domain
+    assistant_id = f'{venue_id}/AI_Review_Assistant'
+
+    # the replies posted by the assistant run this process too
+    if edit.signatures[0] in [venue_id, assistant_id]:
+        return
+
+    if edit.note.ddate:
+        return
+
+    # answer new messages only, not the edits of a message
+    message_edits = client.get_note_edits(note_id=edit.note.id, sort='tcdate:asc')
+    if message_edits and message_edits[0].id != edit.id:
+        print('not the first edit of the message, exiting...')
+        return
+
+    def count_tokens(usage):
+        # the input tokens read from the prompt cache are not counted: every message sends the PDF and the metadata
+        # again, so counting them would use up the limit a little more with each message; the input tokens written
+        # to the cache, the rest of the input and the output tokens are counted
+        cached_tokens = (usage.get('prompt_tokens_details') or {}).get('cached_tokens') or usage.get('cache_read_input_tokens') or 0
+        # never below zero, in case a provider leaves the cached tokens out of prompt_tokens
+        return max(0, (usage.get('prompt_tokens') or 0) - cached_tokens) + (usage.get('completion_tokens') or 0)
+
+    def get_cost(headers):
+        # the cost of the call in USD reported by the gateway, after its discount and margin
+        if headers.get('x-litellm-response-cost') is not None:
+            return float(headers['x-litellm-response-cost'])
+        if headers.get('x-litellm-response-cost-original') is None:
+            return None
+        return float(headers['x-litellm-response-cost-original']) - float(headers.get('x-litellm-response-cost-discount-amount') or 0) + float(headers.get('x-litellm-response-cost-margin-amount') or 0)
+
+    def save_reply(reply_edit, message, content=None):
+        reply_edit.note.content['message']['value'] = message
+        # the invitation makes these fields readable by the venue only, the usage details are in the process logs;
+        # the chats created before a field was added to the invitation do not have it
+        reply_edit.content = {
+            name: { 'value': value }
+            for name, value in (content or {}).items()
+            if value is not None and name in invitation.edit.get('content', {})
+        }
+        # re-post the same edit so the reply note keeps its id
+        reply_edit.note.id = None
+        client.post_edit(reply_edit)
+
+    def get_used_tokens():
+        # the tokens of the answers in this chat, the committee member's chat about the submission; the edits
+        # without usage, like the placeholder, have the content fields without a value
+        return sum(
+            (chat_edit.content or {}).get('tokens', {}).get('value') or 0
+            for chat_edit in client.get_note_edits(invitation=invitation.id)
+            if chat_edit.signatures[0] == assistant_id
+        )
+
+    def get_answer():
+        nonlocal gateway_request
+
+        super_invitation = client.get_invitation(invitation.invitations[0])
+        api_key = super_invitation.get_content_value('llm_api_key')
+        base_url = super_invitation.get_content_value('llm_base_url')
+        prompt = super_invitation.get_content_value('llm_prompt')
+        show_usage = super_invitation.get_content_value('llm_show_usage', False)
+        if not api_key or not base_url or not prompt:
+            raise openreview.OpenReviewException('The LLM key, URL or prompt is missing, set them with the LLM_Interaction/Settings invitation')
+
+        # the chat's own model and token limit, copied from the super invitation when the chat was created
+        model = invitation.get_content_value('llm_model') or super_invitation.get_content_value('llm_model', 'claude-sonnet-4-6')
+        token_limit = invitation.get_content_value('llm_token_limit')
+        if token_limit is None:
+            token_limit = super_invitation.get_content_value('llm_token_limit')
+        print(f'model of the chat: {model}')
+
+        used_tokens = 0
+        if token_limit is not None:
+            used_tokens = get_used_tokens()
+            print(f'tokens used in the chat: {used_tokens} of {token_limit}')
+            if used_tokens >= token_limit:
+                return LIMIT_MESSAGE, None, None, None
+
+        # the context is read as the committee member: impersonating the anonymous group of the chat, the API only
+        # returns the notes and fields the member can read; the venue client keeps posting the answer
+        member_client = openreview.api.OpenReviewClient(baseurl=client.baseurl, token=client.token)
+        member_client.impersonate(edit.signatures[0])
+
+        try:
+            submission = member_client.get_note(edit.note.forum)
+        except openreview.OpenReviewException as e:
+            # e.g. the chats were activated before the submissions were released to the committee
+            print('The committee member can not read the submission:', e)
+            return UNAVAILABLE_MESSAGE, None, None, None
+
+        context = []
+
+        if submission.content.get('pdf', {}).get('value'):
+            try:
+                pdf = member_client.get_attachment('pdf', id=submission.id)
+                if len(pdf) > MAX_PDF_BYTES:
+                    print(f'The submission PDF is too large to attach: {len(pdf)} bytes')
+                else:
+                    context.append({
+                        'type': 'file',
+                        'file': {
+                            'filename': f'submission{submission.number}.pdf',
+                            'file_data': 'data:application/pdf;base64,' + base64.standard_b64encode(pdf).decode('utf-8')
+                        }
+                    })
+            except Exception as e:
+                print('Could not load the submission PDF:', e)
+
+        def format_fields(content, excluded_fields=[]):
+            lines = []
+            for field_name, field in content.items():
+                if field_name in excluded_fields or field_name.startswith('_'):
+                    continue
+                value = field.get('value')
+                if isinstance(value, list):
+                    value = ', '.join(str(item) for item in value)
+                if value in (None, ''):
+                    continue
+                lines.append(f'{field_name.replace("_", " ").capitalize()}: {value}')
+            return lines
+
+        metadata = [f'Submission number: {submission.number}'] + format_fields(submission.content, EXCLUDED_FIELDS)
+
+        if not context:
+            metadata.append('The submission PDF is not available, answer based on the metadata only.')
+
+        context.append({ 'type': 'text', 'text': 'Submission metadata:\n\n' + '\n\n'.join(metadata) })
+
+        # the forum replies of the invitations listed by the super invitation, e.g. the reviews, rebuttals and
+        # comments for the area chairs
+        reply_invitation_names = super_invitation.get_content_value('llm_reply_invitations', [])
+        if reply_invitation_names:
+
+            def label(note):
+                return f'{note.invitations[0].split("/-/")[-1].replace("_", " ")} by {note.signatures[0].split("/")[-1]}'
+
+            forum_notes = { note.id: note for note in member_client.get_all_notes(forum=submission.id, sort='tcdate:asc') }
+            replies = []
+            for note in forum_notes.values():
+                if note.id == submission.id or note.invitations[0].split('/-/')[-1] not in reply_invitation_names:
+                    continue
+                header = label(note)
+                parent = forum_notes.get(note.replyto)
+                if parent and parent.id != submission.id:
+                    header += f', in reply to the {label(parent)}'
+                replies.append(f'{header}:\n\n' + '\n\n'.join(format_fields(note.content)))
+
+            context.append({ 'type': 'text', 'text': 'Forum replies:\n\n' + ('\n\n---\n\n'.join(replies) if replies else 'There are no replies in the forum yet.') })
+
+        # the conversation up to and including the message being answered, oldest first
+        messages = []
+        for note in client.get_all_notes(invitation=invitation.id, sort='tcdate:asc'):
+            text = note.content.get('message', {}).get('value', '')
+            if note.signatures[0] == assistant_id:
+                # skip the replies that were never completed
+                if text not in (THINKING_MESSAGE, ERROR_MESSAGE, LIMIT_MESSAGE, UNAVAILABLE_MESSAGE):
+                    # without the usage line, the last match since the answer can have its own horizontal rules
+                    messages.append({ 'role': 'assistant', 'content': text.rsplit(USAGE_PREFIX, 1)[0] })
+            else:
+                messages.append({ 'role': 'user', 'content': text })
+
+            if note.id == edit.note.id:
+                break
+
+        if messages and messages[0]['role'] == 'user':
+            messages[0]['content'] = context + [{ 'type': 'text', 'text': messages[0]['content'] }]
+        else:
+            messages.insert(0, { 'role': 'user', 'content': context })
+        messages.insert(0, { 'role': 'system', 'content': prompt })
+
+        if model.startswith('claude'):
+            # every message of the chat resends the context and the conversation so far, so both are cached: the
+            # message being answered caches the whole conversation for the next message, and the context is cached
+            # on its own for when the earlier conversation changes, e.g. a failed answer that is answered later.
+            # For one hour, because the committee member reads the answer and the paper before asking again.
+            # LiteLLM passes the marks to Claude; the other providers cache the whole prompt on their own, OpenAI
+            # for 30 minutes
+            cache_control = { 'type': 'ephemeral', 'ttl': '1h' }
+            context[-1]['cache_control'] = cache_control
+            if isinstance(messages[-1]['content'], str):
+                messages[-1]['content'] = [{ 'type': 'text', 'text': messages[-1]['content'] }]
+            messages[-1]['content'][-1]['cache_control'] = cache_control
+
+        body = {
+            'model': model,
+            # the OpenAI reasoning models reject max_tokens; LiteLLM maps max_completion_tokens to the max_tokens of
+            # Claude and the max_output_tokens of Gemini
+            'max_completion_tokens': MAX_TOKENS,
+            'messages': messages,
+            # LiteLLM maps it to the thinking of each provider
+            'reasoning_effort': 'medium',
+            # the parameters a model does not support are dropped instead of failing the request
+            'drop_params': True
+        }
+
+        # saved before the request, so a run of this process after an interruption knows the gateway may have
+        # charged it
+        save_reply(reply_edit, THINKING_MESSAGE, { 'gateway_request': 'sent' })
+        gateway_request = 'sent'
+
+        response = requests.post(
+            f'{base_url.rstrip("/")}/chat/completions',
+            headers={
+                'Authorization': f'Bearer {api_key}',
+                'content-type': 'application/json'
+            },
+            json=body,
+            timeout=REQUEST_TIMEOUT
+        )
+        if not response.ok:
+            # the gateway did not answer, a run after an interruption can send the request again
+            gateway_request = 'failed'
+            raise openreview.OpenReviewException(f'LLM gateway error {response.status_code}: {response.text}')
+
+        result = response.json()
+        usage = { 'model': result.get('model', model), **(result.get('usage') or {}) }
+        cost = get_cost(response.headers)
+        print('LLM usage:', usage, 'cost:', cost)
+
+        choice = result['choices'][0]
+        if choice.get('finish_reason') == 'content_filter':
+            answer = 'Sorry, I cannot help with this request.'
+        else:
+            content = choice['message'].get('content') or ''
+            if isinstance(content, list):
+                content = '\n\n'.join(part.get('text', '') for part in content if part.get('type') == 'text')
+            answer = content.strip()
+            if choice.get('finish_reason') == 'length':
+                answer += '\n\n_The answer was cut off because it reached the maximum length._'
+
+        if show_usage and token_limit:
+            used_tokens += count_tokens(usage)
+            percent = used_tokens * 100 / token_limit
+            answer += USAGE_FOOTER.format(
+                percent=f'{percent:.0f}%' if percent >= 1 else 'less than 1%',
+                used=used_tokens,
+                limit=token_limit
+            )
+        return answer, model, usage, cost
+
+    # the reply of an earlier run of this process to the message, the API runs a process again when it is interrupted
+    replies = [note for note in client.get_notes(invitation=invitation.id, replyto=edit.note.id) if note.signatures[0] == assistant_id]
+    if replies and replies[0].content['message']['value'] not in (THINKING_MESSAGE, ERROR_MESSAGE):
+        print('the message is answered already, exiting...')
+        return
+
+    if replies:
+        # the answer goes in the same reply, so the message keeps one reply
+        reply_edit = client.get_note_edits(note_id=replies[0].id)[0]
+        if (reply_edit.content or {}).get('gateway_request', {}).get('value') == 'sent':
+            # the earlier run sent the request but did not save its answer, and the gateway may have charged it: it
+            # is not sent again, the committee member can ask again
+            print('the request of an earlier run was sent but its answer was not saved, exiting...')
+            save_reply(reply_edit, ERROR_MESSAGE, { 'gateway_request': 'sent' })
+            return
+    else:
+        reply_edit = client.get_note_edit(client.post_note_edit(
+            invitation=invitation.id,
+            signatures=[assistant_id],
+            note=openreview.api.Note(
+                replyto=edit.note.id,
+                content={
+                    'message': { 'value': THINKING_MESSAGE }
+                }
+            )
+        )['id'])
+
+    # the state of the request to the gateway in this run: not sent, sent or failed
+    gateway_request = None
+    try:
+        answer, model, usage, cost = get_answer()
+    except Exception:
+        save_reply(reply_edit, ERROR_MESSAGE, { 'gateway_request': gateway_request })
+        raise
+
+    if usage:
+        save_reply(reply_edit, answer, {
+            'gateway_request': 'answered',
+            'model': model,
+            'tokens': count_tokens(usage),
+            'cost': cost
+        })
+    else:
+        # the limit and unavailable messages, without a request
+        save_reply(reply_edit, answer)

@@ -438,6 +438,45 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
+    def set_edit_process_script_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        sub_invitation_id = f'{super_invitation_id}/Process'
+
+        invitation = Invitation(
+            id = sub_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'process_script': {
+                        'value': {
+                            'param': {
+                                'type': 'script'
+                            }
+                        }
+                    },
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'process_script': {
+                            'value': '${4/content/process_script/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
     def set_edit_dates_invitation(self, super_invitation_id, process_file=None, preprocess_file=None, include_activation_date=True, include_due_date=True, include_expiration_date=True, due_date=None):
 
         venue_id = self.venue_id
@@ -2051,6 +2090,143 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_llm_chat_settings_invitation(self, super_invitation_id, include_reply_invitations=False):
+
+        venue_id = self.venue_id
+
+        invitation_id = super_invitation_id + '/Settings'
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'llm_api_key': {
+                        'order': 1,
+                        'description': 'Key of the LLM gateway.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.+'
+                            }
+                        }
+                    },
+                    'llm_base_url': {
+                        'order': 2,
+                        'description': 'URL of the LLM gateway.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '^https?://.+',
+                                'default': 'https://litellm.openreview.net'
+                            }
+                        }
+                    },
+                    'llm_model': {
+                        'order': 3,
+                        'description': 'Model that answers the messages. Each chat is created with this model, changing it does not change the existing chats.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['claude-sonnet-4-6', 'gemini-2.5-flash', 'gpt-6-astra', 'gpt-6.1-sol', 'gpt-6-luna'],
+                                'default': 'claude-sonnet-4-6',
+                                'input': 'radio'
+                            }
+                        }
+                    },
+                    'llm_prompt': {
+                        'order': 4,
+                        'description': 'Instructions for the model.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'input': 'textarea'
+                            }
+                        }
+                    },
+                    'llm_token_limit': {
+                        'order': 5,
+                        'description': 'Maximum number of tokens the assistant can use in each chat, one committee member on one submission. Each chat is created with this limit, changing it does not change the existing chats.',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'minimum': 0,
+                                'default': 1000000
+                            }
+                        }
+                    },
+                    'llm_show_usage': {
+                        'order': 6,
+                        'description': 'Should the committee members see how much of the token limit they have used? The usage is added at the end of each answer in their chat.',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [
+                                    { 'value': True, 'description': 'Yes, show the usage to the committee members.' },
+                                    { 'value': False, 'description': 'No, the usage is visible to the venue only.' }
+                                ],
+                                'input': 'radio',
+                                'default': False
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'llm_api_key': {
+                            'value': '${4/content/llm_api_key/value}',
+                            'readers': [venue_id]  # make sure llm_api_key is private
+                        },
+                        'llm_base_url': {
+                            'value': '${4/content/llm_base_url/value}'
+                        },
+                        'llm_model': {
+                            'value': '${4/content/llm_model/value}'
+                        },
+                        'llm_prompt': {
+                            'value': '${4/content/llm_prompt/value}'
+                        },
+                        'llm_token_limit': {
+                            'value': '${4/content/llm_token_limit/value}'
+                        },
+                        'llm_show_usage': {
+                            'value': '${4/content/llm_show_usage/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        # the chats that get the forum replies, e.g. the reviews, rebuttals and comments for the area chairs
+        if include_reply_invitations:
+            invitation.edit['content']['llm_reply_invitations'] = {
+                'order': 7,
+                'description': 'Names of the invitations whose forum replies are sent to the model with the submission, e.g. Official_Review, Author_Rebuttal, Official_Comment. Only the replies the committee member can read are sent. Delete the value to send no forum replies.',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'input': 'text',
+                        'regex': r'^\w+$',
+                        'mismatchError': 'must be invitation names with underscores instead of spaces, e.g. Official_Review',
+                        'deletable': True
+                    }
+                }
+            }
+            invitation.edit['invitation']['content']['llm_reply_invitations'] = {
+                'value': '${4/content/llm_reply_invitations/value}'
+            }
 
         self.save_invitation(invitation, replacement=True)
         return invitation
