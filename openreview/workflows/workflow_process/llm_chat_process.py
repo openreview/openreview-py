@@ -57,8 +57,12 @@ def process(client, edit, invitation):
         return
 
     def count_tokens(usage):
-        # the input and output tokens reported by the gateway, the input tokens include the cached ones
-        return usage.get('total_tokens') or (usage.get('prompt_tokens') or 0) + (usage.get('completion_tokens') or 0)
+        # the input tokens read from the prompt cache are not counted: every message sends the PDF and the metadata
+        # again, so counting them would use up the limit a little more with each message; the input tokens written
+        # to the cache, the rest of the input and the output tokens are counted
+        cached_tokens = (usage.get('prompt_tokens_details') or {}).get('cached_tokens') or usage.get('cache_read_input_tokens') or 0
+        # never below zero, in case a provider leaves the cached tokens out of prompt_tokens
+        return max(0, (usage.get('prompt_tokens') or 0) - cached_tokens) + (usage.get('completion_tokens') or 0)
 
     def get_cost(headers):
         # the cost of the call in USD reported by the gateway, after its discount and margin

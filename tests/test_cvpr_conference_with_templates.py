@@ -27,6 +27,10 @@ def llm_mock():
             # keeps the question pending for a while
             if '[slow]' in question:
                 time.sleep(5)
+            usage = { 'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120 }
+            # answers as if 80 of the input tokens were read from the prompt cache
+            if '[cached]' in question:
+                usage['prompt_tokens_details'] = { 'cached_tokens': 80 }
             answer = json.dumps({
                 'id': 'chatcmpl-mock',
                 'object': 'chat.completion',
@@ -36,7 +40,7 @@ def llm_mock():
                     'finish_reason': 'stop',
                     'message': { 'role': 'assistant', 'content': f'Answer from the LLM mock to: {question}' }
                 }],
-                'usage': { 'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120 }
+                'usage': usage
             }).encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -1600,13 +1604,16 @@ class TestCVPRConferenceWithTemplates():
 
         # the workflow chairs give another model to one chat, e.g. to compare the answers of two models
         save_chat_setting(other_anon_group_id, 'llm_model', 'gemini-2.5-flash')
-        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', 'What are the main weaknesses?')
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', 'What are the main weaknesses? [cached]')
         answer = get_answer(other_anon_group_id, message_edit)
         request = llm_mock['requests'][-1]
         assert request['body']['model'] == 'gemini-2.5-flash'
-        # the context is marked for caching on the Claude models only
+        # the context is marked for caching on the Claude models only, the other providers cache it on their own
         assert all('cache_control' not in block for block in request['body']['messages'][1]['content'])
-        assert openreview_client.get_note_edits(note_id=answer.id)[0].content['model']['value'] == 'gemini-2.5-flash'
+        answer_edit = openreview_client.get_note_edits(note_id=answer.id)[0]
+        assert answer_edit.content['model']['value'] == 'gemini-2.5-flash'
+        # the input tokens read from the prompt cache do not count towards the limit
+        assert answer_edit.content['tokens']['value'] == 40
         # the reviewer can not read the model of their chat
         assert (reviewer_client.get_invitation(f'{other_anon_group_id}/-/LLM_Interaction').content or {}).get('llm_model', {}).get('value') is None
 
