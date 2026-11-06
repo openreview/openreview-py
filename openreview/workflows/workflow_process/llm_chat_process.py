@@ -287,14 +287,16 @@ def process(client, edit, invitation):
 
     # the reply of an earlier run of this process to the message, the API runs a process again when it is interrupted
     replies = [note for note in client.get_notes(invitation=invitation.id, replyto=edit.note.id) if note.signatures[0] == assistant_id]
-    if replies and replies[0].content['message']['value'] not in (THINKING_MESSAGE, ERROR_MESSAGE):
-        print('the message is answered already, exiting...')
-        return
-
     if replies:
         # the answer goes in the same reply, so the message keeps one reply
         reply_edit = client.get_note_edits(note_id=replies[0].id)[0]
-        if (reply_edit.content or {}).get('gateway_request', {}).get('value') == 'sent':
+        previous_request = (reply_edit.content or {}).get('gateway_request', {}).get('value')
+        # an answer can read like the placeholder or the apology, e.g. when the committee member asked for that
+        # text, so the state of the request decides; the chats created before gateway_request only have the text
+        if previous_request == 'answered' or replies[0].content['message']['value'] not in (THINKING_MESSAGE, ERROR_MESSAGE):
+            print('the message is answered already, exiting...')
+            return
+        if previous_request == 'sent':
             # the earlier run sent the request but did not save its answer, and the gateway may have charged it: it
             # is not sent again, the committee member can ask again
             print('the request of an earlier run was sent but its answer was not saved, exiting...')

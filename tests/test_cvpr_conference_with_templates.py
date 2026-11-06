@@ -60,6 +60,10 @@ def llm_mock():
             if '[cached_outside]' in question:
                 # a provider that leaves the cached tokens out of prompt_tokens
                 usage = { 'prompt_tokens': 50, 'completion_tokens': 20, 'total_tokens': 70, 'prompt_tokens_details': { 'cached_tokens': 80 } }
+            content = f'Answer from the LLM mock to: {question}'
+            # answers with the text of the placeholder, as an LLM asked to repeat it would
+            if '[placeholder]' in question:
+                content = 'Thinking...'
             answer = json.dumps({
                 'id': 'chatcmpl-mock',
                 'object': 'chat.completion',
@@ -67,7 +71,7 @@ def llm_mock():
                 'choices': [{
                     'index': 0,
                     'finish_reason': 'stop',
-                    'message': { 'role': 'assistant', 'content': f'Answer from the LLM mock to: {question}' }
+                    'message': { 'role': 'assistant', 'content': content }
                 }],
                 'usage': usage
             }).encode('utf-8')
@@ -1723,6 +1727,16 @@ class TestCVPRConferenceWithTemplates():
         run_process_again(anon_group_id, message_edit)
         assert len(llm_mock['requests']) == requests_count
         get_reply(anon_group_id, message_edit)
+
+        # an answer that reads like the placeholder is an answer too: a run after an interruption does not call the
+        # gateway again, and the committee member can send the next message
+        _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 2, 'Reviewer_', 'Reply with the placeholder text [placeholder]')
+        answer = get_answer(anon_group_id, message_edit)
+        assert answer.content['message']['value'] == 'Thinking...'
+        requests_count = len(llm_mock['requests'])
+        run_process_again(anon_group_id, message_edit)
+        assert len(llm_mock['requests']) == requests_count
+        assert get_reply(anon_group_id, message_edit).content['message']['value'] == 'Thinking...'
 
         # the gateway fails: the committee member gets the apology and the request is marked as failed, so a run
         # after an interruption sends it again and answers in the same reply

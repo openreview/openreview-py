@@ -22,7 +22,11 @@ def process(client, edit, invitation):
         return
 
     latest_note = latest_notes[0]
-    answered = latest_note.signatures[0] == assistant_id and latest_note.content['message']['value'] != THINKING_MESSAGE
+    answered = False
+    if latest_note.signatures[0] == assistant_id:
+        # an answer can read like the placeholder, e.g. when the committee member asked for that text, but the edit
+        # of the reply records the answered request
+        answered = latest_note.content['message']['value'] != THINKING_MESSAGE or (client.get_note_edits(note_id=latest_note.id)[0].content or {}).get('gateway_request', {}).get('value') == 'answered'
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     if not answered and now - latest_note.tcdate < PENDING_TIMEOUT:
