@@ -10,13 +10,20 @@ def process(client, edit, invitation):
     venue_short_name = domain.content['subtitle']['value']
     venue_from_email = f"{venue_short_name.replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()}-notifications@openreview.net"
 
+    committee_group = openreview.api.Group(
+        id=edit.group.id,
+        web=invitation.content[f'{committee_role}_web']['value'],
+    )
+
+    # ethics chairs act as a group (flagging submissions, assigning ethics reviewers, commenting),
+    # so like the program chairs they must be able to sign with the committee group itself
+    if committee_role == 'ethics_chairs':
+        committee_group.signatories = [venue_id, edit.group.id]
+
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
         signatures=[invitation.domain],
-        group=openreview.api.Group(
-            id=edit.group.id,
-            web=invitation.content[f'{committee_role}_web']['value'],
-        )
+        group=committee_group
     )
 
     client.post_invitation_edit(

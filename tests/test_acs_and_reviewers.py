@@ -252,6 +252,31 @@ class TestSimpleDualAnonymous():
         assert 'area_chairs_submitted_name' not in domain_content
         assert domain_content['area_chairs_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Recruitment_Response'
 
+        # this venue did not opt in to ethics review, so nothing related to it is created
+        for key in ['ethics_chairs_id', 'ethics_chairs_name', 'ethics_reviewer_roles', 'ethics_reviewers_id', 'ethics_reviewers_name', 'anon_ethics_reviewer_name', 'ethics_review_name', 'release_submissions_to_ethics_chairs']:
+            assert key not in domain_content
+
+        assert not openreview_client.get_all_groups(prefix='EFGH.cc/2025/Conference/Ethics_')
+
+        for invitation_id in [
+            'EFGH.cc/2025/Conference/-/Ethics_Review',
+            'EFGH.cc/2025/Conference/-/Ethics_Review_Flag',
+            'EFGH.cc/2025/Conference/-/Ethics_Review_Release',
+            'EFGH.cc/2025/Conference/-/Ethics_Reviewers_Assignment_Deployment',
+            'EFGH.cc/2025/Conference/Ethics_Reviewers/-/Submission_Group',
+            'EFGH.cc/2025/Conference/Ethics_Reviewers/-/Affinity_Score',
+            'EFGH.cc/2025/Conference/Ethics_Reviewers/-/Conflict',
+            'EFGH.cc/2025/Conference/Ethics_Reviewers/-/Assignment_Configuration',
+            'EFGH.cc/2025/Conference/Ethics_Reviewers/-/Assignment'
+        ]:
+            assert not openreview.tools.get_invitation(openreview_client, invitation_id)
+
+        # the review readers are set directly on the invitation, they are not computed per submission like on venues with ethics review
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Review')
+        assert 'noteReaders' not in invitation.edit['content']
+        assert 'review_readers' not in invitation.content
+        assert invitation.edit['invitation']['edit']['note']['readers'][0] != '${5/content/noteReaders/value}'
+
     def test_recruit_area_chairs(self, openreview_client, selenium, request_page, helpers):
 
         # use invitation to recruit reviewers
