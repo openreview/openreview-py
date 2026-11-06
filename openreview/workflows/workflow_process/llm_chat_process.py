@@ -194,11 +194,6 @@ def process(client, edit, invitation):
 
             context.append({ 'type': 'text', 'text': 'Forum replies:\n\n' + ('\n\n---\n\n'.join(replies) if replies else 'There are no replies in the forum yet.') })
 
-        if model.startswith('claude'):
-            # every message of the chat resends the same context, cache it; LiteLLM passes it to Claude, the other
-            # providers cache long prompts on their own
-            context[-1]['cache_control'] = { 'type': 'ephemeral' }
-
         # the conversation up to and including the message being answered, oldest first
         messages = []
         for note in client.get_all_notes(invitation=invitation.id, sort='tcdate:asc'):
@@ -219,6 +214,19 @@ def process(client, edit, invitation):
         else:
             messages.insert(0, { 'role': 'user', 'content': context })
         messages.insert(0, { 'role': 'system', 'content': prompt })
+
+        if model.startswith('claude'):
+            # every message of the chat resends the context and the conversation so far, so both are cached: the
+            # message being answered caches the whole conversation for the next message, and the context is cached
+            # on its own for when the earlier conversation changes, e.g. a failed answer that is answered later.
+            # For one hour, because the committee member reads the answer and the paper before asking again.
+            # LiteLLM passes the marks to Claude; the other providers cache the whole prompt on their own, OpenAI
+            # for 30 minutes
+            cache_control = { 'type': 'ephemeral', 'ttl': '1h' }
+            context[-1]['cache_control'] = cache_control
+            if isinstance(messages[-1]['content'], str):
+                messages[-1]['content'] = [{ 'type': 'text', 'text': messages[-1]['content'] }]
+            messages[-1]['content'][-1]['cache_control'] = cache_control
 
         body = {
             'model': model,

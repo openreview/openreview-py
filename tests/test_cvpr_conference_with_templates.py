@@ -1608,6 +1608,10 @@ class TestCVPRConferenceWithTemplates():
         assert 'SomeFirstName' not in metadata_block['text']
         assert 'Kai' not in metadata_block['text']
         assert question_block['text'] == 'What are the main contributions of this paper?'
+        # the context and the conversation are cached for an hour, for the next messages of the chat
+        assert 'cache_control' not in pdf_block
+        assert metadata_block['cache_control'] == { 'type': 'ephemeral', 'ttl': '1h' }
+        assert question_block['cache_control'] == { 'type': 'ephemeral', 'ttl': '1h' }
 
         # the edit of the answer stores the model, the tokens and the cost, readable by the venue only
         answer_edit = openreview_client.get_note_edits(note_id=answer.id)[0]
@@ -1658,12 +1662,17 @@ class TestCVPRConferenceWithTemplates():
         _, _, message_edit = ask('reviewer1@cvpr.cc', '~Reviewer_CVPROne1', 4, 'Reviewer_', 'And the experiments?')
         answer = get_answer(other_anon_group_id, message_edit)
         assert answer.content['message']['value'].endswith('_You have used 75% of the AI assistant usage limit for this submission (360 of 480 tokens)._')
-        assert [message['content'] for message in llm_mock['requests'][-1]['body']['messages'][2:]] == [
+        messages = llm_mock['requests'][-1]['body']['messages']
+        assert [message['content'] for message in messages[2:-1]] == [
             'Answer from the LLM mock to: What are the main contributions of this paper?',
             'And the limitations?',
-            'Answer from the LLM mock to: And the limitations?',
-            'And the experiments?'
+            'Answer from the LLM mock to: And the limitations?'
         ]
+        # only the context and the message being answered are marked for caching, the earlier messages are read
+        # from the cache of the previous message
+        assert messages[-1]['content'] == [{ 'type': 'text', 'text': 'And the experiments?', 'cache_control': { 'type': 'ephemeral', 'ttl': '1h' } }]
+        assert 'cache_control' not in messages[1]['content'][-1]
+        assert str(messages).count('cache_control') == 2
         save_chat_setting(other_anon_group_id, 'llm_token_limit', 1000000)
         save_settings('Reviewers', llm_mock['url'])
 
@@ -1673,8 +1682,9 @@ class TestCVPRConferenceWithTemplates():
         answer = get_answer(other_anon_group_id, message_edit)
         request = llm_mock['requests'][-1]
         assert request['body']['model'] == 'gemini-2.5-flash'
-        # the context is marked for caching on the Claude models only, the other providers cache it on their own
-        assert all('cache_control' not in block for block in request['body']['messages'][1]['content'])
+        # the context and the conversation are marked for caching on the Claude models only, the other providers
+        # cache them on their own
+        assert 'cache_control' not in str(request['body']['messages'])
         answer_edit = openreview_client.get_note_edits(note_id=answer.id)[0]
         assert answer_edit.content['model']['value'] == 'gemini-2.5-flash'
         # the input tokens read from the prompt cache do not count towards the limit
@@ -1762,8 +1772,10 @@ class TestCVPRConferenceWithTemplates():
         assert 'Limited evaluation' in replies_block['text']
         # the chats of the reviewers are not part of the forum replies
         assert 'Answer from the LLM mock' not in replies_block['text']
-        assert 'cache_control' in replies_block
+        # the reviews are the end of the cached context
+        assert replies_block['cache_control'] == { 'type': 'ephemeral', 'ttl': '1h' }
         assert question_block['text'] == 'Which critique is best supported by the paper?'
+        assert question_block['cache_control'] == { 'type': 'ephemeral', 'ttl': '1h' }
 
         # point the chats back to the LLM gateway
         save_settings('Reviewers', 'https://litellm.openreview.net')
