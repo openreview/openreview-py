@@ -146,6 +146,7 @@ class InvitationBuilder(object):
         for registration_stage in (venue.registration_stages or []):
             stage_map[registration_stage.name] = 'recruitment'
         if venue.submission_stage:
+            stage_map[venue.submission_stage.name] = 'submission'
             stage_map[venue.submission_stage.withdrawal_name] = 'reviewing'
             stage_map[venue.submission_stage.desk_rejection_name] = 'reviewing'
         if venue.review_stage:
