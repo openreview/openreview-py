@@ -916,7 +916,9 @@ class efficient_iterget:
         self.gathering_responses = tqdm(total=total, desc=desc) if total > self.params['limit'] else None
 
     def update_batch(self):
-        after = self.current_batch[-1].id
+        # getters such as get_messages return plain dicts rather than objects, so read the id either way
+        last_obj = self.current_batch[-1]
+        after = last_obj['id'] if isinstance(last_obj, dict) else last_obj.id
         self.params['after'] = after
         self.params['with_count'] = False
         next_batch = self.get_function(**self.params)
