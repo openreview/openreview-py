@@ -23,6 +23,7 @@ class ProfileManagement():
     def setup(self):
         self.set_profile_moderation_invitations()
         self.set_profile_assertion_invitations()
+        self.set_vouch_invitations()
         self.set_remove_name_invitations()
         self.set_remove_email_invitations()
         self.set_archive_invitations()
@@ -499,8 +500,163 @@ return {
             )
         )
 
+    def set_vouch_invitations(self):
+
+        self.client.post_invitation_edit(
+            invitations=self.meta_invitation_id,
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Vouch_Request',
+                invitees=['everyone'],
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                guestPosting=True,
+                preprocess=self.get_process_content('process/vouch_request_pre_process.py'),
+                process=self.get_process_content('process/vouch_request_process.py'),
+                web=self.get_process_content('webfield/vouchRequestWebfield.js'),
+                content={
+                    'linkExpirationDays': { 'value': 30 },
+                    'requestExpirationDays': { 'value': 30 },
+                    'maxOpenRequests': { 'value': 3 }
+                },
+                edit={
+                    'signatures': { 'param': { 'regex': '^~.+$' } },
+                    'readers': [self.support_group_id, '${2/signatures}'],
+                    'writers': [self.support_group_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': f'{self.support_group_id}/-/Vouch_Request',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, '${3/signatures}', '${2/content/voucher/value}'],
+                        'writers': [self.support_group_id],
+                        'content': {
+                            'voucher': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': r'^~\S+\d+$'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        self.client.post_invitation_edit(
+            invitations=self.meta_invitation_id,
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Vouch_Verification',
+                invitees=[self.support_group_id],
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                content={
+                    'lifetimeLimit': { 'value': 20 },
+                    'monthLimit': { 'value': 5 }
+                },
+                edit={
+                    'signatures': [self.super_user],
+                    'readers': [self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'content': {
+                        'noteNumber': { 'value': { 'param': { 'type': 'integer' } } },
+                        'vouchee': { 'value': { 'param': { 'type': 'string', 'regex': '^~.+$' } } },
+                        'voucher': { 'value': { 'param': { 'type': 'string', 'regex': '^~.+$' } } },
+                        'expdate': { 'value': { 'param': { 'type': 'integer' } } },
+                        'names': { 'value': { 'param': { 'type': 'object[]' } } },
+                        'history': { 'value': { 'param': { 'type': 'object[]' } } },
+                        'homepage': { 'value': { 'param': { 'type': 'string', 'optional': True } } },
+                        'email': { 'value': { 'param': { 'type': 'string', 'regex': r'^[^@\s]+@[^@\s]+\.[^@\s]+$' } } }
+                    },
+                    'invitation': {
+                        'id': f'{self.support_group_id}/Vouch_Request' + '${2/content/noteNumber/value}' + '/-/Vouch_Verification',
+                        'signatures': [self.super_user],
+                        'readers': [self.support_group_id, '${3/content/vouchee/value}', '${3/content/voucher/value}'],
+                        'writers': [self.support_group_id],
+                        'invitees': ['${3/content/voucher/value}'],
+                        'expdate': '${2/content/expdate/value}',
+                        'content': {
+                            'email': {
+                                'value': '${4/content/email/value}',
+                                'readers': [self.support_group_id, '${5/content/vouchee/value}']
+                            }
+                        },
+                        'preprocess': self.get_process_content('process/vouch_verification_pre_process.py'),
+                        'process': self.get_process_content('process/vouch_verification_process.py'),
+                        'web': self.get_process_content('webfield/vouchVerificationWebfield.js'),
+                        'assertion': {
+                            'signatures': ['${4/content/voucher/value}'],
+                            'readers': ['everyone'],
+                            'writers': [self.support_group_id],
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'content': {
+                                'confirmations': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'input': 'checkbox',
+                                            'enum': [
+                                                'I know this person, and the information above is correct.',
+                                                'This vouch will be public on my profile and on theirs.',
+                                                'I cannot delete this vouch after I post it.'
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            'profile': {
+                                'id': '${4/content/vouchee/value}',
+                                'content': {
+                                    'names': {
+                                        'value': { 'const': { 'add': '${8/content/names/value}' } }
+                                    },
+                                    'history': {
+                                        'value': { 'const': { 'add': '${8/content/history/value}' } }
+                                    },
+                                    'homepage': {
+                                        'value': '${6/content/homepage/value?}'
+                                    },
+                                    'emails': {
+                                        'value': {
+                                            'param': {
+                                                'type': 'string{}',
+                                                'change': 'add',
+                                                'regex': r'^[^@\s]+@[^@\s]+\.[^@\s]+$'
+                                            }
+                                        },
+                                        'readers': [self.support_group_id, '${7/content/vouchee/value}', '${7/content/voucher/value}']
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
     def set_public_article_invitations(self):
-        
+
 
         public_article_group = openreview.tools.get_group(self.client, self.public_article_group_id)
         if public_article_group is None:
