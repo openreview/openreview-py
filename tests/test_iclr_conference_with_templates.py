@@ -2314,13 +2314,25 @@ note={under review}
             anon_group_id
         ]
 
-        # the review readers edit offers the readers with the submission number placeholder used by the review readers template
+        # the review author is stored in the review readers template with the other readers, so the note readers
+        # of the review invitation only use the readers computed for each submission
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review')
+        assert invitation.content['review_readers']['value'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Area_Chairs',
+            '${3/signatures}'
+        ]
+        assert invitation.edit['invitation']['edit']['note']['readers'] == ['${5/content/noteReaders/value}']
+
+        # the review readers edit offers the readers with the submission number placeholder used by the review readers template,
+        # and the review author like the venues without an ethics review
         readers_inv = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review/Readers')
         reader_options = [item['value'] for item in readers_inv.edit['content']['readers']['value']['param']['items']]
         assert 'ICLR.cc/2026/Conference/Submission{number}/Reviewers/Submitted' in reader_options
-        assert '${3/signatures}' not in reader_options
+        assert '${3/signatures}' in reader_options
 
-        # the program chairs release the reviews to the reviewers who submitted their review
+        # the program chairs release the reviews to the reviewers who submitted their review, without selecting the review author
         pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Official_Review/Readers',
             content={
@@ -2337,6 +2349,7 @@ note={under review}
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=3)
 
         # the selected readers are stored in the review readers template, the invitation still computes the readers per submission
+        # and the note readers are not changed, so the review author is no longer a reader because it wasn't selected
         invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review')
         assert invitation.content['review_readers']['value'] == [
             'ICLR.cc/2026/Conference/Program_Chairs',
@@ -2344,7 +2357,7 @@ note={under review}
             'ICLR.cc/2026/Conference/Submission{number}/Area_Chairs',
             'ICLR.cc/2026/Conference/Submission{number}/Reviewers/Submitted'
         ]
-        assert invitation.edit['invitation']['edit']['note']['readers'] == ['${5/content/noteReaders/value}', '${3/signatures}']
+        assert invitation.edit['invitation']['edit']['note']['readers'] == ['${5/content/noteReaders/value}']
 
         # the flagged submission keeps the ethics committee as readers of its reviews
         invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission5/-/Official_Review')
@@ -2354,18 +2367,17 @@ note={under review}
             'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
             'ICLR.cc/2026/Conference/Submission5/Reviewers/Submitted',
             'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
-            'ICLR.cc/2026/Conference/Ethics_Chairs',
-            '${3/signatures}'
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
         ]
 
-        # the existing reviews get the new readers, the review of the flagged submission keeps the ethics committee
+        # the existing reviews get the new readers, the review authors can still read them as reviewers who submitted
+        # their review, and the review of the flagged submission keeps the ethics committee
         reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
         assert reviews[0].readers == [
             'ICLR.cc/2026/Conference/Program_Chairs',
             'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
             'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
-            'ICLR.cc/2026/Conference/Submission2/Reviewers/Submitted',
-            reviews[0].signatures[0]
+            'ICLR.cc/2026/Conference/Submission2/Reviewers/Submitted'
         ]
         flagged_review = openreview_client.get_note(flagged_review.id)
         assert flagged_review.readers == [
@@ -2374,11 +2386,10 @@ note={under review}
             'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
             'ICLR.cc/2026/Conference/Submission5/Reviewers/Submitted',
             'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
-            'ICLR.cc/2026/Conference/Ethics_Chairs',
-            anon_group_id
+            'ICLR.cc/2026/Conference/Ethics_Chairs'
         ]
 
-        # restore the default readers, the next stages expect them
+        # restore the default readers, selecting the review author adds it back without changing the note readers
         pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Official_Review/Readers',
             content={
@@ -2386,12 +2397,16 @@ note={under review}
                     'value': [
                         'ICLR.cc/2026/Conference/Program_Chairs',
                         'ICLR.cc/2026/Conference/Submission{number}/Senior_Area_Chairs',
-                        'ICLR.cc/2026/Conference/Submission{number}/Area_Chairs'
+                        'ICLR.cc/2026/Conference/Submission{number}/Area_Chairs',
+                        '${3/signatures}'
                     ]
                 }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=4)
+
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review')
+        assert invitation.edit['invitation']['edit']['note']['readers'] == ['${5/content/noteReaders/value}']
 
         reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
         assert reviews[0].readers == [
@@ -3063,6 +3078,69 @@ note={under review}
             'ICLR.cc/2026/Conference/Ethics_Chairs'
         ]
 
+        # release the reviews to the reviewers who submitted their review and to the review author, the previous
+        # release didn't select the review author, so this adds it back
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2026/Conference/-/Official_Review_Release/Readers',
+            content = {
+                'readers': {
+                    'value': [
+                        'ICLR.cc/2026/Conference/Program_Chairs',
+                        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Senior_Area_Chairs',
+                        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Area_Chairs',
+                        'ICLR.cc/2026/Conference/Submission${5/content/noteNumber/value}/Reviewers/Submitted',
+                        '${3/signatures}'
+                    ]
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=6)
+
+        # the review author is stored in the review readers template with the other released readers
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/-/Official_Review')
+        assert invitation.content['review_readers']['value'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission{number}/Reviewers/Submitted',
+            '${3/signatures}'
+        ]
+        assert invitation.edit['invitation']['edit']['note']['readers'] == ['${5/content/noteReaders/value}']
+
+        reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission2/-/Official_Review')
+        assert len(reviews) == 1
+        assert reviews[0].readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission2/Reviewers/Submitted',
+            reviews[0].signatures[0]
+        ]
+
+        # the flagged submission still adds the ethics committee, and the review author stays a reader
+        invitation = openreview_client.get_invitation('ICLR.cc/2026/Conference/Submission5/-/Official_Review')
+        assert invitation.edit['note']['readers'] == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Reviewers/Submitted',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            '${3/signatures}'
+        ]
+        flagged_reviews = openreview_client.get_notes(invitation='ICLR.cc/2026/Conference/Submission5/-/Official_Review')
+        assert len(flagged_reviews) == 1
+        assert flagged_reviews[0].readers == [
+            'ICLR.cc/2026/Conference/Program_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Senior_Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Area_Chairs',
+            'ICLR.cc/2026/Conference/Submission5/Reviewers/Submitted',
+            'ICLR.cc/2026/Conference/Submission5/Ethics_Reviewers',
+            'ICLR.cc/2026/Conference/Ethics_Chairs',
+            flagged_reviews[0].signatures[0]
+        ]
+
         # release the reviews to the public, the release is active so changing its readers applies the release again
         pc_client.post_invitation_edit(
             invitations='ICLR.cc/2026/Conference/-/Official_Review_Release/Readers',
@@ -3072,8 +3150,8 @@ note={under review}
                 }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review_Release-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=6)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review_Release-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2026/Conference/-/Official_Review-0-1', count=7)
 
         review_release_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2026/Conference/-/Official_Review_Release')
         assert review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == ['everyone']

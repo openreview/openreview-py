@@ -715,17 +715,25 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.edit['content']['noteReaders'] = {
                 'value': {
                     'param': {
-                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
+                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone|\\$\\{{3/signatures\\}}'
                     }
                 }
             }
-            invitation.content['review_readers'] = {
-                'value': review_stage.get_readers(self.venue, '{number}')
-            }
-            note_readers = ['${5/content/noteReaders/value}']
-            if review_stage.release_to_reviewers in [openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE, openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED] and not review_stage.public:
-                note_readers.append('${3/signatures}')
-            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
+            if self.venue.is_template_related_workflow():
+                # the review author is kept in the per submission readers, so the PCs can add or remove it by
+                # editing the review readers without changing the note readers, which would run the stage again
+                invitation.content['review_readers'] = {
+                    'value': review_stage.get_readers(self.venue, '{number}', '${3/signatures}')
+                }
+                invitation.edit['invitation']['edit']['note']['readers'] = ['${5/content/noteReaders/value}']
+            else:
+                invitation.content['review_readers'] = {
+                    'value': review_stage.get_readers(self.venue, '{number}')
+                }
+                note_readers = ['${5/content/noteReaders/value}']
+                if review_stage.release_to_reviewers in [openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE, openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED] and not review_stage.public:
+                    note_readers.append('${3/signatures}')
+                invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         if self.venue.is_template_related_workflow():
             invitation.content['users_to_notify'] = {
@@ -1214,17 +1222,27 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.edit['content']['noteReaders'] = {
                 'value': {
                     'param': {
-                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
+                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone|\\$\\{{3/signatures\\}}'
                     }
                 }
             }
-            invitation.content['review_readers'] = {
-                'value': meta_review_stage.get_readers(self.venue, '{number}')
-            }
-            note_readers = ['${5/content/noteReaders/value}']
-            if meta_review_stage.release_to_reviewers in [openreview.stages.MetaReviewStage.Readers.REVIEWERS_SUBMITTED] and not meta_review_stage.public:
-                note_readers.append('${3/signatures}')
-            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
+            meta_review_readers = meta_review_stage.get_readers(self.venue, '{number}')
+            add_signatures = meta_review_stage.release_to_reviewers in [openreview.stages.MetaReviewStage.Readers.REVIEWERS_SUBMITTED] and not meta_review_stage.public
+            if self.venue.is_template_related_workflow():
+                # the meta review author is kept in the per submission readers, so the PCs can add or remove it by
+                # editing the meta review readers without changing the note readers, which would run the stage again
+                invitation.content['review_readers'] = {
+                    'value': meta_review_readers + (['${3/signatures}'] if add_signatures else [])
+                }
+                invitation.edit['invitation']['edit']['note']['readers'] = ['${5/content/noteReaders/value}']
+            else:
+                invitation.content['review_readers'] = {
+                    'value': meta_review_readers
+                }
+                note_readers = ['${5/content/noteReaders/value}']
+                if add_signatures:
+                    note_readers.append('${3/signatures}')
+                invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         if self.venue.is_template_related_workflow():
             invitation.description = 'Configure the contents of the meta review form (form fields can be added or removed), who can see the meta reviews, who should be notified when a new meta review is posted, and set the date/time when the meta reviewing form is available to area chairs, when meta reviews are due, and when the meta reviewing form is no longer available to area chairs.'

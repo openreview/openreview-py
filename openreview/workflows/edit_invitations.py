@@ -676,9 +676,9 @@ class EditInvitationsBuilder(object):
                 {'value': f'{venue_id}/{submission_name}{paper_number}/{ethics_reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Ethics Reviewers who already submitted their ethics review'}
             ])
 
-        # with per submission readers the review author stays a reader through the invitation note readers,
-        # which are not changed by this edit
-        if include_signatures and not per_submission_readers:
+        # with per submission readers the review author is stored in the review_readers template too, and the
+        # submission invitations add it to their note readers, so this edit doesn't change the note readers
+        if include_signatures:
             reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
 
         if include_authors:
