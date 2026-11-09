@@ -234,6 +234,7 @@ class Templates():
                                 'maxLength': 100,
                                 'regex': '.*',
                                 'optional': True,
+                                'deletable': True,
                                 'default': ''
                             }
                         }
