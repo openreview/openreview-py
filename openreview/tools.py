@@ -1476,7 +1476,7 @@ def recruit_user(client, user,
 
     client.post_message(recruitment_message_subject, [user], personalized_message, parentGroup=comittee_invited_id, replyTo=contact_email, invitation=message_invitation, signature=message_signature)
 
-def get_user_hash_key(user, hash_seed, invitation=None):
+def get_user_hash_key(user, hash_seed, invitation=None, expires_in=None):
     """Generate a hash key for a user's recruitment or authentication link.
 
     When ``invitation`` is provided, returns a JWT token encoding the user and
@@ -1488,6 +1488,8 @@ def get_user_hash_key(user, hash_seed, invitation=None):
     :type hash_seed: str
     :param invitation: Invitation ID. If provided, a JWT is returned instead of an HMAC hash.
     :type invitation: str, optional
+    :param expires_in: Number of seconds the JWT stays valid. Only used with ``invitation``; without it the token does not expire.
+    :type expires_in: int, optional
 
     :return: JWT token string (if invitation is given) or HMAC-SHA256 hex digest.
     :rtype: str
@@ -1497,6 +1499,8 @@ def get_user_hash_key(user, hash_seed, invitation=None):
             "group": user,
             "invitation": invitation,
         }
+        if expires_in is not None:
+            jwt_payload["exp"] = int(datetime.datetime.now(datetime.timezone.utc).timestamp()) + expires_in
         return jwt.encode(jwt_payload, hash_seed, algorithm="HS256")
     hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
     return hashkey
