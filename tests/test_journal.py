@@ -3239,11 +3239,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         ## Check invitations are expired
         invitations = openreview_client.get_invitations(prefix=f"{venue_id}/Paper1/.*", type = "all")
-        assert len(invitations) == 5
+        assert len(invitations) == 6
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Retraction" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Editorial_Retraction" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/EIC_Revision" in [i.id for i in invitations]
 
         ## Update the paper by the EICs
@@ -6138,9 +6139,6 @@ note={Expert Certification}
 }'''
         assert note.content['expert_reviewers']['value'] == ['~Hugo_Larochelle1']                                                              
 
-  
-        note = openreview_client.get_note(note_id_13)
-        journal.invitation_builder.expire_paper_invitations(note)
 
         ## Add Event certification
         raia_client.post_note_edit(invitation='TMLR/-/Event_Certification',
@@ -6150,7 +6148,72 @@ note={Expert Certification}
                 content= {
                     'event_certifications': { 'value': ['lifelong-ml.cc/CoLLAs/2023/Journal_Track'] }
                 }
-            ))        
+            ))
+
+        ## The authors can not use the EICs' retraction invitation, otherwise they could skip the approval step that their own Retraction invitation requires
+        with pytest.raises(openreview.OpenReviewException):
+            test_client.post_note_edit(invitation='TMLR/Paper13/-/Editorial_Retraction',
+                signatures=['TMLR/Paper13/Authors'],
+                note=Note(
+                    signatures=['TMLR/Paper13/Authors'],
+                    content= {
+                        'retraction_confirmation': { 'value': 'I confirm that the Editors-in-Chief are retracting this paper in accordance with the venue\'s retraction policy.' }
+                    }
+                ))
+
+        ## Retract the paper as EIC, the EICs are the ones who approve retractions so there is no Retraction_Approval step and the paper is retracted right away
+        retraction_note = raia_client.post_note_edit(invitation='TMLR/Paper13/-/Editorial_Retraction',
+            signatures=['TMLR/Editors_In_Chief'],
+            note=Note(
+                signatures=['TMLR/Editors_In_Chief'],
+                content= {
+                    'retraction_confirmation': { 'value': 'I confirm that the Editors-in-Chief are retracting this paper in accordance with the venue\'s retraction policy.' },
+                    'comment': { 'value': 'The main result does not hold.' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=retraction_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Retracted', count=2)
+
+        retraction = openreview_client.get_note(retraction_note['note']['id'])
+        assert retraction.readers == ['everyone']
+        assert retraction.signatures == ['TMLR/Editors_In_Chief']
+        assert retraction.forum == note_id_13
+        assert retraction.replyto == note_id_13
+        assert retraction.content['comment']['value'] == 'The main result does not hold.'
+
+        note = openreview_client.get_note(note_id_13)
+        assert 'TMLR/-/Retracted' in note.invitations
+        assert note.content['venue']['value'] == 'Retracted by Editors'
+        assert note.content['venueid']['value'] == 'TMLR/Retracted_Acceptance'
+        assert note.content['_bibtex']['value'] == '''@article{
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title 13 {VERSION} 3},
+author={SomeFirstName User and Melissa Eight and Hugo Larochelle},
+journal={Submitted to Transactions on Machine Learning Research},
+year={''' + str(datetime.datetime.today().year) + '''},
+url={https://openreview.net/forum?id=''' + note_id_13 + '''},
+note={Retracted after acceptance}
+}'''
+
+        messages = journal.client.get_messages(to='test@mail.com', subject='[TMLR] TMLR submission 13 has been retracted: Paper title 13 VERSION 3')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+As TMLR Editors-in-Chief, we have retracted your accepted paper at TMLR "13: Paper title 13 VERSION 3".
+
+To view the retraction, follow this link: https://openreview.net/forum?id={note_id_13}&noteId={retraction_note['note']['id']}
+
+The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
+'''
+
+        ## The Retracted process expires the paper invitations, so neither the authors nor the EICs can retract the paper a second time
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
+        assert openreview_client.get_invitation('TMLR/Paper13/-/Retraction').expdate <= now
+        assert openreview_client.get_invitation('TMLR/Paper13/-/Editorial_Retraction').expdate <= now
 
     def test_invite_external_reviewers(self, journal, openreview_client, test_client, helpers, selenium, request_page):
 
