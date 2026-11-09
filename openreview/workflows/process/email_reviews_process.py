@@ -31,11 +31,18 @@ def process(client, invitation):
     active_submissions = client.get_notes(content={'venueid': submission_venue_id}, details='directReplies')
     print('# active submissions:', len(active_submissions))
 
+    # this process runs again after any edit to the invitation and when a failed job is retried, so collect the subjects already sent by this invitation to skip those submissions below
+    sent_subjects = {message['content']['subject'] for message in client.get_all_messages(invitation=invitation.id)}
+
     def send_reviews_email(submission):
         subject = email_subject.format(
             submission_number=submission.number,
             submission_title=submission.content['title']['value']
         )
+
+        if subject in sent_subjects:
+            return None
+
         reviews = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{review_name}' in reply['invitations']]
 
         formatted_reviews = ''
@@ -56,7 +63,7 @@ def process(client, invitation):
                 submission_forum=submission.id
             )
 
-            client.post_message(
+            return client.post_message(
                 subject=subject,
                 recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
                 message=message,
@@ -64,8 +71,12 @@ def process(client, invitation):
                 replyTo=contact_email
             )
 
-    if fields_to_include:
-        openreview.tools.concurrent_requests(send_reviews_email, active_submissions)
-        print('Review emails sent to authors')
+        return None
+
+    messages = openreview.tools.concurrent_requests(send_reviews_email, active_submissions)
+    len_messages = len([m for m in messages if m is not None])
+
+    if len_messages:
+        print(f'{len_messages} review emails sent to authors')
     else:
-        print('No fields were selected; please set the review fields to include in the email to be sent to authors')
+        print('No new review emails sent to authors')
