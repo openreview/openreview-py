@@ -4127,8 +4127,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                                 'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in ethics_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
-                        'readers': ethics_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),
-                        'nonreaders': ethics_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
+                        'readers': ['${2/note/readers}'],
+                        'nonreaders': ['${2/note/nonreaders}'],
                         'writers': [venue_id],
                         'note': {
                             'id': {
