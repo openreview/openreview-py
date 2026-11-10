@@ -266,6 +266,9 @@ def process(client, edit, invitation):
 
         choice = result['choices'][0]
         if choice.get('finish_reason') == 'content_filter':
+            # the model declined the request, e.g. its safety classifiers; the response says why when the provider
+            # reports it, like the category of a Claude refusal
+            print('The LLM declined the request:', result)
             answer = 'Sorry, I cannot help with this request.'
         else:
             content = choice['message'].get('content') or ''

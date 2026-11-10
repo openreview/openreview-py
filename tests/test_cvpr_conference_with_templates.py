@@ -806,6 +806,9 @@ class TestCVPRConferenceWithTemplates():
                         'id': '${2/content/anonGroupId/value}/-/LLM_Interaction',
                         # one message at a time: a new message waits for the answer to the previous one
                         'preprocess': edit_invitations_builder.get_process_content('workflow_process/llm_chat_preprocess.py'),
+                        # a committee member who sends more than 20 messages in an hour, e.g. through an agent, has to
+                        # pass a human verification challenge; the answers are posted by the venue, which is not counted
+                        'humanVerificationRequired': { 'limit': 20, 'windowMs': 3600000 },
                         'process': '''def process(client, edit, invitation):
     import base64
     import requests
@@ -994,6 +997,8 @@ class TestCVPRConferenceWithTemplates():
                 # each chat has its own copy of the model and the token limit, readable by the venue only
                 assert chat_invitation.content['llm_model'] == { 'value': 'claude-sonnet-4-6', 'readers': ['thecvf.com/CVPR/2027/Conference'] }
                 assert chat_invitation.content['llm_token_limit'] == { 'value': 1000000, 'readers': ['thecvf.com/CVPR/2027/Conference'] }
+                # more than 20 messages in an hour need a human verification challenge
+                assert chat_invitation.humanVerificationRequired == { 'limit': 20, 'windowMs': 3600000 }
                 # the model, the tokens and the cost stored in the edit of each answer are readable by the venue only
                 assert chat_invitation.edit['content']['model']['readers'] == ['thecvf.com/CVPR/2027/Conference']
                 assert chat_invitation.edit['content']['tokens']['readers'] == ['thecvf.com/CVPR/2027/Conference']
@@ -1185,6 +1190,9 @@ class TestCVPRConferenceWithTemplates():
                         'id': '${2/content/anonGroupId/value}/-/LLM_Interaction',
                         # one message at a time: a new message waits for the answer to the previous one
                         'preprocess': edit_invitations_builder.get_process_content('workflow_process/llm_chat_preprocess.py'),
+                        # a committee member who sends more than 20 messages in an hour, e.g. through an agent, has to
+                        # pass a human verification challenge; the answers are posted by the venue, which is not counted
+                        'humanVerificationRequired': { 'limit': 20, 'windowMs': 3600000 },
                         'process': '''def process(client, edit, invitation):
     import base64
     import requests
@@ -1790,6 +1798,25 @@ class TestCVPRConferenceWithTemplates():
         assert replies_block['cache_control'] == { 'type': 'ephemeral', 'ttl': '1h' }
         assert question_block['text'] == 'Which critique is best supported by the paper?'
         assert question_block['cache_control'] == { 'type': 'ephemeral', 'ttl': '1h' }
+
+        # a committee member who sends too many messages has to pass a human verification challenge, and the answers
+        # of the assistant, posted by the venue, are not counted: with a limit of 2, the area chair, who sent one
+        # message, gets the answer to a second one, although the venue already posted more than 2 edits in the chat
+        openreview_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2027/Conference/-/Edit',
+            readers=['thecvf.com/CVPR/2027/Conference'],
+            writers=['thecvf.com/CVPR/2027/Conference'],
+            signatures=['thecvf.com/CVPR/2027/Conference'],
+            invitation=openreview.api.Invitation(
+                id=f'{ac_anon_group_id}/-/LLM_Interaction',
+                humanVerificationRequired={ 'limit': 2, 'windowMs': 3600000 }
+            )
+        )
+        _, _, message_edit = ask('ac1@cvpr.cc', '~AC_CVPROne1', 2, 'Area_Chair_', 'Which review should weigh the most?')
+        answer = get_answer(ac_anon_group_id, message_edit)
+        assert answer.content['message']['value'] == 'Answer from the LLM mock to: Which review should weigh the most?'
+        with pytest.raises(openreview.OpenReviewException, match=r'Human verification required'):
+            ask('ac1@cvpr.cc', '~AC_CVPROne1', 2, 'Area_Chair_', 'And the rebuttal?')
 
         # point the chats back to the LLM gateway
         save_settings('Reviewers', 'https://litellm.openreview.net')
