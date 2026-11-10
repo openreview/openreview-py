@@ -40,6 +40,8 @@ class Journal(object):
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
         self.retracted_venue_id = f'{venue_id}/Retracted_Acceptance'
+        self.retracted_by_authors_venue = 'Retracted by Authors'
+        self.retracted_by_editors_venue = 'Retracted by Editors'
         self.assigning_AE_venue_id = f'{venue_id}/Assigning_AE'
         self.assigned_AE_venue_id = f'{venue_id}/Assigned_AE'
         self.accepted_venue_id = venue_id
@@ -160,6 +162,9 @@ class Journal(object):
 
     def get_retraction_release_id(self, number=None):
         return self.__get_invitation_id(name='Retraction_Release', number=number)
+
+    def get_editorial_retraction_id(self, number=None):
+        return self.__get_invitation_id(name='Editorial_Retraction', number=number)
 
     def get_retracted_id(self):
         return self.__get_invitation_id(name='Retracted')
@@ -1150,6 +1155,37 @@ class Journal(object):
                 '}'
             ]
             return '\n'.join(bibtex)
+
+    def post_retracted_submission(self, submission, venue):
+        """Move an accepted submission to the retracted status.
+
+        Keeps the authors anonymous in the BibTeX entry when their names have not
+        been released to the public.
+
+        Side effects: posts a note edit through the Retracted invitation, whose
+        process expires the remaining paper invitations.
+
+        :param submission: The accepted submission note to retract.
+        :type submission: openreview.api.Note
+        :param venue: The public label of the retraction, either ``retracted_by_authors_venue`` or ``retracted_by_editors_venue``.
+        :type venue: str
+        :return: The posted note edit.
+        :rtype: dict
+        """
+        author_readers = submission.content['authors'].get('readers', [])
+        return self.client.post_note_edit(invitation=self.get_retracted_id(),
+            signatures=[self.venue_id],
+            note=openreview.api.Note(id=submission.id,
+                content={
+                    '_bibtex': {
+                        'value': self.get_bibtex(submission, self.retracted_venue_id, anonymous=(author_readers and author_readers != ['everyone']))
+                    },
+                    'venue': {
+                        'value': venue
+                    }
+                }
+            )
+        )
 
     def get_late_invitees(self, invitation_id):
         """Find invitees of an invitation who have not yet submitted a response.
