@@ -110,6 +110,7 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': venue.reviewers_name },
             'authors_name': { 'value': venue.authors_name },
             'additional_readers': { 'value': additional_readers },
+            'workflow_stage_name': { 'value': 'decision' },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases decisions to the specified readers.' }
         },
         await_process=True
