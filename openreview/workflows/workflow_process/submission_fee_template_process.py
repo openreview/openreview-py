@@ -4,4 +4,5 @@ def process(client, edit, invitation):
     stage_name = edit.content['name']['value']
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
-    edit_invitations_builder.set_edit_dates_invitation(f'{domain.id}/-/{stage_name}', include_expiration_date=False)
+    edit_invitations_builder.set_edit_dates_invitation(f'{domain.id}/-/{stage_name}')
+    edit_invitations_builder.set_edit_payment_amount_invitation(f'{domain.id}/-/{stage_name}')

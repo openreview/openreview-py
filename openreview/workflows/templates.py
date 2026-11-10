@@ -65,6 +65,7 @@ class Templates():
         self.setup_llm_pdf_response_template_invitation()
         self.setup_submission_fee_payment_template_invitation()
         self.setup_fee_waiver_request_template_invitation()
+        self.setup_fee_waiver_decision_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -3261,7 +3262,7 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'due_date': {
                         'order': 4,
-                        'description': 'When is the submission fee due? Authors can still pay after this date, submissions left unpaid are resolved by the venue.',
+                        'description': 'When is the submission fee due? This is the deadline shown to the authors.',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -3270,8 +3271,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'amount': {
+                    'expiration_date': {
                         'order': 5,
+                        'description': 'When should the payments close? Authors can not start a payment after this date. A payment started before it can still be completed for up to 24 hours, so this date must be at least 24 hours before the program chairs start desk rejecting the submissions with unpaid fees.',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        }
+                    },
+                    'amount': {
+                        'order': 6,
                         'description': 'Fee per submission, in the minor unit of the currency: 2000 is 20.00 USD.',
                         'value': {
                             'param': {
@@ -3281,7 +3292,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'currency': {
-                        'order': 6,
+                        'order': 7,
                         'description': 'Currency of the fee.',
                         'value': {
                             'param': {
@@ -3292,7 +3303,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'submission_name': {
-                        'order': 7,
+                        'order': 8,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -3312,7 +3323,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Authors of every active submission pay a submission fee through the OpenReview payment processor. Payments are visible to the program chairs, the authors of the submission and OpenReview support.',
+                    'description': 'Authors of every active submission pay a submission fee through the OpenReview payment processor, and are notified by email when the fee of their submission is paid. Submission fees are non-refundable. Payments are visible to the program chairs, the authors of the submission and OpenReview support. Authors can start a payment until the expiration date and have 24 hours to complete it: do not desk reject the submissions with unpaid fees until 24 hours after the expiration date.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -3323,6 +3334,9 @@ If you would like to change your decision, please follow the link in the previou
                         },
                         'currency': {
                             'value': '${4/content/currency/value}'
+                        },
+                        'submission_fee_payment_process_script': {
+                            'value': self.get_process_content('process/submission_fee_payment_process.py')
                         }
                     },
                     'edit': {
@@ -3357,6 +3371,16 @@ If you would like to change your decision, please follow the link in the previou
                             'invitees': ['${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors', support_user_id],
                             'cdate': '${4/content/activation_date/value}',
                             'duedate': '${4/content/due_date/value}',
+                            'expdate': '${4/content/expiration_date/value}',
+                            'description': 'Submission fees are non-refundable.',
+                            'process': '''def process_update(client, payment, invitation, existing_payment):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['submission_fee_payment_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process_update'](client, payment, invitation, existing_payment)''',
                             ## Checkout reads the amount from here, never from the payer
                             'content': {
                                 'amount': {
@@ -3372,8 +3396,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'writers': [support_user_id],
                                 'payment': {
                                     'note': '${4/content/noteId/value}',
-                                    ## Fixed to the fee, also for waived payments: they record the fee that was waived
-                                    'amount': '${6/content/amount/value}',
+                                    'amount': { 'param': { 'minimum': 0 } },
                                     'currency': '${6/content/currency/value}',
                                     'status': { 'param': { 'enum': ['pending', 'paid', 'waived', 'refunded', 'disputed', 'expired'] } },
                                     ## The payer, or support for the statuses support asserts
@@ -3400,6 +3423,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/fee_waiver_request_template_process.py'),
             edit = {
                 'signatures': [support_user_id],
                 'readers': [self.template_domain],
@@ -3451,8 +3475,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'payment_name': {
+                    'expiration_date': {
                         'order': 5,
+                        'description': 'When should the waiver requests close? A waiver can only settle a fee while its payments are open, so this date should not be later than the expiration date of the submission fee.',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        }
+                    },
+                    'payment_name': {
+                        'order': 6,
                         'description': 'Name of the submission fee step whose fee the waivers settle. Default is Submission_Fee_Payment.',
                         'value': {
                             'param': {
@@ -3463,15 +3497,27 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'decision_name': {
+                        'order': 7,
+                        'description': 'Name of the step that decides the waiver requests. Default is Fee_Waiver_Decision.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Fee_Waiver_Decision'
+                            }
+                        }
+                    },
                     'auto_grant_waivers': {
-                        'order': 6,
+                        'order': 8,
                         'description': 'Should every waiver request be granted automatically?',
                         'value': {
                             'param': {
                                 'type': 'boolean',
                                 'enum': [
                                     { 'value': True, 'description': 'Yes, grant every waiver request automatically' },
-                                    { 'value': False, 'description': 'No, OpenReview support decides each waiver request' }
+                                    { 'value': False, 'description': 'No, each waiver request waits for a decision of the program chairs or OpenReview support' }
                                 ],
                                 'input': 'radio',
                                 'default': True
@@ -3479,7 +3525,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'submission_name': {
-                        'order': 7,
+                        'order': 9,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -3495,11 +3541,7 @@ If you would like to change your decision, please follow the link in the previou
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
                     'invitees': ['${3/content/venue_id/value}'],
-                    ## Signed by the super user instead of the venue, and so are the child invitations:
-                    ## their processes read the submissions of the venue and record a granted waiver as
-                    ## a waived payment, which only support can post. The program chairs can not edit
-                    ## the dates, support changes them by posting this template again
-                    'signatures': ['~Super_User1'],
+                    'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
@@ -3511,6 +3553,9 @@ If you would like to change your decision, please follow the link in the previou
                     'content': {
                         'payment_name': {
                             'value': '${4/content/payment_name/value}'
+                        },
+                        'decision_name': {
+                            'value': '${4/content/decision_name/value}'
                         },
                         'auto_grant_waivers': {
                             'value': '${4/content/auto_grant_waivers/value}'
@@ -3545,17 +3590,19 @@ If you would like to change your decision, please follow the link in the previou
                         'replacement': True,
                         'invitation': {
                             'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
-                            'signatures': ['~Super_User1'],
+                            'signatures': ['${5/content/venue_id/value}'],
                             'readers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors', support_user_id],
                             'writers': ['${5/content/venue_id/value}'],
                             'invitees': ['${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors'],
                             'cdate': '${4/content/activation_date/value}',
                             'duedate': '${4/content/due_date/value}',
+                            'expdate': '${4/content/expiration_date/value}',
                             'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['fee_waiver_request_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)''',
@@ -3563,7 +3610,8 @@ If you would like to change your decision, please follow the link in the previou
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['fee_waiver_request_preprocess_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)''',
@@ -3619,6 +3667,130 @@ If you would like to change your decision, please follow the link in the previou
                                                     'input': 'radio'
                                                 }
                                             }
+                                        },
+                                        'status': {
+                                            'value': 'Pending'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_fee_waiver_decision_template_invitation(self):
+
+        support_user_id = self.support_user_id
+
+        invitation = Invitation(id=f'{self.template_domain}/-/Fee_Waiver_Decision',
+            invitees=[support_user_id],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            edit = {
+                'signatures': [support_user_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Fee_Waiver_Decision.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Fee_Waiver_Decision'
+                            }
+                        }
+                    },
+                    'payment_name': {
+                        'order': 3,
+                        'description': 'Name of the submission fee step whose fee the waivers settle. Default is Submission_Fee_Payment.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission_Fee_Payment'
+                            }
+                        }
+                    },
+                    'request_name': {
+                        'order': 4,
+                        'description': 'Name of the step where authors request the waivers. Default is Fee_Waiver_Request.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Fee_Waiver_Request'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}', support_user_id],
+                    'signatures': [support_user_id],
+                    'readers': ['${3/content/venue_id/value}', support_user_id],
+                    'writers': [support_user_id],
+                    'description': 'A decision settles a fee waiver request. An accepted request waives the submission fee of the submission: OpenReview support records it as a waived payment. A rejected request leaves the fee due.',
+                    'content': {
+                        'payment_name': {
+                            'value': '${4/content/payment_name/value}'
+                        },
+                        'request_name': {
+                            'value': '${4/content/request_name/value}'
+                        }
+                    },
+                    'preprocess': self.get_process_content('process/fee_waiver_decision_pre_process.py'),
+                    'process': self.get_process_content('process/fee_waiver_decision_process.py'),
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                'items': [
+                                    { 'value': '${7/content/venue_id/value}', 'optional': True },
+                                    { 'value': support_user_id, 'optional': True }
+                                ]
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', support_user_id],
+                        'writers': [support_user_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withContent': {
+                                        'status': 'Pending'
+                                    }
+                                }
+                            },
+                            'content': {
+                                'status': {
+                                    'order': 1,
+                                    'description': 'Decision on the fee waiver request.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Accepted', 'Rejected'],
+                                            'input': 'radio'
                                         }
                                     }
                                 }
