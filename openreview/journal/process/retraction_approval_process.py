@@ -11,16 +11,7 @@ def process(client, edit, invitation):
         print('Release retraction request')
         journal.invitation_builder.set_note_retraction_release_invitation(submission)
 
-        author_readers = submission.content['authors'].get('readers', [])
-        client.post_note_edit(invitation= journal.get_retracted_id(),
-                                signatures=[venue_id],
-                                note=openreview.api.Note(id=submission.id,
-                                content= {
-                                    '_bibtex': {
-                                        'value': journal.get_bibtex(submission, journal.retracted_venue_id, anonymous=(author_readers and author_readers != ['everyone']))
-                                    }
-                                }
-        ))
+        journal.post_retracted_submission(submission, journal.retracted_by_authors_venue)
 
     ## Send email to Authors
     print('Send email to authors')
