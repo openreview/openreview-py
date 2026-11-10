@@ -3935,9 +3935,39 @@ Please note that responding to this email will direct your reply to joelle@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_rating_enabling_note['id'])       
+        helpers.await_queue_edit(openreview_client, edit_id=review_rating_enabling_note['id'])
+
+        rating_invitations = openreview_client.get_invitations(prefix=f'{venue_id}/Paper4/Reviewer_.*', invitation=f'{venue_id}/-/Rating')
+        assert len(rating_invitations) == 3
+
+        ## Post a late review after review rating started, it should get its own rating invitation with the same due date
+        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password=helpers.strong_password)
+        hugo_anon_groups=hugo_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Hugo_Larochelle1')
+        assert len(hugo_anon_groups) == 1
+        hugo_review_note = hugo_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
+            signatures=[hugo_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'], process_index=1)
+
+        hugo_rating_invitation = openreview_client.get_invitation(f'{hugo_anon_groups[0].id}/-/Rating')
+        assert hugo_rating_invitation.edit['note']['replyto'] == hugo_review_note['note']['id']
+        assert hugo_rating_invitation.duedate == rating_invitations[0].duedate
 
         reviews=openreview_client.get_notes(forum=note_id_4, invitation=f'{venue_id}/Paper4/-/Review', sort= 'number:asc')
+        assert len(reviews) == 4
 
         for review in reviews:
             signature=review.signatures[0]
