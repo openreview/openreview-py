@@ -219,6 +219,20 @@ class TestARRCommitmentWorkflow():
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision_Release')
         assert openreview_client.get_invitation(f'{venue_id}/-/Submission_Change_After_Deadline')
 
+        # camera-ready revision is available for accepted commitments, authors upload a new PDF
+        # while the link to the ARR submission and the paper type are kept from the commitment
+        camera_ready_invitation = openreview_client.get_invitation(f'{venue_id}/-/Camera_Ready_Revision')
+        assert camera_ready_invitation.content['source']['value']['with_decision_accept'] == True
+        camera_ready_content = camera_ready_invitation.edit['invitation']['edit']['note']['content']
+        assert 'pdf' in camera_ready_content
+        assert 'paper_link' not in camera_ready_content
+        assert 'paper_type' not in camera_ready_content
+        assert 'email_sharing' not in camera_ready_content
+        assert 'data_release' not in camera_ready_content
+        assert 'readers' not in camera_ready_content['authors']
+        assert openreview_client.get_invitation(f'{venue_id}/-/Camera_Ready_Revision/Dates')
+        assert openreview_client.get_invitation(f'{venue_id}/-/Camera_Ready_Revision/Form_Fields')
+
         # release steps are grouped under their timeline stage
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision_Release').content['workflow_stage_name']['value'] == 'decision'
         assert openreview_client.get_invitation(f'{venue_id}/-/Accept_Submission_Change_After_Decision').content['workflow_stage_name']['value'] == 'public_release'
@@ -425,6 +439,73 @@ class TestARRCommitmentWorkflow():
             })
         )
         helpers.await_queue_edit(openreview_client, edit_id=decision['id'])
+
+    def test_camera_ready_revision(self, openreview_client, helpers):
+
+        venue_id = 'ABCD.cc/2026/Commitment'
+        pc_client = OpenReviewClient(username='commitment_pc@abcd.cc', password=helpers.strong_password)
+
+        now = datetime.datetime.now()
+        due_ms = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
+        pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Camera_Ready_Revision/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+                'due_date': { 'value': due_ms },
+                'expiration_date': { 'value': due_ms }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Camera_Ready_Revision-0-1', count=2)
+
+        # only the accepted commitment gets a camera-ready revision invitation
+        invitations = openreview_client.get_invitations(invitation=f'{venue_id}/-/Camera_Ready_Revision')
+        assert len(invitations) == 1
+        assert invitations[0].id == f'{venue_id}/Submission1/-/Camera_Ready_Revision'
+        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/Submission2/-/Camera_Ready_Revision') is None
+
+        submission = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', number=1)[0]
+        paper_link = submission.content['paper_link']['value']
+        paper_type = submission.content['paper_type']['value']
+
+        # the link to the ARR submission can not be changed in the camera-ready revision
+        author_client = OpenReviewClient(username='author_one@arrtest.cc', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException):
+            author_client.post_note_edit(
+                invitation=f'{venue_id}/Submission1/-/Camera_Ready_Revision',
+                signatures=[f'{venue_id}/Submission1/Authors'],
+                note=Note(
+                    content={
+                        'title': { 'value': submission.content['title']['value'] },
+                        'abstract': { 'value': submission.content['abstract']['value'] },
+                        'authors': { 'value': submission.content['authors']['value'] },
+                        'keywords': { 'value': submission.content['keywords']['value'] },
+                        'pdf': { 'value': '/pdf/' + 'c' * 40 + '.pdf' },
+                        'paper_link': { 'value': 'anotherNoteId' }
+                    }
+                ))
+
+        revision_edit = author_client.post_note_edit(
+            invitation=f'{venue_id}/Submission1/-/Camera_Ready_Revision',
+            signatures=[f'{venue_id}/Submission1/Authors'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Commitment Paper Camera Ready' },
+                    'abstract': { 'value': submission.content['abstract']['value'] },
+                    'authors': { 'value': submission.content['authors']['value'] },
+                    'keywords': { 'value': submission.content['keywords']['value'] },
+                    'pdf': { 'value': '/pdf/' + 'c' * 40 + '.pdf' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
+
+        submission = openreview_client.get_note(submission.id)
+        assert submission.content['title']['value'] == 'Commitment Paper Camera Ready'
+        assert submission.content['pdf']['value'] == '/pdf/' + 'c' * 40 + '.pdf'
+        assert submission.content['paper_link']['value'] == paper_link
+        assert submission.content['paper_type']['value'] == paper_type
+
+        messages = openreview_client.get_messages(to='author_one@arrtest.cc', subject='ABCD Commitment 2026 has received a new revision of your submission titled Commitment Paper Camera Ready')
+        assert len(messages) == 1
 
     def test_request_without_acs(self, openreview_client, helpers):
 
