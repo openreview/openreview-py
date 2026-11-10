@@ -6070,19 +6070,22 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         reviews = self.client.get_notes(forum=note.forum, invitation=self.journal.get_review_id(number=note.number))
 
         for review in reviews:
-            signature=review.signatures[0]
-            if signature.startswith(paper_reviewers_id):
-                self.client.post_invitation_edit(invitations=self.journal.get_review_rating_id(),
-                content={ 
-                    'noteId': { 'value': note.id }, 
-                    'noteNumber': { 'value': note.number },
-                    'replytoId': { 'value': review.id },
-                    'signature': { 'value': signature },
-                    'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
-                },
-                readers=[self.journal.venue_id],
-                writers=[self.journal.venue_id],
-                signatures=[self.journal.venue_id]
+            if review.signatures[0].startswith(paper_reviewers_id):
+                self.set_note_review_rating_invitation_for_review(note, review, duedate)
+
+    def set_note_review_rating_invitation_for_review(self, note, review, duedate):
+        # duedate may be a datetime (rating stage just opened) or epoch millis (copied from an existing Rating invitation)
+        return self.client.post_invitation_edit(invitations=self.journal.get_review_rating_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'replytoId': { 'value': review.id },
+                'signature': { 'value': review.signatures[0] },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
         )
 
     def set_review_rating_enabling_invitation(self):
