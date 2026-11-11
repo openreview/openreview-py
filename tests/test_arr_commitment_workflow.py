@@ -232,6 +232,8 @@ class TestARRCommitmentWorkflow():
         assert 'readers' not in camera_ready_content['authors']
         assert openreview_client.get_invitation(f'{venue_id}/-/Camera_Ready_Revision/Dates')
         assert openreview_client.get_invitation(f'{venue_id}/-/Camera_Ready_Revision/Form_Fields')
+        # camera-ready opens after decisions are released so authors can not infer acceptance early
+        assert camera_ready_invitation.cdate > openreview_client.get_invitation(f'{venue_id}/-/Decision_Release').cdate
 
         # release steps are grouped under their timeline stage
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision_Release').content['workflow_stage_name']['value'] == 'decision'
@@ -447,6 +449,29 @@ class TestARRCommitmentWorkflow():
 
         now = datetime.datetime.now()
         due_ms = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
+
+        # camera-ready can not open before decisions are released
+        with pytest.raises(openreview.OpenReviewException, match=r'Camera Ready Revision activation date must be after the Decision Release activation date'):
+            pc_client.post_invitation_edit(
+                invitations=f'{venue_id}/-/Camera_Ready_Revision/Dates',
+                content={
+                    'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+                    'due_date': { 'value': due_ms },
+                    'expiration_date': { 'value': due_ms }
+                }
+            )
+
+        # release decisions
+        pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Decision_Release/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Decision_Release-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Decision-0-1', count=3)
+
+        now = datetime.datetime.now()
         pc_client.post_invitation_edit(
             invitations=f'{venue_id}/-/Camera_Ready_Revision/Dates',
             content={

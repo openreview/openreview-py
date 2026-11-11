@@ -62,7 +62,7 @@ def process(client, edit, invitation):
     # the link to the ARR submission and the paper type can not be changed
     venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
         name='Camera_Ready_Revision',
-        start_date=submission_duedate + datetime.timedelta(weeks=4),
+        start_date=submission_duedate + datetime.timedelta(weeks=5),
         due_date=submission_duedate + datetime.timedelta(weeks=6),
         only_accepted=True,
         allow_author_reorder=openreview.stages.AuthorReorder.ALLOW_INSTITUTION_EDIT,
