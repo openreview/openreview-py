@@ -27,6 +27,13 @@ def process(client, edit, invitation):
     ## Expire ack task
     journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=submission.number, reviewer_id=signature_group.members[0]))
 
+    ## If review rating already started, the review came in late: create its Rating invitation with the same due date as the others,
+    ## otherwise the decision is never enabled because the rating process waits for every review to be rated
+    rating_invitations = client.get_invitations(prefix=f'{journal.get_reviewers_id(number=submission.number, anon=True)}.*', invitation=journal.get_review_rating_id(), type='all')
+    if rating_invitations and review_note.signatures[0].startswith(journal.get_reviewers_id(number=submission.number, anon=True)):
+        print('Review rating already started, create rating invitation for the new review')
+        journal.invitation_builder.set_note_review_rating_invitation_for_review(submission, review_note, rating_invitations[0].duedate)
+
     if journal.get_release_review_id(number=submission.number) in review_note.invitations:
         print('Review already released, exit')
         return
