@@ -114,7 +114,7 @@ def process(client, edit, invitation):
         remove_fields=['email_sharing', 'data_release']
     )
 
-    venue.setup(note.content['program_chair_emails']['value'])
+    venue.setup(note.content['program_chair_emails']['value'], note.content.get('publication_chairs_emails', {}).get('value', []))
     venue.invitation_builder.set_venue_template_invitations()
 
     client.post_group_edit(
@@ -352,6 +352,8 @@ def process(client, edit, invitation):
         'submission_area_chair_group_names',
         'senior_area_chairs_support',
         'senior_area_chair_groups_names',
+        'publication_chairs_support',
+        'publication_chairs_emails',
         'release_role_participation',
         'venue_organizer_agreement'
     ]
