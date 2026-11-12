@@ -225,7 +225,12 @@ var renderData = function(venueStatusData) {
         return '<div><h4><strong>No Recommendation</strong></h4></div>'
       }
     ],
-    extraClasses: 'console-table'
+    extraClasses: 'console-table',
+    postRenderTable: function() {
+      $('.console-table th').eq(0).css('width', '65px'); // #
+      $('.console-table th').eq(2).css('width', '40%'); // Your Review
+      $('.console-table th').eq(3).css('width', '28%'); // Decision Status
+    }
   })
 
 }
