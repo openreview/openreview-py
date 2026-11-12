@@ -41,7 +41,7 @@ class Helpers:
         return Helpers._default_dob
 
     @staticmethod
-    def create_user(email, first, last, alternates=[], institution=None, fullname=None, dblp_url=None, dob=None):
+    def create_user(email, first, last, alternates=[], institution=None, fullname=None, dblp_url=None, dob=None, country='US'):
 
         fullname = f'{first} {last}' if fullname is None else fullname
         dob = Helpers.default_dob() if dob is None else dob
@@ -84,7 +84,7 @@ class Helpers:
             'start': 2017,
             'end': None,
             'institution': {
-                'country': 'US',
+                'country': country,
                 'domain': domain,
             }
         } for domain in institutions]

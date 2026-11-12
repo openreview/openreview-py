@@ -2072,7 +2072,7 @@ class EditInvitationsBuilder(object):
                 'writers': [venue_id],
                 'content': {
                     'amount': {
-                        'description': 'Fee per submission, in the minor unit of the currency: 2000 is 20.00 USD. Fees that are already paid or waived, and payments already in progress, keep the amount they were started with.',
+                        'description': 'Full fee per submission, in the minor unit of the currency: 2000 is 20.00 USD. A submission with an author in a country that has a lower fee pays that fee instead. Fees that are already paid or waived, and payments already in progress, keep the amount they were started with.',
                         'value': {
                             'param': {
                                 'type': 'integer',
@@ -2088,14 +2088,53 @@ class EditInvitationsBuilder(object):
                         'amount': {
                             'value': '${4/content/amount/value}'
                         }
-                    },
-                    'edit': {
-                        'invitation': {
-                            'content': {
-                                'amount': {
-                                    'value': '${6/content/amount/value}'
-                                }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_payment_country_fees_invitation(self, super_invitation_id, support_group_id):
+
+        venue_id = self.venue_id
+
+        invitation_id = super_invitation_id + '/Country_Fees'
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id, support_group_id],
+            signatures = [venue_id],
+            readers = [venue_id, support_group_id],
+            writers = [venue_id],
+            preprocess = self.get_process_content('workflow_process/edit_submission_fee_country_fees_pre_process.py'),
+            edit = {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs'), 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [venue_id, support_group_id],
+                'writers': [venue_id],
+                'content': {
+                    'country_fees': {
+                        'description': 'Fees by country, from ISO 3166-1 alpha-2 codes to fees from 0 to the full amount, in the minor unit of the currency, for example {"ET": 0, "IN": 1000}. A submission pays the lowest of the full amount and the fees of the countries of its authors\' institutions. Enter {"delete": true} to remove the table, so every submission pays the full amount. Fees that are already paid or waived, and payments already in progress, keep the amount they were started with.',
+                        'value': {
+                            'param': {
+                                'type': 'json'
                             }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'country_fees': {
+                            'value': '${4/content/country_fees/value}'
                         }
                     }
                 }

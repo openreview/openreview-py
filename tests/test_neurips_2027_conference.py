@@ -1,7 +1,6 @@
 import pytest
 import datetime
 import openreview
-from openreview.api import Note
 from openreview.api import Payment
 
 class TestNeurIPS2027Conference():
@@ -70,8 +69,7 @@ class TestNeurIPS2027Conference():
         assert submission_invitation.duedate == openreview.tools.datetime_millis(abstract_due_date)
 
         assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Submission_Fee_Payment') is None
-        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Fee_Waiver_Request') is None
-        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Fee_Waiver_Decision') is None
+        assert openreview.tools.get_invitation(openreview_client, f'{venue_id}/-/Fee_Waiver') is None
 
     def test_submit_abstracts(self, openreview_client, helpers):
 
@@ -185,7 +183,27 @@ class TestNeurIPS2027Conference():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Submission', count=5)
+        author_two_client.post_note_edit(
+            invitation=f'{venue_id}/-/Submission',
+            signatures=['~AuthorTwo_ICMLTwentySeven1'],
+            note=openreview.api.Note(
+                license='CC BY 4.0',
+                content={
+                    'title': { 'value': 'NeurIPS paper title 6' },
+                    'abstract': { 'value': 'This is the abstract of submission 6' },
+                    'authors': {
+                        'value': [
+                            { 'fullname': 'AuthorTwo ICMLTwentySeven', 'username': '~AuthorTwo_ICMLTwentySeven1', 'institutions': [{ 'domain': 'icml2027.cc', 'country': 'US' }] }
+                        ]
+                    },
+                    'keywords': { 'value': ['machine learning'] },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Submission', count=6)
 
         submissions = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc')
         assert [submission.content['title']['value'] for submission in submissions] == [
@@ -193,12 +211,13 @@ class TestNeurIPS2027Conference():
             'NeurIPS paper title 2',
             'NeurIPS paper title 3',
             'NeurIPS paper title 4',
-            'NeurIPS paper title 5'
+            'NeurIPS paper title 5',
+            'NeurIPS paper title 6'
         ]
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@neurips2027.cc', password=helpers.strong_password)
         submission_invitation = pc_client.get_invitation(f'{venue_id}/-/Submission')
-        abstract_due_date = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(minutes=30))
+        abstract_due_date = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(hours=3))
 
         edit = pc_client.post_invitation_edit(
             invitations=f'{venue_id}/-/Submission/Dates',
@@ -212,14 +231,32 @@ class TestNeurIPS2027Conference():
         submission_invitation = pc_client.get_invitation(f'{venue_id}/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
 
-    def test_enable_submission_fee(self, openreview_client, helpers):
+    def test_schedule_submission_fee(self, openreview_client, helpers):
 
         venue_id = self.venue_id
         support_group_id = openreview_client.get_group('openreview.net/Support').id
 
+        pc_client = openreview.api.OpenReviewClient(username='programchair@neurips2027.cc', password=helpers.strong_password)
+
         now = datetime.datetime.now()
-        payment_due_date = openreview.tools.datetime_millis(now + datetime.timedelta(weeks=1))
-        payment_expiration_date = openreview.tools.datetime_millis(now + datetime.timedelta(weeks=1, days=1))
+        one_day = 24 * 60 * 60 * 1000
+        payment_due_date = openreview.tools.datetime_millis(now + datetime.timedelta(weeks=3))
+        payment_expiration_date = openreview.tools.datetime_millis(now + datetime.timedelta(weeks=3, days=1))
+
+        full_submission_invitation = pc_client.get_invitation(f'{venue_id}/-/Full_Submission')
+        full_submission_closes = full_submission_invitation.edit['invitation']['expdate']
+        assert full_submission_closes > openreview.tools.datetime_millis(now)
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/Template/-/Fee_Waiver',
+            signatures=[support_group_id],
+            content={
+                'venue_id': { 'value': venue_id },
+                'name': { 'value': 'Fee_Waiver' },
+                'payment_name': { 'value': 'Submission_Fee_Payment' },
+                'submission_name': { 'value': 'Submission' }
+            }
+        )
 
         edit = openreview_client.post_invitation_edit(
             invitations='openreview.net/Template/-/Submission_Fee_Payment',
@@ -227,71 +264,131 @@ class TestNeurIPS2027Conference():
             content={
                 'venue_id': { 'value': venue_id },
                 'name': { 'value': 'Submission_Fee_Payment' },
-                'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+                'activation_date': { 'value': full_submission_closes },
                 'due_date': { 'value': payment_due_date },
                 'expiration_date': { 'value': payment_expiration_date },
                 'amount': { 'value': 3000 },
                 'currency': { 'value': 'USD' },
+                'country_fees': { 'value': {} },
+                'waiver_name': { 'value': 'Fee_Waiver' },
                 'submission_name': { 'value': 'Submission' }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=1)
 
-        payment_invitations = openreview_client.get_all_invitations(invitation=f'{venue_id}/-/Submission_Fee_Payment')
-        assert len(payment_invitations) == 5
-        for payment_invitation in payment_invitations:
-            assert payment_invitation.signatures == [venue_id]
-            assert payment_invitation.duedate == payment_due_date
-            assert payment_invitation.expdate == payment_expiration_date
-            assert payment_invitation.description == 'Submission fees are non-refundable.'
-            assert payment_invitation.content['amount']['value'] == 3000
+        invitation = openreview_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment')
+        assert invitation.cdate == full_submission_closes
+        assert invitation.edit['invitation']['cdate'] == full_submission_closes
+        assert invitation.get_content_value('country_fees') is None
+        assert openreview_client.get_all_invitations(invitation=f'{venue_id}/-/Submission_Fee_Payment') == []
 
-        amount_invitation = openreview_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment/Amount')
-        assert amount_invitation.edit['signatures'] == [f'{venue_id}/Program_Chairs']
-        assert list(amount_invitation.edit['content'].keys()) == ['amount']
-
-        openreview_client.post_invitation_edit(
-            invitations='openreview.net/Template/-/Fee_Waiver_Decision',
-            signatures=[support_group_id],
+        new_full_submission_closes = full_submission_closes + one_day
+        edit = pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Full_Submission/Dates',
             content={
-                'venue_id': { 'value': venue_id },
-                'name': { 'value': 'Fee_Waiver_Decision' },
-                'payment_name': { 'value': 'Submission_Fee_Payment' },
-                'request_name': { 'value': 'Fee_Waiver_Request' }
-            }
-        )
-
-        decision_invitation = openreview_client.get_invitation(f'{venue_id}/-/Fee_Waiver_Decision')
-        assert decision_invitation.signatures == [support_group_id]
-
-        edit = openreview_client.post_invitation_edit(
-            invitations='openreview.net/Template/-/Fee_Waiver_Request',
-            signatures=[support_group_id],
-            content={
-                'venue_id': { 'value': venue_id },
-                'name': { 'value': 'Fee_Waiver_Request' },
-                'activation_date': { 'value': openreview.tools.datetime_millis(now) },
-                'due_date': { 'value': payment_due_date },
-                'expiration_date': { 'value': payment_expiration_date },
-                'payment_name': { 'value': 'Submission_Fee_Payment' },
-                'decision_name': { 'value': 'Fee_Waiver_Decision' },
-                'auto_grant_waivers': { 'value': False },
-                'submission_name': { 'value': 'Submission' }
+                'activation_date': { 'value': full_submission_invitation.cdate },
+                'due_date': { 'value': full_submission_invitation.edit['invitation']['duedate'] + one_day },
+                'expiration_date': { 'value': new_full_submission_closes }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Fee_Waiver_Request-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, f'{venue_id}/-/Full_Submission-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=2)
 
-        waiver_invitation = openreview_client.get_invitation(f'{venue_id}/-/Fee_Waiver_Request')
-        assert waiver_invitation.signatures == [venue_id]
-        assert waiver_invitation.content['auto_grant_waivers']['value'] == False
+        invitation = openreview_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment')
+        assert invitation.cdate == new_full_submission_closes
+        assert invitation.edit['invitation']['cdate'] == new_full_submission_closes
 
-        waiver_invitations = openreview_client.get_all_invitations(invitation=f'{venue_id}/-/Fee_Waiver_Request')
-        assert len(waiver_invitations) == 5
-        for waiver_invitation in waiver_invitations:
-            assert waiver_invitation.signatures == [venue_id]
-            assert waiver_invitation.expdate == payment_expiration_date
+        with pytest.raises(openreview.OpenReviewException, match=r'Full Submission expiration date must be earlier than or equal to the submission fee due date'):
+            pc_client.post_invitation_edit(
+                invitations=f'{venue_id}/-/Full_Submission/Dates',
+                content={
+                    'activation_date': { 'value': full_submission_invitation.cdate },
+                    'due_date': { 'value': payment_due_date + one_day },
+                    'expiration_date': { 'value': payment_due_date + one_day + (30*60*1000) }
+                }
+            )
+
+    def test_open_submission_fee(self, openreview_client, helpers):
+
+        venue_id = self.venue_id
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@neurips2027.cc', password=helpers.strong_password)
+
+        now = datetime.datetime.now()
+        submission_invitation = pc_client.get_invitation(f'{venue_id}/-/Submission')
+
+        edit = pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Full_Submission/Dates',
+            content={
+                'activation_date': { 'value': submission_invitation.expdate },
+                'due_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=2)) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=1, minutes=30)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, f'{venue_id}/-/Full_Submission-0-1', count=3)
+
+        full_submission_invitation = pc_client.get_invitation(f'{venue_id}/-/Full_Submission')
+        invitation = pc_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment')
+        assert invitation.cdate > full_submission_invitation.edit['invitation']['expdate']
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The submission fee activation date must be later than or equal to the Full Submission deadline'):
+            pc_client.post_invitation_edit(
+                invitations=f'{venue_id}/-/Submission_Fee_Payment/Dates',
+                content={
+                    'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=2)) },
+                    'due_date': { 'value': invitation.edit['invitation']['duedate'] },
+                    'expiration_date': { 'value': invitation.edit['invitation']['expdate'] }
+                }
+            )
+
+        activation_date = openreview.tools.datetime_millis(now)
+        pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Submission_Fee_Payment/Dates',
+            content={
+                'activation_date': { 'value': activation_date },
+                'due_date': { 'value': invitation.edit['invitation']['duedate'] },
+                'expiration_date': { 'value': invitation.edit['invitation']['expdate'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=3)
+
+        payment_invitations = openreview_client.get_all_invitations(invitation=f'{venue_id}/-/Submission_Fee_Payment')
+        assert len(payment_invitations) == 6
+        for payment_invitation in payment_invitations:
+            assert payment_invitation.signatures == [venue_id]
+            assert payment_invitation.cdate == activation_date
+            assert payment_invitation.duedate == invitation.edit['invitation']['duedate']
+            assert payment_invitation.expdate == invitation.edit['invitation']['expdate']
+            assert payment_invitation.content['amount']['value'] == 3000
+            assert payment_invitation.content['terms']['value'] == 'I agree to the [OpenReview Terms of Use](https://openreview.net/legal/terms) and understand that submission fees are non-refundable.'
+
+        withdrawal_invitation = pc_client.get_invitation(f'{venue_id}/-/Withdrawal')
+        edit = pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Withdrawal/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'expiration_date': { 'value': withdrawal_invitation.edit['invitation']['expdate'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, f'{venue_id}/-/Withdrawal-0-1', count=3)
+
+        desk_rejection_invitation = pc_client.get_invitation(f'{venue_id}/-/Desk_Rejection')
+        edit = pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Desk_Rejection/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'expiration_date': { 'value': desk_rejection_invitation.edit['invitation']['expdate'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, f'{venue_id}/-/Desk_Rejection-0-1', count=3)
+
+        assert openreview_client.get_invitation(f'{venue_id}/Submission5/-/Withdrawal')
+        assert openreview_client.get_invitation(f'{venue_id}/Submission3/-/Desk_Rejection')
 
     def test_pay_submission_fees(self, openreview_client, helpers):
 
@@ -379,18 +476,16 @@ class TestNeurIPS2027Conference():
                 'amount': { 'value': 2500 }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=4)
 
         invitation = openreview_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment')
         assert invitation.content['amount']['value'] == 2500
-        assert invitation.edit['invitation']['content']['amount']['value'] == 2500
 
         payment_invitations = openreview_client.get_all_invitations(invitation=f'{venue_id}/-/Submission_Fee_Payment')
-        assert len(payment_invitations) == 5
+        assert len(payment_invitations) == 6
         for payment_invitation in payment_invitations:
             assert payment_invitation.content['amount']['value'] == 2500
             assert payment_invitation.content['currency']['value'] == 'USD'
-            assert payment_invitation.description == 'Submission fees are non-refundable.'
             assert payment_invitation.edit['payment']['amount'] == { 'param': { 'minimum': 0 } }
 
         assert [(p.status, p.amount) for p in pc_client.get_payments(note=submissions[0].id)] == [('paid', 3000)]
@@ -405,7 +500,7 @@ class TestNeurIPS2027Conference():
         cancelled = author_three_client.cancel_payment(checkout['paymentId'])
         assert cancelled['status'] == 'expired'
 
-    def test_decide_fee_waivers(self, openreview_client, helpers):
+    def test_waive_fee(self, openreview_client, helpers):
 
         venue_id = self.venue_id
         support_group_id = openreview_client.get_group('openreview.net/Support').id
@@ -416,64 +511,22 @@ class TestNeurIPS2027Conference():
 
         submissions = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc')
 
-        edit = author_one_client.post_note_edit(
-            invitation=f'{venue_id}/Submission4/-/Fee_Waiver_Request',
-            signatures=['~AuthorOne_ICMLTwentySeven1'],
-            note=Note(
-                content={
-                    'low_income_economy': { 'value': 'Yes' },
-                    'students_or_unaffiliated': { 'value': 'Yes' },
-                    'no_payment_method': { 'value': 'No' }
-                }
-            )
-        )
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        accepted_request_id = edit['note']['id']
+        assert pc_client.get_all_notes(invitation=f'{venue_id}/-/Fee_Waiver') == []
 
-        edit = author_three_client.post_note_edit(
-            invitation=f'{venue_id}/Submission5/-/Fee_Waiver_Request',
-            signatures=['~AuthorThree_ICMLTwentySeven1'],
-            note=Note(
-                content={
-                    'low_income_economy': { 'value': 'No' },
-                    'students_or_unaffiliated': { 'value': 'No' },
-                    'no_payment_method': { 'value': 'No' }
-                }
-            )
-        )
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        rejected_request_id = edit['note']['id']
-
-        assert author_one_client.get_note(accepted_request_id).content['status']['value'] == 'Pending'
-        assert author_three_client.get_note(rejected_request_id).content['status']['value'] == 'Pending'
-        assert pc_client.get_payments(note=submissions[3].id) == []
-        assert pc_client.get_payments(note=submissions[4].id) == []
-
-        with pytest.raises(openreview.OpenReviewException, match=r'does not have permission to see Invitation NeurIPS.cc/2027/Conference/-/Fee_Waiver_Decision'):
-            author_one_client.post_note_edit(
-                invitation=f'{venue_id}/-/Fee_Waiver_Decision',
-                signatures=[venue_id],
-                note=Note(
-                    id=accepted_request_id,
-                    content={
-                        'status': { 'value': 'Accepted' }
-                    }
-                )
-            )
-
-        edit = pc_client.post_note_edit(
-            invitation=f'{venue_id}/-/Fee_Waiver_Decision',
+        pc_client.post_note_edit(
+            invitation=f'{venue_id}/-/Fee_Waiver',
             signatures=[venue_id],
-            note=Note(
-                id=accepted_request_id,
-                content={
-                    'status': { 'value': 'Accepted' }
-                }
+            note=openreview.api.Note(
+                forum=submissions[3].id,
+                replyto=submissions[3].id,
+                content={ 'comment': { 'value': 'Waived by the program chairs' } }
             )
         )
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Fee_Waiver', count=1)
 
-        assert author_one_client.get_note(accepted_request_id).content['status']['value'] == 'Accepted'
+        waiver_notes = pc_client.get_all_notes(invitation=f'{venue_id}/-/Fee_Waiver')
+        assert [(note.forum, note.signatures, note.content['comment']['value']) for note in waiver_notes] == [(submissions[3].id, [venue_id], 'Waived by the program chairs')]
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/Submission4/-/Submission_Fee_Payment', count=1)
 
         payments = author_three_client.get_payments(note=submissions[3].id)
         assert len(payments) == 1
@@ -482,28 +535,84 @@ class TestNeurIPS2027Conference():
         assert payments[0].signature == support_group_id
         assert payments[0].invitations == [f'{venue_id}/Submission4/-/Submission_Fee_Payment']
 
-        messages = openreview_client.get_messages(to='authorone@icml2027.cc', subject='[NeurIPS 2027] Your fee waiver request has been granted for submission number 4')
+        messages = openreview_client.get_messages(to='authorone@icml2027.cc', subject='[NeurIPS 2027] The submission fee has been waived for submission number 4')
         assert len(messages) == 1
+        assert messages[0]['content']['text'].count('Please note that responding to this email will direct your reply to neurips2027.programchairs@gmail.com.') == 1
 
-        edit = pc_client.post_note_edit(
-            invitation=f'{venue_id}/-/Fee_Waiver_Decision',
-            signatures=[venue_id],
-            note=Note(
-                id=rejected_request_id,
+        with pytest.raises(openreview.OpenReviewException, match=r'already settled'):
+            author_one_client.checkout_payment(invitation=f'{venue_id}/Submission4/-/Submission_Fee_Payment', payment=Payment(note=submissions[3].id))
+
+        assert pc_client.get_payments(note=submissions[4].id) == []
+
+    def test_withdraw_and_desk_reject(self, openreview_client, helpers):
+
+        venue_id = self.venue_id
+
+        author_two_client = openreview.api.OpenReviewClient(username='authortwo@icml2027.cc', password=helpers.strong_password)
+        author_three_client = openreview.api.OpenReviewClient(username='authorthree@icml2027.cc', password=helpers.strong_password)
+        pc_client = openreview.api.OpenReviewClient(username='programchair@neurips2027.cc', password=helpers.strong_password)
+
+        submissions = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc')
+        checkout_in_progress = pc_client.get_payments(note=submissions[1].id, status='pending')[0]
+
+        withdraw_note = author_three_client.post_note_edit(
+            invitation=f'{venue_id}/Submission2/-/Withdrawal',
+            signatures=[f'{venue_id}/Submission2/Authors'],
+            note=openreview.api.Note(
                 content={
-                    'status': { 'value': 'Rejected' }
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' }
                 }
             )
         )
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Withdrawn_Submission')
+        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
 
-        assert author_three_client.get_note(rejected_request_id).content['status']['value'] == 'Rejected'
-        assert pc_client.get_payments(note=submissions[4].id) == []
+        assert openreview_client.get_note(submissions[1].id).content['venueid']['value'] == f'{venue_id}/Withdrawn_Submission'
+        assert openreview_client.get_invitation(f'{venue_id}/Submission2/-/Submission_Fee_Payment').ddate <= openreview.tools.datetime_millis(datetime.datetime.now())
+        assert pc_client.get_payments(id=checkout_in_progress.id)[0].status == 'expired'
 
-        messages = openreview_client.get_messages(to='authorthree@icml2027.cc', subject='[NeurIPS 2027] Your fee waiver request has been rejected for submission number 5')
-        assert len(messages) == 1
-        assert 'The submission fee remains due.' in messages[0]['content']['text']
-        assert messages[0]['content']['text'].count('Please note that responding to this email will direct your reply to neurips2027.programchairs@gmail.com.') == 1
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation NeurIPS.cc/2027/Conference/Submission2/-/Submission_Fee_Payment was not found'):
+            author_two_client.checkout_payment(invitation=f'{venue_id}/Submission2/-/Submission_Fee_Payment', payment=Payment(note=submissions[1].id))
+
+        desk_reject_note = pc_client.post_note_edit(
+            invitation=f'{venue_id}/Submission3/-/Desk_Rejection',
+            signatures=[f'{venue_id}/Program_Chairs'],
+            note=openreview.api.Note(
+                content={
+                    'desk_reject_comments': { 'value': 'The submission fee was not paid.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Desk_Rejected_Submission')
+
+        assert openreview_client.get_note(submissions[2].id).content['venueid']['value'] == f'{venue_id}/Desk_Rejected_Submission'
+        assert openreview_client.get_invitation(f'{venue_id}/Submission3/-/Submission_Fee_Payment').ddate <= openreview.tools.datetime_millis(datetime.datetime.now())
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation NeurIPS.cc/2027/Conference/Submission3/-/Submission_Fee_Payment was not found'):
+            author_three_client.checkout_payment(invitation=f'{venue_id}/Submission3/-/Submission_Fee_Payment', payment=Payment(note=submissions[2].id))
+
+        assert [(p.status, p.amount) for p in pc_client.get_payments(note=submissions[2].id)] == [('expired', 2500)]
+
+        reversion_note = pc_client.post_note_edit(
+            invitation=f'{venue_id}/Submission2/-/Withdrawal_Reversion',
+            signatures=[f'{venue_id}/Program_Chairs'],
+            note=openreview.api.Note(
+                content={
+                    'revert_withdrawal_confirmation': { 'value': 'We approve the reversion of withdrawn submission.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/Submission2/-/Withdrawal_Reversion')
+
+        assert openreview_client.get_note(submissions[1].id).content['venueid']['value'] == f'{venue_id}/Submission'
+        fee_step = openreview_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment')
+        assert author_two_client.get_invitation(f'{venue_id}/Submission2/-/Submission_Fee_Payment').expdate == fee_step.edit['invitation']['expdate']
+
+        checkout = author_two_client.checkout_payment(invitation=f'{venue_id}/Submission2/-/Submission_Fee_Payment', payment=Payment(note=submissions[1].id))
+        assert author_two_client.get_payments(id=checkout['paymentId'])[0].amount == 2500
 
     def test_payments_page(self, openreview_client, helpers):
 
@@ -515,7 +624,6 @@ class TestNeurIPS2027Conference():
         invitations = { i.id: i for i in author_three_client.get_invitations(invitee=True, type='payment', details='replytoNote,repliedPayments') if i.domain == venue_id }
         assert sorted(invitations.keys()) == [
             f'{venue_id}/Submission2/-/Submission_Fee_Payment',
-            f'{venue_id}/Submission3/-/Submission_Fee_Payment',
             f'{venue_id}/Submission4/-/Submission_Fee_Payment',
             f'{venue_id}/Submission5/-/Submission_Fee_Payment'
         ]
@@ -523,11 +631,20 @@ class TestNeurIPS2027Conference():
         submission_two_fee = invitations[f'{venue_id}/Submission2/-/Submission_Fee_Payment']
         assert submission_two_fee.content['amount']['value'] == 2500
         assert submission_two_fee.details['replytoNote']['content']['title']['value'] == 'NeurIPS paper title 2'
-        assert [(p['status'], p['amount'], p['signature']) for p in submission_two_fee.details['repliedPayments']] == [('pending', 3000, '~AuthorTwo_ICMLTwentySeven1')]
+        assert sorted([(p['status'], p['amount'], p['signature']) for p in submission_two_fee.details['repliedPayments']]) == [
+            ('expired', 3000, '~AuthorTwo_ICMLTwentySeven1'),
+            ('pending', 2500, '~AuthorTwo_ICMLTwentySeven1')
+        ]
 
-        assert [(p['status'], p['amount']) for p in invitations[f'{venue_id}/Submission3/-/Submission_Fee_Payment'].details['repliedPayments']] == [('expired', 2500)]
         assert [(p['status'], p['amount']) for p in invitations[f'{venue_id}/Submission4/-/Submission_Fee_Payment'].details['repliedPayments']] == [('waived', 2500)]
         assert invitations[f'{venue_id}/Submission5/-/Submission_Fee_Payment'].details['repliedPayments'] == []
+
+        expired_invitations = { i.id: i for i in author_three_client.get_invitations(invitee=True, type='payment', expired=True, details='replytoNote,repliedPayments') if i.domain == venue_id }
+        assert sorted(expired_invitations.keys()) == [
+            f'{venue_id}/Submission2/-/Submission_Fee_Payment',
+            f'{venue_id}/Submission4/-/Submission_Fee_Payment',
+            f'{venue_id}/Submission5/-/Submission_Fee_Payment'
+        ]
 
         invitations = { i.id: i for i in author_one_client.get_invitations(invitee=True, type='payment', details='replytoNote,repliedPayments') if i.domain == venue_id }
         assert sorted(invitations.keys()) == [
@@ -535,3 +652,96 @@ class TestNeurIPS2027Conference():
             f'{venue_id}/Submission4/-/Submission_Fee_Payment'
         ]
         assert [(p['status'], p['amount'], p['signature']) for p in invitations[f'{venue_id}/Submission1/-/Submission_Fee_Payment'].details['repliedPayments']] == [('paid', 3000, '~AuthorOne_ICMLTwentySeven1')]
+
+    def test_withdraw_after_payments_close(self, openreview_client, helpers):
+
+        venue_id = self.venue_id
+
+        author_two_client = openreview.api.OpenReviewClient(username='authortwo@icml2027.cc', password=helpers.strong_password)
+        pc_client = openreview.api.OpenReviewClient(username='programchair@neurips2027.cc', password=helpers.strong_password)
+
+        submission = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', number=6)[0]
+        fee_step = pc_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment')
+
+        checkout = author_two_client.checkout_payment(invitation=f'{venue_id}/Submission6/-/Submission_Fee_Payment', payment=Payment(note=submission.id))
+        helpers.await_queue_edit(openreview_client, edit_id=checkout['paymentId'], count=1)
+
+        closing_date = openreview.tools.datetime_millis(datetime.datetime.now())
+        pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Submission_Fee_Payment/Dates',
+            content={
+                'activation_date': { 'value': fee_step.cdate },
+                'due_date': { 'value': closing_date },
+                'expiration_date': { 'value': closing_date }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=5)
+
+        assert openreview_client.get_invitation(f'{venue_id}/Submission6/-/Submission_Fee_Payment').expdate == closing_date
+        assert author_two_client.get_payments(id=checkout['paymentId'])[0].status == 'pending'
+
+        withdraw_note = author_two_client.post_note_edit(
+            invitation=f'{venue_id}/Submission6/-/Withdrawal',
+            signatures=[f'{venue_id}/Submission6/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Withdrawn_Submission', count=2)
+        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
+
+        assert openreview_client.get_note(submission.id).content['venueid']['value'] == f'{venue_id}/Withdrawn_Submission'
+        assert openreview_client.get_invitation(f'{venue_id}/Submission6/-/Submission_Fee_Payment').ddate is None
+        assert author_two_client.get_payments(id=checkout['paymentId'])[0].status == 'pending'
+
+        pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Submission_Fee_Payment/Dates',
+            content={
+                'activation_date': { 'value': fee_step.cdate },
+                'due_date': { 'value': fee_step.edit['invitation']['duedate'] },
+                'expiration_date': { 'value': fee_step.edit['invitation']['expdate'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=6)
+
+        assert openreview_client.get_invitation(f'{venue_id}/Submission5/-/Submission_Fee_Payment').expdate == fee_step.edit['invitation']['expdate']
+        assert openreview_client.get_invitation(f'{venue_id}/Submission6/-/Submission_Fee_Payment').expdate == closing_date
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation NeurIPS.cc/2027/Conference/Submission6/-/Submission_Fee_Payment has expired'):
+            author_two_client.checkout_payment(invitation=f'{venue_id}/Submission6/-/Submission_Fee_Payment', payment=Payment(note=submission.id))
+
+    def test_revert_desk_rejection(self, openreview_client, helpers):
+
+        venue_id = self.venue_id
+
+        author_three_client = openreview.api.OpenReviewClient(username='authorthree@icml2027.cc', password=helpers.strong_password)
+        pc_client = openreview.api.OpenReviewClient(username='programchair@neurips2027.cc', password=helpers.strong_password)
+
+        submission = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', number=3)[0]
+
+        reversion_note = pc_client.post_note_edit(
+            invitation=f'{venue_id}/Submission3/-/Desk_Rejection_Reversion',
+            signatures=[f'{venue_id}/Program_Chairs'],
+            note=openreview.api.Note(
+                content={
+                    'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/Submission3/-/Desk_Rejection_Reversion')
+
+        assert openreview_client.get_note(submission.id).content['venueid']['value'] == f'{venue_id}/Submission'
+        assert f'{venue_id}/Submission3/Authors' in openreview_client.get_group(f'{venue_id}/Authors').members
+
+        fee_step = openreview_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment')
+        fee_invitation = author_three_client.get_invitation(f'{venue_id}/Submission3/-/Submission_Fee_Payment')
+        assert fee_invitation.ddate is None
+        assert fee_invitation.expdate == fee_step.edit['invitation']['expdate']
+        assert fee_invitation.content['amount']['value'] == 2500
+
+        checkout = author_three_client.checkout_payment(invitation=f'{venue_id}/Submission3/-/Submission_Fee_Payment', payment=Payment(note=submission.id))
+        assert author_three_client.get_payments(id=checkout['paymentId'])[0].amount == 2500
