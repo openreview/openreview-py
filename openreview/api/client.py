@@ -87,6 +87,7 @@ class OpenReviewClient(object):
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
         self.profiles_rename = self.baseurl + '/profiles/rename'
         self.relation_readers_url = self.baseurl + '/settings/relationReaders'
+        self.domains_to_moderate_url = self.baseurl + '/settings/domainsToModerate'
         self.profiles_moderate = self.baseurl + '/profile/moderate'
         self.profile_documents_url = self.baseurl + '/profile-documents'
         self.reference_url = self.baseurl + '/references'
@@ -1315,6 +1316,47 @@ class OpenReviewClient(object):
             json = update,
             headers = self.headers)
 
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_domains_to_moderate(self):
+        """
+        Gets the email domains whose profiles are never activated automatically and always go to the moderation queue. Requires Support permission.
+
+        :return: List of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.get_domains_to_moderate()
+        """
+        response = self.session.get(self.domains_to_moderate_url, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def update_domains_to_moderate(self, add=None, remove=None):
+        """
+        Adds or removes email domains from the list of domains whose profiles always go to the moderation queue. Requires Support permission.
+
+        :param add: Email domains to add to the list
+        :type add: list[str], optional
+        :param remove: Email domains to remove from the list
+        :type remove: list[str], optional
+
+        :return: The new list of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.update_domains_to_moderate(add=['example.edu'])
+        """
+        update = {}
+        if add:
+            update['add'] = add
+        if remove:
+            update['remove'] = remove
+
+        response = self.session.patch(self.domains_to_moderate_url, json = update, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
