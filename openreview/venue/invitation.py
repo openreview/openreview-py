@@ -877,10 +877,16 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.content['source']['value']['content'] = review_stage.source_submissions_query
 
         if self.venue.ethics_review_stage:
+            # only the workflow venues keep the review author in the per submission readers, the legacy venues
+            # keep the regex that update_review_invitations and update_meta_review_invitations post, so re-running
+            # the ethics review stage doesn't change the invitation and run the stage again for every submission
+            note_readers_regex = f'{venue_id}/.*|everyone'
+            if self.venue.is_template_related_workflow():
+                note_readers_regex += '|\\$\\{3/signatures\\}'
             invitation.edit['content']['noteReaders'] = {
                 'value': {
                     'param': {
-                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone|\\$\\{{3/signatures\\}}'
+                        'type': 'string[]', 'regex': note_readers_regex
                     }
                 }
             }
@@ -1384,10 +1390,16 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
         if self.venue.ethics_review_stage:
+            # only the workflow venues keep the review author in the per submission readers, the legacy venues
+            # keep the regex that update_review_invitations and update_meta_review_invitations post, so re-running
+            # the ethics review stage doesn't change the invitation and run the stage again for every submission
+            note_readers_regex = f'{venue_id}/.*|everyone'
+            if self.venue.is_template_related_workflow():
+                note_readers_regex += '|\\$\\{3/signatures\\}'
             invitation.edit['content']['noteReaders'] = {
                 'value': {
                     'param': {
-                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone|\\$\\{{3/signatures\\}}'
+                        'type': 'string[]', 'regex': note_readers_regex
                     }
                 }
             }
