@@ -4937,6 +4937,12 @@ The OpenReview Team.
         voucher_client = helpers.create_user('voucher@umass.edu', 'Voucher', 'User', institution='umass.edu')
         assert openreview_client.get_profile('~Voucher_User1').state == 'Active Institutional'
 
+        moderated_voucher_client = helpers.create_user('moderatedvoucher@asu.edu', 'Moderatedvoucher', 'User', institution='asu.edu')
+        assert openreview_client.get_profile('~Moderatedvoucher_User1').state == 'Active Institutional'
+
+        disallowed_voucher_client = helpers.create_user('disallowedvoucher@umbc.edu', 'Disallowedvoucher', 'User', institution='umbc.edu')
+        assert openreview_client.get_profile('~Disallowedvoucher_User1').state == 'Active Institutional'
+
         def add_voucher_relation(username, name):
             ## The voucher must declare a relation to the user they vouch for
             profile = voucher_client.get_profile(voucher_client.profile.id)
@@ -4995,6 +5001,64 @@ The OpenReview Team.
 
             ## The profile is still rejected
             assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+
+            moderated_voucher_profile = moderated_voucher_client.get_profile('~Moderatedvoucher_User1')
+            moderated_voucher_profile.content.setdefault('relations', []).append({
+                'relation': 'Colleague',
+                'name': 'Vouchee User',
+                'username': '~Vouchee_User1',
+                'start': 2020,
+                'end': None
+            })
+            moderated_voucher_client.post_profile(moderated_voucher_profile)
+
+            domains_to_moderate = support_client.update_domains_to_moderate(add=['asu.edu'])
+            assert 'asu.edu' in domains_to_moderate
+            assert 'asu.edu' in support_client.get_domains_to_moderate()
+
+            with pytest.raises(openreview.OpenReviewException, match=r'you must have an institutional email in your profile'):
+                moderated_voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Moderatedvoucher_User1',
+                        profile='~Vouchee_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')) == 0
+
+            with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+                moderated_voucher_client.get_domains_to_moderate()
+
+            disallowed_voucher_profile = disallowed_voucher_client.get_profile('~Disallowedvoucher_User1')
+            disallowed_voucher_profile.content.setdefault('relations', []).append({
+                'relation': 'Colleague',
+                'name': 'Vouchee User',
+                'username': '~Vouchee_User1',
+                'start': 2020,
+                'end': None
+            })
+            disallowed_voucher_client.post_profile(disallowed_voucher_profile)
+
+            disallowed_domains = support_client.update_disallowed_domains(add=['umbc.edu'])
+            assert 'umbc.edu' in disallowed_domains
+            assert 'umbc.edu' in support_client.get_disallowed_domains()
+
+            with pytest.raises(openreview.OpenReviewException, match=r'you must have an institutional email in your profile'):
+                disallowed_voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Disallowedvoucher_User1',
+                        profile='~Vouchee_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')) == 0
+
+            with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+                disallowed_voucher_client.get_disallowed_domains()
 
             ## The target profile must exist. Vouching for a non-existent profile is rejected
             ## so it does not pollute the "Vouched Profiles" list or consume the voucher's quota.
@@ -5129,6 +5193,9 @@ The OpenReview Team.
             assert openreview_client.get_profile('~Voucheee_User1').state == 'Rejected'
 
         finally:
+            support_client.update_domains_to_moderate(remove=['asu.edu'])
+            support_client.update_disallowed_domains(remove=['umbc.edu'])
+
             ## Restore moderation to its disabled state so the rest of the suite keeps auto-activating users
             config_note = openreview_client.get_notes(invitation='openreview.net/-/OpenReview_Config')[0]
             support_client.post_note_edit(

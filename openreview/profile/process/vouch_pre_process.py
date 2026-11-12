@@ -42,9 +42,13 @@ def process(client, tag, invitation):
 
     ## The voucher must have a confirmed institutional email
     confirmed_emails = voucher_profile.content.get('emailsConfirmed', []) or []
+    domains_to_moderate = set(client.get_domains_to_moderate())
+    disallowed_domains = set(client.get_disallowed_domains())
     has_institutional_email = False
     for email in confirmed_emails:
-        domain = email.split('@')[-1]
+        domain = email.strip().lower().split('@')[-1]
+        if domain in domains_to_moderate or domain in disallowed_domains:
+            continue
         institutions = client.get_institutions(domain=domain)
         if institutions and institutions.get('count', 0) > 0:
             has_institutional_email = True
