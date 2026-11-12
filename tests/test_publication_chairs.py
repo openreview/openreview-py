@@ -71,6 +71,13 @@ class TestPublicationChairs():
         assert domain_group.content['publication_chairs_id']['value'] == f'{venue_id}/Publication_Chairs'
         assert f'{venue_id}/Publication_Chairs' in domain_group.content['preferred_emails_groups']['value']
 
+        # the PCs can manage the publication chairs group from the workflow timeline
+        assert openreview_client.get_invitation(f'{venue_id}/Publication_Chairs/-/Members')
+        assert openreview_client.get_invitation(f'{venue_id}/Publication_Chairs/-/Homepage')
+        assert openreview_client.get_invitation(f'{venue_id}/Publication_Chairs/-/Message')
+        # the message invitation is hidden from the workflow timeline like the other committee message invitations
+        assert f'{venue_id}/Publication_Chairs/-/Message' in domain_group.content['exclusion_workflow_invitations']['value']
+
         # publication chairs can read the preferred emails of the committee
         preferred_emails_readers_group = openreview_client.get_group(f'{venue_id}/Preferred_Emails_Readers')
         assert f'{venue_id}/Publication_Chairs' in preferred_emails_readers_group.members
@@ -87,3 +94,36 @@ class TestPublicationChairs():
         request_note = openreview_client.get_note(request['note']['id'])
         assert request_note.content['publication_chairs_support']['readers'] == [support_group_id]
         assert request_note.content['publication_chairs_emails']['readers'] == [support_group_id]
+
+    def test_add_and_remove_publication_chairs(self, openreview_client, helpers):
+
+        venue_id = 'PUBC.cc/2026/Conference'
+        pc_client = openreview.api.OpenReviewClient(username='programchair@pubc.cc', password=helpers.strong_password)
+
+        # add a publication chair
+        pc_client.post_group_edit(
+            invitation=f'{venue_id}/Publication_Chairs/-/Members',
+            signatures=[venue_id],
+            group=openreview.api.Group(
+                members={
+                    'append': ['new_publicationchair@pubc.cc']
+                }
+            )
+        )
+
+        publication_chairs_group = openreview_client.get_group(f'{venue_id}/Publication_Chairs')
+        assert publication_chairs_group.members == ['publicationchair@pubc.cc', 'new_publicationchair@pubc.cc']
+
+        # remove the publication chair that was just added
+        pc_client.post_group_edit(
+            invitation=f'{venue_id}/Publication_Chairs/-/Members',
+            signatures=[venue_id],
+            group=openreview.api.Group(
+                members={
+                    'remove': ['new_publicationchair@pubc.cc']
+                }
+            )
+        )
+
+        publication_chairs_group = openreview_client.get_group(f'{venue_id}/Publication_Chairs')
+        assert publication_chairs_group.members == ['publicationchair@pubc.cc']

@@ -382,7 +382,8 @@ class GroupBuilder(object):
                 f'{venue_id}/Authors/Accepted/-/Message',
                 f'{venue_id}/-/Message',
                 f'{venue_id}/-/Withdrawn_Submission',
-                f'{venue_id}/-/Desk_Rejected_Submission'
+                f'{venue_id}/-/Desk_Rejected_Submission',
+                f'{venue_id}/Publication_Chairs/-/Message'
             ])
 
             content['exclusion_workflow_invitations']  = { 'value': exclusion_workflow_invitations }
@@ -750,6 +751,32 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 self.client.add_members_to_group(publication_chairs_group_id, members_to_add)
             if members_to_remove:
                 self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
+
+        if self.venue.is_template_related_workflow():
+            for template_invitation in ['Group_Members', 'Group_Homepage']:
+                self.client.post_invitation_edit(
+                    invitations=f'{self.openreview_template}/-/{template_invitation}',
+                    signatures=[self.openreview_template],
+                    content={
+                        'venue_id': { 'value': venue_id },
+                        'group_id': { 'value': publication_chairs_group_id },
+                    },
+                    invitation=openreview.api.Invitation(),
+                    await_process=True
+                )
+
+            self.client.post_invitation_edit(
+                invitations=f'{self.openreview_template}/-/Group_Message',
+                signatures=[self.openreview_template],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'group_id': { 'value': publication_chairs_group_id },
+                    'venue_short_name': { 'value': self.venue.short_name },
+                    'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )
 
     def create_preferred_emails_readers_group(self):
         venue_id = self.venue_id
