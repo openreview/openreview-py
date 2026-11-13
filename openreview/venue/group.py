@@ -533,6 +533,25 @@ For questions, assistance, or feedback, use the **Comment** or **Feedback** butt
                 invitation=openreview.api.Invitation(),
                 await_process=True
             )
+
+            # publication chairs write to the accepted authors group, so they can also message its members
+            # and sign the message as Publication Chairs; this is applied on top of the Group_Message template
+            # since the template only lets the venue message the group
+            if self.venue.use_publication_chairs:
+                publication_chairs_id = self.venue.get_publication_chairs_id()
+                message_invitation_id = f'{authors_accepted_id}/-/Message'
+                message = self.client.get_invitation(message_invitation_id).message
+                message['signature'] = { 'param': { 'enum': [venue_id, publication_chairs_id] } }
+                self.client.post_invitation_edit(
+                    invitations=self.venue.get_meta_invitation_id(),
+                    signatures=[venue_id],
+                    invitation=openreview.api.Invitation(
+                        id=message_invitation_id,
+                        invitees=[venue_id, publication_chairs_id],
+                        readers=[venue_id, publication_chairs_id],
+                        message=message
+                    )
+                )
     
     def create_reviewers_group(self):
 

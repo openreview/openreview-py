@@ -127,3 +127,37 @@ class TestPublicationChairs():
 
         publication_chairs_group = openreview_client.get_group(f'{venue_id}/Publication_Chairs')
         assert publication_chairs_group.members == ['publicationchair@pubc.cc']
+
+    def test_publication_chairs_message_accepted_authors(self, openreview_client, helpers):
+
+        venue_id = 'PUBC.cc/2026/Conference'
+        authors_accepted_id = f'{venue_id}/Authors/Accepted'
+
+        # only the accepted authors message invitation lets the publication chairs message its members
+        invitation = openreview_client.get_invitation(f'{authors_accepted_id}/-/Message')
+        assert invitation.invitees == [venue_id, f'{venue_id}/Publication_Chairs']
+        assert invitation.readers == [venue_id, f'{venue_id}/Publication_Chairs']
+        assert invitation.message['signature'] == { 'param': { 'enum': [venue_id, f'{venue_id}/Publication_Chairs'] } }
+
+        invitation = openreview_client.get_invitation(f'{venue_id}/Authors/-/Message')
+        assert invitation.invitees == [venue_id]
+        assert invitation.readers == [venue_id]
+        assert invitation.message['signature'] == venue_id
+
+        # the accepted authors group is filled by the decision process, add an author directly to have someone to message
+        helpers.create_user('author@pubc.cc', 'Author', 'PUBC')
+        openreview_client.add_members_to_group(authors_accepted_id, ['~Author_PUBC1'])
+
+        publication_chair_client = openreview.api.OpenReviewClient(username='publicationchair@pubc.cc', password=helpers.strong_password)
+        publication_chair_client.post_message(
+            subject='[PUBC 2026] Camera ready instructions',
+            recipients=['~Author_PUBC1'],
+            message='Please submit your camera ready version.',
+            invitation=f'{authors_accepted_id}/-/Message',
+            signature=f'{venue_id}/Publication_Chairs',
+            parentGroup=authors_accepted_id
+        )
+
+        messages = openreview_client.get_messages(to='author@pubc.cc', subject='[PUBC 2026] Camera ready instructions')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Please submit your camera ready version.')
