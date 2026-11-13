@@ -308,7 +308,6 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': submission_release_additional_readers },
             'decision_option': { 'value': 'Accept' },
             'decision_option_id': { 'value': openreview.tools.decision_option_to_id('Accept') },
             'decision_venue_id': { 'value': venue_id },
