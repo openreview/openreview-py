@@ -10,6 +10,8 @@ import pytest
 import requests
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 @pytest.fixture(scope='module')
 def llm_mock():
@@ -830,6 +832,8 @@ class TestCVPRConferenceWithTemplates():
                         ],
                         'readers': [
                             'thecvf.com/CVPR/2027/Conference',
+                            'thecvf.com/CVPR/2027/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+                            'thecvf.com/CVPR/2027/Conference/Submission${3/content/noteNumber/value}/Area_Chairs',
                             'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
                             '${3/content/anonGroupId/value}'
                         ],
@@ -858,6 +862,8 @@ class TestCVPRConferenceWithTemplates():
                             },
                             'readers': [
                                 'thecvf.com/CVPR/2027/Conference',
+                                'thecvf.com/CVPR/2027/Conference/Submission${4/content/noteNumber/value}/Senior_Area_Chairs',
+                                'thecvf.com/CVPR/2027/Conference/Submission${4/content/noteNumber/value}/Area_Chairs',
                                 'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
                                 '${4/content/anonGroupId/value}'
                             ],
@@ -916,6 +922,8 @@ class TestCVPRConferenceWithTemplates():
                                 'signatures': ['${3/signatures}'],
                                 'readers': [
                                     'thecvf.com/CVPR/2027/Conference',
+                                    'thecvf.com/CVPR/2027/Conference/Submission${5/content/noteNumber/value}/Senior_Area_Chairs',
+                                    'thecvf.com/CVPR/2027/Conference/Submission${5/content/noteNumber/value}/Area_Chairs',
                                     'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
                                     '${5/content/anonGroupId/value}'
                                 ],
@@ -999,6 +1007,14 @@ class TestCVPRConferenceWithTemplates():
                 assert chat_invitation.content['llm_token_limit'] == { 'value': 1000000, 'readers': ['thecvf.com/CVPR/2027/Conference'] }
                 # more than 20 messages in an hour need a human verification challenge
                 assert chat_invitation.humanVerificationRequired == { 'limit': 20, 'windowMs': 3600000 }
+                # the SACs and the AC of the submission read the chats of its reviewers
+                assert chat_invitation.edit['note']['readers'] == [
+                    'thecvf.com/CVPR/2027/Conference',
+                    f'thecvf.com/CVPR/2027/Conference/Submission{submission.number}/Senior_Area_Chairs',
+                    f'thecvf.com/CVPR/2027/Conference/Submission{submission.number}/Area_Chairs',
+                    'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
+                    anon_group.id
+                ]
                 # the model, the tokens and the cost stored in the edit of each answer are readable by the venue only
                 assert chat_invitation.edit['content']['model']['readers'] == ['thecvf.com/CVPR/2027/Conference']
                 assert chat_invitation.edit['content']['tokens']['readers'] == ['thecvf.com/CVPR/2027/Conference']
@@ -1214,6 +1230,7 @@ class TestCVPRConferenceWithTemplates():
                         ],
                         'readers': [
                             'thecvf.com/CVPR/2027/Conference',
+                            'thecvf.com/CVPR/2027/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
                             'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
                             '${3/content/anonGroupId/value}'
                         ],
@@ -1242,6 +1259,7 @@ class TestCVPRConferenceWithTemplates():
                             },
                             'readers': [
                                 'thecvf.com/CVPR/2027/Conference',
+                                'thecvf.com/CVPR/2027/Conference/Submission${4/content/noteNumber/value}/Senior_Area_Chairs',
                                 'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
                                 '${4/content/anonGroupId/value}'
                             ],
@@ -1300,6 +1318,7 @@ class TestCVPRConferenceWithTemplates():
                                 'signatures': ['${3/signatures}'],
                                 'readers': [
                                     'thecvf.com/CVPR/2027/Conference',
+                                    'thecvf.com/CVPR/2027/Conference/Submission${5/content/noteNumber/value}/Senior_Area_Chairs',
                                     'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
                                     '${5/content/anonGroupId/value}'
                                 ],
@@ -1358,6 +1377,7 @@ class TestCVPRConferenceWithTemplates():
                 assert chat_invitation.edit['note']['forum'] == submission.id
                 assert chat_invitation.edit['note']['readers'] == [
                     'thecvf.com/CVPR/2027/Conference',
+                    f'thecvf.com/CVPR/2027/Conference/Submission{submission.number}/Senior_Area_Chairs',
                     'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant',
                     anon_group.id
                 ]
@@ -1430,6 +1450,10 @@ class TestCVPRConferenceWithTemplates():
                     {
                         'id': 'reviewer_llm_interaction',
                         'label': 'Reviewer AI Chat',
+                        # one tab per reviewer chat for the AC and the SACs of the submission, who read them
+                        'tabPerInvitation': True,
+                        # instructions shown above the chat
+                        'message': 'Ask the AI assistant about this submission: it reads the submission PDF and its metadata. **It can make mistakes**, so check its answers against the paper. Write your review yourself, do not ask the assistant to write it.',
                         'filter': 'invitations:thecvf.com/CVPR/2027/Conference/Submission${note.number}/Reviewer_.*/-/LLM_Interaction',
                         'nesting': 1,
                         'sort': 'date-asc',
@@ -1440,6 +1464,10 @@ class TestCVPRConferenceWithTemplates():
                     {
                         'id': 'area_chair_llm_interaction',
                         'label': 'Area Chair AI Chat',
+                        # one tab per area chair chat when a submission has more than one AC
+                        'tabPerInvitation': True,
+                        # instructions shown above the chat
+                        'message': 'Ask the AI assistant about this submission and its reviews: it reads the submission PDF, its metadata and the reviews, rebuttals and comments of the forum that you can read. **It can make mistakes**, so check its answers against the paper and the reviews. Write your meta-review yourself, do not ask the assistant to write it or to recommend a decision.',
                         'filter': 'invitations:thecvf.com/CVPR/2027/Conference/Submission${note.number}/Area_Chair_.*/-/LLM_Interaction',
                         'nesting': 1,
                         'sort': 'date-asc',
@@ -1453,6 +1481,8 @@ class TestCVPRConferenceWithTemplates():
 
         submission_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/-/Submission')
         assert [view['id'] for view in submission_invitation.reply_forum_views] == ['discussion', 'reviewer_llm_interaction', 'area_chair_llm_interaction']
+        assert [view.get('tabPerInvitation') for view in submission_invitation.reply_forum_views] == [None, True, True]
+        assert [bool(view.get('message')) for view in submission_invitation.reply_forum_views] == [False, True, True]
 
         # open the review stage together with the chat
         now = datetime.datetime.now()
@@ -1799,6 +1829,26 @@ class TestCVPRConferenceWithTemplates():
         assert question_block['text'] == 'Which critique is best supported by the paper?'
         assert question_block['cache_control'] == { 'type': 'ephemeral', 'ttl': '1h' }
 
+        # the AC of the submission reads the chat of each of its reviewers, but not the model, the tokens and the
+        # cost of the answers
+        ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
+        reviewer_chat_notes = openreview_client.get_all_notes(invitation=f'{anon_group_id}/-/LLM_Interaction')
+        assert sorted(note.id for note in ac_client.get_all_notes(invitation=f'{anon_group_id}/-/LLM_Interaction')) == sorted(note.id for note in reviewer_chat_notes)
+        reviewer_chat_answer = [note for note in reviewer_chat_notes if note.signatures[0] == 'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant'][0]
+        assert ac_client.get_note_edits(note_id=reviewer_chat_answer.id)[0].content is None
+
+        # the SAC of the submission reads the chats of its reviewers and of its AC, but not the model, the tokens and
+        # the cost of the answers
+        openreview_client.add_members_to_group('thecvf.com/CVPR/2027/Conference/Submission2/Senior_Area_Chairs', ['~SAC_CVPROne1'])
+        sac_client = openreview.api.OpenReviewClient(username='sac1@cvpr.cc', password=helpers.strong_password)
+        for chat_group_id in [anon_group_id, ac_anon_group_id]:
+            chat_notes = openreview_client.get_all_notes(invitation=f'{chat_group_id}/-/LLM_Interaction')
+            assert sorted(note.id for note in sac_client.get_all_notes(invitation=f'{chat_group_id}/-/LLM_Interaction')) == sorted(note.id for note in chat_notes)
+            chat_answer = [note for note in chat_notes if note.signatures[0] == 'thecvf.com/CVPR/2027/Conference/AI_Review_Assistant'][0]
+            assert sac_client.get_note_edits(note_id=chat_answer.id)[0].content is None
+        # the reviewers of the submission do not read the chat of its AC
+        assert not reviewer_client.get_all_notes(invitation=f'{ac_anon_group_id}/-/LLM_Interaction')
+
         # a committee member who sends too many messages has to pass a human verification challenge, and the answers
         # of the assistant, posted by the venue, are not counted: with a limit of 2, the area chair, who sent one
         # message, gets the answer to a second one, although the venue already posted more than 2 edits in the chat
@@ -1840,3 +1890,54 @@ class TestCVPRConferenceWithTemplates():
             )
             assert selenium.find_element(By.LINK_TEXT, tab)
             assert not selenium.find_elements(By.LINK_TEXT, other_tab)
+
+        # the AC of a submission gets one read-only tab per reviewer chat with messages, named after the reviewer
+        ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
+        submission = ac_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/-/Submission', number=2)[0]
+        chats = [
+            chat for chat in openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
+            if chat.edit['note']['forum'] == submission.id and openreview_client.get_notes(invitation=chat.id, limit=1)
+        ]
+        assert chats
+        labels = [f"Reviewer AI Chat ({chat.id.split('/-/')[0].split('/')[-1].replace('_', ' ')})" for chat in chats]
+        request_page(
+            selenium,
+            'http://localhost:3030/forum?id=' + submission.id,
+            ac_client,
+            by=By.LINK_TEXT,
+            wait_for_element=labels[0]
+        )
+        for label in labels:
+            assert selenium.find_element(By.LINK_TEXT, label)
+        assert not selenium.find_elements(By.LINK_TEXT, 'Reviewer AI Chat')
+        assert selenium.find_element(By.LINK_TEXT, 'Area Chair AI Chat')
+
+        # the SAC of the submission, who has no chat of their own, gets one read-only tab per reviewer chat and per AC
+        # chat with messages
+        sac_client = openreview.api.OpenReviewClient(username='sac1@cvpr.cc', password=helpers.strong_password)
+        ac_chats = [
+            chat for chat in openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Area_Chairs/-/LLM_Interaction')
+            if chat.edit['note']['forum'] == submission.id and openreview_client.get_notes(invitation=chat.id, limit=1)
+        ]
+        assert ac_chats
+        sac_labels = labels + [f"Area Chair AI Chat ({chat.id.split('/-/')[0].split('/')[-1].replace('_', ' ')})" for chat in ac_chats]
+        request_page(
+            selenium,
+            'http://localhost:3030/forum?id=' + submission.id,
+            sac_client,
+            by=By.LINK_TEXT,
+            wait_for_element=sac_labels[0]
+        )
+        for label in sac_labels:
+            assert selenium.find_element(By.LINK_TEXT, label)
+        assert not selenium.find_elements(By.LINK_TEXT, 'Reviewer AI Chat')
+        assert not selenium.find_elements(By.LINK_TEXT, 'Area Chair AI Chat')
+
+        # a read-only chat shows the instructions of its tab and who reads the chat
+        selenium.find_element(By.LINK_TEXT, sac_labels[0]).click()
+        tab_message = WebDriverWait(selenium, 10).until(EC.visibility_of_element_located((By.ID, 'tab-message')))
+        assert tab_message.text.startswith('Ask the AI assistant about this submission: it reads the submission PDF')
+        notice = selenium.find_element(By.CLASS_NAME, 'chat-invitations-container').text
+        assert 'You do not have permission to post in this chat.' in notice
+        assert 'LLM Interaction replies are only visible to' in notice
+        assert 'Senior Area Chairs' in notice
