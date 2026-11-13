@@ -443,29 +443,49 @@ class BidStage(object):
             }
         }
 
+    def get_paired_roles(self, conference):
+        """Return (committee kind, paired area chair role, paired senior area chair role) for the
+        bidding committee. A reviewer or area chair role is paired by position with the roles of
+        the other kinds, falling back to the venue-wide role."""
+
+        committee_name = self.committee_id.split('/')[-1]
+        reviewer_roles = conference.reviewer_roles
+        area_chair_roles = conference.area_chair_roles
+        senior_area_chair_roles = conference.senior_area_chair_roles
+
+        def paired(roles, index):
+            return roles[index] if index < len(roles) else roles[0]
+
+        if self.committee_id == conference.get_reviewers_id():
+            return 'reviewers', area_chair_roles[0], senior_area_chair_roles[0]
+        if self.committee_id == conference.get_area_chairs_id():
+            return 'area_chairs', None, senior_area_chair_roles[0]
+        if committee_name in reviewer_roles:
+            index = reviewer_roles.index(committee_name)
+            return 'reviewers', paired(area_chair_roles, index), paired(senior_area_chair_roles, index)
+        if committee_name in area_chair_roles:
+            return 'area_chairs', None, paired(senior_area_chair_roles, area_chair_roles.index(committee_name))
+        return None, None, None
+
     def get_invitation_readers(self, conference):
         readers = [conference.get_id()]
-        if self.committee_id == conference.get_reviewers_id():
-            if conference.use_senior_area_chairs:
-                readers.append(conference.get_senior_area_chairs_id())
-            if conference.use_area_chairs:
-                readers.append(conference.get_area_chairs_id())
-        if self.committee_id == conference.get_area_chairs_id():
-            if conference.use_senior_area_chairs:
-                readers.append(conference.get_senior_area_chairs_id())
+        kind, area_chairs_name, senior_area_chairs_name = self.get_paired_roles(conference)
+        if kind and conference.use_senior_area_chairs:
+            readers.append(conference.get_committee_id(senior_area_chairs_name))
+        if kind == 'reviewers' and conference.use_area_chairs:
+            readers.append(conference.get_committee_id(area_chairs_name))
         readers.append(self.committee_id)
         return readers
 
     def get_readers(self, conference, number=None):
         values_copied = [conference.get_id()]
-        if self.committee_id == conference.get_reviewers_id():
-            if conference.use_senior_area_chairs:
-                values_copied.append(conference.get_senior_area_chairs_id(number))
-            if conference.use_area_chairs:
-                values_copied.append(conference.get_area_chairs_id(number))
-        if self.committee_id == conference.get_area_chairs_id():
-            if conference.use_senior_area_chairs:
-                values_copied.append(conference.get_senior_area_chairs_id(number))
+        kind, area_chairs_name, _ = self.get_paired_roles(conference)
+        if kind and conference.use_senior_area_chairs:
+            values_copied.append(conference.get_senior_area_chairs_id(number))
+        if kind == 'reviewers' and conference.use_area_chairs:
+            ## per submission, the group the paired area chair role is assigned into
+            area_chairs_name = conference.get_submission_committee_name(area_chairs_name) if number else area_chairs_name
+            values_copied.append(conference.get_area_chairs_id(number, name=area_chairs_name))
         values_copied.append('{signatures}')
         return values_copied
 
