@@ -191,7 +191,7 @@ class TestICML2027Conference():
         fee_content = {
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Submission_Fee_Payment' },
-            'activation_date': { 'value': openreview.tools.datetime_millis(now) },
+            'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(hours=1)) },
             'due_date': { 'value': payment_due_date },
             'expiration_date': { 'value': payment_expiration_date },
             'amount': { 'value': 2000 },
@@ -321,7 +321,9 @@ class TestICML2027Conference():
 
         assert [openreview_client.get_invitation(f'{venue_id}/Submission{number}/-/Submission_Fee_Payment').content['amount']['value'] for number in [1, 2, 3]] == [2000, 0, 1000]
 
-        fee_invitations = [invitation, dates_invitation, amount_invitation, country_fees_invitation, waiver_invitation] + payment_invitations
+        assert [message['content']['subject'] for message in openreview_client.get_messages(to='authorone@icml2027.cc') if 'submission fee' in message['content']['subject']] == []
+
+        fee_invitations =[invitation, dates_invitation, amount_invitation, country_fees_invitation, waiver_invitation] + payment_invitations
         assert len(fee_invitations) == 8
         assert all('~Super_User1' not in fee_invitation.signatures for fee_invitation in fee_invitations)
 
@@ -480,6 +482,59 @@ class TestICML2027Conference():
         assert reduced_payment.signature == '~AuthorFive_ICMLTwentySeven1'
         helpers.await_queue_edit(openreview_client, edit_id=reduced_checkout['paymentId'], count=1)
 
+    def test_remind_unpaid_fees(self, openreview_client, helpers):
+
+        venue_id = self.venue_id
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@icml2027.cc', password=helpers.strong_password)
+
+        submissions = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc')
+        invitation = pc_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment')
+
+        due_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days=1, seconds=10))
+        expiration_date = due_date + (30*60*1000)
+
+        pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Submission_Fee_Payment/Dates',
+            content={
+                'activation_date': { 'value': invitation.cdate },
+                'due_date': { 'value': due_date },
+                'expiration_date': { 'value': expiration_date }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-1-1', count=1)
+
+        due_date_text = datetime.datetime.fromtimestamp(due_date / 1000, datetime.timezone.utc).strftime('%b %d %Y %I:%M%p') + ' UTC-0'
+        expiration_date_text = datetime.datetime.fromtimestamp(expiration_date / 1000, datetime.timezone.utc).strftime('%b %d %Y %I:%M%p') + ' UTC-0'
+        messages = openreview_client.get_messages(to='authorone@icml2027.cc', subject='[ICML 2027] Reminder: the submission fee is due for submission number 1')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi AuthorOne ICMLTwentySeven,
+
+This is a reminder that the submission fee of your submission to ICML 2027 has not been paid yet. It is due by {due_date_text}.
+
+Submission Number: 1
+
+Title: Paper title 1
+
+Amount: 20.00 USD
+
+To pay the fee, click here: https://openreview.net/forum?id={submissions[0].id}
+
+To pay the fees of several submissions at once, go to https://openreview.net/payments
+
+Payments close on {expiration_date_text}. Submission fees are non-refundable.
+
+Please note that responding to this email will direct your reply to icml2027.programchairs@gmail.com.
+'''
+        assert len(openreview_client.get_messages(to='authortwo@icml2027.cc', subject='[ICML 2027] Reminder: the submission fee is due for submission number 1')) == 1
+
+        messages = openreview_client.get_messages(to='authorfive@iitb.ac.in', subject='[ICML 2027] Reminder: the submission fee is due for submission number 3')
+        assert len(messages) == 1
+        assert 'Amount: 10.00 USD' in messages[0]['content']['text']
+
+        assert openreview_client.get_messages(subject='[ICML 2027] Reminder: the submission fee is due for submission number 2') == []
+
     def test_close_payments(self, openreview_client, helpers):
 
         venue_id = self.venue_id
@@ -503,7 +558,7 @@ class TestICML2027Conference():
                 'expiration_date': { 'value': expiration_date }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=3)
 
         assert openreview_client.get_invitation(f'{venue_id}/Submission3/-/Submission_Fee_Payment').expdate == expiration_date
 
@@ -669,7 +724,7 @@ Please note that responding to this email will direct your reply to icml2027.pro
                 'expiration_date': { 'value': new_expiration_date }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=4)
 
         invitation = openreview_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment')
         assert invitation.edit['invitation']['duedate'] == new_due_date
@@ -756,7 +811,7 @@ Please note that responding to this email will direct your reply to icml2027.pro
             signatures=[f'{venue_id}/Program_Chairs'],
             content={ 'country_fees': { 'value': { 'ET': 0, 'IN': 500 } } }
         )
-        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=5)
 
         assert openreview_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment').content['country_fees']['value'] == { 'ET': 0, 'IN': 500 }
         assert [openreview_client.get_invitation(f'{venue_id}/Submission{number}/-/Submission_Fee_Payment').content['amount']['value'] for number in [1, 2, 3]] == [2000, 0, 500]
@@ -776,7 +831,7 @@ Please note that responding to this email will direct your reply to icml2027.pro
             signatures=[support_group_id],
             content={ 'country_fees': { 'value': { 'delete': True } } }
         )
-        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=5)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=6)
 
         assert openreview_client.get_invitation(f'{venue_id}/-/Submission_Fee_Payment').get_content_value('country_fees') is None
         assert [openreview_client.get_invitation(f'{venue_id}/Submission{number}/-/Submission_Fee_Payment').content['amount']['value'] for number in [1, 2, 3]] == [2000, 2000, 2000]

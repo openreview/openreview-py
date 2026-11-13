@@ -3262,12 +3262,11 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'due_date': {
                         'order': 4,
-                        'description': 'When is the submission fee due? This is the deadline shown to the authors.',
+                        'description': 'When is the submission fee due? This is the deadline shown to the authors, who are reminded a week and a day before it while their fee is unpaid.',
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     },
@@ -3344,10 +3343,13 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'After the full submission deadline, the authors of every active submission pay a submission fee through the OpenReview payment processor. The fee of each submission is set from the countries of its authors\' institutions: waived, reduced or the full amount. Authors are notified by email when the fee of their submission is paid or waived. Submission fees are non-refundable, and whoever pays accepts it on the checkout page. Payments are visible to the program chairs, the authors of the submission and OpenReview support. Authors can start a payment until the expiration date and have 24 hours to complete it. After that, the venue chooses whether to desk reject the submissions with unpaid fees: the venue is responsible for the fees of the unpaid submissions it keeps.',
+                    'description': 'After the full submission deadline, the authors of every active submission pay a submission fee through the OpenReview payment processor. The fee of each submission is set from the countries of its authors\' institutions: waived, reduced or the full amount. Authors are reminded by email a week and a day before the due date while the fee of their submission is unpaid, and notified when it is paid or waived. Submission fees are non-refundable, and whoever pays accepts it on the checkout page. Payments are visible to the program chairs, the authors of the submission and OpenReview support. Authors can start a payment until the expiration date and have 24 hours to complete it. After that, the venue chooses whether to desk reject the submissions with unpaid fees: the venue is responsible for the fees of the unpaid submissions it keeps.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_fee_invitation_process.py')
+                    }, {
+                        'dates': ["#{4/edit/invitation/duedate} - 604800000", "#{4/edit/invitation/duedate} - 86400000"],
+                        'script': self.get_process_content('process/submission_fee_reminder_process.py')
                     }],
                     'content': {
                         'amount': {

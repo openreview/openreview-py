@@ -345,25 +345,29 @@ class TestNeurIPS2027Conference():
             )
 
         activation_date = openreview.tools.datetime_millis(now)
+        due_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days=1, seconds=10))
         pc_client.post_invitation_edit(
             invitations=f'{venue_id}/-/Submission_Fee_Payment/Dates',
             content={
                 'activation_date': { 'value': activation_date },
-                'due_date': { 'value': invitation.edit['invitation']['duedate'] },
+                'due_date': { 'value': due_date },
                 'expiration_date': { 'value': invitation.edit['invitation']['expdate'] }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/-/Submission_Fee_Payment-1-1', count=1)
 
         payment_invitations = openreview_client.get_all_invitations(invitation=f'{venue_id}/-/Submission_Fee_Payment')
         assert len(payment_invitations) == 6
         for payment_invitation in payment_invitations:
             assert payment_invitation.signatures == [venue_id]
             assert payment_invitation.cdate == activation_date
-            assert payment_invitation.duedate == invitation.edit['invitation']['duedate']
+            assert payment_invitation.duedate == due_date
             assert payment_invitation.expdate == invitation.edit['invitation']['expdate']
             assert payment_invitation.content['amount']['value'] == 3000
             assert payment_invitation.content['terms']['value'] == 'I agree to the [OpenReview Terms of Use](https://openreview.net/legal/terms) and understand that submission fees are non-refundable.'
+
+        assert openreview_client.get_messages(subject='[NeurIPS 2027] Reminder: the submission fee is due for submission number 1') == []
 
         withdrawal_invitation = pc_client.get_invitation(f'{venue_id}/-/Withdrawal')
         edit = pc_client.post_invitation_edit(
