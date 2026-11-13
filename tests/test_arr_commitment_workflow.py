@@ -461,6 +461,16 @@ class TestARRCommitmentWorkflow():
                 }
             )
 
+        # decision release can not be postponed past the camera-ready activation date
+        camera_ready_cdate = openreview_client.get_invitation(f'{venue_id}/-/Camera_Ready_Revision').cdate
+        with pytest.raises(openreview.OpenReviewException, match=r'Decision Release activation date must be before the Camera Ready Revision activation date'):
+            pc_client.post_invitation_edit(
+                invitations=f'{venue_id}/-/Decision_Release/Dates',
+                content={
+                    'activation_date': { 'value': camera_ready_cdate + 60000 }
+                }
+            )
+
         # release decisions
         pc_client.post_invitation_edit(
             invitations=f'{venue_id}/-/Decision_Release/Dates',
