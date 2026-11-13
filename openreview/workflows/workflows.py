@@ -598,8 +598,33 @@ class Workflows():
                                 }
                             }
                         },
-                        'colocated': {
+                        'publication_chairs_support': {
                             'order': 12,
+                            'description': "Does your venue have publication chairs? Leave unchecked if your venue does not have publication chairs. The Publication Chairs will only have access to accepted submissions (including author names) and the author accepted group in order to email authors of accepted submissions.",
+                            'value': {
+                                'param': {
+                                    'type': "boolean",
+                                    'enum': [{ 'value': True, 'description': 'Yes, my venue does have Publication Chairs.'}],
+                                    'input': 'checkbox',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'publication_chairs_emails': {
+                            'order': 13,
+                            'description': "Please provide a comma-separated list of the *lower-cased* email addresses of the Publication Chairs. Leave empty if none.",
+                            'value': {
+                                'param': {
+                                    'type': 'string[]',
+                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'colocated': {
+                            'order': 14,
                             'description': 'Please provide the name of the conference, organization, or academic institution with which your event is colocated. If your event is independent of a conference or organization, you can leave this blank or write "independent"',
                             'value': {
                                 'param': {
@@ -611,7 +636,7 @@ class Workflows():
                             }
                         },
                         'previous_venue': {
-                            'order': 13,
+                            'order': 15,
                             'description': 'If possible, please provide a link to the previous iteration of this venue on OpenReview.',
                             'value': {
                                 'param': {
@@ -623,7 +648,7 @@ class Workflows():
                             }
                         },
                         'expected_submissions': {
-                            'order': 14,
+                            'order': 16,
                             'description': 'How many submissions do you expect to receive for this venue? Please provide a number. This will help us plan for the expected load on our servers.',
                             'value': {
                                 'param': {
@@ -633,7 +658,7 @@ class Workflows():
                             }
                         },
                         'how_did_you_hear_about_us': {
-                            'order': 15,
+                            'order': 17,
                             'description': 'How did you hear about OpenReview?',
                             'value': {
                                 'param': {
@@ -646,7 +671,7 @@ class Workflows():
                             }
                         },
                         'other_important_information': {
-                            'order': 16,
+                            'order': 18,
                             'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
                             'value': {
                                 'param': {
@@ -659,7 +684,7 @@ class Workflows():
                             }
                         },
                         'venue_organizer_agreement': {
-                            'order': 17,
+                            'order': 19,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {
