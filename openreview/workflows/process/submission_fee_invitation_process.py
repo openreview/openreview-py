@@ -22,19 +22,18 @@ def process(client, invitation):
     waiver_contents = {}
     for submission in submissions:
         authors = [author for author in submission.content.get('authors', {}).get('value', []) if isinstance(author, dict)]
-        author_countries = [(author, institution.get('country')) for author in authors for institution in author.get('institutions', [])]
+        countries = [institution.get('country') for author in authors for institution in author.get('institutions') or []]
+        every_author_has_an_institution = bool(authors) and all(author.get('institutions') for author in authors)
+        every_country_has_a_fee = all(country in country_fees for country in countries)
 
-        priced_countries = { country for author, country in author_countries }.intersection(country_fees)
-        submission_amount = min([amount] + [country_fees[country] for country in priced_countries])
+        submission_amount = amount
+        if every_author_has_an_institution and every_country_has_a_fee:
+            submission_amount = min(amount, max(country_fees[country] for country in countries))
+
         if submission_amount == 0:
-            waiver_country = next(country for author, country in author_countries if country_fees.get(country) == 0)
-            qualifying_authors = []
-            for author, country in author_countries:
-                if country == waiver_country and author.get('username') and author['username'] not in qualifying_authors:
-                    qualifying_authors.append(author['username'])
             waiver_contents[submission.id] = {
-                'qualifying_authors': { 'value': qualifying_authors },
-                'country': { 'value': waiver_country }
+                'qualifying_authors': { 'value': [author['username'] for author in authors if author.get('username')] },
+                'countries': { 'value': list(dict.fromkeys(countries)) }
             }
 
         fee_contents.append({

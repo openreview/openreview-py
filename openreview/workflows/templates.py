@@ -3303,7 +3303,7 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'country_fees': {
                         'order': 8,
-                        'description': 'Fees by country, from ISO 3166-1 alpha-2 codes to fees from 0 to the full amount, in the minor unit of the currency, for example {"ET": 0, "IN": 1000}. A submission pays the lowest of the full amount and the fees of the countries of its authors\' institutions, so a fee of 0 waives every submission with an author affiliated with an institution in that country. Enter {} to charge every submission the full amount.',
+                        'description': 'Fees by country, from ISO 3166-1 alpha-2 codes to fees from 0 to the full amount, in the minor unit of the currency, for example {"ET": 0, "IN": 1000}. A submission whose authors all list institutions, all in countries of this table, pays the highest of those countries\' fees. Any other submission pays the full amount, so a fee of 0 waives a submission only when every institution of every author is in a country with a fee of 0. Enter {} to charge every submission the full amount.',
                         'value': {
                             'param': {
                                 'type': 'json'
@@ -3553,7 +3553,7 @@ If you would like to change your decision, please follow the link in the previou
                             'content': {
                                 'qualifying_authors': {
                                     'order': 1,
-                                    'description': 'The authors with an institution in the country of the waiver, as the submission listed them when the fee was set.',
+                                    'description': 'The authors of the submission, as the submission listed them when the fee was set. Every institution of every one of them was in a country with a fee of 0.',
                                     'value': {
                                         'param': {
                                             'type': 'profile[]',
@@ -3561,12 +3561,12 @@ If you would like to change your decision, please follow the link in the previou
                                         }
                                     }
                                 },
-                                'country': {
+                                'countries': {
                                     'order': 2,
-                                    'description': 'The country whose fee was 0 when the fee was set, as an ISO 3166-1 alpha-2 code.',
+                                    'description': 'The countries of the authors\' institutions when the fee was set, as ISO 3166-1 alpha-2 codes. The fee of each of them was 0.',
                                     'value': {
                                         'param': {
-                                            'type': 'string',
+                                            'type': 'string[]',
                                             'regex': '^[A-Z]{2}$',
                                             'optional': True
                                         }

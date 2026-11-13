@@ -6,8 +6,8 @@ def process(client, edit, invitation):
     if note.replyto != note.forum:
         raise openreview.OpenReviewException('A fee waiver must reply to the submission itself.')
 
-    if not content.get('country', {}).get('value') and not content.get('comment', {}).get('value'):
-        raise openreview.OpenReviewException('Give the country or a comment that explains the waiver.')
+    if not content.get('countries', {}).get('value') and not content.get('comment', {}).get('value'):
+        raise openreview.OpenReviewException('Give the countries or a comment that explains the waiver.')
 
     payment_name = invitation.get_content_value('payment_name')
     fee_invitations = [fee_invitation for fee_invitation in client.get_invitations(replyForum=note.forum, type='payment', expired=True) if fee_invitation.id.endswith(f'/-/{payment_name}')]

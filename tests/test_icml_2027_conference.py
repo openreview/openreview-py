@@ -82,11 +82,10 @@ class TestICML2027Conference():
         venue_id = self.venue_id
 
         author_one_client = helpers.create_user('authorone@icml2027.cc', 'AuthorOne', 'ICMLTwentySeven')
-        author_two_client = helpers.create_user('authortwo@icml2027.cc', 'AuthorTwo', 'ICMLTwentySeven')
-        author_three_client = helpers.create_user('authorthree@icml2027.cc', 'AuthorThree', 'ICMLTwentySeven')
-        helpers.create_user('authorfour@aau.edu.et', 'AuthorFour', 'ICMLTwentySeven', country='ET')
+        helpers.create_user('authortwo@icml2027.cc', 'AuthorTwo', 'ICMLTwentySeven')
+        author_four_client = helpers.create_user('authorfour@aau.edu.et', 'AuthorFour', 'ICMLTwentySeven', country='ET')
         helpers.create_user('authorsix@aau.edu.et', 'AuthorSix', 'ICMLTwentySeven', country='ET')
-        helpers.create_user('authorfive@iitb.ac.in', 'AuthorFive', 'ICMLTwentySeven', country='IN')
+        author_five_client = helpers.create_user('authorfive@iitb.ac.in', 'AuthorFive', 'ICMLTwentySeven', country='IN')
 
         ## abstracts only: the pdf is due at the full submission deadline
         author_one_client.post_note_edit(
@@ -100,7 +99,8 @@ class TestICML2027Conference():
                     'authors': {
                         'value': [
                             { 'fullname': 'AuthorOne ICMLTwentySeven', 'username': '~AuthorOne_ICMLTwentySeven1', 'institutions': [{ 'domain': 'icml2027.cc', 'country': 'US' }] },
-                            { 'fullname': 'AuthorTwo ICMLTwentySeven', 'username': '~AuthorTwo_ICMLTwentySeven1', 'institutions': [{ 'domain': 'icml2027.cc', 'country': 'US' }] }
+                            { 'fullname': 'AuthorTwo ICMLTwentySeven', 'username': '~AuthorTwo_ICMLTwentySeven1', 'institutions': [{ 'domain': 'icml2027.cc', 'country': 'US' }] },
+                            { 'fullname': 'AuthorFour ICMLTwentySeven', 'username': '~AuthorFour_ICMLTwentySeven1', 'institutions': [{ 'domain': 'aau.edu.et', 'country': 'ET' }] }
                         ]
                     },
                     'keywords': { 'value': ['machine learning'] },
@@ -110,9 +110,9 @@ class TestICML2027Conference():
             )
         )
 
-        author_two_client.post_note_edit(
+        author_four_client.post_note_edit(
             invitation=f'{venue_id}/-/Submission',
-            signatures=['~AuthorTwo_ICMLTwentySeven1'],
+            signatures=['~AuthorFour_ICMLTwentySeven1'],
             note=openreview.api.Note(
                 license='CC BY 4.0',
                 content={
@@ -120,8 +120,6 @@ class TestICML2027Conference():
                     'abstract': { 'value': 'This is the abstract of submission 2' },
                     'authors': {
                         'value': [
-                            { 'fullname': 'AuthorTwo ICMLTwentySeven', 'username': '~AuthorTwo_ICMLTwentySeven1', 'institutions': [{ 'domain': 'icml2027.cc', 'country': 'US' }] },
-                            { 'fullname': 'AuthorThree ICMLTwentySeven', 'username': '~AuthorThree_ICMLTwentySeven1', 'institutions': [{ 'domain': 'icml2027.cc', 'country': 'US' }] },
                             { 'fullname': 'AuthorFour ICMLTwentySeven', 'username': '~AuthorFour_ICMLTwentySeven1', 'institutions': [{ 'domain': 'aau.edu.et', 'country': 'ET' }] },
                             { 'fullname': 'AuthorSix ICMLTwentySeven', 'username': '~AuthorSix_ICMLTwentySeven1', 'institutions': [{ 'domain': 'aau.edu.et', 'country': 'ET' }] }
                         ]
@@ -133,9 +131,9 @@ class TestICML2027Conference():
             )
         )
 
-        author_three_client.post_note_edit(
+        author_five_client.post_note_edit(
             invitation=f'{venue_id}/-/Submission',
-            signatures=['~AuthorThree_ICMLTwentySeven1'],
+            signatures=['~AuthorFive_ICMLTwentySeven1'],
             note=openreview.api.Note(
                 license='CC BY 4.0',
                 content={
@@ -143,8 +141,8 @@ class TestICML2027Conference():
                     'abstract': { 'value': 'This is the abstract of submission 3' },
                     'authors': {
                         'value': [
-                            { 'fullname': 'AuthorThree ICMLTwentySeven', 'username': '~AuthorThree_ICMLTwentySeven1', 'institutions': [{ 'domain': 'icml2027.cc', 'country': 'US' }] },
-                            { 'fullname': 'AuthorFive ICMLTwentySeven', 'username': '~AuthorFive_ICMLTwentySeven1', 'institutions': [{ 'domain': 'iitb.ac.in', 'country': 'IN' }] }
+                            { 'fullname': 'AuthorFive ICMLTwentySeven', 'username': '~AuthorFive_ICMLTwentySeven1', 'institutions': [{ 'domain': 'iitb.ac.in', 'country': 'IN' }] },
+                            { 'fullname': 'AuthorSix ICMLTwentySeven', 'username': '~AuthorSix_ICMLTwentySeven1', 'institutions': [{ 'domain': 'aau.edu.et', 'country': 'ET' }] }
                         ]
                     },
                     'keywords': { 'value': ['machine learning'] },
@@ -188,6 +186,9 @@ class TestICML2027Conference():
         now = datetime.datetime.now()
         payment_due_date = openreview.tools.datetime_millis(now + datetime.timedelta(weeks=2))
         payment_expiration_date = openreview.tools.datetime_millis(now + datetime.timedelta(weeks=2, minutes=30))
+        low_income_countries = ['AF', 'BF', 'BI', 'CD', 'CF', 'ER', 'ET', 'GM', 'GW', 'KP', 'LR', 'MG', 'ML', 'MW', 'MZ', 'NE', 'RW', 'SD', 'SL', 'SO', 'SS', 'SY', 'TD', 'UG', 'YE']
+        lower_middle_income_countries = ['AO', 'BD', 'BJ', 'BO', 'BT', 'CG', 'CI', 'CM', 'DJ', 'EG', 'GH', 'GN', 'HN', 'HT', 'IN', 'KE', 'KG', 'KH', 'KI', 'KM', 'LA', 'LB', 'LS', 'MA', 'MM', 'MR', 'NA', 'NG', 'NI', 'NP', 'PG', 'PK', 'PS', 'SB', 'SN', 'ST', 'SZ', 'TG', 'TJ', 'TL', 'TN', 'TZ', 'UZ', 'VE', 'VU', 'ZM', 'ZW']
+        country_fees = { **{ country: 0 for country in low_income_countries }, **{ country: 1000 for country in lower_middle_income_countries } }
         fee_content = {
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Submission_Fee_Payment' },
@@ -196,7 +197,7 @@ class TestICML2027Conference():
             'expiration_date': { 'value': payment_expiration_date },
             'amount': { 'value': 2000 },
             'currency': { 'value': 'USD' },
-            'country_fees': { 'value': { 'ET': 0, 'IN': 1000 } },
+            'country_fees': { 'value': country_fees },
             'waiver_name': { 'value': 'Fee_Waiver' },
             'submission_name': { 'value': 'Submission' }
         }
@@ -264,7 +265,7 @@ class TestICML2027Conference():
         assert waiver_invitation.edit['note']['replyto'] == { 'param': { 'withInvitation': f'{venue_id}/-/Submission' } }
         assert waiver_invitation.edit['note']['readers'] == [venue_id, support_group_id]
         assert waiver_invitation.edit['note']['writers'] == [support_group_id]
-        assert list(waiver_invitation.edit['note']['content'].keys()) == ['qualifying_authors', 'country', 'comment']
+        assert list(waiver_invitation.edit['note']['content'].keys()) == ['qualifying_authors', 'countries', 'comment']
 
         edit = openreview_client.post_invitation_edit(
             invitations='openreview.net/Template/-/Submission_Fee_Payment',
@@ -279,7 +280,7 @@ class TestICML2027Conference():
         assert invitation.signatures == [venue_id]
         assert invitation.content['amount']['value'] == 2000
         assert invitation.content['currency']['value'] == 'USD'
-        assert invitation.content['country_fees']['value'] == { 'ET': 0, 'IN': 1000 }
+        assert invitation.content['country_fees']['value'] == country_fees
         assert invitation.edit['invitation']['duedate'] == payment_due_date
         assert invitation.edit['invitation']['expdate'] == payment_expiration_date
         assert 'Submission fees are non-refundable' in invitation.description
@@ -340,8 +341,8 @@ class TestICML2027Conference():
         assert f'{venue_id}/Submission1/-/Submission_Fee_Payment' in [i.id for i in pc_client.get_invitations(replyForum=submissions[0].id, prefix=f'{venue_id}/Submission1')]
 
         ## and the payments page lists every fee an author is invited to pay
-        author_two_client = openreview.api.OpenReviewClient(username='authortwo@icml2027.cc', password=helpers.strong_password)
-        assert sorted([i.id for i in author_two_client.get_all_invitations(invitee=True, type='payment') if i.domain == venue_id]) == [
+        author_four_client = openreview.api.OpenReviewClient(username='authorfour@aau.edu.et', password=helpers.strong_password)
+        assert sorted([i.id for i in author_four_client.get_all_invitations(invitee=True, type='payment') if i.domain == venue_id]) == [
             f'{venue_id}/Submission1/-/Submission_Fee_Payment',
             f'{venue_id}/Submission2/-/Submission_Fee_Payment'
         ]
@@ -351,8 +352,8 @@ class TestICML2027Conference():
         venue_id = self.venue_id
         support_group_id = openreview_client.get_group('openreview.net/Support').id
 
-        author_two_client = openreview.api.OpenReviewClient(username='authortwo@icml2027.cc', password=helpers.strong_password)
-        author_three_client = openreview.api.OpenReviewClient(username='authorthree@icml2027.cc', password=helpers.strong_password)
+        author_four_client = openreview.api.OpenReviewClient(username='authorfour@aau.edu.et', password=helpers.strong_password)
+        author_six_client = openreview.api.OpenReviewClient(username='authorsix@aau.edu.et', password=helpers.strong_password)
         pc_client = openreview.api.OpenReviewClient(username='programchair@icml2027.cc', password=helpers.strong_password)
 
         submissions = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc')
@@ -364,17 +365,17 @@ class TestICML2027Conference():
         waiver_notes = pc_client.get_all_notes(invitation=f'{venue_id}/-/Fee_Waiver')
         assert [(note.forum, note.replyto, note.signatures) for note in waiver_notes] == [(submission.id, submission.id, [venue_id])]
         assert waiver_notes[0].content['qualifying_authors']['value'] == ['~AuthorFour_ICMLTwentySeven1', '~AuthorSix_ICMLTwentySeven1']
-        assert waiver_notes[0].content['country']['value'] == 'ET'
+        assert waiver_notes[0].content['countries']['value'] == ['ET']
         assert 'comment' not in waiver_notes[0].content
         assert waiver_notes[0].readers == [venue_id, support_group_id]
 
         assert [note.id for note in pc_client.get_all_notes(forum=submission.id) if note.invitations[0] == f'{venue_id}/-/Fee_Waiver'] == [waiver_notes[0].id]
-        assert [note for note in author_two_client.get_all_notes(forum=submission.id) if note.invitations[0] == f'{venue_id}/-/Fee_Waiver'] == []
+        assert [note for note in author_four_client.get_all_notes(forum=submission.id) if note.invitations[0] == f'{venue_id}/-/Fee_Waiver'] == []
 
         assert f'{venue_id}/-/Fee_Waiver' in [i.id for i in pc_client.get_invitations(replyForum=submissions[0].id, type='note')]
-        assert f'{venue_id}/-/Fee_Waiver' not in [i.id for i in author_two_client.get_invitations(replyForum=submissions[0].id, type='note')]
+        assert f'{venue_id}/-/Fee_Waiver' not in [i.id for i in author_four_client.get_invitations(replyForum=submissions[0].id, type='note')]
 
-        payments = author_three_client.get_payments(note=submission.id)
+        payments = author_six_client.get_payments(note=submission.id)
         assert len(payments) == 1
         assert payments[0].status == 'waived'
         assert payments[0].amount == 0
@@ -388,11 +389,11 @@ class TestICML2027Conference():
         assert len(messages) == 1
         assert 'The submission fee of your submission to ICML 2027 has been waived. No payment is due for this submission.' in messages[0]['content']['text']
         assert messages[0]['content']['text'].count('Please note that responding to this email will direct your reply to icml2027.programchairs@gmail.com.') == 1
-        assert len(openreview_client.get_messages(to='authortwo@icml2027.cc', subject='[ICML 2027] The submission fee has been waived for submission number 2')) == 1
+        assert len(openreview_client.get_messages(to='authorsix@aau.edu.et', subject='[ICML 2027] The submission fee has been waived for submission number 2')) == 1
 
         ## a waived fee can not be paid
         with pytest.raises(openreview.OpenReviewException, match=r'already settled'):
-            author_three_client.checkout_payment(invitation=f'{venue_id}/Submission2/-/Submission_Fee_Payment', payment=Payment(note=submission.id))
+            author_six_client.checkout_payment(invitation=f'{venue_id}/Submission2/-/Submission_Fee_Payment', payment=Payment(note=submission.id))
 
         with pytest.raises(openreview.OpenReviewException, match=r'The submission fee of this submission is already waived'):
             pc_client.post_note_edit(
@@ -542,7 +543,7 @@ Please note that responding to this email will direct your reply to icml2027.pro
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@icml2027.cc', password=helpers.strong_password)
         author_one_client = openreview.api.OpenReviewClient(username='authorone@icml2027.cc', password=helpers.strong_password)
-        author_three_client = openreview.api.OpenReviewClient(username='authorthree@icml2027.cc', password=helpers.strong_password)
+        author_six_client = openreview.api.OpenReviewClient(username='authorsix@aau.edu.et', password=helpers.strong_password)
 
         submissions = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc')
         full_submission_invitation = pc_client.get_invitation(f'{venue_id}/-/Full_Submission')
@@ -563,7 +564,7 @@ Please note that responding to this email will direct your reply to icml2027.pro
         assert openreview_client.get_invitation(f'{venue_id}/Submission3/-/Submission_Fee_Payment').expdate == expiration_date
 
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICML.cc/2027/Conference/Submission3/-/Submission_Fee_Payment has expired'):
-            author_three_client.checkout_payment(invitation=f'{venue_id}/Submission3/-/Submission_Fee_Payment', payment=Payment(note=submissions[2].id))
+            author_six_client.checkout_payment(invitation=f'{venue_id}/Submission3/-/Submission_Fee_Payment', payment=Payment(note=submissions[2].id))
 
         reduced_checkout_in_progress = openreview_client.get_payments(note=submissions[2].id, status='pending')[0]
         assert reduced_checkout_in_progress.signature == '~AuthorFive_ICMLTwentySeven1'
@@ -635,15 +636,15 @@ Please note that responding to this email will direct your reply to icml2027.pro
         support_group_id = openreview_client.get_group('openreview.net/Support').id
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@icml2027.cc', password=helpers.strong_password)
-        author_three_client = openreview.api.OpenReviewClient(username='authorthree@icml2027.cc', password=helpers.strong_password)
+        author_six_client = openreview.api.OpenReviewClient(username='authorsix@aau.edu.et', password=helpers.strong_password)
         author_five_client = openreview.api.OpenReviewClient(username='authorfive@iitb.ac.in', password=helpers.strong_password)
 
         submission = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', number=3)[0]
 
         with pytest.raises(openreview.OpenReviewException, match=r'does not have permission to see Invitation ICML.cc/2027/Conference/-/Fee_Waiver'):
-            author_three_client.post_note_edit(
+            author_six_client.post_note_edit(
                 invitation=f'{venue_id}/-/Fee_Waiver',
-                signatures=['~AuthorThree_ICMLTwentySeven1'],
+                signatures=['~AuthorSix_ICMLTwentySeven1'],
                 note=openreview.api.Note(
                     forum=submission.id,
                     replyto=submission.id,
@@ -651,7 +652,7 @@ Please note that responding to this email will direct your reply to icml2027.pro
                 )
             )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Give the country or a comment that explains the waiver'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Give the countries or a comment that explains the waiver'):
             pc_client.post_note_edit(
                 invitation=f'{venue_id}/-/Fee_Waiver',
                 signatures=[venue_id],
@@ -687,7 +688,7 @@ Please note that responding to this email will direct your reply to icml2027.pro
 
         waiver_note = [note for note in pc_client.get_all_notes(invitation=f'{venue_id}/-/Fee_Waiver') if note.forum == submission.id][0]
         assert waiver_note.content['comment']['value'] == 'The venue keeps this submission.'
-        assert 'country' not in waiver_note.content
+        assert 'countries' not in waiver_note.content
         helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/Submission3/-/Submission_Fee_Payment', count=3)
 
         payments = author_five_client.get_payments(note=submission.id)
@@ -749,11 +750,11 @@ Please note that responding to this email will direct your reply to icml2027.pro
         venue_id = self.venue_id
 
         author_one_client = openreview.api.OpenReviewClient(username='authorone@icml2027.cc', password=helpers.strong_password)
-        author_two_client = openreview.api.OpenReviewClient(username='authortwo@icml2027.cc', password=helpers.strong_password)
+        author_four_client = openreview.api.OpenReviewClient(username='authorfour@aau.edu.et', password=helpers.strong_password)
         author_five_client = openreview.api.OpenReviewClient(username='authorfive@iitb.ac.in', password=helpers.strong_password)
 
         ## one call gives the payments page every fee the author is invited to pay, its submission and its payments
-        invitations = { i.id: i for i in author_two_client.get_invitations(invitee=True, type='payment', details='replytoNote,repliedPayments') if i.domain == venue_id }
+        invitations = { i.id: i for i in author_four_client.get_invitations(invitee=True, type='payment', details='replytoNote,repliedPayments') if i.domain == venue_id }
         assert sorted(invitations.keys()) == [f'{venue_id}/Submission1/-/Submission_Fee_Payment', f'{venue_id}/Submission2/-/Submission_Fee_Payment']
 
         submission_one_fee = invitations[f'{venue_id}/Submission1/-/Submission_Fee_Payment']

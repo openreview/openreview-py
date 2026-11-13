@@ -2072,7 +2072,7 @@ class EditInvitationsBuilder(object):
                 'writers': [venue_id],
                 'content': {
                     'amount': {
-                        'description': 'Full fee per submission, in the minor unit of the currency: 2000 is 20.00 USD. A submission with an author in a country that has a lower fee pays that fee instead. Fees that are already paid or waived, and payments already in progress, keep the amount they were started with.',
+                        'description': 'Full fee per submission, in the minor unit of the currency: 2000 is 20.00 USD. A submission whose authors all list institutions in countries with a lower fee pays the highest of those fees instead. Fees that are already paid or waived, and payments already in progress, keep the amount they were started with.',
                         'value': {
                             'param': {
                                 'type': 'integer',
@@ -2121,7 +2121,7 @@ class EditInvitationsBuilder(object):
                 'writers': [venue_id],
                 'content': {
                     'country_fees': {
-                        'description': 'Fees by country, from ISO 3166-1 alpha-2 codes to fees from 0 to the full amount, in the minor unit of the currency, for example {"ET": 0, "IN": 1000}. A submission pays the lowest of the full amount and the fees of the countries of its authors\' institutions. Enter {"delete": true} to remove the table, so every submission pays the full amount. Fees that are already paid or waived, and payments already in progress, keep the amount they were started with.',
+                        'description': 'Fees by country, from ISO 3166-1 alpha-2 codes to fees from 0 to the full amount, in the minor unit of the currency, for example {"ET": 0, "IN": 1000}. A submission whose authors all list institutions, all in countries of this table, pays the highest of those countries\' fees, and any other submission pays the full amount. Enter {"delete": true} to remove the table, so every submission pays the full amount. Fees that are already paid or waived, and payments already in progress, keep the amount they were started with.',
                         'value': {
                             'param': {
                                 'type': 'json'
