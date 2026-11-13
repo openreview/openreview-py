@@ -19,6 +19,21 @@ def process(client, edit, invitation):
     submission_cdate = datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000)
     submission_duedate = datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000)
 
+    commitment_fields = {
+        'paper_link': {
+            'order': 8,
+            'description': 'Provide the link to your ARR submission (https://openreview.net/forum?id=<PAPER_ID>) or the ARR submission id (<PAPER_ID>). Make sure to only add the paper id and no other parameters.',
+            'value': {
+                'param': {
+                    'type': 'string',
+                    'regex': r'^(https:\/\/openreview\.net\/forum\?id=)?[a-zA-Z0-9_\-]+$',
+                    'mismatchError': 'must be a valid link to an OpenReview submission (https://openreview.net/forum?id=...) or a note id'
+                }
+            }
+        },
+        'paper_type': paper_type_content
+    }
+
     venue.submission_stage = openreview.stages.SubmissionStage(
         start_date=submission_cdate,
         due_date=submission_duedate,
@@ -27,20 +42,7 @@ def process(client, edit, invitation):
         force_profiles=True,
         unified_authors=True,
         commitments_venue=True,
-        additional_fields={
-            'paper_link': {
-                'order': 8,
-                'description': 'Provide the link to your ARR submission (https://openreview.net/forum?id=<PAPER_ID>) or the ARR submission id (<PAPER_ID>). Make sure to only add the paper id and no other parameters.',
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'regex': r'^(https:\/\/openreview\.net\/forum\?id=)?[a-zA-Z0-9_\-]+$',
-                        'mismatchError': 'must be a valid link to an OpenReview submission (https://openreview.net/forum?id=...) or a note id'
-                    }
-                }
-            },
-            'paper_type': paper_type_content
-        }
+        additional_fields=commitment_fields
     )
 
     if venue.use_area_chairs:
@@ -54,6 +56,17 @@ def process(client, edit, invitation):
         due_date=submission_duedate + datetime.timedelta(weeks=4),
         options=['Accept', 'Reject'],
         accept_options=['Accept']
+    )
+
+    # authors of accepted commitments upload the camera-ready PDF to their commitment note,
+    # the link to the ARR submission and the paper type can not be changed
+    venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
+        name='Camera_Ready_Revision',
+        start_date=submission_duedate + datetime.timedelta(weeks=5),
+        due_date=submission_duedate + datetime.timedelta(weeks=6),
+        only_accepted=True,
+        allow_author_reorder=openreview.stages.AuthorReorder.ALLOW_INSTITUTION_EDIT,
+        remove_fields=['email_sharing', 'data_release', 'paper_link', 'paper_type']
     )
 
     venue.setup(note.content['program_chair_emails']['value'])
@@ -151,6 +164,15 @@ def process(client, edit, invitation):
                 'source': { 'value': { 'venueid': source_venue_ids, 'decision_options': ['Reject'] } }
             }
         )
+
+    venue.submission_stage = openreview.stages.SubmissionStage(
+        double_blind=True,
+        author_names_revealed=True, # we need this in order to not add readers to the unified authors field
+        unified_authors=True,
+        commitments_venue=True,
+        additional_fields=commitment_fields
+    )
+    venue.create_submission_revision_stage()
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Accept_Submission_Release',

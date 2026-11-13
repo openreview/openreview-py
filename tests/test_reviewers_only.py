@@ -2648,6 +2648,16 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         ]
         assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['nonreaders'] == []
 
+        # decision release can not be postponed past the camera-ready activation date
+        camera_ready_cdate = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision').cdate
+        with pytest.raises(openreview.OpenReviewException, match=r'Decision Release activation date must be before the Camera Ready Revision activation date'):
+            pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Decision_Release/Dates',
+                content={
+                    'activation_date': { 'value': camera_ready_cdate }
+                }
+            )
+
         # release decisions
         now = datetime.datetime.now()
         pc_client.post_invitation_edit(
@@ -2940,6 +2950,18 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
+
+        # camera-ready can not open before decisions are released
+        decision_release_cdate = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Release').cdate
+        with pytest.raises(openreview.OpenReviewException, match=r'Camera Ready Revision activation date must be after the Decision Release activation date'):
+            pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Dates',
+                content={
+                    'activation_date': { 'value': decision_release_cdate - 60000 },
+                    'due_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3))},
+                    'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) }
+                }
+            )
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Dates',
