@@ -56,7 +56,7 @@ def process(client, edit, invitation):
         accept_options=['Accept']
     )
 
-    venue.setup(note.content['program_chair_emails']['value'])
+    venue.setup(note.content['program_chair_emails']['value'], note.content.get('publication_chairs_emails', {}).get('value', []))
     venue.invitation_builder.set_venue_template_invitations()
 
     client.post_group_edit(
@@ -161,7 +161,6 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': venue.reviewers_name },
             'authors_name': { 'value': venue.authors_name },
-            'additional_readers': { 'value': submission_release_additional_readers },
             'decision_option': { 'value': 'Accept' },
             'decision_option_id': { 'value': openreview.tools.decision_option_to_id('Accept') },
             'decision_venue_id': { 'value': venue_id },
@@ -196,6 +195,8 @@ def process(client, edit, invitation):
         'submission_start_date',
         'submission_deadline',
         'area_chairs_support',
+        'publication_chairs_support',
+        'publication_chairs_emails',
         'venue_organizer_agreement'
     ]
     # only hide fields present in the note, otherwise the edit creates value-less stub fields

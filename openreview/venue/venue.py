@@ -169,6 +169,10 @@ class Venue(object):
 
         self.release_role_participation = request_note.content.get('release_role_participation', {}).get('value', True)
 
+        if request_note.content.get('publication_chairs_support', {}).get('value'):
+            self.use_publication_chairs = True
+            preferred_email_groups.append(self.get_publication_chairs_id())
+
         self.preferred_emails_groups = preferred_email_groups
         self.automatic_reviewer_assignment = True
 
