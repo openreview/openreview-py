@@ -8,5 +8,7 @@ def process(client, edit, invitation):
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     review_release_invitation_id = f'{domain.id}/-/{stage_name}'
 
-    edit_invitations_builder.set_review_release_reply_readers_invitation(review_release_invitation_id)
+    # the ethics review release also offers the ethics committee as readers
+    is_ethics_review_release = edit.content['stage_name']['value'] == domain.content.get('ethics_review_name', {}).get('value')
+    edit_invitations_builder.set_review_release_reply_readers_invitation(review_release_invitation_id, include_ethics=is_ethics_review_release)
     edit_invitations_builder.set_edit_dates_one_level_invitation(review_release_invitation_id)

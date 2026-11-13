@@ -63,11 +63,18 @@ def process(client, edit, invitation):
                     final_readers = [reader.replace('{number}', str(submission.number)) for reader in final_readers]
                     if '{signatures}' in final_readers:
                         final_readers.remove('{signatures}')
+                    # the review author (${3/signatures}) is resolved when the review is posted, it is moved after
+                    # the ethics readers so the readers keep the same order as when it was added to the note readers
+                    include_signatures = '${3/signatures}' in final_readers
+                    if include_signatures:
+                        final_readers.remove('${3/signatures}')
                     if 'everyone' not in final_readers:
                         if invitation_name != meta_review_name:
                             final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
                         if release_to_ethics_chairs:
                             final_readers.append(ethics_chairs_id)
+                    if include_signatures:
+                        final_readers.append('${3/signatures}')
 
                     print('invitation_name:', invitation_name)
                     paper_invitation_edit = client.post_invitation_edit(

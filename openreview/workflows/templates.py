@@ -445,6 +445,8 @@ class Templates():
                 'reviewers_web': { 'value': self.get_webfield_content('../venue/webfield/reviewersWebfield.js')},
                 'area_chairs_web': { 'value': self.get_webfield_content('../venue/webfield/areachairsWebfield.js')},
                 'senior_area_chairs_web': { 'value': self.get_webfield_content('../venue/webfield/seniorAreaChairsWebfield.js')},
+                'ethics_reviewers_web': { 'value': self.get_webfield_content('../venue/webfield/ethicsReviewersWebfield.js')},
+                'ethics_chairs_web': { 'value': self.get_webfield_content('../venue/webfield/ethicsChairsWebfield.js')},
             },
             edit={
                 'content': {
@@ -464,7 +466,7 @@ class Templates():
                             'param': {
                                 'type': 'string',
                                 'default': 'reviewers',
-                                'enum': ['reviewers', 'area_chairs', 'senior_area_chairs']
+                                'enum': ['reviewers', 'area_chairs', 'senior_area_chairs', 'ethics_reviewers', 'ethics_chairs']
                             }
                         }
                     },
