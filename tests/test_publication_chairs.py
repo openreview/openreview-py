@@ -161,3 +161,41 @@ class TestPublicationChairs():
         messages = openreview_client.get_messages(to='author@pubc.cc', subject='[PUBC 2026] Camera ready instructions')
         assert len(messages) == 1
         assert messages[0]['content']['text'].startswith('Please submit your camera ready version.')
+
+    def test_publication_chairs_submission_readers_option(self, openreview_client, helpers):
+
+        venue_id = 'PUBC.cc/2026/Conference'
+
+        # the /Readers invitations are created by the release template processes, wait for both of them
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Accept_Submission_Release')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Reject_Submission_Release')
+
+        # the PCs can make accepted submissions readable by the publication chairs, as the legacy Post Decision stage did
+        readers_invitation = openreview_client.get_invitation(f'{venue_id}/-/Accept_Submission_Change_After_Decision/Readers')
+        readers_items = readers_invitation.edit['content']['readers']['value']['param']['items']
+        assert { 'value': f'{venue_id}/Publication_Chairs', 'optional': True, 'description': 'Publication Chairs' } in readers_items
+        # the option sits between the committee options and the submission authors
+        descriptions = [item['description'] for item in readers_items]
+        assert descriptions.index('Publication Chairs') == descriptions.index('Submission Authors') - 1
+
+        # publication chairs only work with accepted submissions, so rejected submissions don't offer the option
+        readers_invitation = openreview_client.get_invitation(f'{venue_id}/-/Reject_Submission_Change_After_Decision/Readers')
+        readers_items = readers_invitation.edit['content']['readers']['value']['param']['items']
+        assert f'{venue_id}/Publication_Chairs' not in [item['value'] for item in readers_items]
+
+        # the PCs keep accepted submissions private to the program chairs, publication chairs and authors
+        pc_client = openreview.api.OpenReviewClient(username='programchair@pubc.cc', password=helpers.strong_password)
+        submission_authors_id = f'{venue_id}/Submission' + '${{2/id}/number}' + '/Authors'
+        # the /Readers edit has only a preprocess, so the release invitation is updated as soon as the edit is posted
+        pc_client.post_invitation_edit(
+            invitations=f'{venue_id}/-/Accept_Submission_Change_After_Decision/Readers',
+            content={
+                'readers': {
+                    'value': [venue_id, f'{venue_id}/Publication_Chairs', submission_authors_id]
+                }
+            }
+        )
+
+        # the selected readers are copied as they are, the submission number is filled in when the release runs on each note
+        release_invitation = openreview_client.get_invitation(f'{venue_id}/-/Accept_Submission_Change_After_Decision')
+        assert release_invitation.edit['note']['readers'] == [venue_id, f'{venue_id}/Publication_Chairs', submission_authors_id]
