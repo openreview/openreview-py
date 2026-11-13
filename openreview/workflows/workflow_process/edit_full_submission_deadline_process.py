@@ -120,6 +120,25 @@ def process(client, edit, invitation):
                 )
             )
 
+    submission_fee_payment_id = domain.get_content_value('submission_fee_payment_id')
+    submission_fee_payment_invitation = openreview.tools.get_invitation(client, submission_fee_payment_id) if submission_fee_payment_id else None
+    if submission_fee_payment_invitation and (submission_fee_payment_invitation.cdate or 0) < expdate:
+        print('Setting submission fee cdate to:', expdate)
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=submission_fee_payment_id,
+                signatures=[venue_id],
+                cdate=expdate,
+                edit={
+                    'invitation': {
+                        'cdate': expdate
+                    }
+                }
+            )
+        )
+
     # keep Deletion cdate in sync with Full_Submission cdate
     deletion_invitation_id = f'{venue_id}/-/Deletion'
     client.post_invitation_edit(
