@@ -194,6 +194,124 @@ class TestCVPRConferenceWithTemplates():
             '~Reviewer_CVPRSeven1'
         ])
 
+    def test_lead_area_chairs_recruitment(self, openreview_client, helpers, selenium, request_page):
+
+        # A new committee is created with the Committee_Group template, the same invitation the deployment
+        # uses for the Reviewers, Area_Chairs and Senior_Area_Chairs groups. Only OpenReview support can
+        # post to the template, after that the program chairs manage the committee and its recruitment.
+        edit = openreview_client.post_group_edit(
+            invitation='openreview.net/Template/-/Committee_Group',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': { 'value': 'thecvf.com/CVPR/2027/Conference' },
+                # name of the group, the group id is <venue_id>/<committee_name>
+                'committee_name': { 'value': 'Lead_Area_Chairs' },
+                # one of reviewers, area_chairs or senior_area_chairs, it selects the console of the group and
+                # the committees the invitees cannot be members of when they accept
+                'committee_role': { 'value': 'area_chairs' },
+                # used in the recruitment emails and the instructions of the invitations
+                'committee_pretty_name': { 'value': 'Lead Area Chair' },
+                # groups, besides the venue and the committee itself, that can see the members of the committee
+                'additional_readers': { 'value': ['thecvf.com/CVPR/2027/Conference/Senior_Area_Chairs'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        lead_area_chairs_group = openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs')
+        assert lead_area_chairs_group.domain == 'thecvf.com/CVPR/2027/Conference'
+        assert lead_area_chairs_group.readers == [
+            'thecvf.com/CVPR/2027/Conference',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs',
+            'thecvf.com/CVPR/2027/Conference/Senior_Area_Chairs'
+        ]
+        assert lead_area_chairs_group.members == []
+        assert lead_area_chairs_group.content['committee_role']['value'] == 'area_chairs'
+        assert lead_area_chairs_group.content['committee_pretty_name']['value'] == 'Lead Area Chair'
+        assert 'AreaChairConsole' in lead_area_chairs_group.web
+
+        # groups to track the recruitment
+        assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/Invited').members == []
+        assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/Declined').members == []
+
+        # invitations for the program chairs to manage the committee
+        for invitation_id in [
+            # email the members and edit the members
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Message',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Members',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/Invited/-/Message',
+            # send the recruitment emails, set when they can be sent and customize the default emails
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Request',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Request/Dates',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Request/Request_Emails',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Request_Reminder',
+            # the invitees accept or decline, set the response deadline, the reduced load options, the emails
+            # sent after the response and the committees the invitees cannot be members of
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Response',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Response/Dates',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Response/Reduced_Load',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Response/Response_Emails',
+            'thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Response/Overlap_Committees'
+        ]:
+            assert openreview_client.get_invitation(invitation_id)
+
+        # as area chairs, by default the lead area chairs cannot serve as reviewers
+        recruitment_response_invitation = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Response')
+        assert recruitment_response_invitation.invitees == ['thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/Invited']
+        assert recruitment_response_invitation.content['no_overlap_committee_ids']['value'] == ['thecvf.com/CVPR/2027/Conference/Reviewers']
+
+        # the program chairs recruit the lead area chairs, one invitee has a profile and the other one does not
+        helpers.create_user('lead_ac1@cvpr.cc', 'LeadAC', 'CVPROne')
+        pc_client = openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
+
+        edit = pc_client.post_group_edit(
+            invitation='thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Request',
+            content={
+                'invitee_details': { 'value': 'lead_ac1@cvpr.cc, LeadAC CVPROne\nlead_ac2@cvpr.cc, LeadAC CVPRTwo' },
+                'invite_message_subject_template': { 'value': '[CVPR 2027] Invitation to serve as Lead Area Chair' },
+                'invite_message_body_template': { 'value': 'Dear {{fullname}},\n\nWe are pleased to invite you to serve as a Lead Area Chair for CVPR 2027.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nCVPR 2027 Program Chairs' },
+            },
+            group=openreview.api.Group()
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        assert set(openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/Invited').members) == {'~LeadAC_CVPROne1', 'lead_ac2@cvpr.cc'}
+        assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs').members == []
+
+        messages = openreview_client.get_messages(to='pc@cvpr.cc', subject='Recruitment request status for CVPR 2027 Lead Area Chair Group')
+        assert len(messages) == 1
+        assert 'Invited: 2\nAlready invited: 0\nAlready member: 0\nErrors: 0' in messages[0]['content']['text']
+
+        def get_invitation_url(email):
+            messages = openreview_client.get_messages(to=email, subject='[CVPR 2027] Invitation to serve as Lead Area Chair')
+            assert len(messages) == 1
+            text = messages[0]['content']['text']
+            assert text.startswith('Dear LeadAC ')
+            return re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+
+        # the first invitee accepts and becomes a member of the committee
+        helpers.respond_invitation(selenium, request_page, get_invitation_url('lead_ac1@cvpr.cc'), accept=True)
+
+        edits = openreview_client.get_note_edits(invitation='thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Response', sort='tcdate:desc')
+        assert len(edits) == 1
+        assert edits[0].note.content['response']['value'] == 'Yes'
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs').members == ['~LeadAC_CVPROne1']
+        assert len(openreview_client.get_messages(to='lead_ac1@cvpr.cc', subject='[CVPR 2027] Lead Area Chair Invitation accepted')) == 1
+
+        # the second invitee declines
+        helpers.respond_invitation(selenium, request_page, get_invitation_url('lead_ac2@cvpr.cc'), accept=False)
+
+        edits = openreview_client.get_note_edits(invitation='thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/-/Recruitment_Response', sort='tcdate:desc')
+        assert len(edits) == 2
+        assert edits[0].note.content['response']['value'] == 'No'
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs').members == ['~LeadAC_CVPROne1']
+        assert openreview_client.get_group('thecvf.com/CVPR/2027/Conference/Lead_Area_Chairs/Declined').members == ['lead_ac2@cvpr.cc']
+        assert len(openreview_client.get_messages(to='lead_ac2@cvpr.cc', subject='[CVPR 2027] Lead Area Chair Invitation declined')) == 1
+
     def test_submissions(self, openreview_client, helpers, test_client):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
