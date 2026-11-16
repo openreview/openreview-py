@@ -2355,8 +2355,83 @@ def create_forum_invitations(client, submission):
                         signatures=[submission.domain],
                         invitation=openreview.api.Invitation(id=forum_invitation.id,
                             ddate=openreview.tools.datetime_millis(datetime.datetime.now())
-                        )            
+                        )
                     )
+
+def create_committee_member_invitations(client, submission, committee_id, anon_group_id):
+    """
+    Creates the invitations of a member of a submission committee, given its anonymous group, e.g. the AI chat of a
+    reviewer of the submission, from the super invitations of the committee that take the ``anonGroupId``,
+    ``noteId`` and ``noteNumber`` params.
+    It is to a new committee member what :func:`create_forum_invitations` is to a new submission: the assignment
+    process calls it for the member it assigns once the super invitations are active. The members assigned before
+    get their invitations from the date process of each super invitation.
+
+    The edit of each invitation gets ``noteId``, ``noteNumber`` and ``anonGroupId``, and each one of its other params,
+    all of them required, gets the value of the content field of the super invitation with the same name, e.g. the
+    model of the chats. A super invitation without the value of one of its params is skipped. The member is assumed
+    to have no invitation of the committee yet: an invitation that exists already is posted again, so it gets the
+    values of the super invitation back, e.g. a chat whose model was changed.
+
+    :param client: Client of the venue, that signs the edits
+    :type client: openreview.api.OpenReviewClient
+    :param submission: Submission of the committee
+    :type submission: openreview.api.Note
+    :param committee_id: Committee whose super invitations are used, the ones with the prefix ``<committee_id>/-/``,
+        e.g. ``<venue_id>/Reviewers`` for the members of ``<venue_id>/Submission1/Reviewers``
+    :type committee_id: str
+    :param anon_group_id: Anonymous group of the member, e.g. ``<venue_id>/Submission1/Reviewer_abcd``
+    :type anon_group_id: str
+    """
+
+    venue_id = submission.domain
+
+    def get_param(field):
+        value = field.get('value') if isinstance(field, dict) else None
+        return value.get('param') if isinstance(value, dict) else None
+
+    def has_member_params(invitation):
+        params = (invitation.edit or {}).get('content', {})
+        return all(get_param(params.get(name)) for name in ['anonGroupId', 'noteId', 'noteNumber'])
+
+    ## The process functions run as the venue, so only the invitations it can sign for are created
+    def venue_can_sign(invitation):
+        invitation_signatures = (invitation.edit or {}).get('invitation', {}).get('signatures')
+        return not isinstance(invitation_signatures, list) or invitation_signatures == [venue_id]
+
+    invitations = [
+        invitation for invitation in client.get_all_invitations(prefix=f'{committee_id}/-/', type='invitation', domain=venue_id)
+        if invitation.is_active() and invitation.date_processes and has_member_params(invitation) and venue_can_sign(invitation)
+    ]
+
+    for invitation in invitations:
+        content = {
+            'noteId': { 'value': submission.id },
+            'noteNumber': { 'value': submission.number },
+            'anonGroupId': { 'value': anon_group_id }
+        }
+        ## The other params, all of them required, take the value of the content field of the super invitation
+        ## with the same name
+        missing_params = []
+        for name in invitation.edit.get('content', {}):
+            if name in content:
+                continue
+            value = invitation.get_content_value(name)
+            if value is None:
+                missing_params.append(name)
+            content[name] = { 'value': value }
+        if missing_params:
+            print('skipping invitation: ', invitation.id, ' - no value for the params ', missing_params)
+            continue
+
+        print('create invitation: ', invitation.id, anon_group_id)
+        client.post_invitation_edit(
+            invitations=invitation.id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            content=content
+        )
 
 def singularize(word):
     if word.endswith('ies'):

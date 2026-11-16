@@ -1746,8 +1746,30 @@ class TestCVPRConferenceWithTemplates():
         # the reviewer can not read the model of their chat
         assert (reviewer_client.get_invitation(f'{other_anon_group_id}/-/LLM_Interaction').content or {}).get('llm_model', {}).get('value') is None
 
-        # activating the chats again, e.g. for the reviewers assigned later, creates the missing chats only, so the
-        # existing chats keep their model and token limit
+        # a reviewer assigned once the chats are active gets their chat from the assignment, with the model and the
+        # token limit of the reviewer chats, without activating the chats again
+        submission = openreview_client.get_notes(invitation='thecvf.com/CVPR/2027/Conference/-/Submission', number=3)[0]
+        assignment_edge = pc_client.post_edge(openreview.api.Edge(
+            invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/Assignment',
+            head=submission.id,
+            tail='~Reviewer_CVPRSeven1',
+            signatures=['thecvf.com/CVPR/2027/Conference/Program_Chairs'],
+            weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
+        new_anon_group_id = openreview_client.get_groups(prefix='thecvf.com/CVPR/2027/Conference/Submission3/Reviewer_', member='~Reviewer_CVPRSeven1')[0].id
+        reviewer_chats = openreview_client.get_invitation('thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')
+        new_chat = openreview_client.get_invitation(f'{new_anon_group_id}/-/LLM_Interaction')
+        assert new_chat.content['llm_model']['value'] == reviewer_chats.content['llm_model']['value']
+        assert new_chat.content['llm_token_limit']['value'] == reviewer_chats.content['llm_token_limit']['value']
+        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')) == 27
+
+        _, _, message_edit = ask('reviewer7@gmail.com', '~Reviewer_CVPRSeven1', 3, 'Reviewer_', 'What are the main contributions of this paper?')
+        answer = get_answer(new_anon_group_id, message_edit)
+        assert answer.content['message']['value'] == 'Answer from the LLM mock to: What are the main contributions of this paper?'
+
+        # activating the chats again creates the missing chats only, so the existing chats keep their model and
+        # token limit
         pc_client.post_invitation_edit(
             invitations='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction/Dates',
             content={
@@ -1755,7 +1777,7 @@ class TestCVPRConferenceWithTemplates():
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction-0-0', count=2)
-        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')) == 26
+        assert len(openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2027/Conference/Reviewers/-/LLM_Interaction')) == 27
         assert openreview_client.get_invitation(f'{other_anon_group_id}/-/LLM_Interaction').content['llm_model']['value'] == 'gemini-2.5-flash'
 
         # a run of the process for a message that has its answer does nothing, the gateway is not called again
