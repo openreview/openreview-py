@@ -1903,6 +1903,15 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'additional_readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
+                    },
                     'decision_option': {
                         'value': {
                             'param': {
