@@ -963,7 +963,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
             )
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Only the super user can make the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails run as ~Super_User1'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can make the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails run as ~Super_User1'):
             pc_client_v2.post_edit(openreview.api.Edit(
                 id=signature_edit['id'],
                 invitations='ICML.cc/2023/Conference/-/Edit',
@@ -1104,7 +1104,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
             )
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'ForbiddenError'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of openreview.net/Support can make the process functions of the Invitation ICML.cc/2023/Conference/-/Support_Signed run as openreview.net/Support'):
             pc_client_v2.post_edit(openreview.api.Edit(
                 id=signature_edit['id'],
                 invitations='ICML.cc/2023/Conference/-/Edit',
