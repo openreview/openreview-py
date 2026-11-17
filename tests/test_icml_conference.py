@@ -860,7 +860,79 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         ## Check preferred emails
         assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails') == 11
-        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails', head='~SomeFirstName_User1') == 1      
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails', head='~SomeFirstName_User1') == 1
+
+        preferred_emails_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
+        assert preferred_emails_invitation.signatures == ['~Super_User1']
+        assert preferred_emails_invitation.process is None
+        assert preferred_emails_invitation.preprocess is None
+        assert preferred_emails_invitation.post_processes is None
+        assert len(preferred_emails_invitation.date_processes) == 2
+        date_processes = preferred_emails_invitation.date_processes
+
+        pc_script = '''def process(client, invitation):
+    print('PC script')
+'''
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can modify the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails'):
+            pc_client_v2.post_invitation_edit(
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                    date_processes=[{
+                        'dates': ['#{4/cdate} + 3000'],
+                        'script': pc_script
+                    }]
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can modify the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails'):
+            pc_client_v2.post_invitation_edit(
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                    process=pc_script
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can modify the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails'):
+            pc_client_v2.post_invitation_edit(
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                    preprocess=pc_script
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can modify the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails'):
+            pc_client_v2.post_invitation_edit(
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                    post_processes=[{
+                        'script': pc_script
+                    }]
+                )
+            )
+
+        preferred_emails_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
+        assert preferred_emails_invitation.signatures == ['~Super_User1']
+        assert preferred_emails_invitation.process is None
+        assert preferred_emails_invitation.preprocess is None
+        assert preferred_emails_invitation.post_processes is None
+        assert preferred_emails_invitation.date_processes == date_processes
 
     def test_post_submission(self, client, openreview_client, test_client, helpers, request_page, selenium):
 
