@@ -105,6 +105,7 @@ class InvitationBuilder(object):
         self.set_desk_rejection_reversion_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
+        self.set_editorial_retraction_invitation()
         self.set_revision_invitation()
         self.set_decision_invitation()
         self.set_decision_approval_invitation()
@@ -3512,6 +3513,96 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures=[self.journal.venue_id]
         )
 
+    def set_editorial_retraction_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/editorial_retraction_process.py')
+            }
+        }
+        edit_content = {
+            'noteId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_editorial_retraction_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, editors_in_chief_id],
+            'readers': [venue_id, editors_in_chief_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'process': self.process_script,
+            'edit': {
+                'signatures': [editors_in_chief_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'signatures': [editors_in_chief_id],
+                    ## The EICs' decision is final, so unlike the authors' request there is no approval step and the note can be released to the paper readers right away
+                    'readers': self.journal.get_release_decision_readers('${5/content/noteNumber/value}'),
+                    'writers': [ venue_id ],
+                    'content': {
+                        'retraction_confirmation': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'I confirm that the Editors-in-Chief are retracting this paper in accordance with the venue\'s retraction policy.'
+                                    ],
+                                    'input': 'checkbox'
+                                }
+                            },
+                            'description': 'Please confirm to retract. The retraction takes effect immediately and the authors will be notified.',
+                            'order': 1
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Optionally explain the reason for the retraction. This comment will be visible to the readers of the paper. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_editorial_retraction_id(), invitation_content, edit_content, invitation)
+
+    def set_note_editorial_retraction_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_editorial_retraction_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
     def set_under_review_invitation(self):
         venue_id = self.journal.venue_id
 
@@ -3705,7 +3796,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             }
                         },
                         'venue': {
-                            'value': 'Retracted by Authors'
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [self.journal.retracted_by_authors_venue, self.journal.retracted_by_editors_venue],
+                                    'input': 'select'
+                                }
+                            }
                         },
                         'venueid': {
                             'value': self.journal.retracted_venue_id
@@ -6070,19 +6167,22 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         reviews = self.client.get_notes(forum=note.forum, invitation=self.journal.get_review_id(number=note.number))
 
         for review in reviews:
-            signature=review.signatures[0]
-            if signature.startswith(paper_reviewers_id):
-                self.client.post_invitation_edit(invitations=self.journal.get_review_rating_id(),
-                content={ 
-                    'noteId': { 'value': note.id }, 
-                    'noteNumber': { 'value': note.number },
-                    'replytoId': { 'value': review.id },
-                    'signature': { 'value': signature },
-                    'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
-                },
-                readers=[self.journal.venue_id],
-                writers=[self.journal.venue_id],
-                signatures=[self.journal.venue_id]
+            if review.signatures[0].startswith(paper_reviewers_id):
+                self.set_note_review_rating_invitation_for_review(note, review, duedate)
+
+    def set_note_review_rating_invitation_for_review(self, note, review, duedate):
+        # duedate may be a datetime (rating stage just opened) or epoch millis (copied from an existing Rating invitation)
+        return self.client.post_invitation_edit(invitations=self.journal.get_review_rating_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'replytoId': { 'value': review.id },
+                'signature': { 'value': review.signatures[0] },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
         )
 
     def set_review_rating_enabling_invitation(self):
