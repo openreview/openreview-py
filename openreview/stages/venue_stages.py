@@ -1652,8 +1652,10 @@ class RegistrationStage(object):
         return content
 class CustomStage(object):
     """
-    param reply_to: submission, reviews, metareviews, forum
-    type reply_to: string
+    param reply_to: ReplyTo.FORUM, ReplyTo.WITHFORUM, or the name of the stage whose notes this
+        stage replies to (e.g. 'Official_Review', 'Meta_Review', 'Author_Rebuttal'). Pass the stage
+        name only, not the full invitation id.
+    type reply_to: CustomStage.ReplyTo or string
     """
 
     class Participants(Enum):
@@ -1683,9 +1685,6 @@ class CustomStage(object):
     class ReplyTo(Enum):
         FORUM = 0
         WITHFORUM = 1
-        REVIEWS = 2
-        METAREVIEWS = 3
-        REBUTTALS = 4
 
     class ReplyType(Enum):
         REPLY = 0
@@ -1876,25 +1875,7 @@ class CustomStage(object):
             reply_to = 'forum'
         elif self.reply_to == self.ReplyTo.WITHFORUM:
             reply_to = 'withForum'
-        elif self.reply_to == self.ReplyTo.REVIEWS:
-            reply_to = 'reviews'
-        elif self.reply_to == self.ReplyTo.METAREVIEWS:
-            reply_to = 'metareviews'
-        elif self.reply_to == self.ReplyTo.REBUTTALS:
-            reply_to = 'rebuttals'
         return reply_to
-    
-    def get_reply_stage_name(self, venue):
-        custom_stage_replyto = self.get_reply_to()
-
-        if custom_stage_replyto == 'reviews':
-            return venue.review_stage.name
-        if custom_stage_replyto == 'metareviews':
-            return venue.meta_review_stage.name
-        if custom_stage_replyto == 'rebuttals':
-            return venue.review_rebuttal_stage.name
-
-        return custom_stage_replyto
 
     def get_reply_type(self):
 

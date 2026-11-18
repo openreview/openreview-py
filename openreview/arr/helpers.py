@@ -992,7 +992,7 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Review_Rating",
                 stage_arguments={
                     'name': 'Review_Issue_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
+                    'reply_to': 'Official_Review',
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
                     'readers': [
@@ -1013,7 +1013,7 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Meta-Review_Issue_Report",
                 stage_arguments={
                     'name': 'Meta-Review_Issue_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+                    'reply_to': 'Meta_Review',
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
                     'readers': [
@@ -1081,7 +1081,7 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_Reviewer_Report",
                 stage_arguments={
                     'name': 'Great_or_Irresponsible_Reviewer_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
+                    'reply_to': 'Official_Review',
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
@@ -1103,7 +1103,7 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_AC_Report",
                 stage_arguments={
                     'name': 'Great_or_Irresponsible_AC_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+                    'reply_to': 'Meta_Review',
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED
