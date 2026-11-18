@@ -1,4 +1,5 @@
 // Webfield component
+const directUploadEnabled = entity.content?.direct_upload_enabled?.value
 const tabs = []
 
 if (user) {
@@ -20,6 +21,15 @@ if (user) {
   })
 }
 
+const disabledNotice = directUploadEnabled ? '' : `**Direct upload of publications to the OpenReview Archive is currently disabled.**
+
+`
+
+const updateInstructions = directUploadEnabled ? `- If the papers listed do not adequately represent your reviewing expertise, please upload a few papers that are representative of your work by clicking the "OpenReview Archive Direct Upload" button below.
+- **Do not upload papers that you are not willing to share publicly.** If you decide to upload an unpublished paper, it will be treated as a public preprint.
+- In the "pdf" field, please provide either a URL to a pdf file, **or** upload the PDF from your hard drive.
+- Please make sure that the original author order is preserved.` : `- If the papers listed do not adequately represent your reviewing expertise, please import papers that are representative of your work from DBLP or ORCID in the Personal Links section of your [profile](/profile/edit).`
+
 return {
   component: 'VenueHomepage',
   version: 1,
@@ -29,7 +39,7 @@ return {
       subtitle: 'Publication Upload Portal for Paper-Reviewer Matching',
       website: 'https://openreview.net',
       instructions: `
-**General Information**
+${disabledNotice}**General Information**
 
 - The OpenReview paper-reviewer matching system uses the text from your authored publications to match you with relevant papers. 
 - Your reviewing expertise for every submission is inferred from the text in the title and abstract fields of your publications, and is represented by an affinity score.
@@ -39,17 +49,14 @@ return {
 **Updating your Expertise**
 
 - Listed below are your authored papers that we currently have on record.
-- If the papers listed do not adequately represent your reviewing expertise, please upload a few papers that are representative of your work by clicking the "OpenReview Archive Direct Upload" button below.
-- **Do not upload papers that you are not willing to share publicly.** If you decide to upload an unpublished paper, it will be treated as a public preprint.
-- In the "pdf" field, please provide either a URL to a pdf file, **or** upload the PDF from your hard drive.
-- Please make sure that the original author order is preserved.
+${updateInstructions}
 
 **Questions?**
 
 Please contact the OpenReview support team at [info@openreview.net](info@openreview.net) with any questions or concerns about the OpenReview platform.
 `  
     },
-    submissionId: `${entity.id}/-/Direct_Upload`,
+    submissionId: directUploadEnabled ? `${entity.id}/-/Direct_Upload` : undefined,
     submissionConfirmationMessage: 'Your publication has been uploaded.',
     parentGroupId: entity.parent,
     tabs: tabs
