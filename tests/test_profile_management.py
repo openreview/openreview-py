@@ -584,7 +584,7 @@ class TestProfileManagement():
             {"fullname": "Andrew McCallum", "username": "~Andrew_McCallum1"}
         ]
 
-        with pytest.raises(openreview.OpenReviewException, match=r'The author username ~Nihar_B._Shah1 from index 0 doesn\'t match with the author name Nihar Shah'): 
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Nihar Shah doesn\'t match with the author name Nihar B. Shah from index 0'):
             edit = nihar_client.post_note_edit(
                 invitation = 'openreview.net/Public_Article/-/Author_Removal',
                 signatures = ['~Nihar_B._Shah1'],
@@ -1678,6 +1678,107 @@ computation and memory.
         assert note.external_ids == ['doi:10.1103/physreva.109.022426']
         assert note.content['authors']['value'][0] == {'fullname': 'Josiah Couch', 'username': '~Josiah_Couch1'}
         assert note.content['authors']['value'][2] == {'fullname': 'Sarah Racz', 'username': '~Sarah_Racz1'}
+
+    def test_remove_orcid_author_with_credit_name_different_from_profile_name(self, openreview_client, helpers):
+
+        nuzhin_client = helpers.create_user('nuzhin@profile.org', 'Nuzhin', 'E.E.')
+
+        edit = nuzhin_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/ORCID.org/-/Record',
+            signatures = ['~Nuzhin_E.E.1'],
+            content = {
+                'json': {
+                    'value': {
+                        'created-date': { 'value': 1708964039610 },
+                        'title': { 'title': { 'value': 'Credit Names in ORCID Records' } },
+                        'journal-title': { 'value': 'Phys.Rev.A' },
+                        'type': 'journal-article',
+                        'publication-date': {
+                            'year': { 'value': '2024' },
+                            'month': { 'value': '02' },
+                            'day': { 'value': '20' }
+                        },
+                        'external-ids': {
+                            'external-id': [{
+                                'external-id-type': 'doi',
+                                'external-id-value': '10.1103/PhysRevA.109.099999',
+                                'external-id-relationship': 'self'
+                            }]
+                        },
+                        'contributors': {
+                            'contributor': [{
+                                'contributor-orcid': {
+                                    'uri': 'http://orcid.org/0000-0002-0000-0001',
+                                    'path': '0000-0002-0000-0001',
+                                    'host': 'orcid.org'
+                                },
+                                'credit-name': { 'value': 'Nuzhin, E.E.' },
+                                'contributor-attributes': { 'contributor-sequence': 'first', 'contributor-role': 'author' }
+                            }, {
+                                'contributor-orcid': None,
+                                'credit-name': { 'value': 'Petrov, Ivan' },
+                                'contributor-attributes': { 'contributor-sequence': 'additional', 'contributor-role': 'author' }
+                            }]
+                        },
+                        'visibility': 'public'
+                    }
+                }
+            },
+            note = openreview.api.Note(
+                external_id = 'doi:10.1103/physreva.109.099999',
+                content = {
+                    'title': { 'value': 'Credit Names in ORCID Records' },
+                    'authors': {
+                        'value': [
+                            {'fullname': 'E.E. Nuzhin', 'username': '~Nuzhin_E.E.1'},
+                            {'fullname': 'Petrov, Ivan', 'username': ''},
+                        ]
+                    },
+                    'venue': { 'value': 'Phys.Rev.A' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        note = nuzhin_client.get_note(edit['note']['id'])
+        assert note.content['authors']['value'] == [
+            {'fullname': 'E.E. Nuzhin', 'username': '~Nuzhin_E.E.1'},
+            {'fullname': 'Ivan Petrov', 'username': 'https://orcid.org/orcid-search/search?searchQuery=Ivan%20Petrov'},
+        ]
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Nuzhin E.E. doesn\'t match with the author name E.E. Nuzhin from index 0'):
+            nuzhin_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Author_Removal',
+                signatures = ['~Nuzhin_E.E.1'],
+                content = {
+                    'author_index': { 'value': 0 },
+                    'author_id': { 'value': '' },
+                    'author_name': { 'value': 'Nuzhin E.E.' },
+                },
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        nuzhin_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
+            signatures = ['~Nuzhin_E.E.1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+                'author_name': { 'value': 'E.E. Nuzhin' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        assert nuzhin_client.get_note(note.id).content['authors']['value'] == [
+            {'fullname': 'E.E. Nuzhin', 'username': ''},
+            {'fullname': 'Ivan Petrov', 'username': 'https://orcid.org/orcid-search/search?searchQuery=Ivan%20Petrov'},
+        ]
 
 
     def test_import_acl_anthology_notes(self, client, openreview_client, test_client, helpers):

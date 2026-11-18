@@ -21,9 +21,10 @@ async function process(client, edit, invitation) {
   const usernames = userProfile.content.names.map(name => name.username).filter(username => !!username);
 
   const authorUsername = publication.content.authors.value[authorIndex]?.username;
+  const publicationAuthorName = publication.content.authors.value[authorIndex]?.fullname;
 
-  if (Tools.prettyId(authorUsername) !== authorName) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author username ${authorUsername} from index ${authorIndex} doesn't match with the author name ${authorName}` }));
+  if (publicationAuthorName !== authorName) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${authorName} doesn't match with the author name ${publicationAuthorName} from index ${authorIndex}` }));
   }
 
   if (!usernames.some(username => username === authorUsername)) {
