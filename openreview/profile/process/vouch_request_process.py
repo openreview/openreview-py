@@ -11,6 +11,7 @@ def process(client, edit, invitation):
 
     voucher = openreview.tools.get_profile(client, note.content['voucher']['value'])
     if not voucher:
+        print(f"No profile found for {note.content['voucher']['value']}, so request {note.number} has no vouch invitation.")
         return
 
     vouchee_id = note.signatures[0]

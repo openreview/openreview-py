@@ -194,6 +194,9 @@ class TestProfileVouching():
         assert request_edit['note']['number'] == 2
         helpers.await_queue_edit(openreview_client, edit_id=request_edit['id'])
         assert openreview.tools.get_invitation(openreview_client, 'openreview.net/Support/Vouch_Request2/-/Vouch_Verification') is None
+        process_logs = openreview_client.get_process_logs(id=request_edit['id'])
+        assert process_logs[0]['status'] == 'ok'
+        assert 'No profile found for ~Nobody_Here1, so request 2 has no vouch invitation.' in process_logs[0]['log']
 
     def test_vouch_for_rejected_profile(self, openreview_client, support_client, helpers):
 
