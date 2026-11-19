@@ -3272,7 +3272,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         content = custom_stage.get_content(api_version='2', conference=self.venue)
 
-        custom_stage_replyto = custom_stage.get_reply_stage_name(self.venue)
+        custom_stage_replyto = custom_stage.get_reply_to()
         custom_stage_source = custom_stage.get_source_submissions(self.venue)
         custom_stage_reply_type = custom_stage.get_reply_type()
         note_writers = None

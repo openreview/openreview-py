@@ -2451,6 +2451,55 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
 
+    def test_rebuttal_custom_stage(self, openreview_client, helpers):
+
+        # Rebuild the venue from its domain group, as PCs and support do for workflow venues. get_venue
+        # does not reconstruct the review, meta-review or rebuttal stage objects, so a custom stage that
+        # replies to rebuttals must name the rebuttal invitation instead of relying on venue stage state.
+        venue = openreview.venue.helpers.get_venue(openreview_client, 'ABCD.cc/2025/Conference', support_user='openreview.net/Support')
+
+        now = datetime.datetime.now()
+        venue.custom_stage = openreview.stages.CustomStage(
+            name='Rebuttal_Acknowledgement',
+            reply_to='Author_Rebuttal',
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            start_date=now,
+            due_date=now + datetime.timedelta(days=3),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED],
+            readers=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS, openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.AUTHORS],
+            content={
+                'acknowledgement': {
+                    'order': 1,
+                    'description': 'I acknowledge I read the rebuttal.',
+                    'value': {
+                        'param': {
+                            'type': 'boolean',
+                            'enum': [{ 'value': True, 'description': 'Yes, I acknowledge I read the rebuttal.' }],
+                            'input': 'checkbox'
+                        }
+                    }
+                }
+            }
+        )
+        venue.create_custom_stage()
+
+        # The super invitation sources its child invitations from the Author_Rebuttal replies
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Rebuttal_Acknowledgement')
+        assert invitation.content['source']['value']['reply_to'] == 'Author_Rebuttal'
+
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Rebuttal_Acknowledgement-0-1', count=1)
+
+        # One child invitation per posted rebuttal: test_rebuttal_stage posted a single rebuttal on Submission1
+        rebuttals = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Author_Rebuttal')
+        assert len(rebuttals) == 1
+
+        invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Rebuttal_Acknowledgement')
+        assert len(invitations) == 1
+
+        child_invitation = openreview_client.get_invitation(f'ABCD.cc/2025/Conference/Submission1/Author_Rebuttal{rebuttals[0].number}/-/Rebuttal_Acknowledgement')
+        assert child_invitation.edit['note']['replyto'] == rebuttals[0].id
+        assert child_invitation.edit['note']['forum'] == rebuttals[0].forum
+
     def test_decision_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)

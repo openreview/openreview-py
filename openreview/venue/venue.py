@@ -908,6 +908,15 @@ class Venue(object):
 
     def create_custom_stage(self):
         """Create invitations for a custom stage defined in ``self.custom_stage``."""
+        # Fail fast when the custom stage replies to a stage that doesn't exist (a typo, or a full
+        # invitation id instead of the stage name); otherwise no child invitations are ever created.
+        # The check lives here rather than in the invitation builder because ARR builds custom stages
+        # before the invitations they reply to, which are created later from the request form.
+        reply_to = self.custom_stage.get_reply_to()
+        if reply_to not in ['forum', 'withForum']:
+            reply_to_invitation_id = self.get_invitation_id(reply_to)
+            if not openreview.tools.get_invitation(self.client, reply_to_invitation_id):
+                raise openreview.OpenReviewException(f'Cannot create custom stage {self.custom_stage.name}: reply_to invitation {reply_to_invitation_id} does not exist. Pass the name of an existing stage, e.g. "Official_Review"')
         return self.invitation_builder.set_custom_stage_invitation()
     
     def create_ethics_review_stage(self):

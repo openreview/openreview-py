@@ -3119,7 +3119,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         now = datetime.datetime.now()
 #         due_date = now + datetime.timedelta(days=3)
 #         venue.custom_stage = openreview.stages.CustomStage(name='Rating',
-#             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+#             reply_to='Official_Review',
 #             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
 #             due_date=due_date,
 #             exp_date=due_date + datetime.timedelta(days=1),
@@ -3218,7 +3218,7 @@ Please note that responding to this email will direct your reply to contact@icml
 
 #         #hide review ratings from Senior Area Chairs
 #         venue.custom_stage = openreview.stages.CustomStage(name='Rating',
-#             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+#             reply_to='Official_Review',
 #             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
 #             due_date=due_date,
 #             exp_date=due_date + datetime.timedelta(days=1),
@@ -4655,7 +4655,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         ## Ask reviewers to ACK the rebuttals
 #         venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
 #         venue.custom_stage = openreview.stages.CustomStage(name='Rebuttal_Acknowledgement',
-#             reply_to=openreview.stages.CustomStage.ReplyTo.REBUTTALS,
+#             reply_to='Rebuttal',
 #             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
 #             due_date=due_date,
 #             exp_date=due_date + datetime.timedelta(days=1),
@@ -4688,7 +4688,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         ## Ask reviewers to comment the rebuttals
 #         venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
 #         venue.custom_stage = openreview.stages.CustomStage(name='Rebuttal_Comment',
-#             reply_to=openreview.stages.CustomStage.ReplyTo.REBUTTALS,
+#             reply_to='Rebuttal',
 #             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
 #             due_date=None,
 #             exp_date=due_date + datetime.timedelta(days=1),
@@ -5115,7 +5115,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         now = datetime.datetime.now()
 #         due_date = now + datetime.timedelta(days=3)
 #         venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Agreement',
-#             reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+#             reply_to='Meta_Review',
 #             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
 #             due_date=due_date,
 #             exp_date=due_date + datetime.timedelta(days=1),
