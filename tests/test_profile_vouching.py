@@ -29,8 +29,14 @@ class TestProfileVouching():
         assert request_invitation.content['maxOpenRequests']['value'] == 3
         assert "component: 'VouchRequestForm'" in request_invitation.web
 
-        assert list(request_invitation.edit['note']['content'].keys()) == ['voucher']
+        assert list(request_invitation.edit['note']['content'].keys()) == ['voucher', 'confirmations']
         assert request_invitation.edit['note']['content']['voucher']['value']['param']['regex'] == r'^~\S+\d+$'
+        assert request_invitation.edit['note']['content']['confirmations']['value']['param']['input'] == 'checkbox'
+        assert request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] == [
+            "The vouch will be public on my profile and on my colleague's profile.",
+            'I cannot remove the vouch from my profile after my colleague posts it.'
+        ]
+        assert 'Your colleague has ${entity.content.requestExpirationDays.value} days to vouch after you send the request.' in request_invitation.web
 
         verification_invitation = openreview_client.get_invitation('openreview.net/Support/-/Vouch_Verification')
         assert verification_invitation.content['lifetimeLimit']['value'] == 20
@@ -107,28 +113,42 @@ class TestProfileVouching():
             guest_client.post_note_edit_as_guest(expired_token, {
                 'invitation': 'openreview.net/Support/-/Vouch_Request',
                 'signatures': ['~Daniel_Okafor1'],
-                'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' } } }
+                'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
             })
 
         with pytest.raises(openreview.OpenReviewException):
             guest_client.post_note_edit_as_guest(token, {
                 'invitation': 'openreview.net/Support/-/Vouch_Request',
                 'signatures': ['~Elena_Rossi1'],
-                'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' } } }
+                'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
             })
 
         with pytest.raises(openreview.OpenReviewException):
             guest_client.post_note_edit_as_guest(token, {
                 'invitation': 'openreview.net/Support/-/Vouch_Request',
                 'signatures': ['~Daniel_Okafor1'],
-                'note': { 'content': { 'voucher': { 'value': 'elena.rossi@umass.edu' } } }
+                'note': { 'content': { 'voucher': { 'value': 'elena.rossi@umass.edu' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'cannot ask yourself'):
             guest_client.post_note_edit_as_guest(token, {
                 'invitation': 'openreview.net/Support/-/Vouch_Request',
                 'signatures': ['~Daniel_Okafor1'],
-                'note': { 'content': { 'voucher': { 'value': '~Daniel_Okafor1' } } }
+                'note': { 'content': { 'voucher': { 'value': '~Daniel_Okafor1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
+            })
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Check every statement to request the vouch'):
+            guest_client.post_note_edit_as_guest(token, {
+                'invitation': 'openreview.net/Support/-/Vouch_Request',
+                'signatures': ['~Daniel_Okafor1'],
+                'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'][:1] } } }
+            })
+
+        with pytest.raises(openreview.OpenReviewException, match=r'confirmations'):
+            guest_client.post_note_edit_as_guest(token, {
+                'invitation': 'openreview.net/Support/-/Vouch_Request',
+                'signatures': ['~Daniel_Okafor1'],
+                'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' } } }
             })
 
         with pytest.raises(openreview.OpenReviewException):
@@ -143,7 +163,7 @@ class TestProfileVouching():
         request_edit = guest_client.post_note_edit_as_guest(token, {
             'invitation': 'openreview.net/Support/-/Vouch_Request',
             'signatures': ['~Daniel_Okafor1'],
-            'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' } } }
+            'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
         })
         assert request_edit['note']['number'] == 1
         helpers.await_queue_edit(openreview_client, edit_id=request_edit['id'])
@@ -155,6 +175,7 @@ class TestProfileVouching():
         assert request.signatures == ['~Daniel_Okafor1']
         assert request.readers == ['openreview.net/Support', '~Daniel_Okafor1', '~Elena_Rossi1']
         assert request.content['voucher']['value'] == '~Elena_Rossi1'
+        assert request.content['confirmations']['value'] == request_invitation.edit['note']['content']['confirmations']['value']['param']['enum']
 
         vouch_invitation = openreview_client.get_invitation('openreview.net/Support/Vouch_Request1/-/Vouch_Verification')
         assert vouch_invitation.invitees == ['~Elena_Rossi1']
@@ -163,6 +184,7 @@ class TestProfileVouching():
         assert vouch_invitation.assertion['profile']['id'] == '~Daniel_Okafor1'
         assert vouch_invitation.assertion['signatures'] == ['~Elena_Rossi1']
         assert "component: 'VouchVerificationForm'" in vouch_invitation.web
+        assert 'You did not vouch for this profile' in vouch_invitation.web
         assert vouch_invitation.assertion['profile']['content']['names']['value']['const']['add'] == [{ 'fullname': 'Daniel Okafor', 'username': '~Daniel_Okafor1' }]
         assert len(vouch_invitation.assertion['profile']['content']['history']['value']['const']['add']) == 1
         assert vouch_invitation.assertion['profile']['content']['history']['value']['const']['add'][0]['position'] == 'Research Engineer'
@@ -189,7 +211,7 @@ class TestProfileVouching():
         request_edit = guest_client.post_note_edit_as_guest(token, {
             'invitation': 'openreview.net/Support/-/Vouch_Request',
             'signatures': ['~Daniel_Okafor1'],
-            'note': { 'content': { 'voucher': { 'value': '~Nobody_Here1' } } }
+            'note': { 'content': { 'voucher': { 'value': '~Nobody_Here1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
         })
         assert request_edit['note']['number'] == 2
         helpers.await_queue_edit(openreview_client, edit_id=request_edit['id'])
@@ -278,7 +300,7 @@ class TestProfileVouching():
         request_edit = guest_client.post_note_edit_as_guest(token, {
             'invitation': 'openreview.net/Support/-/Vouch_Request',
             'signatures': ['~Daniel_Okafor1'],
-            'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' } } }
+            'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
         })
         assert request_edit['note']['number'] == 3
         helpers.await_queue_edit(openreview_client, edit_id=request_edit['id'])
@@ -291,7 +313,7 @@ class TestProfileVouching():
         request_edit = guest_client.post_note_edit_as_guest(token, {
             'invitation': 'openreview.net/Support/-/Vouch_Request',
             'signatures': ['~Daniel_Okafor1'],
-            'note': { 'content': { 'voucher': { 'value': '~Tomas_Varga1' } } }
+            'note': { 'content': { 'voucher': { 'value': '~Tomas_Varga1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
         })
         assert request_edit['note']['number'] == 4
         helpers.await_queue_edit(openreview_client, edit_id=request_edit['id'])
@@ -417,7 +439,7 @@ class TestProfileVouching():
         request_edit = guest_client.post_note_edit_as_guest(token, {
             'invitation': 'openreview.net/Support/-/Vouch_Request',
             'signatures': ['~Lena_Fischer1'],
-            'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' } } }
+            'note': { 'content': { 'voucher': { 'value': '~Elena_Rossi1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
         })
         assert request_edit['note']['number'] == 5
         helpers.await_queue_edit(openreview_client, edit_id=request_edit['id'])
@@ -447,7 +469,7 @@ class TestProfileVouching():
         request_edit = guest_client.post_note_edit_as_guest(token, {
             'invitation': 'openreview.net/Support/-/Vouch_Request',
             'signatures': ['~Priya_Raman1'],
-            'note': { 'content': { 'voucher': { 'value': '~Lena_Fischer1' } } }
+            'note': { 'content': { 'voucher': { 'value': '~Lena_Fischer1' }, 'confirmations': { 'value': request_invitation.edit['note']['content']['confirmations']['value']['param']['enum'] } } }
         })
         assert request_edit['note']['number'] == 6
         helpers.await_queue_edit(openreview_client, edit_id=request_edit['id'])

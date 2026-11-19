@@ -549,6 +549,18 @@ return {
                                         'regex': r'^~\S+\d+$'
                                     }
                                 }
+                            },
+                            'confirmations': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'input': 'checkbox',
+                                        'enum': [
+                                            "The vouch will be public on my profile and on my colleague's profile.",
+                                            'I cannot remove the vouch from my profile after my colleague posts it.'
+                                        ]
+                                    }
+                                }
                             }
                         }
                     }

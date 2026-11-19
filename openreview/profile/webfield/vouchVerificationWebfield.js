@@ -11,11 +11,18 @@ A colleague asked you to vouch for their OpenReview profile. Vouch only for some
 Check that the name, homepage and positions below are correct. Then enter the email address they use on OpenReview, and confirm the statements below.
 
 Your vouch is public, and it activates their profile if it is still waiting for activation. The email address you enter is visible only to you, to them, and to OpenReview support.
+
+If you don't know this person, or something below is wrong, don't vouch.
 `,
     vouchedMessage: `
 #### You vouched for this profile
 
 Thank you. Your vouch is recorded. If their profile was waiting for activation, it is now active.
+`,
+    declinedMessage: `
+#### You did not vouch for this profile
+
+Nothing was posted, and OpenReview does not notify your colleague. You can close this page.
 `
   }
 }

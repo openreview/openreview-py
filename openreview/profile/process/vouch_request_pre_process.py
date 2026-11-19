@@ -10,7 +10,12 @@ def process(client, edit, invitation):
     vouchee_id = edit.signatures[0]
     voucher_id = edit.note.content['voucher']['value']
 
-    vouchee = openreview.tools.get_profile(client, vouchee_id)
+    statements = invitation.edit['note']['content']['confirmations']['value']['param']['enum']
+    confirmations = edit.note.content.get('confirmations', {}).get('value', [])
+    if sorted(confirmations) != sorted(statements):
+        raise openreview.OpenReviewException('Check every statement to request the vouch.')
+
+    vouchee =openreview.tools.get_profile(client, vouchee_id)
     if not vouchee or getattr(vouchee, 'state', None) not in VOUCHABLE_STATES:
         raise openreview.OpenReviewException('A vouch can only be requested while the profile is waiting for activation.')
 
