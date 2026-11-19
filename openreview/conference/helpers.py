@@ -190,7 +190,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.registration_stages = get_registration_stages(note, venue)
         if 'ethics_review_deadline' in note.content:
             venue.ethics_review_stage = get_ethics_review_stage(note)
-        venue.custom_stage = get_review_rating_stage(note)
+        venue.custom_stage = get_review_rating_stage(note, venue.review_stage.name)
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
@@ -987,7 +987,7 @@ def get_registration_stages(request_forum, venue):
         stages.append(get_ac_registration_stage(request_forum, venue))
     return stages
 
-def get_review_rating_stage(request_forum):
+def get_review_rating_stage(request_forum, review_name):
 
     review_rating_start_date = request_forum.content.get('review_rating_start_date', '').strip()
     if review_rating_start_date:
@@ -1038,7 +1038,7 @@ def get_review_rating_stage(request_forum):
     content = request_forum.content.get('review_rating_form_options', default_content)
 
     return openreview.stages.CustomStage(name='Rating',
-        reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+        reply_to=review_name,
         source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
         reply_type=openreview.stages.CustomStage.ReplyType.REPLY,
         start_date=review_rating_start_date,
