@@ -1750,7 +1750,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         due_date = now + datetime.timedelta(days=3)
 
         venue.custom_stage = openreview.stages.CustomStage(name='Flag_Insufficient_Review',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            reply_to='Official_Review',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             # start_date=datetime(2025, 6, 25, 00, 00),
             due_date=due_date,
