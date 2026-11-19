@@ -2075,7 +2075,7 @@ class OpenReviewClient(object):
 
         return edits
 
-    def get_profile_assertions(self, profile_id = None, invitation = None, with_count = False, sort = None, trash = None, limit = None):
+    def get_profile_assertions(self, profile_id = None, invitation = None, with_count = False, sort = None, trash = None, limit = None, signatures = None, domain = None):
         """
         Gets a list of assertions about a profile. Profile assertions record claims
         about a profile (e.g. moderation verifications) and never modify the profile
@@ -2094,6 +2094,10 @@ class OpenReviewClient(object):
         :type trash: bool, optional
         :param limit: Maximum number of assertions to return.
         :type limit: int, optional
+        :param signatures: Only return assertions signed by these group IDs. The API requires another filter with it, such as ``domain`` or ``invitation``.
+        :type signatures: list[str], optional
+        :param domain: Only return assertions in this domain.
+        :type domain: str, optional
 
         :return: List of Assertion objects, or a tuple ``(list[Assertion], int)`` when ``with_count`` is True.
         :rtype: list[Assertion] | tuple[list[Assertion], int]
@@ -2103,6 +2107,10 @@ class OpenReviewClient(object):
             params['profile.id'] = profile_id
         if invitation:
             params['invitation'] = invitation
+        if signatures:
+            params['signatures'] = signatures
+        if domain:
+            params['domain'] = domain
         if sort:
             params['sort'] = sort
         if trash:
