@@ -57,10 +57,12 @@ class OpenReviewClient(object):
     :type password: str, optional
     :param token: Session token. This token can be provided instead of the username and password if the user had already logged in
     :type token: str, optional
-    :param expiresIn: Time in seconds before the token expires. If none is set the value will be set automatically to one hour. The max value that it can be set to is 1 week.
-    :type expiresIn: number, optional
+    :param tokenExpiresIn: Time in seconds before the token expires. If none is set the value will be set automatically to one hour. The max value that it can be set to is 1 week.
+    :type tokenExpiresIn: number, optional
+    :param mfa_code_provider: Callable that returns the current code from an authenticator app (TOTP), so scripts can log in to accounts with multi-factor authentication without interactive prompts. It receives the method name ``'totp'`` and is called at most once per login, and only when the account has TOTP enabled. Return ``None`` or ``''`` to fall back to the interactive prompt. Example: ``lambda method: pyotp.TOTP(os.environ['OPENREVIEW_TOTP_SECRET']).now()``
+    :type mfa_code_provider: callable, optional
     """
-    def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
+    def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None, mfa_code_provider=None):
         self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL_V2', 'http://localhost:3001')
         if any(url in self.baseurl for url in tools.V1_REMOTE_URLS):
             correct_baseurl = tools.get_base_urls(self)[1]
@@ -85,6 +87,8 @@ class OpenReviewClient(object):
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
         self.profiles_rename = self.baseurl + '/profiles/rename'
         self.relation_readers_url = self.baseurl + '/settings/relationReaders'
+        self.domains_to_moderate_url = self.baseurl + '/settings/domainsToModerate'
+        self.disallowed_domains_url = self.baseurl + '/settings/disallowedDomains'
         self.profiles_moderate = self.baseurl + '/profile/moderate'
         self.profile_documents_url = self.baseurl + '/profile-documents'
         self.reference_url = self.baseurl + '/references'
@@ -107,6 +111,9 @@ class OpenReviewClient(object):
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
         self.mfa_challenge_url = self.baseurl + '/mfa/challenge'
         self.mfa_verify_url = self.baseurl + '/mfa/verify'
+        self.mfa_setup_email_url = self.baseurl + '/mfa/setup/email'
+        self.mfa_setup_totp_init_url = self.baseurl + '/mfa/setup/totp/init'
+        self.mfa_setup_totp_verify_url = self.baseurl + '/mfa/setup/totp/verify'
 
         # Build User-Agent string: openreview-py/{package_version} (Python/{python_version})
         try:
@@ -172,7 +179,7 @@ class OpenReviewClient(object):
                 password = os.environ.get('OPENREVIEW_PASSWORD')
 
             if username or password:
-                self.login_user(username, password, expiresIn=tokenExpiresIn)
+                self.login_user(username, password, expiresIn=tokenExpiresIn, mfa_code_provider=mfa_code_provider)
 
 
 
@@ -219,14 +226,19 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def __resolve_mfa(self, mfa_pending_token, mfa_methods, preferred_method):
-        """Resolve MFA via interactive prompt."""
+    def __resolve_mfa(self, mfa_pending_token, mfa_methods, preferred_method, mfa_code_provider=None):
+        """Resolve MFA via the code provider, falling back to an interactive prompt."""
         supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]
         if not supported:
             raise OpenReviewException({
                 'name': 'MfaError',
                 'message': f'No supported MFA methods. Server offered: {", ".join(mfa_methods)}'
             })
+
+        if mfa_code_provider and 'totp' in mfa_methods:
+            code = mfa_code_provider('totp')
+            if code:
+                return self.__verify_mfa(mfa_pending_token, 'totp', code)
 
         if not mfa._is_interactive():
             raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
@@ -308,16 +320,20 @@ class OpenReviewClient(object):
         self.__handle_authorization(json_response)
         return json_response
 
-    def login_user(self,username=None, password=None, expiresIn=None):
+    def login_user(self,username=None, password=None, expiresIn=None, mfa_code_provider=None):
         """
         Logs in a registered user. If MFA is enabled for the account, this method
-        will attempt to complete MFA verification automatically using the configured
-        an interactive terminal prompt.
+        completes MFA verification with ``mfa_code_provider`` when given, otherwise
+        with an interactive terminal prompt.
 
         :param username: OpenReview username
         :type username: str, optional
         :param password: OpenReview password
         :type password: str, optional
+        :param expiresIn: Time in seconds before the token expires. If none is set the value will be set automatically to one hour. The max value that it can be set to is 1 week.
+        :type expiresIn: number, optional
+        :param mfa_code_provider: Callable that returns the current code from an authenticator app (TOTP), so scripts can log in to accounts with multi-factor authentication without interactive prompts. It receives the method name ``'totp'`` and is called at most once per login, and only when the account has TOTP enabled. Return ``None`` or ``''`` to fall back to the interactive prompt. Example: ``lambda method: pyotp.TOTP(os.environ['OPENREVIEW_TOTP_SECRET']).now()``
+        :type mfa_code_provider: callable, optional
 
         :return: Dictionary containing user information and the authentication token
         :rtype: dict
@@ -331,7 +347,8 @@ class OpenReviewClient(object):
             json_response = self.__resolve_mfa(
                 json_response['mfaPendingToken'],
                 json_response['mfaMethods'],
-                json_response.get('preferredMethod')
+                json_response.get('preferredMethod'),
+                mfa_code_provider
             )
 
         self.__handle_authorization(json_response)
@@ -534,13 +551,16 @@ class OpenReviewClient(object):
             members_by_anonid = { g.id:g.members[0] for g in self.get_groups(prefix=anon_prefix) if g.members }
             members = []
             anon_members = []
+            anon_ids_by_member = {}
             for member in group.members:
                 if member in members_by_anonid:
                     anon_members.append(member)
                     members.append(members_by_anonid[member])
+                    anon_ids_by_member[members_by_anonid[member]] = member
                 else:
                     members.append(member)
             group.anon_members = anon_members
+            group.anon_ids_by_member = anon_ids_by_member
             group.members = members
         return group
 
@@ -891,12 +911,16 @@ class OpenReviewClient(object):
             return 'openreview.net/-/Edit'
         return 'OpenReview.net/-/Edit'
 
-    def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None):
+    def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None, wait_for_active_jobs=False, timeout=300):
         """
         Updates the domain for an entire venue
 
-        :param old_domain: Current domain
-        :param new_domain: New domain
+        :param old_venue_id: Current domain
+        :param new_venue_id: New domain
+        :param wait_for_active_jobs: The server rejects the rename with a 409 while a process job for the venue is active. If True, retry until no job is active or the timeout is reached, then raise the last 409, which names the blocking job.
+        :type wait_for_active_jobs: bool
+        :param timeout: Seconds to keep retrying when wait_for_active_jobs is True
+        :type timeout: int
 
         :return: Status of the request. The process can be tracked in the queue.
         :rtype: dict
@@ -908,11 +932,17 @@ class OpenReviewClient(object):
             }
         if additional_renames:
             json['additionalRenames'] = additional_renames
-        response = self.session.post(
-            self.domains_rename,
-            json = json,
-            headers = self.headers)
 
+        wait_time = 0.5
+        max_iterations = (int(timeout / wait_time) or 1) if wait_for_active_jobs else 1
+        for iteration in range(max_iterations):
+            response = self.session.post(
+                self.domains_rename,
+                json = json,
+                headers = self.headers)
+            if response.status_code != 409 or iteration == max_iterations - 1:
+                break
+            time.sleep(wait_time)
 
         response = self.__handle_response(response)
         result = response.json()
@@ -1287,6 +1317,88 @@ class OpenReviewClient(object):
             json = update,
             headers = self.headers)
 
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_domains_to_moderate(self):
+        """
+        Gets the email domains whose profiles are never activated automatically and always go to the moderation queue. Requires Support permission.
+
+        :return: List of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.get_domains_to_moderate()
+        """
+        response = self.session.get(self.domains_to_moderate_url, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def update_domains_to_moderate(self, add=None, remove=None):
+        """
+        Adds or removes email domains from the list of domains whose profiles always go to the moderation queue. Requires Support permission.
+
+        :param add: Email domains to add to the list
+        :type add: list[str], optional
+        :param remove: Email domains to remove from the list
+        :type remove: list[str], optional
+
+        :return: The new list of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.update_domains_to_moderate(add=['example.edu'])
+        """
+        update = {}
+        if add:
+            update['add'] = add
+        if remove:
+            update['remove'] = remove
+
+        response = self.session.patch(self.domains_to_moderate_url, json = update, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_disallowed_domains(self):
+        """
+        Gets the email domains that cannot be used to create an account. Requires Support permission.
+
+        :return: List of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.get_disallowed_domains()
+        """
+        response = self.session.get(self.disallowed_domains_url, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def update_disallowed_domains(self, add=None, remove=None):
+        """
+        Adds or removes email domains from the list of domains that cannot be used to create an account. Requires Support permission.
+
+        :param add: Email domains to add to the list
+        :type add: list[str], optional
+        :param remove: Email domains to remove from the list
+        :type remove: list[str], optional
+
+        :return: The new list of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.update_disallowed_domains(add=['example.com'])
+        """
+        update = {}
+        if add:
+            update['add'] = add
+        if remove:
+            update['remove'] = remove
+
+        response = self.session.patch(self.disallowed_domains_url, json = update, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -2510,8 +2622,8 @@ class OpenReviewClient(object):
         :type head: str, optional
         :param tail: id of the edge tail (tail type defined by the edge invitation)
         :type tail: str, optional
-        :param wait_to_finish: True if execution should pause until deletion of edges is finished
-        :type wait_to_finish: bool, optional
+        :param soft_delete: True if the edges should be soft deleted, False if they should be hard deleted
+        :type soft_delete: bool, optional
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
@@ -2526,12 +2638,72 @@ class OpenReviewClient(object):
         if id: 
             delete_query['id'] = id
 
-        delete_query['waitToFinish'] = wait_to_finish
+        ## A deletion filtered by id, head or tail matches few edges and finishes well within the
+        ## gateway timeout, so the server can wait for it. An invitation wide deletion takes minutes
+        ## when the collection holds millions of edges: holding the request open with waitToFinish
+        ## runs past the gateway timeout, and the session then retries the DELETE and starts a
+        ## second deletion while the first one is still running. Start that one in the background
+        ## instead and wait until no matching edge is left, since edges posted while a deletion is
+        ## still running get deleted too.
+        scoped_deletion = bool(id or head or tail)
+        delete_query['waitToFinish'] = scoped_deletion
         delete_query['softDelete'] = soft_delete
 
         response = self.session.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
-        return response.json()
+        result = response.json()
+
+        if not scoped_deletion:
+            self.__wait_for_edges_deletion(invitation=invitation, label=label)
+
+        return result
+
+    def __wait_for_edges_deletion(self, invitation, label, wait_timeout=3600, max_poll_interval=60):
+        """
+        Polls the API until all the edges of the invitation are deleted.
+        """
+        ## Resolve the domain once: get_edges_count would otherwise fetch the invitation on every poll
+        try:
+            domain = self.get_invitation(invitation).domain
+        except:
+            domain = None
+
+        deadline = time.time() + wait_timeout
+        ## The wait between polls doubles up to max_poll_interval, so these are more than enough polls to cover wait_timeout
+        max_attempts = int(wait_timeout / max_poll_interval) + 10
+        poll_interval = 1
+        last_error = None
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                ## GET /edges requires one of id, head, tail, groupBy, stream or signatures, so an
+                ## invitation wide deletion can only be checked with the count endpoint
+                pending = self.get_edges_count(invitation=invitation, label=label, domain=domain)
+                last_error = None
+                if not pending:
+                    print(f'Deleting edges of {invitation}: all the edges were deleted')
+                    return
+                print(f'Deleting edges of {invitation}: {pending} edges pending to be deleted, attempt {attempt}/{max_attempts}')
+            except Exception as error:
+                ## The check can fail while the deletion is running, keep polling until the deadline,
+                ## but a rejected request keeps failing the same way, so raise it right away
+                details = error.args[0] if isinstance(error, OpenReviewException) and error.args else None
+                status = details.get('status') if isinstance(details, dict) else None
+                if status and status < 500 and status != 429:
+                    raise
+                last_error = error
+                print(f'Deleting edges of {invitation}: edge check failed with "{error}", attempt {attempt}/{max_attempts}')
+
+            remaining = deadline - time.time()
+            if remaining <= 0:
+                break
+
+            time.sleep(min(poll_interval, remaining))
+            poll_interval = min(poll_interval * 2, max_poll_interval)
+
+        if last_error:
+            raise OpenReviewException(f'Failed to check the deletion of the edges of {invitation}: {last_error}')
+        raise OpenReviewException(f'Timeout waiting for the deletion of the edges of {invitation}')
     
     def delete_tags(self, invitation, id=None, label=None, wait_to_finish=False, soft_delete=False):
         """
@@ -2908,7 +3080,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None):
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, invitation = None, after = None, sort = None, with_count = None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -2918,14 +3090,57 @@ class OpenReviewClient(object):
         :type subject: str, optional
         :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
         :type status: str, optional
+        :param invitation: Invitation ID of the invitation used to send the messages
+        :type invitation: str, optional
+        :param after: Message id to start getting the list of messages from
+        :type after: str, optional
+        :param sort: Field to sort the messages by, for example "id". The server sorts by timestamp descending by default
+        :type sort: str, optional
+        :param with_count: If True and offset is not set, also returns the total number of matching messages
+        :type with_count: bool, optional
 
-        :return: Messages that match the passed parameters
-        :rtype: dict
+        :return: Messages that match the passed parameters, or a tuple of the messages and their count when with_count is True and offset is not set
+        :rtype: list[dict]
         """
 
-        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
+        params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit, 'invitation': invitation, 'after': after, 'sort': sort, 'count': with_count }
+        response = self.session.get(self.messages_url, params = tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
-        return response.json()['messages']
+        messages = response.json()['messages']
+
+        if with_count and offset is None:
+            return messages, response.json()['count']
+
+        return messages
+
+    def get_all_messages(self, to = None, subject = None, status = None, invitation = None):
+        """
+        **Only for Super User**. Retrieves every message that matches the filters, requesting as many pages as needed
+
+        :param to: Tilde user names or emails
+        :type to: list[str], optional
+        :param subject: Subject of the e-mail
+        :type subject: str, optional
+        :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
+        :type status: str, optional
+        :param invitation: Invitation ID of the invitation used to send the messages
+        :type invitation: str, optional
+
+        :return: Messages that match the passed parameters
+        :rtype: list[dict]
+        """
+
+        params = {}
+        if to is not None:
+            params['to'] = to
+        if subject is not None:
+            params['subject'] = subject
+        if status is not None:
+            params['status'] = status
+        if invitation is not None:
+            params['invitation'] = invitation
+
+        return list(tools.efficient_iterget(self.get_messages, desc='Getting V2 Messages', **params))
 
     def get_process_logs(self, id = None, invitation = None, status = None, min_sdate = None):
         """Retrieve process function execution logs.
@@ -4438,6 +4653,7 @@ class Group(object):
         self.deanonymizers = deanonymizers
         self.details = details
         self.anon_members = []
+        self.anon_ids_by_member = {}
 
     def get_content_value(self, field_name, default_value=None):
         if self.content:
@@ -4616,10 +4832,7 @@ class Group(object):
     def transform_to_anon_ids(self, elements):
         if self.anonids:
             for index, element in enumerate(elements):
-                if element in self.members and self.anon_members:
-                    elements[index] = self.anon_members[self.members.index(element)]
-                else:
-                    elements[index] = element
+                elements[index] = self.anon_ids_by_member.get(element, element)
         return elements
 
 

@@ -253,6 +253,10 @@ For more details and guidelines on the {short_name} review process, visit {websi
 The {short_name} Editors-in-Chief
 '''
 
+reviewer_assignment_email_legacy_release_text = 'Once submitted, your review will become privately visible to the authors and AE. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}.'
+
+reviewer_assignment_email_release_text = 'Once submitted, your review will become privately visible to {review_readers_before_release}. Then, as soon as {review_release_event}, all reviews will become {review_visibility}.'
+
 reviewer_assignment_email_template = '''Hi {{{{fullname}}}},
 
 With this email, we request that you submit, within {review_period_length} weeks ({review_duedate}) a review for your newly assigned {short_name} submission "{submission_number}: {submission_title}".{submission_length}
@@ -263,7 +267,7 @@ As a reminder, reviewers are **expected to accept all assignments** for submissi
 
 To submit your review, please follow this link: {invitation_url} or check your tasks in the Reviewers Console: https://openreview.net/group?id={venue_id}/Reviewers#reviewer-tasks
 
-Once submitted, your review will become privately visible to the authors and AE. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}. For more details and guidelines on performing your review, visit {website}.
+''' + reviewer_assignment_email_release_text + ''' For more details and guidelines on performing your review, visit {website}.
 
 We thank you for your essential contribution to {short_name}!
 
@@ -348,7 +352,7 @@ To view the submission, click here: https://openreview.net/forum?id={submission_
 
 author_official_recommendation_starts_email_template = '''Hi {{{{fullname}}}},
 
-The discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.
+This email is to let you know that the reviewers for your {short_name} submission, "{submission_number}: {submission_title}", are now asked to submit their official recommendation within the next {recommendation_period_length} weeks ({recommendation_duedate}). They have received a separate email from us, informing them of this task. Subsequent to that, the AE will be asked to make a decision, following which the Editors-in-Chief will iterate with the AE if necessary on the decision.
 
 The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.

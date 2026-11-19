@@ -18,13 +18,8 @@ class Assignment(object):
     def post_submission_edges(self, edges):
         if edges:
             ## Remove current edges if they exists
-            self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head, wait_to_finish=True)
+            self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head)
             tools.post_bulk_edges(self.client, edges)
-            # Perform sanity check
-            edges_posted = self.client.get_edges_count(invitation=edges[0].invitation, head=edges[0].head, domain=self.journal.venue_id)
-            if edges_posted != len(edges):
-                raise openreview.OpenReviewException(f'Failed during bulk post of {edges[0].invitation} edges! Edges found: {len(edges)}, Edges posted: {edges_posted}')
-               
 
     def setup_ae_assignment(self, note, job_id=None):
         print('Start setup AE assignment...')
@@ -75,6 +70,26 @@ class Assignment(object):
                 conflict_edges.append(edge)
 
         self.post_submission_edges(conflict_edges)
+
+        tracks = self.journal.get_tracks()
+        if tracks:
+            submission_track = note.content.get('track', {}).get('value', tracks[0])
+            track_by_action_editor = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=self.journal.get_ae_track_id(), groupby='tail', select='label', domain=venue_id) }
+            track_score_edges = []
+            for action_editor in action_editors:
+                if track_by_action_editor.get(action_editor, tracks[0]) == submission_track:
+                    edge = Edge(invitation = self.journal.get_ae_track_score_id(),
+                        readers = [venue_id, authors_id, action_editor],
+                        writers = [venue_id],
+                        signatures = [venue_id],
+                        head = note.id,
+                        tail = action_editor,
+                        weight = 1
+                    )
+                    track_score_edges.append(edge)
+
+            self.post_submission_edges(track_score_edges)
+
         print('Finished setup AE assignment.')
         
 
@@ -189,10 +204,8 @@ class Assignment(object):
                         )
 
                     ## Compute resubmission scores, TMLR/Action_Editors/-/Resubmission_Score with weigth = 10 in the matching system
-                    if f'previous_{journal.short_name}_submission_url' in submitted_submission.content:
-                        previous_forum_url = submitted_submission.content[f'previous_{journal.short_name}_submission_url']['value']
-                        previous_forum_url = previous_forum_url.replace('https://openreview.net/forum?id=', '')
-                        previous_forum_id = previous_forum_url.split('&')[0]
+                    previous_forum_id = journal.get_previous_submission_id(submitted_submission)
+                    if previous_forum_id:
                         previous_assignments = self.client.get_edges(invitation=journal.get_ae_assignment_id(), head = previous_forum_id)
                         for assignment in previous_assignments:
                             if assignment.tail in action_editors and not self.client.get_edges(invitation=journal.get_ae_resubmission_score_id(), head=submitted_submission.id, tail=assignment.tail):
@@ -219,7 +232,7 @@ class Assignment(object):
         assignments_by_ae = { e['id']['tail']: [v for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail', domain=journal.venue_id) }
 
         ## Clear the quotas
-        self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
+        self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True)
 
         max_active_submissions = journal.get_ae_max_active_submissions()
         now = datetime.datetime.now()
@@ -261,6 +274,8 @@ class Assignment(object):
         scores_spec[journal.get_ae_affinity_score_id()] = {'weight': 1, 'default': 0}
         scores_spec[journal.get_ae_recommendation_id()] = {'weight': 0.1, 'default': 0}
         scores_spec[journal.get_ae_resubmission_score_id()] = {'weight': 10, 'default': 0}
+        if journal.get_tracks():
+            scores_spec[journal.get_ae_track_score_id()] = {'weight': 10, 'default': 0}
         self.client.post_note_edit(invitation=journal.get_ae_assignment_configuration_id(),
                 signatures=[journal.venue_id],
                 note=openreview.api.Note(

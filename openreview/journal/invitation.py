@@ -90,7 +90,9 @@ class InvitationBuilder(object):
         self.set_event_certificate_invitation()
         self.set_authors_release_invitation()
         self.set_ae_assignment(assignment_delay)
+        self.set_ae_track_invitations()
         self.set_reviewer_assignment(assignment_delay)
+        self.set_reviewer_role_invitation()
         self.set_reviewer_assignment_acknowledgement_invitation()
         self.set_review_invitation()
         self.set_official_recommendation_invitation()
@@ -99,8 +101,11 @@ class InvitationBuilder(object):
         self.set_solicit_review_comment_invitation()
         self.set_withdrawal_invitation()
         self.set_desk_rejection_invitation()
+        self.set_desk_rejection_expiration_invitation()
+        self.set_desk_rejection_reversion_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
+        self.set_editorial_retraction_invitation()
         self.set_revision_invitation()
         self.set_decision_invitation()
         self.set_decision_approval_invitation()
@@ -171,27 +176,37 @@ class InvitationBuilder(object):
             invitation=invitation
         )
 
-    def expire_invitation(self, invitation_id, expdate=None):
+    def expire_invitation(self, invitation_id, expdate=None, expiration_invitation_id=None):
         invitation = openreview.tools.get_invitation(self.client, invitation_id)
 
         if not invitation:
             return
-        
+
         now = tools.datetime_millis(datetime.datetime.now())
 
         if invitation.expdate and invitation.expdate < now:
             return
-        
+
         invitation_expdate = expdate if expdate else now
-        self.post_invitation_edit(invitation=Invitation(id=invitation.id,
-                cdate=invitation_expdate if (invitation.cdate and invitation.cdate > invitation_expdate) else None,
-                duedate=invitation_expdate if (invitation.duedate and invitation.duedate > invitation_expdate) else None,                                                        
-                expdate=invitation_expdate,
-                signatures=[self.venue_id]
-            )
+        expired_invitation = Invitation(id=invitation.id,
+            cdate=invitation_expdate if (invitation.cdate and invitation.cdate > invitation_expdate) else None,
+            duedate=invitation_expdate if (invitation.duedate and invitation.duedate > invitation_expdate) else None,
+            expdate=invitation_expdate,
+            signatures=[self.venue_id]
         )
 
-    def expire_paper_invitations(self, note):
+        ## Post through a dedicated expiration invitation when given so the edit can be found and deleted later to reopen the invitation
+        if expiration_invitation_id:
+            return self.client.post_invitation_edit(invitations=expiration_invitation_id,
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                invitation=expired_invitation
+            )
+
+        self.post_invitation_edit(invitation=expired_invitation)
+
+    def expire_paper_invitations(self, note, expiration_invitation_id=None):
 
         now = openreview.tools.datetime_millis(datetime.datetime.now())
         invitations = self.client.get_invitations(prefix=f'{self.venue_id}/Paper{note.number}/.*', type='all')
@@ -199,7 +214,7 @@ class InvitationBuilder(object):
 
         for invitation in invitations:
             if invitation.id.split('/')[-1] not in exceptions:
-                self.expire_invitation(invitation.id, now)
+                self.expire_invitation(invitation.id, now, expiration_invitation_id=expiration_invitation_id)
 
                 if self.journal.get_review_id(number=note.number) == invitation.id:
                     ## Discount all the pending reviews
@@ -1062,12 +1077,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             },
+            preprocess=self.get_process_content('process/submission_pre_process.py'),
             process=self.get_process_content('process/author_submission_process.py')
         )
 
         existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
-        if existing_invitation and existing_invitation.preprocess:
-            invitation.preprocess=existing_invitation.preprocess
 
         if self.journal.enable_blocked_authors():
             invitation.post_processes = [
@@ -1076,9 +1090,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             ]
 
-        existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
         if existing_invitation and existing_invitation.post_processes:
             invitation.post_processes=existing_invitation.post_processes
+
+        if existing_invitation and existing_invitation.content:
+            invitation.content = existing_invitation.content
 
         author_submission_readers = self.journal.get_author_submission_readers('${4/number}')
         if author_submission_readers:
@@ -1099,6 +1115,21 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
                 'order': 6                
+            }
+
+        tracks = self.journal.get_tracks()
+        if tracks:
+            invitation.edit['note']['content']['track'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': tracks,
+                        'default': tracks[0],
+                        'input': 'select'
+                    }
+                },
+                'description': 'Select the track of your submission.',
+                'order': 6
             }
 
         if self.journal.get_submission_additional_fields():
@@ -1667,7 +1698,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
+                            { 'value': '${3/tail}', 'optional': True }
                         ]
                     }
                 },
@@ -1786,7 +1817,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
+                            { 'value': '${3/tail}', 'optional': True }
                         ]
                     }
                 },
@@ -1817,6 +1848,135 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             ]
         )
         self.save_invitation(invitation)         
+
+    def set_ae_track_invitations(self):
+
+        tracks = self.journal.get_tracks()
+        if not tracks:
+            return
+
+        venue_id = self.journal.venue_id
+        author_submission_id = self.journal.get_author_submission_id()
+        editor_in_chief_id = self.journal.get_editors_in_chief_id()
+        action_editors_id = self.journal.get_action_editors_id()
+        authors_id = self.journal.get_authors_id()
+
+        invitation = Invitation(
+            id=self.journal.get_ae_track_id(),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_track_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'value': venue_id, 'optional': True }
+                        ]
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'group',
+                        'const': action_editors_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'options': { 'group': action_editors_id }
+                    }
+                },
+                'label': {
+                    'param': {
+                        'enum': tracks
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_ae_track_score_id(),
+            invitees=[venue_id],
+            readers=[venue_id, authors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_track_score_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'enum': [1]
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)
 
     def set_reviewer_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
@@ -2138,8 +2298,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
-                        ]                   
+                            { 'value': '${3/tail}', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -2257,8 +2417,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'items': [
                             { 'value': editor_in_chief_id, 'optional': True },
-                            { 'prefix': '~.*', 'optional': True }
-                        ]                    
+                            { 'value': '${3/tail}', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -2330,7 +2490,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*', anon=True)
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${{3/head}/number}', anon=True), 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -2500,7 +2664,82 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             web = web
         )
 
-        self.save_invitation(invitation)                       
+        self.save_invitation(invitation)
+
+    def set_reviewer_role_invitation(self):
+
+        reviewer_roles = self.journal.get_reviewer_roles()
+        if not reviewer_roles:
+            return
+
+        venue_id = self.journal.venue_id
+        editor_in_chief_id = self.journal.get_editors_in_chief_id()
+        action_editors_id = self.journal.get_action_editors_id()
+        reviewers_id = self.journal.get_reviewers_id()
+        additional_committee = [self.journal.get_action_editors_archived_id()] if self.journal.has_archived_action_editors() else []
+
+        invitation = Invitation(
+            id=self.journal.get_reviewer_role_id(),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, action_editors_id] + additional_committee,
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_role_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, action_editors_id] + additional_committee,
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'value': venue_id, 'optional': True }
+                        ]
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'group',
+                        'const': reviewers_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'options': { 'group': reviewers_id }
+                    }
+                },
+                'label': {
+                    'param': {
+                        'enum': reviewer_roles
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
 
     def set_review_approval_invitation(self):
         venue_id = self.journal.venue_id
@@ -2885,9 +3124,161 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
     def set_note_desk_rejection_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
+            content={
+                'noteId': { 'value': note.id },
                 'noteNumber': { 'value': note.number },
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
+    def set_desk_rejection_expiration_invitation(self):
+        venue_id = self.journal.venue_id
+
+        ## Expiration edits for paper invitations closed by a desk rejection, the edit ddate lets the reversion delete them to reopen the invitations
+        invitation = Invitation(id=self.journal.get_desk_rejection_expiration_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'invitation': {
+                    'id': {
+                        'param': {
+                            'regex': f'{venue_id}/{self.journal.submission_group_name}[0-9]+/.*'
+                        }
+                    },
+                    'signatures': [venue_id],
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'duedate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
+
+    def set_desk_rejection_reversion_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/desk_rejection_reversion_process.py')
+            }
+        }
+        edit_content = {
+            'noteId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'deskRejectionId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_desk_rejection_reversion_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, editors_in_chief_id],
+            'readers': [venue_id, editors_in_chief_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'process': self.process_script,
+            'edit': {
+                'signatures': [editors_in_chief_id],
+                'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/deskRejectionId/value}',
+                    'signatures': [editors_in_chief_id],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id ],
+                    'content': {
+                        'revert_desk_rejection_confirmation': {
+                            'order': 1,
+                            'description': 'Please confirm to revert the desk rejection.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'We approve the reversion of the desk-rejected submission.'
+                                    ],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Optionally explain why the desk rejection is being reverted. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'deletable': True,
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_desk_rejection_reversion_id(), invitation_content, edit_content, invitation)
+
+    def set_note_desk_rejection_reversion_invitation(self, note, desk_rejection_note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_reversion_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'deskRejectionId': { 'value': desk_rejection_note.id }
             },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
@@ -3000,7 +3391,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [ venue_id],
                 'note': {
                     'id': { 'param': { 'withInvitation': self.journal.get_retraction_id(number='${6/content/noteNumber/value}') }},
-                    'readers': [ 'everyone' ],
+                    'readers': self.journal.get_release_decision_readers('${5/content/noteNumber/value}'),
                     'nonreaders': []
                 }
             }
@@ -3117,6 +3508,96 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
     def set_note_retraction_approval_invitation(self, note, retraction):
         return self.client.post_invitation_edit(invitations=self.journal.get_retraction_approval_id(),
             content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }, 'replytoId': { 'value': retraction.id }},
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
+    def set_editorial_retraction_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/editorial_retraction_process.py')
+            }
+        }
+        edit_content = {
+            'noteId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_editorial_retraction_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, editors_in_chief_id],
+            'readers': [venue_id, editors_in_chief_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'process': self.process_script,
+            'edit': {
+                'signatures': [editors_in_chief_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'signatures': [editors_in_chief_id],
+                    ## The EICs' decision is final, so unlike the authors' request there is no approval step and the note can be released to the paper readers right away
+                    'readers': self.journal.get_release_decision_readers('${5/content/noteNumber/value}'),
+                    'writers': [ venue_id ],
+                    'content': {
+                        'retraction_confirmation': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'I confirm that the Editors-in-Chief are retracting this paper in accordance with the venue\'s retraction policy.'
+                                    ],
+                                    'input': 'checkbox'
+                                }
+                            },
+                            'description': 'Please confirm to retract. The retraction takes effect immediately and the authors will be notified.',
+                            'order': 1
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Optionally explain the reason for the retraction. This comment will be visible to the readers of the paper. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_editorial_retraction_id(), invitation_content, edit_content, invitation)
+
+    def set_note_editorial_retraction_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_editorial_retraction_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -3296,7 +3777,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures=[venue_id],
             edit={
                 'signatures': [venue_id],
-                'readers': [ 'everyone' ],
+                'readers': self.journal.get_under_review_submission_readers('${{2/note/id}/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -3315,7 +3796,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             }
                         },
                         'venue': {
-                            'value': 'Retracted by Authors'
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [self.journal.retracted_by_authors_venue, self.journal.retracted_by_editors_venue],
+                                    'input': 'select'
+                                }
+                            }
                         },
                         'venueid': {
                             'value': self.journal.retracted_venue_id
@@ -3645,6 +4132,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             date_processes=[self.author_edge_reminder_process]
         )
 
+        track_instructions = f'<li>Your submission is in the {note.content["track"]["value"]} track. AEs who handle this track have a track score of 1.</li>' if self.journal.get_tracks() and 'track' in note.content else ''
+
         header = {
             'title': f'{self.journal.short_name} Action Editor Suggestion',
             'instructions': f'<p class="dark"><strong>Instructions:</strong></p>\
@@ -3652,6 +4141,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     <li>For your submission, please select at least 3 AEs to recommend.</li>\
                     <li>AEs who have conflicts with your submission are not shown.</li>\
                     <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
+                    {track_instructions}\
                     <li>See <a href="{self.journal.get_website_url("editorial_board")}" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
                     <li>To get started click the button below.</li>\
                 </ul>\
@@ -3660,9 +4150,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         conflict_id = f'{action_editors_id}/-/Conflict'
         score_ids = [f'{action_editors_id}/-/Affinity_Score', f'{action_editors_id}/-/Custom_Max_Papers,head:ignore', f'{action_editors_id}/-/Assignment_Availability,head:ignore', f'{action_editors_id}/-/Assignment,head:count']
+        if self.journal.get_tracks():
+            score_ids.insert(1, self.journal.get_ae_track_score_id())
         edit_param = f'{action_editors_id}/-/Recommendation'
         browse_param = ';'.join(score_ids)
-        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&maxColumns=2&showCounter=false&version=2&filter={action_editors_id}/-/Assignment_Availability == Available AND {action_editors_id}/-/Custom_Max_Papers > {action_editors_id}/-/Assignment&referrer=[Instructions](/invitation?id={invitation.id})'
+        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&maxColumns=2&showCounter=false&version=2&filter={action_editors_id}/-/Assignment_Availability == Available AND {action_editors_id}/-/Custom_Max_Papers > {action_editors_id}/-/Assignment&check_quota=false&referrer=[Instructions](/invitation?id={invitation.id})'
         with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
@@ -3747,8 +4239,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 <br>'
         }
 
-        edit_param = f'{self.journal.get_reviewer_assignment_id()};{self.journal.get_reviewer_invite_assignment_id()}'
+        edit_ids = [self.journal.get_reviewer_assignment_id()]
+        if self.journal.has_external_reviewers():
+            edit_ids.append(self.journal.get_reviewer_invite_assignment_id())
+        edit_param = ';'.join(edit_ids)
         score_ids = [self.journal.get_reviewer_affinity_score_id(), self.journal.get_reviewer_conflict_id(), self.journal.get_reviewer_custom_max_papers_id() + ',head:ignore', self.journal.get_reviewer_pending_review_id() + ',head:ignore', self.journal.get_reviewer_availability_id() + ',head:ignore']
+        if self.journal.get_reviewer_roles():
+            score_ids.append(self.journal.get_reviewer_role_id() + ',head:ignore')
         browse_param = ';'.join(score_ids)
         filter_param = f'{self.journal.get_reviewer_pending_review_id()} == 0 AND {self.journal.get_reviewer_availability_id()} == Available AND {self.journal.get_reviewer_conflict_id()} == 0'
         params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&filter={filter_param}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={invitation.id})'
@@ -3846,7 +4343,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         }
                     },
                     'signatures': ['${3/signatures}'],
-                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}', self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'content': {
                         'summary_of_contributions': {
@@ -3928,6 +4425,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             for key, value in self.journal.get_review_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
+        if self.journal.should_release_reviews_to_authors_when_posted():
+            invitation['edit']['note']['readers'].append(self.journal.get_authors_id(number='${5/content/noteNumber/value}'))
+        else:
+            invitation['edit']['nonreaders'] = [self.journal.get_authors_id(number='${4/content/noteNumber/value}')]
+            invitation['edit']['note']['nonreaders'] = [self.journal.get_authors_id(number='${5/content/noteNumber/value}')]
+
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
         invitation = {
@@ -3948,6 +4451,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         }
                     },
                     'readers': self.journal.get_release_review_readers(number='${5/content/noteNumber/value}'),
+                    'nonreaders': []
                 }
             }
         }
@@ -3980,7 +4484,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 signatures=[self.journal.venue_id],
                 edit={
                     'note': {
-                        'readers': self.journal.get_release_review_readers(number=note.number)
+                        'readers': self.journal.get_release_review_readers(number=note.number),
+                        'nonreaders': []
                     }
                 }
         ))
@@ -4653,7 +5158,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation_content = {
             'process_script': {
                 'value': self.get_process_content('process/submission_revision_process.py')
-            }                
+            },
+            'preprocess_script': {
+                'value': self.get_process_content('process/submission_pre_process.py')
+            }
         }
         edit_content = {
             'noteId': { 
@@ -4798,13 +5306,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             },
-            'process': self.process_script                    
+            'preprocess': self.preprocess_script,
+            'process': self.process_script
         }
-
-        existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_revision_id())
-        if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
-            invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
-            invitation['preprocess'] = existing_super_invitation.edit['invitation']['preprocess']
 
         submission_length = self.journal.get_submission_length()
         if submission_length:
@@ -5663,19 +6167,22 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         reviews = self.client.get_notes(forum=note.forum, invitation=self.journal.get_review_id(number=note.number))
 
         for review in reviews:
-            signature=review.signatures[0]
-            if signature.startswith(paper_reviewers_id):
-                self.client.post_invitation_edit(invitations=self.journal.get_review_rating_id(),
-                content={ 
-                    'noteId': { 'value': note.id }, 
-                    'noteNumber': { 'value': note.number },
-                    'replytoId': { 'value': review.id },
-                    'signature': { 'value': signature },
-                    'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
-                },
-                readers=[self.journal.venue_id],
-                writers=[self.journal.venue_id],
-                signatures=[self.journal.venue_id]
+            if review.signatures[0].startswith(paper_reviewers_id):
+                self.set_note_review_rating_invitation_for_review(note, review, duedate)
+
+    def set_note_review_rating_invitation_for_review(self, note, review, duedate):
+        # duedate may be a datetime (rating stage just opened) or epoch millis (copied from an existing Rating invitation)
+        return self.client.post_invitation_edit(invitations=self.journal.get_review_rating_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'replytoId': { 'value': review.id },
+                'signature': { 'value': review.signatures[0] },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
         )
 
     def set_review_rating_enabling_invitation(self):
@@ -5954,6 +6461,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
+        ## Authors are still anonymous at camera ready time, keep the author fields restricted like the submission
+        author_submission_readers = self.journal.get_author_submission_readers('${7/content/noteNumber/value}')
+        if author_submission_readers:
+            invitation['edit']['note']['content']['authors']['readers'] = author_submission_readers
+            invitation['edit']['note']['content']['authorids']['readers'] = author_submission_readers
 
         existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_camera_ready_revision_id())
         if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
@@ -6275,6 +6788,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             for key, value in self.journal.get_submission_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }                        
 
+        ## The Accepted edit releases the authors before this invitation exists, so only keep them
+        ## restricted when the journal never releases them
+        if not self.journal.release_submission_after_acceptance():
+            author_submission_readers = self.journal.get_author_submission_readers('${7/content/noteNumber/value}')
+            if author_submission_readers:
+                invitation['edit']['note']['content']['authors']['readers'] = author_submission_readers
+                invitation['edit']['note']['content']['authorids']['readers'] = author_submission_readers
+
         self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
 
     def set_note_eic_revision_invitation(self, note):
@@ -6350,6 +6871,77 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         self.save_super_invitation(self.journal.get_authors_deanonymization_id(), invitation_content, edit_content, invitation)
 
+        invitation = {
+            'id': self.journal.get_eic_author_deanonymization_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id],
+            'readers': [venue_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'edit': {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': editors_in_chief_id, 'optional': False }]
+                    }
+                },
+                'readers': ['${2/note/readers}'],
+                'writers': [ venue_id ],
+                'note': {
+                    'signatures': ['${3/signatures}'],
+                    'forum':  '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'readers': {
+                        'param': {
+                            'items': [
+                                { 'value': editors_in_chief_id, 'optional': False },
+                                { 'value': self.journal.get_action_editors_id('${8/content/noteNumber/value}'), 'optional': True },
+                                { 'value': self.journal.get_reviewers_id(number='${8/content/noteNumber/value}'), 'optional': True },
+                                { 'value': self.journal.get_authors_id(number='${8/content/noteNumber/value}'), 'optional': True },
+                                { 'value': 'everyone', 'optional': True }
+                            ]
+                        }
+                    },
+                    'writers': [ venue_id ],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'const': 'Authors De-Anonymization By EICs'
+                                }
+                            }
+                        },
+                        'confirmation': {
+                            'order': 2,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['I want to reveal all author names.'],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 3,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            'process': self.process_script
+        }
+
+        self.save_super_invitation(self.journal.get_eic_author_deanonymization_id(), invitation_content, edit_content, invitation)
+
     def set_note_authors_deanonymization_invitation(self, note):
         if self.journal.should_release_authors():
             return self.client.post_invitation_edit(invitations=self.journal.get_authors_deanonymization_id(),
@@ -6361,6 +6953,18 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 writers=[self.journal.venue_id],
                 signatures=[self.journal.venue_id]
             )
+
+    def set_note_eic_author_deanonymization_invitation(self, note):
+        if self.journal.should_release_authors():
+            return self.client.post_invitation_edit(invitations=self.journal.get_eic_author_deanonymization_id(),
+                    content={
+                        'noteId': { 'value': note.id },
+                        'noteNumber': { 'value': note.number }
+                    },
+                    readers=[self.journal.venue_id],
+                    writers=[self.journal.venue_id],
+                    signatures=[self.journal.venue_id]
+                )
 
     def set_assignment_configuration_invitation(self):
 
@@ -6375,6 +6979,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'weight': 1,
             'default': 0
         }
+        if self.journal.get_tracks():
+            scores_specification[self.journal.get_ae_track_score_id()] = {
+                'weight': 10,
+                'default': 0
+            }
 
         invitation = Invitation(
             id = self.journal.get_ae_assignment_configuration_id(),
@@ -6689,13 +7298,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'deletable': True
                         }
                     },
-                    'readers': [ venue_id, '${2/signatures}' ],
-                    'writers': [ venue_id, '${2/signatures}' ],
-                    'signatures': {
-                        'param': {
-                            'regex': '~.*' 
-                        }
-                    },
+                    'readers': [ venue_id, '${2/tail}' ],
+                    'writers': [ venue_id, '${2/tail}' ],
+                    'signatures': [ '${2/tail}' ],
                     'head': {
                         'param': {
                             'type': 'note'

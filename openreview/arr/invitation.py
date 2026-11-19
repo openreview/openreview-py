@@ -212,7 +212,7 @@ class InvitationBuilder(object):
     def set_post_submission_invitation(self, source=None):
         if source is None:
             source = {
-                'venueid': self.venue.get_submission_venue_id(),
+                'venueid': [self.venue.get_submission_venue_id()],
                 'content':{
                     'preprint': 'no'
                 }
@@ -231,7 +231,7 @@ class InvitationBuilder(object):
         submission_id = submission_stage.get_submission_id(self.venue)
         invitation_id = self.venue.get_preprint_post_submission_id()
         source = {
-            'venueid': self.venue.get_submission_venue_id(),
+            'venueid': [self.venue.get_submission_venue_id()],
             'content': {
                 'preprint': 'yes'
             }
@@ -395,7 +395,7 @@ class InvitationBuilder(object):
 
         revision_stage = openreview.stages.SubmissionRevisionStage(
             name='Submission_Metadata_Revision',
-            source={'venueid': self.venue.get_submission_venue_id()},
+            source={'venueid': [self.venue.get_submission_venue_id()]},
             start_date=arr_stage.start_date,
             due_date=arr_stage.due_date,
             exp_date=arr_stage.exp_date,

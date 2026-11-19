@@ -274,6 +274,112 @@ class TestTMLRExperiment():
 
         openreview_client.add_members_to_group('TMLRE/AI_Reviewer', ['~Lele_Cao1'])
 
+        ## Add the AI review variants of the email templates, used only for TMLR submissions that have an AI review
+        ae_official_recommendation_starts_ai_review_email_template = '''Hi {{{{fullname}}}},
+
+This email is to let you know, as AE for {short_name} submission "{submission_number}: {submission_title}", that the reviewers for the submission must now submit their official recommendation for the submission, within the next {recommendation_period_length} weeks ({recommendation_duedate}). They have received a separate email from us, informing them of this task.
+
+As announced in the [TMLR blog](https://blog.tmlr.org/2026/ai-reviews-at-tmlr-for-assessing-soundness/), TMLR is including an AI review in addition to conventional reviews. The AI review will only address the question of whether the claims in the paper are met with accurate and convincing evidence, and does not consider the more subjective interestingness criterion. We are also conducting an optional survey to assess whether AI reviewers can generate reviews of sufficient quality. Please click [here](https://jmlr.org/tmlr/ai-review-aes.html) for more details and consent information. If you agree to participate, you can answer the survey by clicking on the "Survey" button at the bottom of the AI review on OpenReview.
+
+For more details and guidelines on performing your review, visit {website}.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief
+'''
+
+        reviewer_official_recommendation_starts_ai_review_email_template = '''Hi {{{{fullname}}}},
+
+Thank you for submitting your review and engaging with the authors of {short_name} submission "{submission_number}: {submission_title}".
+
+You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
+
+We ask that you submit your recommendation within {recommendation_period_length} weeks ({recommendation_duedate}). To do so, please follow this link: {invitation_url}
+
+As announced in the [TMLR blog](https://blog.tmlr.org/2026/ai-reviews-at-tmlr-for-assessing-soundness/), TMLR is including an AI review in addition to your review. The AI review will only address the question of whether the claims in the paper are met with accurate and convincing evidence. We are also conducting an optional survey to assess whether the AI review for this paper was of sufficiently good quality. Please click [here](https://jmlr.org/tmlr/ai-review-reviewers.html) for more details and consent information. If you agree to participate, you can answer the survey by clicking on the "Survey" button at the bottom of the AI review on OpenReview.
+
+For more details and guidelines on performing your review, visit {website}.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+        openreview_client.post_group_edit(
+            invitation='TMLRE/-/Edit',
+            signatures=['TMLRE'],
+            group=openreview.api.Group(
+                id='TMLRE/Reviewers',
+                content={
+                    'official_recommendation_starts_ai_review_email_template_script': { 'value': reviewer_official_recommendation_starts_ai_review_email_template }
+                }
+            )
+        )
+
+        reviewer_group = openreview_client.get_group('TMLRE/Reviewers')
+        assert 'official_recommendation_starts_ai_review_email_template_script' in reviewer_group.content
+        assert 'official_recommendation_starts_email_template_script' in reviewer_group.content
+
+        openreview_client.post_group_edit(
+            invitation='TMLRE/-/Edit',
+            signatures=['TMLRE'],
+            group=openreview.api.Group(
+                id='TMLRE/Action_Editors',
+                content={
+                    'official_recommendation_starts_ai_review_email_template_script': { 'value': ae_official_recommendation_starts_ai_review_email_template }
+                }
+            )
+        )
+
+        ae_group = openreview_client.get_group('TMLRE/Action_Editors')
+        assert 'official_recommendation_starts_ai_review_email_template_script' in ae_group.content
+        assert 'official_recommendation_starts_email_template_script' in ae_group.content
+
+        author_discussion_starts_ai_review_email_template = '''Hi {{{{fullname}}}},
+
+Now that {number_of_reviewers} reviews have been submitted for your submission  {submission_number}: {submission_title}, all reviews have been made {review_visibility}. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+
+You will have {discussion_period_length} weeks to interact with the reviewers, including uploading any revisions. To maximize the period of interaction and discussion, please respond as soon as possible. Additionally, revising the submission PDF in light of reviewer feedback is possible and encouraged (consider making changes in a different color to help reviewers), in order to give reviewers maximum confidence that their concerns are addressed. The reviewers will be using this time period to hear from you and gather all the information they need. In about {discussion_period_length} weeks ({discussion_cdate}), and no later than {recommendation_period_length} weeks ({recommendation_duedate}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+
+As announced in the [TMLR blog](https://blog.tmlr.org/2026/ai-reviews-at-tmlr-for-assessing-soundness/), TMLR is including an AI review in addition to conventional reviews. The AI review will only address the question of whether the claims in the paper are met with accurate and convincing evidence, and does not consider the audience criterion. You can respond to the AI review, and the AE can take your response into account when making their decision. We are also conducting an optional survey to assess whether the AI review for this paper was of sufficiently good quality, and this survey will be available to fill out once the next phase (the recommendation phase) of the review process begins.
+
+Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission_id}
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+        author_official_recommendation_starts_ai_review_email_template = '''Hi {{{{fullname}}}},
+
+This email is to let you know that the reviewers for your {short_name} submission, "{submission_number}: {submission_title}", are now asked to submit their official recommendation within the next {recommendation_period_length} weeks ({recommendation_duedate}). They have received a separate email from us, informing them of this task. Subsequent to that, the AE will be asked to make a decision, following which the Editors-in-Chief will iterate with the AE if necessary on the decision.
+
+Separately, we are conducting an optional survey to assess the quality of the AI review for your paper. Please click [here](https://jmlr.org/tmlr/ai-review-authors.html) for more details and consent information. If you agree to participate, you can answer the survey by clicking on the "Survey" button at the bottom of the AI review on OpenReview.
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+        openreview_client.post_group_edit(
+            invitation='TMLRE/-/Edit',
+            signatures=['TMLRE'],
+            group=openreview.api.Group(
+                id='TMLRE/Authors',
+                content={
+                    'discussion_starts_ai_review_email_template_script': { 'value': author_discussion_starts_ai_review_email_template },
+                    'official_recommendation_starts_ai_review_email_template_script': { 'value': author_official_recommendation_starts_ai_review_email_template }
+                }
+            )
+        )
+
+        author_group = openreview_client.get_group('TMLRE/Authors')
+        assert 'discussion_starts_ai_review_email_template_script' in author_group.content
+        assert 'official_recommendation_starts_ai_review_email_template_script' in author_group.content
+        assert 'discussion_starts_email_template_script' in author_group.content
+        assert 'official_recommendation_starts_email_template_script' in author_group.content
+
     def test_invite_action_editors(self, journal, openreview_client, helpers):
         openreview_client.add_members_to_group('TMLRE/Action_Editors', ['~Alice_Johnson1'])
         group = openreview_client.get_group('TMLRE/Action_Editors')
@@ -540,6 +646,11 @@ class TestTMLRExperiment():
         assert survey_invitation
         assert survey_invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
+        # Authors get the AI review variant of the discussion email
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[TMLRE] Reviewer responses and discussion for your TMLRE submission')
+        assert len(messages) == 1
+        assert 'You can respond to the AI review, and the AE can take your response into account when making their decision.' in messages[0]['content']['text']
+
         # author posts a reply to the LLM review
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
@@ -573,6 +684,19 @@ class TestTMLRExperiment():
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/Paper1/-/Official_Recommendation-0-0')
+
+        # Reviewers, AE and authors get the AI review variant of the official recommendation emails
+        messages = openreview_client.get_messages(to='bob@expmailone.com', subject='[TMLRE] Submit official recommendation for TMLRE submission 1: Experiment Paper Title')
+        assert len(messages) == 1
+        assert 'TMLR is including an AI review in addition to your review.' in messages[0]['content']['text']
+
+        messages = openreview_client.get_messages(to='alice@expmailseven.com', subject='[TMLRE] Reviewers must submit official recommendation for TMLRE submission 1: Experiment Paper Title')
+        assert len(messages) == 1
+        assert 'does not consider the more subjective interestingness criterion' in messages[0]['content']['text']
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[TMLRE] Discussion period ended for TMLRE submission 1: Experiment Paper Title')
+        assert len(messages) == 1
+        assert 'Separately, we are conducting an optional survey to assess the quality of the AI review for your paper.' in messages[0]['content']['text']
 
         # Post official recommendations
         for reviewer_client, reviewer_id in [

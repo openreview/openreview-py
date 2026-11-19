@@ -4,13 +4,14 @@ def process(client, invitation):
 
     submission = client.get_note(invitation.edit['note']['forum'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
+    has_ai_review = journal.has_ai_review(submission)
 
     ## send email to reviewers
     print('send email to reviewers')
     assigned_action_editor = openreview.tools.get_profiles(client, ids_or_emails=[submission.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
 
     reviewer_group = client.get_group(journal.get_reviewers_id())
-    message=reviewer_group.content['official_recommendation_starts_email_template_script']['value'].format(
+    message=journal.get_email_template(reviewer_group, 'official_recommendation_starts_email_template_script', has_ai_review).format(
         short_name=journal.short_name,
         submission_number=submission.number,
         submission_title=submission.content['title']['value'],
@@ -34,7 +35,7 @@ def process(client, invitation):
     ## send email to action editos
     print('send email to action editors')
     ae_group = client.get_group(journal.get_action_editors_id())
-    message=ae_group.content['official_recommendation_starts_email_template_script']['value'].format(
+    message=journal.get_email_template(ae_group, 'official_recommendation_starts_email_template_script', has_ai_review).format(
         short_name=journal.short_name,
         submission_number=submission.number,
         submission_title=submission.content['title']['value'],
@@ -58,7 +59,7 @@ def process(client, invitation):
 
     ## send email to authors
     author_group = client.get_group(journal.get_authors_id())
-    email_template = author_group.content.get('official_recommendation_starts_email_template_script', {}).get('value')
+    email_template = journal.get_email_template(author_group, 'official_recommendation_starts_email_template_script', has_ai_review)
     if email_template:
         print('send email to authors')
         message=email_template.format(

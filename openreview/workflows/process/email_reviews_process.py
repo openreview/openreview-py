@@ -17,41 +17,32 @@ def process(client, invitation):
     review_name = domain.get_content_value('review_name')
     submission_name = domain.get_content_value('submission_name')
     authors_name  = domain.get_content_value('authors_name')
-    support_user = invitation.invitations[0].split('Template')[0] + 'Support'
 
     email_subject = invitation.get_content_value('subject')
     email_content = invitation.get_content_value('message')
     fields_to_include = invitation.get_content_value('fields_to_include')
     contact_email = domain.get_content_value('contact')
 
-    status_invitation_id = domain.get_content_value('status_invitation_id')
-    request_form_id = domain.get_content_value('request_form_id')
-
     if not fields_to_include:
-        # post status to request form
-        client.post_note_edit(
-            invitation=status_invitation_id,
-            signatures=[venue_id],
-            readers=[venue_id, support_user],
-            note=openreview.api.Note(
-                forum=request_form_id,
-                signatures=[venue_id],
-                content={
-                    'title': { 'value': 'Author Reviews Notification Failed' },
-                    'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid review fields to include in the email notification. Please re-schedule this process to run at a later time and then select which fields to include.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?id={venue_id}), find and expand the "Create {invitation.id.split("/")[-1].replace("_", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Fields To Include" invitation, select the fields to include when emailing reviews to authors and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid fields to include. Once you have selected the fields to include, click "Submit" and the process will automatically be scheduled to run shortly.'}
-                }
-            )
-        )
+        # log the failure so PCs can see it in the workflow timeline
+        print('Review emails were not sent: no review fields were selected. Select the fields under "Fields To Include" to run this step.')
         return
 
     active_submissions = client.get_notes(content={'venueid': submission_venue_id}, details='directReplies')
     print('# active submissions:', len(active_submissions))
+
+    # this process runs again after any edit to the invitation and when a failed job is retried, so collect the subjects already sent by this invitation to skip those submissions below
+    sent_subjects = {message['content']['subject'] for message in client.get_all_messages(invitation=invitation.id)}
 
     def send_reviews_email(submission):
         subject = email_subject.format(
             submission_number=submission.number,
             submission_title=submission.content['title']['value']
         )
+
+        if subject in sent_subjects:
+            return None
+
         reviews = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{review_name}' in reply['invitations']]
 
         formatted_reviews = ''
@@ -72,7 +63,7 @@ def process(client, invitation):
                 submission_forum=submission.id
             )
 
-            client.post_message(
+            return client.post_message(
                 subject=subject,
                 recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
                 message=message,
@@ -80,8 +71,12 @@ def process(client, invitation):
                 replyTo=contact_email
             )
 
-    if fields_to_include:
-        openreview.tools.concurrent_requests(send_reviews_email, active_submissions)
-        print('Review emails sent to authors')
+        return None
+
+    messages = openreview.tools.concurrent_requests(send_reviews_email, active_submissions)
+    len_messages = len([m for m in messages if m is not None])
+
+    if len_messages:
+        print(f'{len_messages} review emails sent to authors')
     else:
-        print('No fields were selected; please set the review fields to include in the email to be sent to authors')
+        print('No new review emails sent to authors')

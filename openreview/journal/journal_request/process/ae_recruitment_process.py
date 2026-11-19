@@ -43,7 +43,7 @@ Please check the invitee group to see more details: https://openreview.net/group
         
         comment_content += f'''\n**Error**: {error_status}'''
 
-    comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Reviewer_Recruitment_by_AE', 'Comment'),
+    comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Reviewer_Recruitment_by_AE', 'Recruitment_Comment'),
         signatures=[SUPPORT_GROUP],
         note = openreview.api.Note(
             content = {
@@ -51,6 +51,5 @@ Please check the invitee group to see more details: https://openreview.net/group
                 'comment': { 'value': comment_content}
             },
             forum = recruitment_note.forum,
-            replyto = recruitment_note.id,
-            readers = recruitment_note.readers
+            replyto = recruitment_note.id
         ))

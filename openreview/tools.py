@@ -100,6 +100,16 @@ def is_accept_decision(decision, accept_options=None):
         return True
     return False
 
+def decision_option_to_id(decision_option):
+    """
+    Slugifies a decision option into an id-safe token for use in invitation ids
+    (i.e. "Accept (Oral)" -> "Accept_Oral")
+
+    :param decision_option: paper decision (i.e., Accept (Oral), Reject)
+    :type decision_option: string
+    """
+    return re.sub(r'[^A-Za-z0-9]+', '_', decision_option).strip('_')
+
 def run_once(f):
     """
     Decorator to run a function only once and return its output for any subsequent call to the function without running
@@ -912,7 +922,9 @@ class efficient_iterget:
         self.gathering_responses = tqdm(total=total, desc=desc) if total > self.params['limit'] else None
 
     def update_batch(self):
-        after = self.current_batch[-1].id
+        # getters such as get_messages return plain dicts rather than objects, so read the id either way
+        last_obj = self.current_batch[-1]
+        after = last_obj['id'] if isinstance(last_obj, dict) else last_obj.id
         self.params['after'] = after
         self.params['with_count'] = False
         next_batch = self.get_function(**self.params)
@@ -2122,21 +2134,18 @@ def get_invitation_source(invitation, domain):
     meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
     rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
 
-    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else {}
+    source = invitation.content.get('source', { 'value': { 'venueid': [submission_venue_id] } }).get('value', { 'venueid': [submission_venue_id] }) if invitation.content else {}
 
     ## Deprecated, user source as dictionary
     if isinstance(source, str):
         if source == 'all_submissions':
-            source = { 'venueid': submission_venue_id }
+            source = { 'venueid': [submission_venue_id] }
         elif source == 'accepted_submissions':
             source = { 'venueid': [venue_id, submission_venue_id], 'with_decision_accept': True }
         elif source == 'public_submissions':
-            source = { 'venueid': submission_venue_id, 'readers': ['everyone'] }
+            source = { 'venueid': [submission_venue_id], 'readers': ['everyone'] }
         elif source == 'flagged_for_ethics_review':
-            source = { 'venueid': submission_venue_id, 'content': { 'flagged_for_ethics_review': True } }
-    ##        
-
-        
+            source = { 'venueid': [submission_venue_id], 'content': { 'flagged_for_ethics_review': True } }
 
     ## Deprecated, use source instead
     reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
@@ -2158,6 +2167,11 @@ def get_invitation_source(invitation, domain):
             source['content'] = {}
         source['content'][key] = value
     ##
+
+    ## venueid may be stored as a string in older invitations, normalize it to a list
+    ## so membership checks don't fall back to substring matching
+    if isinstance(source.get('venueid'), str):
+        source['venueid'] = [source['venueid']]
 
     return source
 
@@ -2242,21 +2256,26 @@ def should_match_invitation_source(client, invitation, submission, note=None, do
     return True
 
 def is_forum_invitation(invitation):
+    """
+    Checks if the invitation creates one invitation per submission forum.
 
-    if invitation.edit:
+    Its edit must declare the ``noteId`` and ``noteNumber`` content fields that
+    ``create_forum_invitations`` passes in, and must not declare ``replyto``, which
+    belongs to the invitations created by ``create_replyto_invitations``.
+    """
 
-        content_keys = invitation.edit.get('content', {}).keys()
+    content_keys = invitation.edit.get('content', {}).keys() if invitation.edit else []
 
-        if 'noteId' not in content_keys:
-            return False
+    if 'noteId' not in content_keys:
+        return False
 
-        if 'noteNumber' not in content_keys:
-            return False
+    if 'noteNumber' not in content_keys:
+        return False
 
-        if 'replyto' in content_keys:
-            return False
+    if 'replyto' in content_keys:
+        return False
 
-    return True    
+    return True
 
 
 def create_replyto_invitations(client, submission, note):
@@ -2299,7 +2318,9 @@ def create_forum_invitations(client, submission):
     ethics_reviewers_name = domain.get_content_value('ethics_reviewers_name')
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
 
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active() and i.date_processes]
+    ## Only invitations that declare the noteId/noteNumber content fields can create a per forum
+    ## invitation, the rest of the invitations do not accept the content posted below.
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation', domain=submission.domain) if i.is_active() and i.date_processes and is_forum_invitation(i)]
 
     for invitation in invitation_invitations:
         print('processing invitation: ', invitation.id)

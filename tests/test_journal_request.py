@@ -349,7 +349,7 @@ TJ22 Editors-in-Chief
         assert messages[0]['content']['text'].startswith('Dear New Reviewer,\n\nYou have been nominated to serve as reviewer for TJ22 by First AE.')
         assert messages[0]['content']['replyTo'] == 'ae_journal1@mail.com'
 
-        inv = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment'
+        inv = f'openreview.net/Support/Journal_Request{journal_number}/-/Recruitment_Comment'
         recruitment_status = ae_client.get_notes(invitation=inv, replyto=recruitment_note.id)
 
         assert recruitment_status
@@ -377,7 +377,7 @@ TJ22 Editors-in-Chief
         recruitment_note = openreview_client.get_note(recruitment_note['note']['id'])
         assert recruitment_note.readers == ['openreview.net/Support', 'TJ22', '~First_AE1']
 
-        inv = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment'
+        inv = f'openreview.net/Support/Journal_Request{journal_number}/-/Recruitment_Comment'
         recruitment_status = ae_client.get_notes(invitation=inv, replyto=recruitment_note.id)
 
         assert recruitment_status
@@ -417,7 +417,7 @@ TJ22 Editors-in-Chief
         assert messages[1]['content']['text'].startswith('Dear New Reviewer,\n\nYou have been nominated to serve as reviewer for TJ22 by Second AE.')
         assert messages[1]['content']['replyTo'] == 'ae_journal2@mail.com'
 
-        inv = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment'
+        inv = f'openreview.net/Support/Journal_Request{journal_number}/-/Recruitment_Comment'
         recruitment_status = ae2_client.get_notes(invitation=inv, replyto=recruitment_note.id)
 
         assert recruitment_status
@@ -431,7 +431,7 @@ TJ22 Editors-in-Chief
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=1)
-        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=6)
+        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Recruitment_Comment', count=4)
 
         #check recruitment response posted as reply of lastest recruitment note
         # recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
@@ -474,7 +474,7 @@ TJ22 Editors-in-Chief
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)        
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=2)
-        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=8)
+        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Recruitment_Comment', count=6)
 
         #check recruitment response posted as reply of lastest recruitment note
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -495,7 +495,7 @@ TJ22 Editors-in-Chief
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True) 
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=3)
-        #helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=8)
+        #helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Recruitment_Comment', count=6)
 
         # #check no new note was posted
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -516,7 +516,7 @@ TJ22 Editors-in-Chief
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)         
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=4)
-        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=9)        
+        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Recruitment_Comment', count=7)        
 
         #check recruitment response was updated
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -535,4 +535,185 @@ TJ22 Editors-in-Chief
         assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in ae_messages[2]['content']['text']
 
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()       
+        journal.invitation_builder.expire_assignment_availability_invitations()
+
+    def test_journal_recruitment_comment_invitation(self, openreview_client, selenium, request_page, helpers, journal_request, journal, journal_number):
+
+        comment_invitation_id = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment'
+        recruitment_comment_invitation_id = f'openreview.net/Support/Journal_Request{journal_number}/-/Recruitment_Comment'
+
+        comment_invitation = openreview_client.get_invitation(comment_invitation_id)
+        assert comment_invitation.edit['note']['readers'] == { 'param': { 'enum': ['openreview.net/Support', 'TJ22'] } }
+
+        recruitment_comment_invitation = openreview_client.get_invitation(recruitment_comment_invitation_id)
+        assert recruitment_comment_invitation.invitees == ['TJ22', 'openreview.net/Support']
+        assert recruitment_comment_invitation.edit['note']['readers'] == ['${{2/replyto}/readers}']
+
+        with pytest.raises(openreview.OpenReviewException, match=r'must be equal to one of the allowed values'):
+            openreview_client.post_note_edit(
+                invitation = comment_invitation_id,
+                signatures = ['TJ22'],
+                note = Note(
+                    forum = journal.request_form_id,
+                    replyto = journal.request_form_id,
+                    readers = ['openreview.net/Support', 'TJ22', '~First_AE1'],
+                    content = {
+                        'title': { 'value': 'Comment with an Action Editor as reader' },
+                        'comment': { 'value': 'This comment should not be posted.' }
+                    }
+                ))
+
+        helpers.create_user('ae_journal4@mail.com', 'Fourth', 'AE')
+        openreview_client.add_members_to_group('TJ22/Action_Editors', '~Fourth_AE1')
+
+        ae_client = OpenReviewClient(username='ae_journal4@mail.com', password=helpers.strong_password)
+        profile = ae_client.get_profile(ae_client.profile.id)
+        profile.content['names'].append({
+            'fullname': 'Fourth Editor',
+            'preferred': False
+        })
+        ae_client.post_profile(profile)
+
+        recruitment_note = ae_client.post_note_edit(
+            invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Reviewer_Recruitment_by_AE',
+            signatures = ['~Fourth_Editor1'],
+            note = Note(
+                content = {
+                    'invitee_name': { 'value': 'Another Reviewer'},
+                    'invitee_email': { 'value': 'another_reviewer@mail.com'},
+                    'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\n{{invitation_url}}\n\nCheers!\n{{inviter}}'}
+                },
+                forum = journal.request_form_id,
+                replyto = journal.request_form_id,
+                signatures = ['~Fourth_Editor1']
+            ))
+        helpers.await_queue_edit(openreview_client, recruitment_note['id'])
+
+        recruitment_note = openreview_client.get_note(recruitment_note['note']['id'])
+        assert recruitment_note.readers == ['openreview.net/Support', 'TJ22', '~Fourth_Editor1']
+
+        recruitment_status = ae_client.get_notes(invitation=recruitment_comment_invitation_id, replyto=recruitment_note.id)
+        assert len(recruitment_status) == 1
+        assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
+        assert '**Invited**: 1 reviewer' in recruitment_status[0].content['comment']['value']
+        assert recruitment_status[0].readers == ['openreview.net/Support', 'TJ22', '~Fourth_Editor1']
+
+        messages = openreview_client.get_messages(to = 'another_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
+        assert len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'ae_journal4@mail.com'
+
+        text = messages[0]['content']['text']
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=5)
+
+        recruitment_response = ae_client.get_notes(invitation=recruitment_comment_invitation_id, replyto=recruitment_note.id, sort='tcdate:desc')
+        assert len(recruitment_response) == 2
+        assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert recruitment_response[0].readers == ['openreview.net/Support', 'TJ22', '~Fourth_Editor1']
+        assert 'The user another_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
+
+        for edit in openreview_client.get_note_edits(note_id=recruitment_response[0].id):
+            helpers.await_queue_edit(openreview_client, edit_id=edit.id)
+
+        ae_messages = openreview_client.get_messages(to = 'ae_journal4@mail.com', subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
+        assert len(ae_messages) == 1
+        assert 'The user another_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in ae_messages[0]['content']['text']
+
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=6)
+
+        recruitment_response = ae_client.get_notes(invitation=recruitment_comment_invitation_id, replyto=recruitment_note.id, sort='tcdate:desc')
+        assert len(recruitment_response) == 2
+        assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert recruitment_response[0].readers == ['openreview.net/Support', 'TJ22', '~Fourth_Editor1']
+        assert 'The user another_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
+
+        edits = openreview_client.get_note_edits(note_id=recruitment_response[0].id)
+        assert len(edits) == 2
+        for edit in edits:
+            helpers.await_queue_edit(openreview_client, edit_id=edit.id)
+
+        ae_messages = openreview_client.get_messages(to = 'ae_journal4@mail.com', subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
+        assert len(ae_messages) == 2
+
+        legacy_recruitment_note = ae_client.post_note_edit(
+            invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Reviewer_Recruitment_by_AE',
+            signatures = ['~Fourth_Editor1'],
+            note = Note(
+                content = {
+                    'invitee_name': { 'value': 'Legacy Reviewer'},
+                    'invitee_email': { 'value': 'legacy_reviewer@mail.com'},
+                    'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\n{{invitation_url}}\n\nCheers!\n{{inviter}}'}
+                },
+                forum = journal.request_form_id,
+                replyto = journal.request_form_id,
+                signatures = ['~Fourth_Editor1']
+            ))
+        helpers.await_queue_edit(openreview_client, legacy_recruitment_note['id'])
+        legacy_recruitment_note = openreview_client.get_note(legacy_recruitment_note['note']['id'])
+
+        openreview_client.post_invitation_edit(
+            invitations = 'openreview.net/Support/-/Edit',
+            readers = ['~Super_User1'],
+            writers = ['~Super_User1'],
+            signatures = ['~Super_User1'],
+            invitation = Invitation(
+                id = comment_invitation_id,
+                edit = {
+                    'note': {
+                        'readers': { 'param': { 'enum': ['openreview.net/Support', 'TJ22', '~.*'] } }
+                    }
+                }
+            )
+        )
+
+        legacy_response = openreview_client.post_note_edit(
+            invitation = comment_invitation_id,
+            signatures = ['TJ22'],
+            note = Note(
+                forum = journal.request_form_id,
+                replyto = legacy_recruitment_note.id,
+                readers = legacy_recruitment_note.readers,
+                content = {
+                    'title': { 'value': 'New Recruitment Response' },
+                    'comment': { 'value': 'The user legacy_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=legacy_response['id'])
+
+        journal_request.setup_comment_invitation(journal.request_form_id)
+        comment_invitation = openreview_client.get_invitation(comment_invitation_id)
+        assert comment_invitation.edit['note']['readers'] == { 'param': { 'enum': ['openreview.net/Support', 'TJ22'] } }
+
+        messages = openreview_client.get_messages(to = 'legacy_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
+        assert len(messages) == 1
+        text = messages[0]['content']['text']
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=7)
+
+        legacy_response = openreview_client.get_note(legacy_response['note']['id'])
+        assert legacy_response.invitations == [comment_invitation_id]
+        assert 'The user legacy_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in legacy_response.content['comment']['value']
+        assert len(openreview_client.get_note_edits(note_id=legacy_response.id)) == 1
+
+        recruitment_response = ae_client.get_notes(invitation=recruitment_comment_invitation_id, replyto=legacy_recruitment_note.id, sort='tcdate:desc')
+        assert len(recruitment_response) == 2
+        assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert recruitment_response[0].readers == ['openreview.net/Support', 'TJ22', '~Fourth_Editor1']
+        assert 'The user legacy_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
+
+        for edit in openreview_client.get_note_edits(note_id=recruitment_response[0].id):
+            helpers.await_queue_edit(openreview_client, edit_id=edit.id)
+
+        assert len(openreview_client.get_notes(replyto=legacy_recruitment_note.id)) == 3
+
+        ae_messages = openreview_client.get_messages(to = 'ae_journal4@mail.com', subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
+        assert len(ae_messages) == 4
+        assert [message for message in ae_messages if 'The user legacy_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in message['content']['text']]

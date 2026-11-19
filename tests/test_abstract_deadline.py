@@ -110,7 +110,7 @@ class TestAbstractDeadline():
         ]
 
         invitation = openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Group')
-        assert invitation and invitation.edit['group']['deanonymizers'] == ['ifaamas.org/AAMAS/2026/Workshop/EMAS']
+        assert invitation and invitation.edit['group']['deanonymizers'] == ['ifaamas.org/AAMAS/2026/Workshop/EMAS', 'ifaamas.org/AAMAS/2026/Workshop/EMAS/Program_Chairs']
         assert invitation.cdate == full_submission_inv.edit['invitation']['expdate']
         assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Group/Dates')
         assert openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/Reviewers/-/Submission_Group/Deanonymizers')

@@ -10,6 +10,12 @@ def process(client, edit, invitation):
 
     submission = client.get_note(note.forum)
 
+    ## Authors and EICs each have their own de-anonymization invitation, so the authors may
+    ## already be released by the other one; Authors_Release only allows one edit per submission
+    if client.get_note_edits(note_id=submission.id, invitation=journal.get_authors_release_id()):
+        print('Authors already released')
+        return
+
     print('Release authors')
 
     release_note = client.post_note_edit(invitation=journal.get_authors_release_id(),

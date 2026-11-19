@@ -139,10 +139,10 @@ class TestFullSubmissionAuthorsLock():
         assert len(submissions) == 1
         assert submissions[0].authorids == ['~SomeFirstName_User1', '~AuthorOne_FLOCK1', '~AuthorTwo_FLOCK1']
 
-        helpers.create_user('rejected@flock.cc', 'Rejected', 'Author')
-        openreview_client.moderate_profile('~Rejected_Author1', 'reject')
+        helpers.create_user('rejected@flock.cc', 'Rejected', 'Flock')
+        openreview_client.moderate_profile('~Rejected_Flock1', 'reject')
 
-        with pytest.raises(openreview.OpenReviewException, match=r'username ~Rejected_Author1 has "Rejected" state which does not meet the minimum required state of Active'):
+        with pytest.raises(openreview.OpenReviewException, match=r'username ~Rejected_Flock1 has "Rejected" state which does not meet the minimum required state of Active'):
             ## Post submission 3
             edit = test_client.post_note_edit(
                 invitation='flock.cc/2026/Conference/-/Submission',
@@ -160,8 +160,8 @@ class TestFullSubmissionAuthorsLock():
                                     'institutions': [{ 'domain': 'mail.com', 'country': 'US' }]
                                 },
                                 {
-                                    'fullname': 'Rejected Author',
-                                    'username': '~Rejected_Author1',
+                                    'fullname': 'Rejected Flock',
+                                    'username': '~Rejected_Flock1',
                                     'institutions': [{ 'domain': 'flock.cc', 'country': 'US' }]
                                 },
                             ]

@@ -139,6 +139,26 @@ class TestJournalRequestWorkflow():
         assert revision_invitation.invitees == ['IJCV', support_group_id]
         assert 'secret_key' not in revision_invitation.edit['note']['content']
 
+        # add a field to the submission invitation content
+        openreview_client.post_invitation_edit(
+            invitations='IJCV/-/Edit',
+            signatures=['IJCV'],
+            invitation=openreview.api.Invitation(
+                id='IJCV/-/Submission',
+                content={
+                    'experiment_api_key': {
+                        'value': 'xyz',
+                        'readers': ['IJCV']
+                    }
+                }
+            )
+        )
+
+        submission_inv = openreview_client.get_invitation('IJCV/-/Submission')
+        assert 'experiment_api_key' in submission_inv.content
+        assert submission_inv.content['experiment_api_key']['value'] == 'xyz'
+        assert submission_inv.content['experiment_api_key']['readers'] == ['IJCV']
+
         # the request form cannot edit notes: it only creates new requests
         eic_client = OpenReviewClient(username='eic@ijcv.org', password=helpers.strong_password)
         with pytest.raises(openreview.OpenReviewException):
@@ -186,6 +206,12 @@ class TestJournalRequestWorkflow():
         updated_request = openreview_client.get_note(request.id)
         assert set(updated_request.readers) == { support_group_id, 'IJCV', 'IJCV/Action_Editors' }
         assert set(updated_request.writers) == { support_group_id, 'IJCV' }
+
+        # check the experiment_api_key in the submission invitation was not removed
+        submission_inv = openreview_client.get_invitation('IJCV/-/Submission')
+        assert 'experiment_api_key' in submission_inv.content
+        assert submission_inv.content['experiment_api_key']['value'] == 'xyz'
+        assert submission_inv.content['experiment_api_key']['readers'] == ['IJCV']
 
     def test_deployment_with_used_venue_id(self, openreview_client, journal_request, helpers):
 

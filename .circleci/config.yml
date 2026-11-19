@@ -169,10 +169,6 @@ commands:
           command: |
             git clone https://x-access-token:$GITHUB_TOKEN@github.com/openreview/openreview-api.git ~/openreview-v2
             cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
-      - run:
-          name: Clone openreview-web
-          command: |
-            git clone https://github.com/openreview/openreview-web.git ~/openreview-web
 
   create-directories:
     description: "Create API directories"
@@ -225,41 +221,36 @@ commands:
   start-apis:
     description: "Start and wait for API V1 and V2"
     steps:
+      # cleanStart opens the port before it finishes creating the setup invitations and
+      # only then prints "Setup Complete!", so the port alone does not mean ready.
       - run:
           name: Start API V1
           command: |
             cd ~/openreview
-            npm run cleanStart
+            npm run cleanStart 2>&1 | tee ~/openreview/logs/api-v1-cleanStart.log
           background: true
       - run:
-          name: Wait for API V1 to start
-          shell: /bin/sh
+          name: Wait for API V1 setup
           command: |
-            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3000
-            :
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            wait_for_line "Setup Complete!" ~/openreview/logs/api-v1-cleanStart.log 600
       - run:
           name: Start API V2
           command: |
             cd ~/openreview-v2
-            NODE_OPTIONS="--max-old-space-size=4096" npm run cleanStart
+            NODE_OPTIONS="--max-old-space-size=4096" npm run cleanStart 2>&1 | tee ~/openreview-v2/logs/api-v2-cleanStart.log
           background: true
       - run:
-          name: Wait for API V2 to start
-          shell: /bin/sh
+          name: Wait for API V2 setup
           command: |
-            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3001
-            :
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            wait_for_line "Setup Complete!" ~/openreview-v2/logs/api-v2-cleanStart.log 600
 
-  setup-openreview-web:
-    description: "Install, build, and start openreview-web"
+  start-openreview-web:
+    description: "Start the openreview-web build produced by the build-web job"
     steps:
-      - run:
-          name: Install openreview-web
-          command: |
-            cd ~/openreview-web
-            npm install
-            cp .env.example .env.local
-            NODE_ENV=production SUPER_USER=openreview.net npm run build
+      - attach_workspace:
+          at: ~/
       - run:
           name: Start openreview-web
           command: |
@@ -330,6 +321,37 @@ jobs:
       - run:
           name: Verify Installation
           command: python -c "import openreview"
+  build-web:
+    # Builds openreview-web once per workflow and hands it to the test jobs through the
+    # workspace, so every node runs the same web commit and only one node pays for (and
+    # can flake on) `next build`, which fetches Google Fonts. Runs on the same VM image
+    # and Node major as the test jobs so the native binaries in node_modules match.
+    executor: mongo8-vm
+    steps:
+      - checkout
+      - install-nodejs
+      - run:
+          name: Clone openreview-web
+          command: |
+            git clone https://github.com/openreview/openreview-web.git ~/openreview-web
+            echo "openreview-web commit: $(git -C ~/openreview-web rev-parse HEAD)"
+      - run:
+          name: Build openreview-web
+          command: |
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            cd ~/openreview-web
+            retry npm ci
+            cp .env.example .env.local
+            retry env NODE_ENV=production SUPER_USER=openreview.net npm run build
+      - run:
+          name: Drop build-only files from the workspace
+          command: |
+            rm -rf ~/openreview-web/.next/cache ~/openreview-web/.git
+            du -sh ~/openreview-web ~/openreview-web/node_modules ~/openreview-web/.next
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - openreview-web
   build-pr-tests:
     # Run only tests from files that were modified/added in the PR
     executor: mongo8-vm
@@ -391,7 +413,7 @@ jobs:
       - create-directories
       - install-firefox
       - start-apis
-      - setup-openreview-web
+      - start-openreview-web
       - install-geckodriver
       - install-pytest
       - run:
@@ -432,7 +454,7 @@ jobs:
       - create-directories
       - install-firefox
       - start-apis
-      - setup-openreview-web
+      - start-openreview-web
       - install-geckodriver
       - install-pytest
       - run:
@@ -485,7 +507,7 @@ jobs:
       - create-directories
       - install-firefox
       - start-apis
-      - setup-openreview-web
+      - start-openreview-web
       - install-geckodriver
       - install-pytest
       - run:
@@ -522,13 +544,18 @@ workflows:
           matrix:
             parameters:
               python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+      - build-web:
+          requires:
+            - install-package
       - build-pr-tests:
           requires:
             - install-package
+            - build-web
           python-version: "3.10"
       - build:
           requires:
             - build-pr-tests
+            - build-web
           python-version: "3.10"
       - deploy-dev:
           requires:
@@ -540,5 +567,8 @@ workflows:
     unless:
       equal: [ "", << pipeline.parameters.pytest-files >> ]
     jobs:
+      - build-web
       - debug-tests:
+          requires:
+            - build-web
           python-version: "3.10"

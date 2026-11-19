@@ -146,6 +146,5 @@ def process(client, invitation):
 
         client.delete_edges(
             invitation=f"{role_id}/-/{tracks_inv_name}",
-            wait_to_finish=True
         )
         openreview.tools.post_bulk_edges(client=client, edges=track_edges_to_post)

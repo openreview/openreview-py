@@ -309,7 +309,7 @@ class TestICMLConference():
         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Senior_Area_Chairs').members) == 0
         group = openreview_client.get_group('ICML.cc/2025/Conference/Senior_Area_Chairs/Invited')
         assert len(group.members) == 2
-        assert group.readers == ['ICML.cc/2025/Conference', 'ICML.cc/2025/Conference/Senior_Area_Chairs/Invited']
+        assert group.readers == ['ICML.cc/2025/Conference']
 
         messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Senior Area Chair')
         assert len(messages) == 2
@@ -1018,7 +1018,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['ICML.cc/2025/Conference/-/Submission', 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding', 'ICML.cc/2025/Conference/-/Desk_Rejected_Submission']
+        assert note.invitations == ['ICML.cc/2025/Conference/-/Submission', 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding', 'ICML.cc/2025/Conference/-/Desk_Rejected_Submission', 'ICML.cc/2025/Conference/-/Edit']
 
         assert desk_reject_note['readers'] == [
             "ICML.cc/2025/Conference/Program_Chairs",
@@ -2993,7 +2993,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         openreview_client.add_members_to_group(f'ICML.cc/2025/Conference/Submission1/Reviewers', '~Reviewer_ICMLThree1')
 
 #         reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
-#         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2025/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
+#         anon_groups = reviewer_client_2.get_groups(prefix='ICML.cc/2025/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
 #         anon_group_id = anon_groups[0].id
 #         review_edit = reviewer_client_2.post_note_edit(
 #             invitation='ICML.cc/2025/Conference/Submission1/-/Official_Review',

@@ -17,6 +17,16 @@ def process(client, edit, invitation):
 
     pc_submission_revision_id = domain.get_content_value('pc_submission_revision_id')
     if pc_submission_revision_id:
+        ## field readers belong only to the submission form
+        revision_content = {}
+        for field, value in submission_content.items():
+            if isinstance(value, dict) and 'readers' in value:
+                value = { key: val for key, val in value.items() if key != 'readers' }
+                ## a field that only set readers has nothing left to sync
+                if not value:
+                    continue
+            revision_content[field] = value
+
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             signatures=[venue_id],
@@ -25,7 +35,7 @@ def process(client, edit, invitation):
                 signatures=[venue_id],
                 edit={
                     'note': {
-                        'content': submission_content,
+                        'content': revision_content,
                         'license': {
                             'param': {
                                 'enum': submission_license

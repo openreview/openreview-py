@@ -3,10 +3,17 @@ async function process(client, edge, invitation) {
 
   const committeeName = invitation.content.committee_name?.value;
   const committeeRole = invitation.content.committee_role?.value;
-  const { groups } = await client.getGroups({ id: invitation.domain });
+  const matchGroupId = invitation.id.split('/-/')[0];
+  const [{ groups }, { groups: matchGroups }] = await Promise.all([
+    client.getGroups({ id: invitation.domain }),
+    client.getGroups({ id: matchGroupId })
+  ]);
   const domain = groups[0];
+  const matchGroup = matchGroups[0];
   const customMaxPapersId = domain.content[`${committeeRole}_custom_max_papers_id`]?.value;
-  const quota = domain.content?.[`submission_assignment_max_${committeeRole}`]?.value;
+  // each committee group sets its own quota, so the key there is not suffixed with the role,
+  // otherwise fall back to the venue-wide quota of this role
+  const quota = matchGroup?.content?.submission_assignment_max_reviewers?.value ?? domain.content?.[`submission_assignment_max_${committeeRole}`]?.value;
 
   if (edge.ddate) {
     return

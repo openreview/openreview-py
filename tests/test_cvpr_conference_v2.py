@@ -993,7 +993,7 @@ class TestCVPRConference():
 
         ## post a meta review
         submission = openreview_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/-/Submission', number=4)[0]       
-        anon_reviewers_group_id = ac1_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Area_Chair_', signatory='ac2@cvpr.cc')[0].id
+        anon_reviewers_group_id = ac2_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Area_Chair_', signatory='ac2@cvpr.cc')[0].id
         ac2_client.post_note_edit(
             invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Meta_Review',
             signatures=[anon_reviewers_group_id],

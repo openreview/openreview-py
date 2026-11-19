@@ -4,6 +4,7 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.content['subtitle']['value']
+    venue_name = domain.content['title']['value']
     contact = domain.content['contact']['value']
     desk_rejected_submission_id = domain.content['desk_rejected_submission_id']['value']
     desk_reject_expiration_id = domain.content['desk_reject_expiration_id']['value']
@@ -80,3 +81,39 @@ For more information, click here https://openreview.net/forum?id={submission.id}
             authors_accepted_id = domain.get_content_value('authors_accepted_id')
             print(f'Add {paper_group_id}/{authors_name} to {authors_accepted_id}')
             client.add_members_to_group(authors_accepted_id, f'{paper_group_id}/{authors_name}')
+
+    submission = client.get_note(edit.note.forum)
+
+    if submission.readers == ['everyone']:
+        # update the submission's bibtex
+        client.post_note_edit(
+            invitation=meta_invitation_id,
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=submission.id,
+                content={
+                    '_bibtex': {
+                        'value':openreview.tools.generate_bibtex(
+                            note=submission,
+                            venue_fullname=venue_name,
+                            year=str(datetime.datetime.now().year),
+                            url_forum=submission.forum,
+                            paper_status='under review',
+                            anonymous='readers' in submission.content['authors']
+                        )
+                    }
+                }
+            )
+        )
+    else:
+        # delete the submission's bibtex
+        client.post_note_edit(
+            invitation=meta_invitation_id,
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=submission.id,
+                content={
+                    '_bibtex': { 'delete': True }
+                }
+            )
+        )

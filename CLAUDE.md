@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Engineering Priorities
+
+When making technical decisions, do not give much weight to development costs. Instead, prefer quality, simplicity, robustness, scalability, and long term maintainability.
+
 ## Project Overview
 
 OpenReview-py is the official Python client library for the [OpenReview](https://openreview.net) scientific review platform. It provides API clients, venue/conference/journal management tools, and workflow automation for academic peer review.

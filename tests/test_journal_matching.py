@@ -100,7 +100,27 @@ class TestJournalMatching():
             head='CARP/Action_Editors',
             tail='~Ken_Beck1',
             label='Unavailable'
-        ))        
+        ))
+
+        ## an action editor can not change the availability or the quota of another action editor
+        with pytest.raises(openreview.OpenReviewException):
+            ken_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Assignment_Availability',
+                signatures=['~Ken_Beck1'],
+                head='CARP/Action_Editors',
+                tail='~Ana_Prada1',
+                label='Unavailable'
+            ))
+
+        with pytest.raises(openreview.OpenReviewException):
+            ken_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Custom_Max_Papers',
+                signatures=['~Ken_Beck1'],
+                head='CARP/Action_Editors',
+                tail='~Ana_Prada1',
+                weight=1
+            ))
+
+        assert openreview_client.get_edges_count(invitation='CARP/Action_Editors/-/Assignment_Availability', tail='~Ana_Prada1') == 0
+        assert openreview_client.get_edges_count(invitation='CARP/Action_Editors/-/Custom_Max_Papers', tail='~Ana_Prada1') == 1
 
         for i in range(1,6):
             test_client.post_note_edit(invitation='CARP/-/Submission',

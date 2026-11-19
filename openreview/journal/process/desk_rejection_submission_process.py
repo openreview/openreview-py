@@ -32,4 +32,7 @@ def process(client, edit, invitation):
         sender=journal.get_message_sender()
     )
 
-    journal.invitation_builder.expire_paper_invitations(submission)     
+    journal.invitation_builder.expire_paper_invitations(submission, expiration_invitation_id=journal.get_desk_rejection_expiration_id())
+
+    ## Created after expiring the paper invitations so the reversion stays open
+    journal.invitation_builder.set_note_desk_rejection_reversion_invitation(submission, edit.note)     

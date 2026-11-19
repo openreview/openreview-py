@@ -264,7 +264,7 @@ class TestAAAIConference():
         assert len(openreview_client.get_group('AAAI.org/2025/Conference/Area_Chairs').members) == 0
         group = openreview_client.get_group('AAAI.org/2025/Conference/Area_Chairs/Invited')
         assert len(group.members) == 2
-        assert group.readers == ['AAAI.org/2025/Conference', 'AAAI.org/2025/Conference/Area_Chairs/Invited']
+        assert group.readers == ['AAAI.org/2025/Conference']
 
         messages = openreview_client.get_messages(subject = '[AAAI 2025] Invitation to serve as Area Chair')
         assert len(messages) == 2

@@ -1,9 +1,13 @@
 async function process(client, edge, invitation) {
   client.throwErrors = true
 
-  const { groups } = await client.getGroups({ id: edge.domain })
-  const domain = groups[0]
   const reviewersId = invitation.content.match_group?.value
+  const [{ groups }, { groups: matchGroups }] = await Promise.all([
+    client.getGroups({ id: edge.domain }),
+    reviewersId ? client.getGroups({ id: reviewersId }) : Promise.resolve({ groups: [] })
+  ])
+  const domain = groups[0]
+  const matchGroup = matchGroups?.[0]
   const assignmentInvitationId = invitation.content.assignment_invitation_id?.value
   const conflictInvitationId = invitation.content.conflict_invitation_id?.value
   const assignmentLabel = invitation.content.assignment_label?.value
@@ -12,7 +16,9 @@ async function process(client, edge, invitation) {
   const committeeName = reviewersId?.split("/")?.pop()
   const conflictPolicy = domain.content?.[`${committeeRole}_conflict_policy`]?.value
   const conflictNYears = domain.content?.[`${committeeRole}_conflict_n_years`]?.value
-  const quota = domain.content?.[`submission_assignment_max_${committeeRole}`]?.value
+  // each committee group sets its own quota, so the key there is not suffixed with the role,
+  // otherwise fall back to the venue-wide quota of this role
+  const quota = matchGroup?.content?.submission_assignment_max_reviewers?.value ?? domain.content?.[`submission_assignment_max_${committeeRole}`]?.value
 
   if (edge.ddate && edge.label !== inviteLabel) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Cannot cancel the invitation since it has status: "${edge.label}"` }))

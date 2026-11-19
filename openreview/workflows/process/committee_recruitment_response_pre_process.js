@@ -12,6 +12,13 @@ async function process(client, edit, invitation) {
   const note = edit.note
   const user = edit.signatures[0]
 
+  // program chairs can post to any invitation of the venue, make sure the signature was invited
+  const { count } = await client.getGroups({ id: `${committee.id}/Invited`, member: user })
+
+  if (count == 0) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: 'User not in invited group, please accept the invitation using the email address you were invited with' }))
+  }
+
   if (note.content.response.value == 'Yes') {
     const noOverlapCommitteeIds = invitation.content.no_overlap_committee_ids?.value ?? []
     const shortPhrase = domain.content.subtitle?.value
