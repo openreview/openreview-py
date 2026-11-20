@@ -2339,6 +2339,11 @@ def create_forum_invitations(client, submission):
                 final_readers = [reader.replace('{number}', str(submission.number)) for reader in final_readers]
                 if '{signatures}' in final_readers:
                     final_readers.remove('{signatures}')
+                # the review author (${3/signatures}) is resolved when the review is posted, it is moved after
+                # the ethics readers so the readers keep the same order as when it was added to the note readers
+                include_signatures = '${3/signatures}' in final_readers
+                if include_signatures:
+                    final_readers.remove('${3/signatures}')
                 if submission.content.get('flagged_for_ethics_review', {}).get('value', False):
                     if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
                         is_meta_review_invitation = meta_review_name and invitation.id == f'{venue_id}/-/{meta_review_name}'
@@ -2346,6 +2351,8 @@ def create_forum_invitations(client, submission):
                             final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
                         if release_to_ethics_chairs:
                             final_readers.append(ethics_chairs_id)
+                if include_signatures:
+                    final_readers.append('${3/signatures}')
                 content['noteReaders'] = { 'value': final_readers }
             client.post_invitation_edit(invitations=invitation.id,
                 content=content,
