@@ -50,7 +50,7 @@ def process_update(client, edge, invitation, existing_edge):
 
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
-        client.add_members_to_group(group.id, edge.tail)
+        group = client.add_members_to_group(group.id, edge.tail)
         client.add_members_to_group(reviewers_id, edge.tail)
 
         if sync_sac_id:
@@ -79,3 +79,9 @@ Thank you,
 {signature}'''
 
         client.post_message(subject, recipients, message, invitation=meta_invitation_id, signature=venue_id, parentGroup=group.id, replyTo=contact, sender=sender)
+
+        ## The invitations of the new member that take its anonymous group, e.g. its AI chat, when they are active
+        ## already; the members assigned before get them on the activation date
+        anon_group_id = group.anon_ids_by_member.get(edge.tail)
+        if anon_group_id:
+            openreview.tools.create_committee_member_invitations(client, note, f'{venue_id}/{reviewers_name}', anon_group_id)
