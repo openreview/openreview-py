@@ -266,7 +266,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False, content={}):
+    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False, content={}, committee_ids=None):
 
         venue_id = self.venue_id
         submission_name = self.get_content_value('submission_name', 'Submission')
@@ -278,11 +278,19 @@ class EditInvitationsBuilder(object):
             {'value': venue_id, 'optional': True, 'description': 'Program Chairs'}
         ]
 
+        ## a track-scoped invitation offers the track's committee groups instead of the venue-wide ones
+        if committee_ids is not None:
+            for committee_id in committee_ids:
+                readers_items.append(
+                    {'value': committee_id, 'optional': True, 'description': f'All {committee_id.split("/")[-1].replace("_", " ")}'}
+                )
+
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
-            readers_items.append(
-                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'}
-            )
+            if committee_ids is None:
+                readers_items.append(
+                    {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'}
+                )
             if include_assigned_committee:
                 readers_items.append(
                     {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
@@ -290,17 +298,19 @@ class EditInvitationsBuilder(object):
 
         area_chairs_name = self.get_content_value('area_chairs_name')
         if area_chairs_name:
-            readers_items.append(
-                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'}
-            )
+            if committee_ids is None:
+                readers_items.append(
+                    {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'}
+                )
             if include_assigned_committee:
                 readers_items.append(
                     {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
                 )
 
-        readers_items.append(
-            {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'}
-        )
+        if committee_ids is None:
+            readers_items.append(
+                {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'}
+            )
         if include_assigned_committee:
             readers_items.append(
                 {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'}

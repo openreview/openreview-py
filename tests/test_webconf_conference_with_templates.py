@@ -1,4 +1,5 @@
 import datetime
+import pytest
 import openreview
 import openreview.venue
 from selenium.webdriver.common.by import By
@@ -117,6 +118,8 @@ class TestWebConfTracks():
             assert openreview_client.get_invitation(f'{VENUE_ID}/{role}/-/Assignment')
             assert openreview_client.get_invitation(f'{VENUE_ID}/{role}/-/Proposed_Assignment')
             assert openreview_client.get_invitation(f'{VENUE_ID}/{role}/-/Assignment_Configuration')
+            # every reviewer and area chair role bids on its own submissions
+            assert openreview_client.get_invitation(f'{VENUE_ID}/{role}/-/Bid')
 
     def test_add_track_field_to_submission(self, openreview_client, helpers):
         """Add the 'track' field to the submission form. Authors pick a long
@@ -186,6 +189,40 @@ class TestWebConfTracks():
             group = openreview_client.get_group(f'{VENUE_ID}/{role}')
             assert 'track' not in group.content
 
+        # each track gets its own submission change invitations, scoped to the track's
+        # submissions and released only to the track's committee
+        for track, _ in TRACKS:
+            before_bidding_invitation = openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding')
+            assert before_bidding_invitation.content['source']['value'] == { 'venueid': [f'{VENUE_ID}/Submission'], 'content': { 'track': track } }
+            assert before_bidding_invitation.edit['note']['readers'] == [
+                VENUE_ID,
+                f'{VENUE_ID}/{track}_Senior_Area_Chairs',
+                f'{VENUE_ID}/{track}_Area_Chairs',
+                f'{VENUE_ID}/{track}_Reviewers',
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Authors'
+            ]
+            assert openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding/Dates')
+            assert openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding/Restrict_Field_Visibility')
+            readers_invitation = openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding/Readers')
+            reader_options = [item['value'] for item in readers_invitation.edit['content']['readers']['value']['param']['items']]
+            assert f'{VENUE_ID}/{track}_Reviewers' in reader_options
+            assert f'{VENUE_ID}/Reviewers' not in reader_options
+
+            before_reviewing_invitation = openreview_client.get_invitation(f'{VENUE_ID}/-/{track}_Submission_Change_Before_Reviewing')
+            assert before_reviewing_invitation.content['source']['value'] == { 'venueid': [f'{VENUE_ID}/Submission'], 'content': { 'track': track } }
+            assert before_reviewing_invitation.edit['note']['readers'] == [
+                VENUE_ID,
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Senior_Area_Chairs',
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Area_Chairs',
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Reviewers',
+                f'{VENUE_ID}/Submission${{{{2/id}}/number}}/Authors'
+            ]
+
+        # the per-track invitations replace the venue-wide ones
+        for name in ['Submission_Change_Before_Bidding', 'Submission_Change_Before_Reviewing']:
+            venue_invitation = openreview.tools.get_invitation(openreview_client, f'{VENUE_ID}/-/{name}')
+            assert venue_invitation is None or venue_invitation.ddate
+
     def test_post_submissions(self, openreview_client, test_client, helpers):
         """Post one submission per sampled track."""
 
@@ -224,6 +261,36 @@ class TestWebConfTracks():
         for submission, track in zip(submissions, SAMPLED_TRACKS):
             assert submission.content['track']['value'] == track
 
+    def test_release_submissions_per_track(self, openreview_client, helpers):
+        """Running a track's Submission_Change_Before_Bidding releases only
+        that track's submissions, and only to that track's committee."""
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@webconf.cc', password=helpers.strong_password)
+        now = datetime.datetime.now()
+
+        for track in SAMPLED_TRACKS:
+            invitation_id = f'{VENUE_ID}/-/{track}_Submission_Change_Before_Bidding'
+            pc_client.post_invitation_edit(
+                invitations=f'{invitation_id}/Dates',
+                content={
+                    'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+                }
+            )
+            ## saved by the track's Reviewers, Area_Chairs and Senior_Area_Chairs Track edits (each adds
+            ## a reader), then by the Dates edit; each save queues the date process once
+            helpers.await_queue_edit(openreview_client, edit_id=f'{invitation_id}-0-1', count=4)
+
+        submissions = openreview_client.get_notes(invitation=f'{VENUE_ID}/-/Submission', sort='number:asc')
+        for submission in submissions:
+            track = submission.content['track']['value']
+            assert submission.readers == [
+                VENUE_ID,
+                f'{VENUE_ID}/{track}_Senior_Area_Chairs',
+                f'{VENUE_ID}/{track}_Area_Chairs',
+                f'{VENUE_ID}/{track}_Reviewers',
+                f'{VENUE_ID}/Submission{submission.number}/Authors'
+            ]
+
     def test_matching_invitations_are_track_scoped(self, openreview_client, helpers):
         """Affinity_Score, Conflict, Proposed_Assignment and
         Assignment_Configuration must only consider submissions of the role's
@@ -242,6 +309,18 @@ class TestWebConfTracks():
                 proposed_assignment_invitation = openreview_client.get_invitation(f'{role_id}/-/Proposed_Assignment')
                 assert proposed_assignment_invitation.edit['head']['param']['withContent'] == { 'track': track }
 
+                bid_invitation = openreview_client.get_invitation(f'{role_id}/-/Bid')
+                assert bid_invitation.edit['head']['param']['withContent'] == { 'track': track }
+                # the domain only stores the venue-wide ids, so the bid console reads the track's from the bid
+                assert bid_invitation.content['affinity_score_id']['value'] == f'{role_id}/-/Affinity_Score'
+                assert bid_invitation.content['conflict_id']['value'] == f'{role_id}/-/Conflict'
+                # the track's own senior area chairs (and area chairs, for reviewer bids) read the bids
+                assert f'{VENUE_ID}/{track}_Senior_Area_Chairs' in bid_invitation.readers
+                assert f'{VENUE_ID}/Senior_Area_Chairs' not in bid_invitation.readers
+                if role.endswith('_Reviewers'):
+                    assert f'{VENUE_ID}/{track}_Area_Chairs' in bid_invitation.readers
+                    assert f'{VENUE_ID}/Area_Chairs' not in bid_invitation.readers
+
                 assignment_configuration_invitation = openreview_client.get_invitation(f'{role_id}/-/Assignment_Configuration')
                 assert assignment_configuration_invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == \
                     f'{VENUE_ID}/-/Submission&content.venueid={VENUE_ID}/Submission&content.track={track}'
@@ -251,9 +330,69 @@ class TestWebConfTracks():
             affinity_score_invitation = openreview_client.get_invitation(f'{VENUE_ID}/{role}/-/Affinity_Score')
             assert 'withContent' not in affinity_score_invitation.edit['head']['param']
 
+            bid_invitation = openreview_client.get_invitation(f'{VENUE_ID}/{role}/-/Bid')
+            assert 'withContent' not in bid_invitation.edit['head']['param']
+
             assignment_configuration_invitation = openreview_client.get_invitation(f'{VENUE_ID}/{role}/-/Assignment_Configuration')
             assert assignment_configuration_invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == \
                 f'{VENUE_ID}/-/Submission&content.venueid={VENUE_ID}/Submission'
+
+    def test_bid_per_track(self, openreview_client, helpers):
+        """A track reviewer can bid on submissions of their own track, but not
+        on another track's."""
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@webconf.cc', password=helpers.strong_password)
+        now = datetime.datetime.now()
+
+        submissions = openreview_client.get_notes(invitation=f'{VENUE_ID}/-/Submission', sort='number:asc')
+        submissions_by_track = { s.content['track']['value']: s for s in submissions }
+
+        role_id = f'{VENUE_ID}/Econ_Reviewers'
+        reviewer = '~EconReviewer_WebConf1'
+        openreview_client.post_group_edit(
+            invitation=f'{role_id}/-/Members',
+            signatures=[VENUE_ID],
+            group=openreview.api.Group(members={ 'append': [reviewer] })
+        )
+
+        pc_client.post_invitation_edit(
+            invitations=f'{role_id}/-/Bid/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'due_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) }
+            }
+        )
+
+        reviewer_client = openreview.api.OpenReviewClient(username='econ_reviewer@webconf.cc', password=helpers.strong_password)
+
+        bid = reviewer_client.post_edge(openreview.api.Edge(
+            invitation=f'{role_id}/-/Bid',
+            head=submissions_by_track['Econ'].id,
+            tail=reviewer,
+            signatures=[reviewer],
+            label='High'
+        ))
+        assert bid.readers == [
+            VENUE_ID,
+            f'{VENUE_ID}/Submission{submissions_by_track["Econ"].number}/Senior_Area_Chairs',
+            f'{VENUE_ID}/Submission{submissions_by_track["Econ"].number}/Area_Chairs',
+            reviewer
+        ]
+
+        # the COI submission is outside the Econ track
+        with pytest.raises(openreview.OpenReviewException):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation=f'{role_id}/-/Bid',
+                head=submissions_by_track['COI'].id,
+                tail=reviewer,
+                signatures=[VENUE_ID],
+                label='High'
+            ))
+
+        # the track's bids feed into the track's own matching
+        configuration_invitation = openreview_client.get_invitation(f'{role_id}/-/Assignment_Configuration')
+        assert f'{role_id}/-/Bid' in configuration_invitation.edit['note']['content']['scores_specification']['value']['param']['default']
 
     def test_deploy_assignments_per_track(self, openreview_client, helpers):
         """Deploying a track's assignments only touches submissions of that
