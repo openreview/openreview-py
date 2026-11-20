@@ -446,11 +446,21 @@ class Matching(object):
 
         print ('Reduced loads received: ', len(reduced_loads))
 
+        ## Responses to an email invitation are keyed by that email. Resolve them with the profile search, the
+        ## venue can not read the profile emails
+        reduced_load_by_profile_id = {}
+        reduced_load_by_email = { user.lower(): load for user, load in reduced_loads.items() if '@' in user }
+        if reduced_load_by_email:
+            for email, profile in self.client.search_profiles(confirmedEmails=list(reduced_load_by_email)).items():
+                if email in reduced_load_by_email:
+                    reduced_load_by_profile_id.setdefault(profile.id, reduced_load_by_email[email])
+
         edges = []
         for user_profile in tqdm(user_profiles):
 
-            custom_load = None
-            ids = user_profile.content['emailsConfirmed'] + [ n['username'] for n in user_profile.content['names'] if 'username' in n]
+            custom_load = reduced_load_by_profile_id.get(user_profile.id)
+            ## user_profile.id is an email when the member has no profile
+            ids = [user_profile.id] + [ n['username'] for n in user_profile.content['names'] if 'username' in n]
             for i in ids:
                 if not custom_load and (i in reduced_loads):
                     custom_load = reduced_loads[i]

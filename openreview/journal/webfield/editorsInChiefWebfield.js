@@ -98,7 +98,6 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Brow
   '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
   '<li><a href="/forum?id=' + REVIEWER_REPORT_ID + '&referrer=' + referrerUrl + '">Reviewers Report</a></li></ul>';
-var institutionDomains = [];
 
 // ---------------------------------------------------------------------------
 // Temporary performance instrumentation.
@@ -435,10 +434,7 @@ var loadData = function() {
         roles[edge.tail] = edge.label;
         return roles;
       }, {});
-    }) : $.Deferred().resolve({})),
-    perfTrack('  settings: institution domains', Webfield2.api.get('/settings/institutiondomains').then(function(result) {
-      institutionDomains = result;
-    }))
+    }) : $.Deferred().resolve({}))
   );
 
   // Attached as a side effect so the original multi-value resolution is passed
@@ -504,7 +500,7 @@ var formatData = function(
           Archived: isArchived ? 'Yes' : 'No',
           Volunteer: isVolunteer ? 'Yes' : 'No'
         }),
-        hasInstitutionEmail: reviewer.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
+        hasInstitutionEmail: !!reviewer.hasVerifiedInstitution
       },
       reviewerProgressData: {
         numCompletedReviews: 0,
@@ -561,7 +557,7 @@ var formatData = function(
           Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-'
         }),
-        hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
+        hasInstitutionEmail: !!actionEditor.hasVerifiedInstitution
       },
       reviewProgressData: {
         numCompletedReviews: 0,
@@ -590,7 +586,7 @@ var formatData = function(
           Publications: '-',
           Archived: 'Yes'
         }),
-        hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
+        hasInstitutionEmail: !!actionEditor.hasVerifiedInstitution
       },
       reviewProgressData: {
         numCompletedReviews: 0,
