@@ -6,6 +6,7 @@ import datetime
 import random
 import os
 import re
+import types
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
@@ -424,6 +425,28 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Jiashun Jin,\n\nThe following invitation email was sent to Ollie Fox:\n\nHi Ollie Fox,\n\nWe request your help with reviewing a SLADS submission:\n\nNumber: {note_one.number}\nTitle: \"Paper title\"\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=SLADS/Reviewers/-/Assignment_Recruitment&user=~Ollie_Fox1&key={key_value}&submission_id={note_one.id}&inviter=~Jiashun_Jin1\n\nThanks,\n\nSLADS Paper{note_one.number} Action Editor {andrew_paper1_anon_group.id.split('_')[-1]}\nJiashun Jin\n\nPlease note that responding to this email will direct your reply to ollie@sladsfive.com.\n'''
 
+        ## Run the daily reminder one week later as the journal, which can not read the emails of the invitee
+        invite_assignment_invitation = openreview_client.get_invitation('SLADS/Reviewers/-/Invite_Assignment')
+
+        class OneWeekLater(datetime.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return datetime.datetime.now(tz) + datetime.timedelta(weeks=1, hours=12)
+
+        funcs = {
+            'openreview': openreview,
+            'datetime': types.SimpleNamespace(datetime=OneWeekLater, timedelta=datetime.timedelta)
+        }
+        exec(invite_assignment_invitation.date_processes[0]['script'], funcs)
+        funcs['process'](journal.client, invite_assignment_invitation)
+
+        messages = openreview_client.get_messages(to = 'ollie@sladsfive.com', subject = '[SLADS] Reminder: Invitation to review paper titled "Paper title"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Ollie Fox,\n\nWe request your help with reviewing a SLADS submission:\n\nNumber: {note_one.number}\nTitle: \"Paper title\"\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=SLADS/Reviewers/-/Assignment_Recruitment&user=~Ollie_Fox1&key={key_value}&submission_id={note_one.id}&inviter={andrew_paper1_anon_group.id}\n\nThanks,\n\nSLADS Paper{note_one.number} Action Editor {andrew_paper1_anon_group.id.split('_')[-1]}\n\n\nPlease note that responding to this email will direct your reply to slads@scichina.com.\n'''
+
+        assert not openreview_client.get_messages(to = 'andrew@sladszero.com', subject = '[SLADS] Reminder: Invitation to review paper titled "Paper title"')
+        assert len(openreview_client.get_messages(to = 'ollie@sladsfive.com', subject = '[SLADS] Invitation to review paper titled "Paper title"')) == 1
+
         ## Carlos Gardel
         paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='SLADS/Reviewers/-/Assignment',
             readers=["SLADS", "SLADS/Paper1/Action_Editors", '~Carlos_Gex1'],
@@ -530,6 +553,59 @@ note={Under review}
         assert edge.readers == ['SLADS/Preferred_Emails_Readers', '~Melisa_Amex1']
         edge = openreview_client.get_edges(invitation='SLADS/-/Preferred_Emails', head='~SomeFirstName_User1')[0]
         assert edge.readers == ['SLADS/Preferred_Emails_Readers', '~SomeFirstName_User1']
+
+    def test_action_editor_availability_reminder(self, journal, openreview_client, helpers):
+
+        availability_invitation = openreview_client.get_invitation('SLADS/Action_Editors/-/Assignment_Availability')
+        assert availability_invitation.signatures == ['SLADS']
+
+        andrew_client = OpenReviewClient(username='andrew@sladszero.com', password=helpers.strong_password)
+        andrew_client.post_edge(openreview.api.Edge(invitation='SLADS/Action_Editors/-/Assignment_Availability',
+            signatures=['~Jiashun_Jin1'],
+            head='SLADS/Action_Editors',
+            tail='~Jiashun_Jin1',
+            label='Unavailable'
+        ))
+
+        assert openreview_client.get_edges(invitation='SLADS/-/Preferred_Emails', head='~Jiashun_Jin1')[0].tail == 'andrew@sladszero.com'
+
+        def run_reminder(fixed_now):
+            class FixedNow(datetime.datetime):
+                @classmethod
+                def now(cls, tz=None):
+                    return fixed_now
+
+            funcs = {
+                'openreview': openreview,
+                'datetime': types.SimpleNamespace(datetime=FixedNow, timedelta=datetime.timedelta)
+            }
+            exec(availability_invitation.date_processes[0]['script'], funcs)
+            funcs['process'](journal.client, availability_invitation)
+
+        reminder_period = datetime.timedelta(weeks=journal.unavailable_reminder_period)
+        reminder_subject = '[SLADS] Consider updating your availability for SLADS'
+
+        ## The journal finds the preferred email in the Preferred_Emails edges to check the previous reminders
+        run_reminder(datetime.datetime.now() + reminder_period + datetime.timedelta(days=1))
+
+        messages = openreview_client.get_messages(to='andrew@sladszero.com', subject=reminder_subject)
+        assert len(messages) == 1
+
+        edge = openreview_client.get_edges(invitation='SLADS/Action_Editors/-/Assignment_Availability', tail='~Jiashun_Jin1')[0]
+        assert edge.label == 'Unavailable'
+
+        ## Run again before the next reminder is due, the previous reminder is found and no new reminder is sent
+        run_reminder(datetime.datetime.fromtimestamp((edge.tmdate + messages[0]['cdate']) / 2000) + reminder_period)
+
+        assert len(openreview_client.get_messages(to='andrew@sladszero.com', subject=reminder_subject)) == 1
+
+        ## After two reminder periods the journal changes the availability back to available
+        run_reminder(datetime.datetime.now() + 2 * reminder_period + datetime.timedelta(days=1))
+
+        edge = openreview_client.get_edges(invitation='SLADS/Action_Editors/-/Assignment_Availability', tail='~Jiashun_Jin1')[0]
+        assert edge.label == 'Available'
+        assert edge.signatures == ['SLADS']
+        assert len(openreview_client.get_messages(to='andrew@sladszero.com', subject='[SLADS] Your status has been changed to "Available"')) == 1
 
     def test_decision(self, journal, openreview_client, helpers):
 

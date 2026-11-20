@@ -13,13 +13,12 @@ def process(client, edit, invitation):
     subject = recruitment_note.content['email_subject']['value']
     message = recruitment_note.content['email_content']['value']
 
-    inviter_profile = client.get_profile(recruitment_note.signatures[0])
+    ## The inviter is an action editor, so the preferred email comes from the journal preferred email edges
+    inviter_profile = openreview.tools.get_profiles(client, ids_or_emails=[recruitment_note.signatures[0]], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
     inviter_name = openreview.tools.get_preferred_name(inviter_profile)
     message = message.replace('{{inviter}}', inviter_name)
 
-    inviter_email = inviter_profile.content.get('preferredEmail')
-    if not inviter_email:
-        inviter_email = inviter_profile.content.get('emails')[0]
+    inviter_email = inviter_profile.get_preferred_email()
 
     status = journal.invite_reviewers(message, subject, [email], [name], replyTo=inviter_email)
 

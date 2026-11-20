@@ -8,7 +8,10 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "main"
+    default: "feat/hide-profile-emails"
+  openreview-web-branch:
+    type: string
+    default: "feature/hide-profile-emails"
   python-version:
     type: string
     default: "3.13.1"
@@ -331,9 +334,10 @@ jobs:
       - checkout
       - install-nodejs
       - run:
-          name: Clone openreview-web
+          name: Clone openreview-web branch << pipeline.parameters.openreview-web-branch >>
           command: |
             git clone https://github.com/openreview/openreview-web.git ~/openreview-web
+            cd ~/openreview-web && git checkout << pipeline.parameters.openreview-web-branch >>
             echo "openreview-web commit: $(git -C ~/openreview-web rev-parse HEAD)"
       - run:
           name: Build openreview-web

@@ -446,11 +446,18 @@ class Matching(object):
 
         print ('Reduced loads received: ', len(reduced_loads))
 
+        ## Responses to an email invitation are keyed by that email, the venue can not read the profile emails
+        reduced_load_by_profile_id = {}
+        reduced_load_by_email = { user.lower(): load for user, load in reduced_loads.items() if '@' in user }
+        for email, profile in openreview.tools.get_profiles(self.client, list(reduced_load_by_email), as_dict=True).items():
+            reduced_load_by_profile_id.setdefault(profile.id, reduced_load_by_email[email])
+
         edges = []
         for user_profile in tqdm(user_profiles):
 
-            custom_load = None
-            ids = user_profile.content['emailsConfirmed'] + [ n['username'] for n in user_profile.content['names'] if 'username' in n]
+            custom_load = reduced_load_by_profile_id.get(user_profile.id)
+            ## user_profile.id is an email when the member has no profile
+            ids = [user_profile.id] + [ n['username'] for n in user_profile.content['names'] if 'username' in n]
             for i in ids:
                 if not custom_load and (i in reduced_loads):
                     custom_load = reduced_loads[i]

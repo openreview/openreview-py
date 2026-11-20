@@ -80,11 +80,7 @@ def process(client, edit, invitation):
         invited_group_ids=list(set(invited_roles) & set(memberships))
         member_group_ids=list(set(member_roles) & set(memberships))
 
-        if profile and not profile.content.get('emails', []):
-            if 'profiles_without_email' not in recruitment_status['errors']:
-                recruitment_status['errors']['profiles_without_email'] = []
-            recruitment_status['errors']['profiles_without_email'].append(email)
-        elif invalid_profile_id:
+        if invalid_profile_id:
             if 'invalid_profile_ids' not in recruitment_status['errors']:
                 recruitment_status['errors']['invalid_profile_ids'] = []
             recruitment_status['errors']['invalid_profile_ids'].append(email)

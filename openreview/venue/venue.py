@@ -1581,15 +1581,13 @@ Total Errors: {len(errors)}
             # Extract domains from each authorprofile
             author_ids = set()
             author_domains = set()
-            author_emails = set()
             author_relations = set()
-            author_publications = set()            
+            author_publications = set()
             for authorid in authorids:
                 if author_profile_by_id.get(authorid):
                     author_info = info_function(author_profile_by_id[authorid], conflict_n_years)
                     author_ids.add(author_info['id'])
                     author_domains.update(author_info['domains'])
-                    author_emails.update(author_info['emails'])
                     author_relations.update(author_info['relations'])
                     author_publications.update(author_info['publications'])
                 else:
