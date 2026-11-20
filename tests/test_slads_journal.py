@@ -6,6 +6,7 @@ import datetime
 import random
 import os
 import re
+import types
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
@@ -423,6 +424,28 @@ note={Under review}
         messages = openreview_client.get_messages(to = 'andrew@sladszero.com', subject = '[SLADS] Invitation to review paper titled "Paper title"')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Jiashun Jin,\n\nThe following invitation email was sent to Ollie Fox:\n\nHi Ollie Fox,\n\nWe request your help with reviewing a SLADS submission:\n\nNumber: {note_one.number}\nTitle: \"Paper title\"\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=SLADS/Reviewers/-/Assignment_Recruitment&user=~Ollie_Fox1&key={key_value}&submission_id={note_one.id}&inviter=~Jiashun_Jin1\n\nThanks,\n\nSLADS Paper{note_one.number} Action Editor {andrew_paper1_anon_group.id.split('_')[-1]}\nJiashun Jin\n\nPlease note that responding to this email will direct your reply to ollie@sladsfive.com.\n'''
+
+        ## Run the daily reminder one week later as the journal, which can not read the emails of the invitee
+        invite_assignment_invitation = openreview_client.get_invitation('SLADS/Reviewers/-/Invite_Assignment')
+
+        class OneWeekLater(datetime.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return datetime.datetime.now(tz) + datetime.timedelta(weeks=1, hours=12)
+
+        funcs = {
+            'openreview': openreview,
+            'datetime': types.SimpleNamespace(datetime=OneWeekLater, timedelta=datetime.timedelta)
+        }
+        exec(invite_assignment_invitation.date_processes[0]['script'], funcs)
+        funcs['process'](journal.client, invite_assignment_invitation)
+
+        messages = openreview_client.get_messages(to = 'ollie@sladsfive.com', subject = '[SLADS] Reminder: Invitation to review paper titled "Paper title"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Ollie Fox,\n\nWe request your help with reviewing a SLADS submission:\n\nNumber: {note_one.number}\nTitle: \"Paper title\"\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=SLADS/Reviewers/-/Assignment_Recruitment&user=~Ollie_Fox1&key={key_value}&submission_id={note_one.id}&inviter={andrew_paper1_anon_group.id}\n\nThanks,\n\nSLADS Paper{note_one.number} Action Editor {andrew_paper1_anon_group.id.split('_')[-1]}\n\n\nPlease note that responding to this email will direct your reply to slads@scichina.com.\n'''
+
+        assert not openreview_client.get_messages(to = 'andrew@sladszero.com', subject = '[SLADS] Reminder: Invitation to review paper titled "Paper title"')
+        assert len(openreview_client.get_messages(to = 'ollie@sladsfive.com', subject = '[SLADS] Invitation to review paper titled "Paper title"')) == 1
 
         ## Carlos Gardel
         paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='SLADS/Reviewers/-/Assignment',
