@@ -1,6 +1,7 @@
 import openreview
 import pytest
 import re
+import datetime
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
@@ -86,6 +87,7 @@ class TestRLJJournal():
                             'reviewer_roles': ['Technical Reviewer', 'Senior Reviewer'],
                             'review_release': 'decision_posted',
                             'release_reviews_to_authors_when_posted': False,
+                            'disable_comments_after_decision_approval': True,
                             'submission_additional_fields': {
                                 'is_revision': {
                                     'order': 8,
@@ -704,6 +706,25 @@ class TestRLJJournal():
         assert invitation.edit['note']['readers'] == ['RLJ/Editors_In_Chief', 'RLJ/Action_Editors', 'RLJ/Paper1/Reviewers', 'RLJ/Paper1/Authors']
         assert invitation.edit['note']['nonreaders'] == []
 
+        ## Comments are still open while the decision is waiting for EIC approval
+        assert openreview_client.get_invitation('RLJ/Paper1/-/Official_Comment').expdate is None
+
+        comment_note = test_client.post_note_edit(invitation='RLJ/Paper1/-/Official_Comment',
+            signatures=['RLJ/Paper1/Authors'],
+            note=Note(
+                signatures=['RLJ/Paper1/Authors'],
+                readers=['RLJ/Editors_In_Chief', 'RLJ/Paper1/Action_Editors', 'RLJ/Paper1/Authors'],
+                forum=note_id_1,
+                replyto=note_id_1,
+                content={
+                    'title': { 'value': 'Question about the decision' },
+                    'comment': { 'value': 'Thank you for handling our submission.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
+
         approval_note = eic_client.post_note_edit(invitation='RLJ/Paper1/-/Decision_Approval',
             signatures=['RLJ/Editors_In_Chief'],
             note=Note(
@@ -720,6 +741,61 @@ class TestRLJJournal():
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[RLJ] Decision for your RLJ submission 1: Paper title')
         assert len(messages) == 1
+
+        ## disable_comments_after_decision_approval is enabled, so the comment invitation is expired once the decision is approved
+        invitation = openreview_client.get_invitation('RLJ/Paper1/-/Official_Comment')
+        assert invitation.expdate is not None
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+
+        ## Authors can no longer comment
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation RLJ/Paper1/-/Official_Comment has expired'):
+            test_client.post_note_edit(invitation='RLJ/Paper1/-/Official_Comment',
+                signatures=['RLJ/Paper1/Authors'],
+                note=Note(
+                    signatures=['RLJ/Paper1/Authors'],
+                    readers=['RLJ/Editors_In_Chief', 'RLJ/Paper1/Action_Editors', 'RLJ/Paper1/Authors'],
+                    forum=note_id_1,
+                    replyto=comment_note['note']['id'],
+                    content={
+                        'title': { 'value': 'Follow up' },
+                        'comment': { 'value': 'One more question about the decision.' }
+                    }
+                )
+            )
+
+        ## Reviewers can no longer comment
+        tomas_anon_group = tomas_client.get_groups(prefix='RLJ/Paper1/Reviewer_.*', signatory='~Tomas_Lind1')[0]
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation RLJ/Paper1/-/Official_Comment has expired'):
+            tomas_client.post_note_edit(invitation='RLJ/Paper1/-/Official_Comment',
+                signatures=[tomas_anon_group.id],
+                note=Note(
+                    signatures=[tomas_anon_group.id],
+                    readers=['RLJ/Editors_In_Chief', 'RLJ/Paper1/Action_Editors', tomas_anon_group.id],
+                    forum=note_id_1,
+                    replyto=note_id_1,
+                    content={
+                        'title': { 'value': 'Late comment' },
+                        'comment': { 'value': 'I have one more comment about the paper.' }
+                    }
+                )
+            )
+
+        ## EICs can still comment through the expired invitation
+        eic_comment_note = eic_client.post_note_edit(invitation='RLJ/Paper1/-/Official_Comment',
+            signatures=['RLJ/Editors_In_Chief'],
+            note=Note(
+                signatures=['RLJ/Editors_In_Chief'],
+                readers=['RLJ/Editors_In_Chief', 'RLJ/Paper1/Action_Editors', 'RLJ/Paper1/Authors'],
+                forum=note_id_1,
+                replyto=comment_note['note']['id'],
+                content={
+                    'title': { 'value': 'Reply from the editors' },
+                    'comment': { 'value': 'You are welcome, please submit the camera ready version.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=eic_comment_note['id'])
 
         revision_note = test_client.post_note_edit(invitation='RLJ/Paper1/-/Camera_Ready_Revision',
             signatures=['RLJ/Paper1/Authors'],
