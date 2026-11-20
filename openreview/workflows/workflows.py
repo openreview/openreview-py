@@ -853,8 +853,8 @@ class Workflows():
         status_invitation_id = f'{support_group_id}/Venue_Request/{workflow_name}/-/Status'
 
         invitation = Invitation(id=status_invitation_id,
-            invitees=['active_venues'],
-            readers=['active_venues'],
+            invitees=['venues'],
+            readers=['venues'],
             writers=[support_group_id],
             signatures=[support_group_id],
             edit = {
@@ -867,7 +867,7 @@ class Workflows():
                     'param': {
                         'items': [
                             { 'value': support_group_id, 'optional': False },
-                            { 'inGroup': 'active_venues', 'optional': False }
+                            { 'inGroup': 'venues', 'optional': False }
                         ]
                     }
                 },
