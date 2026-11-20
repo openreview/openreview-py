@@ -63,6 +63,8 @@ class Templates():
         self.setup_reviewers_review_days_late_template_invitation()
         self.setup_committee_roles_invitations()
         self.setup_llm_pdf_response_template_invitation()
+        self.setup_submission_fee_payment_template_invitation()
+        self.setup_fee_waiver_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -3194,6 +3196,391 @@ If you would like to change your decision, please follow the link in the previou
                                                     'input': 'textarea'
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_submission_fee_payment_template_invitation(self):
+
+        ## Only support enables a submission fee: the payments are collected by OpenReview
+        support_user_id = self.support_user_id
+
+        invitation = Invitation(id=f'{self.template_domain}/-/Submission_Fee_Payment',
+            invitees=[support_user_id],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            preprocess=self.get_process_content('workflow_process/submission_fee_template_pre_process.py'),
+            process=self.get_process_content('workflow_process/submission_fee_template_process.py'),
+            edit = {
+                'signatures': [support_user_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Submission_Fee_Payment.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission_Fee_Payment'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'description': 'When should authors be able to pay the submission fee? It can not be earlier than the end of the full submission deadline, so authors who withdraw their submission before then never pay.',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 4,
+                        'description': 'When is the submission fee due? This is the deadline shown to the authors, who are reminded a week and a day before it while their fee is unpaid.',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        }
+                    },
+                    'expiration_date': {
+                        'order': 5,
+                        'description': 'When should the payments close? Authors can not start a payment after this date. A payment started before it can still be completed for up to 24 hours, so a venue that desk rejects the submissions with unpaid fees should wait 24 hours after this date.',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        }
+                    },
+                    'amount': {
+                        'order': 6,
+                        'description': 'Fee per submission, in the minor unit of the currency: 2000 is 20.00 USD.',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'minimum': 1
+                            }
+                        }
+                    },
+                    'currency': {
+                        'order': 7,
+                        'description': 'Currency of the fee.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['USD'],
+                                'default': 'USD'
+                            }
+                        }
+                    },
+                    'country_fees': {
+                        'order': 8,
+                        'description': 'Fees by country, from ISO 3166-1 alpha-2 codes to fees from 0 to the full amount, in the minor unit of the currency, for example {"ET": 0, "IN": 1000}. A submission whose authors all list institutions, all in countries of this table, pays the highest of those countries\' fees. Any other submission pays the full amount, so a fee of 0 waives a submission only when every institution of every author is in a country with a fee of 0. Enter {} to charge every submission the full amount.',
+                        'value': {
+                            'param': {
+                                'type': 'json'
+                            }
+                        }
+                    },
+                    'waiver_name': {
+                        'order': 9,
+                        'description': 'Name of the step that records fee waivers. Default is Fee_Waiver.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Fee_Waiver'
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 10,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'After the full submission deadline, the authors of every active submission pay a submission fee through the OpenReview payment processor. The fee of each submission is set from the countries of its authors\' institutions: waived, reduced or the full amount. Authors are reminded by email a week and a day before the due date while the fee of their submission is unpaid, and notified when it is paid or waived. Submission fees are non-refundable, and whoever pays accepts it on the checkout page. Payments are visible to the program chairs, the authors of the submission and OpenReview support. Authors can start a payment until the expiration date and have 24 hours to complete it. After that, the venue chooses whether to desk reject the submissions with unpaid fees: the venue is responsible for the fees of the unpaid submissions it keeps.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.get_process_content('process/submission_fee_invitation_process.py')
+                    }, {
+                        'dates': ["#{4/edit/invitation/duedate} - 604800000", "#{4/edit/invitation/duedate} - 86400000"],
+                        'script': self.get_process_content('process/submission_fee_reminder_process.py')
+                    }],
+                    'content': {
+                        'amount': {
+                            'value': '${4/content/amount/value}'
+                        },
+                        'currency': {
+                            'value': '${4/content/currency/value}'
+                        },
+                        'country_fees': {
+                            'value': '${4/content/country_fees/value}'
+                        },
+                        'waiver_name': {
+                            'value': '${4/content/waiver_name/value}'
+                        },
+                        'submission_fee_payment_process_script': {
+                            'value': self.get_process_content('process/submission_fee_payment_process.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            },
+                            'amount': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'minimum': 0
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors', support_user_id],
+                            'writers': ['${5/content/venue_id/value}', support_user_id],
+                            ## Authors are invitees so the forum shows them the pay button, but the
+                            ## edit signature keeps them from posting a payment: they pay through checkout.
+                            ## Only support posts payment edits, whoever signs the invitation
+                            'invitees': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors', support_user_id],
+                            'cdate': '${4/content/activation_date/value}',
+                            'duedate': '${4/content/due_date/value}',
+                            'expdate': '${4/content/expiration_date/value}',
+                            'process': '''def process_update(client, payment, invitation, existing_payment):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['submission_fee_payment_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process_update'](client, payment, invitation, existing_payment)''',
+                            ## Checkout reads the amount from here, never from the payer
+                            'content': {
+                                'amount': {
+                                    'value': '${4/content/amount/value}'
+                                },
+                                'currency': {
+                                    'value': '${6/content/currency/value}'
+                                },
+                                'terms': {
+                                    'value': 'I agree to the [OpenReview Terms of Use](https://openreview.net/legal/terms) and understand that submission fees are non-refundable.'
+                                }
+                            },
+                            'edit': {
+                                'signature': { 'param': { 'const': support_user_id } },
+                                'readers': ['${6/content/venue_id/value}', '${6/content/venue_id/value}/${6/content/submission_name/value}${4/content/noteNumber/value}/Authors', support_user_id],
+                                'writers': [support_user_id],
+                                'payment': {
+                                    'note': '${4/content/noteId/value}',
+                                    'amount': { 'param': { 'minimum': 0 } },
+                                    'currency': '${6/content/currency/value}',
+                                    'status': { 'param': { 'enum': ['pending', 'paid', 'waived', 'refunded', 'disputed', 'expired'] } },
+                                    ## The payer, or support for the statuses support asserts
+                                    'signature': { 'param': { 'regex': f'~.*|{support_user_id}' } },
+                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${5/content/noteNumber/value}/Authors', support_user_id],
+                                    'writers': [support_user_id],
+                                    'transactionId': { 'param': { 'regex': '.*', 'optional': True } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+
+    def setup_fee_waiver_template_invitation(self):
+
+        support_user_id = self.support_user_id
+
+        invitation = Invitation(id=f'{self.template_domain}/-/Fee_Waiver',
+            invitees=[support_user_id],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            edit = {
+                'signatures': [support_user_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Fee_Waiver.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Fee_Waiver'
+                            }
+                        }
+                    },
+                    'payment_name': {
+                        'order': 3,
+                        'description': 'Name of the submission fee step whose fees the waivers settle. Default is Submission_Fee_Payment.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission_Fee_Payment'
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 4,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': [support_user_id],
+                    'readers': ['${3/content/venue_id/value}', support_user_id],
+                    'writers': [support_user_id],
+                    'description': 'A fee waiver settles the submission fee of a submission without a payment. It is a reply to the submission in its forum, and OpenReview support records it as a waived payment. The submission fee step waives every fee of 0 automatically, naming the authors and countries that waive it. The program chairs can waive the fee of any other submission, giving a reason. Only the program chairs and OpenReview support can see the waivers.',
+                    'content': {
+                        'payment_name': {
+                            'value': '${4/content/payment_name/value}'
+                        }
+                    },
+                    'preprocess': self.get_process_content('process/fee_waiver_pre_process.py'),
+                    'process': self.get_process_content('process/fee_waiver_process.py'),
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}', support_user_id],
+                        'writers': [support_user_id],
+                        'note': {
+                            'forum': {
+                                'param': {
+                                    'withInvitation': '${6/content/venue_id/value}/-/${6/content/submission_name/value}'
+                                }
+                            },
+                            'replyto': {
+                                'param': {
+                                    'withInvitation': '${6/content/venue_id/value}/-/${6/content/submission_name/value}'
+                                }
+                            },
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['${5/content/venue_id/value}', support_user_id],
+                            'writers': [support_user_id],
+                            'content': {
+                                'qualifying_authors': {
+                                    'order': 1,
+                                    'description': 'The authors of the submission, as the submission listed them when the fee was set. Every institution of every one of them was in a country with a fee of 0.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'profile[]',
+                                            'optional': True
+                                        }
+                                    }
+                                },
+                                'countries': {
+                                    'order': 2,
+                                    'description': 'The countries of the authors\' institutions when the fee was set, as ISO 3166-1 alpha-2 codes. The fee of each of them was 0.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'regex': '^[A-Z]{2}$',
+                                            'optional': True
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'order': 3,
+                                    'description': 'Why the fee is waived, for a waiver that does not come from the fees by country, or anything else to record about the waiver.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 5000,
+                                            'input': 'textarea',
+                                            'optional': True
                                         }
                                     }
                                 }

@@ -2254,8 +2254,10 @@ def is_forum_invitation(invitation):
     Checks if the invitation creates one invitation per submission forum.
 
     Its edit must declare the ``noteId`` and ``noteNumber`` content fields that
-    ``create_forum_invitations`` passes in, and must not declare ``replyto``, which
-    belongs to the invitations created by ``create_replyto_invitations``.
+    ``create_forum_invitations`` passes in, must not declare ``replyto``, which
+    belongs to the invitations created by ``create_replyto_invitations``, and must
+    not require any other content field, like the amount the submission fee
+    computes for each submission.
     """
 
     content_keys = invitation.edit.get('content', {}).keys() if invitation.edit else []
@@ -2268,6 +2270,12 @@ def is_forum_invitation(invitation):
 
     if 'replyto' in content_keys:
         return False
+
+    for key, field in invitation.edit['content'].items():
+        value = field.get('value') if isinstance(field, dict) else None
+        param = value.get('param') if isinstance(value, dict) else None
+        if key not in ['noteId', 'noteNumber', 'noteReaders'] and param and 'const' not in param and not param.get('optional', param.get('deletable', False)):
+            return False
 
     return True
 
