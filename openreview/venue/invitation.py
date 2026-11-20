@@ -3224,7 +3224,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, allow_license_edition=revision_stage.allow_license_edition)
             process_file = '../workflows/workflow_process/edit_full_submission_deadline_process.py' if is_full_submission_revision else None
-            preprocess_file = '../workflows/workflow_process/edit_full_submission_dates_preprocess.py' if is_full_submission_revision else None
+            preprocess_file = None
+            if is_full_submission_revision:
+                preprocess_file = '../workflows/workflow_process/edit_full_submission_dates_preprocess.py'
+            elif revision_stage.only_accepted:
+                preprocess_file = '../workflows/workflow_process/edit_camera_ready_dates_preprocess.py'
             edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id, process_file=process_file, preprocess_file=preprocess_file)
 
         return invitation
