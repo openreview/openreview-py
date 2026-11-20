@@ -8,4 +8,4 @@ def process(client, edit, invitation):
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id, include_pdate=is_accepted)
     edit_invitations_builder.set_edit_content_invitation(invitation_id)
-    edit_invitations_builder.set_edit_submission_readers_invitation(invitation_id, True)
+    edit_invitations_builder.set_edit_submission_readers_invitation(invitation_id, True, include_publication_chairs=is_accepted)

@@ -143,6 +143,8 @@ class TestARRCommitmentWorkflow():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(start_date) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'area_chairs_support': { 'value': True },
+                    'publication_chairs_support': { 'value': True },
+                    'publication_chairs_emails': { 'value': ['commitment_pubchair@abcd.cc'] },
                     'expected_submissions': { 'value': 100 },
                     'venue_organizer_agreement': { 'value': [
                         'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
@@ -229,6 +231,31 @@ class TestARRCommitmentWorkflow():
         # the manual ARR release step is available to the support team on the request form
         release_invitation = openreview_client.get_invitation('openreview.net/Support/Venue_Request/ARR_Commitment_Workflow/-/ARR_Release')
         assert release_invitation.invitees == ['openreview.net/Support']
+
+        # publication chairs are set up from the request form, as in the conference review workflow
+        publication_chairs_id = f'{venue_id}/Publication_Chairs'
+        assert openreview_client.get_group(publication_chairs_id).members == ['commitment_pubchair@abcd.cc']
+        assert venue_group.content['publication_chairs_id']['value'] == publication_chairs_id
+        assert publication_chairs_id in venue_group.content['preferred_emails_groups']['value']
+        assert openreview_client.get_invitation(f'{publication_chairs_id}/-/Members')
+
+        # publication chairs can message the accepted authors
+        assert openreview_client.get_group(f'{venue_id}/Authors/Accepted').readers == [venue_id, publication_chairs_id]
+        message_invitation = openreview_client.get_invitation(f'{venue_id}/Authors/Accepted/-/Message')
+        assert message_invitation.invitees == [venue_id, publication_chairs_id]
+        assert message_invitation.message['signature'] == { 'param': { 'enum': [venue_id, publication_chairs_id] } }
+
+        # the PCs can make accepted commitments readable by the publication chairs; the /Readers invitation is
+        # created by the process of the template edit that created the release invitation, so wait for it
+        release_edit = openreview_client.get_invitation_edits(invitation_id=f'{venue_id}/-/Accept_Submission_Change_After_Decision', sort='tcdate:asc')[0]
+        helpers.await_queue_edit(openreview_client, edit_id=release_edit.id)
+        readers_items = openreview_client.get_invitation(f'{venue_id}/-/Accept_Submission_Change_After_Decision/Readers').edit['content']['readers']['value']['param']['items']
+        assert { 'value': publication_chairs_id, 'optional': True, 'description': 'Publication Chairs' } in readers_items
+
+        # the publication chairs fields are hidden from the PCs once the venue is deployed
+        request_note = openreview_client.get_note(request.id)
+        assert request_note.content['publication_chairs_support']['readers'] == ['openreview.net/Support']
+        assert request_note.content['publication_chairs_emails']['readers'] == ['openreview.net/Support']
 
     def test_submit_commitments(self, openreview_client, helpers):
 
@@ -479,3 +506,8 @@ class TestARRCommitmentWorkflow():
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision_Release')
         assert 'paper_link' in openreview_client.get_invitation(f'{venue_id}/-/Submission').edit['note']['content']
         assert 'paper_type' in openreview_client.get_invitation(f'{venue_id}/-/Submission').edit['note']['content']
+
+        # without publication chairs on the request form, the venue has no publication chairs
+        assert openreview.tools.get_group(openreview_client, f'{venue_id}/Publication_Chairs') is None
+        assert 'publication_chairs_id' not in openreview_client.get_group(venue_id).content
+        assert openreview_client.get_group(f'{venue_id}/Authors/Accepted').readers == [venue_id]
