@@ -190,7 +190,8 @@ class JournalRequest():
                             'decision_additional_fields': {},
                             'issn': None,
                             'min_profile_valid_state': None,
-                            'submission_deadline': None
+                            'submission_deadline': None,
+                            'disable_comments_after_decision_approval': False
                         }
                     }
                 }
