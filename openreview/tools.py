@@ -1602,7 +1602,8 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
 def get_profile_info(profile, n_years=None):
     """
     Gets all the domains, relations and publications associated with a Profile.
-    Domains come from the institution history only; email addresses are not used.
+    Domains come from the institution history; profile emails are not used. A member without a profile,
+    whose id is an email, gets the domain of that email.
 
     :param profile: Profile from which all the relations will be obtained
     :type profile: Profile
@@ -1633,6 +1634,10 @@ def get_profile_info(profile, n_years=None):
             domain = history.get('institution', {}).get('domain', '')
             domains.add(domain)
 
+    ## A member without a profile is identified by an email, so the domain of that email id is used
+    if '@' in profile.id:
+        domains.add(profile.id.split('@')[1])
+
     ## Relations section
     relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year)
 
@@ -1649,7 +1654,8 @@ def get_profile_info(profile, n_years=None):
 def get_neurips_profile_info(profile, n_years=None):
     """
     Gets all the domains, relations and publications associated with a Profile.
-    Domains come from the institution history only, excluding internships; email addresses are not used.
+    Domains come from the institution history, excluding internships; profile emails are not used. A member
+    without a profile, whose id is an email, gets the domain of that email.
 
     :param profile: Profile from which all the relations will be obtained
     :type profile: Profile
@@ -1682,6 +1688,10 @@ def get_neurips_profile_info(profile, n_years=None):
                 domain = h.get('institution', {}).get('domain', '')
                 domains.add(domain)
 
+    ## A member without a profile is identified by an email, so the domain of that email id is used
+    if '@' in profile.id:
+        domains.add(profile.id.split('@')[1])
+
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
 
@@ -1698,7 +1708,8 @@ def get_neurips_profile_info(profile, n_years=None):
 def get_comprehensive_profile_info(profile, n_years=None):
     """
     Gets all the domains, relations and publications associated with a Profile.
-    Domains come from the institution history only, including internships; email addresses are not used.
+    Domains come from the institution history, including internships; profile emails are not used. A member
+    without a profile, whose id is an email, gets the domain of that email.
 
     :param profile: Profile from which all the relations will be obtained
     :type profile: Profile
@@ -1730,6 +1741,10 @@ def get_comprehensive_profile_info(profile, n_years=None):
             if not end or (int(end) > cut_off_year):
                 domain = h.get('institution', {}).get('domain', '')
                 domains.add(domain)
+
+    ## A member without a profile is identified by an email, so the domain of that email id is used
+    if '@' in profile.id:
+        domains.add(profile.id.split('@')[1])
 
     ## Relations section, get all relations within the last n years
     relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
