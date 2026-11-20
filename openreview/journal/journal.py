@@ -952,6 +952,9 @@ class Journal(object):
     def get_decision_additional_fields(self):
         return self.settings.get('decision_additional_fields', {})
 
+    def should_disable_comments_after_decision_approval(self):
+        return self.settings.get('disable_comments_after_decision_approval', False)
+
     def get_submission_start_date(self):
         return self.settings.get('submission_start_date', openreview.tools.datetime_millis(datetime.datetime.now()))
 
