@@ -1,5 +1,6 @@
 import openreview
 import pytest
+import math
 import datetime
 import random
 import types
@@ -993,9 +994,8 @@ class TestTools():
         filtered_publications = openreview.tools.filter_publications_by_year(publications, 2018)
         assert len(filtered_publications) == 0
 
-    def test_percentile_empty_data_raises(self):
-        with pytest.raises(ValueError, match="data must be non-empty"):
-            openreview.tools.percentile([], 50)
+    def test_percentile_empty_data_returns_nan(self):
+        assert math.isnan(openreview.tools.percentile([], 50))
 
     def test_percentile_single_element(self):
         assert openreview.tools.percentile([42], 0) == 42
