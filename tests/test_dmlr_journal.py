@@ -829,6 +829,44 @@ note={Featured Certification, Reproducibility Certification}
             assert review.readers == ['everyone']
             assert review.signatures == [review.signatures[0]]
 
+        ## disable_comments_after_decision_approval is not set, so the comment invitation stays open after the decision is approved and the paper is accepted
+        assert openreview_client.get_invitation('DMLR/Paper1/-/Official_Comment').expdate is None
+
+        ## Reviewers can still comment
+        carlos_client = OpenReviewClient(username='carlos@dmlrthree.com', password=helpers.strong_password)
+        carlos_anon_group = carlos_client.get_groups(prefix='DMLR/Paper1/Reviewer_.*', signatory='~Carlos_Ge1')[0]
+        comment_note = carlos_client.post_note_edit(invitation='DMLR/Paper1/-/Official_Comment',
+            signatures=[carlos_anon_group.id],
+            note=Note(
+                signatures=[carlos_anon_group.id],
+                readers=['DMLR/Editors_In_Chief', 'DMLR/Paper1/Action_Editors', carlos_anon_group.id],
+                forum=note_id_1,
+                replyto=note_id_1,
+                content={
+                    'comment': { 'value': 'Congratulations on the acceptance.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
+
+        ## Authors can still comment
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        comment_note = test_client.post_note_edit(invitation='DMLR/Paper1/-/Official_Comment',
+            signatures=['DMLR/Paper1/Authors'],
+            note=Note(
+                signatures=['DMLR/Paper1/Authors'],
+                readers=['DMLR/Editors_In_Chief', 'DMLR/Paper1/Action_Editors', 'DMLR/Paper1/Authors'],
+                forum=note_id_1,
+                replyto=note_id_1,
+                content={
+                    'comment': { 'value': 'Thank you to the reviewers and the action editor.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
+
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()            
