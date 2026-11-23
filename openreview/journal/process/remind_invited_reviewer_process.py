@@ -33,8 +33,8 @@ def process(client, invitation):
 
             if last_modified < one_week:
                 print(f"remind: {edge.tail}")
-                hashkey = openreview.tools.get_user_hash_key(user_id, journal.secret_key)
-                invitation_url = f'https://openreview.net/invitation?id={recruitment_invitation_id}&user={user_id}&key={hashkey}&submission_id={submission.id}&inviter={edge.signatures[0]}'
+                hashkey = openreview.tools.get_user_hash_key(user, journal.secret_key)
+                invitation_url = f'https://openreview.net/invitation?id={recruitment_invitation_id}&user={user}&key={hashkey}&submission_id={submission.id}&inviter={edge.signatures[0]}'
                 invitation_links = f'''Please respond the invitation clicking the following link:
 
 {invitation_url}'''

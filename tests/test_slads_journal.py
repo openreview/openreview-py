@@ -425,6 +425,28 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Jiashun Jin,\n\nThe following invitation email was sent to Ollie Fox:\n\nHi Ollie Fox,\n\nWe request your help with reviewing a SLADS submission:\n\nNumber: {note_one.number}\nTitle: \"Paper title\"\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=SLADS/Reviewers/-/Assignment_Recruitment&user=~Ollie_Fox1&key={key_value}&submission_id={note_one.id}&inviter=~Jiashun_Jin1\n\nThanks,\n\nSLADS Paper{note_one.number} Action Editor {andrew_paper1_anon_group.id.split('_')[-1]}\nJiashun Jin\n\nPlease note that responding to this email will direct your reply to ollie@sladsfive.com.\n'''
 
+        ## Invite external reviewer without profile, who signs up before the reminder
+        paper_assignment_edge = andrew_client.post_edge(openreview.api.Edge(invitation='SLADS/Reviewers/-/Invite_Assignment',
+            signatures=[andrew_paper1_anon_group.id],
+            head=note_one.id,
+            tail='nora@sladssix.com',
+            weight=1,
+            label='Invitation Sent'
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        messages = openreview_client.get_messages(to = 'nora@sladssix.com', subject = '[SLADS] Invitation to review paper titled "Paper title"')
+        assert len(messages) == 1
+        nora_invitation_params = parse_qs(urlparse(re.search(r'https://openreview\.net/invitation\?[^\s]+', messages[0]['content']['text']).group(0)).query)
+        assert nora_invitation_params['user'] == ['nora@sladssix.com']
+
+        helpers.create_user('nora@sladssix.com', 'Nora', 'Quix')
+
+        invite_edges = openreview_client.get_edges(invitation='SLADS/Reviewers/-/Invite_Assignment', head=note_one.id, tail='nora@sladssix.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Invitation Sent'
+
         ## Run the daily reminder one week later as the journal, which can not read the emails of the invitee
         invite_assignment_invitation = openreview_client.get_invitation('SLADS/Reviewers/-/Invite_Assignment')
 
@@ -446,6 +468,20 @@ note={Under review}
 
         assert not openreview_client.get_messages(to = 'andrew@sladszero.com', subject = '[SLADS] Reminder: Invitation to review paper titled "Paper title"')
         assert len(openreview_client.get_messages(to = 'ollie@sladsfive.com', subject = '[SLADS] Invitation to review paper titled "Paper title"')) == 1
+
+        messages = openreview_client.get_messages(to = 'nora@sladssix.com', subject = '[SLADS] Reminder: Invitation to review paper titled "Paper title"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Hi Nora Quix,\n\n')
+        nora_reminder_url = re.search(r'https://openreview\.net/invitation\?[^\s]+', messages[0]['content']['text']).group(0)
+        nora_reminder_params = parse_qs(urlparse(nora_reminder_url).query)
+        assert nora_reminder_params['user'] == ['nora@sladssix.com']
+        assert nora_reminder_params['key'] == nora_invitation_params['key']
+
+        helpers.respond_invitation_fast(nora_reminder_url, accept=False)
+
+        invite_edges = openreview_client.get_edges(invitation='SLADS/Reviewers/-/Invite_Assignment', head=note_one.id, tail='nora@sladssix.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Declined'
 
         ## Carlos Gardel
         paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='SLADS/Reviewers/-/Assignment',
