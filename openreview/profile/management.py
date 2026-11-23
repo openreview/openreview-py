@@ -242,7 +242,7 @@ return {
         ## Posted by support after reviewing an identity document uploaded by the user:
         ## confirms the name and date of birth as flat values read off the document, and
         ## records which kind of document they were read from. The record is visible to
-        ## the profile owner and the support team only.
+        ## the support team only.
         self.client.post_invitation_edit(
             invitations=self.meta_invitation_id,
             signatures=[self.super_user],
@@ -254,7 +254,7 @@ return {
                 signatures=[self.super_user],
                 assertion={
                     'signatures': [self.support_group_id],
-                    'readers': ['${2/profile/id}', self.support_group_id],
+                    'readers': [self.support_group_id],
                     'writers': [self.support_group_id],
                     'ddate': {
                         'param': {
@@ -330,9 +330,8 @@ return {
         ## compared to the profile field by field. Institution-issued documents
         ## vary: some show identity data and some do not even state the email domain,
         ## so the identity fields and the institution domain are optional -- only the
-        ## affiliation itself is required. The record is visible to the profile owner
-        ## and the support team: making verified affiliations public is a separate
-        ## decision.
+        ## affiliation itself is required. The record is visible to the support team
+        ## only.
         self.client.post_invitation_edit(
             invitations=self.meta_invitation_id,
             signatures=[self.super_user],
@@ -344,7 +343,7 @@ return {
                 signatures=[self.super_user],
                 assertion={
                     'signatures': [self.support_group_id],
-                    'readers': ['${2/profile/id}', self.support_group_id],
+                    'readers': [self.support_group_id],
                     'writers': [self.support_group_id],
                     'ddate': {
                         'param': {
@@ -434,9 +433,8 @@ return {
         )
 
         ## Posted by support after reviewing a parental consent document for a minor:
-        ## confirms the parent relation declared in the profile. Not public because we
-        ## never disclose that a profile belongs to a minor: the record is visible to
-        ## the profile owner and the support team only.
+        ## confirms the parent relation declared in the profile. The record is visible
+        ## to the support team only.
         self.client.post_invitation_edit(
             invitations=self.meta_invitation_id,
             signatures=[self.super_user],
@@ -448,7 +446,7 @@ return {
                 signatures=[self.super_user],
                 assertion={
                     'signatures': [self.support_group_id],
-                    'readers': ['${2/profile/id}', self.support_group_id],
+                    'readers': [self.support_group_id],
                     'writers': [self.support_group_id],
                     'ddate': {
                         'param': {
