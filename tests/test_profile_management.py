@@ -75,7 +75,7 @@ class TestProfileManagement():
                 }
             }
         )
-        assert identity_assertion['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
+        assert identity_assertion['readers'] == ['openreview.net/Support']
 
         ## The document source is required: it says where the data was read from.
         with pytest.raises(openreview.OpenReviewException):
@@ -90,15 +90,16 @@ class TestProfileManagement():
                 }
             )
 
-        ## The record is visible to the profile owner.
-        assertions = gwen_client.get_profile_assertions(profile_id='~Gwen_Verified1')
+        ## The record is visible to the support team only.
+        assertions = support_client.get_profile_assertions(profile_id='~Gwen_Verified1')
         assert len(assertions) == 1
         assert assertions[0].invitation == 'openreview.net/Support/-/Identity_Verification'
         assert assertions[0].content['source']['value'] == 'Passport'
         assert assertions[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Gwen Verified'
         assert assertions[0].profile['content']['dob']['value'] == helpers.default_dob()
 
-        ## Other users cannot see the identity verification record.
+        ## Neither the profile owner nor other users can see the identity verification record.
+        assert len(gwen_client.get_profile_assertions(profile_id='~Gwen_Verified1')) == 0
         amelia_client = helpers.get_user('amelia@profile.org')
         assertions = amelia_client.get_profile_assertions(profile_id='~Gwen_Verified1')
         assert len(assertions) == 0
@@ -131,7 +132,7 @@ class TestProfileManagement():
             }
         )
 
-        assert affiliation_assertion['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
+        assert affiliation_assertion['readers'] == ['openreview.net/Support']
         assert affiliation_assertion['content']['source']['value'] == 'Enrollment Letter'
 
         ## The affiliation record is not public either.
@@ -139,7 +140,7 @@ class TestProfileManagement():
         assert len(assertions) == 0
 
         ## 3. The user uploaded a parental consent document: support confirms the parent
-        ## relation. Not public: visible to the profile owner and the support team only.
+        ## relation. Visible to the support team only.
         parent_consent_assertion = support_client.post_profile_assertion(
             invitation='openreview.net/Support/-/Parent_Consent',
             signatures=['openreview.net/Support'],
@@ -159,7 +160,7 @@ class TestProfileManagement():
                 }
             }
         )
-        assert parent_consent_assertion['readers'] == ['~Gwen_Verified1', 'openreview.net/Support']
+        assert parent_consent_assertion['readers'] == ['openreview.net/Support']
         assert parent_consent_assertion['content']['comment']['value'] == 'Consent form signed by the parent on file.'
 
         ## The relation type and the parent's name are mandatory in the consent record.
@@ -202,9 +203,9 @@ class TestProfileManagement():
                 }
             )
 
-        ## The owner and support see all the records, other users none of them.
+        ## Support sees all the records, the owner and other users none of them.
         assertions = gwen_client.get_profile_assertions(profile_id='~Gwen_Verified1')
-        assert len(assertions) == 3
+        assert len(assertions) == 0
         assertions = support_client.get_profile_assertions(profile_id='~Gwen_Verified1')
         assert len(assertions) == 3
         assertions = amelia_client.get_profile_assertions(profile_id='~Gwen_Verified1')
@@ -2836,6 +2837,18 @@ The OpenReview Team.
 
         tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Last1')
         assert len(tags) == 1
+
+        ana_assertion = support_client.post_profile_assertion(
+            invitation='openreview.net/Support/-/Identity_Verification',
+            signatures=['openreview.net/Support'],
+            content={ 'source': { 'value': 'Passport' } },
+            profile={
+                'id': '~Ana_Last1',
+                'content': {
+                    'names': { 'value': { 'add': [{ 'fullname': 'Ana Last' }] } }
+                }
+            }
+        )
     
         profile = ana_client.get_profile(ana_client.profile.id)
 
@@ -2992,6 +3005,20 @@ Thanks,
 
 The OpenReview Team.
 '''
+
+        support_client.post_profile_assertion(
+            id=ana_assertion['id'],
+            invitation='openreview.net/Support/-/Identity_Verification',
+            signatures=['openreview.net/Support'],
+            ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
+            content={ 'source': { 'value': 'Passport' } },
+            profile={ 'id': '~Ana_Alternate_Last1' }
+        )
+
+        assertions = support_client.get_profile_assertions(profile_id='~Ana_Alternate_Last1', invitation='openreview.net/Support/-/Identity_Verification', trash=True)
+        assert len(assertions) == 1
+        assert assertions[0].id == ana_assertion['id']
+        assert assertions[0].ddate
 
     def test_request_remove_name_and_decline(self, openreview_client, support_client, helpers):
 
@@ -4926,6 +4953,18 @@ The OpenReview Team.
 
         helpers.create_user('tidus_two@profile.org', 'Tidus', 'Chapa', alternates=[], institution='deepmind.com')
 
+        tidus_assertion = support_client.post_profile_assertion(
+            invitation='openreview.net/Support/-/Identity_Verification',
+            signatures=['openreview.net/Support'],
+            content={ 'source': { 'value': 'Passport' } },
+            profile={
+                'id': '~Tidus_Chapa1',
+                'content': {
+                    'names': { 'value': { 'add': [{ 'fullname': 'Tidus Chapa' }] } }
+                }
+            }
+        )
+
         support_client.merge_profiles('~Tidus_Mondragon1', '~Tidus_Chapa1')
 
         edit = support_client.post_note_edit(
@@ -4945,6 +4984,21 @@ The OpenReview Team.
         profile = tidus_client.get_profile(tidus_client.profile.id)
 
         tidus_client.post_profile(profile)
+
+        assertions = support_client.get_profile_assertions(profile_id='~Tidus_Mondragon1', invitation='openreview.net/Support/-/Identity_Verification')
+        assert len(assertions) == 1
+        assert assertions[0].id == tidus_assertion['id']
+        assert assertions[0].profile['id'] == '~Tidus_Mondragon1'
+
+        support_client.post_profile_assertion(
+            id=tidus_assertion['id'],
+            invitation='openreview.net/Support/-/Identity_Verification',
+            signatures=['openreview.net/Support'],
+            ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
+            content={ 'source': { 'value': 'Passport' } },
+            profile={ 'id': '~Tidus_Mondragon1' }
+        )
+        assert len(support_client.get_profile_assertions(profile_id='~Tidus_Mondragon1', invitation='openreview.net/Support/-/Identity_Verification')) == 0
 
     def test_update_relation_after_signup(self, helpers, support_client):
 
@@ -5704,8 +5758,8 @@ The OpenReview Team.
         assert assertions[0].content['source']['value'] == 'Government ID'
         assert assertions[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Rita Identity'
 
-        ## The state history recorded by moderate_profile is visible to support only;
-        ## the profile owner sees the verification record
+        ## The verification record and the state history recorded by moderate_profile
+        ## are visible to support only
         assertions = support_client.get_profile_assertions(profile_id='~Rita_Identity1', invitation='openreview.net/Support/-/Profile_State', sort='tcdate:asc')
         assert len(assertions) == 2
         assert assertions[0].profile['state'] == 'Rejected'
@@ -5713,9 +5767,7 @@ The OpenReview Team.
         assert link['url'] in assertions[0].content['reason']['value']
         assert assertions[1].profile['state'] == 'Active'
 
-        assertions = rita_client.get_profile_assertions(profile_id='~Rita_Identity1')
-        assert len(assertions) == 1
-        assert assertions[0].invitation == 'openreview.net/Support/-/Identity_Verification'
+        assert len(rita_client.get_profile_assertions(profile_id='~Rita_Identity1')) == 0
 
     def test_profile_identity_documents_kept_for_review(self, openreview_client, support_client, helpers, tmp_path):
 
