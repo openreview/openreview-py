@@ -5422,10 +5422,17 @@ The OpenReview Team.
 
         request_page(selenium, 'http://localhost:3030/group?id=openreview.net/Archive', uploader_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
-        assert 'Direct upload of publications to the OpenReview Archive is currently disabled.' in header.text
-        assert 'import papers that are representative of your work from DBLP or ORCID' in header.text
+        alert = header.find_element(By.CSS_SELECTOR, '.alert.alert-warning')
+        assert 'Direct upload of publications to the OpenReview Archive is currently disabled.' in alert.text
+        assert 'import papers that are representative of your work from DBLP or ORCID' in alert.text
+        assert alert.find_element(By.LINK_TEXT, 'profile').get_attribute('href') == 'http://localhost:3030/profile'
+        assert alert.find_element(By.LINK_TEXT, 'edit your profile').get_attribute('href') == 'http://localhost:3030/profile/edit'
+        assert 'Updating your Expertise' not in header.text
         assert 'OpenReview Archive Direct Upload" button below' not in header.text
+        assert 'info@openreview.net' not in header.text
+        assert header.find_element(By.LINK_TEXT, 'contact us').get_attribute('href') == 'http://localhost:3030/contact'
         assert selenium.find_elements(By.ID, 'invitation') == []
+        assert selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li') == []
 
         openreview.profile.ProfileManagement(openreview_client, 'openreview.net').set_archive_invitations()
 
@@ -5450,6 +5457,16 @@ The OpenReview Team.
 
         request_page(selenium, 'http://localhost:3030/group?id=openreview.net/Archive', uploader_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
+        assert header.find_elements(By.CLASS_NAME, 'alert') == []
         assert 'currently disabled' not in header.text
         assert 'OpenReview Archive Direct Upload" button below' in header.text
+        assert 'info@openreview.net' not in header.text
+        assert header.find_element(By.LINK_TEXT, 'contact us').get_attribute('href') == 'http://localhost:3030/contact'
         assert len(selenium.find_elements(By.ID, 'invitation')) == 1
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        assert len(tabs) == 2
+        assert tabs[0].text == 'Publications'
+        assert tabs[1].text == 'Previous Publications'
+        notes = selenium.find_element(By.ID, 'publications').find_elements(By.CLASS_NAME, 'note')
+        assert len(notes) == 1
+        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper uploaded to the archive'
