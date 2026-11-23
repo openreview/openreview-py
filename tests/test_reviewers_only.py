@@ -17,6 +17,7 @@ class TestReviewersOnly():
         support_group_id = super_id + '/Support'
 
         helpers.create_user('programchair@abcd.cc', 'ProgramChair', 'ABCD')
+        helpers.create_user('programchair_two@abcd.cc', 'ProgramChairTwo', 'ABCD')
         helpers.create_user('reviewer_one@abcd.cc', 'ReviewerOne', 'ABCD')
         helpers.create_user('reviewer_two@abcd.cc', 'ReviewerTwo', 'ABCD')
         helpers.create_user('reviewer_three@abcd.cc', 'ReviewerThree', 'ABCD')
@@ -61,7 +62,7 @@ class TestReviewersOnly():
                     'venue_website_url': { 'value': 'https://abcd.cc/Conferences/2025' },
                     'location': { 'value': 'Amherst, Massachusetts' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@abcd.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_ABCD1'] },
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
@@ -97,8 +98,8 @@ class TestReviewersOnly():
         comment_invitation = openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
         assert comment_invitation
         # only the support group and the program chairs listed in the request form can see and post comments on it
-        assert comment_invitation.readers == ['openreview.net/Support', 'programchair@abcd.cc']
-        assert comment_invitation.invitees == ['openreview.net/Support', 'programchair@abcd.cc']
+        assert comment_invitation.readers == ['openreview.net/Support', '~ProgramChair_ABCD1']
+        assert comment_invitation.invitees == ['openreview.net/Support', '~ProgramChair_ABCD1']
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
         assert request.domain == 'openreview.net/Support'
 
@@ -134,7 +135,7 @@ class TestReviewersOnly():
         assert request_form.content['status']['readers'] == ['openreview.net/Support']
 
         comment = openreview_client.get_note(comment_edit['note']['id'])
-        assert comment.readers == ['openreview.net/Support', 'programchair@abcd.cc']
+        assert comment.readers == ['openreview.net/Support', '~ProgramChair_ABCD1']
 
         messages = openreview_client.get_messages(subject='Comment posted to a request for service: The ABCD Conference')
         assert len(messages) == 1
@@ -316,7 +317,7 @@ class TestReviewersOnly():
         # assert group.domain == 'ABCD.cc'
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs')
-        assert group.members == ['programchair@abcd.cc']
+        assert group.members == ['~ProgramChair_ABCD1']
         assert group.domain == 'ABCD.cc/2025/Conference'
         assert 'reviewers_invite_assignment_id' in group.web
 
@@ -782,7 +783,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                     'venue_website_url': { 'value': 'https://abcd.cc/Conferences/2025' },
                     'location': { 'value': 'Amherst, Massachusetts' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@abcd.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_ABCD1'] },
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
@@ -842,7 +843,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             signatures=['ABCD.cc/2025/Conference'],
             group=openreview.api.Group(
                 members={
-                    'remove': ['new_pc@abcd.cc', 'programchair@abcd.cc']
+                    'remove': ['new_pc@abcd.cc', '~ProgramChair_ABCD1']
                 }
             ),
         )
@@ -855,7 +856,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             signatures=['ABCD.cc/2025/Conference'],
             group=openreview.api.Group(
                 members={
-                    'append': ['programchair@abcd.cc']
+                    'append': ['~ProgramChair_ABCD1']
                 }
             ),
         )        

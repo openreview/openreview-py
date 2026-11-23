@@ -190,11 +190,12 @@ class Workflows():
                         },
                         'program_chair_emails': {
                             'order': 7,
-                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request.',
+                            'description': 'Search program chair profiles by first, middle and last name or OpenReview profile ID. If a program chair does not have a profile at the time of submission, you will be able to add them as program chair later.',
                             'value': {
                                 'param': {
-                                    'type': 'string[]',
-                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+                                    'fieldName': 'Program Chair Profile IDs',
+                                    'type': 'profile[]',
+                                    'regex': r'~.*'
                                 }
                             }
                         },
@@ -522,11 +523,12 @@ class Workflows():
                         },
                         'program_chair_emails': {
                             'order': 7,
-                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request.',
+                            'description': 'Search program chair profiles by first, middle and last name or OpenReview profile ID. If a program chair does not have a profile at the time of submission, you will be able to add them as program chair later.',
                             'value': {
                                 'param': {
-                                    'type': 'string[]',
-                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+                                    'fieldName': 'Program Chair Profile IDs',
+                                    'type': 'profile[]',
+                                    'regex': r'~.*'
                                 }
                             }
                         },
