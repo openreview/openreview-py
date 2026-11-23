@@ -214,13 +214,12 @@ class TestProfileManagement():
         ## changes the state and records every decision as a Profile_State assertion.
         ## The labels enum in the assertion schema is the controlled
         ## vocabulary of moderation reasons: support manages it by editing the
-        ## invitation, and every record is validated against it. Entries with a
-        ## description are offered by the rejection UI with the description as the
-        ## default message.
+        ## invitation, and every record is validated against it. Every entry carries
+        ## a description, the default message sent with that label.
         invitation = support_client.get_invitation('openreview.net/Support/-/Profile_State')
         label_options = invitation.assertion['content']['labels']['value']['param']['enum']
         assert len(label_options) == 13
-        assert len([option for option in label_options if 'description' in option]) == 11
+        assert len([option for option in label_options if 'description' in option]) == 13
 
         ## A label outside the vocabulary is rejected by the assertion schema.
         with pytest.raises(openreview.OpenReviewException):
@@ -432,11 +431,9 @@ class TestProfileManagement():
         assert len(assertions) == 1
         assert assertions[0].profile['state'] == 'Active Institutional'
         assert assertions[0].content['email']['value'] == 'hugo@umass.edu'
-        assert assertions[0].readers == ['~Hugo_Institutional1', 'openreview.net/Support']
+        assert assertions[0].readers == ['openreview.net/Support']
 
-        assertions = hugo_client.get_profile_assertions(profile_id='~Hugo_Institutional1', invitation='openreview.net/Support/-/Profile_State')
-        assert len(assertions) == 1
-        assert assertions[0].content['email']['value'] == 'hugo@umass.edu'
+        assert len(hugo_client.get_profile_assertions(profile_id='~Hugo_Institutional1', invitation='openreview.net/Support/-/Profile_State')) == 0
 
         amelia_client = helpers.get_user('amelia@profile.org')
         assert len(amelia_client.get_profile_assertions(profile_id='~Hugo_Institutional1', invitation='openreview.net/Support/-/Profile_State')) == 0
@@ -5707,17 +5704,18 @@ The OpenReview Team.
         assert assertions[0].content['source']['value'] == 'Government ID'
         assert assertions[0].profile['content']['names']['value']['add'][0]['fullname'] == 'Rita Identity'
 
-        ## The verification record and the state history recorded by moderate_profile
-        ## are visible to the profile owner
-        assertions = rita_client.get_profile_assertions(profile_id='~Rita_Identity1', sort='tcdate:asc')
-        assert len(assertions) == 3
-        assert assertions[0].invitation == 'openreview.net/Support/-/Profile_State'
+        ## The state history recorded by moderate_profile is visible to support only;
+        ## the profile owner sees the verification record
+        assertions = support_client.get_profile_assertions(profile_id='~Rita_Identity1', invitation='openreview.net/Support/-/Profile_State', sort='tcdate:asc')
+        assert len(assertions) == 2
         assert assertions[0].profile['state'] == 'Rejected'
         assert assertions[0].content['labels']['value'] == ['Documentation / ID requests']
         assert link['url'] in assertions[0].content['reason']['value']
-        assert assertions[1].invitation == 'openreview.net/Support/-/Profile_State'
         assert assertions[1].profile['state'] == 'Active'
-        assert assertions[2].invitation == 'openreview.net/Support/-/Identity_Verification'
+
+        assertions = rita_client.get_profile_assertions(profile_id='~Rita_Identity1')
+        assert len(assertions) == 1
+        assert assertions[0].invitation == 'openreview.net/Support/-/Identity_Verification'
 
     def test_profile_identity_documents_kept_for_review(self, openreview_client, support_client, helpers, tmp_path):
 
