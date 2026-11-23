@@ -1377,8 +1377,8 @@ var renderTable = function(container, rows) {
     extraClasses: 'console-table paper-table',
     pageSize: 10,
     postRenderTable: function() {
-      $('#' + container + ' .console-table th').eq(0).css('width', '2%');  // [ ]
-      $('#' + container + ' .console-table th').eq(1).css('width', '3%');  // #
+      $('#' + container + ' .console-table th').eq(0).css('width', '35px');  // [ ]
+      $('#' + container + ' .console-table th').eq(1).css('width', '65px');  // #
       $('#' + container + ' .console-table th').eq(2).css('width', '20%'); // Paper Summary
       $('#' + container + ' .console-table th').eq(3).css('width', '20%'); // Review Progress
       $('#' + container + ' .console-table th').eq(4).css('width', '20%'); // Action Editor Decision

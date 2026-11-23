@@ -860,7 +860,300 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         ## Check preferred emails
         assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails') == 11
-        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails', head='~SomeFirstName_User1') == 1      
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails', head='~SomeFirstName_User1') == 1
+
+        preferred_emails_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
+        assert preferred_emails_invitation.signatures == ['~Super_User1']
+        assert preferred_emails_invitation.process is None
+        assert preferred_emails_invitation.preprocess is None
+        assert preferred_emails_invitation.post_processes is None
+        assert len(preferred_emails_invitation.date_processes) == 2
+        date_processes = preferred_emails_invitation.date_processes
+
+        pc_script = '''def process(client, invitation):
+    print('PC script')
+'''
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can modify the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails'):
+            pc_client_v2.post_invitation_edit(
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                    date_processes=[{
+                        'dates': ['#{4/cdate} + 3000'],
+                        'script': pc_script
+                    }]
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can modify the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails'):
+            pc_client_v2.post_invitation_edit(
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                    process=pc_script
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can modify the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails'):
+            pc_client_v2.post_invitation_edit(
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                    preprocess=pc_script
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can modify the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails'):
+            pc_client_v2.post_invitation_edit(
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                    post_processes=[{
+                        'script': pc_script
+                    }]
+                )
+            )
+
+        preferred_emails_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
+        assert preferred_emails_invitation.signatures == ['~Super_User1']
+        assert preferred_emails_invitation.process is None
+        assert preferred_emails_invitation.preprocess is None
+        assert preferred_emails_invitation.post_processes is None
+        assert preferred_emails_invitation.date_processes == date_processes
+
+        signature_edit = pc_client_v2.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                signatures=['ICML.cc/2023/Conference']
+            )
+        )
+
+        jobs_status_script = '''def process(client, invitation):
+    client.get_jobs_status()
+'''
+
+        pc_client_v2.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                date_processes=[{
+                    'dates': ['#{4/cdate} + 3000'],
+                    'script': jobs_status_script
+                }]
+            )
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of ~Super_User1 can make the process functions of the Invitation ICML.cc/2023/Conference/-/Preferred_Emails run as ~Super_User1'):
+            pc_client_v2.post_edit(openreview.api.Edit(
+                id=signature_edit['id'],
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                    signatures=['ICML.cc/2023/Conference']
+                )
+            ))
+
+        preferred_emails_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
+        assert preferred_emails_invitation.signatures == ['ICML.cc/2023/Conference']
+        assert preferred_emails_invitation.date_processes == [{
+            'dates': ['#{4/cdate} + 3000'],
+            'script': jobs_status_script
+        }]
+
+        current_log_count = len(openreview_client.get_process_logs(id='ICML.cc/2023/Conference/-/Preferred_Emails-0-0'))
+
+        pc_client_v2.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Preferred_Emails-0-0', count=current_log_count + 1, error=True)
+
+        process_log = openreview_client.get_process_logs(id='ICML.cc/2023/Conference/-/Preferred_Emails-0-0')[0]
+        assert process_log['status'] == 'error'
+        assert 'does not have permission to access /jobs/status' in str(process_log['error'])
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                signatures=['~Super_User1'],
+                date_processes=date_processes
+            )
+        )
+
+        preferred_emails_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
+        assert preferred_emails_invitation.signatures == ['~Super_User1']
+        assert preferred_emails_invitation.date_processes == date_processes
+
+        support_script = '''def process(client, invitation):
+    print('Support script')
+'''
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Support_Signed',
+                invitees=['ICML.cc/2023/Conference'],
+                readers=['ICML.cc/2023/Conference', 'openreview.net/Support'],
+                writers=['openreview.net/Support'],
+                signatures=['openreview.net/Support'],
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days=1)),
+                type='Edge',
+                edit={
+                    'readers': ['ICML.cc/2023/Conference'],
+                    'nonreaders': [],
+                    'writers': ['ICML.cc/2023/Conference'],
+                    'signatures': ['ICML.cc/2023/Conference'],
+                    'head': {
+                        'param': {
+                            'type': 'profile'
+                        }
+                    },
+                    'tail': {
+                        'param': {
+                            'type': 'group'
+                        }
+                    }
+                },
+                date_processes=[{
+                    'dates': ['#{4/cdate} + 3000'],
+                    'script': support_script
+                }]
+            )
+        )
+
+        support_signed_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Support_Signed')
+        assert support_signed_invitation.domain == 'ICML.cc/2023/Conference'
+        assert support_signed_invitation.signatures == ['openreview.net/Support']
+        assert support_signed_invitation.writers == ['openreview.net/Support']
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of openreview.net/Support can modify the process functions of the Invitation ICML.cc/2023/Conference/-/Support_Signed'):
+            pc_client_v2.post_invitation_edit(
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Support_Signed',
+                    date_processes=[{
+                        'dates': ['#{4/cdate} + 3000'],
+                        'script': jobs_status_script
+                    }]
+                )
+            )
+
+        signature_edit = pc_client_v2.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Support_Signed',
+                signatures=['ICML.cc/2023/Conference']
+            )
+        )
+
+        pc_client_v2.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Support_Signed',
+                date_processes=[{
+                    'dates': ['#{4/cdate} + 3000'],
+                    'script': jobs_status_script
+                }]
+            )
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only a signatory of openreview.net/Support can make the process functions of the Invitation ICML.cc/2023/Conference/-/Support_Signed run as openreview.net/Support'):
+            pc_client_v2.post_edit(openreview.api.Edit(
+                id=signature_edit['id'],
+                invitations='ICML.cc/2023/Conference/-/Edit',
+                readers=['ICML.cc/2023/Conference'],
+                writers=['ICML.cc/2023/Conference'],
+                signatures=['ICML.cc/2023/Conference'],
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
+                invitation=openreview.api.Invitation(
+                    id='ICML.cc/2023/Conference/-/Support_Signed',
+                    signatures=['ICML.cc/2023/Conference']
+                )
+            ))
+
+        support_signed_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Support_Signed')
+        assert support_signed_invitation.signatures == ['ICML.cc/2023/Conference']
+        assert support_signed_invitation.date_processes == [{
+            'dates': ['#{4/cdate} + 3000'],
+            'script': jobs_status_script
+        }]
+
+        current_log_count = len(openreview_client.get_process_logs(id='ICML.cc/2023/Conference/-/Support_Signed-0-0'))
+
+        pc_client_v2.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Support_Signed',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Support_Signed-0-0', count=current_log_count + 1, error=True)
+
+        process_log = openreview_client.get_process_logs(id='ICML.cc/2023/Conference/-/Support_Signed-0-0')[0]
+        assert process_log['status'] == 'error'
+        assert 'does not have permission to access /jobs/status' in str(process_log['error'])
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Support_Signed',
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+            )
+        )
 
     def test_post_submission(self, client, openreview_client, test_client, helpers, request_page, selenium):
 
@@ -3104,7 +3397,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Rating',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            reply_to='Official_Review',
             source={ 'venueid': ['ICML.cc/2023/Conference/Submission', 'ICML.cc/2023/Conference/Withdrawn_Submission', 'ICML.cc/2023/Conference/Desk_Rejected_Submission' ] },
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
@@ -3203,7 +3496,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         #hide review ratings from Senior Area Chairs
         venue.custom_stage = openreview.stages.CustomStage(name='Rating',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            reply_to='Official_Review',
             source={ 'venueid': ['ICML.cc/2023/Conference/Submission', 'ICML.cc/2023/Conference/Withdrawn_Submission', 'ICML.cc/2023/Conference/Desk_Rejected_Submission' ] },
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
@@ -4983,7 +5276,7 @@ url={https://openreview.net/forum?id='''
         ## Ask reviewers to ACK the rebuttals
         venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
         venue.custom_stage = openreview.stages.CustomStage(name='Rebuttal_Acknowledgement',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REBUTTALS,
+            reply_to='Rebuttal',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
@@ -5019,7 +5312,7 @@ url={https://openreview.net/forum?id='''
         ## Ask reviewers to comment the rebuttals
         venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
         venue.custom_stage = openreview.stages.CustomStage(name='Rebuttal_Comment',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REBUTTALS,
+            reply_to='Rebuttal',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=None,
             exp_date=due_date + datetime.timedelta(days=1),
@@ -5449,7 +5742,7 @@ url={https://openreview.net/forum?id='''
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Agreement',
-            reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+            reply_to='Meta_Review',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
