@@ -94,7 +94,11 @@ class TestReviewersOnly():
         assert len(messages) == 0        
 
         request = openreview_client.get_note(request['note']['id'])
-        assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
+        comment_invitation = openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
+        assert comment_invitation
+        # only the support group and the program chairs listed in the request form can see and post comments on it
+        assert comment_invitation.readers == ['openreview.net/Support', 'programchair@abcd.cc']
+        assert comment_invitation.invitees == ['openreview.net/Support', 'programchair@abcd.cc']
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
         assert request.domain == 'openreview.net/Support'
 
@@ -179,6 +183,11 @@ class TestReviewersOnly():
         messages = openreview_client.get_messages(subject='Your venue, ABCD 2025, is available in OpenReview')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'programchair@abcd.cc'
+
+        # after deployment the PC group replaces the request form readers as readers and invitees of the comment invitation
+        comment_invitation = openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
+        assert comment_invitation.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
+        assert comment_invitation.invitees == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
 
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)

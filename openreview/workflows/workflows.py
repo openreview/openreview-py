@@ -766,9 +766,9 @@ class Workflows():
                 'invitation': {
                     'id': f'{support_group_id}/Venue_Request/{workflow_name}' + '${2/content/noteNumber/value}' + '/-/Comment',
                     'signatures': [self.super_id],
-                    'readers': ['everyone'],
+                    'readers': [support_group_id, '${{3/content/noteId/value}/content/program_chair_emails/value}'],
                     'writers': [support_group_id],
-                    'invitees': ['everyone'],
+                    'invitees': [support_group_id, '${{3/content/noteId/value}/content/program_chair_emails/value}'],
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
