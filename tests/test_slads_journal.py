@@ -443,7 +443,9 @@ note={Under review}
 
         helpers.create_user('nora@sladssix.com', 'Nora', 'Quix')
 
-        invite_edges = openreview_client.get_edges(invitation='SLADS/Reviewers/-/Invite_Assignment', head=note_one.id, tail='nora@sladssix.com')
+        ## The API renames the edges of the confirmed email to the new profile id
+        assert not openreview_client.get_edges(invitation='SLADS/Reviewers/-/Invite_Assignment', head=note_one.id, tail='nora@sladssix.com')
+        invite_edges = openreview_client.get_edges(invitation='SLADS/Reviewers/-/Invite_Assignment', head=note_one.id, tail='~Nora_Quix1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Invitation Sent'
 
@@ -474,12 +476,12 @@ note={Under review}
         assert messages[0]['content']['text'].startswith('Hi Nora Quix,\n\n')
         nora_reminder_url = re.search(r'https://openreview\.net/invitation\?[^\s]+', messages[0]['content']['text']).group(0)
         nora_reminder_params = parse_qs(urlparse(nora_reminder_url).query)
-        assert nora_reminder_params['user'] == ['nora@sladssix.com']
-        assert nora_reminder_params['key'] == nora_invitation_params['key']
+        assert nora_reminder_params['user'] == ['~Nora_Quix1']
+        assert nora_reminder_params['key'] == [openreview.tools.get_user_hash_key('~Nora_Quix1', journal.secret_key)]
 
         helpers.respond_invitation_fast(nora_reminder_url, accept=False)
 
-        invite_edges = openreview_client.get_edges(invitation='SLADS/Reviewers/-/Invite_Assignment', head=note_one.id, tail='nora@sladssix.com')
+        invite_edges = openreview_client.get_edges(invitation='SLADS/Reviewers/-/Invite_Assignment', head=note_one.id, tail='~Nora_Quix1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Declined'
 
