@@ -44,8 +44,7 @@ ${generalInformation}
 - Please make sure that the original author order is preserved.
 
 ${questions}
-` : `
-<div class="alert alert-warning"><strong>Direct upload of publications to the OpenReview Archive is currently disabled.</strong><br>The publications we have on record for you are listed on your <a href="/profile">profile</a>. If they do not adequately represent your reviewing expertise, <a href="/profile/edit">edit your profile</a> and import papers that are representative of your work from DBLP or ORCID in the Personal Links section.</div>
+` : `<div class="alert alert-warning"><strong>Direct upload of publications to the OpenReview Archive is currently disabled.</strong><br>The publications we have on record for you are listed on your <a href="/profile">profile</a>. If they do not adequately represent your reviewing expertise, <a href="/profile/edit">edit your profile</a> and import papers that are representative of your work from DBLP or ORCID in the Personal Links section.</div>
 
 ${generalInformation}
 
