@@ -1,6 +1,5 @@
 def process(client, edit, invitation):
 
-    SUPPORT_GROUP = ''
     forum = client.get_note(edit.note.forum)
 
     journal = openreview.journal.JournalRequest.get_journal(client, forum.id)
@@ -43,7 +42,7 @@ Please check the invitee group to see more details: https://openreview.net/group
         comment_content += f'''\n**Error**: {error_status}'''
 
     comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Reviewer_Recruitment_by_AE', 'Recruitment_Comment'),
-        signatures=[SUPPORT_GROUP],
+        signatures=[journal.venue_id],
         note = openreview.api.Note(
             content = {
                 'title': { 'value': 'Recruitment Status'},
