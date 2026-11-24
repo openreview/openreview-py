@@ -61,7 +61,7 @@ The OpenReview Team'''
         )
 
         post_message(
-            recipients=[SUPPORT_GROUP],
+            recipients=[f'{SUPPORT_GROUP}/Recipients'],
             subject=f'Dual submission check ready to run: {short_name} and {alternate_short_name}',
             message=f'''The program chairs of {alternate_short_name} ({alternate_venue_id}) approved the dual submission check requested by {short_name} ({venue_id}).
 

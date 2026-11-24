@@ -74,7 +74,7 @@ def process(client, edit, invitation):
         alternate_recipients = approval.content.get('results_recipients', {}).get('value')
         ## without recipients, the results are shared with all the program chairs of the venue
         results_readers = [SUPPORT_GROUP] + (recipients or [venue_id]) + (alternate_recipients or [alternate_venue_id])
-        results_emails = [SUPPORT_GROUP] + (recipients or [program_chairs_id]) + (alternate_recipients or [alternate_program_chairs_id])
+        results_emails = [f'{SUPPORT_GROUP}/Recipients'] + (recipients or [program_chairs_id]) + (alternate_recipients or [alternate_program_chairs_id])
 
         ## the approval can not change once the data is being shared
         client.post_invitation_edit(
@@ -163,7 +163,7 @@ The OpenReview Team'''
     except Exception as e:
         post_status('Failed', status_message=repr(e))
         post_message(
-            recipients=[SUPPORT_GROUP],
+            recipients=[f'{SUPPORT_GROUP}/Recipients'],
             subject=f'Dual submission check failed: {short_name} and {alternate_short_name}',
             message=f'''The dual submission check between {short_name} and {alternate_short_name} failed with the following error:
 

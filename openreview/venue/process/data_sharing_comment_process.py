@@ -28,7 +28,7 @@ def process(client, edit, invitation):
     recipients = {
         venue_id: program_chairs_id,
         alternate_venue_id: alternate_program_chairs_id,
-        SUPPORT_GROUP: SUPPORT_GROUP
+        SUPPORT_GROUP: f'{SUPPORT_GROUP}/Recipients'
     }
     recipients.pop(signature, None)
 

@@ -56,11 +56,26 @@ class TestVenueDataSharing():
     def test_setup(self, openreview_client, data_sharing, helpers):
 
         helpers.create_user('chris@datasharing.org', 'Chris', 'Sharing')
+        helpers.create_user('sam@datasharing.org', 'Sam', 'Sharing')
         openreview_client.post_group_edit(
             invitation='openreview.net/-/Edit',
             signatures=['openreview.net'],
             group=openreview.api.Group(
                 id=self.support_group_id,
+                members={
+                    'append': ['~Chris_Sharing1', '~Sam_Sharing1']
+                }
+            )
+        )
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            signatures=['openreview.net'],
+            group=openreview.api.Group(
+                id=f'{self.support_group_id}/Recipients',
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=['openreview.net'],
+                signatories=[self.support_group_id],
                 members={
                     'append': ['~Chris_Sharing1']
                 }
@@ -238,6 +253,7 @@ class TestVenueDataSharing():
         assert 'A comment was posted by the program chairs of DSB 2026' in messages[0]['content']['text']
         assert 'Do you want to include the withdrawn submissions?' in messages[0]['content']['text']
         assert len(openreview_client.get_messages(to='chris@datasharing.org', subject=subject)) == 1
+        assert len(openreview_client.get_messages(to='sam@datasharing.org', subject=subject)) == 0
         assert len(openreview_client.get_messages(to='pc@datasharingb.cc', subject=subject)) == 0
 
         edit = pc_client.post_note_edit(
@@ -254,6 +270,7 @@ class TestVenueDataSharing():
         assert len(openreview_client.get_messages(to='pc@datasharinga.cc', subject=subject)) == 1
         assert len(openreview_client.get_messages(to='pc@datasharingb.cc', subject=subject)) == 1
         assert len(openreview_client.get_messages(to='chris@datasharing.org', subject=subject)) == 2
+        assert len(openreview_client.get_messages(to='sam@datasharing.org', subject=subject)) == 0
 
         ## the program chairs can only sign as their own venue
         with pytest.raises(openreview.OpenReviewException):
@@ -344,6 +361,7 @@ class TestVenueDataSharing():
 
         messages = openreview_client.get_messages(to='chris@datasharing.org', subject='Dual submission check ready to run: DSA 2026 and DSB 2026')
         assert len(messages) == 1
+        assert openreview_client.get_messages(to='sam@datasharing.org', subject='Dual submission check ready to run: DSA 2026 and DSB 2026') == []
 
     def test_run(self, openreview_client, data_sharing, helpers):
 
@@ -418,6 +436,7 @@ class TestVenueDataSharing():
             assert len(messages) == 1
             assert f'forum?id={request.id}&noteId={results_note.id}' in messages[0]['content']['text']
         assert openreview_client.get_messages(to='pc2@datasharinga.cc', subject='Dual submission check completed: DSA 2026 and DSB 2026') == []
+        assert openreview_client.get_messages(to='sam@datasharing.org', subject='Dual submission check completed: DSA 2026 and DSB 2026') == []
 
     def test_run_failure(self, openreview_client, data_sharing, helpers):
 
@@ -487,6 +506,7 @@ class TestVenueDataSharing():
         assert len(messages) == 1
         assert f'forum?id={request.id}' in messages[0]['content']['text']
         assert openreview_client.get_messages(to='pc@datasharinga.cc', subject='Dual submission check failed: DSA 2026 and DSB 2026') == []
+        assert openreview_client.get_messages(to='sam@datasharing.org', subject='Dual submission check failed: DSA 2026 and DSB 2026') == []
 
         ## support fixes the problem and runs the check again
         openreview_client.post_group_edit(
