@@ -190,7 +190,8 @@ class JournalRequest():
                             'decision_additional_fields': {},
                             'issn': None,
                             'min_profile_valid_state': None,
-                            'submission_deadline': None
+                            'submission_deadline': None,
+                            'disable_comments_after_decision_approval': False
                         }
                     }
                 }
@@ -580,7 +581,7 @@ Cheers!'''.replace('{short_name}', short_name)
                     invitees = [venue_id],
                     readers = [venue_id],
                     writers = [],
-                    signatures = ['~Super_User1'],
+                    signatures = [venue_id],
                     edit = {
                     'signatures': { 
                         'param': { 
@@ -638,7 +639,7 @@ Cheers!'''.replace('{short_name}', short_name)
                     invitees = [venue_id],
                     readers = [venue_id],
                     writers = [],
-                    signatures = ['~Super_User1'],
+                    signatures = [venue_id],
                     edit = {
                     'signatures': { 
                         'param': { 
@@ -735,13 +736,12 @@ Cheers!
 
         with open(os.path.join(os.path.dirname(__file__), 'process/ae_recruitment_process.py')) as f:
             content = f.read()
-            content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
             invitation = openreview.api.Invitation(
                 id = invitation_id,
                 invitees = [f'{venue_id}/Action_Editors'],
                 readers = [f'{venue_id}/Action_Editors'],
                 writers = [],
-                signatures = ['~Super_User1'],
+                signatures = [venue_id],
                 edit = {
                     'signatures': {
                         'param': {

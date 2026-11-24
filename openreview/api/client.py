@@ -87,6 +87,8 @@ class OpenReviewClient(object):
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
         self.profiles_rename = self.baseurl + '/profiles/rename'
         self.relation_readers_url = self.baseurl + '/settings/relationReaders'
+        self.domains_to_moderate_url = self.baseurl + '/settings/domainsToModerate'
+        self.disallowed_domains_url = self.baseurl + '/settings/disallowedDomains'
         self.profiles_moderate = self.baseurl + '/profile/moderate'
         self.profile_documents_url = self.baseurl + '/profile-documents'
         self.reference_url = self.baseurl + '/references'
@@ -1315,6 +1317,88 @@ class OpenReviewClient(object):
             json = update,
             headers = self.headers)
 
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_domains_to_moderate(self):
+        """
+        Gets the email domains whose profiles are never activated automatically and always go to the moderation queue. Requires Support permission.
+
+        :return: List of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.get_domains_to_moderate()
+        """
+        response = self.session.get(self.domains_to_moderate_url, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def update_domains_to_moderate(self, add=None, remove=None):
+        """
+        Adds or removes email domains from the list of domains whose profiles always go to the moderation queue. Requires Support permission.
+
+        :param add: Email domains to add to the list
+        :type add: list[str], optional
+        :param remove: Email domains to remove from the list
+        :type remove: list[str], optional
+
+        :return: The new list of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.update_domains_to_moderate(add=['example.edu'])
+        """
+        update = {}
+        if add:
+            update['add'] = add
+        if remove:
+            update['remove'] = remove
+
+        response = self.session.patch(self.domains_to_moderate_url, json = update, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_disallowed_domains(self):
+        """
+        Gets the email domains that cannot be used to create an account. Requires Support permission.
+
+        :return: List of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.get_disallowed_domains()
+        """
+        response = self.session.get(self.disallowed_domains_url, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def update_disallowed_domains(self, add=None, remove=None):
+        """
+        Adds or removes email domains from the list of domains that cannot be used to create an account. Requires Support permission.
+
+        :param add: Email domains to add to the list
+        :type add: list[str], optional
+        :param remove: Email domains to remove from the list
+        :type remove: list[str], optional
+
+        :return: The new list of email domains
+        :rtype: list[str]
+
+        Example:
+
+        >>> domains = client.update_disallowed_domains(add=['example.com'])
+        """
+        update = {}
+        if add:
+            update['add'] = add
+        if remove:
+            update['remove'] = remove
+
+        response = self.session.patch(self.disallowed_domains_url, json = update, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -2996,7 +3080,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None):
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, invitation = None, after = None, sort = None, with_count = None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -3006,14 +3090,57 @@ class OpenReviewClient(object):
         :type subject: str, optional
         :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
         :type status: str, optional
+        :param invitation: Invitation ID of the invitation used to send the messages
+        :type invitation: str, optional
+        :param after: Message id to start getting the list of messages from
+        :type after: str, optional
+        :param sort: Field to sort the messages by, for example "id". The server sorts by timestamp descending by default
+        :type sort: str, optional
+        :param with_count: If True and offset is not set, also returns the total number of matching messages
+        :type with_count: bool, optional
 
-        :return: Messages that match the passed parameters
-        :rtype: dict
+        :return: Messages that match the passed parameters, or a tuple of the messages and their count when with_count is True and offset is not set
+        :rtype: list[dict]
         """
 
-        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
+        params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit, 'invitation': invitation, 'after': after, 'sort': sort, 'count': with_count }
+        response = self.session.get(self.messages_url, params = tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
-        return response.json()['messages']
+        messages = response.json()['messages']
+
+        if with_count and offset is None:
+            return messages, response.json()['count']
+
+        return messages
+
+    def get_all_messages(self, to = None, subject = None, status = None, invitation = None):
+        """
+        **Only for Super User**. Retrieves every message that matches the filters, requesting as many pages as needed
+
+        :param to: Tilde user names or emails
+        :type to: list[str], optional
+        :param subject: Subject of the e-mail
+        :type subject: str, optional
+        :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
+        :type status: str, optional
+        :param invitation: Invitation ID of the invitation used to send the messages
+        :type invitation: str, optional
+
+        :return: Messages that match the passed parameters
+        :rtype: list[dict]
+        """
+
+        params = {}
+        if to is not None:
+            params['to'] = to
+        if subject is not None:
+            params['subject'] = subject
+        if status is not None:
+            params['status'] = status
+        if invitation is not None:
+            params['invitation'] = invitation
+
+        return list(tools.efficient_iterget(self.get_messages, desc='Getting V2 Messages', **params))
 
     def get_process_logs(self, id = None, invitation = None, status = None, min_sdate = None):
         """Retrieve process function execution logs.

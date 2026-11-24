@@ -37,8 +37,8 @@ def process(client, invitation):
             submission_title=submission.content['title']['value']
         )
 
-        # if email with this subject has already been sent, skip sending email
-        if not client.get_messages(subject=subject):
+        # if email with this subject has already been sent by this invitation, skip sending email
+        if subject not in sent_subjects:
             if decisions:
                 formatted_decision = ''
                 decision = decisions[0]
@@ -78,6 +78,9 @@ def process(client, invitation):
     if not filtered_submissions:
         print(f'No emails were sent since there are no "{decision_option}" submissions')
         return
+
+    # this process runs again after any edit to the invitation and when a failed job is retried, so collect the subjects already sent by this invitation to skip those submissions
+    sent_subjects = {message['content']['subject'] for message in client.get_all_messages(invitation=invitation.id)}
 
     messages = openreview.tools.concurrent_requests(send_decision_email, filtered_submissions)
     len_messages = len([m for m in messages if m is not None])

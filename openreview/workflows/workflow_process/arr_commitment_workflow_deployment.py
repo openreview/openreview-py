@@ -110,6 +110,7 @@ def process(client, edit, invitation):
             'reviewers_name': { 'value': venue.reviewers_name },
             'authors_name': { 'value': venue.authors_name },
             'additional_readers': { 'value': additional_readers },
+            'workflow_stage_name': { 'value': 'decision' },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases decisions to the specified readers.' }
         },
         await_process=True
@@ -215,12 +216,20 @@ def process(client, edit, invitation):
 
     baseurl = openreview.tools.get_site_url(client)
 
-    # edit Comment invitation to have PC group as readers
+    # edit Comment invitation to have PC group as readers and invitees
     client.post_invitation_edit(
         invitations=f'{support_user}/-/Edit',
         signatures=[support_user],
         invitation=openreview.api.Invitation(
             id=f'{support_user}/Venue_Request/ARR_Commitment_Workflow{note.number}/-/Comment',
+            readers=[
+                venue.get_program_chairs_id(),
+                support_user
+            ],
+            invitees=[
+                venue.get_program_chairs_id(),
+                support_user
+            ],
             edit = {
                 'readers': [
                     venue.get_program_chairs_id(),

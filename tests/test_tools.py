@@ -464,9 +464,10 @@ class TestTools():
             }
         )
 
+        ## Domains come from the institution history only, the email domains are ignored
         info = openreview.tools.get_profile_info(profile1)
-        assert info['emails'] == set()
-        assert info['domains'] == set(['cmu.edu', '126.com'])
+        assert 'emails' not in info
+        assert info['domains'] == set(['126.com'])
         assert info['id'] == '~Test_Conflict1'
         assert info['relations'] == set([])
         assert info['publications'] == set([])
@@ -495,13 +496,64 @@ class TestTools():
         )
 
         info = openreview.tools.get_profile_info(profile1)
-        assert info['emails'] == set()
-        assert info['domains'] == set(['cmu.edu', '126.com'])
+        assert 'emails' not in info
+        assert info['domains'] == set(['126.com'])
         assert info['id'] == '~Test_Conflict1'
         assert info['relations'] == set([])
-        assert info['publications'] == set([])        
+        assert info['publications'] == set([])
 
-    
+        ## No policy reads the profile emails, not even when the institution history is empty
+        no_history_profile = openreview.Profile(
+            id = '~Test_Conflict4',
+            content = {
+                'emails': ['user4@cmu.edu']
+            }
+        )
+        assert openreview.tools.get_profile_info(no_history_profile)['domains'] == set()
+        assert openreview.tools.get_neurips_profile_info(no_history_profile)['domains'] == set()
+        assert openreview.tools.get_comprehensive_profile_info(no_history_profile)['domains'] == set()
+
+        no_history_coauthor = openreview.Profile(
+            id = '~Test_Conflict5',
+            content = {
+                'emails': ['user5@cmu.edu']
+            }
+        )
+        assert openreview.tools.get_conflicts([no_history_coauthor], no_history_profile) == []
+        assert openreview.tools.get_conflicts([no_history_coauthor], no_history_profile, policy='NeurIPS') == []
+        assert openreview.tools.get_conflicts([no_history_coauthor], no_history_profile, policy='Comprehensive') == []
+
+        ## A member without a profile is identified by an email, every policy uses the domain of that email id
+        email_only_profile = openreview.Profile(
+            id = 'user6@cmu.edu',
+            content = {
+                'emails': ['user6@cmu.edu'],
+                'preferredEmail': 'user6@cmu.edu',
+                'emailsConfirmed': ['user6@cmu.edu'],
+                'names': []
+            }
+        )
+        assert openreview.tools.get_profile_info(email_only_profile)['domains'] == set(['cmu.edu'])
+        assert openreview.tools.get_neurips_profile_info(email_only_profile)['domains'] == set(['cmu.edu'])
+        assert openreview.tools.get_comprehensive_profile_info(email_only_profile)['domains'] == set(['cmu.edu'])
+
+        cmu_profile = openreview.Profile(
+            id = '~Test_Conflict6',
+            content = {
+                'history': [{
+                    'position': 'Professor',
+                    'institution': { 'domain': 'cmu.edu' },
+                    'start': 2015,
+                    'end': None
+                }]
+            }
+        )
+        assert openreview.tools.get_conflicts([cmu_profile], email_only_profile) == ['cmu.edu']
+        assert openreview.tools.get_conflicts([cmu_profile], email_only_profile, policy='NeurIPS') == ['cmu.edu']
+        assert openreview.tools.get_conflicts([cmu_profile], email_only_profile, policy='Comprehensive') == ['cmu.edu']
+        assert openreview.tools.get_conflicts([email_only_profile], cmu_profile) == ['cmu.edu']
+
+
     def test_get_conflicts(self, openreview_client, helpers):
 
         helpers.create_user('user@gmail.com', 'First', 'Last')
@@ -711,17 +763,8 @@ class TestTools():
 
         def cmu_is_a_never_conflict(profile, n_years=None):
             domains = set()
-            emails = set()
             relations = set()
             publications = set()
-
-            ## Emails section
-            for email in profile.content['emails']:
-                # split email
-                domain = email.split('@')[1]
-                if domain != 'cmu.edu':
-                    domains.add(domain)
-                    emails.add(email)
 
             ## Institution section
             for history in profile.content.get('history', []):
@@ -737,52 +780,11 @@ class TestTools():
             return {
                 'id': profile.id,
                 'domains': domains,
-                'emails': emails,
-                'relations': relations,
-                'publications': publications
-            }
-        
-        with pytest.raises(Exception) as error:
-            conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict)
-        assert  str(error.value) == 'list index out of range'
-
-        def cmu_is_a_never_conflict_updated(profile, n_years=None):
-            domains = set()
-            emails = set()
-            relations = set()
-            publications = set()
-
-            ## Emails section
-            for email in profile.content['emails']:
-                # split email
-                if '@' in email:
-                    domain = email.split('@')[1]
-                    if domain != 'cmu.edu':
-                        domains.add(domain)
-                        emails.add(email)
-                else:
-                    print('Profile with invalid email:', profile.id, email)
-
-            ## Institution section
-            for history in profile.content.get('history', []):
-                try:
-                    end = int(history.get('end', 0) or 0)
-                except:
-                    end = 0
-                if not end:
-                    domain = history.get('institution', {}).get('domain', '')
-                    if domain != 'cmu.edu':
-                        domains.add(domain)
-
-            return {
-                'id': profile.id,
-                'domains': domains,
-                'emails': emails,
                 'relations': relations,
                 'publications': publications
             }
 
-        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict_updated)
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict)
         assert len(conflicts) == 1
         assert 'umass.edu' in conflicts
 

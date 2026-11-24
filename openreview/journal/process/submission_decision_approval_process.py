@@ -15,6 +15,11 @@ def process(client, edit, invitation):
     ## Make the decision public
     print('Make decision public')
     journal.invitation_builder.set_note_decision_release_invitation(submission)
+    ## Expire comment invitations if comments should be disabled after decision
+    if journal.should_disable_comments_after_decision_approval():
+        print('Disabling comments for submission', submission.number)
+        journal.invitation_builder.expire_invitation(journal.get_official_comment_id(submission.number))
+        journal.invitation_builder.expire_invitation(journal.get_public_comment_id(submission.number))
 
     ## Notify the action editors
     client.post_message(

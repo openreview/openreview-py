@@ -553,8 +553,10 @@ class SubmissionRevisionStage():
                  allow_license_edition=False, 
                  preprocess_path=None,
                  revision_history_readers=None,
-                 include_field_readers=False):
+                 include_field_readers=False,
+                 workflow_stage_name=None):
         self.name = name
+        self.workflow_stage_name = workflow_stage_name
         self.start_date = start_date
         self.due_date = due_date
         self.exp_date = exp_date
@@ -1650,8 +1652,10 @@ class RegistrationStage(object):
         return content
 class CustomStage(object):
     """
-    param reply_to: submission, reviews, metareviews, forum
-    type reply_to: string
+    param reply_to: ReplyTo.FORUM, ReplyTo.WITHFORUM, or the name of the stage whose notes this
+        stage replies to (e.g. 'Official_Review', 'Meta_Review', 'Author_Rebuttal'). Pass the stage
+        name only, not the full invitation id.
+    type reply_to: CustomStage.ReplyTo or string
     """
 
     class Participants(Enum):
@@ -1681,9 +1685,6 @@ class CustomStage(object):
     class ReplyTo(Enum):
         FORUM = 0
         WITHFORUM = 1
-        REVIEWS = 2
-        METAREVIEWS = 3
-        REBUTTALS = 4
 
     class ReplyType(Enum):
         REPLY = 0
@@ -1706,9 +1707,17 @@ class CustomStage(object):
                  email_template=None, 
                  allow_de_anonymization=False,
                  description=None,
-                 child_invitations_name=None):
+                 child_invitations_name=None,
+                 workflow_stage_name=None,
+                 workflow_stage_insert_after=None):
         self.name = name
         self.child_invitations_name = child_invitations_name if child_invitations_name else self.name
+        # Timeline grouping: name of the workflow stage this custom stage belongs to. Reuse one
+        # of the default stage names (e.g. 'reviewing') or provide a new name to define a new stage.
+        # A new stage name is added to the `workflow_stages` order array of the venue group, placed
+        # after the stage named by `workflow_stage_insert_after` (at the end when not given).
+        self.workflow_stage_name = workflow_stage_name
+        self.workflow_stage_insert_after = workflow_stage_insert_after
         self.reply_to = reply_to
         self.source = source
         self.reply_type = reply_type
@@ -1866,25 +1875,7 @@ class CustomStage(object):
             reply_to = 'forum'
         elif self.reply_to == self.ReplyTo.WITHFORUM:
             reply_to = 'withForum'
-        elif self.reply_to == self.ReplyTo.REVIEWS:
-            reply_to = 'reviews'
-        elif self.reply_to == self.ReplyTo.METAREVIEWS:
-            reply_to = 'metareviews'
-        elif self.reply_to == self.ReplyTo.REBUTTALS:
-            reply_to = 'rebuttals'
         return reply_to
-    
-    def get_reply_stage_name(self, venue):
-        custom_stage_replyto = self.get_reply_to()
-
-        if custom_stage_replyto == 'reviews':
-            return venue.review_stage.name
-        if custom_stage_replyto == 'metareviews':
-            return venue.meta_review_stage.name
-        if custom_stage_replyto == 'rebuttals':
-            return venue.review_rebuttal_stage.name
-
-        return custom_stage_replyto
 
     def get_reply_type(self):
 

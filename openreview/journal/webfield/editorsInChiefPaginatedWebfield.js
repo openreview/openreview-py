@@ -22,7 +22,7 @@
 //      per-reviewer Rating invitations
 //   3. one /groups request per paper - the reviewer and action editor groups
 //      together with their anonymous groups
-//   4. one /profiles/search - names and emails for the members just fetched
+//   4. one /profiles/search - names for the members just fetched
 //
 // The cost of a page is a function of PAGE_SIZE, not of the size of the venue,
 // so the console behaves the same on a journal with 500 submissions and one
@@ -205,10 +205,10 @@ var profileInfo = function(profile, fallbackId) {
     };
   }
   var nameEntry = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names) || {};
+  // Emails are not read from the profile, use the preferred email edges to get the email of a user
   return {
     id: profile.id,
-    name: nameEntry.fullname || profile.id,
-    email: profile.content.preferredEmail || (profile.content.emailsConfirmed || [])[0]
+    name: nameEntry.fullname || profile.id
   };
 };
 
