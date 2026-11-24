@@ -1569,7 +1569,6 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
 
     author_ids = set()
     author_domains = set()
-    author_emails = set()
     author_relations = set()
     author_publications = set()
 
@@ -1586,7 +1585,6 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
         author_info = info_function(profile, n_years)
         author_ids.add(author_info['id'])
         author_domains.update(author_info['domains'])
-        author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
         author_publications.update(author_info['publications'])
 
@@ -1597,25 +1595,25 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
     conflicts.update(author_domains.intersection(user_info['domains']))
     conflicts.update(author_relations.intersection([user_info['id']]))
     conflicts.update(author_ids.intersection(user_info['relations']))
-    conflicts.update(author_emails.intersection(user_info['emails']))
     conflicts.update(author_publications.intersection(user_info['publications']))
 
     return list(conflicts)
 
 def get_profile_info(profile, n_years=None):
     """
-    Gets all the domains, emails, relations associated with a Profile
+    Gets all the domains, relations and publications associated with a Profile.
+    Domains come from the institution history; profile emails are not used. A member without a profile,
+    whose id is an email, gets the domain of that email.
 
     :param profile: Profile from which all the relations will be obtained
     :type profile: Profile
     :param n_years: Number of years to consider when getting the profile information
     :type n_years: int, optional
 
-    :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+    :return: Dictionary with the domains, relations and publications associated with the passed Profile
     :rtype: dict
     """
     domains = set()
-    emails = set()
     relations = set()
     publications = set()
 
@@ -1625,15 +1623,6 @@ def get_profile_info(profile, n_years=None):
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1
-
-    ## Emails section
-    for email in profile.content['emails']:
-        # split email
-        if '@' in email:
-            domain = email.split('@')[1]
-            domains.add(domain)
-        else:
-            print('Profile with invalid email:', profile.id, email)
 
     ## Institution section
     for history in profile.content.get('history', []):
@@ -1645,6 +1634,10 @@ def get_profile_info(profile, n_years=None):
             domain = history.get('institution', {}).get('domain', '')
             domains.add(domain)
 
+    ## A member without a profile is identified by an email, so the domain of that email id is used
+    if '@' in profile.id:
+        domains.add(profile.id.split('@')[1])
+
     ## Relations section
     relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year)
 
@@ -1654,25 +1647,25 @@ def get_profile_info(profile, n_years=None):
     return {
         'id': profile.id,
         'domains': domains,
-        'emails': emails,
         'relations': relations,
         'publications': publications
     }
 
 def get_neurips_profile_info(profile, n_years=None):
     """
-    Gets all the domains, emails, relations associated with a Profile
+    Gets all the domains, relations and publications associated with a Profile.
+    Domains come from the institution history, excluding internships; profile emails are not used. A member
+    without a profile, whose id is an email, gets the domain of that email.
 
     :param profile: Profile from which all the relations will be obtained
     :type profile: Profile
     :param n_years: Number of years to consider when getting the profile information
     :type n_years: int, optional
 
-    :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+    :return: Dictionary with the domains, relations and publications associated with the passed Profile
     :rtype: dict
     """
     domains = set()
-    emails=set()
     relations = set()
     publications = set()
 
@@ -1695,17 +1688,12 @@ def get_neurips_profile_info(profile, n_years=None):
                 domain = h.get('institution', {}).get('domain', '')
                 domains.add(domain)
 
+    ## A member without a profile is identified by an email, so the domain of that email id is used
+    if '@' in profile.id:
+        domains.add(profile.id.split('@')[1])
+
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
-
-    ## if institution section is empty, add email domains
-    if not domains:
-        for email in profile.content['emails']:
-            if '@' in email:
-                domain = email.split('@')[1]
-                domains.add(domain)
-            else:
-                print('Profile with invalid email:', profile.id, email)
 
     ## Publications section: get publications within last n years
     publications = filter_publications_by_year(profile.content.get('publications', []), cut_off_year)
@@ -1713,25 +1701,25 @@ def get_neurips_profile_info(profile, n_years=None):
     return {
         'id': profile.id,
         'domains': domains,
-        'emails': emails,
         'relations': relations,
         'publications': publications
     }
 
 def get_comprehensive_profile_info(profile, n_years=None):
     """
-    Gets all the domains, emails, relations associated with a Profile
+    Gets all the domains, relations and publications associated with a Profile.
+    Domains come from the institution history, including internships; profile emails are not used. A member
+    without a profile, whose id is an email, gets the domain of that email.
 
     :param profile: Profile from which all the relations will be obtained
     :type profile: Profile
     :param n_years: Number of years to consider when getting the profile information
     :type n_years: int, optional
 
-    :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+    :return: Dictionary with the domains, relations and publications associated with the passed Profile
     :rtype: dict
     """
     domains = set()
-    emails = set()
     relations = set()
     publications = set()
 
@@ -1754,17 +1742,12 @@ def get_comprehensive_profile_info(profile, n_years=None):
                 domain = h.get('institution', {}).get('domain', '')
                 domains.add(domain)
 
+    ## A member without a profile is identified by an email, so the domain of that email id is used
+    if '@' in profile.id:
+        domains.add(profile.id.split('@')[1])
+
     ## Relations section, get all relations within the last n years
     relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
-
-    ## if institution section is empty, add email domains
-    if not domains:
-        for email in profile.content['emails']:
-            if '@' in email:
-                domain = email.split('@')[1]
-                domains.add(domain)
-            else:
-                print('Profile with invalid email:', profile.id, email)
 
     ## Publications section: get publications within last n years
     publications = filter_publications_by_year(profile.content.get('publications', []), cut_off_year)
@@ -1772,7 +1755,6 @@ def get_comprehensive_profile_info(profile, n_years=None):
     return {
         'id': profile.id,
         'domains': domains,
-        'emails': emails,
         'relations': relations,
         'publications': publications
     }
@@ -1823,7 +1805,6 @@ def get_current_submissions_profile_info(profile, n_years=None, submission_venue
     return {
         'id': profile.id,
         'domains': domains,
-        'emails': set(),
         'relations': relations,
         'publications': publications
     }

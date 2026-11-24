@@ -49,12 +49,16 @@ The {journal.short_name} Editors-in-Chief
         if edge.tmdate < back_to_available_period:
             print(f"back to available: {edge.tail}")
             edge.label = 'Available'
+            edge.signatures = [journal.venue_id]
             client.post_edge(edge)
             client.post_message(available_subject, recipients, available_message, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, replyTo=journal.contact_info, sender=journal.get_message_sender())
         elif edge.tmdate < reminder_period:
             print(f"check if we need to remind: {edge.tail}")
-            profile = client.get_profile(edge.tail)
-            messages = client.get_messages(to=profile.get_preferred_email(), subject=reminder_subject)
+            preferred_email_edges = client.get_edges(invitation=journal.get_preferred_emails_invitation_id(), head=edge.tail)
+            if not preferred_email_edges:
+                print(f"no preferred email for {edge.tail}, can not check the previous reminders")
+                continue
+            messages = client.get_messages(to=preferred_email_edges[0].tail, subject=reminder_subject)
             if len(messages) > 0 and messages[0]['cdate'] > reminder_period:
                 print(f"already reminded: {edge.tail} on {messages[0]['cdate']}, no action needed")
             else:

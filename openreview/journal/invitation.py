@@ -1785,9 +1785,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id, action_editors_id],
             readers=[venue_id, action_editors_id, authors_id],
             writers=[venue_id],
-            signatures=['~Super_User1'], ## user super user so it can update the edges
+            signatures=[venue_id],
             minReplies=1,
-            maxReplies=1,            
+            maxReplies=1,
             type='Edge',
             edit={
                 'id': {
@@ -1795,7 +1795,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'withInvitation': self.journal.get_ae_availability_id(),
                         'optional': True
                     }
-                },                
+                },
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1816,6 +1816,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'signatures': {
                     'param': {
                         'items': [
+                            { 'value': venue_id, 'optional': True },
                             { 'value': editor_in_chief_id, 'optional': True },
                             { 'value': '${3/tail}', 'optional': True }
                         ]
