@@ -8,10 +8,10 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "feat/hide-profile-emails"
+    default: "main"
   openreview-web-branch:
     type: string
-    default: "feature/hide-profile-emails"
+    default: "master"
   python-version:
     type: string
     default: "3.13.1"
