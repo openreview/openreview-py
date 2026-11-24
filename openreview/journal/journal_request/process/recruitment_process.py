@@ -69,7 +69,7 @@ Please check the invitee group to see more details: https://openreview.net/group
 
     invitation = recruitment_note.invitations[0].split('/-/')[0]
     comment_note = client.post_note_edit(invitation=invitation + '/-/Comment',
-        signatures=[SUPPORT_GROUP],
+        signatures=[journal.venue_id],
         note = openreview.api.Note(
             content = {
                 'title': { 'value': 'Recruitment Status'},

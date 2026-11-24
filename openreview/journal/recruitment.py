@@ -10,6 +10,15 @@ class Recruitment(object):
         self.client = journal.client
         self.journal = journal
 
+    def get_memberships(self, invitee, prefix):
+        try:
+            return [g.id for g in self.client.get_groups(member=invitee, prefix=prefix)]
+        except openreview.OpenReviewException as e:
+            error = e.args[0]
+            if isinstance(error, dict) and (error.get('name') == 'NotFoundError' or error.get('message', '').startswith('Group Not Found')):
+                return []
+            raise e
+
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
 
         action_editors_id = self.journal.get_action_editors_id()
@@ -26,7 +35,7 @@ class Recruitment(object):
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
             invitee = invitee.lower() if '@' in invitee else invitee
-            memberships = [g.id for g in self.client.get_groups(member=invitee, prefix=action_editors_id)] if tools.get_group(self.client, invitee) else []
+            memberships = self.get_memberships(invitee, action_editors_id)
             if action_editors_id in memberships:
                 recruitment_status['already_member'].append(invitee)
             else:
@@ -77,7 +86,7 @@ class Recruitment(object):
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
             invitee = invitee.lower() if '@' in invitee else invitee
-            memberships = [g.id for g in self.client.get_groups(member=invitee, prefix=reviewers_id)] if tools.get_group(self.client, invitee) else []
+            memberships = self.get_memberships(invitee, reviewers_id)
             if reviewers_id in memberships:
                 recruitment_status['already_member'].append(invitee)
                 if reviewer_role:
