@@ -32,7 +32,7 @@ class TestVenueRestriction():
                     'venue_website_url': {'value': 'https://restrict.cc/Conferences/2025'},
                     'location': {'value': 'Virtual'},
                     'venue_start_date': {'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52))},
-                    'program_chair_emails': {'value': ['programchair@restrict.cc']},
+                    'program_chair_emails': {'value': ['~Program_ChairRestrict1']},
                     'contact_email': {'value': 'programchair@restrict.cc'},
                     'submission_start_date': {'value': openreview.tools.datetime_millis(now)},
                     'submission_deadline': {'value': openreview.tools.datetime_millis(due_date)},

@@ -38,7 +38,7 @@ class TestChangeVenueEmail():
                     'venue_website_url': { 'value': 'https://venueemail.cc/Conferences/2025' },
                     'location': { 'value': 'Amherst, Massachusetts' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@venueemail.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_VenueEmail1'] },
                     'contact_email': { 'value': 'venueemail2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(start_date) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
