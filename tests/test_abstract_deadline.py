@@ -34,7 +34,7 @@ class TestAbstractDeadline():
                     'venue_website_url': { 'value': 'https://emas.cc/Conferences/2026' },
                     'location': { 'value': 'Paphos, Cyprus' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@emas.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_EMAS1'] },
                     'contact_email': { 'value': 'emas2026.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
@@ -76,7 +76,7 @@ class TestAbstractDeadline():
         helpers.await_queue_edit(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission_Change_Before_Bidding-0-1', count=1)
 
         group = openreview.tools.get_group(openreview_client, 'ifaamas.org/AAMAS/2026/Workshop/EMAS/Program_Chairs')
-        assert group.members == ['programchair@emas.cc']
+        assert group.members == ['~ProgramChair_EMAS1']
         assert group.domain == 'ifaamas.org/AAMAS/2026/Workshop/EMAS'
 
         domain_group = openreview_client.get_group('ifaamas.org/AAMAS/2026/Workshop/EMAS')

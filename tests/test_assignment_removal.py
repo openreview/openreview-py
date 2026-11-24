@@ -24,7 +24,7 @@ class TestAssignmentRemoval():
                     'venue_website_url': { 'value': 'https://arv.cc/Conferences/2026' },
                     'location': { 'value': 'Amherst, Massachusetts' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@arv.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_ARV1'] },
                     'contact_email': { 'value': 'arv2026.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=2)) },
