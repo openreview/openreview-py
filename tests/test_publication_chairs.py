@@ -26,7 +26,7 @@ class TestPublicationChairs():
                     'venue_website_url': { 'value': 'https://pubc.cc/Conferences/2026' },
                     'location': { 'value': 'Amherst, Massachusetts' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@pubc.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_PUBC1'] },
                     'contact_email': { 'value': 'pubc2026.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
