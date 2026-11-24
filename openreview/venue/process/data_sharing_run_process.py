@@ -74,7 +74,7 @@ def process(client, edit, invitation):
         alternate_recipients = approval.content.get('results_recipients', {}).get('value')
         ## without recipients, the results are shared with all the program chairs of the venue
         results_readers = [SUPPORT_GROUP] + (recipients or [venue_id]) + (alternate_recipients or [alternate_venue_id])
-        results_emails = [f'{SUPPORT_GROUP}/Recipients'] + (recipients or [program_chairs_id]) + (alternate_recipients or [alternate_program_chairs_id])
+        results_emails = (recipients or [program_chairs_id]) + (alternate_recipients or [alternate_program_chairs_id])
 
         ## the approval can not change once the data is being shared
         client.post_invitation_edit(

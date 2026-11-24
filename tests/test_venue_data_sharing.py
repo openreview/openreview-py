@@ -431,12 +431,12 @@ class TestVenueDataSharing():
         messages = openreview_client.get_messages(to='pc@datasharingb.cc', subject='Dual submission check started: DSA 2026 and DSB 2026')
         assert len(messages) == 1
 
-        for email in ['pc@datasharinga.cc', 'pc@datasharingb.cc', 'chris@datasharing.org']:
+        for email in ['pc@datasharinga.cc', 'pc@datasharingb.cc']:
             messages = openreview_client.get_messages(to=email, subject='Dual submission check completed: DSA 2026 and DSB 2026')
             assert len(messages) == 1
             assert f'forum?id={request.id}&noteId={results_note.id}' in messages[0]['content']['text']
         assert openreview_client.get_messages(to='pc2@datasharinga.cc', subject='Dual submission check completed: DSA 2026 and DSB 2026') == []
-        assert openreview_client.get_messages(to='sam@datasharing.org', subject='Dual submission check completed: DSA 2026 and DSB 2026') == []
+        assert openreview_client.get_messages(to='chris@datasharing.org', subject='Dual submission check completed: DSA 2026 and DSB 2026') == []
 
     def test_run_failure(self, openreview_client, data_sharing, helpers):
 
@@ -539,9 +539,10 @@ class TestVenueDataSharing():
         results_notes = openreview_client.get_notes(invitation=data_sharing.get_results_invitation_id(2))
         assert len(results_notes) == 1
 
-        messages = openreview_client.get_messages(to='chris@datasharing.org', subject='Dual submission check completed: DSA 2026 and DSB 2026')
-        assert len(messages) == 2
-        assert any(f'forum?id={request.id}&noteId={results_notes[0].id}' in m['content']['text'] for m in messages)
+        messages = openreview_client.get_messages(to='pc2@datasharinga.cc', subject='Dual submission check completed: DSA 2026 and DSB 2026')
+        assert len(messages) == 1
+        assert f'forum?id={request.id}&noteId={results_notes[0].id}' in messages[0]['content']['text']
+        assert openreview_client.get_messages(to='chris@datasharing.org', subject='Dual submission check completed: DSA 2026 and DSB 2026') == []
 
     def test_run_failure_on_venue_lookup(self, openreview_client, data_sharing, helpers):
 
