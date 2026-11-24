@@ -54,7 +54,7 @@ class TestServeAsReviewerValidation():
                     'venue_website_url': { 'value': 'https://sarc.cc/Conferences/2026' },
                     'location': { 'value': 'Online' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@sarc.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_SARC1'] },
                     'contact_email': { 'value': 'sarc2026.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },

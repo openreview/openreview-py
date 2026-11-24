@@ -190,11 +190,12 @@ class Workflows():
                         },
                         'program_chair_emails': {
                             'order': 7,
-                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request.',
+                            'description': 'Search program chair profiles by first, middle and last name or OpenReview profile ID. If a program chair does not have a profile at the time of submission, you will be able to add them as program chair later.',
                             'value': {
                                 'param': {
-                                    'type': 'string[]',
-                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+                                    'fieldName': 'Program Chair Profile IDs',
+                                    'type': 'profile[]',
+                                    'regex': r'~.*'
                                 }
                             }
                         },
@@ -547,11 +548,12 @@ class Workflows():
                         },
                         'program_chair_emails': {
                             'order': 7,
-                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request.',
+                            'description': 'Search program chair profiles by first, middle and last name or OpenReview profile ID. If a program chair does not have a profile at the time of submission, you will be able to add them as program chair later.',
                             'value': {
                                 'param': {
-                                    'type': 'string[]',
-                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+                                    'fieldName': 'Program Chair Profile IDs',
+                                    'type': 'profile[]',
+                                    'regex': r'~.*'
                                 }
                             }
                         },
@@ -816,9 +818,9 @@ class Workflows():
                 'invitation': {
                     'id': f'{support_group_id}/Venue_Request/{workflow_name}' + '${2/content/noteNumber/value}' + '/-/Comment',
                     'signatures': [self.super_id],
-                    'readers': ['everyone'],
+                    'readers': [support_group_id, '${{3/content/noteId/value}/content/program_chair_emails/value}'],
                     'writers': [support_group_id],
-                    'invitees': ['everyone'],
+                    'invitees': [support_group_id, '${{3/content/noteId/value}/content/program_chair_emails/value}'],
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
@@ -903,8 +905,8 @@ class Workflows():
         status_invitation_id = f'{support_group_id}/Venue_Request/{workflow_name}/-/Status'
 
         invitation = Invitation(id=status_invitation_id,
-            invitees=['active_venues'],
-            readers=['active_venues'],
+            invitees=['venues'],
+            readers=['venues'],
             writers=[support_group_id],
             signatures=[support_group_id],
             edit = {
@@ -917,7 +919,7 @@ class Workflows():
                     'param': {
                         'items': [
                             { 'value': support_group_id, 'optional': False },
-                            { 'inGroup': 'active_venues', 'optional': False }
+                            { 'inGroup': 'venues', 'optional': False }
                         ]
                     }
                 },

@@ -952,6 +952,9 @@ class Journal(object):
     def get_decision_additional_fields(self):
         return self.settings.get('decision_additional_fields', {})
 
+    def should_disable_comments_after_decision_approval(self):
+        return self.settings.get('disable_comments_after_decision_approval', False)
+
     def get_submission_start_date(self):
         return self.settings.get('submission_start_date', openreview.tools.datetime_millis(datetime.datetime.now()))
 
@@ -1833,11 +1836,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     if ack_invitation:
                         return ack_invitation
 
-            for email in profile.content['emailsConfirmed']:
-                ack_invitation = invitations_by_id.get(self.get_reviewer_responsibility_id(email))
-                if ack_invitation:
-                    return ack_invitation
-
             print('no responsibility invitation for', profile.id)
 
         def get_ack_invitation(submission_number, profile):
@@ -1846,11 +1844,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     ack_invitation = invitations_by_id.get(self.get_reviewer_assignment_acknowledgement_id(submission_number, name["username"]))
                     if ack_invitation:
                         return ack_invitation
-
-            for email in profile.content['emailsConfirmed']:
-                ack_invitation = invitations_by_id.get(self.get_reviewer_assignment_acknowledgement_id(submission_number, email))
-                if ack_invitation:
-                    return ack_invitation
 
             print('no ack invitation for', submission_number, profile.id)
 

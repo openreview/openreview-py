@@ -13,6 +13,7 @@ class TestRecruitmentLoggedInUser():
     recruitment_response_id = 'RLIP.cc/2026/Conference/Reviewers/-/Recruitment_Response'
     recruitment_title = '[RLIP 2026] Invitation to serve as Reviewer'
     pc_email = 'pc_rlip@mail.cc'
+    pc_profile_id = '~ProgramChair_RLIP1'
     pc_id = '~ProgramChair_RLIP1'
 
     def get_recruitment_url(self, openreview_client, email):
@@ -39,7 +40,7 @@ class TestRecruitmentLoggedInUser():
                     'venue_website_url': { 'value': 'https://rlip.cc/Conferences/2026' },
                     'location': { 'value': 'Amherst, Massachusetts' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': [self.pc_email] },
+                    'program_chair_emails': { 'value': [self.pc_profile_id] },
                     'contact_email': { 'value': self.pc_email },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
@@ -83,7 +84,7 @@ class TestRecruitmentLoggedInUser():
         helpers.await_queue_edit(openreview_client, f'{self.venue_id}/-/Desk_Rejection-0-1', count=1)
         helpers.await_queue_edit(openreview_client, f'{self.venue_id}/-/Submission_Change_Before_Bidding-0-1', count=1)
 
-        assert self.pc_email in openreview_client.get_group(f'{self.venue_id}/Program_Chairs').members
+        assert self.pc_profile_id in openreview_client.get_group(f'{self.venue_id}/Program_Chairs').members
         assert openreview_client.get_invitation(self.recruitment_response_id).guestPosting == True
 
         edit = pc_client.post_group_edit(

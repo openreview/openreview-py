@@ -88,7 +88,6 @@ class Recruitment(object):
 
         print('sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
-            profile_emails = []
             profile = None
             is_profile_id = email.startswith('~')
             invalid_profile_id = False
@@ -107,7 +106,6 @@ class Recruitment(object):
                         continue
                 if not profile:
                     no_profile_found = True
-                profile_emails = profile.content['emails'] if profile else []
 
             memberships = [g.id for g in self.client.get_groups(member=email, prefix=venue_id)] if tools.get_group(self.client, email) else []
             invited_roles = [f'{venue_id}/{role}/Invited' for role in committee_roles]
@@ -116,11 +114,7 @@ class Recruitment(object):
             invited_group_ids=list(set(invited_roles) & set(memberships))
             member_group_ids=list(set(member_roles) & set(memberships))
 
-            if profile and not profile_emails:
-                if 'profiles_without_email' not in recruitment_status['errors']:
-                    recruitment_status['errors']['profiles_without_email'] = []
-                recruitment_status['errors']['profiles_without_email'].append(email)
-            elif invalid_profile_id:
+            if invalid_profile_id:
                 if 'invalid_profile_ids' not in recruitment_status['errors']:
                     recruitment_status['errors']['invalid_profile_ids'] = []
                 recruitment_status['errors']['invalid_profile_ids'].append(email)
