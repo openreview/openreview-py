@@ -64,7 +64,7 @@ class TestWebConfTracks():
                     'venue_website_url': { 'value': 'https://www2026.thewebconf.org' },
                     'location': { 'value': 'Dubai, United Arab Emirates' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@webconf.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_WebConf1'] },
                     'contact_email': { 'value': 'webconf2026.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },

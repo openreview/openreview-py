@@ -175,6 +175,7 @@ TJ22 Editors-in-Chief
 
         invitation = test_client.get_invitation(id=f'openreview.net/Support/Journal_Request{journal_number}/-/Reviewer_Recruitment')
         assert 'Hi {{fullname}},\n\nGreetings! You have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['value']['param']['default']
+        assert invitation.signatures == ['TJ22']
 
         helpers.create_user('reviewer_journal2@mail.com', 'Second', 'Reviewer')
 
@@ -226,6 +227,7 @@ TJ22 Editors-in-Chief
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
         assert '**Invited**: 3 Reviewer(s).' in recruitment_status[0].content['comment']['value']
+        assert recruitment_status[0].signatures == ['TJ22']
 
         ## make sure recruitment templates are not overwitten
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'TJ22' })
@@ -260,6 +262,7 @@ TJ22 Editors-in-Chief
 
         invitation = test_client.get_invitation(id=f'openreview.net/Support/Journal_Request{journal_number}/-/Action_Editor_Recruitment')
         assert 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['value']['param']['default']
+        assert invitation.signatures == ['TJ22']
 
         #add ae to invited group
         openreview_client.add_members_to_group('TJ22/Action_Editors/Invited', 'ae_journal1@mail.com')
@@ -307,6 +310,7 @@ TJ22 Editors-in-Chief
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
         assert '**Invited**: 3 Action Editor(s).' in recruitment_status[0].content['comment']['value']
+        assert recruitment_status[0].signatures == ['TJ22']
         assert 'No recruitment invitation was sent to the following users because they are already members of the Action Editor group:' in recruitment_status[0].content['comment']['value']
         assert "'InvalidGroup': ['newactioneditor@mail.com;']" in recruitment_status[0].content['comment']['value']
 
@@ -317,6 +321,21 @@ TJ22 Editors-in-Chief
 
         helpers.create_user('ae_journal1@mail.com', 'First', 'AE')
         ae_client = OpenReviewClient(username='ae_journal1@mail.com', password=helpers.strong_password)
+        helpers.create_user('ae_journal2@mail.com', 'Second', 'AE')
+
+        openreview_client.post_invitation_edit(
+            invitations='TJ22/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=Invitation(
+                id='TJ22/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='TJ22/-/Preferred_Emails-0-0', count=2)
+
+        assert [edge.tail for edge in openreview_client.get_edges(invitation='TJ22/-/Preferred_Emails', head='~First_AE1')] == ['ae_journal1@mail.com']
+        assert [edge.tail for edge in openreview_client.get_edges(invitation='TJ22/-/Preferred_Emails', head='~Second_AE1')] == ['ae_journal2@mail.com']
 
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal.request_form_id), ae_client, by=By.CLASS_NAME, wait_for_element='invitations-container')
         invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
@@ -356,6 +375,8 @@ TJ22 Editors-in-Chief
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
         assert '**Invited**: 1 reviewer' in recruitment_status[0].content['comment']['value']
         assert recruitment_status[0].readers == ['openreview.net/Support', 'TJ22', '~First_AE1']
+        assert recruitment_status[0].signatures == ['TJ22']
+        assert openreview_client.get_invitation(f'openreview.net/Support/Journal_Request{journal_number}/-/Reviewer_Recruitment_by_AE').signatures == ['TJ22']
 
         # catch group not found error
         recruitment_note = ae_client.post_note_edit(
@@ -386,7 +407,6 @@ TJ22 Editors-in-Chief
         assert "'InvalidGroup': ['new_reviewer@mail.com;']" in recruitment_status[0].content['comment']['value']
         assert recruitment_status[0].readers == ['openreview.net/Support', 'TJ22', '~First_AE1']
 
-        helpers.create_user('ae_journal2@mail.com', 'Second', 'AE')
         ae2_client = OpenReviewClient(username='ae_journal2@mail.com', password=helpers.strong_password)
 
         #re-invite reviewer by another AE
@@ -565,6 +585,19 @@ TJ22 Editors-in-Chief
 
         helpers.create_user('ae_journal4@mail.com', 'Fourth', 'AE')
         openreview_client.add_members_to_group('TJ22/Action_Editors', '~Fourth_AE1')
+
+        openreview_client.post_invitation_edit(
+            invitations='TJ22/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=Invitation(
+                id='TJ22/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='TJ22/-/Preferred_Emails-0-0', count=3)
+
+        assert [edge.tail for edge in openreview_client.get_edges(invitation='TJ22/-/Preferred_Emails', head='~Fourth_AE1')] == ['ae_journal4@mail.com']
 
         ae_client = OpenReviewClient(username='ae_journal4@mail.com', password=helpers.strong_password)
         profile = ae_client.get_profile(ae_client.profile.id)

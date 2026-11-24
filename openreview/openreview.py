@@ -3218,5 +3218,9 @@ class Profile(object):
         state=n.get('state'),
         lastLogIn=n.get('lastLogIn')
         )
+        ## The API omits the email fields when the caller is neither the profile owner nor a privileged user
+        if isinstance(profile.content, dict):
+            profile.content.setdefault('emails', [])
+            profile.content.setdefault('emailsConfirmed', [])
         return profile
 
