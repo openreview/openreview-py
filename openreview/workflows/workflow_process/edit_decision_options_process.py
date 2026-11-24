@@ -116,6 +116,7 @@ def process(client, edit, invitation):
                 additional_readers.append(f'{venue_id}/{submission_name}' + '${{2/id}/number}/' + senior_area_chairs_name)
             additional_readers.append(f'{venue_id}/{submission_name}' + '${{2/id}/number}/' + area_chairs_name)
 
+        publication_chairs_id = domain.get_content_value('publication_chairs_id')
         # post new submission release invitations
         if is_accepted_option:
             client.post_invitation_edit(
@@ -127,6 +128,7 @@ def process(client, edit, invitation):
                     'submission_name': { 'value': submission_name },
                     'reviewers_name': { 'value': reviewers_name },
                     'authors_name': { 'value': authors_name },
+                    'additional_readers': { 'value': [publication_chairs_id] if publication_chairs_id else [] },
                     'decision_option': { 'value': decision_option },
                     'decision_option_id': { 'value': openreview.tools.decision_option_to_id(decision_option) },
                     'decision_venue_id': { 'value': venue_id },

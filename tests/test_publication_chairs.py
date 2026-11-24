@@ -273,9 +273,10 @@ class TestPublicationChairs():
         assert submission.content['venueid']['value'] == venue_id
         assert submission.readers == [venue_id, f'{venue_id}/Publication_Chairs', f'{venue_id}/Submission1/Authors']
         assert 'readers' not in submission.content['authors']
-        # the pdf and the other hidden fields stay with the PCs and the authors, as in the legacy Post Decision stage;
-        # the PCs can add the publication chairs to their readers through Form_Fields if they need them
-        assert submission.content['pdf']['readers'] == [venue_id, f'{venue_id}/Submission1/Authors']
+        # the publication chairs prepare the proceedings, so the release also adds them to the readers of the pdf;
+        # the other hidden fields stay with the PCs and the authors, as in the legacy Post Decision stage
+        assert submission.content['pdf']['readers'] == [venue_id, f'{venue_id}/Submission1/Authors', f'{venue_id}/Publication_Chairs']
+        assert submission.content['keywords']['readers'] == [venue_id, f'{venue_id}/Submission1/Authors']
 
         # the publication chairs see the accepted paper in their console
         publication_chair_client = openreview.api.OpenReviewClient(username='publicationchair@pubc.cc', password=helpers.strong_password)
