@@ -37,7 +37,7 @@ class TestSubmissionAuthorsEmail():
                     'venue_website_url': { 'value': 'https://eauth.cc/Conferences/2026' },
                     'location': { 'value': 'Online' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@eauth.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_EAUTH1'] },
                     'contact_email': { 'value': 'eauth2026.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },

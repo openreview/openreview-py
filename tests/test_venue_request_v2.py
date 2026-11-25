@@ -2138,7 +2138,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ## Ask reviewers to comment the rebuttals
         conf = openreview.helpers.get_conference(client, venue['request_form_note'].forum, setup=False)
         conf.custom_stage = openreview.stages.CustomStage(name='Rebuttal_Comment',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REBUTTALS,
+            reply_to='Rebuttal',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
@@ -2300,7 +2300,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
         venue.custom_stage = openreview.stages.CustomStage(name='Review_Revision',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            reply_to='Official_Review',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
             due_date=due_date,
@@ -2399,7 +2399,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         ## Test release of final_review_rating
         venue.custom_stage = openreview.stages.CustomStage(name='Review_Revision',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            reply_to='Official_Review',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
             due_date=due_date,
@@ -2456,7 +2456,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue_object.custom_stage = openreview.stages.CustomStage(name='Author_Review_Rating',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            reply_to='Official_Review',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
@@ -2831,7 +2831,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
         venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Revision',
-            reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+            reply_to='Meta_Review',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
             invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
@@ -4203,7 +4203,7 @@ Best,
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
         venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Rating',
-            reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+            reply_to='Meta_Review',
             source=openreview.stages.CustomStage.Source.ACCEPTED_SUBMISSIONS,
             reply_type=openreview.stages.CustomStage.ReplyType.REPLY,
             due_date=due_date,

@@ -728,7 +728,7 @@ class TestCVPRConference():
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Rating',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            reply_to='Official_Review',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
@@ -1374,7 +1374,7 @@ class TestCVPRConference():
         }
 
         venue.custom_stage = openreview.stages.CustomStage(name='Final_Revision',
-            reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+            reply_to='Meta_Review',
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
             invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],

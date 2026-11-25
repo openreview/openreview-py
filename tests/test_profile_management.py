@@ -2001,6 +2001,9 @@ computation and memory.
         direct_upload_invitation = john_client.get_invitation('openreview.net/Archive/-/Direct_Upload')
         assert direct_upload_invitation.humanVerificationRequired == { 'limit': 15, 'windowMs': 3600000 }
 
+        assert direct_upload_invitation.expdate is None
+        assert openreview_client.get_group('openreview.net/Archive').content['direct_upload_enabled']['value'] == True
+
         ## Add publications
         edit = john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -4937,6 +4940,12 @@ The OpenReview Team.
         voucher_client = helpers.create_user('voucher@umass.edu', 'Voucher', 'User', institution='umass.edu')
         assert openreview_client.get_profile('~Voucher_User1').state == 'Active Institutional'
 
+        moderated_voucher_client = helpers.create_user('moderatedvoucher@asu.edu', 'Moderatedvoucher', 'User', institution='asu.edu')
+        assert openreview_client.get_profile('~Moderatedvoucher_User1').state == 'Active Institutional'
+
+        disallowed_voucher_client = helpers.create_user('disallowedvoucher@umbc.edu', 'Disallowedvoucher', 'User', institution='umbc.edu')
+        assert openreview_client.get_profile('~Disallowedvoucher_User1').state == 'Active Institutional'
+
         def add_voucher_relation(username, name):
             ## The voucher must declare a relation to the user they vouch for
             profile = voucher_client.get_profile(voucher_client.profile.id)
@@ -4995,6 +5004,64 @@ The OpenReview Team.
 
             ## The profile is still rejected
             assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+
+            moderated_voucher_profile = moderated_voucher_client.get_profile('~Moderatedvoucher_User1')
+            moderated_voucher_profile.content.setdefault('relations', []).append({
+                'relation': 'Colleague',
+                'name': 'Vouchee User',
+                'username': '~Vouchee_User1',
+                'start': 2020,
+                'end': None
+            })
+            moderated_voucher_client.post_profile(moderated_voucher_profile)
+
+            domains_to_moderate = support_client.update_domains_to_moderate(add=['asu.edu'])
+            assert 'asu.edu' in domains_to_moderate
+            assert 'asu.edu' in support_client.get_domains_to_moderate()
+
+            with pytest.raises(openreview.OpenReviewException, match=r'you must have an institutional email in your profile'):
+                moderated_voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Moderatedvoucher_User1',
+                        profile='~Vouchee_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')) == 0
+
+            with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+                moderated_voucher_client.get_domains_to_moderate()
+
+            disallowed_voucher_profile = disallowed_voucher_client.get_profile('~Disallowedvoucher_User1')
+            disallowed_voucher_profile.content.setdefault('relations', []).append({
+                'relation': 'Colleague',
+                'name': 'Vouchee User',
+                'username': '~Vouchee_User1',
+                'start': 2020,
+                'end': None
+            })
+            disallowed_voucher_client.post_profile(disallowed_voucher_profile)
+
+            disallowed_domains = support_client.update_disallowed_domains(add=['umbc.edu'])
+            assert 'umbc.edu' in disallowed_domains
+            assert 'umbc.edu' in support_client.get_disallowed_domains()
+
+            with pytest.raises(openreview.OpenReviewException, match=r'you must have an institutional email in your profile'):
+                disallowed_voucher_client.post_tag(
+                    openreview.api.Tag(
+                        invitation='openreview.net/Support/-/Vouch',
+                        signature='~Disallowedvoucher_User1',
+                        profile='~Vouchee_User1'
+                    )
+                )
+
+            assert openreview_client.get_profile('~Vouchee_User1').state == 'Rejected'
+            assert len(openreview_client.get_tags(invitation='openreview.net/Support/-/Vouch', profile='~Vouchee_User1')) == 0
+
+            with pytest.raises(openreview.OpenReviewException, match=r'does not have permission'):
+                disallowed_voucher_client.get_disallowed_domains()
 
             ## The target profile must exist. Vouching for a non-existent profile is rejected
             ## so it does not pollute the "Vouched Profiles" list or consume the voucher's quota.
@@ -5129,6 +5196,9 @@ The OpenReview Team.
             assert openreview_client.get_profile('~Voucheee_User1').state == 'Rejected'
 
         finally:
+            support_client.update_domains_to_moderate(remove=['asu.edu'])
+            support_client.update_disallowed_domains(remove=['umbc.edu'])
+
             ## Restore moderation to its disabled state so the rest of the suite keeps auto-activating users
             config_note = openreview_client.get_notes(invitation='openreview.net/-/OpenReview_Config')[0]
             support_client.post_note_edit(
@@ -5321,3 +5391,82 @@ The OpenReview Team.
         assert 'dob' not in profile.content
         assert 'isMinor' not in profile.content
         assert 'isOver18' not in profile.content
+
+    def test_disable_direct_upload(self, openreview_client, helpers, request_page, selenium):
+
+        uploader_client = helpers.create_user('uploader@profile.org', 'Uploader', 'Archive')
+
+        remote_client = openreview.api.OpenReviewClient(baseurl='http://127.0.0.1:3001', token=openreview_client.token)
+        openreview.profile.ProfileManagement(remote_client, 'openreview.net').set_archive_invitations()
+
+        assert openreview_client.get_group('openreview.net/Archive').content['direct_upload_enabled']['value'] == False
+        assert openreview.tools.get_invitation(uploader_client, 'openreview.net/Archive/-/Direct_Upload') is None
+        invitation = openreview_client.get_invitations(id='openreview.net/Archive/-/Direct_Upload', expired=True)[0]
+        assert invitation.expdate <= openreview.tools.datetime_millis(datetime.datetime.now())
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation openreview.net/Archive/-/Direct_Upload has expired'):
+            uploader_client.post_note_edit(
+                invitation='openreview.net/Archive/-/Direct_Upload',
+                signatures=['~Uploader_Archive1'],
+                note=openreview.api.Note(
+                    pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                    content = {
+                        'title': { 'value': 'Paper uploaded to the archive' },
+                        'abstract': { 'value': 'Paper abstract' },
+                        'authors': { 'value': ['Uploader Archive'] },
+                        'authorids': { 'value': ['~Uploader_Archive1'] }
+                    },
+                    license = 'CC BY-SA 4.0'
+                )
+            )
+
+        request_page(selenium, 'http://localhost:3030/group?id=openreview.net/Archive', uploader_client, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        alert = header.find_element(By.CSS_SELECTOR, '.alert.alert-warning')
+        assert 'Direct upload of publications to the OpenReview Archive is currently disabled.' in alert.text
+        assert 'import papers that are representative of your work from DBLP or ORCID' in alert.text
+        assert alert.find_element(By.LINK_TEXT, 'profile').get_attribute('href') == 'http://localhost:3030/profile'
+        assert alert.find_element(By.LINK_TEXT, 'edit your profile').get_attribute('href') == 'http://localhost:3030/profile/edit'
+        assert 'Updating your Expertise' not in header.text
+        assert 'OpenReview Archive Direct Upload" button below' not in header.text
+        assert 'info@openreview.net' not in header.text
+        assert header.find_element(By.LINK_TEXT, 'contact us').get_attribute('href') == 'http://localhost:3030/contact'
+        assert selenium.find_elements(By.ID, 'invitation') == []
+        assert selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li') == []
+
+        openreview.profile.ProfileManagement(openreview_client, 'openreview.net').set_archive_invitations()
+
+        assert openreview_client.get_group('openreview.net/Archive').content['direct_upload_enabled']['value'] == True
+        assert openreview_client.get_invitation('openreview.net/Archive/-/Direct_Upload').expdate is None
+
+        edit = uploader_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Uploader_Archive1'],
+            note=openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper uploaded to the archive' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Uploader Archive'] },
+                    'authorids': { 'value': ['~Uploader_Archive1'] }
+                },
+                license = 'CC BY-SA 4.0'
+            )
+        )
+        assert openreview_client.get_note(edit['note']['id']).content['title']['value'] == 'Paper uploaded to the archive'
+
+        request_page(selenium, 'http://localhost:3030/group?id=openreview.net/Archive', uploader_client, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert header.find_elements(By.CLASS_NAME, 'alert') == []
+        assert 'currently disabled' not in header.text
+        assert 'OpenReview Archive Direct Upload" button below' in header.text
+        assert 'info@openreview.net' not in header.text
+        assert header.find_element(By.LINK_TEXT, 'contact us').get_attribute('href') == 'http://localhost:3030/contact'
+        assert len(selenium.find_elements(By.ID, 'invitation')) == 1
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        assert len(tabs) == 2
+        assert tabs[0].text == 'Publications'
+        assert tabs[1].text == 'Previous Publications'
+        notes = selenium.find_element(By.ID, 'publications').find_elements(By.CLASS_NAME, 'note')
+        assert len(notes) == 1
+        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper uploaded to the archive'

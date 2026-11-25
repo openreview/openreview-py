@@ -17,6 +17,7 @@ class TestReviewersOnly():
         support_group_id = super_id + '/Support'
 
         helpers.create_user('programchair@abcd.cc', 'ProgramChair', 'ABCD')
+        helpers.create_user('programchair_two@abcd.cc', 'ProgramChairTwo', 'ABCD')
         helpers.create_user('reviewer_one@abcd.cc', 'ReviewerOne', 'ABCD')
         helpers.create_user('reviewer_two@abcd.cc', 'ReviewerTwo', 'ABCD')
         helpers.create_user('reviewer_three@abcd.cc', 'ReviewerThree', 'ABCD')
@@ -35,6 +36,7 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Recruitment_Request_Reminder')
         assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Declined_Group')
         assert openreview_client.get_invitation('openreview.net/Template/-/Group_Message')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Group_Homepage')
         assert openreview_client.get_invitation('openreview.net/Template/-/Venue_Message')
         assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count')
@@ -60,7 +62,7 @@ class TestReviewersOnly():
                     'venue_website_url': { 'value': 'https://abcd.cc/Conferences/2025' },
                     'location': { 'value': 'Amherst, Massachusetts' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@abcd.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_ABCD1'] },
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
@@ -93,7 +95,11 @@ class TestReviewersOnly():
         assert len(messages) == 0        
 
         request = openreview_client.get_note(request['note']['id'])
-        assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
+        comment_invitation = openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
+        assert comment_invitation
+        # only the support group and the program chairs listed in the request form can see and post comments on it
+        assert comment_invitation.readers == ['openreview.net/Support', '~ProgramChair_ABCD1']
+        assert comment_invitation.invitees == ['openreview.net/Support', '~ProgramChair_ABCD1']
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
         assert request.domain == 'openreview.net/Support'
 
@@ -129,7 +135,7 @@ class TestReviewersOnly():
         assert request_form.content['status']['readers'] == ['openreview.net/Support']
 
         comment = openreview_client.get_note(comment_edit['note']['id'])
-        assert comment.readers == ['openreview.net/Support', 'programchair@abcd.cc']
+        assert comment.readers == ['openreview.net/Support', '~ProgramChair_ABCD1']
 
         messages = openreview_client.get_messages(subject='Comment posted to a request for service: The ABCD Conference')
         assert len(messages) == 1
@@ -179,6 +185,11 @@ class TestReviewersOnly():
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'programchair@abcd.cc'
 
+        # after deployment the PC group replaces the request form readers as readers and invitees of the comment invitation
+        comment_invitation = openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
+        assert comment_invitation.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
+        assert comment_invitation.invitees == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
+
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=1)
@@ -219,6 +230,48 @@ class TestReviewersOnly():
         venue_group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert venue_group.content['status_invitation_id']['value'] == 'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Status'
         group_content = venue_group.content
+
+        # workflow invitations declare which timeline stage they belong to so the UI can
+        # group them; the venue group stores the order of the stages.
+        assert venue_group.content['workflow_stages']['value'] == [
+            'recruitment',
+            'recruitment - Program_Committee',
+            'submission',
+            'bidding',
+            'bidding - Program_Committee',
+            'assignment',
+            'assignment - Program_Committee',
+            'reviewing',
+            'discussion',
+            'meta_review',
+            'decision',
+            'camera_ready',
+            'public_release',
+            'statistics',
+            'statistics - Program_Committee',
+        ]
+
+        expected_workflow_stage = {
+            'ABCD.cc/2025/Conference/-/Submission': 'submission',
+            'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding': 'bidding',
+            'ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing': 'reviewing',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Bid': 'bidding - Program_Committee',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Conflict': 'assignment - Program_Committee',
+            'ABCD.cc/2025/Conference/-/Official_Review': 'reviewing',
+            'ABCD.cc/2025/Conference/-/Official_Comment': 'discussion',
+            'ABCD.cc/2025/Conference/-/Decision': 'decision',
+            'ABCD.cc/2025/Conference/-/Decision_Upload': 'decision',
+            'ABCD.cc/2025/Conference/-/Accept_Submission_Change_After_Decision': 'public_release',
+            'ABCD.cc/2025/Conference/-/Reject_Submission_Change_After_Decision': 'decision',
+            'ABCD.cc/2025/Conference/-/Withdrawal': 'reviewing',
+            'ABCD.cc/2025/Conference/-/Desk_Rejection': 'reviewing',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request': 'recruitment - Program_Committee',
+            'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response': 'recruitment - Program_Committee',
+        }
+        for invitation_id, stage in expected_workflow_stage.items():
+            invitation = openreview_client.get_invitation(invitation_id)
+            assert invitation.content['workflow_stage_name']['value'] == stage, \
+                f'{invitation_id} expected stage {stage}, got {invitation.content.get("workflow_stage_name")}'
 
         # re-deploy to mimic deployment error and re-deployment
         # deploy the venue
@@ -264,7 +317,7 @@ class TestReviewersOnly():
         # assert group.domain == 'ABCD.cc'
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs')
-        assert group.members == ['programchair@abcd.cc']
+        assert group.members == ['~ProgramChair_ABCD1']
         assert group.domain == 'ABCD.cc/2025/Conference'
         assert 'reviewers_invite_assignment_id' in group.web
 
@@ -369,6 +422,7 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Authors/Accepted/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Members')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Homepage')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Chairs/-/Members')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Aggregate_Score')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Proposed_Assignment')
@@ -609,6 +663,110 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
         assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['submission_authors', 'program_chairs']
 
+    def test_custom_stage_workflow_timeline(self, openreview_client, helpers):
+
+        # Reconstruct the deployed venue to add custom stages. These are used to test how the
+        # timeline groups invitations by `workflow_stage_name`: one custom stage defines a
+        # brand new stage and another reuses an existing default stage.
+        venue = openreview.venue.Venue(openreview_client, 'ABCD.cc/2025/Conference', support_user='openreview.net/Support')
+        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/Conference_Review_Workflow'
+        venue.reviewer_roles = ['Program_Committee']
+        venue.reviewers_name = 'Program_Committee'
+        venue.use_area_chairs = False
+        venue.use_senior_area_chairs = False
+        venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, unified_authors=True)
+
+        now = datetime.datetime.now()
+        custom_stage_content = {
+            'comment': {
+                'order': 1,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 5000,
+                        'input': 'textarea'
+                    }
+                }
+            }
+        }
+
+        # Custom stage that defines a brand new timeline stage ('ethics_review')
+        venue.custom_stage = openreview.stages.CustomStage(
+            name='Ethics_Review',
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            start_date=now,
+            due_date=now + datetime.timedelta(days=5),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS, openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            content=custom_stage_content,
+            workflow_stage_name='ethics_review',
+            workflow_stage_insert_after='reviewing'
+        )
+        venue.create_custom_stage()
+
+        ethics_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Ethics_Review')
+        assert ethics_invitation.content['workflow_stage_name']['value'] == 'ethics_review'
+
+        # the new stage is inserted into the timeline order right after 'reviewing'
+        domain = openreview_client.get_group('ABCD.cc/2025/Conference')
+        assert domain.content['workflow_stages']['value'] == [
+            'recruitment',
+            'recruitment - Program_Committee',
+            'submission',
+            'bidding',
+            'bidding - Program_Committee',
+            'assignment',
+            'assignment - Program_Committee',
+            'reviewing',
+            'ethics_review',
+            'discussion',
+            'meta_review',
+            'decision',
+            'camera_ready',
+            'public_release',
+            'statistics',
+            'statistics - Program_Committee',
+        ]
+
+        # Custom stage that reuses an existing timeline stage ('reviewing')
+        venue.custom_stage = openreview.stages.CustomStage(
+            name='Reviewer_Checklist',
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            start_date=now,
+            due_date=now + datetime.timedelta(days=5),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS, openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            content=custom_stage_content,
+            workflow_stage_name='reviewing'
+        )
+        venue.create_custom_stage()
+
+        checklist_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Checklist')
+        assert checklist_invitation.content['workflow_stage_name']['value'] == 'reviewing'
+
+        # reusing an existing stage does not change the timeline order
+        domain = openreview_client.get_group('ABCD.cc/2025/Conference')
+        assert domain.content['workflow_stages']['value'] == [
+            'recruitment',
+            'recruitment - Program_Committee',
+            'submission',
+            'bidding',
+            'bidding - Program_Committee',
+            'assignment',
+            'assignment - Program_Committee',
+            'reviewing',
+            'ethics_review',
+            'discussion',
+            'meta_review',
+            'decision',
+            'camera_ready',
+            'public_release',
+            'statistics',
+            'statistics - Program_Committee',
+        ]
+
     def test_deployment_with_same_venue_id(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
@@ -625,7 +783,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                     'venue_website_url': { 'value': 'https://abcd.cc/Conferences/2025' },
                     'location': { 'value': 'Amherst, Massachusetts' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@abcd.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_ABCD1'] },
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
@@ -685,7 +843,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             signatures=['ABCD.cc/2025/Conference'],
             group=openreview.api.Group(
                 members={
-                    'remove': ['new_pc@abcd.cc', 'programchair@abcd.cc']
+                    'remove': ['new_pc@abcd.cc', '~ProgramChair_ABCD1']
                 }
             ),
         )
@@ -698,7 +856,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             signatures=['ABCD.cc/2025/Conference'],
             group=openreview.api.Group(
                 members={
-                    'append': ['programchair@abcd.cc']
+                    'append': ['~ProgramChair_ABCD1']
                 }
             ),
         )        
@@ -2142,6 +2300,60 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 '''
         assert messages[0]['content']['replyTo'] == 'abcd2025.programchairs@gmail.com'
 
+    def test_retrigger_reviews_notification_with_same_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # paper #1 already received a reviews notification earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
+
+        # retrigger the reviews notification
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=4)
+
+        # emails should not be sent again since the subject matches the subject of the email sent earlier
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
+
+        # only messages sent with this invitation are returned when filtering by invitation
+        messages = openreview_client.get_all_messages(invitation='ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
+        subjects = [message['content']['subject'] for message in messages]
+        assert '[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available' in subjects
+        assert all(subject.startswith('[ABCD 2025] The reviews for your submission #') for subject in subjects)
+
+    def test_retrigger_reviews_notification_new_subject(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        # change the reviews email subject
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Templates',
+            content={
+                'email_subject': { 'value': '[ABCD 2025] Updated reviews for your submission #{submission_number}, titled "{submission_title}"' },
+                'email_content': { 'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the reviews for your submission #{submission_number}, "{submission_title}", to ABCD 2025 have been updated.\n\n{formatted_reviews}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}' },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=5)
+
+        # the email now gets sent since the subject no longer matches a previously sent email
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] Updated reviews for your submission #1, titled \"Paper title 1\"')
+        assert messages and len(messages) == 1
+        assert 'have been updated' in messages[0]['content']['text']
+        assert '**review**: This is a good paper' in messages[0]['content']['text']
+
+        # the email sent earlier with the previous subject is not sent again
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
+
     def test_rebuttal_stage(self, openreview_client, test_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
@@ -2249,6 +2461,55 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
 
+    def test_rebuttal_custom_stage(self, openreview_client, helpers):
+
+        # Rebuild the venue from its domain group, as PCs and support do for workflow venues. get_venue
+        # does not reconstruct the review, meta-review or rebuttal stage objects, so a custom stage that
+        # replies to rebuttals must name the rebuttal invitation instead of relying on venue stage state.
+        venue = openreview.venue.helpers.get_venue(openreview_client, 'ABCD.cc/2025/Conference', support_user='openreview.net/Support')
+
+        now = datetime.datetime.now()
+        venue.custom_stage = openreview.stages.CustomStage(
+            name='Rebuttal_Acknowledgement',
+            reply_to='Author_Rebuttal',
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            start_date=now,
+            due_date=now + datetime.timedelta(days=3),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED],
+            readers=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS, openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.AUTHORS],
+            content={
+                'acknowledgement': {
+                    'order': 1,
+                    'description': 'I acknowledge I read the rebuttal.',
+                    'value': {
+                        'param': {
+                            'type': 'boolean',
+                            'enum': [{ 'value': True, 'description': 'Yes, I acknowledge I read the rebuttal.' }],
+                            'input': 'checkbox'
+                        }
+                    }
+                }
+            }
+        )
+        venue.create_custom_stage()
+
+        # The super invitation sources its child invitations from the Author_Rebuttal replies
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Rebuttal_Acknowledgement')
+        assert invitation.content['source']['value']['reply_to'] == 'Author_Rebuttal'
+
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Rebuttal_Acknowledgement-0-1', count=1)
+
+        # One child invitation per posted rebuttal: test_rebuttal_stage posted a single rebuttal on Submission1
+        rebuttals = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Author_Rebuttal')
+        assert len(rebuttals) == 1
+
+        invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Rebuttal_Acknowledgement')
+        assert len(invitations) == 1
+
+        child_invitation = openreview_client.get_invitation(f'ABCD.cc/2025/Conference/Submission1/Author_Rebuttal{rebuttals[0].number}/-/Rebuttal_Acknowledgement')
+        assert child_invitation.edit['note']['replyto'] == rebuttals[0].id
+        assert child_invitation.edit['note']['forum'] == rebuttals[0].forum
+
     def test_decision_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
@@ -2261,9 +2522,15 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Article_Endorsement')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Article_Endorsement').get_content_value('workflow_stage_name') == 'public_release'
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
+
+        # the statistics invitations are grouped under the 'statistics' timeline stage
+        for statistics_invitation_name in ['Review_Count', 'Review_Assignment_Count', 'Review_Days_Late_Sum']:
+            statistics_invitation = pc_client.get_invitation(f'ABCD.cc/2025/Conference/Program_Committee/-/{statistics_invitation_name}')
+            assert statistics_invitation.get_content_value('workflow_stage_name') == 'statistics - Program_Committee'
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept']
 
@@ -2802,6 +3069,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert 'authors' in inv.edit['note']['content']
         assert 'authorids' not in inv.edit['note']['content']
         assert inv.content['decision_option']['value'] == 'Poster'
+        assert inv.content['workflow_stage_name']['value'] == 'public_release'
         assert inv.content['source']['value'] == {
             'venueid': ['ABCD.cc/2025/Conference/Submission', 'ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Rejected_Submission'],
             'decision_options': ['Poster']
@@ -2857,6 +3125,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert 'authors' in inv.edit['note']['content']
         assert 'authorids' not in inv.edit['note']['content']
         assert inv.content['decision_option']['value'] == 'Revision Needed'
+        assert inv.content['workflow_stage_name']['value'] == 'decision'
         assert inv.content['source']['value'] == {
             'venueid': ['ABCD.cc/2025/Conference/Submission', 'ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Rejected_Submission'],
             'decision_options': ['Revision Needed']

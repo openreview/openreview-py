@@ -138,7 +138,7 @@ class TestARRCommitmentWorkflow():
                     'venue_website_url': { 'value': 'https://abcd.cc/2026' },
                     'location': { 'value': 'Virtual' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=10)) },
-                    'program_chair_emails': { 'value': ['commitment_pc@abcd.cc'] },
+                    'program_chair_emails': { 'value': ['~CommitmentPC_ABCD1'] },
                     'contact_email': { 'value': 'commitment_pc@abcd.cc' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(start_date) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
@@ -218,6 +218,11 @@ class TestARRCommitmentWorkflow():
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision_Upload')
         assert openreview_client.get_invitation(f'{venue_id}/-/Decision_Release')
         assert openreview_client.get_invitation(f'{venue_id}/-/Submission_Change_After_Deadline')
+
+        # release steps are grouped under their timeline stage
+        assert openreview_client.get_invitation(f'{venue_id}/-/Decision_Release').content['workflow_stage_name']['value'] == 'decision'
+        assert openreview_client.get_invitation(f'{venue_id}/-/Accept_Submission_Change_After_Decision').content['workflow_stage_name']['value'] == 'public_release'
+        assert openreview_client.get_invitation(f'{venue_id}/-/Reject_Submission_Change_After_Decision').content['workflow_stage_name']['value'] == 'decision'
         assert openreview_client.get_invitation(f'{venue_id}/Area_Chairs/-/Assignment')
         assert openreview_client.get_invitation(f'{venue_id}/Area_Chairs/-/Submission_Group')
 
@@ -436,7 +441,7 @@ class TestARRCommitmentWorkflow():
                     'venue_website_url': { 'value': 'https://efgh.cc/2026' },
                     'location': { 'value': 'Virtual' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=10)) },
-                    'program_chair_emails': { 'value': ['commitment_pc2@efgh.cc'] },
+                    'program_chair_emails': { 'value': ['~CommitmentPCTwo_EFGH1'] },
                     'contact_email': { 'value': 'commitment_pc2@efgh.cc' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(days=1)) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=2)) },
