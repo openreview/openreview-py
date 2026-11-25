@@ -450,6 +450,19 @@ class TestARRCommitmentWorkflow():
         now = datetime.datetime.now()
         due_ms = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
+        # decision release can not be disabled while camera-ready is enabled
+        with pytest.raises(openreview.OpenReviewException, match=r'Camera Ready Revision must be disabled before disabling Decision Release'):
+            pc_client.post_invitation_edit(
+                invitations=f'{venue_id}/-/Edit',
+                signatures=[venue_id],
+                invitation=Invitation(
+                    id=f'{venue_id}/-/Decision_Release',
+                    signatures=[venue_id],
+                    ddate=openreview.tools.datetime_millis(now)
+                )
+            )
+        assert not openreview_client.get_invitation(f'{venue_id}/-/Decision_Release').ddate
+
         # camera-ready can not open before decisions are released
         with pytest.raises(openreview.OpenReviewException, match=r'Camera Ready Revision activation date must be after the Decision Release activation date'):
             pc_client.post_invitation_edit(

@@ -2717,6 +2717,19 @@ Please note that responding to this email will direct your reply to abcd2025.pro
                 }
             )
 
+        # decision release can not be disabled while camera-ready is enabled
+        with pytest.raises(openreview.OpenReviewException, match=r'Camera Ready Revision must be disabled before disabling Decision Release'):
+            pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Edit',
+                signatures=['ABCD.cc/2025/Conference'],
+                invitation=openreview.api.Invitation(
+                    id='ABCD.cc/2025/Conference/-/Decision_Release/Dates',
+                    signatures=['ABCD.cc/2025/Conference'],
+                    ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+                )
+            )
+        assert not openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Release/Dates').ddate
+
         # release decisions
         now = datetime.datetime.now()
         pc_client.post_invitation_edit(

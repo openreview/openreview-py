@@ -283,8 +283,9 @@ class InvitationBuilder(object):
     def set_meta_invitation(self):
         venue_id=self.venue_id
         meta_invitation = openreview.tools.get_invitation(self.client, self.venue.get_meta_invitation_id())
+        preprocess = self.get_process_content('../workflows/workflow_process/disable_decision_release_preprocess.js') if self.venue.is_template_related_workflow() else None
 
-        if meta_invitation is None or self._should_update_meta_invitation(meta_invitation):
+        if meta_invitation is None or self._should_update_meta_invitation(meta_invitation) or meta_invitation.preprocess != preprocess:
             self.client.post_invitation_edit(invitations=None,
                 readers=[venue_id],
                 writers=[venue_id],
@@ -301,6 +302,7 @@ class InvitationBuilder(object):
                             'value': self.get_process_content('process/group_edit_process.py')
                         }
                     },
+                    preprocess=preprocess,
                     edit=True
                 )
             )
