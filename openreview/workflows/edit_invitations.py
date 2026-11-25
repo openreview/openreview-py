@@ -2055,6 +2055,95 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
+    def set_edit_payment_amount_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+
+        invitation_id = super_invitation_id + '/Amount'
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'amount': {
+                        'description': 'Full fee per submission, in the minor unit of the currency: 2000 is 20.00 USD. A submission whose authors all list institutions in countries with a lower fee pays the highest of those fees instead. Fees that are already paid or waived, and payments already in progress, keep the amount they were started with.',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'minimum': 1
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'amount': {
+                            'value': '${4/content/amount/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_payment_country_fees_invitation(self, super_invitation_id, support_group_id):
+
+        venue_id = self.venue_id
+
+        invitation_id = super_invitation_id + '/Country_Fees'
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id, support_group_id],
+            signatures = [venue_id],
+            readers = [venue_id, support_group_id],
+            writers = [venue_id],
+            preprocess = self.get_process_content('workflow_process/edit_submission_fee_country_fees_pre_process.py'),
+            edit = {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs'), 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [venue_id, support_group_id],
+                'writers': [venue_id],
+                'content': {
+                    'country_fees': {
+                        'description': 'Fees by country, from ISO 3166-1 alpha-2 codes to fees from 0 to the full amount, in the minor unit of the currency, for example {"ET": 0, "IN": 1000}. A submission whose authors all list institutions, all in countries of this table, pays the highest of those countries\' fees, and any other submission pays the full amount. Enter {"delete": true} to remove the table, so every submission pays the full amount. Fees that are already paid or waived, and payments already in progress, keep the amount they were started with.',
+                        'value': {
+                            'param': {
+                                'type': 'json'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'country_fees': {
+                            'value': '${4/content/country_fees/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
     def set_edit_track_invitation(self, group_id, track_options=[]):
 
         venue_id = self.venue_id
