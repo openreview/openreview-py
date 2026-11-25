@@ -1133,6 +1133,11 @@ For more details, please check the following links:
             groupby='id'
         )) == 6
 
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Conflict').date_processes[0]['timeout'] == openreview.tools.MAX_PROCESS_TIMEOUT
+        assert openreview_client.get_invitation('ICLR.cc/2026/Conference/Reviewers/-/Affinity_Score').date_processes[0]['timeout'] == openreview.tools.MAX_PROCESS_TIMEOUT
+        for invitation_id in ['ICLR.cc/2026/Conference/-/Withdrawal', 'ICLR.cc/2026/Conference/Reviewers/-/Submission_Group']:
+            assert not any('timeout' in date_process for date_process in openreview_client.get_invitation(invitation_id).date_processes)
+
     def test_bidding_stages(self, client, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@iclr.cc', password=helpers.strong_password)

@@ -52,6 +52,8 @@ DEFAULT_HUMAN_VERIFICATION = { 'limit': 15, 'windowMs': 3600000 }
 # one click per paper, so a single legitimate session posts far more than a submission does
 DEFAULT_EDGE_TAG_HUMAN_VERIFICATION = { 'limit': 100, 'windowMs': 3600000 }
 
+MAX_PROCESS_TIMEOUT = 86400000
+
 def _identify_environment(baseurl):
     """Return 'dev', 'prod', or 'local' based on baseurl."""
     if any(url in baseurl for url in [DEV_API_V1, DEV_API_V2]):
