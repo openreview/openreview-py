@@ -10,8 +10,11 @@ const roleMap = {
   [seniorAreaChairsName]: 'senior_area_chairs'
 };
 
+// the bid invitation stores the score and conflict ids of its own group, since a role split into
+// several groups (e.g. one per track) is not in the domain; older bid invitations fall back to the domain
 const internalRole = roleMap[committeeName]
-const affinityScoreId = domain.content[`${internalRole}_affinity_score_id`]?.value
+const affinityScoreId = entity.content.affinity_score_id?.value || domain.content[`${internalRole}_affinity_score_id`]?.value
+const conflictInvitationId = entity.content.conflict_id?.value || domain.content[`${internalRole}_conflict_id`]?.value
 
 return {
   component: 'BidConsole',
@@ -36,7 +39,7 @@ ${affinityScoreId ? '- Papers are sorted based on keyword similarity with the pa
     venueId: domain.id,
     submissionVenueId: domain.content.submission_venue_id?.value,
     scoreIds: affinityScoreId ? [affinityScoreId] : [],
-    conflictInvitationId: domain.content[`${internalRole}_conflict_id`]?.value,
+    conflictInvitationId,
     subjectAreas: domain.content.subject_areas?.value
   }
 }
