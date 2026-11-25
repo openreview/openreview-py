@@ -46,9 +46,17 @@ def process(client, edit, invitation):
 
     if desk_rejection_approval_note.content['approval']['value'] == 'I don\'t approve the AE\'s decision. Submission should be appropriate for review.':
 
+        review_approval_note = client.get_note(edit.note.replyto)
+        content = {
+            'under_review': { 'value': 'Appropriate for Review' }
+        }
+        for field, definition in journal.get_review_approval_additional_fields().items():
+            if (field != 'under_review'
+                    and definition
+                    and not (isinstance(definition, dict) and definition.get('delete'))
+                    and field in review_approval_note.content):
+                content[field] = review_approval_note.content[field]
+
         client.post_note_edit(invitation= journal.get_review_approval_id(submission.number),
                                     signatures=[journal.get_editors_in_chief_id()],
-                                    note=openreview.api.Note(content={
-                                        'under_review': { 'value': 'Appropriate for Review' }
-                                    }))        
-
+                                    note=openreview.api.Note(content=content))

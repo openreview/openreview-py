@@ -266,8 +266,7 @@ class TestRLJJournal():
                                         'param': {
                                             'type': 'string',
                                             'enum': ['Yes', 'No'],
-                                            'input': 'radio',
-                                            'optional': True
+                                            'input': 'radio'
                                         }
                                     }
                                 }
@@ -557,11 +556,31 @@ class TestRLJJournal():
         under_review_note = mateo_client.post_note_edit(invitation= 'RLJ/Paper1/-/Review_Approval',
                                     signatures=[mateo_paper1_anon_group.id],
                                     note=Note(content={
-                                        'under_review': { 'value': 'Appropriate for Review' },
+                                        'under_review': { 'value': 'Desk Reject' },
                                         'scope_check': { 'value': 'Yes' }
                                     }))
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        assert openreview_client.get_invitation('RLJ/Paper1/-/Desk_Rejection_Approval')
+        desk_rejection_approval = eic_client.post_note_edit(invitation='RLJ/Paper1/-/Desk_Rejection_Approval',
+            signatures=['RLJ/Editors_In_Chief'],
+            note=Note(
+                forum=note_id_1,
+                replyto=under_review_note['note']['id'],
+                content={
+                    'approval': { 'value': 'I don\'t approve the AE\'s decision. Submission should be appropriate for review.' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_approval['id'])
+
+        review_approval_notes = openreview_client.get_notes(invitation='RLJ/Paper1/-/Review_Approval', signature='RLJ/Editors_In_Chief')
+        review_approval_edits = openreview_client.get_note_edits(review_approval_notes[0].id)
+        review_approval_edit = [edit for edit in review_approval_edits if edit.invitation == 'RLJ/Paper1/-/Review_Approval'][0]
+        helpers.await_queue_edit(openreview_client, edit_id=review_approval_edit.id)
+
+        review_approval_note = openreview_client.get_note(review_approval_notes[0].id)
+        assert review_approval_note.content['scope_check']['value'] == 'Yes'
 
         edits = openreview_client.get_note_edits(note_id_1, invitation='RLJ/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
@@ -876,3 +895,14 @@ class TestRLJJournal():
 
         with pytest.raises(ValueError):
             journal.invitation_builder.set_review_approval_invitation()
+
+    @pytest.mark.parametrize('field', ['under_review', 'comment'])
+    def test_review_approval_notification_fields_reject_reader_overrides(self, journal, field):
+        original_fields = journal.settings['review_approval_additional_fields']
+        journal.settings['review_approval_additional_fields'] = {field: {'readers': ['RLJ']}}
+
+        try:
+            with pytest.raises(ValueError, match='field-level readers'):
+                journal.invitation_builder.set_review_approval_invitation()
+        finally:
+            journal.settings['review_approval_additional_fields'] = original_fields

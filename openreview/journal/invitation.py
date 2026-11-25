@@ -2842,6 +2842,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_review_approval_additional_fields():
             for key, value in self.journal.get_review_approval_additional_fields().items():
+                if key in ['under_review', 'comment'] and isinstance(value, dict) and 'readers' in value:
+                    raise ValueError(f'The {key} field cannot have field-level readers because it is included in review approval notifications.')
+
                 if key == 'under_review':
                     if not isinstance(value, dict) or 'delete' in value:
                         raise ValueError('The under_review field cannot be deleted from review_approval_additional_fields.')
