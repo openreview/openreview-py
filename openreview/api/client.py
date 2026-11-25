@@ -3498,15 +3498,13 @@ class OpenReviewClient(object):
             }
         }
 
+        dataset = {}
         if weight:
-            expertise_request['dataset'] = {
-                'weightSpecification': weight
-            }
-        
+            dataset['weightSpecification'] = weight
         if top_recent_pubs:
-            expertise_request['dataset'] = {
-                'topRecentPubs': top_recent_pubs
-            }
+            dataset['topRecentPubs'] = top_recent_pubs
+        if dataset:
+            expertise_request['dataset'] = dataset
 
         if percentile_selection:
             expertise_request['model']['percentileSelect'] = percentile_selection
