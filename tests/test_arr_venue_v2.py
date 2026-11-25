@@ -3061,7 +3061,6 @@ Abstract: This is an abstract 1''' in messages[0]['content']['text']
             ]
             for number in (2, 4, 6)
         }
-        assert 'service_contributor' in hide_fields_from_public
         assert 'country_of_origin' in hide_fields_from_public
         for index in (1, 3, 5):
             submission = submissions[index]
@@ -3072,6 +3071,10 @@ Abstract: This is an abstract 1''' in messages[0]['content']['text']
                 if field in submission.content:
                     assert submission.content[field]['readers'] == public_field_readers[submission.number], field
         assert submissions[1].content['TLDR']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['service_contributor']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            'aclweb.org/ACL/ARR/2023/August/Submission2/Authors'
+        ]
         assert submissions[1].content['preprint']['readers'] == public_field_readers[2]
         assert submissions[1].content['existing_preprints']['readers'] == public_field_readers[2]
         assert submissions[1].content['preferred_venue']['readers'] == public_field_readers[2]
