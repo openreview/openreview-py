@@ -46,7 +46,7 @@ class TestSimpleDualAnonymous():
                     'venue_website_url': { 'value': 'https://iclr.cc/Conferences/2026' },
                     'location': { 'value': 'Minnetonka, Minnesota' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['programchair@iclr.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_ICLROne1'] },
                     'contact_email': { 'value': 'iclr2026.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },

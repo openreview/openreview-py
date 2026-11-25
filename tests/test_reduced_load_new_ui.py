@@ -31,7 +31,7 @@ class TestReducedLoadNewUI():
                     'venue_website_url': { 'value': 'https://rl.cc/Conferences/2025' },
                     'location': { 'value': 'Amherst, Massachusetts' },
                     'venue_start_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(weeks=52)) },
-                    'program_chair_emails': { 'value': ['pc_rl@mail.cc'] },
+                    'program_chair_emails': { 'value': ['~ProgramChair_RL1'] },
                     'contact_email': { 'value': 'pc_rl@mail.cc' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },

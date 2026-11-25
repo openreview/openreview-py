@@ -373,12 +373,20 @@ def process(client, edit, invitation):
 
     baseurl = openreview.tools.get_site_url(client)
 
-    # edit Comment invitation to have PC group as readers
+    # edit Comment invitation to have PC group as readers and invitees
     client.post_invitation_edit(
         invitations=f'{support_user}/-/Edit',
         signatures=[support_user],
         invitation=openreview.api.Invitation(
             id=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment',
+            readers=[
+                venue.get_program_chairs_id(),
+                support_user
+            ],
+            invitees=[
+                venue.get_program_chairs_id(),
+                support_user
+            ],
             edit = {
                 'readers': [
                     venue.get_program_chairs_id(),

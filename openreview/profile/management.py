@@ -1,4 +1,5 @@
 import os
+import datetime
 import openreview
 from openreview.stages import *
 from .arxiv_subject_areas import *
@@ -1821,9 +1822,12 @@ return {
                     )
                 )
 
-    def set_archive_invitations(self):
+    def set_archive_invitations(self, direct_upload_enabled=None):
 
         archive_group_id = f'{self.super_user}/Archive'
+
+        if direct_upload_enabled is None:
+            direct_upload_enabled = 'localhost' in self.client.baseurl
 
         self.client.post_invitation_edit(invitations=None,
             readers=[archive_group_id],
@@ -1842,7 +1846,10 @@ return {
             readers = ['everyone'],
             writers = [archive_group_id],
             signatures = [self.super_user],
-            signatories = [archive_group_id]
+            signatories = [archive_group_id],
+            content = {
+                'direct_upload_enabled': { 'value': direct_upload_enabled }
+            }
         )
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/archiveWebfield.js'), 'r') as f:
@@ -1863,6 +1870,7 @@ return {
                 writers=[self.support_group_id],
                 signatures=[archive_group_id],
                 invitees=['~'],
+                expdate={ 'delete': True } if direct_upload_enabled else openreview.tools.datetime_millis(datetime.datetime.now()),
                 humanVerificationRequired=openreview.tools.DEFAULT_HUMAN_VERIFICATION,
                 edit={
                     'readers': ['everyone'],
