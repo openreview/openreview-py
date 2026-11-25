@@ -186,12 +186,21 @@ def process(client, invitation):
             final_readers = [reader.replace('{number}', str(childNote.number)) for reader in final_readers]
             if '{signatures}' in final_readers:
                 final_readers.remove('{signatures}')
+            # the review author reader is resolved when the review is posted, it is moved after the ethics readers
+            # so the readers keep the same order as when it was added to the note readers. This script is stored as
+            # invitation content, where the API resolves every variable, so the reader is built when the script runs
+            signatures_reader = '$' + '{3/signatures}'
+            include_signatures = signatures_reader in final_readers
+            if include_signatures:
+                final_readers.remove(signatures_reader)
             if childNote.content.get('flagged_for_ethics_review', {}).get('value', False):
                 if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
                     if not is_meta_review_invitation:
                         final_readers.append(f'{venue_id}/{submission_name}{childNote.number}/{ethics_reviewers_name}')
                     if release_to_ethics_chairs:
                         final_readers.append(ethics_chairs_id)
+            if include_signatures:
+                final_readers.append(signatures_reader)
             content['noteReaders'] = { 'value': final_readers }
 
         paper_invitation_edit = client.post_invitation_edit(invitations=invitation.id,

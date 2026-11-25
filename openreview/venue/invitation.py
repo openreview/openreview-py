@@ -877,20 +877,34 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.content['source']['value']['content'] = review_stage.source_submissions_query
 
         if self.venue.ethics_review_stage:
+            # only the workflow venues keep the review author in the per submission readers, the legacy venues
+            # keep the regex that update_review_invitations and update_meta_review_invitations post, so re-running
+            # the ethics review stage doesn't change the invitation and run the stage again for every submission
+            note_readers_regex = f'{venue_id}/.*|everyone'
+            if self.venue.is_template_related_workflow():
+                note_readers_regex += '|\\$\\{3/signatures\\}'
             invitation.edit['content']['noteReaders'] = {
                 'value': {
                     'param': {
-                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
+                        'type': 'string[]', 'regex': note_readers_regex
                     }
                 }
             }
-            invitation.content['review_readers'] = {
-                'value': review_stage.get_readers(self.venue, '{number}')
-            }
-            note_readers = ['${5/content/noteReaders/value}']
-            if review_stage.release_to_reviewers in [openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE, openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED] and not review_stage.public:
-                note_readers.append('${3/signatures}')
-            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
+            if self.venue.is_template_related_workflow():
+                # the review author is kept in the per submission readers, so the PCs can add or remove it by
+                # editing the review readers without changing the note readers, which would run the stage again
+                invitation.content['review_readers'] = {
+                    'value': review_stage.get_readers(self.venue, '{number}', '${3/signatures}')
+                }
+                invitation.edit['invitation']['edit']['note']['readers'] = ['${5/content/noteReaders/value}']
+            else:
+                invitation.content['review_readers'] = {
+                    'value': review_stage.get_readers(self.venue, '{number}')
+                }
+                note_readers = ['${5/content/noteReaders/value}']
+                if review_stage.release_to_reviewers in [openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE, openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED] and not review_stage.public:
+                    note_readers.append('${3/signatures}')
+                invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         if self.venue.is_template_related_workflow():
             invitation.content['users_to_notify'] = {
@@ -1376,20 +1390,36 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
         if self.venue.ethics_review_stage:
+            # only the workflow venues keep the review author in the per submission readers, the legacy venues
+            # keep the regex that update_review_invitations and update_meta_review_invitations post, so re-running
+            # the ethics review stage doesn't change the invitation and run the stage again for every submission
+            note_readers_regex = f'{venue_id}/.*|everyone'
+            if self.venue.is_template_related_workflow():
+                note_readers_regex += '|\\$\\{3/signatures\\}'
             invitation.edit['content']['noteReaders'] = {
                 'value': {
                     'param': {
-                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
+                        'type': 'string[]', 'regex': note_readers_regex
                     }
                 }
             }
-            invitation.content['review_readers'] = {
-                'value': meta_review_stage.get_readers(self.venue, '{number}')
-            }
-            note_readers = ['${5/content/noteReaders/value}']
-            if meta_review_stage.release_to_reviewers in [openreview.stages.MetaReviewStage.Readers.REVIEWERS_SUBMITTED] and not meta_review_stage.public:
-                note_readers.append('${3/signatures}')
-            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
+            meta_review_readers = meta_review_stage.get_readers(self.venue, '{number}')
+            add_signatures = meta_review_stage.release_to_reviewers in [openreview.stages.MetaReviewStage.Readers.REVIEWERS_SUBMITTED] and not meta_review_stage.public
+            if self.venue.is_template_related_workflow():
+                # the meta review author is kept in the per submission readers, so the PCs can add or remove it by
+                # editing the meta review readers without changing the note readers, which would run the stage again
+                invitation.content['review_readers'] = {
+                    'value': meta_review_readers + (['${3/signatures}'] if add_signatures else [])
+                }
+                invitation.edit['invitation']['edit']['note']['readers'] = ['${5/content/noteReaders/value}']
+            else:
+                invitation.content['review_readers'] = {
+                    'value': meta_review_readers
+                }
+                note_readers = ['${5/content/noteReaders/value}']
+                if add_signatures:
+                    note_readers.append('${3/signatures}')
+                invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         if self.venue.is_template_related_workflow():
             invitation.description = 'Configure the contents of the meta review form (form fields can be added or removed), who can see the meta reviews, who should be notified when a new meta review is posted, and set the date/time when the meta reviewing form is available to area chairs, when meta reviews are due, and when the meta reviewing form is no longer available to area chairs.'
@@ -3544,6 +3574,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 },
                 'reviewers_anon_name': {
                     'value': venue.anon_ethics_reviewers_name()
+                },
+                'committee_role': {
+                    'value': venue.get_standard_committee_role(committee_id=venue.get_ethics_reviewers_id())
                 }
             }
 
@@ -4217,7 +4250,16 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
         )
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'This step creates an Ethics Reviewers group for each submission flagged for ethics review, when the submission is flagged. Here configure the Deanonymizers which will determine which groups can see the Ethics Reviewers\' true identities.'
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id, include_ethics=True)
+            edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+
         return invitation
 
     def set_ethics_review_invitation(self):
@@ -4286,8 +4328,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                                 'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in ethics_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
-                        'readers': ethics_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),
-                        'nonreaders': ethics_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
+                        'readers': ['${2/note/readers}'],
+                        'nonreaders': ['${2/note/nonreaders}'],
                         'writers': [venue_id],
                         'note': {
                             'id': {
@@ -4351,8 +4393,17 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if ethics_review_expdate:
             invitation.edit['invitation']['expdate'] = ethics_review_expdate
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'Configure the contents of the ethics review form (form fields can be added or removed), who can see the ethics reviews, and set the date/time when the ethics review form is available to ethics reviewers, when ethics reviews are due, and when the ethics review form is no longer available to ethics reviewers. The ethics review form is only created for the submissions flagged for ethics review.'
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_content_invitation(ethics_review_invitation_id)
+            edit_invitations_builder.set_edit_reply_readers_invitation(ethics_review_invitation_id, include_ethics=True)
+            edit_invitations_builder.set_edit_dates_invitation(ethics_review_invitation_id)
+
         return invitation
 
     def set_ethics_stage_invitation(self):

@@ -60,15 +60,18 @@ def process(client, invitation):
         )
 
         #update change before reviewing cdate
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=f'{venue_id}/-/Submission_Change_Before_Reviewing',
-                cdate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes=30)),
-                signatures=[venue_id]
+        # ethics reviewers get access to a submission when it is flagged, and running this invitation
+        # replaces the submission readers, which would remove the ethics readers of the flagged submissions
+        if committee_id != domain.get_content_value('ethics_reviewers_id'):
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=f'{venue_id}/-/Submission_Change_Before_Reviewing',
+                    cdate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes=30)),
+                    signatures=[venue_id]
+                )
             )
-        )
     except Exception as e:
         print(e)
         # edit assignment configuration and set status as "Deployment Error"
