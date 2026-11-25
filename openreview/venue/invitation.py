@@ -123,17 +123,17 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
 
-        ## The date process almost every stage invitation runs: re-stamp the sub-invitations when
-        ## the stage's cdate is reached and again shortly after any edit to the stage itself. Shared
-        ## by reference across invitations, so it must never be mutated in place.
-        self.invitation_edit_date_process = {
+    @property
+    def invitation_edit_date_process(self):
+        return {
             'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
             'script': self.invitation_edit_process,
             'timeout': tools.MAX_PROCESS_TIMEOUT
         }
 
-        ## Same thing for the invitations that rebuild groups instead of invitations.
-        self.group_edit_date_process = {
+    @property
+    def group_edit_date_process(self):
+        return {
             'dates': ["#{4/cdate}", self.update_date_string],
             'script': self.group_edit_process,
             'timeout': tools.MAX_PROCESS_TIMEOUT
