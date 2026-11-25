@@ -266,7 +266,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False, content={}):
+    def set_edit_submission_readers_invitation(self, invitation_id, include_assigned_committee=False, include_publication_chairs=False,content={}):
 
         venue_id = self.venue_id
         submission_name = self.get_content_value('submission_name', 'Submission')
@@ -304,6 +304,14 @@ class EditInvitationsBuilder(object):
         if include_assigned_committee:
             readers_items.append(
                 {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'}
+            )
+
+        # publication chairs only work with accepted submissions, so the option is offered only where the caller
+        # asks for it (the accepted submissions release) and only when the venue was deployed with publication chairs
+        publication_chairs_id = self.get_content_value('publication_chairs_id')
+        if include_publication_chairs and publication_chairs_id:
+            readers_items.append(
+                {'value': publication_chairs_id, 'optional': True, 'description': 'Publication Chairs'}
             )
 
         readers_items.extend([

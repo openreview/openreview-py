@@ -672,7 +672,7 @@ class SubmissionRevisionStage():
             for field in content:
                 if field in hidden_field_names:
                     content[field]['readers'] = [conference.id, conference.get_authors_id('${{4/id}/number}')]
-                    if field in ['authors', 'authorids'] and only_accepted and conference.use_publication_chairs:
+                    if only_accepted and conference.use_publication_chairs and (field in ['authors', 'authorids'] or (field == 'pdf' and conference.is_template_related_workflow())):
                         content[field]['readers'].append(conference.get_publication_chairs_id())
                 if field not in hidden_field_names and not content[field].get('readers', []) and existing_invitation_content.get(field, {}).get('readers', []):
                     ## The field is not hidden anymore: drop the stale readers from this invitation
