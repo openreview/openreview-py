@@ -1683,6 +1683,10 @@ computation and memory.
 
         nuzhin_client = helpers.create_user('nuzhin@profile.org', 'Nuzhin', 'E.E.')
 
+        profile = nuzhin_client.get_profile(nuzhin_client.profile.id)
+        profile.content['names'].append({ 'fullname': 'E.E. Nuzhin' })
+        nuzhin_client.post_profile(profile)
+
         edit = nuzhin_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/ORCID.org/-/Record',
             signatures = ['~Nuzhin_E.E.1'],
