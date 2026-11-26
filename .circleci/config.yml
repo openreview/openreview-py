@@ -489,6 +489,7 @@ jobs:
     # build can never hide test files that did not run on any node.
     docker:
       - image: cimg/python:3.10
+    resource_class: small
     steps:
       - checkout
       - attach_workspace:

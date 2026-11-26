@@ -18,14 +18,16 @@ def suite_results(junit_dir):
         if 'skipped' in report.relative_to(junit_dir).parts:
             continue
         for suite in ET.parse(report).iter('testsuite'):
-            results[suite.get('name')] = results.get(suite.get('name'), False) or failed(suite)
+            name = suite.get('name')
+            results[name] = results.get(name, False) or failed(suite)
     return results
 
 
 def main(junit_dir, discovered_files):
     results = suite_results(junit_dir)
-    missing = [f for f in sorted(set(discovered_files)) if f not in results]
-    failing = [f for f in sorted(set(discovered_files)) if results.get(f)]
+    files = sorted(set(discovered_files))
+    missing = [f for f in files if f not in results]
+    failing = [f for f in files if results.get(f)]
     for test_file in missing:
         print(f'No test results for {test_file}')
     for test_file in failing:

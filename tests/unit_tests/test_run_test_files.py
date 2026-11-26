@@ -4,7 +4,9 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-RUNNER = Path(__file__).resolve().parents[2] / '.circleci' / 'run-test-files.sh'
+CIRCLECI = Path(__file__).resolve().parents[2] / '.circleci'
+RUNNER = CIRCLECI / 'run-test-files.sh'
+VERIFIER = CIRCLECI / 'verify_test_results.py'
 
 
 def run_runner(project, junit_dir, *test_files):
@@ -49,7 +51,7 @@ def test_a_failing_file_does_not_stop_the_other_files(tmp_path):
     }
 
 
-def test_each_report_names_its_test_file_even_when_collection_fails(tmp_path):
+def test_the_verifier_attributes_runner_reports_to_their_files_even_when_collection_fails(tmp_path):
     project = make_project(tmp_path, {
         'tests/test_broken.py': 'import module_that_does_not_exist\n',
         'tests/test_fine.py': 'def test_fine():\n    pass\n',
@@ -57,14 +59,13 @@ def test_each_report_names_its_test_file_even_when_collection_fails(tmp_path):
     junit_dir = tmp_path / 'junit'
 
     result = run_runner(project, junit_dir, 'tests/test_broken.py', 'tests/test_fine.py')
+    verified = subprocess.run(
+        [sys.executable, str(VERIFIER), str(junit_dir), 'tests/test_broken.py', 'tests/test_fine.py'],
+        capture_output=True, text=True,
+    )
 
     assert result.returncode != 0, result.stdout + result.stderr
-    suites = {
-        suite.get('name'): int(suite.get('errors')) + int(suite.get('failures'))
-        for report in junit_dir.rglob('*.xml')
-        for suite in ET.parse(report).iter('testsuite')
-    }
-    assert suites == {'tests/test_broken.py': 1, 'tests/test_fine.py': 0}
+    assert verified.stdout.splitlines() == ['Failures in tests/test_broken.py']
 
 
 def test_passing_files_exit_zero(tmp_path):
