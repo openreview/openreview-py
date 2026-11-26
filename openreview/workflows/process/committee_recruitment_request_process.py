@@ -36,73 +36,47 @@ def process(client, edit, invitation):
             invitee_emails.append(email)
             invitee_names.append(name)
 
-    valid_invitees = []
-
     valid_email_re = re.compile(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
+    valid_profile_id_re = re.compile(r'^~.*\d+$')
 
+    candidates = []
     for index, email in enumerate(invitee_emails):
-        profile = None
-        is_email = '@' in email
-        is_profile_id = not is_email
-        email = email.lower() if is_email else email
-        invalid_profile_id = False
-        no_profile_found = False
+        if '@' in email:
+            email = email.lower()
+            if not valid_email_re.match(email):
+                recruitment_status['errors'].setdefault('invalid_emails', []).append(email)
+                continue
+        elif not valid_profile_id_re.match(email):
+            recruitment_status['errors'].setdefault('invalid_profile_ids', []).append(email)
+            continue
+        candidates.append((index, email))
 
-        if is_email and not valid_email_re.match(email):
-            if 'invalid_emails' not in recruitment_status['errors']:
-                recruitment_status['errors']['invalid_emails'] = []
-            recruitment_status['errors']['invalid_emails'].append(email)
+    lookup_values = set(email for _, email in candidates) | set(committee_group.members) | set(invited_group.members)
+    profiles = openreview.tools.get_profiles(client, list(lookup_values), as_dict=True)
+
+    committee_member_ids = set(profiles[member].id if profiles.get(member) else member for member in committee_group.members)
+    invited_member_ids = set(profiles[member].id if profiles.get(member) else member for member in invited_group.members)
+
+    valid_invitees = []
+    for index, email in candidates:
+        is_profile_id = email.startswith('~')
+        profile = profiles.get(email)
+
+        if is_profile_id and not profile:
+            recruitment_status['errors'].setdefault('profile_not_found', []).append(email)
             continue
 
-        try:
-            profile = openreview.tools.get_profile(client, email)
-        except openreview.OpenReviewException as e:
-            error_string = repr(e)
-            if 'ValidationError' in error_string:
-                invalid_profile_id = True
-            else:
-                if error_string not in recruitment_status['errors']:
-                    recruitment_status['errors'][error_string] = []
-                recruitment_status['errors'][error_string].append(email)
-                continue
-    
-        if is_profile_id and not profile:
-            no_profile_found = True                
+        invitee_id = profile.id if profile else email
 
-        try:
-            memberships = [g.id for g in client.get_groups(member=email, prefix=venue_id)]
-        except:
-            memberships = []
-    
-        invited_roles = [invited_group.id]
-        member_roles = [group_id]
-
-        invited_group_ids=list(set(invited_roles) & set(memberships))
-        member_group_ids=list(set(member_roles) & set(memberships))
-
-        if invalid_profile_id:
-            if 'invalid_profile_ids' not in recruitment_status['errors']:
-                recruitment_status['errors']['invalid_profile_ids'] = []
-            recruitment_status['errors']['invalid_profile_ids'].append(email)
-        elif no_profile_found:
-            if 'profile_not_found' not in recruitment_status['errors']:
-                recruitment_status['errors']['profile_not_found'] = []
-            recruitment_status['errors']['profile_not_found'].append(email)
-        elif member_group_ids:
-            member_group_id = member_group_ids[0]
-            if member_group_id not in recruitment_status['already_member']:
-                recruitment_status['already_member'][member_group_id] = []
-            recruitment_status['already_member'][member_group_id].append(email)
-        elif invited_group_ids:
-            invited_group_id=invited_group_ids[0]
-            if invited_group_id not in recruitment_status['already_invited']:
-                recruitment_status['already_invited'][invited_group_id] = [] 
-            recruitment_status['already_invited'][invited_group_id].append(email)
+        if invitee_id in committee_member_ids:
+            recruitment_status['already_member'].setdefault(group_id, []).append(email)
+        elif invitee_id in invited_member_ids:
+            recruitment_status['already_invited'].setdefault(invited_group.id, []).append(email)
         else:
-            name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
+            name = invitee_names[index]
             if not name and not is_profile_id:
                 name = 'invitee'
-            valid_invitees.append((profile.id if profile else email, name))
+            valid_invitees.append((invitee_id, name))
 
     print('Valid invitees:', valid_invitees)
     
