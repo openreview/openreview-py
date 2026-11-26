@@ -576,6 +576,7 @@ workflows:
             - build: [success, failed]
       - deploy-dev:
           requires:
+            - build
             - verify-test-results
           filters:
             branches:
