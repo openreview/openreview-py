@@ -1,0 +1,8 @@
+---
+name: ci tests
+discover: .circleci/discover-test-files.sh
+run: .circleci/run-test-files.sh "<< outputs.junit-directory >>" << test.atoms >>
+outputs:
+  junit-directory: test-reports/junit
+options:
+  store-test-results: true
