@@ -470,6 +470,7 @@ jobs:
           name: Run tests
           environment:
             PYTHONUNBUFFERED: "1"
+            DEADLINE_PROBE: "1"
           command: |
             cd ~/openreview-py-repo
             circleci testsuite run "ci tests"
@@ -486,6 +487,37 @@ jobs:
             - junit-results
       - copy-logs-on-failure
       - store-test-artifacts
+  legacy-deadline-probe:
+    docker:
+      - image: cimg/python:3.10
+    resource_class: small
+    environment:
+      DEADLINE_PROBE: "1"
+    steps:
+      - checkout
+      - run: pip install -c requirements-dev.txt -e '.[test]'
+      - run:
+          name: Run the probe with the legacy circleci tests run
+          command: |
+            circleci tests glob "tests/test_zz_deadline_probe.py" | circleci tests run \
+              --command="xargs pytest -v -o junit_family=legacy --junitxml=test-reports/junit.xml" \
+              --verbose --split-by=timings
+      - store_artifacts:
+          path: test-reports
+  testsuite-deadline-probe:
+    docker:
+      - image: cimg/python:3.10
+    resource_class: small
+    environment:
+      DEADLINE_PROBE: "1"
+    steps:
+      - checkout
+      - run: pip install -c requirements-dev.txt -e '.[test]'
+      - run:
+          name: Run the probe with circleci testsuite run
+          command: circleci testsuite run "ci tests" -t deadline_probe
+      - store_artifacts:
+          path: test-reports
   verify-test-results:
     # Fails unless every discovered test file reported results and passed, so a green
     # build can never hide test files that did not run on any node.
@@ -571,6 +603,8 @@ workflows:
             - build-pr-tests
             - build-web
           python-version: "3.10"
+      - legacy-deadline-probe
+      - testsuite-deadline-probe
       - verify-test-results:
           requires:
             - build: [success, failed]
