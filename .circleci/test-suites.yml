@@ -6,4 +6,3 @@ outputs:
   junit-directory: test-reports/junit
 options:
   store-test-results: true
-  timeout: 15m
