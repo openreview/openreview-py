@@ -1,11 +1,11 @@
 from unittest.mock import MagicMock, patch
-from openreview.venue_request.process.ithenticate_eula_process import process
+from openreview.venue_request.process import ithenticate_eula_process
 
 
 class TestProcessFunction:
 
     # Mock the function and modules used in process
-    @patch("openreview.venue_request.process.ithenticate_eula_process.openreview")
+    @patch.object(ithenticate_eula_process, "openreview")
     def test_process_eula_version_insertion(self, mock_openreview):
         # Mock API2 client and its behavior
         mock_client = MagicMock()
@@ -71,7 +71,7 @@ class TestProcessFunction:
         mock_openreview.api.Invitation.return_value = modified_invitation
 
         # Run the process function
-        process(mock_client, iThenticate_invitation)
+        ithenticate_eula_process.process(mock_client, iThenticate_invitation)
 
         # Assertions
         mock_client.get_group.assert_called_once_with("Mock/Conference")
@@ -104,7 +104,7 @@ class TestProcessFunction:
             == "The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v2beta"
         )
 
-    @patch("openreview.venue_request.process.ithenticate_eula_process.openreview")
+    @patch.object(ithenticate_eula_process, "openreview")
     def test_process_eula_version_mismatch(self, mock_openreview):
         # Mock API2 client and its behavior
         mock_client = MagicMock()
@@ -190,7 +190,7 @@ class TestProcessFunction:
         mock_client.get_invitation.return_value = submission_invitation
 
         # Run the process function
-        process(mock_client, iThenticate_invitation)
+        ithenticate_eula_process.process(mock_client, iThenticate_invitation)
 
         # Assertions
         mock_client.get_group.assert_called_once_with("Mock/Conference")
@@ -223,7 +223,7 @@ class TestProcessFunction:
             == f"The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v2beta"
         )
 
-    @patch("openreview.venue_request.process.ithenticate_eula_process.openreview")
+    @patch.object(ithenticate_eula_process, "openreview")
     def test_process_eula_version_match(self, mock_openreview):
         # Mock API2 client and its behavior
         mock_client = MagicMock()
@@ -284,7 +284,7 @@ class TestProcessFunction:
         mock_client.get_invitation.return_value = submission_invitation
 
         # Run the process function
-        process(mock_client, iThenticate_invitation)
+        ithenticate_eula_process.process(mock_client, iThenticate_invitation)
 
         # Assertions
         mock_client.get_group.assert_called_once_with("Mock/Conference")

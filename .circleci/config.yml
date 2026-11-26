@@ -298,11 +298,15 @@ commands:
             cp ~/openreview/logs/* ~/openreview-py-repo/test-reports/ 2>/dev/null || true
             cp ~/openreview-v2/logs/* ~/openreview-py-repo/test-reports/ 2>/dev/null || true
 
-  store-test-artifacts:
-    description: "Store test results and artifacts"
+  store-test-results:
+    description: "Upload JUnit results to CircleCI"
     steps:
       - store_test_results:
           path: test-reports
+
+  store-test-artifacts:
+    description: "Store test reports and API logs as artifacts"
+    steps:
       - store_artifacts:
           when: always
           path: test-reports
@@ -439,6 +443,7 @@ jobs:
               echo "No test files to run"
             fi
       - copy-logs-on-failure
+      - store-test-results
       - store-test-artifacts
   build:
     executor: mongo8-vm
@@ -465,32 +470,41 @@ jobs:
           name: Run tests
           environment:
             PYTHONUNBUFFERED: "1"
+          # Not Smarter Testing's `circleci testsuite run`: it stops every node 40 minutes
+          # after the job starts, and test_arr_venue_v2.py alone ends seconds before that (#3341).
           command: |
             cd ~/openreview-py-repo
-            
-            # Container 0: ONLY test_journal.py (~22 min)
-            if [ "$CIRCLE_NODE_INDEX" -eq 0 ]; then
-              pytest tests/test_journal.py --durations=0 -v -o junit_family=legacy \
-                --junitxml=test-reports/junit-journal.xml \
-                --driver Firefox --driver-path tests/drivers/geckodriver
-            fi
-            
-            # Container 1: ONLY test_arr_venue_v2.py (~38 min)
-            if [ "$CIRCLE_NODE_INDEX" -eq 1 ]; then
-              pytest tests/test_arr_venue_v2.py --durations=0 -v -o junit_family=legacy \
-                --junitxml=test-reports/junit-arr.xml \
-                --driver Firefox --driver-path tests/drivers/geckodriver
-            fi
-            
-            # Containers 2-9: Everything else distributed by timings
-            if [ "$CIRCLE_NODE_INDEX" -ge 2 ]; then
-              TEST_FILES=$(circleci tests glob "tests/test_*.py" | grep -v "test_journal.py\|test_arr_venue_v2.py")
-              echo "$TEST_FILES" | circleci tests run \
-                --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" \
-                --verbose --split-by=timings
-            fi
+            .circleci/discover-test-files.sh | circleci tests run \
+              --command="xargs .circleci/run-test-files.sh test-reports/junit" \
+              --verbose --split-by=timings
+      - run:
+          name: Collect this node's JUnit reports
+          when: always
+          command: |
+            mkdir -p ~/openreview-py-repo/test-reports/junit ~/junit-results
+            cp -r ~/openreview-py-repo/test-reports/junit ~/junit-results/node-$CIRCLE_NODE_INDEX
+      - persist_to_workspace:
+          when: always
+          root: ~/
+          paths:
+            - junit-results
       - copy-logs-on-failure
+      - store-test-results
       - store-test-artifacts
+  verify-test-results:
+    # Fails unless every discovered test file reported results and passed, so a green
+    # build can never hide test files that did not run on any node.
+    docker:
+      - image: cimg/python:3.10
+    resource_class: small
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/workspace
+      - run:
+          name: Check every test file ran and passed
+          command: |
+            .circleci/discover-test-files.sh | xargs python .circleci/verify_test_results.py ~/workspace/junit-results
   debug-tests:
     # Run an explicit set of tests against custom openreview-api / openreview-api-v1
     # branches. Triggered by passing a non-empty `pytest-files` pipeline parameter
@@ -526,6 +540,7 @@ jobs:
               --junitxml=test-reports/junit-debug.xml \
               --driver Firefox --driver-path tests/drivers/geckodriver
       - copy-logs-on-failure
+      - store-test-results
       - store-test-artifacts
   deploy-dev:
     working_directory: ~/openreview-py-repo
@@ -561,9 +576,13 @@ workflows:
             - build-pr-tests
             - build-web
           python-version: "3.10"
+      - verify-test-results:
+          requires:
+            - build: [success, failed]
       - deploy-dev:
           requires:
             - build
+            - verify-test-results
           filters:
             branches:
               only: master
