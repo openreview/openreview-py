@@ -37,6 +37,7 @@ def process(client, edit, invitation):
             invitee_names.append(name)
 
     valid_email_re = re.compile(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
+    valid_profile_id_re = re.compile(r'^~.*\d+$')
 
     candidates = []
     for index, email in enumerate(invitee_emails):
@@ -45,7 +46,7 @@ def process(client, edit, invitation):
             if not valid_email_re.match(email):
                 recruitment_status['errors'].setdefault('invalid_emails', []).append(email)
                 continue
-        elif not email.startswith('~'):
+        elif not valid_profile_id_re.match(email):
             recruitment_status['errors'].setdefault('invalid_profile_ids', []).append(email)
             continue
         candidates.append((index, email))

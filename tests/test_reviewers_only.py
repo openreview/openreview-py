@@ -868,7 +868,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 
                 invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
                 content={
-                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nREVIEWER@mail.com\nmelisa_bok1\ninvalid_emäil@abcd.cc\nreviewer_guest_signature@mail.com' },
+                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nREVIEWER@mail.com\nmelisa_bok1\ninvalid_emäil@abcd.cc\nreviewer_guest_signature@mail.com\n~Melisa_Bok\n~Unknown_Reviewer1' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
                     'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
                 },
@@ -891,7 +891,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 Invited: 4
 Already invited: 0
 Already member: 0
-Errors: 2
+Errors: 3
 
 For more details, please check the following links:
 
@@ -903,6 +903,11 @@ For more details, please check the following links:
         notes = openreview_client.get_notes(forum=venue.content['request_form_id']['value'], sort='tcdate:desc')
         assert len(notes) == 7 # there are two comments after deployment
         assert notes[0].content['title']['value'] == 'Recruitment request status for ABCD 2025 Program Committee Group'
+        assert notes[0].content['recruitment_request_status']['value']['errors'] == {
+            'invalid_emails': ['invalid_emäil@abcd.cc'],
+            'invalid_profile_ids': ['melisa_bok1', '~Melisa_Bok'],
+            'profile_not_found': ['~Unknown_Reviewer1']
+        }
 
         ## Accept invitation as guest user
         guest_messages = openreview_client.get_messages(to='reviewer_guest_signature@mail.com', subject = '[ABCD 2025] Invitation to serve as expert Reviewer')
