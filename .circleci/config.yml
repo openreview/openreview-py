@@ -470,9 +470,13 @@ jobs:
           name: Run tests
           environment:
             PYTHONUNBUFFERED: "1"
+          # Not Smarter Testing's `circleci testsuite run`: it stops every node 40 minutes
+          # after the job starts, and test_arr_venue_v2.py alone ends seconds before that (#3341).
           command: |
             cd ~/openreview-py-repo
-            circleci testsuite run "ci tests"
+            .circleci/discover-test-files.sh | circleci tests run \
+              --command="xargs .circleci/run-test-files.sh test-reports/junit" \
+              --verbose --split-by=timings
       - run:
           name: Collect this node's JUnit reports
           when: always
@@ -485,6 +489,7 @@ jobs:
           paths:
             - junit-results
       - copy-logs-on-failure
+      - store-test-results
       - store-test-artifacts
   verify-test-results:
     # Fails unless every discovered test file reported results and passed, so a green

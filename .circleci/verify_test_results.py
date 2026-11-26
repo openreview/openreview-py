@@ -14,10 +14,6 @@ def failed(cases):
 def failed_by_file(junit_dir):
     failed_by = {}
     for report in Path(junit_dir).rglob('*.xml'):
-        # Smarter Testing writes results for atoms it did not run into skipped/; they
-        # are not evidence that the file ran in this attempt.
-        if 'skipped' in report.relative_to(junit_dir).parts:
-            continue
         for suite in ET.parse(report).iter('testsuite'):
             cases = list(suite.iter('testcase'))
             if cases:

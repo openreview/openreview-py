@@ -46,16 +46,6 @@ def test_a_discovered_file_without_a_report_fails_and_is_named(tmp_path):
     assert 'rerun the workflow from the start' in result.stdout
 
 
-def test_results_of_skipped_atoms_do_not_count_as_run(tmp_path):
-    write_report(tmp_path, '1/a.xml', 'tests/test_a.py')
-    write_report(tmp_path, 'skipped/b.xml', 'tests/test_b.py')
-
-    result = verify(tmp_path, 'tests/test_a.py', 'tests/test_b.py')
-
-    assert result.returncode != 0
-    assert 'tests/test_b.py' in result.stdout
-
-
 def test_a_report_with_no_tests_counts_as_no_results(tmp_path):
     write_report(tmp_path, 'node0/a.xml', 'tests/test_a.py')
     (tmp_path / 'node0/empty.xml').write_text('''<?xml version="1.0" encoding="utf-8"?>
