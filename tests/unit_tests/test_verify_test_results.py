@@ -56,6 +56,17 @@ def test_results_of_skipped_atoms_do_not_count_as_run(tmp_path):
     assert 'tests/test_b.py' in result.stdout
 
 
+def test_a_report_with_no_tests_counts_as_no_results(tmp_path):
+    write_report(tmp_path, 'node0/a.xml', 'tests/test_a.py')
+    (tmp_path / 'node0/empty.xml').write_text('''<?xml version="1.0" encoding="utf-8"?>
+<testsuites><testsuite name="tests/test_emptied.py" tests="0"></testsuite></testsuites>''')
+
+    result = verify(tmp_path, 'tests/test_a.py', 'tests/test_emptied.py')
+
+    assert result.returncode != 0
+    assert 'No test results for tests/test_emptied.py' in result.stdout
+
+
 def test_files_with_failures_or_errors_fail_and_are_named(tmp_path):
     write_report(tmp_path, 'node0/a.xml', 'tests/test_a.py')
     write_report(tmp_path, 'node0/b.xml', 'tests/test_b.py', outcome='failure')

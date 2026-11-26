@@ -475,13 +475,15 @@ jobs:
             circleci testsuite run "ci tests"
       - run:
           name: Collect this node's JUnit reports
+          when: always
           command: |
-            mkdir -p ~/junit-results
+            mkdir -p ~/openreview-py-repo/test-reports/junit ~/junit-results
             cp -r ~/openreview-py-repo/test-reports/junit ~/junit-results/node-$CIRCLE_NODE_INDEX
       - persist_to_workspace:
-          root: ~/junit-results
+          when: always
+          root: ~/
           paths:
-            - node-*
+            - junit-results
       - copy-logs-on-failure
       - store-test-artifacts
   verify-test-results:
@@ -493,11 +495,11 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: ~/junit-results
+          at: ~/workspace
       - run:
           name: Check every test file ran and passed
           command: |
-            .circleci/discover-test-files.sh | xargs python .circleci/verify_test_results.py ~/junit-results
+            .circleci/discover-test-files.sh | xargs python .circleci/verify_test_results.py ~/workspace/junit-results
   debug-tests:
     # Run an explicit set of tests against custom openreview-api / openreview-api-v1
     # branches. Triggered by passing a non-empty `pytest-files` pipeline parameter
@@ -571,7 +573,7 @@ workflows:
           python-version: "3.10"
       - verify-test-results:
           requires:
-            - build
+            - build: [success, failed]
       - deploy-dev:
           requires:
             - verify-test-results
