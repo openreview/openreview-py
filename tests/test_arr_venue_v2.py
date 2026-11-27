@@ -3488,6 +3488,11 @@ Abstract: This is an abstract 1''' in messages[0]['content']['text']
         assert ae_checklist_invitation.cdate == expected_checklist_cdate
         assert reviewer_checklist_invitation.cdate == expected_checklist_cdate
 
+        # Review form description and paper_summary field description come from ARR code
+        review_super_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Official_Review')
+        assert review_super_invitation.edit['invitation']['description'] == "#### **Instructions for resubmissions**\n\nThis guidance applies only to resubmissions. See the [reviewer guidelines for resubmissions](https://aclrollingreview.org/reviewerguidelines#how-to-review-resubmissions) for details.\n\n- Fresh reviewers (the authors requested different reviewers): The previous reviews and the authors' revision notes become available after you submit your initial review. Please assess the paper independently first. After submitting, check these materials using the Previous URL link in the submission metadata and update your review as appropriate.\n- Repeat and substitute reviewers (the authors requested the same reviewers): The previous reviews and the authors' revision notes are available immediately, including when you are replacing an unavailable reviewer. Please check these materials before submitting your review."
+        assert review_super_invitation.edit['invitation']['edit']['note']['content']['paper_summary']['description'] == " Please make sure that you are familiar with the latest version of the [reviewer guidelines for writing a strong review](https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review), especially with respect to AI assistance. \n\n Note that the reviewer names are anonymous to the authors, but are VISIBLE to the senior researchers serving as area chairs, senior chairs and program chairs. Authors will have an opportunity to submit [issue reports for problematic reviews](https://aclrollingreview.org/authors#step2.2), to be considered by area chairs. Highly problematic reviews may result in penalties, and great reviews may result in awards (see the [reviewer incentives policy](https://aclrollingreview.org/incentives2025)). ARR is currently experimenting with a [review assistant tool](https://revas.mbzuai.ac.ae/), which you may optionally use to check for some common review issues. \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
+
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
             for submission in submissions:
@@ -5178,6 +5183,10 @@ Abstract: This is an abstract 1''' in messages[0]['content']['text']
         assert review_invitation.process
         super_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Official_Review')
         assert 'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging' in super_invitation.content['review_preprocess_script']['value']
+        assert review_invitation.description == super_invitation.edit['invitation']['description']
+        assert review_invitation.description.startswith('#### **Instructions for resubmissions**')
+        assert review_invitation.edit['note']['content']['paper_summary']['description'] == super_invitation.edit['invitation']['edit']['note']['content']['paper_summary']['description']
+        assert review_invitation.edit['note']['content']['paper_summary']['description'].startswith(' Please make sure that you are familiar with the latest version of the [reviewer guidelines for writing a strong review]')
 
         openreview_client.add_members_to_group(venue.get_reviewers_id(number=3), ['~Reviewer_ARROne1'])
 
@@ -5835,6 +5844,10 @@ Abstract: This is an abstract 1''' in messages[0]['content']['text']
 
         reviewing_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Official_Review').edit['invitation']['duedate']
         reviewing_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Official_Review').edit['invitation']['expdate']
+        reviewing_description = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Official_Review').edit['invitation']['description']
+        reviewing_paper_summary_description = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Official_Review').edit['invitation']['edit']['note']['content']['paper_summary']['description']
+        assert reviewing_description.startswith('#### **Instructions for resubmissions**')
+        assert reviewing_paper_summary_description.startswith(' Please make sure that you are familiar with the latest version of the [reviewer guidelines for writing a strong review]')
 
         meta_reviewing_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Meta_Review').edit['invitation']['duedate']
         meta_reviewing_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Meta_Review').edit['invitation']['expdate']
@@ -5887,6 +5900,14 @@ Abstract: This is an abstract 1''' in messages[0]['content']['text']
         
         assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Official_Review').edit['invitation']['duedate'] > reviewing_due_date
         assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Official_Review').edit['invitation']['expdate'] > reviewing_exp_date
+
+        # Date-only updates re-post the latest Review_Stage content, so the descriptions must be unchanged
+        review_super_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Official_Review')
+        assert review_super_invitation.edit['invitation']['description'] == reviewing_description
+        assert review_super_invitation.edit['invitation']['edit']['note']['content']['paper_summary']['description'] == reviewing_paper_summary_description
+        review_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert review_invitation.description == reviewing_description
+        assert review_invitation.edit['note']['content']['paper_summary']['description'] == reviewing_paper_summary_description
 
         assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Meta_Review').edit['invitation']['duedate'] > meta_reviewing_due_date
         assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Meta_Review').edit['invitation']['expdate'] > meta_reviewing_exp_date

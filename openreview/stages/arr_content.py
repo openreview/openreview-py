@@ -1112,6 +1112,8 @@ hide_fields_from_public = [
     # "E1_elaboration",
 ]
 
+arr_official_review_description = "#### **Instructions for resubmissions**\n\nThis guidance applies only to resubmissions. See the [reviewer guidelines for resubmissions](https://aclrollingreview.org/reviewerguidelines#how-to-review-resubmissions) for details.\n\n- Fresh reviewers (the authors requested different reviewers): The previous reviews and the authors' revision notes become available after you submit your initial review. Please assess the paper independently first. After submitting, check these materials using the Previous URL link in the submission metadata and update your review as appropriate.\n- Repeat and substitute reviewers (the authors requested the same reviewers): The previous reviews and the authors' revision notes are available immediately, including when you are replacing an unavailable reviewer. Please check these materials before submitting your review."
+
 arr_official_review_content = {
     "paper_summary": {
         "value": {
@@ -1124,7 +1126,7 @@ arr_official_review_content = {
             }
         },
         "order": 1,
-        "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n Note that the reviewer names are anonymous to the authors, but are VISIBLE to the senior researchers serving as area chairs, senior chairs and program chairs. Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs (https://aclrollingreview.org/authors#step2.2). Highly problematic reviews may result in penalties, and great reviews may result in awards (https://aclrollingreview.org/incentives2025). ARR is currently experimenting with a review assistant tool, which you may optionally use to check for some common review issues (https://revas.mbzuai.ac.ae/). \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
+        "description": " Please make sure that you are familiar with the latest version of the [reviewer guidelines for writing a strong review](https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review), especially with respect to AI assistance. \n\n Note that the reviewer names are anonymous to the authors, but are VISIBLE to the senior researchers serving as area chairs, senior chairs and program chairs. Authors will have an opportunity to submit [issue reports for problematic reviews](https://aclrollingreview.org/authors#step2.2), to be considered by area chairs. Highly problematic reviews may result in penalties, and great reviews may result in awards (see the [reviewer incentives policy](https://aclrollingreview.org/incentives2025)). ARR is currently experimenting with a [review assistant tool](https://revas.mbzuai.ac.ae/), which you may optionally use to check for some common review issues. \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
     },
     "summary_of_strengths": {
         "value": {
