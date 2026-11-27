@@ -31,6 +31,7 @@ from openreview.stages.arr_content import (
     arr_ae_checklist,
     arr_desk_reject_verification,
     arr_official_review_content,
+    arr_official_review_description,
     arr_metareview_content,
     arr_ethics_review_content,
     arr_review_rating_content,
@@ -1159,7 +1160,8 @@ class ARRWorkflow(object):
                         'remove_review_form_options': 'title,rating,review',
                         'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
                         'review_rating_field_name': 'overall_assessment',
-                        'additional_review_form_options': arr_official_review_content
+                        'additional_review_form_options': arr_official_review_content,
+                        'review_description': arr_official_review_description
                     },
                     'forum': request_form_id,
                     'invitation': '{}/-/Request{}/Review_Stage'.format(support_user, request_form.number),
