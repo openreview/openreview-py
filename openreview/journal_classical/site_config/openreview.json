@@ -1,0 +1,227 @@
+{
+  "defaults": {
+    "site_url": "https://openreview.net",
+    "base_url": "https://api2.openreview.net",
+    "venue_id": "JMLR",
+    "official_venue_name": "Journal of Machine Learning Research",
+    "abbreviated_venue_name": "JMLR",
+    "role_groups": {
+      "author": "JMLR/Authors",
+      "reviewer": "JMLR/Reviewers",
+      "action_editor": "JMLR/Action_Editors",
+      "ae": "JMLR/Action_Editors",
+      "editors_in_chief": "JMLR/Editors_In_Chief",
+      "eic": "JMLR/Editors_In_Chief",
+      "production_editor": "JMLR/Production_Editors",
+      "pe": "JMLR/Production_Editors",
+      "expert_reviewer": "JMLR/Expert_Reviewers"
+    },
+    "tracks": {
+      "Regular": {
+        "default": true,
+        "eligibility_invitation": "JMLR/Action_Editors/-/Regular_Ineligible",
+        "eligibility_mode": "exclude"
+      },
+      "OSS": {
+        "display_name": "Open Source Software (OSS)",
+        "eligibility_invitation": "JMLR/Action_Editors/-/Track_Eligible",
+        "eligibility_mode": "include",
+        "publication": {
+          "special_issue": "MLOSS"
+        }
+      },
+      "Award": {
+        "display_name": "Award",
+        "eligibility_invitation": "JMLR/Action_Editors/-/Track_Eligible",
+        "eligibility_mode": "include"
+      }
+    },
+    "request_form": {
+      "submission_public": false,
+      "author_anonymity": false,
+      "AE_anonymity": true,
+      "issn": "NA",
+      "submission_license": "CC BY-SA 4.0",
+      "eic_submission_notification": false,
+      "website_urls": {
+        "editorial_board": "https://jmlr.org/editorial-board.html",
+        "submission_info_for_authors": "https://jmlr.org/author-info.html",
+        "camera_ready_author_guidelines": "https://www.jmlr.org/format/authors-guide.html",
+        "reviewer_guide": "https://jmlr.org/reviewer-guide.html",
+        "editorial_policies": "https://jmlr.org/tmlr/editorial-policies.html",
+        "faq": "https://jmlr.org/faq.html",
+        "stats": "https://jmlr.org/stats.html"
+      },
+      "submission_additional_fields": {
+        "code": {
+          "order": 6,
+          "description": "Optional public project or source-code repository URL for the paper. When supplied, JMLR may publish it as the paper's code link.",
+          "value": {
+            "param": {
+              "type": "string",
+              "regex": "^https?://.+$",
+              "optional": true,
+              "deletable": true
+            }
+          }
+        },
+        "supplementary_material": {
+          "value": {
+            "param": {
+              "type": "file",
+              "extensions": [
+                "zip",
+                "pdf"
+              ],
+              "maxSize": 10,
+              "optional": true,
+              "deletable": true
+            }
+          },
+          "description": "Optional self-contained supplementary material, uploaded as one ZIP or PDF file. Maximum size: 10 MB.",
+          "order": 7,
+          "readers": [
+            "JMLR",
+            "JMLR/Action_Editors/Paper${4/number}",
+            "JMLR/Reviewers/Paper${4/number}",
+            "JMLR/Authors/Paper${4/number}"
+          ]
+        },
+        "track_id": {
+          "order": 2,
+          "description": "JMLR track for this submission. Regular is the standard research track. Managed tracks appear only while open for new submissions. The track determines which Action Editors may be assigned and cannot be changed after submission; a resubmission inherits the track of the submission it revises.",
+          "value": {
+            "param": {
+              "type": "string",
+              "input": "select",
+              "enum": [
+                "Regular",
+                "OSS",
+                "Award"
+              ],
+              "default": "Regular",
+              "optional": false
+            }
+          }
+        },
+        "previous_JMLR_submission_url": {
+          "order": 8,
+          "description": "The previous JMLR paper is supplied automatically by the paper-scoped Start Resubmission action.",
+          "value": {
+            "param": {
+              "type": "string",
+              "regex": "^https://(?:dev\\.)?openreview\\.net/forum\\?id=.*$",
+              "optional": true,
+              "deletable": true,
+              "hidden": true
+            }
+          }
+        },
+        "previous_JMLR_submission": {
+          "order": 9,
+          "description": "Immediate previous JMLR submission, derived by the server and displayed as one paper-forum link.",
+          "value": {
+            "param": {
+              "type": "string",
+              "optional": true,
+              "deletable": true,
+              "markdown": true,
+              "hidden": true
+            }
+          }
+        },
+        "changes_since_last_submission": {
+          "order": 10,
+          "description": "Describe the changes made since the linked JMLR submission.",
+          "value": {
+            "param": {
+              "type": "string",
+              "input": "textarea",
+              "maxLength": 5000,
+              "optional": true,
+              "deletable": true,
+              "markdown": true,
+              "hidden": true
+            }
+          }
+        },
+        "cover_letter": {
+          "order": 6,
+          "description": "Optional. Explain whether this submission extends an earlier conference paper, provide resubmission context, or describe an unusual conflict or other editorial circumstance. This text is contextual only and does not create conflict or assignment edges.",
+          "value": {
+            "param": {
+              "type": "string",
+              "input": "textarea",
+              "maxLength": 10000,
+              "optional": true,
+              "deletable": true
+            }
+          }
+        }
+      },
+      "editors_email": "no-reply@jmlr.org",
+      "skip_ac_recommendation": true,
+      "skip_official_recommendation": true,
+      "automatic_desk_rejection_approval": true,
+      "automatic_decision_approval": true,
+      "decision_additional_fields": {
+        "recommendation": {
+          "order": 6,
+          "description": "Choose Accept with minor revision only when the remaining corrections can be verified during camera-ready preparation without another reviewer round. Choose Reject for a terminal rejection, or select Reject with encouragement to resubmit below when a new linked submission is permitted.",
+          "value": {
+            "param": {
+              "type": "string",
+              "enum": [
+                "Accept as is",
+                "Accept with minor revision",
+                "Reject"
+              ],
+              "input": "radio"
+            }
+          }
+        },
+        "resubmission_of_major_revision": {
+          "order": 8,
+          "description": "Select only with Reject. When selected, authors may create a new linked JMLR resubmission; an unselected Reject is terminal.",
+          "value": {
+            "param": {
+              "type": "string",
+              "enum": [
+                "Reject with encouragement to resubmit"
+              ],
+              "input": "checkbox",
+              "optional": true,
+              "deletable": true
+            }
+          }
+        }
+      },
+      "number_of_reviewers": 3,
+      "action_editors_max_papers": 9,
+      "reviewers_max_papers": 2,
+      "ae_recommendation_period": 1,
+      "reviewer_assignment_period": 1,
+      "review_period": 8,
+      "discussion_period": 2,
+      "recommendation_period": 2,
+      "decision_period": 1,
+      "camera_ready_period": 4,
+      "camera_ready_verification_period": 1,
+      "archived_action_editors": true,
+      "archived_reviewers": true,
+      "expert_reviewers": true,
+      "external_reviewers": true,
+      "expertise_model": "specter+mfr"
+    }
+  },
+  "environments": {
+    "dev": {
+      "site_url": "https://dev.openreview.net",
+      "base_url": "https://api2.dev.openreview.net",
+      "request_form": {
+        "reviewers_max_papers": 3
+      }
+    },
+    "prod": {}
+  }
+}

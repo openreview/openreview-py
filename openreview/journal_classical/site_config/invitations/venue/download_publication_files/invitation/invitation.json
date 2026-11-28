@@ -1,0 +1,7 @@
+{
+  "id": "JMLR/-/Download_Publication_Files",
+  "readers": ["JMLR/Editors_In_Chief", "JMLR/Production_Editors"],
+  "writers": ["JMLR"],
+  "invitees": ["JMLR/Editors_In_Chief", "JMLR/Production_Editors"],
+  "signatures": ["JMLR"]
+}

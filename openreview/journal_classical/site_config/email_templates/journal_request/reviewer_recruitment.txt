@@ -1,0 +1,30 @@
+Dear {{fullname}},
+
+You have been invited by the JMLR Editors-in-Chief to serve as a reviewer for the Journal of Machine Learning Research (JMLR), in recognition of your expertise and contributions to machine learning research.
+
+Serving as a JMLR reviewer is an important service to the community. Reviewers evaluate assigned submissions and provide timely, constructive reports through OpenReview.
+
+If you are willing to serve as a JMLR reviewer, please accept below.
+
+Accepting this invitation requires signing in to OpenReview. If you already have an OpenReview account, please log in before opening the Accept link:
+
+{{SITE_URL}}/login
+
+If you do not yet have an OpenReview account, please create one, then log in and open the Accept link:
+
+{{SITE_URL}}/signup
+
+Accept:
+{{accept_url}}
+
+If you prefer not to serve as a reviewer at this time, you may decline below.
+
+Decline:
+{{decline_url}}
+
+Please respond before the invitation link expires.
+
+Thank you for considering this invitation.
+
+Best regards,
+The JMLR Editors-in-Chief
